@@ -3,7 +3,7 @@
  *
  *  What folding is *for* is skimming. A note long enough to need it is a note
  *  nobody reads top to bottom, and the shape of it - the headings - is the map.
- *  So there are three commands and not six:
+ *  So there are five commands and not six:
  *
  *  - **Fold**, which folds whatever the caret is inside and opens it again on a
  *    second press. One command, because the chevron in the margin is a toggle
@@ -15,12 +15,19 @@
  *  - **Unfold everything**, which opens all of it, whatever was folded and
  *    however it came to be folded. Deliberately not the mirror image of the one
  *    above: "show me all of it" has only one honest reading.
+ *  - **Fold more** and **Fold less**, Obsidian's pair, which take the note one
+ *    level at a time: more folds every block at the deepest level that still has
+ *    something open, less opens the shallowest level that has something folded.
  *
- *  Obsidian's fold more and fold less - one heading level deeper or shallower,
- *  globally - are left out. They need a number nobody can see (which level are
- *  we on?), they cost two menu rows and two chords, and the two things people
- *  actually do are "show me the outline" and "get this one section out of my
- *  way", which the three above already are.
+ *  The pair used to be left out, and the reason was a good one: a level is a
+ *  number nobody can see, and "which level are we on?" is a question an editor
+ *  should never make a reader ask. They are here because neither of them holds
+ *  one. The level is read out of the note every time: how deeply a foldable block
+ *  sits inside the others is what the syntax tree already says - a subsection
+ *  inside a section, a child item inside its item, a fence inside a callout - and
+ *  what is folded is read out of the fold state. Nothing is stored, nothing is
+ *  reset by an edit, and the two of them walk each other back exactly. They are
+ *  two rows and no chord, so the keyboard is no more crowded than it was.
  *
  *  Nothing here decides *what* can fold. `foldable` does, and it answers out of
  *  the language: `@codemirror/lang-markdown` registers a fold service for a
@@ -103,18 +110,28 @@ function enclosingFold(state: EditorState, pos: number): FoldRange | null {
   return null
 }
 
-/** Where the caret has to go for a fold to hold, when it is in the way.
+/** Where the caret has to go for these folds to hold, when one of them is in the
+ *  way.
  *
  *  A fold starts at the end of the line that owns it, so putting the caret
  *  there is putting it on the one line of the fold that stays on screen. The
  *  library drops any fold that covers the selection head, and a head exactly on
  *  a fold's first offset does not count as covered - which is why this is the
- *  one place the caret may be moved and the fold still holds. */
-function caretFor(state: EditorState, range: FoldRange): TransactionSpec {
+ *  one place the caret may be moved and the fold still holds.
+ *
+ *  The innermost of the folds that would swallow it, so a press that folds a
+ *  subsection brings the caret up to that subsection's own heading rather than to
+ *  the chapter's. */
+function caretFor(state: EditorState, ranges: readonly FoldRange[]): TransactionSpec {
   const head = state.selection.main.head
-  const swallowed = head > range.from && head < range.to
+  let holder: FoldRange | null = null
 
-  return swallowed ? { selection: { anchor: range.from } } : {}
+  for (const range of ranges) {
+    if (head <= range.from || head >= range.to) continue
+    if (!holder || range.from > holder.from) holder = range
+  }
+
+  return holder ? { selection: { anchor: holder.from } } : {}
 }
 
 /** Folds what the caret is in, or opens it again.
@@ -142,7 +159,7 @@ export const toggleFold: StateCommand = (target) => {
   const range = enclosingFold(state, state.selection.main.head)
   if (!range) return false
 
-  shutFolds(target, [range], caretFor(state, range))
+  shutFolds(target, [range], caretFor(state, [range]))
   return true
 }
 
@@ -155,8 +172,6 @@ export const toggleFold: StateCommand = (target) => {
 export const foldHeadings: StateCommand = (target) => {
   const { state } = target
   const ranges: FoldRange[] = []
-  const head = state.selection.main.head
-  let holder: FoldRange | null = null
 
   for (let number = 1; number <= state.doc.lines; number++) {
     const line = state.doc.line(number)
@@ -166,13 +181,113 @@ export const foldHeadings: StateCommand = (target) => {
     if (!range) continue
 
     ranges.push(range)
-    if (head > range.from && head < range.to) holder = range
     number = state.doc.lineAt(range.to).number
   }
 
   if (!ranges.length) return false
 
-  shutFolds(target, ranges, holder ? { selection: { anchor: holder.from } } : {})
+  shutFolds(target, ranges, caretFor(state, ranges))
+  return true
+}
+
+/** One foldable block of the note, with everything the level commands ask about
+ *  it. Nothing here is stored: all three answers are read off the note and the
+ *  fold state at the moment of the press. */
+interface Block extends FoldRange {
+  /** How many other foldable blocks hold this one. A `##` section inside a `#`
+   *  one is 1, a child list item inside its parent is 1, a fence inside a callout
+   *  inside a section is 2. The outline of the note as written, rather than the
+   *  hash count: a `###` that follows a `#` with no `##` between them is the
+   *  second level of that note, and reads as one. */
+  depth: number
+  /** Whether it is folded right now. */
+  folded: boolean
+  /** Whether a fold above it has already taken it off the screen. Neither command
+   *  touches one of these: folding what nobody can see is a press that does
+   *  nothing, and opening it would open nothing. */
+  hidden: boolean
+}
+
+/** Every foldable block of the note, in document order, each with its depth and
+ *  its state.
+ *
+ *  One pass down the lines, asking the language only about the ones that could
+ *  open a fold - the same question the chevron in the margin asks of every line on
+ *  screen, and here only on a press. The depths come off a stack rather than out of
+ *  a comparison of every pair: the blocks arrive in document order, so the ones
+ *  still on the stack are exactly the ones holding the next. Markdown blocks nest
+ *  or stand apart and never half overlap, which is what makes a stack enough. */
+function foldableBlocks(state: EditorState): Block[] {
+  const shut: FoldRange[] = []
+  foldedRanges(state).between(0, state.doc.length, (from, to) => {
+    shut.push({ from, to })
+  })
+
+  const blocks: Block[] = []
+  const holding: FoldRange[] = []
+
+  for (let number = 1; number <= state.doc.lines; number++) {
+    const line = state.doc.line(number)
+    if (!COULD_FOLD.test(line.text)) continue
+
+    const range = foldAtLine(state, line)
+    if (!range) continue
+
+    while (holding.length && (holding.at(-1)?.to ?? 0) < range.to) holding.pop()
+
+    blocks.push({
+      ...range,
+      depth: holding.length,
+      // A fold starts at the end of the line that owns it, so a fold and the
+      // block it belongs to share that offset exactly.
+      folded: shut.some((one) => one.from === range.from),
+      hidden: shut.some((one) => one.from < range.from && one.to >= range.to),
+    })
+    holding.push(range)
+  }
+
+  return blocks
+}
+
+/** The deepest level that still has something open, folded: the detail goes
+ *  first, and pressing again walks out towards the outline.
+ *
+ *  Every block of that one level in one press and on one clock, which is what
+ *  makes it read as a level rather than as a fold. They are siblings by
+ *  construction - one level of one note - so no range in the press holds another,
+ *  and the movement has one box per line to move. */
+export const foldMore: StateCommand = (target) => {
+  const { state } = target
+  const open = foldableBlocks(state).filter((one) => !one.folded && !one.hidden)
+  if (!open.length) return false
+
+  const deepest = open.reduce((most, one) => Math.max(most, one.depth), 0)
+  const ranges = open.filter((one) => one.depth === deepest)
+
+  shutFolds(target, ranges, caretFor(state, ranges))
+  return true
+}
+
+/** The shallowest level that has something folded, opened: the mirror of the one
+ *  above, so however many presses folded the note down, the same number of these
+ *  brings it back exactly.
+ *
+ *  Shallowest, because that is the fold the reader can see. A level opened this
+ *  way can leave the level under it still folded, which is the whole point: one
+ *  more section of the map at a time. */
+export const foldLess: StateCommand = (target) => {
+  const shut = foldableBlocks(target.state).filter((one) => one.folded && !one.hidden)
+  if (!shut.length) return false
+
+  const shallowest = shut.reduce(
+    (least, one) => Math.min(least, one.depth),
+    Number.MAX_SAFE_INTEGER,
+  )
+
+  openFolds(
+    target,
+    shut.filter((one) => one.depth === shallowest),
+  )
   return true
 }
 
@@ -365,7 +480,7 @@ class FoldWidget extends NibWidget {
       if (open) openFolds(view, [open])
       else {
         const range = foldAtLine(view.state, line)
-        if (range) shutFolds(view, [range], caretFor(view.state, range))
+        if (range) shutFolds(view, [range], caretFor(view.state, [range]))
       }
     })
 

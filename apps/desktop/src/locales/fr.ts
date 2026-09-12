@@ -123,6 +123,8 @@ export const fr: Dictionary = {
   Fold: 'Replier',
   Unfold: 'Déplier',
   'Fold everything': 'Tout replier',
+  'Fold more': 'Replier d’un niveau',
+  'Fold less': 'Déplier d’un niveau',
   'Unfold everything': 'Tout déplier',
   'No headings in this note': 'Aucun titre dans cette note',
   Files: 'Fichiers',

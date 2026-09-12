@@ -124,6 +124,8 @@ export const de: Dictionary = {
   Fold: 'Einklappen',
   Unfold: 'Ausklappen',
   'Fold everything': 'Alles einklappen',
+  'Fold more': 'Eine Ebene mehr einklappen',
+  'Fold less': 'Eine Ebene weniger einklappen',
   'Unfold everything': 'Alles ausklappen',
   'No headings in this note': 'Keine Überschriften in dieser Notiz',
   Files: 'Dateien',

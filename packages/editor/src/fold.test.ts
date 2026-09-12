@@ -3,8 +3,10 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { describe, expect, test } from 'vitest'
 import {
   foldHeadings,
+  foldLess,
   type FoldLines,
   foldLines,
+  foldMore,
   folding,
   sameFolds,
   toggleFold,
@@ -144,6 +146,115 @@ describe('folding everything', () => {
 
   test('answers no when there was nothing folded', () => {
     expect(ran(unfoldEverything, state(CHAPTER, 0)).ok).toBe(false)
+  })
+})
+
+/** The two level commands, as a reader presses them: one after another on the
+ *  same state. Answers what was folded after every press, so a test reads as the
+ *  walk it is. */
+function pressed(command: StateCommand, times: number, from: EditorState): FoldLines[][] {
+  const seen: FoldLines[][] = []
+  let now = from
+
+  for (let at = 0; at < times; at++) {
+    const step = ran(command, now)
+    if (!step.ok) break
+    now = step.state
+    seen.push(foldLines(now))
+  }
+
+  return seen
+}
+
+describe('folding one level more', () => {
+  test('takes the deepest level first, then walks out to the outline', () => {
+    expect(pressed(foldMore, 4, state(CHAPTER, 0))).toEqual([
+      // The `##` section, which is the deepest thing open.
+      [[5, 7]],
+      // Then both chapters, in one press: one level is one press.
+      [
+        [1, 7],
+        [5, 7],
+        [9, 11],
+      ],
+    ])
+  })
+
+  test('answers no once everything on screen is folded', () => {
+    const all = ran(foldMore, ran(foldMore, state(CHAPTER, 0)).state)
+    expect(ran(foldMore, all.state).ok).toBe(false)
+  })
+
+  test('answers no in a note with nothing to fold at all', () => {
+    expect(ran(foldMore, state('a paragraph\n\nand another\n', 0)).ok).toBe(false)
+  })
+
+  test('counts the levels the note is written in, not the hashes', () => {
+    // A `###` straight under a `#`: the second level of this note, so the first
+    // press folds it and the second folds the chapter holding it.
+    const skipped = '# One\n\n### Deep\n\nwords\n'
+    expect(pressed(foldMore, 3, state(skipped, 0))).toEqual([
+      [[3, 5]],
+      [
+        [1, 5],
+        [3, 5],
+      ],
+    ])
+  })
+
+  test('a list item goes before the section holding it', () => {
+    const list = '# One\n\n- item\n  - child\n\nafter\n'
+    const walk = pressed(foldMore, 3, state(list, 0))
+
+    // The item with a child first, then the whole section.
+    expect(walk[0]).toEqual([[3, 4]])
+    expect(walk[1]).toEqual([
+      [1, 6],
+      [3, 4],
+    ])
+  })
+
+  test('never folds the caret out of sight', () => {
+    const inside = CHAPTER.indexOf('nested') + 2
+    const folded = ran(foldMore, state(CHAPTER, inside))
+    const head = folded.state.selection.main.head
+
+    expect(folded.state.doc.lineAt(head).text).toBe('## Under one')
+  })
+})
+
+describe('folding one level less', () => {
+  test('opens the shallowest level that is folded, one press at a time', () => {
+    const shut = ran(foldMore, ran(foldMore, state(CHAPTER, 0)).state)
+
+    expect(pressed(foldLess, 3, shut.state)).toEqual([
+      // The chapters open; the `##` inside the first one stays folded.
+      [[5, 7]],
+      [],
+    ])
+  })
+
+  test('walks back exactly as many presses as folded the note', () => {
+    const open = state(CHAPTER, 0)
+    const down = pressed(foldMore, 6, open)
+    const shut = ran(foldMore, ran(foldMore, open).state)
+    const up = pressed(foldLess, 6, shut.state)
+
+    expect(down.length).toBe(up.length)
+    expect(up.at(-1)).toEqual([])
+  })
+
+  test('answers no when nothing is folded', () => {
+    expect(ran(foldLess, state(CHAPTER, 0)).ok).toBe(false)
+  })
+
+  test('opens what was folded by hand as readily as what it folded itself', () => {
+    const byHand = ran(toggleFold, state(CHAPTER, 2))
+    expect(foldLines(byHand.state)).toEqual([[1, 7]])
+
+    const open = ran(foldLess, byHand.state)
+    expect(open.ok).toBe(true)
+    expect(foldLines(open.state)).toEqual([])
   })
 })
 

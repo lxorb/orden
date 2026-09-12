@@ -123,6 +123,8 @@ export const ja: Dictionary = {
   Fold: '折りたたむ',
   Unfold: '展開する',
   'Fold everything': 'すべて折りたたむ',
+  'Fold more': '1段階折りたたむ',
+  'Fold less': '1段階展開する',
   'Unfold everything': 'すべて展開する',
   'No headings in this note': 'このノートに見出しはありません',
   Files: 'ファイル',

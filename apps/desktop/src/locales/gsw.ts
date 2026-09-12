@@ -125,6 +125,8 @@ export const gsw: Dictionary = {
   Fold: 'Zämmeklappe',
   Unfold: 'Uufklappe',
   'Fold everything': 'Alles zämmeklappe',
+  'Fold more': 'Ei Ebeni meh zämmeklappe',
+  'Fold less': 'Ei Ebeni weniger zämmeklappe',
   'Unfold everything': 'Alles uufklappe',
   'No headings in this note': 'Kei Überschrifte i dere Notiz',
   Files: 'Dateie',

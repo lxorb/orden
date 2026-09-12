@@ -39,7 +39,7 @@ import {
   toggleWrap,
 } from './commands'
 import { findNext, findPrevious, openFind, openReplace } from './find'
-import { foldHeadings, toggleFold, unfoldEverything } from './fold'
+import { foldHeadings, foldLess, foldMore, toggleFold, unfoldEverything } from './fold'
 import { copyMarkdown } from './copy'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
@@ -166,6 +166,11 @@ export const nibBindings: BindingSpec[] = [
   { id: 'view.fold', key: 'Mod-Alt-[', run: toggleFold, preventDefault: true },
   { id: 'view.unfold-all', key: 'Mod-Alt-]', run: unfoldEverything, preventDefault: true },
   { id: 'view.fold-all', key: null, run: foldHeadings, preventDefault: true },
+  // One level at a time, and unbound for the same reason folding everything is:
+  // Obsidian ships both of these with no key either, and a reader who wants them
+  // on a chord can say so in Settings. See fold.ts for what a level is.
+  { id: 'view.fold-more', key: null, run: foldMore, preventDefault: true },
+  { id: 'view.fold-less', key: null, run: foldLess, preventDefault: true },
 
   // Runs the code fence the caret is in. Falls through to the default when the
   // caret is anywhere else, or the fence is not JavaScript.

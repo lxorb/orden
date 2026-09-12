@@ -45,7 +45,9 @@ export {
 export {
   foldHeadings,
   type FoldLines,
+  foldLess,
   foldLines,
+  foldMore,
   sameFolds,
   toggleFold,
   unfoldEverything,

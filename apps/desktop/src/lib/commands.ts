@@ -2,6 +2,8 @@ import {
   CODE_PALETTES,
   EditorView,
   foldHeadings,
+  foldLess,
+  foldMore,
   insertCallout,
   insertChart,
   insertCodeFence,
@@ -407,8 +409,13 @@ function slideCommands(view?: EditorView): Command[] {
   ]
 }
 
-/** Fold, fold everything, unfold everything - the whole of folding, as three
- *  rows. What each of them does and why there are three is in fold.ts. */
+/** Fold, one level more, one level less, fold everything, unfold everything -
+ *  the whole of folding, as five rows. What each of them does and why there are
+ *  five is in fold.ts.
+ *
+ *  The two level rows are here and on no chord, which is where Obsidian leaves
+ *  them too: they are the press somebody makes while reading rather than while
+ *  writing, and a reader who wants a key for one can put it there in Settings. */
 function foldingCommands(view?: EditorView): Command[] {
   const fold = (id: string, label: string, command: StateCommand): Command => ({
     id,
@@ -428,6 +435,8 @@ function foldingCommands(view?: EditorView): Command[] {
   return [
     fold('view.fold', t('Fold'), toggleFold),
     fold('view.fold-all', t('Fold everything'), foldHeadings),
+    fold('view.fold-more', t('Fold more'), foldMore),
+    fold('view.fold-less', t('Fold less'), foldLess),
     fold('view.unfold-all', t('Unfold everything'), unfoldEverything),
   ]
 }

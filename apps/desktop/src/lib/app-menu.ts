@@ -2,6 +2,8 @@ import {
   clearFormatting,
   type EditorView,
   foldHeadings,
+  foldLess,
+  foldMore,
   insertComment,
   insertLink,
   openFind,
@@ -533,6 +535,16 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Fold everything'),
           hint: shortcuts.hint('view.fold-all'),
           run: () => run(view, foldHeadings),
+        },
+        {
+          label: t('Fold more'),
+          hint: shortcuts.hint('view.fold-more'),
+          run: () => run(view, foldMore),
+        },
+        {
+          label: t('Fold less'),
+          hint: shortcuts.hint('view.fold-less'),
+          run: () => run(view, foldLess),
         },
         {
           label: t('Unfold everything'),

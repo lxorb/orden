@@ -141,6 +141,8 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   // it reads with the other things View decides. See fold.ts in the editor.
   'view.fold': ['view', () => t('Fold')],
   'view.fold-all': ['view', () => t('Fold everything')],
+  'view.fold-more': ['view', () => t('Fold more')],
+  'view.fold-less': ['view', () => t('Fold less')],
   'view.unfold-all': ['view', () => t('Unfold everything')],
 
   'edit.indent': ['edit', () => t('Indent')],
