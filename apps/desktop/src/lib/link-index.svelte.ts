@@ -150,13 +150,16 @@ class Links {
     const counts = new Map<string, number>()
 
     for (const note of this.notes) {
-      // One note is one count per name, whatever the note wrote twice.
-      const under = new Set<string>()
+      // One note is one count per name, whatever it wrote twice and whatever two
+      // of its tags share a level. A list rather than a set: a note carries a
+      // handful of tags, and the reading below is a walk either way.
+      const under: string[] = []
 
       for (const tag of note.tags) {
         const parts = tag.split('/').filter(Boolean)
         for (let depth = 1; depth <= parts.length; depth++) {
-          under.add(parts.slice(0, depth).join('/'))
+          const path = parts.slice(0, depth).join('/')
+          if (!under.includes(path)) under.push(path)
         }
       }
 

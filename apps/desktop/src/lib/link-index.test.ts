@@ -357,15 +357,16 @@ describe('the blocks the whole space holds', () => {
     })
 
     const { workspace } = await import('./workspace.svelte')
-    const was = workspace.excluded.of
-    workspace.excluded.of = () => ['archive']
+    // The list itself is kept per space on the device, and there is no space open
+    // here: what matters is that the search is asked to skip what it holds.
+    const left = vi.spyOn(workspace.excluded, 'of').mockReturnValue(['archive'])
 
     try {
       expect((await links.searchBlocks('second half', 10)).map((one) => one.path)).toEqual([
         'Plan.md',
       ])
     } finally {
-      workspace.excluded.of = was
+      left.mockRestore()
     }
   })
 })
