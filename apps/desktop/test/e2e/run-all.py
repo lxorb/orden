@@ -191,21 +191,29 @@ def run(drive: Path, patience: int) -> tuple[int, float, str]:
         return 124, time.monotonic() - started, f"gave up after {patience}s"
 
 
-def shots(drive: Path, since: float) -> str:
-    """Where a drive left its screenshots, if it left any: a folder under `shots`
-    that it wrote to while it was running. Read off the disk rather than out of
-    the source, because a drive names its folder however it likes."""
-    where = HERE / "shots"
-    if not where.is_dir():
+def shots(drive: Path) -> str:
+    """Where a drive left its screenshots, if it left any.
+
+    A folder named after the drive, which is what every one of them does now. A
+    folder that was written to while the drive ran would be the more general
+    answer and was the first one tried, but a directory's own timestamp is too
+    coarse to tell one drive's folder from the last one's, so the table ended up
+    naming folders the drive had nothing to do with."""
+    root = HERE / "shots"
+    if not root.is_dir():
         return ""
-    fresh = [
+
+    # Named after the drive, or after the drive with something in front of it:
+    # the three that photograph the shell put their pictures under
+    # `shell-<name>`. Anything else says nothing rather than something wrong.
+    found = [
         one
-        for one in where.iterdir()
-        if one.is_dir() and one.stat().st_mtime >= since - 1
+        for one in sorted(root.iterdir())
+        if one.is_dir() and (one.name == drive.stem or one.name.endswith(f"-{drive.stem}"))
     ]
-    if not fresh:
-        return ""
-    return ", ".join(f"shots/{one.name}" for one in sorted(fresh, key=lambda p: p.name))
+
+    counted = [(one, sum(1 for two in one.iterdir() if two.is_file())) for one in found]
+    return ", ".join(f"shots/{one.name} ({many})" for one, many in counted if many)
 
 
 def main() -> int:
@@ -257,9 +265,8 @@ def main() -> int:
             table.append((one.name, BLOCKED, 0.0, kind_of(one), "", f"port {ports} taken"))
             continue
 
-        started = time.time()
         status, took, why = run(one, said.patience)
-        table.append((one.name, status, took, kind_of(one), shots(one, started), why))
+        table.append((one.name, status, took, kind_of(one), shots(one), why))
 
         # The six that build against a Worker leave `dist` pointing at a port
         # that is gone the moment they are. The drive after this one would open
