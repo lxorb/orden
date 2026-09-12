@@ -1123,3 +1123,51 @@ Features Typora does not have, which are the reason this exists.
       a CDN is what the KaTeX round removed. The way forward is the app drawing it
       at save time and storing the SVG, which is how the favicon and the theme
       already work
+
+### The shell, the phone, and how far back a note goes
+
+- [x] Ctrl and the wheel over the note - which is what a trackpad pinch arrives as
+      on every platform - changes the app's own text size in steps, and says what
+      it has become as a badge that goes on its own. Never the webview's zoom:
+      that would scale the panel and the tab strip with the words, would not be
+      remembered, and would not reach the phone or the browser build. The keys
+      stay where Typora's are - Ctrl+Shift+= and Ctrl+Shift+-, with Ctrl+Alt+0 for
+      actual size - because Ctrl+= and Ctrl+- are Heading up and Heading down in
+      the editor and Ctrl+0 is Paragraph
+- [x] The bar over the keyboard on a phone holds any command from the app's own
+      registry, chosen in Settings > Mobile and kept on the account beside the
+      shortcuts. The nine it has always held are the default, so nothing changes
+      for anybody who never opens the pane, and a bar nobody has touched is stored
+      as nothing at all - which is what lets the default change later and reach
+      them. Each button wears a typographic mark where the command has one and the
+      first letter of its name where it does not; a row of little pictures would
+      mean loading the icon set, which is larger than the app around it
+- [x] Pulling a note or the file list down past its top runs one command the
+      reader names - search to begin with, and nothing at all for somebody who
+      does not want the gesture - with a quiet mark that follows the thumb and
+      fills in when letting go would do something. It never becomes the browser's
+      own pull-to-refresh, which in a PWA would throw the page away
+- [x] Any panel tab can sit on the other side of the window, chosen from its own
+      menu, and the right side is empty for everybody until one is moved over:
+      nothing is drawn at all, so the left column, the foot row and the tab strip
+      are pixel for pixel where they were - which the drive measures rather than
+      promises. One component draws both sides; the space's name and the foot row
+      stay on the left, because two of either would be two switchers for one
+      space. On a phone it is a drawer from the right over the note, dismissed by
+      the same scrim, and F6 reaches it as one more region
+- [x] A way of looking at the space's graph, kept as a bookmark: the filter, the
+      colour groups, the spread, the arrows, the sizes and how far a neighbourhood
+      reaches, under a name, in the row above the file list. Pressing it writes
+      those settings back and shows the graph, so a space has a second way of
+      being looked at without setting the card up again
+- [ ] A three-step Lines dial on the graph's control card. Left out: the card
+      already holds a filter, a switch for orphans, the colour groups, a spread
+      dial and three more switches, and the thickness of a link is the one of
+      those nobody would come looking for. The card staying quiet was the
+      condition, and a ninth control is not quiet
+- [x] How far back the account keeps a note: a month, or a year, chosen in Sync
+      and thinned the way a backup is - everything from the last day, one an hour
+      to a month, one a day to three, one a week after that. The history sheet is
+      cut up by month where a year is kept, and there is a per-account ceiling in
+      bytes swept oldest-first, because version bytes do not count against the
+      account's own gigabyte

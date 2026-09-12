@@ -370,6 +370,35 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     settings = request("/v1/settings", token)
     say(f"[{name}] the account's conflict rule is {settings.get('settings', {}).get('conflicts')!r}")
 
+    # ── How long the account keeps a note's history ───────────────────────
+    say(f"[{name}] the pane offers: {pane_rows(page)}")
+    page.evaluate("() => window.nibApp.modes.setKeepVersions(365)")
+    page.wait_for_timeout(1200)
+    kept = request("/v1/settings", token).get("settings", {}).get("keepVersions")
+    say(f"[{name}] the account keeps versions for {kept} days")
+
+    # A year of history, at the ages the sweep's shelves are about: the sheet cuts
+    # it up by month once a year is what the account keeps.
+    day = 24 * 60 * 60 * 1000
+    for age in [2, 40, 70, 100, 200, 300]:
+        worker.sql(
+            "insert or ignore into note_versions (note_id, at, hash, size, by) values"
+            f" ('{tracked['id']}', cast(strftime('%s','now') as integer) * 1000 - {age * day},"
+            f" 'aged-{age}', 120, 'the drive');"
+        )
+
+    page.evaluate("() => (window.nibApp.settings.historyOpen = true)")
+    page.wait_for_timeout(1500)
+    months = page.evaluate(
+        "() => [...document.querySelectorAll('.versions .month')].map((one) => one.textContent.trim())"
+    )
+    say(f"[{name}] with a year kept the sheet is cut up by month: {months}")
+    shot("history-by-month")
+    page.evaluate("() => (window.nibApp.settings.historyOpen = false)")
+    page.wait_for_timeout(300)
+    page.evaluate("() => window.nibApp.settings.show('sync')")
+    page.wait_for_timeout(600)
+
     passes = page.evaluate("() => window.nibApp.sync.status")
     log = page.evaluate(
         """() => [...document.querySelectorAll('.pass')].map((one) => one.textContent.replace(/\\s+/g, ' ').trim())"""
