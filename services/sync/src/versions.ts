@@ -83,11 +83,12 @@ export function presentVersion(version: Version) {
 
 /** The name a device sent for itself, as far as it is worth keeping.
  *
- *  Empty is a real answer and means no one device wrote those words: a note a
- *  room settled between however many were in it, the note a new space arrives
- *  with, or a connected app writing through the connector. The history sheet
- *  shows the moment with no name beside it, which is what the device's own
- *  snapshots look like. See docs/sync.md. */
+ *  A note settled in a room names the device that was typing, the same as a note
+ *  pushed by a pass; see rooms/room.ts. Empty means nobody announced a name - the
+ *  note a new space arrives with, a connected app writing through the connector,
+ *  a client that sent no header. The history sheet shows the moment with no name
+ *  beside it, which is what the device's own snapshots look like. See
+ *  docs/sync.md. */
 export function deviceIn(header: string | undefined): string {
   // Cleaned the way a person's name is, because that is what it is: a word
   // somebody's client chose, shown in the history sheet and beside a session in
