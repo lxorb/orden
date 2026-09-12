@@ -13,7 +13,10 @@
     type Transaction,
   } from '@nib/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
+  import Link from 'lucide/dist/esm/icons/link.mjs'
+  import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
+  import CanvasIcon from './CanvasIcon.svelte'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
@@ -109,15 +112,33 @@
    *  below does not match on a translated string twice. */
   const HIGHLIGHT = t('Highlight')
 
-  const ACTIONS: { label: string; title: string; command: StateCommand }[] = [
+  /** One button on the bar: the mark it wears, what it is called, and what it runs.
+   *
+   *  A letter where a letter says it - `B` has been bold in every word processor
+   *  there has ever been - and the app's own glyph where no letter does. `#` said
+   *  Link here and `#` is how a tag starts in nib's markdown, with `H` already
+   *  standing for Heading: one character cannot mean both, so a link is drawn as the
+   *  chain Lucide draws it with, which is the set the whole interface is drawn in.
+   *
+   *  `low` is for a letter whose ink sits at the top of its own em box rather than
+   *  across the middle of it: a quotation mark is set where quotes go in running
+   *  text, which on a row read across the middle is a mark sitting high in its
+   *  cell. */
+  const ACTIONS: {
+    label: string
+    glyph?: IconNode
+    low?: boolean
+    title: string
+    command: StateCommand
+  }[] = [
     { label: 'B', title: t('Bold'), command: toggleWrap('**') },
     { label: 'I', title: t('Italic'), command: toggleWrap('*') },
     { label: 'S', title: t('Strikethrough'), command: toggleWrap('~~') },
     { label: 'M', title: HIGHLIGHT, command: highlightSelection },
     { label: '<>', title: t('Code'), command: toggleWrap('`') },
     { label: 'H', title: t('Heading'), command: setHeading(2) },
-    { label: '"', title: t('Quote'), command: toggleQuote },
-    { label: '#', title: t('Link'), command: insertLink },
+    { label: '"', low: true, title: t('Quote'), command: toggleQuote },
+    { label: '', glyph: Link, title: t('Link'), command: insertLink },
     { label: '×', title: t('Clear formatting'), command: clearFormatting },
   ]
 
@@ -177,7 +198,13 @@
      everywhere else. What the press prevents is the default that would move the
      focus: on a phone the keyboard would close under the bar, and on a desktop
      the selection the buttons are about would go. -->
-{#snippet press(title: string, label: string, act: () => void)}
+{#snippet press(
+  title: string,
+  label: string,
+  act: () => void,
+  glyph: IconNode | null = null,
+  low = false,
+)}
   <button
     {title}
     aria-label={title}
@@ -185,7 +212,13 @@
     onmousedown={(event) => event.preventDefault()}
     onclick={act}
   >
-    {label}
+    {#if glyph}
+      <CanvasIcon node={glyph} />
+    {:else if low}
+      <span class="low">{label}</span>
+    {:else}
+      {label}
+    {/if}
   </button>
 {/snippet}
 
@@ -219,7 +252,13 @@
     {@render press(t('Highlight colour'), '×', () => void showColours(false))}
   {:else}
     {#each ACTIONS as action (action.title)}
-      {@render press(action.title, action.label, () => run(action.command))}
+      {@render press(
+        action.title,
+        action.label,
+        () => run(action.command),
+        action.glyph ?? null,
+        action.low ?? false,
+      )}
 
       <!-- The colours sit behind one dot, next to the button they are about, so
            the bar says which colour that button is loaded with. -->
@@ -286,6 +325,33 @@
     min-width: 0;
     height: 44px;
     font-size: var(--text-base);
+  }
+
+  /* The one mark on the bar that is a glyph rather than a letter, at the size of the
+     letters beside it: a stroke drawn on Lucide's 24 unit grid reads as the cap
+     height of the words around it at about one and a fifth of their size, and it is
+     said in `em` so the callout's 12.5px row and the docked strip's 17px one both
+     come out as one bar.
+
+     Block, and that is the load-bearing word: an `svg` is inline by default and
+     would sit on the baseline of the button's own line box, which is a pixel lower
+     than the box it was given - the same thing Icon.svelte says about a mark in a
+     badge. Out of the line box it is centred both ways by the button. */
+  button :global(svg) {
+    --mark: 1.2em;
+
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* A quotation mark is cut where quotes belong in running text, which is up against
+     the top of its own em box: on a row of letters read across the middle it was the
+     one mark sitting high in its cell. Dropped onto that middle by a fifth of its
+     size - a transform, so nothing about the row is laid out again, and nothing on
+     the bar moves but the ink. */
+  .low {
+    display: inline-block;
+    transform: translateY(0.2em);
   }
 
   /* A colour, as the dot the whole app asks "which colour" with; the row of them
