@@ -25,7 +25,7 @@
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { runnable } from './shortcuts/registry'
-import { isString, stored } from './stored'
+import { forget, isString, keep, stored } from './stored'
 
 const STORAGE_KEY = 'nib:pull'
 
@@ -106,13 +106,11 @@ class Pull {
    *  that changes later reaching this device. */
   choose(id: string) {
     this.chosen = id === DEFAULT_PULL ? null : usable(id)
-    try {
-      if (this.chosen) localStorage.setItem(STORAGE_KEY, this.chosen)
-      else localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // A browser told to keep no site data still has the gesture; it is this
-      // run's choice rather than this device's.
-    }
+    // Through `keep`, the one place that writes: a browser told to keep no site
+    // data still has the gesture, and it is this run's choice rather than this
+    // device's. See stored.ts.
+    if (this.chosen) keep(STORAGE_KEY, this.chosen)
+    else forget(STORAGE_KEY)
 
     this.share()
   }
@@ -128,12 +126,8 @@ class Pull {
     if (theirOwn === this.chosen) return
 
     this.chosen = theirOwn
-    try {
-      if (theirOwn) localStorage.setItem(STORAGE_KEY, theirOwn)
-      else localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // As above.
-    }
+    if (theirOwn) keep(STORAGE_KEY, theirOwn)
+    else forget(STORAGE_KEY)
   }
 
   private share() {

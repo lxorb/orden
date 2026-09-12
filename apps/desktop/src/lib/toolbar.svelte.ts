@@ -28,7 +28,7 @@ import type { IconNode } from 'lucide'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { BY_ID, runnable } from './shortcuts/registry'
-import { isString, stored } from './stored'
+import { forget, isString, keep, stored } from './stored'
 
 const STORAGE_KEY = 'nib:toolbar'
 
@@ -201,13 +201,11 @@ class Toolbar {
   }
 
   private settle() {
-    try {
-      if (this.chosen) localStorage.setItem(STORAGE_KEY, JSON.stringify(this.chosen))
-      else localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // A browser told to keep no site data still has a bar; it is this run's
-      // bar rather than this device's.
-    }
+    // Through `keep`, which is the one place that writes: a browser told to keep
+    // no site data still has a bar, and it is this run's bar rather than this
+    // device's. See stored.ts.
+    if (this.chosen) keep(STORAGE_KEY, JSON.stringify(this.chosen))
+    else forget(STORAGE_KEY)
 
     this.share()
   }
@@ -229,12 +227,8 @@ class Toolbar {
     if (JSON.stringify(usableOnes) === JSON.stringify(this.chosen)) return
 
     this.chosen = usableOnes
-    try {
-      if (usableOnes) localStorage.setItem(STORAGE_KEY, JSON.stringify(usableOnes))
-      else localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // As above: nothing to do about a store that will not be written.
-    }
+    if (usableOnes) keep(STORAGE_KEY, JSON.stringify(usableOnes))
+    else forget(STORAGE_KEY)
   }
 
   private share() {

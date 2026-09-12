@@ -11,7 +11,7 @@
  *  handle is on its left, where dragging left makes it wider. */
 
 import type { PanelSide } from './workspace.svelte'
-import { isNumber, stored } from './stored'
+import { forget, isNumber, keep, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
 const STORAGE_KEY = 'nib:sidebar-width'
@@ -29,16 +29,12 @@ function saved(side: PanelSide): number | null {
   return isNumber(width) && width >= NARROWEST && width <= WIDEST ? width : null
 }
 
-/** Writes the width down, or does not. `stored` already answers nothing for a
- *  browser told to keep no site data; the setter throws outright there, and a
- *  width nobody can remember is not worth failing a drag over. */
-function keep(side: PanelSide, width: number | null) {
-  try {
-    if (width === null) localStorage.removeItem(keyFor(side))
-    else localStorage.setItem(keyFor(side), String(width))
-  } catch {
-    // As above: the sidebar is the width it is, just not after a restart.
-  }
+/** Writes the width down, through the one place that writes: a width nobody can
+ *  remember is not worth failing a drag over, and the sidebar is the width it is
+ *  either way - just not after a restart. See `keep` in stored.ts. */
+function write(side: PanelSide, width: number | null) {
+  if (width === null) forget(keyFor(side))
+  else keep(keyFor(side), String(width))
 }
 
 /** One step of an arrow key. A whole row's worth rather than a pixel: a hand
@@ -80,7 +76,7 @@ export class SidebarWidth {
   /** Puts the default back. */
   reset() {
     this.pixels = null
-    keep(this.side, null)
+    write(this.side, null)
   }
 
   /** The same edge, moved with a key: the arrows a step at a time, Home and End
@@ -96,7 +92,7 @@ export class SidebarWidth {
 
     const put = (width: number) => {
       this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
-      keep(this.side, this.pixels)
+      write(this.side, this.pixels)
       return true
     }
 
@@ -164,7 +160,7 @@ export class SidebarWidth {
       this.dragging = false
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
-      if (this.pixels !== null) keep(this.side, this.pixels)
+      if (this.pixels !== null) write(this.side, this.pixels)
     }
 
     this.ending = stop

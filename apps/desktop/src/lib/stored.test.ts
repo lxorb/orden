@@ -100,12 +100,7 @@ const SOURCE = fileURLToPath(new URL('..', import.meta.url))
  *  The site script is the odd one: its bundle is committed into the Worker
  *  (`services/sync/src/blog/script.ts`), so converting it means rebuilding that
  *  too. */
-const LEFT = [
-  'lib/recovery.svelte.ts',
-  'lib/sidebar-width.svelte.ts',
-  'lib/workspace/graph-settings.svelte.ts',
-  'site/site.ts',
-]
+const LEFT = ['lib/recovery.svelte.ts', 'lib/workspace/graph-settings.svelte.ts', 'site/site.ts']
 
 function sourceFiles(directory: string, found: string[] = []): string[] {
   for (const name of readdirSync(directory)) {
