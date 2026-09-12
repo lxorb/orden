@@ -16,10 +16,24 @@
  *  block takes over; then the run of marks; then the info string. */
 const FENCE = /^ {0,3}(`{3,}|~{3,})[ \t]*(\S*)/
 
+/** Whether a line could be a fence at all: a mark, after up to three spaces.
+ *
+ *  A byte or two instead of the pattern. Every walk below is asked about every
+ *  line of the note - on every render, and in the editor on every keystroke -
+ *  and nearly every line it is asked about is prose. */
+function couldBeFence(line: string): boolean {
+  let at = 0
+  while (at < 3 && line[at] === ' ') at++
+
+  const mark = line[at]
+  return mark === '`' || mark === '~'
+}
+
 /** The run of backticks or tildes a fence line carries, or null for a line that
  *  is not a fence at all. The run itself, because how long it is and which
  *  character it is made of are both what closes it. */
 export function fenceMark(line: string): string | null {
+  if (!couldBeFence(line)) return null
   return FENCE.exec(line)?.[1] ?? null
 }
 
@@ -30,6 +44,8 @@ export function fenceMark(line: string): string | null {
  *  info string only on the line that opens a block, so ```` ```ts ```` inside a
  *  block is code being shown rather than the end of the block showing it. */
 export function closesFence(line: string, mark: string): boolean {
+  if (!couldBeFence(line)) return false
+
   const found = FENCE.exec(line)
   const run = found?.[1]
   if (!run || !found) return false
