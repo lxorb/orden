@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { chartFigure, chartSvg, readChart } from './chart'
+import { chartFigure, chartSvg, readChart, setChartLocale } from './chart'
 import { renderMarkdown } from './index'
 
 const SALES = `type: bar
@@ -193,5 +193,61 @@ describe('a chart in a note', () => {
 
   test('a fence in another language is left alone', () => {
     expect(renderMarkdown('```yaml\ntype: bar\nseries:\n  - data: [1]\n```\n')).toContain('<pre>')
+  })
+})
+
+/** A thousand is `1,234.5` in English and `1.234,5` in German, and which of the
+ *  two a reader sees is the language the app is set to rather than the language of
+ *  the machine under it. The numbers are the labels down the axis and every hover
+ *  title. */
+describe('the language the numbers are written in', () => {
+  const THOUSANDS = 'series:\n  - title: Sales\n    data: [1234.5, 2000]\n'
+
+  test('English, where nobody has said otherwise', () => {
+    const svg = chartSvg(readChart(THOUSANDS)!)
+    expect(svg).toContain('<title>Sales: 1,234.5</title>')
+    expect(svg).toContain('>1,000<')
+  })
+
+  test('and the one the caller names', () => {
+    const svg = chartSvg(readChart(THOUSANDS)!, { locale: 'de' })
+    expect(svg).toContain('<title>Sales: 1.234,5</title>')
+    expect(svg).toContain('>1.000<')
+  })
+
+  test('through the block a fence becomes', () => {
+    expect(chartFigure(THOUSANDS, { locale: 'de' })).toContain('1.234,5')
+    expect(chartFigure(THOUSANDS)).toContain('1,234.5')
+  })
+
+  /** What the Worker that publishes a note passes, per render: one isolate serves
+   *  many sites, so it cannot say it once the way the app does. */
+  test('through a render option, which reaches a chart inside the note', () => {
+    const fence = '```chart\n' + THOUSANDS + '```\n'
+    expect(renderMarkdown(fence, { locale: 'de' })).toContain('1.234,5')
+    expect(renderMarkdown(fence, { locale: 'en-US' })).toContain('1,234.5')
+    // A published page renders with four other options set; the language has to
+    // survive the company.
+    expect(renderMarkdown(fence, { locale: 'de', escapeHtml: true, toc: true })).toContain(
+      '1.234,5',
+    )
+  })
+
+  /** What the app says once, from the language it is set to, for the five surfaces
+   *  that draw a chart with no option between them. */
+  test('or once, for every caller that names none', () => {
+    try {
+      setChartLocale('de')
+      expect(chartFigure(THOUSANDS)).toContain('1.234,5')
+      // An option still wins, so the Worker is never at the mercy of this.
+      expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
+    } finally {
+      setChartLocale('')
+    }
+  })
+
+  test('and English again when what it is handed is nothing', () => {
+    setChartLocale('')
+    expect(chartFigure(THOUSANDS)).toContain('1,234.5')
   })
 })

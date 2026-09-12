@@ -67,6 +67,11 @@ export interface RenderOptions {
    *  break still works - this is a superset of it, not a replacement. See
    *  docs/slides.md. */
   breaks?: boolean
+  /** What language the numbers in a ` ```chart ` fence are written in: `1,234.5`
+   *  or `1.234,5`. For the Worker that publishes a note, which serves many sites
+   *  from one isolate and so cannot say it once; the app says it once instead.
+   *  See `setChartLocale` in chart.ts. */
+  locale?: string
   /** An array to fill with the headings this document turned out to have, in
    *  order, for a surface that shows the contents beside the page rather than
    *  inside it: a published page's right column. Filled while rendering, so
@@ -253,7 +258,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         // the one surface with no drawing library and no DOM to use it in. A
         // fence that holds no chart falls through and stays code.
         if (language.toLowerCase() === 'chart') {
-          const drawn = chartFigure(token.text)
+          const drawn = chartFigure(token.text, { locale: options.locale })
           if (drawn) return drawn
         }
 
@@ -374,7 +379,11 @@ function needsOwn(options: RenderOptions): boolean {
     options.resolveEmbed !== undefined ||
     // A caller that wants the headings wants them from its own parse: the two
     // shared renderers hand theirs to an array nobody is holding.
-    options.headings !== undefined
+    options.headings !== undefined ||
+    // And a caller that named a language for its numbers needs a renderer that
+    // has heard it: the shared two were built before it spoke, and a chart drawn
+    // through them takes whatever the app set instead.
+    options.locale !== undefined
   )
 }
 

@@ -178,12 +178,48 @@ function round(value: number): string {
   return (Math.round(value * 100) / 100).toString()
 }
 
-/** A number as a reader writes one: no trailing zeroes, and thousands grouped
- *  the way every locale that groups at all groups them. */
-function said(value: number): string {
-  const rounded = Math.round(value * 100) / 100
-  return rounded.toLocaleString('en-US')
+/** Where a chart's numbers are written in English, because nobody has said
+ *  otherwise: a chart pulled out of a document and looked at on its own has no
+ *  language to take. */
+const ENGLISH = 'en-US'
+
+/** What language a chart's numbers are written in for a caller that does not
+ *  say.
+ *
+ *  The same arrangement `setHardBreaks` has, for the same reason: a chart is
+ *  drawn on five surfaces in the app - live preview, the reading view, a card on
+ *  a canvas, a slide and an exported document - and 1234.5 cannot be grouped one
+ *  way in one of them and another way in the next. The app says it once, from the
+ *  language it is set to rather than the machine's.
+ *
+ *  The Worker that publishes a note says it per render instead, through the
+ *  option below: one isolate serves many sites, and a global would leak between
+ *  them. */
+let tongue = ENGLISH
+
+export function setChartLocale(tag: string): void {
+  tongue = tag || ENGLISH
 }
+
+/** What a caller may say about one chart. The locale is the language its numbers
+ *  are grouped and spelled in - `1,234.5` in English, `1.234,5` in German. */
+export interface ChartOptions {
+  locale?: string
+}
+
+/** A number as a reader writes one: no trailing zeroes, and thousands grouped
+ *  the way the reader's own language groups them.
+ *
+ *  Built once per chart rather than per number, because a chart of two hundred
+ *  bars asks for two hundred of these and building the formatter is most of what
+ *  that would cost. */
+function sayer(options?: ChartOptions): (value: number) => string {
+  const format = new Intl.NumberFormat(options?.locale ?? tongue)
+  return (value) => format.format(Math.round(value * 100) / 100)
+}
+
+/** One chart's formatter, handed down to whatever draws the numbers in it. */
+type Said = (value: number) => string
 
 /** The scale a chart is drawn against: how far it reaches each way, and how far
  *  apart the lines across it are.
@@ -218,7 +254,7 @@ function text(words: string, x: number, y: number, className: string, anchor = '
 }
 
 /** The axes: the value lines across, and the labels along the bottom. */
-function frame(chart: Chart, low: number, high: number, step: number): string {
+function frame(chart: Chart, low: number, high: number, step: number, said: Said): string {
   const out: string[] = []
   const plot = {
     x: PAD.left,
@@ -250,7 +286,7 @@ function longest(chart: Chart): number {
   return Math.max(1, ...chart.series.map((one) => one.data.length))
 }
 
-function bars(chart: Chart, low: number, high: number): string {
+function bars(chart: Chart, low: number, high: number, said: Said): string {
   const plot = {
     x: PAD.left,
     y: PAD.top,
@@ -282,7 +318,7 @@ function bars(chart: Chart, low: number, high: number): string {
   return out.join('')
 }
 
-function lines(chart: Chart, low: number, high: number): string {
+function lines(chart: Chart, low: number, high: number, said: Said): string {
   const plot = {
     x: PAD.left,
     y: PAD.top,
@@ -318,7 +354,7 @@ function lines(chart: Chart, low: number, high: number): string {
 
 /** A pie, or the same with the middle taken out. One series only: a pie of two
  *  series is two pies, and nobody reads that. */
-function pie(chart: Chart, hole: number): string {
+function pie(chart: Chart, hole: number, said: Said): string {
   const series = chart.series[0]
   if (!series) return ''
 
@@ -404,15 +440,17 @@ function legend(chart: Chart): string {
 }
 
 /** The chart as one SVG, sized by its viewBox so the column decides how wide. */
-export function chartSvg(chart: Chart): string {
+export function chartSvg(chart: Chart, options?: ChartOptions): string {
   const { low, high, step } = span(chart)
-  const drawn = chart.kind === 'line' ? lines(chart, low, high) : bars(chart, low, high)
+  const said = sayer(options)
+  const drawn =
+    chart.kind === 'line' ? lines(chart, low, high, said) : bars(chart, low, high, said)
   const body =
     chart.kind === 'pie'
-      ? pie(chart, 0)
+      ? pie(chart, 0, said)
       : chart.kind === 'donut'
-        ? pie(chart, 0.58)
-        : `${frame(chart, low, high, step)}${drawn}`
+        ? pie(chart, 0.58, said)
+        : `${frame(chart, low, high, step, said)}${drawn}`
 
   return `<svg class="chart-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" preserveAspectRatio="xMidYMid meet">${body}</svg>`
 }
@@ -420,10 +458,10 @@ export function chartSvg(chart: Chart): string {
 /** The whole block a ` ```chart ` fence becomes, or null when the fence holds no
  *  chart - in which case it stays code, the way a diagram that will not draw
  *  does. */
-export function chartFigure(source: string): string | null {
+export function chartFigure(source: string, options?: ChartOptions): string | null {
   const chart = readChart(source)
   if (chart === null) return null
 
   const title = chart.title === null ? '' : `<figcaption>${escape(chart.title)}</figcaption>`
-  return `<figure class="chart" data-kind="${chart.kind}">${chartSvg(chart)}${legend(chart)}${title}</figure>\n`
+  return `<figure class="chart" data-kind="${chart.kind}">${chartSvg(chart, options)}${legend(chart)}${title}</figure>\n`
 }

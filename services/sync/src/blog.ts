@@ -367,6 +367,14 @@ function mathLink(body: string): string {
  *  surface, the reading view and an exported document all carry, so every rule in
  *  base.css and document.css - the very sheets the app loads - lands on this page
  *  too. That is the whole of what makes a published note look like the note. */
+/** What language a published page says it is in.
+ *
+ *  One place, because two things read it: the page itself, and the numbers in a
+ *  chart on it - `1,234.5` here rather than `1.234,5`, which is grouping the page
+ *  cannot disagree with the tag above it about. A site has no language of its own
+ *  to choose yet; when it has one, this is where it arrives. */
+const PAGE_LANGUAGE = 'en'
+
 /** What goes around the note: the bar at the top, the pages down the left, the
  *  contents down the right, what links here at the foot. Every part optional,
  *  because a site of one note has none of them; see blog/shell.ts. */
@@ -404,7 +412,7 @@ function page(
 
   const scripts = !options.locked
   const html = `<!doctype html>
-<html lang="en"><head>
+<html lang="${PAGE_LANGUAGE}"><head>
 ${headOf(head, sheets)}${mathLink(body)}
 ${scripts ? `<script>${THEME_JS}</script>` : ''}
 ${scripts ? `<script defer src="${SITE_JS_PATH}"></script>` : ''}
@@ -458,7 +466,7 @@ function deckPage(head: Head, body: string): Response {
   const nonce = crypto.randomUUID().replace(/-/g, '')
 
   const html = `<!doctype html>
-<html lang="en"><head>
+<html lang="${PAGE_LANGUAGE}"><head>
 ${headOf(
   {
     ...head,
@@ -1078,6 +1086,7 @@ export async function serveBlog(
       escapeHtml: true,
       code: fencesOf(only.id, url, request, await diagramsIn(env, space, source)),
       breaks,
+      locale: PAGE_LANGUAGE,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
@@ -1262,6 +1271,7 @@ export async function serveBlog(
     escapeHtml: true,
     code: fencesOf(note.id, url, request, await diagramsIn(env, space, source)),
     breaks,
+    locale: PAGE_LANGUAGE,
     resolveLink: linkResolver(pageList, files),
     resolveEmbed: await embedded(
       env,

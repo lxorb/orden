@@ -1,4 +1,5 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
+import { setChartLocale } from '@nib/markdown/chart'
 import { keep } from './stored'
 
 /** The English string is its own key. A language that has not translated
@@ -302,6 +303,9 @@ class I18n {
     const wanted = this.language
     // Not in a test, which has no page to mark.
     if (typeof document !== 'undefined') document.documentElement.lang = wanted
+    // A chart's numbers are grouped the way this language groups them, on every
+    // surface that draws one; see `setChartLocale` in @nib/markdown/chart.
+    setChartLocale(wanted)
 
     const fetching = CATALOGUES[wanted]
     const next = fetching ? await fetching().catch(() => ({})) : {}
