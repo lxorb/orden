@@ -13,6 +13,7 @@
 //! has a twin in `packages/markdown/src/links.test.ts`.
 
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::fs;
 use tauri::AppHandle;
 
@@ -269,10 +270,15 @@ fn is_fence(line: &str) -> bool {
     line.len() - trimmed.len() <= 3 && (trimmed.starts_with("```") || trimmed.starts_with("~~~"))
 }
 
-/// Every line of a note, saying which ones are code. Both delimiters of a fence
-/// count as code: neither can hold a link, a heading or a block name.
-fn lines(body: &str) -> Vec<(usize, &str, bool)> {
-    let mut out = Vec::new();
+/// Every line of a note that is not code, with the number it is on. Both
+/// delimiters of a fence are code as well: neither can hold a link, a heading or a
+/// block name.
+///
+/// Handed to a closure rather than gathered into a list, because all three readers
+/// walk a note straight down and none of them looks back: a space of ten thousand
+/// notes is a million and a half lines, and this is asked of every one of them
+/// three times over.
+fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
     let mut fenced = false;
 
     for (index, line) in body.lines().enumerate() {
@@ -280,24 +286,23 @@ fn lines(body: &str) -> Vec<(usize, &str, bool)> {
         if fence {
             fenced = !fenced;
         }
-        out.push((index, line, fenced || fence));
-    }
+        if fenced || fence {
+            continue;
+        }
 
-    out
+        each(index, line);
+    }
 }
 
 /// Every ATX heading in a note, in order, as the words it shows.
 fn headings_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
 
-    for (_, line, code) in lines(body) {
-        if code {
-            continue;
-        }
+    prose_lines(body, |_, line| {
         if let Some(text) = heading_of(line) {
             found.push(text);
         }
-    }
+    });
 
     found
 }
@@ -327,14 +332,11 @@ fn heading_of(line: &str) -> Option<String> {
 fn block_ids_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
 
-    for (_, line, code) in lines(body) {
-        if code {
-            continue;
-        }
+    prose_lines(body, |_, line| {
         if let Some(id) = block_id_of(line) {
             found.push(id);
         }
-    }
+    });
 
     found
 }
@@ -370,28 +372,39 @@ fn block_id_of(line: &str) -> Option<String> {
 fn links_in(body: &str) -> Vec<Link> {
     let mut found = Vec::new();
 
-    for (index, line, code) in lines(body) {
-        if code {
-            continue;
-        }
-
+    prose_lines(body, |index, line| {
         // Inline code spans are blanked rather than removed, so what is left
         // still lines up with the line the context is taken from.
-        let context: String = line.trim().chars().take(LINE).collect();
+        let mut links = links_on(&without_code(line));
+        if links.is_empty() {
+            return;
+        }
 
-        for mut link in links_on(&without_code(line)) {
+        // The words the link is read in, built only for a line that holds one: a
+        // space of notes is mostly lines that hold none.
+        let context: String = line.trim().chars().take(LINE).collect();
+        for link in &mut links {
             link.line = index;
             link.text.clone_from(&context);
-            found.push(link);
         }
-    }
+
+        found.append(&mut links);
+    });
 
     found
 }
 
 /// The same line with every inline code span replaced by spaces of the same
 /// length, so `[[Note]]` inside backticks is left alone and the offsets hold.
-fn without_code(line: &str) -> String {
+///
+/// The line itself where there is no code span in it, which is nearly every line
+/// of nearly every note: a copy of one costs what the line is long, and this is
+/// asked of every line of a space.
+fn without_code(line: &str) -> Cow<'_, str> {
+    if !line.contains('`') {
+        return Cow::Borrowed(line);
+    }
+
     let letters: Vec<char> = line.chars().collect();
     let mut out = String::with_capacity(line.len());
     let mut at = 0;
@@ -446,7 +459,7 @@ fn without_code(line: &str) -> String {
         }
     }
 
-    out
+    Cow::Owned(out)
 }
 
 /// Every link on one line of prose, in the order they were written.
@@ -790,6 +803,12 @@ mod tests {
     fn blanking_code_keeps_the_line_the_same_length() {
         let line = "a `b c` d";
         assert_eq!(without_code(line).chars().count(), line.chars().count());
+        // And a line with no span in it at all is the line itself rather than a
+        // copy of it, which is nearly every line of a space.
+        assert!(matches!(
+            without_code("see [[Note]] now"),
+            std::borrow::Cow::Borrowed(_)
+        ));
     }
 
     #[test]

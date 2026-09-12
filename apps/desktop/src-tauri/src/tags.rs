@@ -145,32 +145,31 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
             continue;
         }
 
-        let letters: Vec<char> = line.chars().collect();
+        // Read through the line as it is written rather than as a list of
+        // characters: this runs over every line of every note in a space, and an
+        // array of one line's letters is an allocation a tag does not need.
         let mut at = 0;
-
-        while at < letters.len() {
-            if letters[at] != '#' {
-                at += 1;
-                continue;
-            }
+        while let Some(hash) = line[at..].find('#') {
+            let start = at + hash;
 
             // A tag starts a word, so what comes before it must be a space.
-            let opens = at == 0 || letters[at - 1].is_whitespace() || letters[at - 1] == '(';
-            let mut end = at + 1;
-            while end < letters.len()
-                && (letters[end].is_alphanumeric() || "-_/".contains(letters[end]))
-            {
-                end += 1;
+            let opens = line[..start]
+                .chars()
+                .next_back()
+                .is_none_or(|one| one.is_whitespace() || one == '(');
+
+            // The name is what a tag may hold, and the first character of it has
+            // to be a letter, which rules out `#1`.
+            let rest = &line[start + 1..];
+            let name = rest
+                .find(|one: char| !(one.is_alphanumeric() || "-_/".contains(one)))
+                .map_or(rest, |end| &rest[..end]);
+
+            if opens && name.starts_with(char::is_alphabetic) {
+                found.push(line[start..start + 1 + name.len()].to_string());
             }
 
-            // The first character has to be a letter, which rules out `#1`.
-            let is_named = end > at + 1 && letters[at + 1].is_alphabetic();
-
-            if opens && is_named {
-                found.push(letters[at..end].iter().collect());
-            }
-
-            at = end.max(at + 1);
+            at = start + 1 + name.len();
         }
     }
 }
