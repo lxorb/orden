@@ -105,6 +105,17 @@ describe('a block this cannot draw', () => {
     }
   })
 
+  test('a block longer than any note’s metadata is source, whichever rows it holds', () => {
+    // The ceiling used to sit after the two shapes that read their value off the
+    // key's own line, so a thousand of those drew a thousand rows.
+    const many = (line: (at: number) => string) =>
+      ['---', ...Array.from({ length: 200 }, (_, at) => line(at)), '---', ''].join('\n')
+
+    expect(readProperties(many((at) => `k${at}: value`))).toBe(null)
+    expect(readProperties(many((at) => `k${at}: [one, two]`))).toBe(null)
+    expect(readProperties(many((at) => `k${at}:`))).toBe(null)
+  })
+
   test('rather than a table with a row missing', () => {
     // The whole point: half a table is a table that lies about the file.
     expect(readProperties('---\ntitle: A plan\nweird:\n  ~ what\n---\n')).toBe(null)

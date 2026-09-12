@@ -114,6 +114,11 @@ export function readProperties(source: string): Property[] | null {
     const found = KEY.exec(line.text)
     if (!found) return null
 
+    // Asked before the row is made rather than after, so that every shape of row
+    // is counted. Asked at the end it only ever caught the last of the three,
+    // and a block of a thousand `tags: [a]` lines drew a thousand rows.
+    if (out.length >= MOST_KEYS) return null
+
     const key = found[1] ?? ''
     const written = (found[2] ?? '').trim()
     const listed = flowItems(written)
@@ -175,8 +180,6 @@ export function readProperties(source: string): Property[] | null {
       from: line.from,
       to: last,
     })
-
-    if (out.length > MOST_KEYS) return null
   }
 
   return out
