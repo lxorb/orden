@@ -15,6 +15,9 @@ than clicks:
     same square, and sit on the row's own centre line;
   - the formatting bar on a phone sits on the keyboard, follows it, and leaves with
     it - nothing of it is left in the middle of the screen;
+  - and every mark on that bar reads on one line, measured as ink rather than as the
+    cell it sits in: a quotation mark is cut for running text and draws at the top of
+    its em box, which a rule that centres the cell cannot see;
   - the bar is one row: the menu, the button, the space label and the first tab
     all sit on one centre line, inside `--header-height`;
   - the segmented control's chosen half reads raised in both schemes - lighter than
@@ -617,6 +620,78 @@ SEGMENTED = """
 """
 
 
+# Every mark on the formatting bar, and where its ink sits in the button.
+#
+# The bar is a row of one-character marks read across the middle, and a quotation
+# mark is not cut for that: it is set where quotes go in running text, hard against
+# the top of its own em box, so it sat high in its cell while every letter beside it
+# was level. What is measured is the ink rather than the line box - the box is
+# centred either way, which is exactly why an audit of the rule could not see this -
+# and each mark is compared with the others rather than with an absolute, so whatever
+# this font's metrics are, the row either reads as one row or it does not.
+#
+# `measureText` gives both: `fontBoundingBox*` is the em box the text was laid out in,
+# which is what puts the baseline on screen, and `actualBoundingBox*` is what the
+# glyph actually covers.
+FORMAT_MARKS = """
+() => {
+  const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
+  if (!bar) return { none: true }
+
+  const ink = document.createElement('canvas').getContext('2d')
+
+  const marks = [...bar.querySelectorAll('button')].map((one) => {
+    const box = one.getBoundingClientRect()
+    const middle = box.top + box.height / 2
+    const name = one.getAttribute('aria-label') ?? '?'
+
+    const glyph = one.querySelector('svg')
+    if (glyph) {
+      const seen = glyph.getBoundingClientRect()
+      return {
+        name,
+        as: 'glyph',
+        off: Math.round((seen.top + seen.height / 2 - middle) * 10) / 10,
+        size: Math.round(seen.height * 10) / 10,
+      }
+    }
+
+    // The `.low` span where there is one, which is the element the transform is on,
+    // so its own box is where the letter ended up.
+    const held = one.querySelector('span') ?? one
+    const text = (held.textContent ?? '').trim()
+    if (!text) return { name, as: 'nothing', off: null, size: null }
+
+    const style = getComputedStyle(held)
+    ink.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+    ink.textBaseline = 'alphabetic'
+    const cut = ink.measureText(text)
+
+    let line = held.getBoundingClientRect()
+    if (held === one) {
+      const range = document.createRange()
+      range.selectNodeContents(one)
+      line = range.getBoundingClientRect()
+    }
+
+    const lead = (line.height - (cut.fontBoundingBoxAscent + cut.fontBoundingBoxDescent)) / 2
+    const baseline = line.top + lead + cut.fontBoundingBoxAscent
+    const above = (cut.actualBoundingBoxAscent - cut.actualBoundingBoxDescent) / 2
+
+    return {
+      name,
+      as: 'letter',
+      text,
+      off: Math.round((baseline - above - middle) * 10) / 10,
+      size: Math.round((cut.actualBoundingBoxAscent + cut.actualBoundingBoxDescent) * 10) / 10,
+    }
+  })
+
+  return { none: false, marks }
+}
+"""
+
+
 # Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
@@ -780,6 +855,29 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 abs(up["bottom"] - (up["page"] - 320)) <= SLACK,
                 f"[{label}] and it sits on them ({up['bottom']}px of {up['page']}px)",
             )
+            # And every mark in it reads on one line: the ink of each, measured, not
+            # the cell it is centred in - which was centred all along.
+            found = page.evaluate(FORMAT_MARKS)
+            for one in found.get("marks", []):
+                say(f"[{label}]   {one}")
+
+            letters = [one for one in found.get("marks", []) if one["as"] == "letter"]
+            glyphs = [one for one in found.get("marks", []) if one["as"] == "glyph"]
+            check(len(letters) >= 5, f"[{label}] the bar's marks were read ({len(letters)})")
+            check(
+                any(one["name"] == "Link" for one in glyphs),
+                f"[{label}] Link is a glyph rather than a character that means a tag",
+            )
+
+            if letters:
+                level = sorted(one["off"] for one in letters)[len(letters) // 2]
+                for one in letters + glyphs:
+                    check(
+                        abs(one["off"] - level) <= 1.5,
+                        f"[{label}] {one['name']} reads on the row's own line"
+                        f" (ink {one['off']}px against {level}px)",
+                    )
+
             check(
                 up["left"] <= SLACK and abs(up["right"] - width) <= SLACK,
                 f"[{label}] and spans the screen ({up['left']} to {up['right']} of {width})",
