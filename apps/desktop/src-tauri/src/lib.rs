@@ -13,7 +13,9 @@
 
 #[cfg(desktop)]
 mod apple_notes;
-#[cfg(desktop)]
+// The words of a note are read where the database holding them is, and that is a
+// Mac: SQLite, a gzipped protobuf and a group container no other system has.
+#[cfg(target_os = "macos")]
 mod apple_text;
 mod assets;
 mod clock;

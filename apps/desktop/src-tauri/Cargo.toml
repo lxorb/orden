@@ -80,11 +80,6 @@ keyring = { version = "3", default-features = false, features = [
 # Already in the lock file as something tauri builds with, so this adds nothing to
 # the build. Desktop only, because only a desktop has the endpoint.
 getrandom = "0.3"
-# An Apple Notes note is a gzipped protobuf, and reading one is how the Mac's own
-# notes are imported. The pure-Rust backend, so nothing here needs a C compiler,
-# and on all three desktops rather than only macOS: the decoding is the half of
-# that import worth testing on every runner.
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
 # the only way into them: Notes has no export. Bundled so the read does not depend
@@ -93,6 +88,9 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# A note's body on one of that database's rows is a gzipped protobuf. The
+# pure-Rust backend, so the read needs no C compiler of its own.
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

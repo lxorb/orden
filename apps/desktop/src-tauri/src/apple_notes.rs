@@ -22,7 +22,7 @@ use serde::Serialize;
 
 /// One note, in the shape the import's own readers hand over: where it goes,
 /// what it says, and when it was written.
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Note {
     /// The folders it sat in, its own name, and `.md`, which is what a link from
     /// another note points at as well. Whether a name may be spelled that way is
@@ -40,7 +40,7 @@ pub struct Note {
 }
 
 /// One attachment: where it goes beside the notes, and its bytes.
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Media {
     /// Relative to the import, like a note's.
     pub path: String,
@@ -50,7 +50,7 @@ pub struct Media {
 
 /// Everything one read of the database found, counts included, so the sheet can
 /// say what is not coming with them before it writes anything.
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Debug)]
 pub struct Read {
     /// In no particular order: the import sorts nothing, and the folders each
     /// note names are what put it where it goes.
@@ -506,7 +506,7 @@ mod mac {
             }
 
             if !one.first && !one.title.is_empty() {
-                parts.push(one.title.replace('/', ' '));
+                parts.push(one.title.replace('/', " "));
             }
 
             at = one.parent;
@@ -514,7 +514,7 @@ mod mac {
 
         parts.reverse();
         let name = apple_text::title(&row.body).unwrap_or_else(|| row.title.clone());
-        let name = name.replace('/', ' ');
+        let name = name.replace('/', " ");
         parts.push(if name.trim().is_empty() {
             "Untitled".to_string()
         } else {
