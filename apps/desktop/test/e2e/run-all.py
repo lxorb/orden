@@ -19,8 +19,20 @@ already do; the ones that only print what they saw and photograph it pass as
 long as they get through, which is still worth knowing - a scratch drive that
 throws is an app that broke. The last column says which kind each one is.
 
+Two things about the set that are not true of a drive on its own:
+
+  - Six of them build the app against a Worker of their own, which bakes that
+    Worker's address into `dist` as the API. The build left behind then points
+    at a port with nothing on it, so the shared build is made again after any
+    drive that did this; see WORKER_BUILD.
+  - A port belongs to the machine rather than to this run, and drives are run by
+    hand and by other people at the same time. A drive whose port is already
+    taken is not a drive that failed, so its port is waited for and it is called
+    blocked rather than failed if the wait runs out.
+
 The table at the end holds the exit status, how long it took and where it put
-its screenshots. The exit status of the run is the number of drives that failed.
+its screenshots. The exit status of the run is the number of drives that failed;
+a drive that was blocked is counted and named separately.
 """
 
 from __future__ import annotations
@@ -29,6 +41,7 @@ import argparse
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -56,6 +69,21 @@ WAITED = "gave up waiting for"
 VERDICT = re.compile(r"^\s+return 1\b", re.MULTILINE)
 WALKED = re.compile(r"raise SystemExit\([\"f]", re.MULTILINE)
 
+#: The port a drive picked for itself, as it writes it.
+PICKED = re.compile(r"^[A-Z_]*PORT[A-Z_]* = (\d+)$", re.MULTILINE)
+
+#: A drive that bakes its own Worker's address into the build as the API. The
+#: build it leaves behind is no use to the drive after it, so the shared one is
+#: made again; see the note at the top of this file.
+WORKER_BUILD = "VITE_NIB_API"
+
+#: How long to wait for a port somebody else is using, and how often to look.
+FREEING = 180
+LOOKING = 3
+
+#: What a blocked drive is reported as. Not a status any drive returns.
+BLOCKED = -1
+
 
 def drives(only: str | None) -> list[Path]:
     found = sorted(one for one in HERE.glob("*.py") if one.name not in NOT_A_DRIVE)
@@ -72,6 +100,38 @@ def kind_of(drive: Path) -> str:
     if any(WAITED not in one for one in walkouts):
         return "checks"
     return "shows"
+
+
+def ports_of(drive: Path) -> list[int]:
+    """The ports a drive says it uses. Read off the source because that is where
+    a drive states them, and nothing hands them to it."""
+    return [int(one) for one in PICKED.findall(drive.read_text(encoding="utf-8"))]
+
+
+def taken(port: int) -> bool:
+    """Whether something already holds a port. `SO_REUSEADDR` is deliberately
+    not set: the question is whether a drive's own plain server could bind it,
+    and that is the bind this imitates."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        try:
+            sock.bind(("127.0.0.1", port))
+        except OSError:
+            return True
+    return False
+
+
+def free(drive: Path, patience: int) -> list[int]:
+    """Waits for every port a drive wants, and answers with the ones that never
+    came free. Drives are run by other people and by hand on the same machine,
+    and a port somebody else is on is not this drive being wrong."""
+    wanted = ports_of(drive)
+    until = time.monotonic() + patience
+    while True:
+        busy = [one for one in wanted if taken(one)]
+        if not busy or time.monotonic() >= until:
+            return busy
+        print(f"  waiting for port {busy[0]}, which something else holds", flush=True)
+        time.sleep(LOOKING)
 
 
 def build() -> int:
@@ -138,6 +198,14 @@ def main() -> int:
     ask.add_argument("--only", help="run the drives whose name holds this word")
     ask.add_argument("--list", action="store_true", help="say what would run and stop")
     ask.add_argument("--patience", type=int, default=PATIENCE, help="seconds per drive")
+    ask.add_argument(
+        "--freeing", type=int, default=FREEING, help="seconds to wait for a busy port"
+    )
+    ask.add_argument(
+        "--no-rebuild",
+        action="store_true",
+        help="leave a Worker-pointing build in place",
+    )
     said = ask.parse_args()
 
     found = drives(said.only)
@@ -159,25 +227,51 @@ def main() -> int:
     table: list[tuple[str, int, float, str, str, str]] = []
     for at, one in enumerate(found, 1):
         print(f"=== {at}/{len(found)} {one.name} ===", flush=True)
+
+        busy = free(one, said.freeing)
+        if busy:
+            ports = ", ".join(str(port) for port in busy)
+            print(f"  skipped: port {ports} is held by something else", flush=True)
+            table.append((one.name, BLOCKED, 0.0, kind_of(one), "", f"port {ports} taken"))
+            continue
+
         started = time.time()
         status, took, why = run(one, said.patience)
         table.append((one.name, status, took, kind_of(one), shots(one, started), why))
 
-    failed = [one for one in table if one[1] != 0]
+        # The six that build against a Worker leave `dist` pointing at a port
+        # that is gone the moment they are. The drive after this one would open
+        # that build and find no API behind it, so the shared build is made
+        # again here rather than left as a trap.
+        if WORKER_BUILD in one.read_text(encoding="utf-8") and not said.no_rebuild:
+            print(f"  {one.name} built against its own Worker; rebuilding", flush=True)
+            if build() != 0:
+                return len(found)
+
+    failed = [one for one in table if one[1] not in (0, BLOCKED)]
+    blocked = [one for one in table if one[1] == BLOCKED]
 
     print("", flush=True)
     print(f"{'drive':22} {'status':>8} {'time':>8}  {'kind':6} shots", flush=True)
     print("-" * 78, flush=True)
     for name, status, took, kind, where, why in table:
-        mark = "pass" if status == 0 else f"FAIL {status}"
+        if status == 0:
+            mark = "pass"
+        elif status == BLOCKED:
+            mark = "blocked"
+        else:
+            mark = f"FAIL {status}"
         tail = f" {why}" if why else ""
         print(f"{name:22} {mark:>8} {took:7.0f}s  {kind:6} {where}{tail}", flush=True)
 
     print("-" * 78, flush=True)
-    print(f"{len(table) - len(failed)} of {len(table)} passed", flush=True)
+    ran = len(table) - len(blocked)
+    print(f"{ran - len(failed)} of {ran} ran and passed", flush=True)
     for name, status, _, _, _, why in failed:
         tail = f": {why}" if why else ""
         print(f"  FAILED {name}{tail}", flush=True)
+    for name, _, _, _, _, why in blocked:
+        print(f"  BLOCKED {name}: {why}", flush=True)
 
     return len(failed)
 
