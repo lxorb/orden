@@ -12,11 +12,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the four functions that
+# Unsafe is denied everywhere and excepted by name in the five functions that
 # call Windows directly: the shell's recent documents list, the two registry
-# calls behind Explorer's New menu, and WebView2's print engine. None of the four
-# has a safe wrapper to use instead, and anything new that wants unsafe has to
-# say so at the function and say why.
+# calls behind Explorer's New menu, WebView2's print engine, and the launch
+# trace's question about when this process was created. None of the five has a
+# safe wrapper to use instead, and anything new that wants unsafe has to say so
+# at the function and say why.
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
@@ -107,6 +108,10 @@ windows = { version = "0.58", features = [
   "Win32_UI_Shell",
   "Win32_Foundation",
   "Win32_System_Registry",
+  # When this process was created, which is the one thing a launch trace cannot
+  # measure from inside it: everything before our first line is the machine loading
+  # the binary. See trace.rs.
+  "Win32_System_Threading",
 ] }
 # PDF export talks to WebView2's print engine directly. The versions are the
 # ones tauri itself is built against, so the handles it hands out line up.

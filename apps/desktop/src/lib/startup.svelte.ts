@@ -29,6 +29,8 @@
  *  them: the order is the app's, and an order spread across five files is not an
  *  order anybody can read. */
 
+import { mark, sendTrace } from './trace'
+
 /** The stages, in the order their turns come. */
 const STAGES = ['index', 'search', 'icons', 'rooms'] as const
 
@@ -84,6 +86,7 @@ class Startup {
    *  one of them gets forgotten at a new call site. */
   async shown(): Promise<void> {
     await frame()
+    mark('first frame painted')
     if (!this.moving) void this.run()
   }
 
@@ -125,6 +128,7 @@ class Startup {
     for (const stage of STAGES) {
       await idle()
       this.at = STAGES.indexOf(stage) + 1
+      mark(`${stage} may start`)
 
       // Taken before they are called: a waiter that asks for a later turn from
       // inside its own would otherwise be walked over by this same loop.
@@ -132,6 +136,13 @@ class Startup {
       this.waiting.delete(stage)
       for (const go of queue) go()
     }
+
+    // The launch is over as far as the order is concerned, so whatever was timed
+    // goes to the crate to be written beside its own steps; see trace.ts. One idle
+    // callback later, so the last stage's own first breath is on the trace too.
+    await idle()
+    mark('launch order finished')
+    sendTrace()
   }
 }
 

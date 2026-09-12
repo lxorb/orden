@@ -21,6 +21,7 @@ import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop } from './tauri'
+import { mark } from './trace'
 import { CONTRAST_THEME, theme } from './theme.svelte'
 import { store as themeStore } from './themes/store.svelte'
 import { trash } from './trash.svelte'
@@ -35,6 +36,7 @@ const DAY = 24 * 60 * 60 * 1000
 /** Brings everything up. Answers the teardown for what it started, so the root
  *  component can hand it to `onDestroy`. */
 export function start(): () => void {
+  mark('start')
   collectErrors()
   viewport.start()
   i18n.restore()
@@ -53,6 +55,8 @@ export function start(): () => void {
   // other device's whole note and the session is what could read it.
   record.restore()
   account.forgetWithSession(() => record.forgetEverything())
+
+  mark('stores restored')
 
   // A system that asks for more contrast is shown the theme that answers it, on
   // the card it would be installed from. Contrast is a theme, and a theme is a
@@ -89,6 +93,7 @@ export function start(): () => void {
   void workspace
     .restore()
     .then(async () => {
+      mark('space restored')
       stopListening = await openLaunchFiles()
       // The plugin is a page on a pair of glasses: nothing can hand it a link and
       // it has no socket, so the whole of automation is left out of that build

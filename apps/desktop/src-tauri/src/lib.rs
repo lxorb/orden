@@ -50,6 +50,7 @@ mod spaces;
 mod tags;
 mod tasks;
 mod themes;
+mod trace;
 mod trash;
 mod tree;
 #[cfg(desktop)]
@@ -122,6 +123,7 @@ macro_rules! commands {
             trash::purge_trash,
             trash::purge_trash_older_than,
             uris::take_startup_uris,
+            trace::trace_startup,
             $($desktop)*
         ]
     };
@@ -149,6 +151,11 @@ mod entry {
 /// Starts the app. Returns when the last window has closed, and exits with a
 /// message if the app could not be built at all.
 pub fn run() {
+    // First, so that the one step nothing inside the process can time - the
+    // machine loading the binary before any of this ran - is on the trace as well;
+    // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
+    trace::begin();
+
     let builder = tauri::Builder::default();
 
     // A second launch belongs to the window that is already open: it raises it
@@ -170,6 +177,8 @@ pub fn run() {
             let _ = app.emit("nib://open-files", files);
         }))
         .manage(launch::Pending::default());
+    #[cfg(desktop)]
+    trace::mark("plugins: updater, dialog, process, one instance");
 
     // The opener is how a link leaves the app anywhere, and the os plugin is how
     // the window knows which build it is running as.
@@ -184,6 +193,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .manage(Opened::default())
         .manage(uris::Pending::default());
+    trace::mark("plugins: opener, os, deep link");
 
     // What the `nib` command's requests wait in while the window answers them.
     // Managed here rather than where the socket opens, because a builder is the
@@ -226,6 +236,7 @@ pub fn run() {
 
     #[cfg(mobile)]
     let builder = builder.invoke_handler(commands![]);
+    trace::mark("commands registered");
 
     builder
         .setup(ready)
@@ -240,6 +251,11 @@ pub fn run() {
 /// window is seen: what the webview may load, what the app was launched with, and
 /// then showing the window that was built hidden.
 fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    // Everything between the last mark and this one is Tauri's own: the context,
+    // the window and - on Windows, where it is most of a launch - the webview
+    // runtime being started and pointed at the page.
+    trace::mark("app built, window created");
+
     let handle = app.handle();
 
     // A picture in a note is loaded by the webview itself, over the asset
@@ -249,16 +265,20 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(root) = paths::spaces_root(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
+    trace::mark("asset scope");
 
     // Links into the app, on every platform: the one the app was launched by, and
     // every one that arrives while it is running.
     uris::watch(handle);
+    trace::mark("deep links");
 
     // And the socket the `nib` command drives the app through, which only a
     // desktop has. It comes up after the links above and before the window is
     // seen, so a request that arrives in the first moment finds a window to ask.
     #[cfg(desktop)]
     endpoint::start(handle);
+    #[cfg(desktop)]
+    trace::mark("automation endpoint");
 
     // A command line is a desktop's way of being handed a file. A phone app is
     // launched by tapping it, and there is nothing in `args` worth reading.
@@ -275,10 +295,17 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    trace::mark("launch arguments");
+
     // Built hidden, so nobody watches the window paint itself.
     if let Some(window) = app.get_webview_window("main") {
         window.show()?;
     }
+
+    trace::mark("window shown");
+    // Written here as well as when the window reports in, so a launch that never
+    // gets as far as a window still leaves behind what it did get through.
+    trace::write(handle);
 
     Ok(())
 }

@@ -1,0 +1,365 @@
+//! Where a launch spent its time, in milliseconds, on the machine that is slow.
+//!
+//! A launch is the one thing about this app that cannot be measured anywhere but
+//! on the machine complaining about it: the disk, the antivirus and the webview
+//! runtime are the three biggest terms in it and none of the three is in this
+//! repository. So the app can say it itself. Set `NIB_TRACE_STARTUP` and one file
+//! appears in the log folder with every step of the launch on it, from before the
+//! first line of our own code ran to the moment the window has nothing left to do.
+//!
+//! Off by default and free when it is off: one environment read, and a `mark`
+//! that returns without locking anything. Nothing here is behind a compile-time
+//! feature on purpose - a switch that has to be built specially is a switch that
+//! is not there when the launch that is slow happens.
+//!
+//! Two clocks, one axis. This side counts from an `Instant` taken as the app
+//! starts; the window counts from its own `performance.timeOrigin`, which is when
+//! the webview began loading the page and is a different zero. Both are written
+//! down against the wall clock as well, so the window's marks are placed on this
+//! side's axis rather than printed as a second list nobody can line up with the
+//! first; see `offset`.
+//!
+//! The step nothing in the process can time is the one before it: Windows loading
+//! the image, mapping the runtime and - on a binary it has not seen before, which
+//! every auto-update makes - letting Defender read all of it. `GetProcessTimes`
+//! says when the process was created, and the first line below subtracts. A launch
+//! whose whole cost is in that first row is not a launch this code can make faster.
+
+use std::fs;
+use std::io::Write as _;
+use std::sync::{LazyLock, Mutex};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tauri::{AppHandle, Manager};
+
+use crate::clock;
+use crate::paths::{cannot, made};
+
+/// The variable that turns this on. Any value but `0`, because somebody who wrote
+/// `NIB_TRACE_STARTUP=0` meant off.
+const SWITCH: &str = "NIB_TRACE_STARTUP";
+
+/// What the file is called. Beside the app's own log rather than in it: a launch
+/// trace is one launch and several screens of it, and a log somebody is reading
+/// for an error should not have this in the middle of it.
+const FILE: &str = "startup-trace.log";
+
+/// Anything past this and the file starts again. A trace is read once and a
+/// person who forgot to turn the switch off should not find a full disk.
+const MAX_BYTES: u64 = 512 * 1024;
+
+/// How wide the step column is written, so the numbers line up down the page.
+const COLUMN: usize = 34;
+
+/// Whether anything here does anything at all.
+static ON: LazyLock<bool> = LazyLock::new(|| {
+    std::env::var_os(SWITCH).is_some_and(|value| !value.is_empty() && value != "0")
+});
+
+/// The zero of this side's axis, and the same moment on the wall clock. Taken
+/// together and once, because the window's marks are placed against the second of
+/// them and a second reading would be a second zero.
+static STARTED: LazyLock<(Instant, u64)> = LazyLock::new(|| (Instant::now(), clock::now()));
+
+/// Every step so far, in the order it happened.
+static MARKS: Mutex<Vec<Mark>> = Mutex::new(Vec::new());
+
+/// One step: what it was, and how long after the app started it happened.
+struct Mark {
+    step: String,
+    at: Duration,
+}
+
+/// A step the window timed, as it hands it over. `at` is milliseconds on the
+/// window's own clock, which is not this side's; the command below is given the
+/// one number that turns that clock into this one.
+#[derive(serde::Deserialize)]
+pub struct Said {
+    step: String,
+    at: f64,
+}
+
+/// Starts the clock, and writes down the one step that happened before it.
+///
+/// Called as the first thing the app does. Everything before this line belongs to
+/// Windows rather than to us - loading the image, mapping the webview runtime,
+/// and letting whatever scans a new binary read it - and on a machine that has
+/// just auto-updated that is most of what somebody waited through.
+pub fn begin() {
+    if !on() {
+        return;
+    }
+
+    let _ = *STARTED;
+    if let Some(before) = before_main() {
+        push("windows, before our first line", before);
+    }
+    mark("app starting");
+}
+
+/// Whether the switch is on. Read by the one command below, so a window does not
+/// send a list nothing is going to write.
+pub fn on() -> bool {
+    *ON
+}
+
+/// One step, now.
+pub fn mark(step: &str) {
+    if !on() {
+        return;
+    }
+
+    let at = STARTED.0.elapsed();
+    push(step, at);
+}
+
+/// The file, as the trace stands. Written at every step that could be the last
+/// one: a launch that wedges before the window is done still leaves what it got
+/// through, which is the launch worth looking at.
+pub fn write(app: &AppHandle) {
+    if !on() {
+        return;
+    }
+
+    let Ok(path) = file(app) else { return };
+    if fs::metadata(&path).map_or(0, |one| one.len()) > MAX_BYTES {
+        let _ = fs::remove_file(&path);
+    }
+
+    let Ok(marks) = MARKS.lock() else { return };
+    let Ok(mut out) = fs::OpenOptions::new().create(true).append(true).open(&path) else {
+        return;
+    };
+    let _ = out.write_all(page(&marks).as_bytes());
+}
+
+/// Where the file is, in a folder that exists by the time this returns.
+fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|error| format!("could not find the log folder: {error}"))?;
+
+    made(&dir)?;
+    Ok(dir.join(FILE))
+}
+
+/// The whole trace as it reads on the page: a line per step with the time it
+/// happened and the time since the step before it, which is the column that says
+/// where the launch actually went.
+fn page(marks: &[Mark]) -> String {
+    let mut out = format!(
+        "\n=== nib {} launched {} ===\n",
+        env!("CARGO_PKG_VERSION"),
+        STARTED.1
+    );
+
+    let mut last = Duration::ZERO;
+    for mark in marks {
+        let step = mark.step.chars().take(COLUMN).collect::<String>();
+        let since = mark.at.saturating_sub(last);
+        let _ = writeln!(
+            out,
+            "{step:<COLUMN$} {:>9.1} ms  +{:>8.1} ms",
+            millis(mark.at),
+            millis(since)
+        );
+        last = mark.at;
+    }
+
+    out
+}
+
+/// A duration as the milliseconds a person reads.
+fn millis(span: Duration) -> f64 {
+    span.as_secs_f64() * 1000.0
+}
+
+/// Adds a step, and keeps the list in the order the steps happened: the window's
+/// arrive last and belong in the middle.
+fn push(step: &str, at: Duration) {
+    let Ok(mut marks) = MARKS.lock() else { return };
+
+    let mark = Mark {
+        step: step.to_owned(),
+        at,
+    };
+    let place = marks.partition_point(|held| held.at <= mark.at);
+    marks.insert(place, mark);
+}
+
+/// The window's own steps, put on this side's axis and written out with the rest.
+///
+/// A step the window timed is milliseconds since its `timeOrigin`, which is when
+/// the webview started loading the page - some way into the launch on this side.
+/// `origin` says where that was on the wall clock, so the difference against this
+/// side's own zero is what turns one into the other.
+#[tauri::command]
+pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
+    if !on() {
+        return;
+    }
+
+    let shift = offset(origin);
+    for said in steps {
+        let at = Duration::from_secs_f64(said.at.max(0.0) / 1000.0);
+        push(&format!("window: {}", said.step), at.saturating_add(shift));
+    }
+
+    write(&app);
+}
+
+/// How far into the launch the window's clock started, or nothing at all where
+/// the two clocks disagree about which came first - a window whose origin reads
+/// as before the process began is a clock that was stepped, and a negative shift
+/// would put its steps above the first line of the app.
+fn offset(origin: f64) -> Duration {
+    if !origin.is_finite() || origin <= 0.0 {
+        return Duration::ZERO;
+    }
+
+    // Both are milliseconds since the epoch; the window's is fractional.
+    Duration::from_secs_f64(((origin - millis_since_epoch()) / 1000.0).max(0.0))
+}
+
+/// This side's zero on the wall clock, in the milliseconds the window counts in.
+fn millis_since_epoch() -> f64 {
+    #[allow(
+        clippy::cast_precision_loss,
+        reason = "a millisecond count this size is exact in an f64 for another 280,000 years"
+    )]
+    {
+        STARTED.1 as f64
+    }
+}
+
+/// How long the machine spent on this process before our own first line ran.
+///
+/// Windows says when the process was created and the clock above says when we
+/// first looked, and the difference is the image being loaded, the webview runtime
+/// being mapped and - on a binary the machine has not seen before - whatever reads
+/// all of it first. Nothing to report on the platforms that do not make a person
+/// wait for that.
+#[cfg(windows)]
+fn before_main() -> Option<Duration> {
+    use windows::Win32::Foundation::FILETIME;
+    use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+
+    /// Windows counts from 1601 and in hundreds of nanoseconds; the epoch is this
+    /// many of those along.
+    const TO_EPOCH: u64 = 116_444_736_000_000_000;
+
+    let mut created = FILETIME::default();
+    let mut exited = FILETIME::default();
+    let mut kernel = FILETIME::default();
+    let mut user = FILETIME::default();
+
+    // SAFETY: the four are ours and outlive the call, and the handle is the
+    // pseudo-handle for this process, which needs no closing. The call writes the
+    // four and nothing else.
+    #[allow(
+        unsafe_code,
+        reason = "there is no safe way to ask Windows when this process was created"
+    )]
+    unsafe {
+        GetProcessTimes(
+            GetCurrentProcess(),
+            &mut created,
+            &mut exited,
+            &mut kernel,
+            &mut user,
+        )
+    }
+    .ok()?;
+
+    let ticks = (u64::from(created.dwHighDateTime) << 32) | u64::from(created.dwLowDateTime);
+    let since = ticks.checked_sub(TO_EPOCH)?;
+    let at = UNIX_EPOCH.checked_add(Duration::new(since / 10_000_000, {
+        #[allow(
+            clippy::cast_possible_truncation,
+            reason = "a remainder under ten million times a hundred is under a second of nanoseconds"
+        )]
+        {
+            (since % 10_000_000) as u32 * 100
+        }
+    }))?;
+
+    SystemTime::now().duration_since(at).ok()
+}
+
+/// Nothing to say: the platforms that do not scan a new binary before running it
+/// do not make anybody wait for one either.
+#[cfg(not(windows))]
+fn before_main() -> Option<Duration> {
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{millis, page, push, Mark, COLUMN, MARKS};
+    use std::time::Duration;
+
+    /// The marks are one list for the whole process, so a test that writes to them
+    /// takes them back out again.
+    fn only(marks: Vec<Mark>) -> String {
+        let mut held = MARKS.lock().expect("the marks");
+        let before = std::mem::replace(&mut *held, marks);
+        let written = page(&held);
+        *held = before;
+        written
+    }
+
+    #[test]
+    fn a_duration_reads_as_milliseconds() {
+        assert!((millis(Duration::from_millis(1500)) - 1500.0).abs() < 0.001);
+        assert!((millis(Duration::ZERO)).abs() < 0.001);
+    }
+
+    #[test]
+    fn every_step_says_how_long_since_the_one_before_it() {
+        let written = only(vec![
+            Mark {
+                step: "first".to_owned(),
+                at: Duration::from_millis(10),
+            },
+            Mark {
+                step: "second".to_owned(),
+                at: Duration::from_millis(45),
+            },
+        ]);
+
+        assert!(written.contains("first"), "{written}");
+        // The first step's gap is from zero, the second's is from the first.
+        assert!(written.contains("10.0 ms  +    10.0 ms"), "{written}");
+        assert!(written.contains("45.0 ms  +    35.0 ms"), "{written}");
+    }
+
+    #[test]
+    fn a_long_step_name_cannot_push_the_numbers_out_of_line() {
+        let written = only(vec![Mark {
+            step: "x".repeat(COLUMN * 2),
+            at: Duration::ZERO,
+        }]);
+
+        let line = written
+            .lines()
+            .find(|one| one.starts_with('x'))
+            .expect("the step");
+        assert_eq!(line.chars().filter(|one| *one == 'x').count(), COLUMN);
+    }
+
+    #[test]
+    fn a_step_goes_in_where_it_happened_rather_than_at_the_end() {
+        let mut held = MARKS.lock().expect("the marks");
+        let before = std::mem::take(&mut *held);
+        drop(held);
+
+        push("late", Duration::from_millis(100));
+        push("early", Duration::from_millis(5));
+        push("between", Duration::from_millis(50));
+
+        let mut held = MARKS.lock().expect("the marks");
+        let order: Vec<&str> = held.iter().map(|one| one.step.as_str()).collect();
+        assert_eq!(order, vec!["early", "between", "late"]);
+        *held = before;
+    }
+}
