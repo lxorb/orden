@@ -67,7 +67,7 @@
         <span class="nib-badge" aria-hidden="true">{@render mark()}</span>
       {/if}
       <p class="title">{title}</p>
-      <button class="shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+      <button class="nib-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
         <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
       </button>
     </div>
@@ -127,39 +127,10 @@
     color: var(--text-strong);
   }
 
-  /* The way out: the same cross a tab closes with. */
-  .shut {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .shut svg {
-    width: var(--icon-sm);
-    height: var(--icon-sm);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-  }
-
-  @media (hover: hover) {
-    .shut:hover {
-      background: var(--surface-2);
-      color: var(--text-strong);
-    }
-  }
+  /* The way out is `.nib-glyph` in the themes package, which is the square and
+     the mark every icon button in the app is. It was a 24px square with a 13px
+     cross in it, which made the one way off a sheet the smallest glyph button
+     there was. */
 
   /* Cards, one under the next, and the one thing that scrolls. */
   .body {
@@ -427,15 +398,11 @@
     padding-bottom: var(--touch-bottom);
   }
 
+  /* The square and the mark grow with the row scale on their own; what a thumb
+     needs from this one is the bar's own padding back, so the cross sits in the
+     corner rather than a gap away from it. */
   :global([data-touch]) .shut {
-    width: var(--touch-target);
-    height: var(--touch-target);
     margin-right: calc(-1 * var(--space-2));
-  }
-
-  :global([data-touch]) .shut svg {
-    width: var(--icon-md);
-    height: var(--icon-md);
   }
 
   :global([data-touch]) .sheet :global(.row) {

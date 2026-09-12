@@ -224,7 +224,7 @@
       {/if}
 
       <button
-        class="act"
+        class="nib-glyph act"
         title={t('Previous')}
         aria-label={t('Previous')}
         disabled={!count}
@@ -233,7 +233,7 @@
         <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.2 8.2 6.5 4.9l3.3 3.3" /></svg>
       </button>
       <button
-        class="act"
+        class="nib-glyph act"
         title={t('Next')}
         aria-label={t('Next')}
         disabled={!count}
@@ -247,7 +247,7 @@
            thing the space switcher's does: one control, one movement. Ctrl+H is
            the same gesture from the keyboard. -->
         <button
-          class="act"
+          class="nib-glyph act"
           class:on={replacing}
           title={t('Replace')}
           aria-label={t('Replace')}
@@ -262,7 +262,7 @@
         </button>
       {/if}
 
-      <button class="act shut" title={t('Close')} aria-label={t('Close')} onclick={onclose}>
+      <button class="nib-glyph act shut" title={t('Close')} aria-label={t('Close')} onclick={onclose}>
         <svg viewBox="0 0 13 13" aria-hidden="true"
           ><path d="M3.6 3.6l5.8 5.8M9.4 3.6l-5.8 5.8" /></svg
         >
@@ -459,41 +459,17 @@
     stroke-linejoin: round;
   }
 
-  /* Beside the field: a step, the chevron, the cross. One row-sized square each,
-     which is a thumb's target under a thumb and a pointer's under a pointer. */
+  /* Beside the field: a step, the chevron, the cross. `.nib-glyph` in the themes
+     package draws each one - the same square every icon button in the app is, a
+     thumb's target under a thumb and a pointer's under a pointer. What is left
+     here is the hairline a pressed-in one turns, which needs a transparent one
+     to turn from, and which keeps the square the same size either way. */
   .act {
-    flex: none;
-    /* A square of the row scale, said rather than stretched to: the line centres
-       what is in it now that it wraps, so nothing else would give these a
-       height. 28px under a pointer, 56 under a thumb. */
-    width: var(--row-height);
-    height: var(--row-height);
-    display: grid;
-    place-items: center;
     border: 1px solid transparent;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--muted);
-    cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .act:hover:not(:disabled) {
-      background: var(--surface-hover);
-      color: var(--text);
-    }
-  }
-
-  .act:active:not(:disabled) {
-    background: var(--surface-press);
-  }
-
-  .act:disabled {
-    opacity: 0.4;
   }
 
   .act.on {
@@ -507,13 +483,7 @@
   }
 
   .act svg {
-    width: var(--icon-md);
-    height: var(--icon-md);
-    fill: none;
-    stroke: currentColor;
     stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   /* The chevron is drawn on Lucide's grid, which is a quarter again as wide as

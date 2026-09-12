@@ -175,7 +175,7 @@
              held finger, so the gesture is the one every other list in the app
              answers to. -->
         <button
-          class="more"
+          class="nib-glyph more"
           title={t('More')}
           aria-label={t('More')}
           onclick={(event) => about(event, space)}
@@ -243,7 +243,7 @@
             </button>
 
             <button
-              class="more"
+              class="nib-glyph more"
               title={t('More')}
               aria-label={t('More')}
               onclick={(event) => aboutShared(event, item)}
@@ -364,17 +364,9 @@
      the accent on its badge, which is `is-on`. Nor is the shared mark at the end
      of the row, which is SharedMark.svelte for the same reason. */
 
+  /* `.nib-glyph` in the themes package draws it; what is here is whether it is
+     there at all. */
   .more {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: var(--row-height);
-    height: var(--row-height);
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--muted);
-    cursor: default;
     opacity: 0;
     transition:
       opacity var(--dur-fast) var(--ease-out),
@@ -391,10 +383,6 @@
       opacity: 1;
     }
 
-    .more:hover {
-      background: var(--surface-hover);
-      color: var(--text-strong);
-    }
   }
 
   @media (hover: none) {
@@ -403,14 +391,8 @@
     }
   }
 
-  .more:active {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
+  /* Three dots: a shape rather than a stroke, so it is filled. */
   .more svg {
-    width: var(--icon-lg);
-    height: var(--icon-lg);
     fill: currentColor;
     stroke: none;
   }

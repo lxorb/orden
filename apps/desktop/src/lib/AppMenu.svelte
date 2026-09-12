@@ -192,7 +192,7 @@
 </script>
 
 <button
-  class="trigger"
+  class="nib-glyph trigger"
   class:dots
   title={t('Menu')}
   aria-label={t('Menu')}
@@ -329,54 +329,28 @@
 {/if}
 
 <style>
+  /* The three bars are `.nib-glyph` in the themes package, which is the same
+     square, corner, hover and press as the button beside them and the two at the
+     bottom of the panel. It used to be a 30px pill with a 17px glyph in it and a
+     corner of its own, which made it the only icon button in the app at that
+     size and that radius.
+
+     The bar stretches what is in it, and a fixed height turns that into "top of
+     the row": the three bars sat four pixels above the centre line the button
+     beside them, the space's name and the first tab all share. So where it sits
+     in the row is still said here. */
   .trigger {
-    width: 30px;
-    height: 30px;
-    /* The bar stretches what is in it, and a fixed height turns that into "top of
-       the row": the three bars sat four pixels above the centre line the button
-       beside them, the space's name and the first tab all sit on. The pill keeps
-       its own size, because a hover ring the full height of the bar is a different
-       object; what is said here is only where the pill sits in the row. */
     align-self: center;
-    display: grid;
-    place-items: center;
-    /* The rule for the menu rows below reaches every button in this component,
-       this one included. Its padding left a 10px box for a 15px icon, which
-       pushed the icon off the button's centre. */
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .trigger:hover {
-      background: var(--surface-2);
-      color: var(--text-strong);
-    }
-  }
-
-  .trigger svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
   }
 
   /* Dots are drawn rather than stroked, and a shade stronger than the bars: they
      sit alone at the end of a bar rather than in a column of icons. */
+  /* Three dots rather than three bars, which is the same button under a thumb.
+     Filled because a dot is a shape and not a stroke; the colour is the one
+     every glyph button in the app is drawn in and is not restated here. */
   .trigger.dots svg {
     fill: currentColor;
     stroke: none;
-  }
-
-  .trigger.dots {
-    color: var(--muted-strong);
   }
 
   .scrim {

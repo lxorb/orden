@@ -81,7 +81,7 @@
          side of it to show, and swapping it for a built-in is not the switch
          anybody pressed. See theme.svelte.ts. -->
     <button
-      class="act"
+      class="nib-glyph act"
       title={theme.current === 'dark' ? t('Light') : t('Dark')}
       aria-label={t('Switch theme')}
       disabled={!theme.switchable}
@@ -104,7 +104,7 @@
          ambient sign is a mark on the button that leads to it: lit while a pass
          is running, red when the last one failed. -->
     <button
-      class="act"
+      class="nib-glyph act"
       class:syncing={sync.status === 'syncing'}
       class:failed={sync.status === 'error'}
       title={syncTitle()}
@@ -151,10 +151,6 @@
 
   button:focus-visible {
     outline-offset: -1px;
-  }
-
-  button:disabled {
-    opacity: 0.5;
   }
 
   @media (hover: hover) {
@@ -227,25 +223,21 @@
     gap: 2px;
   }
 
+  /* The two switches are `.nib-glyph` in the themes package. They used to be a
+     square of the row scale with a mark of `--icon-lg` in it and nothing said
+     about padding, which meant the browser's own `1px 6px`: the mark was handed
+     a content box 16 wide, gave way in the flex row, and both glyphs at the
+     bottom of the panel came out 16 across and 18 down. The shared class says
+     `padding: 0` and `flex: none` on the mark for exactly that reason.
+
+     What is left here is the dot in the corner, which needs something to be in
+     the corner of. */
   .act {
     position: relative;
-    justify-content: center;
-    width: var(--row-height);
-    height: var(--row-height);
-  }
-
-  .act svg {
-    width: var(--icon-lg);
-    height: var(--icon-lg);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
   }
 
   .act .gear {
     stroke-width: 1.6;
-    stroke-linejoin: round;
   }
 
   /* A dot in the corner, not a badge: it is there to be noticed out of the

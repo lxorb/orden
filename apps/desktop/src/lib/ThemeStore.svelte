@@ -166,7 +166,7 @@
     <header>
       {#if store.chosen}
         <button
-          class="back"
+          class="nib-glyph back"
           onclick={() => {
             store.opened = null
             previewing = null
@@ -195,7 +195,7 @@
         </div>
       {/if}
 
-      <button class="shut" onclick={() => store.close()} aria-label={t('Close')}>
+      <button class="nib-glyph shut" onclick={() => store.close()} aria-label={t('Close')}>
         <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
       </button>
     </header>
@@ -438,47 +438,10 @@
     white-space: nowrap;
   }
 
-  .back,
-  .shut {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .back:hover,
-    .shut:hover {
-      background: var(--surface-2);
-      color: var(--text-strong);
-    }
-  }
-
-  .back:active,
-  .shut:active {
-    background: var(--press);
-  }
-
-  .back svg,
-  .shut svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+  /* The way back and the way out are `.nib-glyph` in the themes package. They
+     were a hard-coded 28px square with a 14px mark and `--radius-sm`, which made
+     them the one pair of icon buttons in the app that did not grow under a thumb
+     and did not share the corner the rest are drawn with. */
 
   .body {
     padding: var(--space-4);

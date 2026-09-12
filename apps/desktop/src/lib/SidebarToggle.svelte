@@ -25,7 +25,8 @@
 </script>
 
 <button
-  class="toggle"
+  class="nib-glyph toggle"
+  class:is-on={open}
   class:on={open}
   title={label}
   aria-label={label}
@@ -39,45 +40,17 @@
 </button>
 
 <style>
+  /* The button itself is `.nib-glyph` in the themes package: the square every
+     icon button in the app is, the row's corner, the row's own hover and press,
+     and a mark that a browser's own button padding cannot squash. This used to
+     be a hard-coded 38px wide with no height and no corner at all, so it
+     stretched to the whole bar and lit a sharp-edged block where the three bars
+     beside it lit a rounded one. What is left here is only its own edge. */
   .toggle {
-    width: 38px;
-    flex: none;
-    display: grid;
-    place-items: center;
-    border: none;
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  /* Only where there is a pointer to hover with. A touch browser pretends the
-     last finger is still hovering, which left this lit after every swipe from
-     the corner it sits in. */
-  @media (hover: hover) {
-    .toggle:hover {
-      background: var(--surface-hover);
-      color: var(--text-strong);
-    }
-  }
-
-  /* Answered under the finger, not when the sidebar has finished moving. */
-  .toggle:active {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
-  .toggle.on {
-    color: var(--accent);
+    align-self: center;
   }
 
   .toggle svg {
-    width: var(--icon-lg);
-    height: var(--icon-lg);
-    fill: none;
-    stroke: currentColor;
     stroke-width: 1.2;
   }
 
@@ -93,10 +66,4 @@
     transform: translateX(-3.6px);
   }
 
-  /* A thumb's target rather than a pointer's, and the glyph drawn at the size
-     every other icon on a touch screen is. */
-  :global([data-touch]) .toggle {
-    width: var(--touch-row);
-    height: var(--touch-row);
-  }
 </style>
