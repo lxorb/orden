@@ -5,8 +5,9 @@ unnecessary."*
 
 So the file list shows one kind of thing. Every row is a note. A note can hold
 notes, and that is the whole of how a space is organised. The word "folder" is
-not in the interface anywhere: not in a menu, not on a row, not as a mark, not as
-a kind of icon to choose, and not in any of the four dictionaries.
+not in the interface anywhere: not in a menu, not on a row, not as a mark and
+not as a kind of icon to choose. What still says it, and why, is at the bottom
+of this file.
 
 On disk nothing changed. A note that holds notes is a folder holding a note of
 the same name - the folder-note convention Obsidian's plugins read - and the
@@ -131,6 +132,11 @@ the names still read as one column. See `move-targets.ts`.
   folder named after the note". Those name real folders on disk that another app
   will also look in.
 - **"Open themes folder"**, which opens a folder in Explorer or Finder.
+- **Two lines in the import sheet**: "A zip, a folder, or a file another app
+  wrote", which is what may be dropped on it, and "{count} archived notes are in
+  a folder called Archive", which names a folder the import makes. Both are
+  about what another app wrote and where it went, which is the one place the
+  reader is looking at somebody else's filing rather than their own notes.
 - **The Files tab's mark**, which is a folder shape with its corners taken off.
   It names the panel rather than a row, and the panel's own label says FILES.
 

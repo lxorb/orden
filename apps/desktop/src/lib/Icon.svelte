@@ -9,8 +9,8 @@
    *  badge, the picker's grid - draws this, so all three come out at the same optical
    *  size and none of those places has to know that sets exist.
    *
-   *  The box is the caller's. This fills whatever it is given, so a mark in a row is
-   *  `--icon-md` and a space's badge is `--icon-rail` without either size being
+   *  The box is the caller's. This fills whatever it is given, so a mark in a row
+   *  and a mark in a space's badge are both `--icon-md` without the size being
    *  repeated here. The one thing a caller owes: `font-size` on that box as well as
    *  its width and height, because an emoji is type and a glyph has no width of its
    *  own to be stretched.

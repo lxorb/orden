@@ -243,7 +243,10 @@ address in front of the at sign; never the whole address, which is not a name
 and which the other people in a space were not necessarily given.
 
 In the tab, one small dot per other device, in the accent, overlapping into a
-stack, and nothing at all when nobody else is there.
+stack, and nothing at all when nobody else is there. Three dots is as many as it
+draws: past that the stack would be wider than the name it sits beside, and the
+answer a reader wants from it is whether anybody else is in here rather than how
+many.
 
 **Undo stays yours.** A change that arrives from the room is applied to the shared
 document with `addToHistory` off, so pressing undo takes back what you wrote and
@@ -550,8 +553,11 @@ next, which is the rule that was already there.
 rather than what is refused, so a route added tomorrow is closed until somebody
 says otherwise. It is: who they are and the one thing they can change about it
 (`/v1/me`), the spaces their links granted and what is inside them (the listing,
-the change feed, the notes, the bookmarks and the file list), the room's socket,
-and letting themselves out. Everything else under `/v1` answers 403 "sign in to
+the change feed, the notes, the bookmarks and the file list), and letting
+themselves out. The room's socket is not on that list and does not need to be:
+`/rooms` sits outside the `/v1` guard, and the door admits a guest on the same
+union of sessions it uses for everybody, which is where a guest's role in a
+space is already known. Everything else under `/v1` answers 403 "sign in to
 do that": no settings, no storage of their own, no Recently deleted, no
 connector, no publishing, no sharing - which is a space being given away, and
 nobody's to do with a link they were handed. Two more follow from having no
@@ -702,8 +708,11 @@ growing it: a globe and `Anyone with the link` with what it hands out as a menu,
 and `Reset link`, which revokes and mints another under one press so the sheet
 never shows the moment in between.
 
-A space somebody else is in carries a quiet dot on its row in the switcher,
-because it is the same fact a tab says about the devices in a note.
+A space somebody else is in carries a quiet mark on its row in the switcher,
+`SharedMark.svelte`, which is the same mark the file list draws on a shared
+note. It used to be a dot in the accent, and a dot on a tab means a note not
+written down yet: one shape was saying two unrelated things, so the dot is the
+saving dot now and anything about other people is a mark.
 
 A guest the link let in is a row in the same two lists, named by the name their
 device gave them, with `Guest` under it where a member has their address - and

@@ -96,7 +96,10 @@ owner's storage whoever typed them. That was already true of a space writer.
 ## One set of routes, one sheet
 
 Every route under `/share` takes `?item={note id}` and answers about that file;
-without it they answer about the space exactly as they always have. One
+without it they answer about the space exactly as they always have. The one
+exception is `DELETE /:id/share/me`, which is a device letting itself out of a
+space and is only ever about the space; letting yourself out of one file is
+`DELETE /v1/shared/:id`. One
 middleware reads it, checks that it names a live note of this space, and puts it
 on the request - so no route can forget it, and a bad id is refused in one
 place.
@@ -115,9 +118,12 @@ The People card, the address field, the roles, the link, Ask first, Reset link
 and the Waiting list are all untouched.
 
 It opens from the note's row in the tree, from the tab's own menu, and from the
-palette when a shareable document is in front of you. All three call one
-function, `shareEntry` in `menu.svelte.ts`, so every list that shows a file can
-offer it without knowing anything about sharing.
+palette when a shareable document is in front of you. All three end at one
+function, `shareThisFile` in `sharing.svelte.ts`, so every list that shows a
+file can offer it without knowing anything about sharing. The row and the tab
+reach it through `shareEntry` in `menu.svelte.ts`, which is the menu row itself;
+the palette has no menu to build and asks for the document in front of the
+reader instead.
 
 ## The recipient: no pseudo-space
 
@@ -209,9 +215,12 @@ what a listing and a ceiling still count.
 
 ## What is not done yet
 
-- **Pictures dropped into a shared canvas.** A shared document has no path, and
-  the canvas drop path writes an image beside the file it belongs to. Reading and
-  drawing work; adding a picture from the recipient's side does not.
+- **Pictures dropped into a shared canvas, by a guest.** A shared document has
+  no path, and the canvas drop path writes an image beside the file it belongs
+  to. An account holder gets past that: `storeImage` in `assets.ts` puts the
+  bytes in their own blob store and the plane carries the absolute URL back. A
+  guest has no account token, so for them there is nowhere to put it and the
+  drop is refused.
 - **Folders.** A share targets a note or a canvas. Sharing a folder would be a
   third size of thing, and the space is already the answer for "a group of
   notes".

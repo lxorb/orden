@@ -486,12 +486,18 @@ dot, and the two lights that are about work in progress rather than about a file
 (a request waiting to be let in, the foot's sync light) borrow the shape because
 they are the same kind of statement.
 
-Anything about other people is a mark, never a dot. `SharedMark.svelte` draws it
-once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's trailing slot -
-and it says it in three places: a shared space's row in the switcher, the header
-over the file list, and a note in that list somebody else is in. A dot in the
-accent used to say the first of those, which meant the one shape the app had for
-a fact about a file was saying two unrelated things at once.
+That somebody else is in this at all is a mark, never a dot. `SharedMark.svelte`
+draws it once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's
+trailing slot - and it says it in five places: a shared space's row in the
+switcher, the header over the file list, the shared-with-you row at the foot of
+the switcher, a note in the file list somebody else is in, and the tab of a
+document shared on its own, which has no row in the list to carry it. A dot in
+the accent used to say the first of those, which meant the one shape the app had
+for a fact about a file was saying two unrelated things at once.
+
+How many of them there are is the one thing the mark cannot say, and that is
+what the stack of accent dots on a tab is for: one per other device in the note,
+three at most, beside the mark rather than instead of it.
 
 The note's half is asked of the rooms rather than of the account, and that is the
 whole of why it is not noise: a note in a shared space that nobody else has open
@@ -530,8 +536,10 @@ field taking the keyboard puts the system's own over half the sheet.
 ### Section labels
 
 `.nib-section` in `base.css`: `--text-xs`, uppercase, `0.06em` of tracking,
-`--muted`, `--row-height-sm` tall, starting on the same left edge as the rows
-under it. Every list that has more than one group wears it - bookmarks and files
+`--muted`, starting on the same left edge as the rows under it. Sized by what it
+says rather than by the row scale - margin and padding and no height - so under
+a thumb it stays a caption instead of becoming a 48px row with nothing in it to
+tap. Every list that has more than one group wears it - bookmarks and files
 in the tree panel, the two lists of links, a note's name over its search hits.
 
 ## What the shell becomes

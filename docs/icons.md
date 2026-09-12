@@ -90,7 +90,8 @@ once rather than loading for ever.
 honest ways to put a picture on screen and they are not one thing: a character the
 font draws, a stroke this app dresses itself, and somebody else's finished drawing
 that has to be left exactly as it was. The box is the caller's - `--icon-md` for a
-mark in a row, `--icon-rail` for a space's own badge - and so is the colour, since
+mark in a row, and `--icon-md` again inside a space's badge, because a mark in a
+badge is a mark in front of a name - and so is the colour, since
 `stroke` inherits and a list that says the row it is on wears the accent says it once
 on the box.
 

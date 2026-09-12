@@ -45,13 +45,15 @@ out of the same renderer and were already the same markup.
 - **One renderer.** `serveBlog` asks for what the reading view asks for:
   `footnotes`, `toc`, `escapeHtml`, a `code` fence renderer, and resolvers for
   links and embeds. The structural difference between the two is zero; see below.
-- **One stylesheet.** `scripts/blog-css.ts` builds it from
+- **One stylesheet for a page.** `scripts/blog-css.ts` builds it from
   `packages/themes/src/{tokens,base,document}.css` plus
   `services/sync/src/blog/page.css`, strips the comments, and writes
   `services/sync/src/blog/style.ts`. Run `pnpm blog:css` after changing any of
   those sheets; a test in `services/sync` fails if you forget. The Worker serves
   it at a path that is its own hash, cached forever, so a reader fetches 34kB
-  once for a whole blog and every page after that carries no CSS at all.
+  once for a whole blog and every page after that carries no CSS at all. The
+  same script writes a second sheet beside it from
+  `packages/themes/src/slides.css`, another 3.5kB, which only a deck asks for.
 - **Light or dark from the reader.** The app is dark until you say otherwise and
   says so with `data-theme`; a page has nobody to ask and no script to ask with.
   So the light tokens are the default, the dark ones are restated under
@@ -62,8 +64,11 @@ out of the same renderer and were already the same markup.
   module the export uses too. Same `hl-` classes, same tree, character for
   character. The colours are in document.css now, written with `:where(#write)`
   so a reader's chosen palette still wins in the app.
-- **No script on the page.** The CSP still says `script-src 'none'`. Highlighting
-  is done before the bytes leave the Worker; nothing is coloured in the browser.
+- **No script on a page.** The CSP says `script-src 'none'`. Highlighting is
+  done before the bytes leave the Worker; nothing is coloured in the browser.
+  One page is not a page: a note published as a deck carries a `Present` link,
+  and following it serves `deckPage`, which is the same few lines that turn the
+  pages in the app under a nonce the CSP names. See `docs/slides.md`.
 - **Nothing from anybody else.** KaTeX's stylesheet and the faces it names used to
   come from jsdelivr, so every reader of a page with an equation on it pinged a CDN
   that had no business knowing who was reading what, and the maths came out in the
@@ -92,7 +97,8 @@ out of the same renderer and were already the same markup.
   Charts are fine: a ` ```chart ` fence is string-built SVG and always was.
 - **A web card.** `![](https://youtube.com/watch?v=…)` is the same card in both,
   but in the app pressing it swaps in the frame and on a page it is a link out.
-  Nothing may run on a published page, and that is the point of it.
+  Nothing a note carries may run on a published page, and that is the point of
+  it: the deck's own page turner is the Worker's script and not the note's.
 - **Raw HTML.** A note of your own is markup in the app, as Typora does it. A
   published note is authored content served to strangers from a domain shared
   with every other blog, so HTML in it is shown as the characters it is made of.

@@ -149,7 +149,7 @@ read it, so a desktop keeps the sizes it has always had.
 | `--touch-target` | 48px | a square that is only a button, and a row read more than tapped |
 | `--touch-text` | 17px | the words in a row |
 | `--touch-icon` | 24px | an icon that is a button of its own |
-| `--touch-mark` | 15px | the slot a mark beside a row's words is drawn in |
+| `--touch-mark` | 20px | the slot a mark beside a row's words is drawn in |
 | `--touch-gap` | 12px | between a mark and the words |
 | `--touch-pad` | 14px | a row's own side padding |
 | `--touch-indent` | 18px | one level of a tree |
@@ -309,8 +309,9 @@ the keys. `MainActivity.onWebViewCreate` pads the webview by the keyboard's
 height instead, which ends the page where the keys begin. The page reads that as
 a window that has lost height rather than as a keyboard over it, which is why
 `viewport.svelte.ts` has both `keyboard`, the pixels covered, and `typing`,
-whether the keyboard is up at all. In a browser only the first is ever non-zero;
-in the app only the second. The caret is scrolled back into sight from
+whether the keyboard is up at all. `keyboard` is only ever non-zero in a
+browser, since that is the only place the keys are over the page; `typing` is
+taken from whichever of the two says so, so it is true in both. The caret is scrolled back into sight from
 `App.svelte` on each step of the keyboard's arrival.
 
 **Back.** Every layer the app opens over a note takes a history entry

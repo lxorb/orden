@@ -75,7 +75,7 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 - Infinite **canvas** with cards, connectors, groups, shapes and ink
 - Open **JSON Canvas** files, the same ones Obsidian reads
-- **Pen** support with pressure and tilt: three pens, highlighter, eraser, lasso
+- **Pen** support with pressure and tilt: three pens, an eraser and a lasso
 - Built for a tablet and the **S Pen**
 
 ### Together

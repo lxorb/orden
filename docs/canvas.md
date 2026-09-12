@@ -73,7 +73,7 @@ lives in the far corner from the tools, and undo is in a third place again.
 
 | From Samsung | |
 | --- | --- |
-| Press the tool you are holding to open its options | kept, for every tool on the bar |
+| Press the tool you are holding to open its options | kept, for every tool that has options |
 | The width and the colour visible without opening anything | kept |
 | Stroke eraser and area eraser as two named things | kept |
 | Lasso or box, and whether a half caught stroke counts | kept |
@@ -152,7 +152,9 @@ tablet has, so only a tablet is asked it.
 
 Every tool's options open in the same shell, anchored over the button that opened
 them, and each is built from the same three rows: a preview at the top, dials
-with a number and a minus and a plus, and switches under them. The pen's preview
+with a number and a minus and a plus, and switches under them. A tool takes the
+rows it has something to put in them: the lasso has neither a width nor a line
+to show, so its panel is the shape choice and one switch and nothing else. The pen's preview
 is the line it will write, drawn by the same outliner that paints the plane, so
 what the panel shows is what the nib does. The eraser's is its nib at its real
 width on the paper.
@@ -287,8 +289,10 @@ drops the key, because a key means nothing to a thumb.
 ## The first canvas
 
 An empty plane says one line in the middle, and it fades the moment anything is
-on the plane and never comes back. That is the whole of the teaching. A tool bar
-that has to be explained is a bar that is wrong.
+on the plane. It is read off the plane rather than remembered, so emptying one
+brings the line back: a plane with nothing on it is a plane that has nothing to
+say about itself either way. That is the whole of the teaching. A tool bar that
+has to be explained is a bar that is wrong.
 
 ## Two hands and a pen
 
@@ -540,7 +544,7 @@ and never kept: the stroke that lands is the samples the pen really reported.
 Presence arrives in packets - twenty a second on a good line, fewer on a bad one -
 and drawing each one where it lands makes another hand hop across the page. So the
 drawn point eases towards the reported one instead, critically damped and frame-rate
-independent, closing about two thirds of the gap every seventieth of a second. It
+independent, closing about two thirds of the gap every seventy milliseconds. It
 never overshoots: a pointer that sails past where somebody is pointing and comes back
 is worse than one that hops. A reader who has asked for as little movement as
 possible gets the packets as they come.

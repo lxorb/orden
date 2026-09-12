@@ -26,15 +26,18 @@ menu in front of that is a question with one right answer, asked of the person
 least able to answer it.
 
 What the sheet then shows is what it is **about to make**: how many notes, how
-many other files, how many folders, where they go, and what is not coming with
-them. Counts rather than a list, because a reader importing four thousand notes
+many other files, where they go, and what is not coming with them. Not the
+folders: a note that holds notes is a note here, so they are already counted
+among the notes. Counts rather than a list, because a reader importing four thousand notes
 cannot read a list of four thousand notes.
 
 ## Where it lands
 
 Two rows. `Into` is the space and folder, through the same picker that moving a
-note uses, so it is a list the reader already knows how to read. `In a folder
-called` is the folder the import makes for itself inside that, named after the
+note uses, so it is a list the reader already knows how to read. `Under` is the
+row below it, which names what the import makes for itself inside that - not
+"folder", because a row that holds notes is a note here and the word is gone
+from the interface. It is named after the
 file that was picked - `Travel.enex` becomes `Travel` - or after the app it came
 out of when the file's name is one an exporter made up, which `Export-9f1c2d3e`
 is.
@@ -190,8 +193,9 @@ one people ask about.
 ## The limits, said plainly
 
 An import is held whole in memory so it can be counted before it is written,
-which puts a ceiling on it: half a gigabyte, and the sheet says so rather than
-taking the window down with it. An `.enex` of a decade of clipped web pages can
+which puts a ceiling on it: half a gigabyte. The count is of what has already
+been read, so the ceiling is a refusal to write rather than a guard on the way
+in: over it, the sheet says so and Import is not offered. An `.enex` of a decade of clipped web pages can
 be larger than that, and the answer there is Evernote's own option to export a
 notebook at a time.
 

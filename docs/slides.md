@@ -125,8 +125,10 @@ channel; see `apps/desktop/src/lib/slides/presenter.ts`.
 
 ## Writing a deck
 
-The rules that break a deck are drawn in the accent colour with a tick in the
-margin while the note is a deck, so the breaks are visible as they are written.
+The rules that break a deck are drawn in the accent colour while the note is a
+deck, so the breaks are visible as they are written. The colour and nothing
+else: there used to be a bead of accent in the margin beside them and it read as
+a list bullet, so a test now refuses anything drawn in front of a rule line.
 An `___` rule is left alone, because that is the one that does not break a slide.
 
 The palette has New slide, Next slide and Previous slide. New slide writes the

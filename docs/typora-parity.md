@@ -160,7 +160,10 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 - [x] Open folder as a space
 - [x] File tree panel
-- [x] Articles (flat file list) panel
+- [ ] Articles (flat file list) panel - not built, on purpose: the file list
+      shows one kind of thing and a note that holds notes is a note, so a second
+      flat list of every note would be a second answer to the same question.
+      See docs/tree.md
 - [x] Outline panel, with the note's footnotes under its headings, and a heading
       draggable to move its whole section; see section 17
 - [x] Create, rename, duplicate, delete files and folders
@@ -207,7 +210,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Fullscreen `F11`
 - [x] Zoom in/out/reset
 - [x] Toggle sidebar `Ctrl+Shift+L`
-- [x] Outline / Articles / File tree panels
+- [x] Outline and file tree panels, plus Search and Links, which is the four
+      the sidebar has; no Articles - see section 9
 - [x] Word count (words, characters, lines, reading time), and with something
       selected the words and the characters read as `3/47w` - this many of that
       many. No word for it and nothing to turn on: the second number is what the
@@ -249,7 +253,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Theme switching without restart
 - [x] Dark mode + light mode
 - [x] Follows system appearance on first run
-- [x] Four built-in themes
+- [x] One built-in theme, in a dark and a light state, and a store to install
+      more from
 - [x] Typora CSS variable compatibility (`--bg-color`, `--md-char-color`, …)
 - [x] `#write` container contract
 - [x] Custom fonts (via a theme)
@@ -314,12 +319,14 @@ Still pandoc's, and offered only where pandoc is installed:
 - [x] File association for `.md`
 - [x] Taskbar Jump List - opened notes go to the shell's own recent documents
 - [x] Application logs
-- [x] UI translations (English, German; falls back to English)
+- [x] UI translations (English, German, Swiss German, French, Japanese; falls
+      back to English)
 - [x] "New Markdown" in Explorer's New menu - a per-user registry entry, added
       and removed from Appearance settings
-- [~] Auto-update - checks GitHub daily and offers the release. Signed
-      background install needs a Tauri updater keypair; the private half is a
-      release secret, so generating it is the maintainer's call.
+- [x] Auto-update - looks every six hours, downloads what it finds and puts it
+      in place as the app closes. Which stream it follows is one setting in
+      General; the updater key is in tauri.conf.json and the private half is a
+      release secret.
 
 ## 17. Beyond Typora
 
