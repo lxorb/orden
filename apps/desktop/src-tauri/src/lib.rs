@@ -13,6 +13,7 @@
 
 mod assets;
 mod clock;
+mod front_matter;
 mod fuzzy;
 mod highlights;
 mod history;

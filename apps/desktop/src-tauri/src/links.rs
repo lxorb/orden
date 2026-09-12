@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::AppHandle;
 
+use crate::front_matter;
 use crate::paths::{files_in, in_spaces, is_canvas, relative_to};
 use crate::tags::tags_in;
 
@@ -113,9 +114,9 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
             blocks: block_ids_in(&body),
             links: links_in(&body),
             tags: note_tags(&body),
-            icon: front_matter_value(&body, "icon"),
-            icon_color: front_matter_value(&body, "icon-color"),
-            aliases: front_matter_list(&body, "aliases"),
+            icon: front_matter::value(&body, "icon"),
+            icon_color: front_matter::value(&body, "icon-color"),
+            aliases: front_matter::list(&body, "aliases"),
         });
     }
 
@@ -260,176 +261,6 @@ fn note_tags(body: &str) -> Vec<String> {
     }
 
     out
-}
-
-/// Where the front matter's own lines sit: from just past the opening fence to
-/// the start of the line the closing one is on. None where the note opens with
-/// anything else, which is most notes.
-///
-/// The block has to close, or the note opens with a rule rather than metadata.
-fn front_matter_block(body: &str) -> Option<(usize, usize)> {
-    let first = body.find('\n')?;
-    if body[..first].trim() != "---" {
-        return None;
-    }
-
-    let mut at = first + 1;
-    while at <= body.len() {
-        let end = body[at..].find('\n').map_or(body.len(), |one| at + one);
-        if body[at..end].trim() == "---" {
-            return Some((first + 1, at));
-        }
-        if end >= body.len() {
-            break;
-        }
-        at = end + 1;
-    }
-
-    None
-}
-
-/// A top-level key read as a list: `key: [a, b]`, the `- a` lines written under
-/// `key:`, or a single value standing for a list of one. Empty where the note
-/// has no block, no such key, or nothing under it.
-///
-/// The twin of `frontMatterList` in `packages/markdown/src/front-matter.ts`.
-fn front_matter_list(body: &str, key: &str) -> Vec<String> {
-    let Some((from, close)) = front_matter_block(body) else {
-        return Vec::new();
-    };
-
-    let mut at = from;
-    while at < close {
-        let end = body[at..]
-            .find('\n')
-            .map_or(close, |one| at + one)
-            .min(close);
-
-        if let Some((named, said)) = body[at..end].split_once(':') {
-            // A key of the note's own stands at the left margin; an indented one
-            // belongs to the key above it.
-            if !named.starts_with(char::is_whitespace) && named.trim_end().eq_ignore_ascii_case(key)
-            {
-                let value = said.trim();
-                return if value.is_empty() {
-                    dash_items(body, end + 1, close)
-                } else {
-                    flow_items(value)
-                };
-            }
-        }
-
-        at = end + 1;
-    }
-
-    Vec::new()
-}
-
-/// `[One, Two]` on the key's own line, or a single value standing for a list of
-/// one.
-fn flow_items(value: &str) -> Vec<String> {
-    if let Some(list) = value
-        .strip_prefix('[')
-        .and_then(|one| one.strip_suffix(']'))
-    {
-        return list
-            .split(',')
-            .filter_map(|one| unquoted(one.trim()))
-            .collect();
-    }
-
-    unquoted(value).into_iter().collect()
-}
-
-/// The `- item` lines written under a key, up to the next key of the note's own
-/// or anything else that is not an item.
-fn dash_items(body: &str, from: usize, close: usize) -> Vec<String> {
-    let mut out = Vec::new();
-    let mut at = from;
-
-    while at < close {
-        let end = body[at..]
-            .find('\n')
-            .map_or(close, |one| at + one)
-            .min(close);
-        let line = body[at..end].trim();
-
-        if !line.is_empty() {
-            let Some(item) = line.strip_prefix('-') else {
-                break;
-            };
-            // A dash with no space after it is not an item, and neither is a
-            // dash on its own: `-One` is a word and `-` is a rule.
-            if !item.starts_with(char::is_whitespace) {
-                break;
-            }
-            if let Some(said) = unquoted(item.trim()) {
-                out.push(said);
-            }
-        }
-
-        at = end + 1;
-    }
-
-    out
-}
-
-/// A value with the quotes YAML would take off taken off, or None where nothing
-/// is left of it.
-fn unquoted(value: &str) -> Option<String> {
-    let bare = value
-        .strip_prefix('"')
-        .and_then(|one| one.strip_suffix('"'))
-        .or_else(|| {
-            value
-                .strip_prefix('\'')
-                .and_then(|one| one.strip_suffix('\''))
-        })
-        .unwrap_or(value);
-
-    if bare.is_empty() {
-        None
-    } else {
-        Some(bare.to_string())
-    }
-}
-
-/// A top-level `key: value` from the note's front matter, quotes stripped, or
-/// None where the note has no block, no such key, or nothing after the colon.
-///
-/// The twin of `frontMatterValue` in `packages/markdown/src/front-matter.ts`,
-/// which the browser build reads a space with; the tests at the bottom hold the
-/// two to the same answers. A key indented under another one belongs to that one
-/// and is not read: `paper` under `export:` is not the note's paper.
-fn front_matter_value(body: &str, key: &str) -> Option<String> {
-    let (from, close) = front_matter_block(body)?;
-
-    let mut at = from;
-    while at < close {
-        let end = body[at..]
-            .find('\n')
-            .map_or(close, |one| at + one)
-            .min(close);
-        if let Some(said) = value_of(&body[at..end], key) {
-            return Some(said);
-        }
-        at = end + 1;
-    }
-
-    None
-}
-
-/// What one line says under `key`, or None when the line is another key, a list
-/// item, or a line indented under something else.
-fn value_of(line: &str, key: &str) -> Option<String> {
-    let (named, said) = line.split_once(':')?;
-    // A key of the note's own stands at the left margin; an indented one belongs
-    // to the key above it.
-    if named.starts_with(char::is_whitespace) || !named.trim_end().eq_ignore_ascii_case(key) {
-        return None;
-    }
-
-    unquoted(said.trim())
 }
 
 /// Whether a line opens or closes a fenced code block.
@@ -869,8 +700,8 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, canvas_note, decode, front_matter_list, front_matter_value, heading_of,
-        headings_in, links_in, note_tags, without_code,
+        block_id_of, canvas_note, decode, heading_of, headings_in, links_in, note_tags,
+        without_code,
     };
 
     fn targets(body: &str) -> Vec<String> {
@@ -1026,118 +857,6 @@ mod tests {
         assert_eq!(block_id_of("a^b"), None);
         assert_eq!(block_id_of("^abc in the middle"), None);
         assert_eq!(block_id_of("x^2^ is a superscript"), None);
-    }
-
-    /// The front matter, which the scan reads the icon a row wears out of. Every
-    /// case here has its twin in `packages/markdown/src/front-matter.test.ts`.
-    fn icon(body: &str) -> Option<String> {
-        front_matter_value(body, "icon")
-    }
-
-    #[test]
-    fn reads_a_key_from_the_front_matter() {
-        assert_eq!(
-            icon("---\nicon: rocket\n---\n\n# Plan").as_deref(),
-            Some("rocket")
-        );
-        assert_eq!(
-            icon("---\ntitle: Plan\nicon: file-text\n---\n").as_deref(),
-            Some("file-text")
-        );
-        assert_eq!(icon("---\nICON: rocket\n---\n").as_deref(), Some("rocket"));
-    }
-
-    #[test]
-    fn takes_the_quotes_off_a_value() {
-        assert_eq!(
-            icon("---\nicon: \"rocket\"\n---\n").as_deref(),
-            Some("rocket")
-        );
-        assert_eq!(
-            icon("---\nicon: 'rocket'\n---\n").as_deref(),
-            Some("rocket")
-        );
-    }
-
-    #[test]
-    fn reads_an_emoji_as_what_it_says() {
-        assert_eq!(icon("---\nicon: 🚀\n---\n").as_deref(), Some("🚀"));
-    }
-
-    #[test]
-    fn reads_nothing_where_there_is_nothing_to_read() {
-        assert_eq!(icon("# Plan\n\nwords"), None);
-        assert_eq!(icon("---\ntitle: Plan\n---\n"), None);
-        assert_eq!(icon("---\nicon:\n---\n"), None);
-        // A block that never closes is a note that opens with a rule.
-        assert_eq!(icon("---\nicon: rocket\n\n# Plan"), None);
-        // And a key below the block is the note's words rather than its metadata.
-        assert_eq!(icon("---\ntitle: Plan\n---\n\nicon: rocket\n"), None);
-    }
-
-    #[test]
-    fn a_key_indented_under_another_is_not_the_notes_own() {
-        assert_eq!(icon("---\nexport:\n  icon: rocket\n---\n"), None);
-    }
-
-    /// The other names a note gives itself. Every case here has its twin in
-    /// `packages/markdown/src/front-matter.test.ts`.
-    fn aliases(body: &str) -> Vec<String> {
-        front_matter_list(body, "aliases")
-    }
-
-    #[test]
-    fn reads_a_list_written_on_the_key_s_own_line() {
-        assert_eq!(
-            aliases("---\naliases: [One, Two]\n---\n"),
-            vec!["One".to_string(), "Two".to_string()]
-        );
-    }
-
-    #[test]
-    fn reads_a_list_written_under_the_key() {
-        assert_eq!(
-            aliases("---\naliases:\n  - One\n  - Two\n---\n"),
-            vec!["One".to_string(), "Two".to_string()]
-        );
-        assert_eq!(
-            aliases("---\naliases:\n- One\n---\n"),
-            vec!["One".to_string()]
-        );
-    }
-
-    #[test]
-    fn reads_a_single_value_as_a_list_of_one() {
-        assert_eq!(aliases("---\naliases: One\n---\n"), vec!["One".to_string()]);
-    }
-
-    #[test]
-    fn takes_the_quotes_off_every_item() {
-        assert_eq!(
-            aliases("---\naliases: [\"One\", 'Two']\n---\n"),
-            vec!["One".to_string(), "Two".to_string()]
-        );
-        assert_eq!(
-            aliases("---\naliases:\n  - \"One two\"\n---\n"),
-            vec!["One two".to_string()]
-        );
-    }
-
-    #[test]
-    fn stops_at_the_next_key_of_the_notes_own() {
-        assert_eq!(
-            aliases("---\naliases:\n  - One\ntitle: Not an alias\n---\n"),
-            vec!["One".to_string()]
-        );
-    }
-
-    #[test]
-    fn reads_nothing_where_there_is_no_list() {
-        assert!(aliases("Words.\n").is_empty());
-        assert!(aliases("---\ntitle: A note\n---\n").is_empty());
-        assert!(aliases("---\naliases:\n---\n").is_empty());
-        assert!(aliases("---\naliases: []\n---\n").is_empty());
-        assert!(aliases("---\nexport:\n  aliases: [One]\n---\n").is_empty());
     }
 
     /// A canvas keeps its icon under `nib`, since a JSON file has no front matter.

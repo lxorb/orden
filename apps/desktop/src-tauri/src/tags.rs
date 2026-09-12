@@ -19,41 +19,21 @@
 //! so does the tree the app draws, so the characters a tag may hold are what
 //! decides how deep that tree can go.
 
+use crate::front_matter;
+
 /// Every tag in one note's text, with the hash, in the order they are used.
 #[must_use]
 pub fn tags_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
-    let front = front_matter(body);
+    // How many bytes of the note the block takes, fences included, or zero where
+    // the note opens with anything else: the tags under its key are read first,
+    // and the pass over the note's own words starts after it.
+    let front = front_matter::block(body).map_or(0, |block| block.end);
 
     read_front(body, front, &mut found);
     read_inline(body, front, &mut found);
 
     found
-}
-
-/// How many bytes of the note the front matter block takes, fences included, or
-/// zero when the note opens with anything else.
-fn front_matter(body: &str) -> usize {
-    let Some(first) = body.find('\n') else {
-        return 0;
-    };
-    if body[..first].trim() != "---" {
-        return 0;
-    }
-
-    let mut at = first + 1;
-    while at < body.len() {
-        let end = body[at..].find('\n').map_or(body.len(), |one| at + one);
-        if body[at..end].trim() == "---" {
-            return end;
-        }
-        if end >= body.len() {
-            break;
-        }
-        at = end + 1;
-    }
-
-    0
 }
 
 /// The tags under a `tags:` key, whether they are on its line or in items
