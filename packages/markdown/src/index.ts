@@ -453,33 +453,16 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
 }
 
 export { withoutComments } from './comments'
-export {
-  abbreviations,
-  callouts,
-  definitionLists,
-  emoji,
-  footnotes,
-  highlight,
-  maths,
-  MOST_EMS,
-  scripts,
-} from './extensions'
-// The link grammar is its own module - `@nib/markdown/links` - so the editor can
-// have it without the renderer that stands on it. Passed on from here too, for
-// everything that already reads this package.
-export {
-  blockIdOf,
-  blockIds,
-  findLinks,
-  type FoundLink,
-  formatWikilink,
-  isNoteTarget,
-  type LinkKind,
-  linkTarget,
-  parseWikilink,
-  sectionOf,
-  shownSpan,
-  shownText,
-  slugify,
-  type Wikilink,
-} from './links'
+
+/** The ceiling a formula's own sizes are held to, which the editor's renderer
+ *  needs as well: one number, so a note that will not fit the panel in the app
+ *  does not fit the page either. The extensions themselves are not passed on -
+ *  they are this renderer's own parts. */
+export { MOST_EMS } from './extensions'
+
+/** The link grammar is its own module - `@nib/markdown/links` - so the editor can
+ *  have it without the renderer that stands on it, and everything that wants the
+ *  grammar imports it from there. These two are here because a caller that renders
+ *  a note usually also asks what it links to, and because taking them out of a
+ *  package's own entry point is a rename of two dozen call sites for nothing. */
+export { findLinks, type FoundLink, type Wikilink } from './links'
