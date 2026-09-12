@@ -457,11 +457,11 @@
       <SidebarToggle />
     {/if}
 
+    <!-- It takes the width the head has left, so the whole row is the control
+         that opens the list of spaces; the plus below is what "the width left"
+         means. There used to be an empty span here holding the two apart, which
+         was the same arrangement with a spacer in the middle. -->
     <SpaceSwitcher />
-
-    <!-- The stretch the switcher does not take. Nothing in it, so it is what the
-         plus is pushed to the far end by. -->
-    <span class="gap"></span>
 
     <!-- The one plus. A desktop's lives at the end of the tab strip, where a
          browser puts it; a handheld has no tab strip, so it is here. Either way
@@ -797,11 +797,6 @@
     gap: var(--space-1);
     min-height: var(--header-height);
     padding: 0 var(--space-1);
-  }
-
-  .gap {
-    flex: 1;
-    min-width: 0;
   }
 
   .new {

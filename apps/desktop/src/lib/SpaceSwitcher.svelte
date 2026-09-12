@@ -278,12 +278,17 @@
 {/if}
 
 <style>
-  /* The space's name, and the whole of what the switcher is. As wide as the word
-     and no wider: a control the width of the panel puts a grey block across the
-     header the moment it is pressed, and says the whole bar is the button when
-     the name is. It gives way rather than pushing the plus off the end. */
+  /* The space's name, and the whole of what the switcher is. The width of the
+     panel, less whatever else is in the head: the list it opens is the width of
+     the panel, so the control that opens it is too, and a header where only the
+     word is pressable is a header most presses miss - on a phone especially,
+     where the thumb lands wide of a short name. It was as wide as the word for a
+     while, on the argument that a full-width hover puts a grey block across the
+     header; the block is what a row does everywhere else in this panel, and
+     missing the button is worse. Still `min-width: 0`, so a long name is cut
+     rather than pushing the plus off the end. */
   .name {
-    flex: 0 1 auto;
+    flex: 1;
     min-width: 0;
     display: flex;
     align-items: center;
