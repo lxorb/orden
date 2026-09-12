@@ -7,19 +7,21 @@
  *  drawing want both drawings whole, so its document is a map of objects by id;
  *  see plane.ts in @nib/rooms.
  *
- *  Which shape a room has is the file's name and nothing else, so the door can say
- *  it in one header and a room woken from a sleep can read it back out of its own
- *  storage. Everything else about a room - the sockets, the snapshot, the log, the
- *  settle on an alarm - is the same either way, which is why there is one object
- *  class rather than two.
+ *  The file's name is what decides the shape of a room that holds nothing yet, so
+ *  the door can say it in one header. After that the shape belongs to the document:
+ *  a room woken from a sleep reads it back out of its own storage, and a file
+ *  renamed across the two kinds does not make the plane in the room into prose. What
+ *  happens then is `crossed` in room.ts. Everything else about a room - the sockets,
+ *  the snapshot, the log, the settle on an alarm - is the same either way, which is
+ *  why there is one object class rather than two.
  *
- *  This file is that difference and nothing more: what fills an empty document,
- *  and what the settle writes. */
+ *  This file is that difference and nothing more: what fills an empty document, what
+ *  the settle writes, and the two questions a settle asks before it writes at all. */
 
 import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
-import { readPlane, seedPlane } from '@nib/rooms/plane'
+import { planeIsEmpty, readPlane, seedPlane } from '@nib/rooms/plane'
 import type * as Y from 'yjs'
 
 /** The two shapes a room's document comes in. */
@@ -58,6 +60,37 @@ export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
   }
 
   if (stored) doc.getText(TEXT).insert(0, stored)
+}
+
+/** Whether reading this document as `kind` would leave a drawing behind.
+ *
+ *  Read as words, a document is the prose in it and nothing else. So a plane with
+ *  anything at all on it is a drawing the file is not about to be given: the empty
+ *  string where the prose is empty too, which is how a canvas came to be written
+ *  over with nothing, and a drawing quietly dropped where it is not.
+ *
+ *  Only that way round. A `Y.Text` inside a plane's document is what a client that
+ *  joined the wrong kind of room leaves behind when it offers the file it was
+ *  holding - a copy of something the file already has - and refusing the settle
+ *  over that would stop a canvas that is working from ever saving again. */
+export function leavesAPlane(kind: RoomKind, doc: Y.Doc): boolean {
+  return kind === 'words' && !planeIsEmpty(doc)
+}
+
+/** Whether this document has never held anything at all: not a keystroke, not a
+ *  card, not even one that was taken away again.
+ *
+ *  What tells a file somebody emptied from a document that never arrived. Both read
+ *  as nothing and only one of them should be written down: deleting every word of a
+ *  note means an empty file, and that is what the file should become. A document
+ *  that was read back and came out with no history at all was not read back - a
+ *  snapshot whose bytes were not bytes leaves exactly that - and writing its
+ *  nothing into a file that has something is the file gone.
+ *
+ *  Yjs keeps an entry for every client that ever wrote into a document, so an
+ *  emptied note has one and a document nothing ever reached has none. */
+export function neverHeld(doc: Y.Doc): boolean {
+  return doc.store.clients.size === 0
 }
 
 /** The room's content as the file it settles into. Byte for byte the file the app

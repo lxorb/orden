@@ -1352,3 +1352,243 @@ describe('a room that could not be opened', () => {
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 1 })
   })
 })
+
+/** A file renamed from a note into a canvas, or back, while its room held it.
+ *
+ *  A room's document is the shape of the file it was opened for - one `Y.Text` of
+ *  prose, or a map of the objects on a plane - and those two cannot be turned into
+ *  each other. A rename across them makes the file a different kind of thing while
+ *  the room goes on holding the old one.
+ *
+ *  What used to happen is that the next join said the new kind, the room wrote that
+ *  down as though it had always been so, and the settle then read the document
+ *  through the wrong serialiser. A plane read as words is the empty string, so a
+ *  canvas somebody had drawn on was written over with nothing at all. */
+describe('a file that changed which kind of room it is', () => {
+  let env: TestEnv
+  let token: string
+  let spaceId: string
+
+  /** A canvas with a card and a stroke already on it. */
+  const DRAWN: Canvas = {
+    nodes: [{ id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'a card' }],
+    edges: [],
+    ink: [penStroke('first', 5)],
+    at: { card: 1000, first: 1000 },
+    gone: {},
+  }
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'renamer@example.com')
+    spaceId = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
+  })
+
+  afterEach(() => {
+    env.close()
+    vi.restoreAllMocks()
+  })
+
+  /** Every line the log was written with while `work` ran. */
+  async function logged(work: () => Promise<unknown>): Promise<string[]> {
+    const lines: string[] = []
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
+      lines.push(String(line))
+    })
+
+    await work()
+    return lines
+  }
+
+  async function fileAt(path: string, content: string): Promise<string> {
+    const made = await call(env, `/v1/spaces/${spaceId}/notes`, { token, body: { path, content } })
+    return made.json.note.id
+  }
+
+  /** The rename itself, as the app makes it: the same note id, a path whose name
+   *  says the other kind, and the bytes it already had. */
+  async function renameTo(noteId: string, path: string): Promise<void> {
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    const done = await call(env, `/v1/notes/${noteId}`, {
+      method: 'PUT',
+      token,
+      body: { path, content: read.json.content, baseVersion: read.json.note.version },
+    })
+
+    expect(done.status).toBe(200)
+  }
+
+  function contentOf(noteId: string): Promise<string> {
+    return call(env, `/v1/notes/${noteId}`, { token }).then((read) => read.json.content)
+  }
+
+  test('does not write nothing over a canvas whose file became a note', async () => {
+    const boardId = await fileAt('Board.canvas', writeCanvas(DRAWN))
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: boardId, spaceId })
+    await say(made, state, one.socket, one.draws(penStroke('kept', 8, '2')))
+    await made.alarm()
+
+    await renameTo(boardId, 'Board.md')
+
+    // The runtime put the object to sleep, and a device joins the file as it now
+    // is. Before the fix this was let in and the settle wrote the empty string;
+    // now it is refused while the room changes over. The file must survive both.
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    await logged(async () => {
+      await join(woken, { id: boardId, spaceId, kind: 'words' }).catch(() => undefined)
+      await woken.alarm().catch(() => undefined)
+    })
+
+    const after = await contentOf(boardId)
+    expect(after).not.toBe('')
+    expect(readCanvas(after).ink).toHaveLength(2)
+    expect(readCanvas(after).nodes).toHaveLength(1)
+  })
+
+  test('does not write a canvas over the words of a note whose file became one', async () => {
+    const noteId = await fileAt('plan.md', '# Plan\nwritten down\n')
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    await say(made, state, one.socket, one.type(7, 'and kept\n'))
+    await made.alarm()
+
+    await renameTo(noteId, 'plan.canvas')
+
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    await logged(async () => {
+      await join(woken, { id: noteId, spaceId, kind: 'plane' }).catch(() => undefined)
+      await woken.alarm().catch(() => undefined)
+    })
+
+    expect(await contentOf(noteId)).toBe('# Plan\nand kept\nwritten down\n')
+  })
+
+  test('starts the room again as the kind the file is now', async () => {
+    const boardId = await fileAt('Board.canvas', writeCanvas(DRAWN))
+    const { room: made, state } = room(env)
+    const drawing = await onPlane(made, state, { id: boardId, spaceId })
+    await made.alarm()
+
+    await renameTo(boardId, 'Board.md')
+
+    // The join that finds the file changed is refused, and the room goes with it:
+    // every socket closed with the code that means come back, the row saying
+    // somebody had it open taken away, and the storage emptied.
+    await expect(join(made, { id: boardId, spaceId, kind: 'words' })).rejects.toThrow()
+
+    expect(drawing.socket.closed).toBe(true)
+    expect(drawing.socket.closedWith?.code).toBe(1012)
+    expect(state.kept.size).toBe(0)
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+
+    // And the next join builds the room out of the file, under the kind it is now:
+    // the canvas as it was written, read as the words the file's name says.
+    const again = new NoteRoom(state as unknown as DurableObjectState, env)
+    const back = await arrive(again, state, { id: boardId, spaceId })
+    expect(readCanvas(back.words).nodes).toHaveLength(1)
+  })
+
+  test('refuses a settle the file itself disagrees with, and says so', async () => {
+    const noteId = await fileAt('plan.md', '# Plan\n')
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    await say(made, state, one.socket, one.type(7, 'typed on\n'))
+
+    // Renamed with nobody joining afterwards, so nothing has told the room: the
+    // settle already on the clock is the next thing to happen.
+    await renameTo(noteId, 'plan.canvas')
+    const lines = await logged(() => made.alarm())
+
+    // The words stay in the room and the file keeps its own; what does not happen
+    // is prose written into a file that says it holds a plane.
+    expect(await contentOf(noteId)).toBe('# Plan\n')
+    expect(lines).toHaveLength(1)
+    const written = JSON.parse(lines[0] ?? '{}') as Record<string, unknown>
+    expect(written.failed).toBe(`room ${noteId}`)
+    expect(String(written.said)).toContain('plane')
+  })
+
+  /** The second line of defence, and the one that matters for a room an older
+   *  build already left in this state: its storage says words and its document is
+   *  a plane, which is exactly what the overwritten kind looked like. */
+  test('never writes nothing over a file that has something in it', async () => {
+    const boardId = await fileAt('Board.canvas', writeCanvas(DRAWN))
+    const { room: made, state } = room(env)
+    await onPlane(made, state, { id: boardId, spaceId })
+    await made.alarm()
+
+    // What the old build wrote down: the file is a note and the room agrees it is
+    // one, while the document it holds is the plane it always was.
+    await renameTo(boardId, 'Board.md')
+    state.kept.set('note', { noteId: boardId, spaceId, kind: 'words' })
+
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    const lines = await logged(() => woken.alarm())
+
+    expect(await contentOf(boardId)).toBe(writeCanvas(DRAWN))
+    expect(lines).toHaveLength(1)
+    const said = String((JSON.parse(lines[0] ?? '{}') as { said?: unknown }).said)
+    expect(said).toContain('holds a plane')
+  })
+
+  /** The same guard from the other side, and the one the client can reach on its
+   *  own: a tab that thinks it holds a canvas, joined to the room of a file whose
+   *  name says it is a note. Nothing on the server renamed anything here - the two
+   *  ends decided the shape from different things and disagreed. */
+  test('leaves the words alone when a canvas is drawn into a note’s room', async () => {
+    const noteId = await fileAt('plan.md', '# Plan\nwritten down\n')
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    // A device drawing on what the room holds as prose, which is what a canvas
+    // binding on a note's room does.
+    const before = Y.encodeStateVector(one.doc)
+    one.doc.transact(() => {
+      pushPlane(one.doc, readPlane(one.doc), stamped(readPlane(one.doc), DRAWN, 7000))
+    })
+    await say(made, state, one.socket, syncUpdate(Y.encodeStateAsUpdate(one.doc, before)))
+
+    const lines = await logged(() => made.alarm())
+
+    expect(await contentOf(noteId)).toBe('# Plan\nwritten down\n')
+    expect(lines).toHaveLength(1)
+  })
+
+  test('does not empty a file because the room’s own snapshot came back quiet', async () => {
+    const noteId = await fileAt('kept.md', '# Kept\nevery word\n')
+    const { room: made, state } = room(env)
+    await arrive(made, state, { id: noteId, spaceId })
+    await made.alarm()
+
+    // A snapshot whose bytes are not bytes: the keys are there, so the room reads
+    // itself back as though it had a document, and what it has is nothing.
+    for (const key of [...state.kept.keys()]) {
+      if (key.startsWith('state:') || key.startsWith('log:')) state.kept.set(key, 'not bytes')
+    }
+
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    const lines = await logged(() => woken.alarm())
+
+    expect(await contentOf(noteId)).toBe('# Kept\nevery word\n')
+    expect(lines).toHaveLength(1)
+    expect(String((JSON.parse(lines[0] ?? '{}') as { said?: unknown }).said)).toContain(
+      'never held',
+    )
+  })
+
+  test('still lets a note somebody emptied become empty', async () => {
+    const noteId = await fileAt('gone.md', '# Gone\nevery word of it\n')
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    // Everything selected and deleted, which is a note somebody emptied rather
+    // than a document read through the wrong serialiser.
+    const before = Y.encodeStateVector(one.doc)
+    one.text.delete(0, one.text.length)
+    await say(made, state, one.socket, syncUpdate(Y.encodeStateAsUpdate(one.doc, before)))
+    await made.alarm()
+
+    expect(await contentOf(noteId)).toBe('')
+  })
+})

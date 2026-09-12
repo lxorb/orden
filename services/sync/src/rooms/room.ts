@@ -39,10 +39,20 @@ import {
   syncUpdate,
 } from '@nib/rooms'
 import { byteLength } from '../crypto'
+import { note as noted } from '../failed'
 import { MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
-import { fileOf, fill, kindOf, writesOf, type RoomKind } from './kind'
+import {
+  fileOf,
+  fill,
+  kindOf,
+  leavesAPlane,
+  neverHeld,
+  roomKind,
+  writesOf,
+  type RoomKind,
+} from './kind'
 import { RoomState } from './state'
 
 /** How long after the last keystroke the words are written into the note store.
@@ -190,6 +200,7 @@ export class NoteRoom implements DurableObject {
     held: Held,
     joining: Joining = { writes: true, who: '' },
   ): Promise<void> {
+    await this.crossed(held.kind)
     await this.open(held)
 
     // Written down where a revocation can find it, and written before the socket
@@ -215,6 +226,64 @@ export class NoteRoom implements DurableObject {
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
+  }
+
+  /** The file behind this room was renamed from a note into a canvas, or back,
+   *  while the room held it.
+   *
+   *  The two shapes cannot be turned into each other: a canvas is not prose and
+   *  prose is not a plane. So there is nothing to convert, and what used to happen
+   *  instead was the worst of the three things that could: the join said the new
+   *  kind, the room wrote it down as though it had always been that, and the settle
+   *  read the document through the wrong serialiser. A plane read as words is the
+   *  empty string, so a canvas somebody had drawn on was written over with nothing.
+   *
+   *  What happens now is the one order of events that keeps both the file and the
+   *  session. What the room holds goes into the file first, through the shape it
+   *  really is - which is byte for byte what renaming the file on a disk leaves
+   *  behind, and the only write allowed to disagree with the file's new name. Then
+   *  the room is taken down: every socket closed with 1012, which is the code for
+   *  "the server is restarting" and which the app's own backoff comes back from
+   *  inside a second, and the storage emptied so that the join after it builds the
+   *  room out of the file under the kind it now is. Nothing is converted and nothing
+   *  is guessed; the file keeps its bytes and the room becomes what the file is.
+   *
+   *  The object is reset rather than talked round because a `Y.Doc` cannot be turned
+   *  from prose into a plane, and seeding a second shape into the one this object is
+   *  holding would leave it both at once - which is the state this whole method is
+   *  about not being in.
+   *
+   *  A settle that did not land leaves everything exactly as it was and refuses the
+   *  join. The door answers 503, the client asks again, and the next attempt may
+   *  land; what must not happen is a document thrown away while the file is still
+   *  without it. */
+  private async crossed(wanted: RoomKind): Promise<void> {
+    const held = this.held ?? heldIn(await this.ctx.storage.get('note'))
+    if (!held || held.kind === wanted) return
+
+    // The document has to be in hand before it can be written down, which for an
+    // object the runtime woke is a read.
+    await this.open(held)
+
+    if (!(await this.settle(true))) {
+      throw new Error(`this room still holds the ${held.kind} its file was`)
+    }
+
+    // The row saying somebody has this file open goes with the sockets: a close
+    // this side asked for brings no close handler with it.
+    await this.env.DB.prepare('delete from room_sockets where note_id = ?').bind(held.noteId).run()
+
+    for (const socket of this.ctx.getWebSockets()) {
+      forget(this.awareness, announcedBy(socket), socket)
+      socket.close(1012, 'this file is another kind of room now')
+    }
+
+    await this.ctx.storage.deleteAll()
+    this.ctx.abort('the file behind this room is another kind of file now')
+
+    // `abort` ends the object rather than this function, so the join is refused
+    // here as well: what must not happen is entering the room that just went.
+    throw new Error(`this room is starting again as a ${wanted} room`)
   }
 
   /** This person has this file open. */
@@ -466,40 +535,83 @@ export class NoteRoom implements DurableObject {
   /** The file as it now stands, written into the note store the way any other save
    *  writes it: the bytes in R2, the row's version and the space's cursor moved on.
    *  Every device that is not in the room reads it as an ordinary edit made
-   *  somewhere else, which is exactly what it is. */
-  private async settle() {
+   *  somewhere else, which is exactly what it is.
+   *
+   *  Answers whether the file now holds what the room holds. Every way of saying no
+   *  leaves both of them as they were - the words stay in the room, and the file
+   *  keeps its own - because there is no failure here whose better outcome is a
+   *  file with less in it than it started with. `crossed` is the one caller that
+   *  reads the answer, because it is the one that throws a document away and may
+   *  only do so once the file has it.
+   *
+   *  `crossing` is that call, and the one write allowed to disagree with the file's
+   *  name; see `crossed`. */
+  private async settle(crossing = false): Promise<boolean> {
     const held = this.held
-    if (!held) return
+    if (!held) return false
 
     // What arrived since the last settle, written into the room's own storage.
     // The two copies move together: everything the note store holds is in the
     // room's snapshot too, and nothing is left only in memory.
     await this.state.flush()
 
-    const note = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
+    const file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
       .bind(held.noteId)
       .first<Note>()
 
     // The note was deleted while the room was open. There is nothing to write
     // it into, and putting it back is Recently deleted's job, not a room's.
-    if (!note) return
+    if (!file) return false
+
+    // The file is not the kind of thing this room holds any more: it was renamed
+    // across the two while the room was open, and writing now would be the settle
+    // reading the document through the wrong serialiser - which is how a canvas
+    // came to be written over with nothing. What the room holds stays in the room,
+    // where the next join's changeover writes it; see `crossed`, whose own settle
+    // is the one that is meant to cross.
+    if (!crossing && roomKind(file.path) !== held.kind) {
+      noted(
+        `room ${held.noteId}`,
+        new Error(`the file is a ${roomKind(file.path)} room now and this one holds ${held.kind}`),
+        null,
+      )
+      return false
+    }
 
     const settled = fileOf(held.kind, this.state.doc)
     const size = byteLength(settled)
-    if (size > MAX_NOTE_BYTES) return
+    if (size > MAX_NOTE_BYTES) return false
+
+    // A drawing this settle would leave behind, which is the other half of the same
+    // mistake and the one that catches it wherever it came from: a room an older
+    // build already wrote the wrong kind into, or a client that joined a note's
+    // room with a canvas in its hands. See `leavesAPlane`.
+    if (leavesAPlane(held.kind, this.state.doc)) {
+      noted(`room ${held.noteId}`, new Error('this room holds a plane and is read as words'), null)
+      return false
+    }
+
+    // And nothing over something, where the nothing is a document that never
+    // arrived rather than a note somebody emptied; see `neverHeld`. The last line
+    // there is: no settle writes a file with less in it than it started with
+    // because a read came back quiet.
+    if (!settled && file.size > 0 && neverHeld(this.state.doc)) {
+      noted(`room ${held.noteId}`, new Error('this room never held the file it would empty'), null)
+      return false
+    }
 
     // Only a note that grew can take an account past what it may keep, and
     // working out what an account is using reads every note it holds. A limit
     // nobody enforces is a number on a settings page; one worked out on every
     // settle is a note that is slow to write in.
-    if (size > note.size) {
+    if (size > file.size) {
       const owner = await this.env.DB.prepare('select user_id from spaces where id = ?')
-        .bind(note.space_id)
+        .bind(file.space_id)
         .first<{ user_id: string }>()
 
       // The words stay in the room and in every editor showing it; what does not
       // happen is the account growing past its quota.
-      if (owner && !(await fits(this.env, owner.user_id, size, note.size))) return
+      if (owner && !(await fits(this.env, owner.user_id, size, file.size))) return false
     }
 
     // Somebody saved the same note between the row being read above and the
@@ -507,7 +619,12 @@ export class NoteRoom implements DurableObject {
     // still holding the words, so the answer is to come round again and write
     // them on top of what landed rather than to write over it from a row that
     // was already stale.
-    if (!(await saveNote(this.env, note, settled, note.path))) await this.settleSoon()
+    if (!(await saveNote(this.env, file, settled, file.path))) {
+      await this.settleSoon()
+      return false
+    }
+
+    return true
   }
 }
 

@@ -80,6 +80,13 @@ export class FakeState {
       }
       return Promise.resolve(gone)
     },
+    /** Everything the object kept, alarm included - what resetting a room is made
+     *  of; see `crossed` in rooms/room.ts. */
+    deleteAll: (): Promise<void> => {
+      this.kept.clear()
+      this.alarm = null
+      return Promise.resolve()
+    },
     getAlarm: (): Promise<number | null> => Promise.resolve(this.alarm),
     setAlarm: (at: number): Promise<void> => {
       this.alarm = at
@@ -114,6 +121,15 @@ export class FakeState {
 
   blockConcurrencyWhile<T>(work: () => Promise<T>): Promise<T> {
     return work()
+  }
+
+  /** Why the object asked the runtime to end it, when it did. The real one throws
+   *  the whole object away and there is nothing left to ask; here it is recorded,
+   *  and the room refuses the request it was handling either way. */
+  aborted: string | null = null
+
+  abort(reason?: string) {
+    this.aborted = reason ?? ''
   }
 
   waitUntil(work: Promise<unknown>) {
