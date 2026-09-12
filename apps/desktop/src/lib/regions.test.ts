@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { isRegion, REGIONS, stepRegion } from './regions'
+import { hasStatusBar, isRegion, REGIONS, stepRegion } from './regions'
 
 /** Walking the regions of the window with one key.
  *
@@ -102,5 +102,31 @@ describe('a window with less in it', () => {
   test('counts a region once however many times it is drawn', () => {
     expect(stepRegion(['tabs', 'editor', 'tabs', 'editor'], 'tabs', 1)).toBe('editor')
     expect(stepRegion(['tabs', 'editor', 'tabs'], 'editor', 1)).toBe('tabs')
+  })
+})
+
+/** Which windows have the bar at all. The ring above walks what is drawn, so this
+ *  is the rule that decides whether `status` is ever in it - and the window, the
+ *  table in docs/keyboard.md and the two comments about the ring all read it here
+ *  rather than each naming their own kinds. */
+describe('the bar under the note', () => {
+  test('is drawn over a note, which is what it has something to say about', () => {
+    expect(hasStatusBar('note')).toBe(true)
+    expect(hasStatusBar('pdf')).toBe(true)
+    expect(hasStatusBar('web')).toBe(true)
+  })
+
+  /** The graph holds no document at all; a canvas and a page note hold the JSON of
+   *  a file format, and the word count of JSON is a number about nothing. */
+  test('and left out over the three that have no words to count', () => {
+    expect(hasStatusBar('graph')).toBe(false)
+    expect(hasStatusBar('canvas')).toBe(false)
+    expect(hasStatusBar('pages')).toBe(false)
+  })
+
+  /** A window waiting for a note, rather than one showing something else. */
+  test('and stays where nothing is open', () => {
+    expect(hasStatusBar(null)).toBe(true)
+    expect(hasStatusBar(undefined)).toBe(true)
   })
 })

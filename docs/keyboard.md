@@ -111,12 +111,14 @@ Eight, in the order the window draws them, which is the order Tab already walks:
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
 | `editor` | the note |
-| `status` | the bar under it |
+| `status` | the bar under it, over a note |
 
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
 not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
-and a canvas has no status bar.
+and the graph, a canvas and a page note have no status bar - the bar counts the
+words of a note, and none of those three has a note for it to count. See
+`hasStatusBar` in regions.ts, which is the one rule the window draws from.
 
 The space switcher is a menu that drops out of the panel header, so
 Ctrl+Shift+Space presses that header's own control rather than opening a second

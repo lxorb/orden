@@ -42,6 +42,7 @@
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
+  import { hasStatusBar } from './lib/regions'
   import { pages } from './lib/pages/showing.svelte'
   import { rooms } from './lib/rooms.svelte'
   import { said } from './lib/said.svelte'
@@ -647,7 +648,11 @@
         <PaneTree frame={workspace.panes.frame} />
       </div>
 
-      {#if workspace.active?.kind !== 'graph' && !fullscreen.on}
+      <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
+           words for it to count, so it is left out rather than drawn empty and F6
+           steps straight past it. One rule, in regions.ts, which is also what the
+           keyboard's own table describes. -->
+      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}

@@ -47,8 +47,9 @@ function boxOf(name: Region): HTMLElement | null {
 }
 
 /** The regions on screen. The sidebar may be shut, the strip belongs to a
- *  desktop, and the status bar is left out over a canvas: what is here is what
- *  the window happens to be drawing. */
+ *  desktop, and the status bar is left out over a canvas, a page note and the
+ *  graph - see `hasStatusBar` in regions.ts: what is here is what the window
+ *  happens to be drawing. */
 function regionsOn(): Region[] {
   return REGIONS.filter((name) => boxOf(name) !== null)
 }

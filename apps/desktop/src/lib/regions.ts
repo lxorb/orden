@@ -12,6 +12,8 @@
  *  are on screen right now, and how to put the keyboard in one, is focus.ts,
  *  where the DOM is. */
 
+import type { TabKind } from './workspace/documents.svelte'
+
 /** Every region there is, in the order the window draws them - down the sidebar,
  *  then across the note - which is the order Tab already walks and so the order
  *  F6 walks too.
@@ -34,6 +36,10 @@ export const REGIONS = [
 
 export type Region = (typeof REGIONS)[number]
 
+/** The kinds of tab the bar under the note is left out over; see `hasStatusBar` at
+ *  the foot of this file. */
+const WITHOUT_STATUS = new Set<TabKind>(['graph', 'canvas', 'pages'])
+
 const RANK = new Map<string, number>(REGIONS.map((name, at) => [name, at]))
 
 export function isRegion(value: string | null | undefined): value is Region {
@@ -41,8 +47,9 @@ export function isRegion(value: string | null | undefined): value is Region {
 }
 
 /** The regions on screen, in the order above. What arrives is whatever the page
- *  happens to hold - the sidebar may be shut, and the status bar is left out over
- *  a canvas - in whatever order it was collected, named once each. */
+ *  happens to hold - the sidebar may be shut, and the status bar is left out over a
+ *  canvas, a page note and the graph - in whatever order it was collected, named
+ *  once each. */
 function ordered(present: readonly string[]): Region[] {
   const kept = [...new Set(present.filter(isRegion))]
   return kept.sort((a, b) => (RANK.get(a) ?? 0) - (RANK.get(b) ?? 0))
@@ -67,4 +74,23 @@ export function stepRegion(
   if (at < 0) return (direction < 0 ? list.at(-1) : list[0]) ?? null
 
   return list[(at + direction + list.length) % list.length] ?? null
+}
+
+/** Whether the bar under the note is drawn over what is open now.
+ *
+ *  It says what is true of a note: how many words it has, which Vim mode the
+ *  keyboard is in, whether the note was too long to parse. Three kinds of tab have
+ *  no note for it to say that of - the graph is drawn from the space and holds no
+ *  document at all, while a canvas and a page note hold the JSON of a file format,
+ *  and counting the words of a file format is a number about nothing. So the bar is
+ *  left out over all three rather than drawn empty, and F6 never lands on a region
+ *  with nothing in it.
+ *
+ *  Here rather than in the markup because three other places describe it - the table
+ *  in docs/keyboard.md, `ordered` above and `regionsOn` in focus.ts - and a window
+ *  that draws one thing while they say another is how the ring and the window drift
+ *  apart. Nothing open at all still draws it: that is a window waiting for a note,
+ *  not one showing something else. */
+export function hasStatusBar(kind: TabKind | null | undefined): boolean {
+  return kind === null || kind === undefined || !WITHOUT_STATUS.has(kind)
 }

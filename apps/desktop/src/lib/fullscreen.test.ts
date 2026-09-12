@@ -170,7 +170,9 @@ describe('the shell', () => {
 
   test('the app leaves: the file list, both bars, the round button', () => {
     expect(app).toContain('{#if !fullscreen.on}')
-    expect(app).toContain("{#if workspace.active?.kind !== 'graph' && !fullscreen.on}")
+    // Which kinds have the bar at all is `hasStatusBar` in regions.ts; what is
+    // asserted here is only that full screen takes it away as well.
+    expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !fullscreen.on}')
     expect(app).toContain('&& !fullscreen.on}\n        <button class="fab"')
 
     const gone = branches(app).find((one) => one.includes('class="panels"'))
