@@ -12,7 +12,7 @@
     type StateCommand,
     type Transaction,
   } from '@nib/editor'
-  import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
+  import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
@@ -81,11 +81,15 @@
     view.focus()
   }
 
+  /** The one action the dot of colours stands beside, named once so the markup
+   *  below does not match on a translated string twice. */
+  const HIGHLIGHT = t('Highlight')
+
   const ACTIONS: { label: string; title: string; command: StateCommand }[] = [
     { label: 'B', title: t('Bold'), command: toggleWrap('**') },
     { label: 'I', title: t('Italic'), command: toggleWrap('*') },
     { label: 'S', title: t('Strikethrough'), command: toggleWrap('~~') },
-    { label: 'M', title: t('Highlight'), command: highlightSelection },
+    { label: 'M', title: HIGHLIGHT, command: highlightSelection },
     { label: '<>', title: t('Code'), command: toggleWrap('`') },
     { label: 'H', title: t('Heading'), command: setHeading(2) },
     { label: '"', title: t('Quote'), command: toggleQuote },
@@ -93,20 +97,19 @@
     { label: '×', title: t('Clear formatting'), command: clearFormatting },
   ]
 
-  /** What the swatch beside the highlight button is drawn in: the colour that
-   *  button writes, so the bar says what it is about to do. A highlight with no
-   *  colour of its own wears the accent, which is what it is drawn in. */
-  const swatch = $derived(
-    modes.highlight.tone === null ? 'var(--accent-soft)' : `var(--mark-${modes.highlight.tone})`,
-  )
+  /** A colour as the dot that offers it: the tone at full strength, the way the
+   *  row of dots on the canvas draws the same six. The wash `--mark-*` is for the
+   *  words behind a highlight, which have to be read through; a dot is the colour
+   *  itself or it is not a colour.
+   *
+   *  Null is the highlight with no colour of its own, which is drawn as the ring
+   *  the others fill - the canvas says "no colour" the same way. */
+  const dotFor = (tone: number | null) => (tone === null ? undefined : `var(--canvas-${tone})`)
 
   /** Highlights the selection in this colour, and keeps it: the button, the
    *  shortcut and the menu row all write it from now on. */
-  function pick(tone: number | null) {
-    const colour = HIGHLIGHT_COLOURS.find((one) => one.tone === tone)
-    if (!colour) return
-
-    modes.setHighlightTone(tone)
+  function pick(colour: HighlightColour) {
+    modes.setHighlightTone(colour.tone)
     colouring = false
     run(toggleHighlight(colour))
   }
@@ -126,15 +129,13 @@
 
      One list of buttons for both bars, because they are the same bar in two
      places: a strip over the keyboard on a phone, a callout by the selection
-     everywhere else. -->
-{#snippet press(title: string, label: string, act: () => void, on = false, dot?: string)}
+     everywhere else. What the press prevents is the default that would move the
+     focus: on a phone the keyboard would close under the bar, and on a desktop
+     the selection the buttons are about would go. -->
+{#snippet press(title: string, label: string, act: () => void)}
   <button
-    class:swatch={dot !== undefined}
-    class:on
     {title}
     aria-label={title}
-    aria-pressed={on}
-    style:--dot={dot}
     onpointerdown={(event) => event.preventDefault()}
     onmousedown={(event) => event.preventDefault()}
     onclick={act}
@@ -143,26 +144,43 @@
   </button>
 {/snippet}
 
-{#snippet buttons()}
-  <!-- The colours, in the bar rather than over it: a phone's bar is the width of
-       the screen and has nowhere to put a second surface, and one row is the same
-       bar on both. The swatch stays where it was, so pressing it again comes
-       back. -->
-  {@render press(t('Highlight colour'), '', () => (colouring = !colouring), colouring, swatch)}
+<!-- A colour, as the dot the whole app asks "which colour" with. The one in hand
+     is ringed; a dot with no colour is the ring the others fill. Named by the
+     colour itself, which is the word the Format menu's own rows use - a highlight
+     is red or it is not, and one vocabulary is one design. -->
+{#snippet dot(colour: HighlightColour, on: boolean, act: () => void)}
+  <button
+    class="swatch"
+    class:on
+    class:bare={colour.tone === null}
+    title={t(colour.name)}
+    aria-label={t(colour.name)}
+    aria-pressed={on}
+    style:--dot={dotFor(colour.tone)}
+    onpointerdown={(event) => event.preventDefault()}
+    onmousedown={(event) => event.preventDefault()}
+    onclick={act}
+  ></button>
+{/snippet}
 
+{#snippet buttons()}
   {#if colouring}
+    <!-- The colours in the bar rather than over it: a phone's bar is the width of
+         the screen and has nowhere to put a second surface, and one row is the
+         same bar on both devices. -->
     {#each HIGHLIGHT_COLOURS as colour (colour.name)}
-      {@render press(
-        t(colour.name),
-        '',
-        () => pick(colour.tone),
-        colour.tone === modes.highlight.tone,
-        colour.tone === null ? 'var(--accent-soft)' : `var(--mark-${colour.tone})`,
-      )}
+      {@render dot(colour, colour.tone === modes.highlight.tone, () => pick(colour))}
     {/each}
+    {@render press(t('Highlight colour'), '×', () => (colouring = false))}
   {:else}
     {#each ACTIONS as action (action.title)}
       {@render press(action.title, action.label, () => run(action.command))}
+
+      <!-- The colours sit behind one dot, next to the button they are about, so
+           the bar says which colour that button is loaded with. -->
+      {#if action.title === HIGHLIGHT}
+        {@render dot(modes.highlight, false, () => (colouring = true))}
+      {/if}
     {/each}
   {/if}
 {/snippet}
@@ -220,9 +238,9 @@
   }
 
   /* A colour, as the dot the whole app asks "which colour" with; the row of them
-     on the canvas is the same shape - see CanvasColours.svelte. The hairline is
-     the page's own ink at a whisper rather than black at a whisper, so a pale
-     wash on a pale bar still has an edge in both themes. */
+     on the canvas is the same shape at a larger size - see CanvasColours.svelte.
+     The hairline is the page's own ink at a whisper rather than black at a
+     whisper, so a pale dot on a pale bar still has an edge in both themes. */
   .swatch {
     display: grid;
     place-items: center;
@@ -231,26 +249,42 @@
   .swatch::after {
     content: '';
     display: block;
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     background: var(--dot);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: scale var(--dur-fast) var(--ease-spring);
   }
 
-  .swatch:hover::after,
-  .swatch.on::after {
-    scale: 1.12;
+  .swatch:hover::after {
+    scale: 1.14;
   }
 
-  /* The chosen colour, and the swatch while its row is open: the ring the rest of
-     the app draws round a choice. */
+  .swatch:active::after {
+    scale: 1.04;
+  }
+
+  /* The colour in hand: the ring the rest of the app draws round a choice. */
   .swatch.on::after {
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent),
       0 0 0 2px var(--surface-3),
-      0 0 0 4px var(--accent);
+      0 0 0 3px var(--accent);
+  }
+
+  /* No colour at all, drawn as the ring the others fill - which is how a card
+     with no colour of its own is drawn on the canvas. */
+  .swatch.bare::after {
+    background: none;
+    box-shadow: inset 0 0 0 2px var(--muted);
+  }
+
+  .swatch.bare.on::after {
+    box-shadow:
+      inset 0 0 0 2px var(--muted),
+      0 0 0 2px var(--surface-3),
+      0 0 0 3px var(--accent);
   }
 
   /* The bar tints a button on hover, which would swallow a dot's own colour. */
