@@ -25,14 +25,15 @@
 //! says when the process was created, and the first line below subtracts. A launch
 //! whose whole cost is in that first row is not a launch this code can make faster.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::io::Write as _;
 use std::sync::{LazyLock, Mutex};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 
 use crate::clock;
-use crate::paths::{cannot, made};
+use crate::paths::made;
 
 /// The variable that turns this on. Any value but `0`, because somebody who wrote
 /// `NIB_TRACE_STARTUP=0` meant off.
@@ -241,6 +242,7 @@ fn millis_since_epoch() -> f64 {
 /// wait for that.
 #[cfg(windows)]
 fn before_main() -> Option<Duration> {
+    use std::time::{SystemTime, UNIX_EPOCH};
     use windows::Win32::Foundation::FILETIME;
     use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 

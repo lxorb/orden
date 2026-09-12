@@ -62,7 +62,9 @@ export function sendTrace(): void {
  *  entry reports it. Nothing at all where the entry is missing, which is every
  *  engine that does not keep one. */
 function navigationSteps(): Step[] {
-  const entry = performance.getEntriesByType?.('navigation')?.[0] as
+  // `at` rather than an index, because a webview that keeps no navigation entry
+  // hands back an empty list and there is nothing to time.
+  const entry = performance.getEntriesByType('navigation').at(0) as
     | PerformanceNavigationTiming
     | undefined
   if (!entry) return []
