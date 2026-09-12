@@ -33,6 +33,40 @@ same commands on every push to `main`.
 One file, one responsibility. A file that has to explain two jobs in its
 header comment is two files.
 
+## Security
+
+A note is a file, and a file can come from anywhere: a download, a repository,
+a folder somebody shared. Three rules follow, and none of them is widened
+quietly: a change that touches one says so where it is made.
+
+- **Whose markup is markup.** Raw HTML in a document of the reader's own is
+  rendered, the way Typora and Obsidian render it. In a room, in a shared
+  space, in anything a guest can see, and in anything markup was pasted into,
+  it is the characters it is made of. The one place that decides is
+  `apps/desktop/src/lib/trust.ts`; every surface asks it through
+  `trustsHtmlIn` or `trustsHtmlAt` and passes the answer to the renderer as
+  `escapeHtml`. A published page always escapes: blogs share a domain.
+- **Nothing runs in the app.** Code that came out of a note runs in a frame
+  sandboxed without `allow-same-origin`, so its document has an opaque origin
+  and the app's DOM, storage and notes are cross-origin to it. That is the
+  ` ```js ` fence (`packages/editor/src/run`) and a block of a note's own HTML
+  (`packages/markdown/src/html-block.ts`), and both wait for a press.
+- **Nothing loads from a third party until the reader asks.** An address a
+  note points at is a card the size the frame will be, and the frame arrives on
+  a press; see `packages/markdown/src/web-embed.ts`.
+
+The policy that backs all three is `apps/desktop/src/csp.ts`, which is the one
+copy of the app's `Content-Security-Policy`: the Tauri config, `index.html` and
+the dev server all carry it and `apps/desktop/test/csp.test.ts` holds them to
+each other. Two lines in it are load-bearing. `script-src-attr 'none'` is why
+an `onerror` in a file somebody was handed is inert even where that file's
+markup is rendered. And `script-src-elem 'unsafe-inline'` is why the sandboxed
+frames above still work at all: a `srcdoc` document inherits the policy of the
+page that made it, so a policy with no room for an inline script is a policy
+that switches those two features off. Prove a change to it with
+`python apps/desktop/test/e2e/frames.py`, which serves the built app under the
+policy as a header and fails on any violation the browser reports.
+
 ## Checks
 
 ```sh

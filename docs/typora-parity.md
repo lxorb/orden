@@ -70,7 +70,13 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 - [x] Inline HTML spans with styles
 - [x] Block-level HTML passthrough
-- [x] `<iframe>` embeds
+- [x] `<iframe>` embeds, as the click-to-load card a provider's address becomes:
+      the domain and a play mark, the room the tag asked for, and nothing fetched
+      until it is pressed. Then the page in a frame sandboxed without
+      `allow-same-origin`, with no forms and no way to move the window. The same
+      card in the editor, in the reading view and on a published page, where it
+      is a link out; only `https`. Typora loads the frame the moment the note
+      opens, which tells whoever is behind the address that the note was read
 - [x] `<video>` / `<audio>` embeds with relative paths
 - [x] HTML escaping in image attributes (XSS-safe)
 - [x] HTML preserved through export
@@ -80,6 +86,16 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       a guest's session can see, and anything markup has been pasted into. The
       passthrough above is a feature of a local document, and this is where a
       document stops being local; the rule is `apps/desktop/src/lib/trust.ts`
+- [x] A block with a script in it runs, which neither Typora nor Obsidian does:
+      both render the markup and drop the script. In a document of the reader's
+      own it is a card that runs the block, once pressed, in a frame with an
+      opaque origin; in a note anybody else can reach it is escaped like the
+      rest. Raw HTML and not an ` ```html ` fence, so the same file still shows
+      its markup in the other two
+- [x] A content policy the app runs under, which Typora has none of: no element
+      on any page may carry an event handler, nothing may be loaded from a third
+      party, and a note cannot post anywhere but over https. One copy, in
+      `apps/desktop/src/csp.ts`; see docs/conventions.md
 
 ## 4. Math and academic
 

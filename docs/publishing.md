@@ -99,9 +99,30 @@ out of the same renderer and were already the same markup.
   but in the app pressing it swaps in the frame and on a page it is a link out.
   Nothing a note carries may run on a published page, and that is the point of
   it: the deck's own page turner is the Worker's script and not the note's.
+
+  An `<iframe src="https://…">` a note wrote by hand is that same card, on both
+  surfaces, and this is the one thing raw HTML does that escaping does not stop:
+  the card is markup `web-embed.ts` wrote out of an address it checked, so it is
+  as safe to serve as a link is. Which means a page needs no `frame-src` and
+  never grew one - what the reader gets is the link, and what the app gets on a
+  press is the page in a frame sandboxed without `allow-same-origin`. An address
+  one of the providers answers for gets that row's card instead, with the
+  narrower sandbox and the permissions its player needs; anything else gets
+  scripts and nothing more, and says its domain rather than a name it would have
+  had to ask somebody for. The card or nothing, and never the tag: a frame at
+  `javascript:`, at a page of the app's own, or at plain http is one a note may
+  not have, and both halves of such a tag are dropped rather than escaped into
+  four characters of text.
 - **Raw HTML.** A note of your own is markup in the app, as Typora does it. A
   published note is authored content served to strangers from a domain shared
   with every other blog, so HTML in it is shown as the characters it is made of.
+
+  A block with a whole `<script>` in it is the sharpest case of that. In the app
+  such a block is a card that runs it, once pressed, in a frame with an opaque
+  origin that knows nothing about the note it sits in; on a page it is escaped
+  like the rest, script and all, and the reader sees the characters. Same rule,
+  read twice: markup that does something is still markup, and whose note it is
+  decides. See `packages/markdown/src/html-block.ts`.
 - **Languages the editor has and the Worker does not.** Shell, SQL, Ruby, Swift
   and the other hundred are stream parsers that only exist inside CodeMirror. A
   fence naming one is a plain fence on a page. Adding a grammar to the table in
