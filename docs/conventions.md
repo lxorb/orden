@@ -100,7 +100,7 @@ where that stops being true:
   `apps/desktop/src/lib/sync/record.svelte.ts` asks which space holds it and
   writes the path built back up from that space.
 - **An import**, where every format reader puts each path component through
-  `safeName` before `applyImport` joins it to the space root — and where
+  `safeName` before `applyImport` joins it to the space root, and where
   `applyImport` then puts every path through `insideOnly` itself, in one pass
   in front of the writing, so a new format that forwards a zip entry's own
   name unsanitised writes nothing rather than escaping. The judge's own answer
