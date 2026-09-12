@@ -17,11 +17,11 @@ use crate::paths::{
 
 /// Bigger than any picture belongs in a document, and small enough that turning
 /// it into text cannot exhaust the memory of the window asking.
-///
-/// In megabytes as well, because a picture that is refused says the number, and a
-/// sentence carrying its own copy of it is a sentence that goes stale.
-const LIMIT_MB: u64 = 12;
 const LIMIT: u64 = LIMIT_MB * 1024 * 1024;
+
+/// The same ceiling in megabytes, because a picture that is refused says the
+/// number, and a sentence carrying a second copy of it is one that goes stale.
+const LIMIT_MB: u64 = 12;
 
 /// How long a picture's file name may be, so the whole path stays inside the
 /// limits Windows puts on one.

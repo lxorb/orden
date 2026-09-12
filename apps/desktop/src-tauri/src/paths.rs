@@ -461,12 +461,6 @@ fn gather(
 /// one file. Here rather than in one of the two modules that keeps something
 /// beside a file, because both do: the version history of a note, and the words
 /// taken out of a PDF.
-/// What a folder named that way holds the file's own path in, so the store can be
-/// listed by file without every record in it being read. The other half of
-/// `folder_key`, and in the same place for the same reason: the version history of
-/// a note and the words taken out of a PDF both keep one.
-pub const ORIGIN: &str = "origin.txt";
-
 #[must_use]
 pub fn folder_key(path: &str) -> String {
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
@@ -476,6 +470,13 @@ pub fn folder_key(path: &str) -> String {
     }
     format!("{hash:016x}")
 }
+
+/// What a folder named by `folder_key` keeps the file's own path in, so the store
+/// can be listed by file without every record in it being read.
+///
+/// The other half of `folder_key`, and here for the same reason: the version
+/// history of a note and the words taken out of a PDF each keep one.
+pub const ORIGIN: &str = "origin.txt";
 
 /// A path inside a space as the space speaks of it: relative, and with `/`
 /// separators whichever the platform writes.
