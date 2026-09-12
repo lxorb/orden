@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { EFFORTS } from './ask/asking'
 import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
+import { KEEP_DAYS } from './versions'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
@@ -210,6 +211,11 @@ const KNOWN: Record<string, Check> = {
   pull: pulledCommand,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
+  // How long the account keeps what a note said before: a month, or a year.
+  // Days, and only the two the app offers - the sweep reads this straight out of
+  // the column, so a number nobody chose would be a horizon nobody asked for.
+  // See versions.ts.
+  keepVersions: oneOf('keepVersions', KEEP_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has

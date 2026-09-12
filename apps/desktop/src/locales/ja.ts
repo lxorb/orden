@@ -1329,4 +1329,12 @@ export const ja: Dictionary = {
   // Which side of the window a panel sits on.
   'Move to the right': '右へ移動',
   'Move to the left': '左へ移動',
+
+  // How long the account keeps what a note said before.
+  'History on the account': 'アカウントの履歴',
+  'Keep versions': '版を保持',
+  'A month': '1 か月',
+  'A year': '1 年',
+  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
+    '直近 1 日はすべて、その後は 1 時間ごと、1 か月を過ぎると 1 日ごと、3 か月を過ぎると 1 週間ごと。',
 }

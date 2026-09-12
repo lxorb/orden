@@ -56,6 +56,13 @@ const STORAGE_KEY = 'nib:modes'
 const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
+/** How long the account keeps what a note said before, in days. A month, which
+ *  is what it always kept, or a year. The same two the service takes; see
+ *  services/sync/src/versions.ts. */
+export const KEEP_MONTH = 30
+export const KEEP_YEAR = 365
+export const KEEP_VERSIONS: readonly number[] = [KEEP_MONTH, KEEP_YEAR]
+
 /** Writing column widths, in rem. */
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
 
@@ -122,6 +129,7 @@ interface Saved {
   vim: boolean
   attachments: string
   conflicts: string
+  keepVersions: number
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -304,6 +312,12 @@ class Modes {
    *  machine; see sync/conflicts.ts. */
   conflicts = $state<ConflictRule>(DEFAULT_RULE)
 
+  /** How long the account keeps what a note said before, in days: a month, or a
+   *  year. On the account because that is whose storage it is, and because the
+   *  sweep that enforces it reads the same number; see services/sync/versions.ts
+   *  and docs/sync.md. */
+  keepVersions = $state<number>(KEEP_MONTH)
+
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
    *  written and so is where this starts.
@@ -374,6 +388,9 @@ class Modes {
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULT_RULE
+      this.keepVersions = KEEP_VERSIONS.includes(saved.keepVersions as number)
+        ? (saved.keepVersions as number)
+        : KEEP_MONTH
       this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
       this.glassesVoice = saved.glassesVoice === true
@@ -770,6 +787,17 @@ class Modes {
     this.share({ conflicts: rule })
   }
 
+  /** A month or a year, and nothing in between: the two the service takes, so a
+   *  number nobody offered is a horizon nobody asked for. */
+  setKeepVersions(days: number) {
+    const wanted = KEEP_VERSIONS.find((one) => one === days)
+    if (wanted === undefined || wanted === this.keepVersions) return
+
+    this.keepVersions = wanted
+    this.persist()
+    this.share({ keepVersions: wanted })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -834,6 +862,14 @@ class Modes {
     if (clash && unheard && clash !== this.conflicts) {
       this.conflicts = clash
       this.persist()
+    }
+
+    const keeping = remote.keepVersions
+    if (isNumber(keeping) && KEEP_VERSIONS.includes(keeping) && unheard) {
+      if (keeping !== this.keepVersions) {
+        this.keepVersions = keeping
+        this.persist()
+      }
     }
 
     const tone = remote.highlightTone
@@ -1108,6 +1144,7 @@ class Modes {
       vim: this.vim,
       attachments: this.attachments,
       conflicts: this.conflicts,
+      keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       linkFormat: this.linkFormat,

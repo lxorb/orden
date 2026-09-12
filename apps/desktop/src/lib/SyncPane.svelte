@@ -17,7 +17,7 @@
   import { account } from './account.svelte'
   import { api } from './api'
   import { i18n, plural, t } from './i18n.svelte'
-  import { modes } from './modes.svelte'
+  import { KEEP_MONTH, KEEP_YEAR, modes } from './modes.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
   import { record } from './sync/record.svelte'
@@ -132,6 +132,14 @@
   function shortPath(path: string): string {
     return path.split(/[\\/]/).slice(-2).join('/')
   }
+
+  /** How far back the account keeps a note's history. Two words rather than a
+   *  number of days: the question a reader is answering is how far back they want
+   *  to be able to go. */
+  const horizons = [
+    { value: String(KEEP_MONTH), label: t('A month') },
+    { value: String(KEEP_YEAR), label: t('A year') },
+  ]
 </script>
 
 <h3>{t('When the same note was written twice')}</h3>
@@ -152,6 +160,31 @@
 
 <p class="hint">
   {t('Nothing is ever thrown away: what does not win is kept as a version.')}
+</p>
+
+<!-- How long the account keeps them. What happens in between - one an hour for
+     the first month, one a day for the next two, one a week after that - is said
+     in the line under it and in docs/sync.md. -->
+<h3>{t('History on the account')}</h3>
+
+<div class="card">
+  <div class="setting">
+    <span class="name">{t('Keep versions')}</span>
+    <div class="pick">
+      <Select
+        value={String(modes.keepVersions)}
+        options={horizons}
+        onchange={(value: string) => modes.setKeepVersions(Number(value))}
+        label={t('Keep versions')}
+      />
+    </div>
+  </div>
+</div>
+
+<p class="hint">
+  {t(
+    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+  )}
 </p>
 
 {#if record.clashes.length}

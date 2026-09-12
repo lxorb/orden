@@ -4,6 +4,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { diffCount, lineDiff, trimmed } from './diff'
   import { overlays } from './overlays'
+  import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
   import { sync } from './sync.svelte'
@@ -181,6 +182,43 @@
       : i18n.when(at, { dateStyle: 'medium', timeStyle: 'short' })
   }
 
+  /** One row of the list: a version, or the month a run of them is in. */
+  interface Row {
+    month?: string
+    version?: Version
+  }
+
+  /** The list as it is drawn: the versions, and - where the account keeps a year
+   *  of them - a heading at each change of month.
+   *
+   *  Only for a year. A month of history is one month, so a heading over the
+   *  whole of the list would say nothing; a year is twelve of them, and the
+   *  thinning means the far end is one row a week, which is a long way to scroll
+   *  without a word saying where you are. The same `.nib-section` label every
+   *  other list in the app cuts itself up with; see docs/design.md. */
+  const rows = $derived.by((): Row[] => {
+    if (modes.keepVersions < KEEP_YEAR) return versions.map((version) => ({ version }))
+
+    const out: Row[] = []
+    let said = ''
+
+    for (const version of versions) {
+      const month = new Date(version.at).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+      })
+
+      if (month !== said) {
+        out.push({ month })
+        said = month
+      }
+
+      out.push({ version })
+    }
+
+    return out
+  })
+
   /** Restoring is itself an edit, so the words being replaced are kept first:
    *  putting an old version back is one more version, and undoable like any. */
   async function restore() {
@@ -213,19 +251,27 @@
       <p class="empty">{t('No earlier versions yet. One is kept each time you save.')}</p>
     {:else}
       <ul class="versions" use:scrollbar>
-        {#each versions as version (version.at)}
-          <li>
-            <button class:active={selected?.at === version.at} onclick={() => (selected = version)}>
-              <span>{when(version.at)}</span>
-              <!-- Where it came from, said only where that is worth saying: a
-                   version this machine kept needs no label, and one the account
-                   holds is worth knowing the device for. -->
-              {#if version.by}
-                <em>{version.by}</em>
-              {/if}
-              <kbd>{Math.max(1, Math.round(version.size / 1024))} kB</kbd>
-            </button>
-          </li>
+        {#each rows as row (row.month ?? row.version?.at)}
+          {#if row.month}
+            <li class="month"><p class="nib-section">{row.month}</p></li>
+          {:else if row.version}
+            {@const version = row.version}
+            <li>
+              <button
+                class:active={selected?.at === version.at}
+                onclick={() => (selected = version)}
+              >
+                <span>{when(version.at)}</span>
+                <!-- Where it came from, said only where that is worth saying: a
+                     version this machine kept needs no label, and one the account
+                     holds is worth knowing the device for. -->
+                {#if version.by}
+                  <em>{version.by}</em>
+                {/if}
+                <kbd>{Math.max(1, Math.round(version.size / 1024))} kB</kbd>
+              </button>
+            </li>
+          {/if}
         {/each}
       </ul>
 
@@ -310,6 +356,18 @@
     list-style: none;
     overflow-y: auto;
     border-right: 1px solid var(--line);
+  }
+
+  /* The month a run of versions is in. The app's own section label, so a year of
+     history is cut up the way every other long list here is; the first one needs
+     no space above it. */
+  .versions .month p {
+    margin: var(--space-3) 0 var(--space-1);
+  }
+
+  .versions li:first-child .month p,
+  .versions .month:first-child p {
+    margin-top: 0;
   }
 
   .versions button {

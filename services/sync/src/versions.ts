@@ -20,25 +20,60 @@
  *  interval the device's own keeper defaults to. The newest state of a note is
  *  the note, so a version from thirty seconds ago says nothing the file does not.
  *
- *  Forever. A month, thinned after the first day to one an hour - the same two
- *  rules the device's sweep uses, so the two histories read alike. There is no
- *  setting for it: the only thing a longer month would change is the bill for
- *  storage nobody asked to keep, and a reader who does not want their words on
- *  the account has a clearer lever than a slider, which is not to sync. */
+ *  Forever. A month by default, or a year for an account that asks - and thinned
+ *  as it ages, the way a backup is: everything from the first day, one an hour
+ *  for the first month, one a day for the next two, one a week after that. Which
+ *  is the shape Time Machine has had since 2007, for the reason it has it: what
+ *  somebody wants from last Tuesday is the version they were writing, and what
+ *  they want from last spring is *a* version.
+ *
+ *  There is a ceiling under all of it, per account and in bytes, swept
+ *  oldest-first: a year of a busy vault is real storage, and a history that grew
+ *  without limit would be a bill nobody agreed to. Version bytes do not count
+ *  against the account's own gigabyte - that is Emil's to decide - so this is the
+ *  only thing holding them. */
 
 import { cleanName, now } from './crypto'
 import type { Env, Note } from './types'
 
-/** How long the account keeps a version. */
+/** How long the account keeps a version, in days: a month, or a year. The two
+ *  the setting offers, and the two the service will take; see settings.ts. */
+export const KEEP_DAYS = [30, 365] as const
+
+/** What an account that has never said keeps: a month, which is what every
+ *  account kept before there was a choice. */
 export const KEEP_FOR = 30 * 24 * 60 * 60 * 1000
 
 /** The closest two versions of one note are allowed to be. */
 const VERSION_EVERY = 5 * 60 * 1000
 
 /** Everything from the last day is kept as it happened; older than that, one per
- *  hour survives. */
+ *  hour survives, then one per day, then one per week. */
 const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
+const WEEK = 7 * DAY
+
+/** Where each shelf begins, as an age. Older than a month, a day is enough;
+ *  older than three, a week is - and a year of a note written in every day comes
+ *  to 24 + 30 + 60 + 39, which is a hundred and fifty-odd rows rather than nine
+ *  thousand. */
+const AFTER_A_MONTH = 30 * DAY
+const AFTER_THREE = 90 * DAY
+
+/** How many bytes of history one account may hold before the oldest of it starts
+ *  to go.
+ *
+ *  Two gigabytes. A year of hourly versions of a thousand-note vault written in
+ *  every day is around that, and the bodies are shared by hash, so a vault of
+ *  small edits costs far less than the arithmetic suggests. It is a number to
+ *  turn rather than a policy: version bytes are not counted against the account's
+ *  own gigabyte, so this is what stands between a year of history and a bill. */
+export const MOST_VERSION_BYTES = 2 * 1024 * 1024 * 1024
+
+/** How many accounts over that ceiling one night deals with. The sweep is
+ *  nightly and an account that is over it is over it by a little more each day,
+ *  so a queue that empties slowly empties. */
+const ACCOUNTS_AT_ONCE = 20
 
 /** How much one sweep does. Counted in writes rather than rows, because a Worker
  *  invocation has a ceiling on those and a busy month has plenty of both. */
@@ -260,7 +295,25 @@ export async function versionsAt(
   return results
 }
 
-/** The sweep: a month, thinned to one an hour after the first day.
+/** What the account a note belongs to keeps its history for, in milliseconds.
+ *
+ *  Read off the owner's settings through the note's space, which is where the
+ *  word the reader chose already lives; a column on the version row would be the
+ *  same fact written twice, and would answer for the choice in force on the day
+ *  the version was written rather than the one in force now. `keepVersions` is
+ *  days, and an account that has never said keeps the month it always kept. */
+const HORIZON = "coalesce(json_extract(u.settings, '$.keepVersions'), ?2) * 86400000"
+
+/** Which shelf a row is on, as the bucket its survivor is chosen within: an hour
+ *  for the first month, a day for the next two, a week after that.
+ *
+ *  Used twice in one statement - grouped by, and divided by - and the group key
+ *  carries both, because two shelves can otherwise land on the same number: a
+ *  week's bucket of an old row and an hour's bucket of a recent one are both
+ *  integers and nothing says they differ. */
+const SHELF = 'case when at < ?3 then ?4 when at < ?5 then ?6 else ?7 end'
+
+/** The sweep: a month or a year, thinned as it ages, and a ceiling under both.
  *
  *  Bodies go only when the last row naming one has gone, and the whole run is
  *  bounded: a sweep that tried to catch up on a year in one invocation would be
@@ -269,13 +322,21 @@ export async function versionsAt(
 export async function sweepVersions(env: Env, at: number): Promise<number> {
   const freed = new Set<string>()
 
-  // Older than the month.
+  // Older than what its own account keeps. The join is what makes the horizon
+  // the reader's rather than the service's; see HORIZON.
   const old = await env.DB.prepare(
     `delete from note_versions
-      where rowid in (select rowid from note_versions where at < ? limit ?)
+      where rowid in (
+        select v.rowid from note_versions v
+          join notes n on n.id = v.note_id
+          join spaces s on s.id = n.space_id
+          left join users u on u.id = s.user_id
+         where v.at < ?1 - ${HORIZON}
+         limit ?3
+      )
       returning hash`,
   )
-    .bind(at - KEEP_FOR, AT_ONCE)
+    .bind(at, KEEP_FOR / DAY, AT_ONCE)
     .all<{ hash: string }>()
 
   for (const row of old.results) freed.add(row.hash)
@@ -301,13 +362,79 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
         where note_id = ?1 and at < ?2
           and at not in (select max(at) from note_versions
                           where note_id = ?1 and at < ?2
-                          group by cast(at / ?3 as integer))
+                          group by ${SHELF}, cast(at / (${SHELF}) as integer))
         returning hash`,
     )
-      .bind(one.note_id, at - DAY, HOUR)
+      .bind(one.note_id, at - DAY, at - AFTER_THREE, WEEK, at - AFTER_A_MONTH, DAY, HOUR)
       .all<{ hash: string }>()
 
     for (const row of thinned.results) freed.add(row.hash)
+  }
+
+  return (await forgetBodies(env, freed)) + (await capVersions(env))
+}
+
+/** The ceiling: an account over it loses its oldest history until it is under.
+ *
+ *  Oldest-first, because that is the order anybody would give history up in - and
+ *  because the version somebody actually asks for is nearly always a recent one.
+ *  Bounded twice, by the accounts looked at and by the rows deleted, so one
+ *  night's run is one night's work and an account that is far over comes down
+ *  over several of them.
+ *
+ *  Answers how many bodies went, which the sweep adds to its own count. */
+async function capVersions(env: Env): Promise<number> {
+  const { results: over } = await env.DB.prepare(
+    `select s.user_id as user_id, sum(v.size) as bytes
+       from note_versions v
+       join notes n on n.id = v.note_id
+       join spaces s on s.id = n.space_id
+      group by s.user_id
+     having bytes > ?1
+      limit ?2`,
+  )
+    .bind(MOST_VERSION_BYTES, ACCOUNTS_AT_ONCE)
+    .all<{ user_id: string; bytes: number }>()
+
+  const freed = new Set<string>()
+
+  for (const account of over) {
+    let held = account.bytes
+
+    for (let round = 0; round < 4 && held > MOST_VERSION_BYTES; round++) {
+      // Read before deleted, so exactly as much goes as has to: a chunk deleted
+      // outright would take four hundred versions where one was over the line.
+      const { results: oldest } = await env.DB.prepare(
+        `select v.rowid as id, v.hash as hash, v.size as size
+           from note_versions v
+           join notes n on n.id = v.note_id
+           join spaces s on s.id = n.space_id
+          where s.user_id = ?1
+          order by v.at
+          limit ?2`,
+      )
+        .bind(account.user_id, AT_ONCE)
+        .all<{ id: number; hash: string; size: number }>()
+
+      if (!oldest.length) break
+
+      const going: number[] = []
+      for (const row of oldest) {
+        if (held <= MOST_VERSION_BYTES) break
+
+        going.push(row.id)
+        freed.add(row.hash)
+        held -= row.size
+      }
+
+      if (!going.length) break
+
+      await env.DB.prepare(
+        `delete from note_versions where rowid in (${going.map(() => '?').join(', ')})`,
+      )
+        .bind(...going)
+        .run()
+    }
   }
 
   return await forgetBodies(env, freed)

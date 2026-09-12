@@ -1343,4 +1343,12 @@ export const gsw: Dictionary = {
   // Which side of the window a panel sits on.
   'Move to the right': 'Uf rechts',
   'Move to the left': 'Uf links',
+
+  // How long the account keeps what a note said before.
+  'History on the account': 'Verlauf ufem Konto',
+  'Keep versions': 'Versione behalte',
+  'A month': 'En Monet',
+  'A year': 'Es Jahr',
+  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
+    'Alles vom letzte Tag, dänn eini pro Stund, nach eim Monet eini pro Tag, nach drü eini pro Wuche.',
 }

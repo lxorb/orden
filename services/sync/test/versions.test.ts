@@ -1,7 +1,14 @@
 import { beforeEach, afterEach, describe, expect, test } from 'vitest'
 
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { deviceIn, KEEP_FOR, MOST_KEPT, sweepVersions, versionKey } from '../src/versions'
+import {
+  deviceIn,
+  KEEP_FOR,
+  MOST_KEPT,
+  MOST_VERSION_BYTES,
+  sweepVersions,
+  versionKey,
+} from '../src/versions'
 
 interface VersionView {
   versions?: { at: number; size: number; by: string }[]
@@ -525,6 +532,172 @@ describe('thinning to one an hour', () => {
     await sweepVersions(env, Date.now())
 
     expect(kept(note)).toHaveLength(3)
+  })
+
+  /** The shelves: an hour for the first month, a day for the next two, a week
+   *  after that. What a backup has done since 2007, and for the same reason -
+   *  what somebody wants from last spring is *a* version. */
+  test('thins to one a day past a month and one a week past three', async () => {
+    const hour = 60 * 60 * 1000
+    const day = 24 * hour
+    const week = 7 * day
+
+    // A year kept, or everything past the month would simply be deleted.
+    env.db.exec(`update users set settings = '{"keepVersions":365}'`)
+
+    const now = Date.now()
+    // Two moments inside one day, two months back: one survives.
+    const old = Math.floor((now - 60 * day) / day) * day
+    // Two inside one week, six months back: one survives.
+    const older = Math.floor((now - 180 * day) / week) * week
+
+    const note = await noteWithVersionsAt('long.md', [
+      old + hour,
+      old + 3 * hour,
+      older + day,
+      older + 3 * day,
+    ])
+
+    await sweepVersions(env, now)
+
+    expect(kept(note)).toEqual([older + 3 * day, old + 3 * hour])
+  })
+})
+
+describe('how long an account keeps its history', () => {
+  let env: TestEnv
+  let token: string
+  let note: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+
+    const made = await call<VersionView>(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const space = made.json.space?.id ?? ''
+    const wrote = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'plan.md', content: 'first' },
+    })
+    note = wrote.json.note?.id ?? ''
+  })
+
+  afterEach(() => env.close())
+
+  test('is a month for an account that has never said', async () => {
+    agedBy(env, KEEP_FOR + 1000)
+    await sweepVersions(env, Date.now())
+
+    expect(rows(env, note)).toHaveLength(0)
+  })
+
+  test('and a year for one that asked for a year', async () => {
+    // The same version, the same age, and the only difference is the word on the
+    // account: this is the whole of what the setting does.
+    env.db.exec(`update users set settings = '{"keepVersions":365}'`)
+    agedBy(env, KEEP_FOR + 1000)
+
+    await sweepVersions(env, Date.now())
+    expect(rows(env, note)).toHaveLength(1)
+  })
+
+  test('and a year is still not for ever', async () => {
+    env.db.exec(`update users set settings = '{"keepVersions":365}'`)
+    agedBy(env, 400 * 24 * 60 * 60 * 1000)
+
+    await sweepVersions(env, Date.now())
+    expect(rows(env, note)).toHaveLength(0)
+  })
+
+  test('a setting nobody offered is not a horizon', async () => {
+    // The route refuses it, which is what keeps the sweep's arithmetic to the two
+    // numbers the app knows; see settings.ts.
+    const refused = await call(env, '/v1/settings', {
+      method: 'PATCH',
+      token,
+      body: { keepVersions: 3650 },
+    })
+
+    expect(refused.status).toBe(400)
+  })
+
+  test('and the two it offers go through', async () => {
+    for (const days of [30, 365]) {
+      const set = await call(env, '/v1/settings', {
+        method: 'PATCH',
+        token,
+        body: { keepVersions: days },
+      })
+
+      expect(set.status).toBe(200)
+    }
+  })
+})
+
+/** The ceiling. Version bytes are not counted against the account's own
+ *  gigabyte, so this is the only thing between a year of history and a bill. */
+describe('more history than an account may hold', () => {
+  let env: TestEnv
+  let token: string
+  let note: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+
+    const made = await call<VersionView>(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const space = made.json.space?.id ?? ''
+    const wrote = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'plan.md', content: 'first' },
+    })
+    note = wrote.json.note?.id ?? ''
+  })
+
+  afterEach(() => env.close())
+
+  /** Rows of a size, inside the month so nothing else would take them. */
+  function heavy(bytes: number, count: number) {
+    env.db.exec(`delete from note_versions where note_id = '${note}'`)
+
+    const insert = env.db.prepare(
+      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    )
+    const now = Date.now()
+    for (let one = 0; one < count; one++) {
+      insert.run(note, now - one * 60 * 1000, `big-${one}`, bytes, '')
+    }
+  }
+
+  function held(): number {
+    const found = env.db
+      .prepare('select count(*) as rows, sum(size) as bytes from note_versions')
+      .get() as { rows: number; bytes: number | null }
+
+    return found.bytes ?? 0
+  }
+
+  test('loses its oldest until it is under the ceiling', async () => {
+    // Three of them, one and a half gigabytes each: four and a half against a
+    // ceiling of two.
+    heavy(1536 * 1024 * 1024, 3)
+    expect(held()).toBeGreaterThan(MOST_VERSION_BYTES)
+
+    await sweepVersions(env, Date.now())
+
+    expect(held()).toBeLessThanOrEqual(MOST_VERSION_BYTES)
+    // And what is left of this note is the newest of them: enough went, and the
+    // oldest went first.
+    const left = rows(env, note)
+    expect(left).toHaveLength(1)
+    expect(left[0]?.hash).toBe('big-0')
+  })
+
+  test('and an account under it loses nothing', async () => {
+    heavy(1024, 3)
+    await sweepVersions(env, Date.now())
+
+    expect(rows(env, note)).toHaveLength(3)
   })
 })
 

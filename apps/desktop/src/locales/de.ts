@@ -1373,4 +1373,12 @@ export const de: Dictionary = {
   // Which side of the window a panel sits on.
   'Move to the right': 'Nach rechts',
   'Move to the left': 'Nach links',
+
+  // How long the account keeps what a note said before.
+  'History on the account': 'Verlauf auf dem Konto',
+  'Keep versions': 'Versionen behalten',
+  'A month': 'Einen Monat',
+  'A year': 'Ein Jahr',
+  'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
+    'Alles vom letzten Tag, dann eine pro Stunde, nach einem Monat eine pro Tag, nach drei eine pro Woche.',
 }

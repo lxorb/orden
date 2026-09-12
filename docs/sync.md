@@ -52,10 +52,28 @@ the device's own snapshots look like.
 defaults to. The newest state of a note is the note itself, so a version from
 thirty seconds ago says nothing the file does not.
 
-**A month, thinned to one an hour after the first day.** The same two rules the
-device's sweep uses, so the two histories read alike, run by the nightly cron with
-a write budget: a sweep that tried to catch up on a year in one invocation would
-be stopped by the platform rather than by us.
+**A month, or a year, and thinned as it ages.** How far back is the account's own
+choice - `Keep versions` in Sync, a month or a year, and nothing in between,
+because the question is how far back somebody wants to be able to go rather than
+a number of days. The sweep reads it off the owner's settings through the note's
+space, so changing the word changes what is already kept rather than only what is
+kept next.
+
+The shelves, which are Time Machine's and for Time Machine's reason - what
+somebody wants from last Tuesday is the version they were writing, and what they
+want from last spring is *a* version:
+
+| age | what is kept |
+| --- | --- |
+| the first day | everything, as it happened |
+| up to a month | one an hour |
+| one to three months | one a day |
+| past three months | one a week |
+
+A note written in every day of a year comes to 24 + 30 + 60 + 39 rows under
+those, which is about a hundred and fifty rather than nine thousand. Run by the
+nightly cron with a write budget: a sweep that tried to catch up on a year in one
+invocation would be stopped by the platform rather than by us.
 
 The budget is spent a statement per note rather than a statement per row, which is
 what makes those two rules true rather than aspirational. A note written in all day
@@ -69,16 +87,29 @@ rather than left to the sweep. A month under the two rules above comes to 984, s
 nothing anybody does reaches this by accident; what it does is put a number on what
 one note can cost, which a ceiling waiting on a nightly job cannot.
 
-**There is no setting for it.** The only thing a longer month would change is the
-bill for storage nobody asked to keep, and a reader who does not want their words
-on the account has a clearer lever than a slider, which is not to sync. Version
-bytes are also not counted against the account's quota: they are the service's
-promise rather than the reader's allowance. Which is worth knowing the size of:
-even with the ceiling above, an account at its 1 GiB quota can have a few hundred
-times that behind it in version bodies, and nothing bills for them.
+**And at most two gigabytes of history per account, swept oldest-first.** Version
+bytes are not counted against the account's 1 GiB quota - they are the service's
+promise rather than the reader's allowance - so this ceiling is the only thing
+between a year of history and a bill nobody agreed to. A year of hourly versions
+of a thousand-note vault written in every day is about that much, and bodies are
+shared by hash, so a vault of small edits costs far less than the arithmetic
+suggests.
+
+Oldest-first, because that is the order anybody would give history up in, and
+because the version somebody asks for is nearly always a recent one. The nightly
+run looks at twenty accounts over the ceiling and takes four hundred rows at a
+time from each, reading before it deletes so that exactly as much goes as has to:
+an account far over comes down over several nights rather than losing a chunk in
+one.
+
+Whether version bytes should count against the quota at all is Emil's to decide;
+until then the ceiling is the whole of the limit.
 
 **One place to read them.** The note's own history sheet lists both, newest first,
-with the device beside the ones the account holds. A save this device kept and then
+with the device beside the ones the account holds. Where the account keeps a year
+the list is cut up by month, the way every other long list in the app is: a month
+of history is one month and needs no heading, and a year is twelve of them with
+one row a week at the far end. A save this device kept and then
 pushed is one moment in two lists, and the device's copy wins, because reading it
 costs nothing.
 

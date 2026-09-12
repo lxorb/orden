@@ -383,6 +383,10 @@ export interface AccountSettings {
    *  recovery.ts. */
   recoveryEvery?: number
   recoveryDays?: number
+  /** How long the account keeps what a note said before, in days: 30 or 365.
+   *  The device's own history is the two above; this is the account's, and the
+   *  nightly sweep reads the same number. See docs/sync.md. */
+  keepVersions?: number
   /** What a device does when the same note was written in two places; see
    *  sync/conflicts.ts. On the account rather than on the device, because it is
    *  a decision about the notes rather than about the machine. */
