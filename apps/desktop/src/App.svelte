@@ -9,23 +9,17 @@
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
-  import History from './lib/History.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { importing } from './lib/importing.svelte'
-  import IconPicker from './lib/IconPicker.svelte'
-  import ImportSheet from './lib/ImportSheet.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
-  import ShareSheet from './lib/ShareSheet.svelte'
-  import PublishSheet from './lib/PublishSheet.svelte'
   import RewriteSheet from './lib/RewriteSheet.svelte'
   import JoinSheet from './lib/JoinSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
-  import Slides from './lib/Slides.svelte'
   import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
@@ -49,7 +43,15 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
-  import { settingsSheet } from './lib/surfaces'
+  import {
+    historySheet,
+    iconPicker,
+    importSheet,
+    publishSheet,
+    settingsSheet,
+    shareSheet,
+    slidesStage,
+  } from './lib/surfaces'
   import { publish } from './lib/publishing.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -90,19 +92,41 @@
    *  listens on. */
   let middle = $state<HTMLElement>()
 
-  /** The settings sheet, once it has been asked for.
+  /** Which of the overlays have been asked for, once each and for good.
    *
-   *  Fetched rather than imported, because it is the app's largest single panel and it
-   *  is by definition not on screen when the window opens; and kept for good once it
-   *  is here, so that its own way in and out is exactly what it was. See surfaces.ts. */
-  let SettingsPanel = $state<Awaited<ReturnType<typeof settingsSheet>> | null>(null)
+   *  Every sheet the app opens over what is under it is fetched rather than imported:
+   *  none of them is on screen when the window opens, and between them they were the
+   *  larger half of what the shell still carried. Each is mounted the first time
+   *  something opens it and kept mounted afterwards, so its own way in and out is
+   *  exactly what it was - a component unmounted the moment it closed would have no
+   *  way out to play, and the sheet's own `{#if}` is what plays it either way.
+   *
+   *  A latch rather than the flag itself, and only ever set: `{#await}` on a promise
+   *  that has already resolved renders in the same pass, so the second open costs
+   *  nothing and only the first ever sees an empty frame. See surfaces.ts, which holds
+   *  one kept promise per door.
+   *
+   *  The deck is not here: it takes the tab it is presenting as a prop, so there is
+   *  nothing for it to be while nothing is presented and its own `{#if}` is the
+   *  boundary already. */
+  const asked = $state({
+    settings: false,
+    history: false,
+    share: false,
+    publish: false,
+    imports: false,
+    icons: false,
+  })
 
+  // One effect for all of them: each line is a door being knocked on, and none of
+  // them is ever closed again.
   $effect(() => {
-    if (!settings.open || SettingsPanel) return
-
-    void settingsSheet().then((one) => {
-      SettingsPanel = one
-    })
+    if (settings.open) asked.settings = true
+    if (settings.historyOpen) asked.history = true
+    if (share.open) asked.share = true
+    if (publish.open) asked.publish = true
+    if (importing.open) asked.imports = true
+    if (iconChoice.target) asked.icons = true
   })
 
   // Everything that has to happen as the app comes up; see start.ts.
@@ -789,9 +813,13 @@
 </main>
 
 <!-- Over everything, with no chrome of its own: while a note is being presented
-     the window is the deck. -->
+     the window is the deck. Fetched when a deck is first asked for, and the promise
+     kept, so the second presentation opens in the same pass as the `{#if}`; see
+     surfaces.ts. -->
 {#if presenting}
-  <Slides tab={presenting} />
+  {#await slidesStage() then Slides}
+    <Slides tab={presenting} />
+  {/await}
 {/if}
 
 <!-- What a pull has come to, while a thumb is on it. -->
@@ -810,26 +838,47 @@
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />
-<!-- The settings sheet, fetched the first time it is asked for: it is the app's
-     largest single panel - the pane per section, the theme store, the sync pane, the
-     AI pane, the security pane - and it is by definition not on screen when the window
-     opens. Mounted for good once it is here, so that its own way in and out is exactly
-     what it was: a component unmounted the moment it closed would have no way out to
-     play. See surfaces.ts. -->
-{#if SettingsPanel}
-  <SettingsPanel {view} />
+<!-- The sheets, each fetched the first time something opens it and kept mounted
+     afterwards; `asked` above says why, and surfaces.ts holds the doors. The largest
+     of them is the settings sheet - the pane per section, the theme store, the sync
+     pane, the AI pane, the security pane - and none of them is on screen when the
+     window opens. -->
+{#if asked.settings}
+  {#await settingsSheet() then SettingsPanel}
+    <SettingsPanel {view} />
+  {/await}
 {/if}
 <FormatBar bind:this={formatBar} {view} context={appContext} />
-<History bind:open={settings.historyOpen} />
-<ShareSheet />
-<PublishSheet />
-<ImportSheet />
+{#if asked.history}
+  {#await historySheet() then History}
+    <History bind:open={settings.historyOpen} />
+  {/await}
+{/if}
+{#if asked.share}
+  {#await shareSheet() then ShareSheet}
+    <ShareSheet />
+  {/await}
+{/if}
+{#if asked.publish}
+  {#await publishSheet() then PublishSheet}
+    <PublishSheet />
+  {/await}
+{/if}
+{#if asked.imports}
+  {#await importSheet() then ImportSheet}
+    <ImportSheet />
+  {/await}
+{/if}
 <RewriteSheet />
 <PromptSheet />
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet
      for one: a space in the switcher, a note in the file list. -->
-<IconPicker />
+{#if asked.icons}
+  {#await iconPicker() then IconPicker}
+    <IconPicker />
+  {/await}
+{/if}
 <FirstSync />
 
 <style>

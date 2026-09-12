@@ -50,3 +50,32 @@ export const settingsSheet = held(() => import('./SettingsPanel.svelte'))
  *  engine and so carry the larger half of the canvas with them. Fetched the first time
  *  a page note is in front. See Sidebar.svelte. */
 export const pagesNavigator = held(() => import('./PagesNavigator.svelte'))
+
+/** The overlays App.svelte holds: the sheets, the pickers and the deck.
+ *
+ *  None of them is on screen when the window opens, and between them they were the
+ *  larger half of what was left in the shell chunk after batch 109 - so each is
+ *  fetched the first time something opens it, and kept mounted afterwards for the
+ *  same reason the settings sheet is: a component unmounted the moment it closed
+ *  would have no way out to play. App.svelte holds the latch; each of these is only
+ *  the door. */
+
+/** Every version of the note in front, the device's and the account's. */
+export const historySheet = held(() => import('./History.svelte'))
+
+/** Who else may read this space, or this one file of it. */
+export const shareSheet = held(() => import('./ShareSheet.svelte'))
+
+/** A space as a site: the address, the theme, the pages that go. */
+export const publishSheet = held(() => import('./PublishSheet.svelte'))
+
+/** Somebody else's notes on their way in, whichever app wrote them. */
+export const importSheet = held(() => import('./ImportSheet.svelte'))
+
+/** The one picker everything that wears an icon asks for one. */
+export const iconPicker = held(() => import('./IconPicker.svelte'))
+
+/** A note as a deck, over the whole window. The one overlay that is not latched:
+ *  it takes the tab it is presenting as a prop, so there is nothing for it to be
+ *  while nothing is being presented, and it is left to the `{#if}` it always had. */
+export const slidesStage = held(() => import('./Slides.svelte'))
