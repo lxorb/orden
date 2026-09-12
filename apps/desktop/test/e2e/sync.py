@@ -260,6 +260,15 @@ class Worker:
         return token
 
 
+def pane_rows(page) -> list[str]:
+    """Every row of the pane on screen, as a reader would read it."""
+    return page.evaluate(
+        """() => [...document.querySelectorAll('.pane .setting, .pane .action')]
+             .map((one) => one.textContent.replace(/\\s+/g, ' ').trim())
+             .filter(Boolean)"""
+    )
+
+
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -367,15 +376,41 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     )
     say(f"[{name}] sync is {passes}; the log says: {log[:3]}")
 
+    # ── The account: the second code, and the devices signed in ──────────
+    page.evaluate("() => window.nibApp.settings.show('account')")
+    page.wait_for_timeout(900)
+
+    # The first device turns it on the way somebody would: the app shows a
+    # secret, and the code for it is worked out here rather than read anywhere.
+    turn = page.query_selector('button:has-text("Turn on")')
+    if turn:
+        turn.click()
+        page.wait_for_selector(".copyable .value", timeout=20000)
+        shown = (page.text_content(".copyable .value") or "").strip()
+        padded = shown + "=" * (-len(shown) % 8)
+        page.fill('input[aria-label="Code from the app"]', totp(base64.b32decode(padded).hex()))
+        page.click('button:has-text("Confirm")')
+        page.wait_for_timeout(1500)
+
+    say(f"[{name}] the account pane says: {pane_rows(page)}")
+    shot("account")
+    page.evaluate("() => window.nibApp.settings.show('sync')")
+    page.wait_for_timeout(300)
+
+    # The space on the account is one the app made for this folder, so its id is
+    # asked for rather than assumed - and it is what the command line pulls below.
+    remote = page.evaluate(
+        "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)"
+    )
     asked = request(
-        f"/v1/spaces/{page.evaluate('() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)')}/rollback",
+        f"/v1/spaces/{remote}/rollback",
         token,
         {"at": int(time.time() * 1000) - 300000, "dry": True},
     )
     say(f"[{name}] a rollback to five minutes ago would change {asked.get('notes')} note(s)")
 
     context.close()
-    return space
+    return remote
 
 
 def second_factor(worker: Worker, token: str) -> None:
@@ -416,15 +451,16 @@ def sessions(worker: Worker, token: str, user: str) -> None:
         say(f"after ending it, that session answers {after.get('status', 200)}")
 
 
-def headless(worker: Worker, token: str, spaceName: str) -> None:
-    """The script a CI job runs, against the same Worker."""
+def headless(worker: Worker, token: str, space: str) -> None:
+    """The script a CI job runs, against the same Worker. The space is named by its
+    id, which the script takes as readily as a name."""
     minted = request("/v1/mcp/token", token, {"readOnly": False})
     program = minted.get("token", "")
 
     with tempfile.TemporaryDirectory(prefix="nib-ci-") as held:
         folder = Path(held)
         done = subprocess.run(
-            ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "pull", spaceName, str(folder)],
+            ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "pull", space, str(folder)],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -440,7 +476,7 @@ def headless(worker: Worker, token: str, spaceName: str) -> None:
         if landed:
             (folder / "from-ci.md").write_text("# From CI\n\nWritten by the action.\n", "utf-8")
             pushed = subprocess.run(
-                ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "push", spaceName, str(folder)],
+                ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "push", space, str(folder)],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -462,9 +498,19 @@ def main() -> int:
 
     try:
         token, user = worker.account()
-        space = request("/v1/spaces", token, {"name": "Work"})
-        name = space.get("space", {}).get("name", "Work")
-        say(f"an account with one space: {name}")
+        say("an account with nothing in it; the app makes its own space")
+
+        # Before the app is looked at, because the pane below turns the factor on
+        # for itself and these are the answers the API has to give first.
+        say("--- the second factor ---")
+        second_factor(worker, token)
+
+        # One more device signed in, so the pane has a list rather than a row.
+        worker.session(user, "another laptop")
+
+        # Whichever space the app ended up syncing, which is the one the command
+        # line is then pointed at.
+        remote = ""
 
         with sync_playwright() as play:
             browser = play.chromium.launch(channel="chrome")
@@ -474,18 +520,15 @@ def main() -> int:
                     ("phone", 390, 844, PHONE_AGENT, True),
                 ]:
                     say(f"--- {one[0]} ---")
-                    drive(browser, worker, out, token, user, *one)
+                    remote = drive(browser, worker, out, token, user, *one) or remote
             finally:
                 browser.close()
-
-        say("--- the second factor ---")
-        second_factor(worker, token)
 
         say("--- the sessions ---")
         sessions(worker, token, user)
 
         say("--- from the command line ---")
-        headless(worker, token, name)
+        headless(worker, token, remote)
     finally:
         worker.stop()
 
