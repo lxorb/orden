@@ -148,6 +148,12 @@ interface Closable {
 }
 
 async function onClose(event: Closing, window: Closable) {
+  // Whatever is waiting on a timer goes down now, before anything below can end
+  // the window: a filter typed into the graph's card in the last breath is written
+  // once the typing stops, and the typing has just stopped for good. See `soon` in
+  // workspace/graph-settings.svelte.ts.
+  workspace.graphSettings.flush()
+
   // A tab gets no chance to ask its own question - `beforeunload` runs to
   // completion before anything is painted. Preventing it is the whole
   // signal, and the browser puts up its own leave-page dialog.

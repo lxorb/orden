@@ -19,6 +19,12 @@ import {
  *  Nothing is pushed anywhere under node: the push imports the account and the
  *  syncing loop, both of which answer with nothing signed out. */
 
+/** How many times anything has been written to storage, ever. Counted because a
+ *  filter is typed a letter at a time and `setItem` blocks the thread it is called
+ *  on: what matters is that the letters are one write and not one each, and a count
+ *  says that where a clock says what the machine was doing. */
+let writes = 0
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -28,7 +34,10 @@ function memoryStorage(): Storage {
     },
     key: (index) => [...store.keys()][index] ?? null,
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
+    setItem: (key, value) => {
+      writes += 1
+      store.set(key, value)
+    },
     removeItem: (key) => void store.delete(key),
     clear: () => store.clear(),
   }
@@ -96,6 +105,9 @@ describe('what a space says about its graph', () => {
 
   test('and survives being read again, which is another window', () => {
     graph.set({ filter: 'tag:work', depth: 3 })
+    // Written once the typing stops, or at once for a window going away, which is
+    // what this is standing in for; see `soon`.
+    graph.flush()
 
     const again = new SpaceGraphSettings(() => ROOT)
     expect(again.here.filter).toBe('tag:work')
@@ -177,5 +189,53 @@ describe('what the account holds', () => {
     graph.adopt(ROOT, {}, 'u2')
 
     expect(graph.here.filter).toBe('mine')
+  })
+})
+
+/** What typing in the card costs the thread it is typed on.
+ *
+ *  A filter is written a letter at a time, and every letter used to stringify every
+ *  space's settings and write them to `localStorage`, which blocks. Beside the pass
+ *  over five thousand nodes the same letter asks the picture for, that is a write
+ *  nobody needed until the typing stopped. Counted rather than timed, for the reason
+ *  the counter beside `memoryStorage` gives. */
+describe('typing a filter', () => {
+  test('writes storage once when the typing stops, not once a letter', () => {
+    vi.useFakeTimers()
+    try {
+      const before = writes
+      for (const filter of ['t', 'ta', 'tag', 'tag:', 'tag:w', 'tag:wo', 'tag:work']) {
+        graph.set({ filter })
+      }
+
+      // Seven letters and nothing written yet: the picture draws from the state,
+      // which is already right.
+      expect(writes - before).toBe(0)
+      expect(graph.here.filter).toBe('tag:work')
+
+      vi.advanceTimersByTime(2000)
+      expect(writes - before).toBe(1)
+      expect(new SpaceGraphSettings(() => ROOT).here.filter).toBe('tag:work')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('and a window going away writes what the timer has not', () => {
+    vi.useFakeTimers()
+    try {
+      const before = writes
+      graph.set({ filter: 'tag:work' })
+      expect(writes - before).toBe(0)
+
+      graph.flush()
+      expect(writes - before).toBe(1)
+
+      // And the timer that was waiting does not write again behind it.
+      vi.advanceTimersByTime(2000)
+      expect(writes - before).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

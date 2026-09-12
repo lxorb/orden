@@ -265,27 +265,47 @@ export class SpaceGraphSettings {
       ...this.spaces,
       [root]: { settings, account: this.spaces[root]?.account ?? null },
     }
-    this.write()
     this.soon(root)
   }
 
-  /** The account hears about it once the typing stops.
+  /** The storage and the account both hear about it once the typing stops.
    *
    *  Unlike a folder icon, which is one gesture, a filter is written a letter at a
    *  time: a push per keystroke would be a request per keystroke, and every one of
-   *  them would be out of date before it landed. This machine is right immediately -
-   *  the picture and the storage are written on the spot - and the account catches
-   *  up. */
+   *  them would be out of date before it landed. The storage is the same bargain on
+   *  a smaller scale and it used to be paid on every letter - every space's
+   *  settings stringified and written to `localStorage`, which blocks the thread it
+   *  is called on, beside the pass over five thousand nodes the same keystroke asks
+   *  the picture for.
+   *
+   *  What is on screen is still right immediately: the picture draws from the state
+   *  above, which this writes down rather than reads. What a crash inside the next
+   *  seven tenths of a second costs is the letter that was typed in it, which is
+   *  the bargain a note's own save makes at nearly twice the wait. */
   private soon(root: string) {
     const held = this.pushing[root]
     if (held !== undefined) clearTimeout(held)
 
     const waiting = setTimeout(() => {
       this.pushing = without(this.pushing, root)
+      this.write()
       void this.push(root)
     }, SETTLING)
 
     this.pushing = { ...this.pushing, [root]: waiting }
+  }
+
+  /** Everything waiting, written down now. For a window going away: the timer
+   *  above will not fire after that, and the letters typed into the card in the last
+   *  breath are the ones somebody would look for when they came back. */
+  flush() {
+    for (const [root, held] of Object.entries(this.pushing)) {
+      clearTimeout(held)
+      void this.push(root)
+    }
+
+    this.pushing = {}
+    this.write()
   }
 
   /** The space's settings as they now stand, sent up so every other machine draws
