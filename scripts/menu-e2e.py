@@ -88,30 +88,25 @@ UNWANTED = [
 
 SEED = """
 async ([path, text]) => {
+  // Whatever version the app made, rather than a number this script would have to
+  // keep in step with web/store.ts: the page has already opened the database by the
+  // time this runs, so the stores are there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
-    request.onupgradeneeded = () => {
-      const made = request.result
-      if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('assets')) made.createObjectStore('assets', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('meta')) made.createObjectStore('meta')
-      if (!made.objectStoreNames.contains('snapshots')) {
-        const store = made.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
-        store.createIndex('notePath', 'notePath')
-      }
-    }
+    const request = indexedDB.open('nib')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
 
   const now = Date.now()
   await new Promise((resolve, reject) => {
-    const request = db
-      .transaction('files', 'readwrite')
-      .objectStore('files')
-      .put({ path, content: text, modified: now, created: now })
-    request.onsuccess = () => resolve()
-    request.onerror = () => reject(request.error)
+    // Two rows for the one file, because the app keeps the listing apart from the
+    // words: `files` is what a note is read from and `stats` is what the file list
+    // walks. See web/store.ts.
+    const change = db.transaction(['files', 'stats'], 'readwrite')
+    change.objectStore('files').put({ path, content: text, modified: now, created: now })
+    change.objectStore('stats').put({ path, modified: now, created: now })
+    change.oncomplete = () => resolve()
+    change.onerror = () => reject(change.error)
   })
   return true
 }

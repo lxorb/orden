@@ -201,18 +201,11 @@ def png(width: int, height: int, tint: int) -> bytes:
 
 SEED = """
 async ([notePath, note, otherPath, other, assetPath, assetData]) => {
+  // Whatever version the app made, rather than a number this script would have to
+  // keep in step with web/store.ts: the page has already opened the database by the
+  // time this runs, so the stores are there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
-    request.onupgradeneeded = () => {
-      const made = request.result
-      if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('assets')) made.createObjectStore('assets', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('meta')) made.createObjectStore('meta')
-      if (!made.objectStoreNames.contains('snapshots')) {
-        const store = made.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
-        store.createIndex('notePath', 'notePath')
-      }
-    }
+    const request = indexedDB.open('nib')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -223,16 +216,31 @@ async ([notePath, note, otherPath, other, assetPath, assetData]) => {
     request.onerror = () => reject(request.error)
   })
 
+  // Two rows per note, because the app keeps the listing apart from the words:
+  // `files` is what a note is read from and `stats` is what the file list walks.
+  // See web/store.ts.
+  const seedNote = (path, content, now) => new Promise((resolve, reject) => {
+    const change = db.transaction(['files', 'stats'], 'readwrite')
+    change.objectStore('files').put({ path, content, modified: now, created: now })
+    change.objectStore('stats').put({ path, modified: now, created: now })
+    change.oncomplete = () => resolve()
+    change.onerror = () => reject(change.error)
+  })
+
   const now = Date.now()
-  await put('files', { path: notePath, content: note, modified: now, created: now })
-  await put('files', { path: otherPath, content: other, modified: now, created: now })
+  await seedNote(notePath, note, now)
+  await seedNote(otherPath, other, now)
   await put('assets', { path: assetPath, type: 'image/png', data: assetData, modified: now })
   return true
 }
 """
 
+# The palette's rows. They are `.nib-row` now, the same row the file list is made
+# of, and the words in one are its `.nib-row-label`; the palette had a row shape of
+# its own with a `.text` in it when this was written. See Palette.svelte.
 ROWS = """() =>
-  [...document.querySelectorAll('.palette ul li button .text')].map((row) => row.textContent.trim())
+  [...document.querySelectorAll('.palette .nib-row .nib-row-label')]
+    .map((row) => row.textContent.trim())
 """
 
 
