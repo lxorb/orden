@@ -11,16 +11,20 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import { isCanvasTarget, isImageTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
-import {
-  BookText,
-  File,
-  FileText,
-  Globe,
-  Image,
-  type IconNode,
-  NotebookPen,
-  Workflow,
-} from 'lucide'
+import type { IconNode } from 'lucide'
+// One file per shape rather than seven names off the library's index, because the
+// index re-exports every icon there is: a static import from it puts the whole set
+// - four hundred kilobytes, and the picker's own lazy chunk with it - in front of
+// the first paint. Every row of the file list wears one of these, so this module is
+// in the first chunk by definition. See canvas/lucide.d.ts, which is where the
+// types for these paths are declared, and icons.ts, which loads the index lazily.
+import BookText from 'lucide/dist/esm/icons/book-text.mjs'
+import File from 'lucide/dist/esm/icons/file.mjs'
+import FileText from 'lucide/dist/esm/icons/file-text.mjs'
+import Globe from 'lucide/dist/esm/icons/globe.mjs'
+import Image from 'lucide/dist/esm/icons/image.mjs'
+import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
+import Workflow from 'lucide/dist/esm/icons/workflow.mjs'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
 
