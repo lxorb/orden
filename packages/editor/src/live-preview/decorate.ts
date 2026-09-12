@@ -26,7 +26,7 @@ import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { noteIndex, resolves } from '../wikilink/notes'
-import { webEmbed } from '@nib/markdown/providers'
+import { iframeCard, webCard } from '@nib/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
 import {
@@ -504,8 +504,9 @@ class Decorator {
     // An address a provider answers for is that page, not a picture. Asked here
     // rather than in image.ts because it is the same question the renderer asks:
     // what did the note point at?
-    if (webEmbed(image.src)) {
-      this.inlineWidget(node, new WebEmbedWidget(image.src), false)
+    const card = webCard(image.src)
+    if (card) {
+      this.inlineWidget(node, new WebEmbedWidget(card), false)
       return false
     }
 
@@ -546,8 +547,9 @@ class Decorator {
     return false
   }
 
-  /** Two pieces of HTML get rendered rather than shown: a resized image, which
-   *  is how a size is recorded, and a page break, which has no markdown form. */
+  /** Three pieces of HTML get rendered rather than shown: a resized image, which
+   *  is how a size is recorded, a page break, which has no markdown form, and an
+   *  `<iframe>`, which is a page somewhere else. */
   private htmlImage(node: SyntaxNode): boolean {
     // A closing tag already paired up by its opener.
     if (this.isClaimed(node.from, node.to)) return true
@@ -563,7 +565,40 @@ class Decorator {
       return false
     }
 
+    // The same card the reading view and a published page show for it, and the
+    // same one a provider's address gets: nothing is fetched until it is pressed.
+    // See web-embed.ts.
+    const framed = iframeCard(tag)
+    if (framed) {
+      // Written on a line of its own the tag is one node, closing half and all.
+      // Written inside a sentence it is two, and the card stands for both - so
+      // the closer is found first, because the caret being in either half is the
+      // caret being in the markup.
+      const closer = node.name === 'HTMLTag' ? this.closingIframe(node) : null
+      if (overlaps(this.state, node.from, closer?.to ?? node.to)) return true
+
+      this.inlineWidget(node, new WebEmbedWidget(framed), false)
+      if (closer) {
+        this.conceal(closer.from, closer.to, false)
+        this.claimed.push({ from: closer.from, to: closer.to })
+      }
+      return false
+    }
+
     return this.image(node)
+  }
+
+  /** The `</iframe>` belonging to an inline `<iframe>`, or null when the note
+   *  never wrote one. The next tag along or nothing: a frame inside a frame is
+   *  not a thing anybody writes, and a closer further away than that belongs to
+   *  something else. */
+  private closingIframe(node: SyntaxNode): SyntaxNode | null {
+    for (let next = node.nextSibling; next; next = next.nextSibling) {
+      if (next.name !== 'HTMLTag') continue
+      const tag = this.state.doc.sliceString(next.from, next.to)
+      return /^<\/iframe\s*>$/i.test(tag) ? next : null
+    }
+    return null
   }
 
   /** Its own range, for the same reason as `inlineMath` above. */

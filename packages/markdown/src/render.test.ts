@@ -448,6 +448,104 @@ describe('raw HTML', () => {
   })
 })
 
+describe('an <iframe> a note wrote', () => {
+  const TAG = '<iframe src="https://field.example.test/plan" height="300"></iframe>'
+
+  // Both surfaces, because the claim is that there is one card: the frame is
+  // never in the markup, so a note that mentions a page tells that page nothing
+  // until a reader asks it to.
+  test('is the same card whether the note is the reader’s own or a public page', () => {
+    for (const options of [{}, { escapeHtml: true }]) {
+      const html = renderMarkdown(`${TAG}\n`, options)
+      expect(html, JSON.stringify(options)).toContain('class="embed-web embed-page"')
+      expect(html, JSON.stringify(options)).toContain('field.example.test')
+      expect(html, JSON.stringify(options)).toContain(
+        'data-frame="https://field.example.test/plan"',
+      )
+      expect(html, JSON.stringify(options)).not.toContain('<iframe')
+    }
+  })
+
+  test('and on a page, which runs nothing, the card is a link to the page itself', () => {
+    expect(renderMarkdown(`${TAG}\n`, { escapeHtml: true })).toContain(
+      'href="https://field.example.test/plan"',
+    )
+  })
+
+  test('inside a sentence as well as on a line of its own', () => {
+    const html = renderMarkdown(`See ${TAG} for the plan.\n`)
+    expect(html).toContain('class="embed-web embed-page"')
+    // The closing half goes with the opening one. Left behind it is a tag the
+    // parser drops without a word here and four characters of text on a page.
+    expect(html).not.toContain('iframe>')
+    expect(renderMarkdown(`See ${TAG} for the plan.\n`, { escapeHtml: true })).not.toContain(
+      'iframe',
+    )
+  })
+
+  test('and a tag pointing where a browser will not frame is nothing at all', () => {
+    // The card or nothing, and never the tag: a frame at `javascript:`, at a page
+    // of this app's own, or at plain http is a frame a note may not have, and one
+    // left in the markup would be a real frame in a document that is trusted.
+    for (const tag of [
+      '<iframe src="javascript:alert(1)"></iframe>',
+      '<iframe src="/index.html"></iframe>',
+      '<iframe src="http://x.dev/a"></iframe>',
+      '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
+    ]) {
+      for (const options of [{}, { escapeHtml: true }]) {
+        expect(renderMarkdown(`${tag}\n`, options), tag).not.toContain('iframe')
+      }
+    }
+  })
+
+  /** The card is a construct that builds its own markup out of the note, which is
+   *  the family of thing `HOSTILE` below is a sweep over; this is that sweep for
+   *  the one construct made out of a tag rather than out of markdown. */
+  test('and nothing a tag carried can run on a page built from it', () => {
+    for (const tag of [
+      '<iframe src="javascript:alert(1)"></iframe>',
+      '<iframe src="https://x.dev/a" onload="alert(1)"></iframe>',
+      '<iframe src="https://x.dev/a?q=1&quot; onload=&quot;alert(1)"></iframe>',
+      '<iframe src=\'https://x.dev/"onload="alert(1)\'></iframe>',
+      '<iframe src="https://x.dev/a" height="1" onmouseover="alert(1)"></iframe>',
+    ]) {
+      expect(running(renderMarkdown(`${tag}\n`, { escapeHtml: true })), tag).toEqual([])
+    }
+  })
+})
+
+/** The one place a note's own code runs, and the two answers about whose note it
+ *  is. `escapeHtml` is how the app says which: a document of the reader's own is
+ *  markup, and one in a room, in a shared space or on a published page is the
+ *  characters it is made of. See `apps/desktop/src/lib/trust.ts`. */
+describe('a block of HTML that does something', () => {
+  const BLOCK = '<div id="dial">nothing yet</div>\n<script>alert(1)</script>\n'
+
+  test('is a card that runs it elsewhere, in a document that is the reader’s own', () => {
+    const html = renderMarkdown(BLOCK)
+    expect(html).toContain('class="embed-web embed-html"')
+    expect(html).toContain('data-srcdoc=')
+    // Not on the page: not the div, not the script, not one character of either.
+    expect(html).not.toContain('<script')
+    expect(html).not.toContain('<div id="dial"')
+  })
+
+  test('and is the characters it is made of in a note somebody else can reach', () => {
+    const html = renderMarkdown(BLOCK, { escapeHtml: true })
+    expect(html).toContain('&lt;script&gt;')
+    expect(html).not.toContain('embed-html')
+    expect(html).not.toContain('data-srcdoc=')
+  })
+
+  test('HTML that only shows something is markup in the first and text in the second', () => {
+    expect(renderMarkdown('<div class="two-up">text</div>\n')).toContain('<div class="two-up">')
+    expect(renderMarkdown('<div class="two-up">text</div>\n', { escapeHtml: true })).toContain(
+      '&lt;div',
+    )
+  })
+})
+
 describe('definition lists', () => {
   test('renders a term and its meaning', () => {
     expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dt>Markdown</dt>')

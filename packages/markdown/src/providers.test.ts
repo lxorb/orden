@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { providers, webEmbed } from './providers'
-import { webCard } from './web-embed'
+import { iframeCard, webCard } from './web-embed'
 
 const frame = (address: string) => webEmbed(address)?.frame ?? null
 const named = (address: string) => webEmbed(address)?.provider.id ?? null
@@ -140,5 +140,72 @@ describe('the card an address is shown as', () => {
   test('and nothing else gets one', () => {
     expect(webCard('https://example.test/a')).toBe(null)
     expect(webCard('shot.png')).toBe(null)
+  })
+})
+
+describe('the card an <iframe> a note wrote becomes', () => {
+  test('says the domain, and holds the page without loading it', () => {
+    const card = iframeCard('<iframe src="https://maps.example.test/plan?a=1&amp;b=2"></iframe>')
+    expect(card).toContain('class="embed-web embed-wide embed-page"')
+    expect(card).toContain('>maps.example.test<')
+    expect(card).toContain('data-frame="https://maps.example.test/plan?a=1&amp;b=2"')
+    expect(card).not.toContain('<iframe')
+    expect(card).not.toContain(' src=')
+  })
+
+  test('and gets scripts and nothing else, having promised nothing', () => {
+    // A provider's row may ask for more, because the table says what that frame
+    // needs. An address a note wrote by hand has said nothing about itself.
+    const card = iframeCard('<iframe src="https://x.test/a"></iframe>') ?? ''
+    expect(card).toContain('data-sandbox="allow-scripts"')
+    expect(card).not.toContain('allow-same-origin')
+    expect(card).not.toContain('data-allow=')
+  })
+
+  test('is a link, so a page with no script still goes somewhere', () => {
+    const card = iframeCard("<iframe src='https://x.test/a' width=560></iframe>") ?? ''
+    expect(card).toContain('href="https://x.test/a"')
+    expect(card).toContain('rel="noopener noreferrer nofollow"')
+  })
+
+  test('takes the room the tag asked for, when it asked for a sane amount', () => {
+    expect(iframeCard('<iframe src="https://x.test/a" height="240"></iframe>')).toContain(
+      '--embed-height: 240px',
+    )
+    // Nothing, too little and far too much all mean sixteen by nine instead.
+    for (const height of ['', ' height="4"', ' height="99999"', ' height="50%"']) {
+      expect(iframeCard(`<iframe src="https://x.test/a"${height}></iframe>`), height).toContain(
+        'embed-wide',
+      )
+    }
+  })
+
+  test('a host the table knows gets the table’s card, not this one', () => {
+    const card = iframeCard('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>')
+    expect(card).toContain('data-provider="youtube"')
+    expect(card).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    expect(card).toContain('YouTube')
+  })
+
+  test('and an address a browser would not frame gets no card at all', () => {
+    for (const tag of [
+      '<iframe src="http://x.test/a"></iframe>',
+      '<iframe src="javascript:alert(1)"></iframe>',
+      '<iframe src="data:text/html,<script>alert(1)</script>"></iframe>',
+      '<iframe src="/local/page.html"></iframe>',
+      '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
+      '<iframe></iframe>',
+      '<div>not a frame</div>',
+      '',
+    ]) {
+      expect(iframeCard(tag), tag).toBe(null)
+    }
+  })
+
+  test('and nothing the tag carried besides the address comes with it', () => {
+    // A handler on the tag is the whole reason the tag is not passed through.
+    const card = iframeCard('<iframe src="https://x.test/a" onload="alert(1)"></iframe>') ?? ''
+    expect(card).not.toContain('onload')
+    expect(card).not.toContain('alert')
   })
 })

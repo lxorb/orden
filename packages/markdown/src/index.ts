@@ -6,9 +6,10 @@ import { propertiesTable, readProperties } from './properties'
 import { withoutComments } from './comments'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
+import { htmlBlockCard } from './html-block'
 import { slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
-import { webCard } from './web-embed'
+import { iframeCard, isIframeTag, webCard } from './web-embed'
 import {
   type EmbedResolver,
   type Embeds,
@@ -227,18 +228,40 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const custom = options.code?.(token.text, language)
         return captioned(custom ?? defaults.code.call(this, token), captionIn(info))
       },
+
+      /** Raw HTML, which is three different questions.
+       *
+       *  An `<iframe>` is a page somewhere else, and that answer is the same on
+       *  every surface: the card a provider's address becomes, loading nothing
+       *  until the reader asks. It is markup this file wrote out of an address it
+       *  checked, so it is as safe on a published page as a link is - and on a
+       *  page, which runs nothing, it *is* a link. See web-embed.ts.
+       *
+       *  The card or nothing, and never the tag. A tag no card could be made of
+       *  points somewhere a note has no business pointing - `javascript:`, a page
+       *  of this app's own, a plain http page read over the reader's shoulder -
+       *  and its closing half goes the same way, or the card would be followed by
+       *  a stray `</iframe>`.
+       *
+       *  Everything else is the note's own markup, and whether that is markup or
+       *  characters is `escapeHtml`: a document of the reader's own is markup, and
+       *  one in a room, in a shared space or on a public page is the characters it
+       *  is made of. See docs/conventions.md and `apps/desktop/src/lib/trust.ts`.
+       *
+       *  A block that has a whole `<script>` in it is the third: markup that does
+       *  something. In a document that is trusted it becomes a card that runs the
+       *  block in a frame of its own when pressed - never in the app - and in one
+       *  that is not it was already escaped by the line above. See html-block.ts. */
+      html(token: Tokens.HTML | Tokens.Tag) {
+        if (isIframeTag(token.text)) return iframeCard(token.text) ?? ''
+        if (options.escapeHtml) return escape(token.text)
+
+        return htmlBlockCard(token.text) ?? defaults.html.call(this, token)
+      },
     },
   })
 
   if (options.toc) marked.use({ extensions: [toc] })
-
-  if (options.escapeHtml) {
-    marked.use({
-      renderer: {
-        html: (token: Tokens.HTML | Tokens.Tag) => escape(token.text),
-      },
-    })
-  }
 
   return marked
 }

@@ -274,6 +274,37 @@ describe('code line numbers', () => {
   })
 })
 
+/** A tag pointing at a page somewhere else is that page's card here, the same one
+ *  the reading view and a published page show. Nothing is fetched for it: the card
+ *  is markup, and the frame arrives when it is pressed. See web-embed.ts. */
+describe('an <iframe> in the text', () => {
+  const TAG = '<iframe src="https://field.example.test/plan"></iframe>'
+
+  test('is replaced by the card that stands for it', () => {
+    expect(concealed(TAG)).toEqual([TAG])
+  })
+
+  test('and is the tag again while the caret is in it', () => {
+    expect(concealed(TAG, 10)).toEqual([])
+  })
+
+  test('inside a sentence the closing half goes with it', () => {
+    // Two nodes there rather than one, and the card stands for both: a card
+    // followed by a visible `</iframe>` would be the markup half shown.
+    expect(concealed(`See ${TAG} here.`)).toEqual([TAG.slice(0, -9), '</iframe>'])
+  })
+
+  test('and both halves come back with the caret in either', () => {
+    expect(concealed(`See ${TAG} here.`, 10)).toEqual([])
+    expect(concealed(`See ${TAG} here.`, 4 + TAG.length - 4)).toEqual([])
+  })
+
+  test('a tag a browser would not frame is left as it was written', () => {
+    expect(concealed('<iframe src="javascript:alert(1)"></iframe>')).toEqual([])
+    expect(concealed('<iframe></iframe>')).toEqual([])
+  })
+})
+
 /** A backslash before a character is how markdown says "this one is a
  *  character, not a marker". It is a marker itself, so it is hidden the way
  *  every other marker is, and shown again when the caret is on it. A pasted tag
