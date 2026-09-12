@@ -211,8 +211,6 @@ export function pageTitle(document: Document, url: string): string {
  *  shows only a picture has none, and the address stands in. */
 export function linkTitle(document: Document, target: string): string {
   for (const anchor of document.querySelectorAll('a[href]')) {
-    if (anchor.getAttribute('href') === null) continue
-
     const href = (anchor as HTMLAnchorElement).href
     if (href !== target) continue
 

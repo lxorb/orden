@@ -13,7 +13,12 @@
   // Type-aware linting reads this file to find a project for every source it
   // sees, so everything the linter visits has to be listed: the two Vite
   // configs and the build script as much as the sources and the tests.
+  //
+  // The markdown package's own ambient declaration is in there for the reason
+  // glasses includes the editor's: this package reads that one through its
+  // source, so what it knows about its untyped imports has to be in scope here.
   "include": [
+    "../../packages/markdown/src/env.d.ts",
     "src/**/*.ts",
     "src/**/*.svelte",
     "src/**/*.d.ts",
