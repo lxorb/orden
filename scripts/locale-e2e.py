@@ -80,8 +80,10 @@ SEED = """
 async ([path, text, language]) => {
   localStorage.setItem('nib:language', language)
 
-  const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
+  // Whatever version the app itself has made, rather than a number written down
+  // here: naming one that has fallen behind is a VersionError and no note.
+  const open = (version) => new Promise((resolve, reject) => {
+    const request = version ? indexedDB.open('nib', version) : indexedDB.open('nib')
     request.onupgradeneeded = () => {
       const made = request.result
       if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
@@ -95,6 +97,13 @@ async ([path, text, language]) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
+
+  let db = await open()
+  if (!db.objectStoreNames.contains('files')) {
+    const version = db.version + 1
+    db.close()
+    db = await open(version)
+  }
 
   const now = Date.now()
   await new Promise((resolve, reject) => {
@@ -346,17 +355,21 @@ def regressions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[st
 
     for surface, reading in readings.items():
         was = baseline.get(surface, {})
-        before = {one["where"] for one in was.get("clipped", [])}
-        for one in reading["clipped"]:
-            if one["where"] in before:
-                continue
-            faults.append(f"{surface}: {one['where']} cut off by {one['over']}px - {one['text']!r}")
 
-        before = {one["where"] for one in was.get("tall", [])}
-        for one in reading["tall"]:
-            if one["where"] in before:
-                continue
-            faults.append(f"{surface}: {one['where']} {one['over']}px too tall - {one['text']!r}")
+        # One row of a list clipped is the same fault as the twenty beside it, so
+        # each place is named once, with the worst overflow it had.
+        for kind, said in (("clipped", "cut off by"), ("tall", "too tall by")):
+            before = {one["where"] for one in was.get(kind, [])}
+            worst: dict[str, tuple[int, str]] = {}
+            for one in reading[kind]:
+                if one["where"] in before:
+                    continue
+                had = worst.get(one["where"])
+                if not had or one["over"] > had[0]:
+                    worst[one["where"]] = (one["over"], one["text"])
+
+            for where, (over, text) in worst.items():
+                faults.append(f"{surface}: {where} {said} {over}px - {text!r}")
 
         if reading["sideways"] > was.get("sideways", 0) + 1:
             faults.append(f"{surface}: the page scrolls sideways by {reading['sideways']}px")
@@ -365,6 +378,11 @@ def regressions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[st
 
 
 def main() -> int:
+    # The report is Arabic, Thai and Bengali; a console in the system codepage
+    # cannot print it, and a drive that falls over on its own output has found
+    # nothing.
+    sys.stdout.reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--languages", default=",".join(LANGUAGES))
     parser.add_argument("--widths", default=",".join(WIDTHS))
@@ -438,9 +456,14 @@ def main() -> int:
                             failures += [f"{said}: {one}" for one in faults]
 
                         if language == "ar":
+                            # With a pane of words open: the shell on its own is
+                            # file names, which are whatever somebody typed.
+                            page.keyboard.press("Control+Comma")
+                            page.wait_for_timeout(700)
                             report[f"{said}: right-to-left text in left-to-right boxes"] = (
                                 page.evaluate(BIDI)
                             )
+                            away(page)
 
                         if problems:
                             report[f"{said}: page problems"] = problems[:6]
