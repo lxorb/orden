@@ -167,6 +167,26 @@ export function mayTrySecondFrom(env: Env, machine: string | null): Promise<bool
   return within(env, 'second-from', machine, SECOND_TRIES_FROM_ONE_MACHINE, AN_HOUR)
 }
 
+/** How many answers one machine may send through the forms on published pages
+ *  in an hour, and how many any one site may take.
+ *
+ *  A form on the open web is a spam target, and the whole of what is done about
+ *  it here is counting: no captcha, which is a third party watching the reader,
+ *  and no address kept, which is the row's own promise. Ten is far more than
+ *  somebody filling in a form, and a site that is being flooded stops taking
+ *  answers rather than growing a table nobody asked for. */
+const ANSWERS_FROM_ONE_MACHINE = 10
+const ANSWERS_TO_ONE_SITE = 200
+
+export function maySendAnswer(env: Env, machine: string | null): Promise<boolean> {
+  if (!machine) return Promise.resolve(true)
+  return within(env, 'answer-from', machine, ANSWERS_FROM_ONE_MACHINE, AN_HOUR)
+}
+
+export function mayTakeAnswer(env: Env, spaceId: string): Promise<boolean> {
+  return within(env, 'answers', spaceId, ANSWERS_TO_ONE_SITE, AN_HOUR)
+}
+
 /** Whether a message may go now, and what to say when it may not.
  *
  *  Null is the answer that means yes, so that a caller writes

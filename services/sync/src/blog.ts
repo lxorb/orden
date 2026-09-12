@@ -1,9 +1,17 @@
-import { documentTitle, findLinks, type Heading, renderMarkdown, type Wikilink } from '@nib/markdown'
+import {
+  codeBlocks,
+  documentTitle,
+  findLinks,
+  type Heading,
+  renderMarkdown,
+  type Wikilink,
+} from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'
 import { feed, type FeedPage, newestFirst, robots, sitemap } from './blog/feed'
+import { answersFrom, formHtml, formOf } from './blog/form'
 import { type NoteFront, readFront } from './blog/front'
 import { gateBody, matches, newTicket, ticketCookie, ticketHolds, ticketIn } from './blog/gate'
 import { escape, type Head, headOf } from './blog/head'
@@ -22,6 +30,8 @@ import {
   underneath,
 } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
+import { machineOf, maySendAnswer, mayTakeAnswer } from './limits'
+import { newId } from './crypto'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import { publishes, readSite, type Site, type SitePassword } from './blog/site'
@@ -763,6 +773,90 @@ function near(pages: readonly Page[], page: Page): Set<string> {
   return around
 }
 
+/** What a fence on a page becomes: coloured code, and - where a note asks a
+ *  question - a form.
+ *
+ *  The one hook the renderer offers, so both live here rather than the renderer
+ *  learning about either. A ` ```form ` fence nobody can read stays a fence: see
+ *  blog/form.ts for the grammar and why it is nib's own. */
+function fencesOf(noteId: string, url: URL, request: Request) {
+  const sent = url.searchParams.get('sent') === noteId
+  const wrong = url.searchParams.get('wrong')
+
+  return (code: string, language: string): string | null => {
+    if (language.toLowerCase() !== 'form') return blogFence(code, language)
+
+    const form = formOf(code)
+    if (!form) return null
+
+    return formHtml(form, noteId, sent, request.method === 'GET' ? wrong : null)
+  }
+}
+
+/** An answer somebody typed into a form on a page.
+ *
+ *  Answered with a redirect rather than a page, so that a reload after sending
+ *  does not send it again and a reader with scripting off gets the same thing
+ *  everybody else does. The note is named in the form rather than read off the
+ *  address, because an address can be a permalink, an alias or a path that has
+ *  moved. */
+async function takeAnswer(
+  env: Env,
+  space: Space,
+  request: Request,
+  noteId: string,
+): Promise<Response> {
+  const back = (where: string) =>
+    new Response(null, {
+      status: 303,
+      headers: { location: where, 'cache-control': 'private, no-store' },
+    })
+
+  const note = await env.DB.prepare(
+    'select * from notes where id = ? and space_id = ? and deleted = 0',
+  )
+    .bind(noteId, space.id)
+    .first<Note>()
+
+  if (!note) return new Response('Not found', { status: 404 })
+
+  const site = readSite(space.site)
+  const front = readFront(note.front)
+  if (!publishes(site.rules, note.path, front)) return new Response('Not found', { status: 404 })
+
+  const object = await env.NOTES.get(noteKey(space.id, note.id))
+  const source = object ? await object.text() : ''
+
+  // The form as the note writes it, so what is accepted is what was asked: a
+  // field the note does not have cannot be sent, whatever a machine posts.
+  const fence = codeBlocks(source).find((one) => one.language.toLowerCase() === 'form')
+  const form = fence ? formOf(fence.code) : null
+  const where = `/${pageOf(note.path, front)}`
+  if (!form) return back(where)
+
+  // Counting, which is the whole of what is done about spam here: no captcha,
+  // because that is a third party watching the reader, and nothing about them is
+  // kept. See limits.ts.
+  const machine = machineOf({ header: (name) => request.headers.get(name) ?? undefined })
+  if (!(await maySendAnswer(env, machine)) || !(await mayTakeAnswer(env, space.id))) {
+    return back(`${where}?wrong=${encodeURIComponent('Too many just now. Try later.')}`)
+  }
+
+  const sent = await request.formData().catch(() => null)
+  if (!sent) return back(where)
+
+  const read = answersFrom(form, sent)
+  if ('wrong' in read) return back(`${where}?wrong=${encodeURIComponent(read.wrong)}`)
+
+  await env.DB.prepare(
+    'insert into form_answers (id, space_id, note_id, at, answers) values (?, ?, ?, ?, ?)',
+  )
+    .bind(newId(), space.id, note.id, Date.now(), JSON.stringify(read.answers))
+    .run()
+
+  return back(`${where}?sent=${encodeURIComponent(note.id)}`)
+}
+
 export async function serveBlog(
   env: Env,
   space: Space,
@@ -793,6 +887,14 @@ export async function serveBlog(
 
   if (slug === 'favicon.svg') return favicon(space, site)
   if (slug === 'robots.txt') return robots(url.origin, !!site.password)
+
+  // An answer to a form on one of the pages. Before the password, because a site
+  // behind one still has to let a reader who is through it send an answer; the
+  // ticket is checked below and a post without one lands on the form again.
+  const answering = /^form\/([A-Za-z0-9_-]{1,64})$/.exec(slug)
+  if (answering?.[1] && request.method === 'POST' && !site.password) {
+    return takeAnswer(env, space, request, answering[1])
+  }
 
   // The password, before anything a reader could read. A site that has none -
   // which is every site until somebody sets one - pays nothing for this.
@@ -889,7 +991,7 @@ export async function serveBlog(
     // to go; an embed still shows what it names, which is inside this page.
     const reading = {
       escapeHtml: true,
-      code: blogFence,
+      code: fencesOf(only.id, url, request),
       breaks,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
@@ -1073,7 +1175,7 @@ export async function serveBlog(
   // what they name - one level deep, which is the renderer's own rule.
   const reading = {
     escapeHtml: true,
-    code: blogFence,
+    code: fencesOf(note.id, url, request),
     breaks,
     resolveLink: linkResolver(pageList, files),
     resolveEmbed: await embedded(

@@ -17,6 +17,7 @@ import { spaceExcluded } from './excluded'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
 import { folderIcons, isIcon, isTint } from './icons'
+import { answers } from './answers'
 import { site } from './site'
 import { publish } from './publish'
 import { share } from './share'
@@ -265,6 +266,7 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
 // Mounted last, so `/order` above is still read as a word and not as an id.
 spaces.route('/', publish)
 spaces.route('/', site)
+spaces.route('/', answers)
 spaces.route('/', bookmarks)
 spaces.route('/', folderIcons)
 spaces.route('/', spaceGraph)

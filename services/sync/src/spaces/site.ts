@@ -73,15 +73,18 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   }
 
   const { results } = await context.env.DB.prepare(
-    'select path, front from notes where space_id = ? and deleted = 0 order by path limit ?',
+    'select path, front, size from notes where space_id = ? and deleted = 0 order by path limit ?',
   )
     .bind(space.id, MOST_LISTED)
-    .all<{ path: string; front: string | null }>()
+    .all<{ path: string; front: string | null; size: number }>()
 
   const adds: string[] = []
   const removes: string[] = []
   let after = 0
   let before = 0
+  /** How many bytes of notes the site would serve, for the line in the sheet
+   *  that says what a site costs; see docs/publishing.md. */
+  let bytes = 0
 
   for (const row of results) {
     if (isCanvasTarget(row.path)) continue
@@ -93,13 +96,17 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
     const is = publishes(asked, row.path, front)
 
     if (was) before += 1
-    if (is) after += 1
+    if (is) {
+      after += 1
+      bytes += row.size
+    }
     if (is && !was) adds.push(row.path)
     if (was && !is) removes.push(row.path)
   }
 
   return context.json({
     pages: after,
+    bytes,
     before,
     adds: adds.slice(0, SHOWN),
     removes: removes.slice(0, SHOWN),
