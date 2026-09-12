@@ -1,4 +1,8 @@
 import { describe, expect, test } from 'vitest'
+// Both heavy libraries handed over outright, the way the Worker has them, because
+// every render below is synchronous and the app's own lazy loading is engines.test.ts's
+// subject rather than this file's. See engines.ts.
+import './eager'
 import {
   codeBlocks,
   documentTitle,

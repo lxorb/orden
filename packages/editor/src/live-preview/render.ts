@@ -1,10 +1,13 @@
 import { MOST_EMS } from '@nib/markdown'
 import { chartFigure } from '@nib/markdown/chart'
+import { loadMaths, mathsEngine } from '@nib/markdown/engines'
 import type { NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
-import katex from 'katex'
-// Chemical equations: `\ce{H2O}` and friends, as Typora supports.
-import 'katex/contrib/mhchem'
+// The engine itself, chemistry pack and all, is loaded when a note turns out to have
+// a formula in it; see @nib/markdown/engines, which is the one holder for it. Its
+// stylesheet stays here and stays eager: a rule is not a module, the faces inside it
+// are fetched only once something on the page wears one, and a formula appearing
+// before the CSS that sets it would be a formula in the wrong font for a frame.
 import 'katex/dist/katex.min.css'
 import { sequenceToMermaid } from './sequence'
 
@@ -52,7 +55,26 @@ export class MathWidget extends NibWidget {
     const body = this.number ? document.createElement('span') : host
     if (this.number) host.append(body)
 
-    katex.render(prepare(this.tex), body, {
+    // The same bargain a diagram strikes below: the engine is heavy, so it does not
+    // load until a document has a formula, and the first formula of a session appears
+    // a moment after the rest of the note rather than with it. Every one after that
+    // is drawn in the frame it was decorated in, because the engine is already here.
+    const engine = mathsEngine()
+    if (engine) this.draw(engine, body)
+    else void loadMaths().then(() => body.isConnected && this.draw(mathsEngine(), body))
+
+    if (this.number) {
+      const tag = document.createElement('span')
+      tag.className = 'nib-math-number'
+      tag.textContent = `(${this.number})`
+      host.append(tag)
+    }
+
+    return host
+  }
+
+  private draw(engine: ReturnType<typeof mathsEngine>, body: HTMLElement) {
+    engine?.render(prepare(this.tex), body, {
       displayMode: this.block,
       throwOnError: false,
       errorColor: 'var(--danger)',
@@ -65,15 +87,6 @@ export class MathWidget extends NibWidget {
       // of TeX that leaves nothing else on screen. See @nib/markdown.
       maxSize: MOST_EMS,
     })
-
-    if (this.number) {
-      const tag = document.createElement('span')
-      tag.className = 'nib-math-number'
-      tag.textContent = `(${this.number})`
-      host.append(tag)
-    }
-
-    return host
   }
 }
 

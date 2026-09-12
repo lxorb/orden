@@ -8,6 +8,7 @@
  *  and it is loaded when an export is actually run rather than at startup - the
  *  Word writer and the zip are a good deal larger than the list of names. */
 
+import { loadFor } from '@nib/markdown/engines'
 import type { FoundLink } from '@nib/markdown/links'
 import {
   buildBody,
@@ -258,6 +259,14 @@ export async function runExport(
   note: Note,
   options: RunOptions = {},
 ): Promise<string | null> {
+  // The formula engine and the emoji table, where this note turns out to want
+  // either: both are loaded on demand rather than at startup, and a document that
+  // has left the app must have its formulas set in it rather than their source.
+  // Once, here, because every format below renders or lexes the note somewhere
+  // inside it and none of those places has an await to spare. See
+  // @nib/markdown/engines.
+  await loadFor(note.source)
+
   if (id === 'pdf') return exportPdf(note, options)
   if (id === 'jpg' || id === 'png') return exportPicture(id, note, options)
   if (id === 'textbundle') return exportBundle(note, options)

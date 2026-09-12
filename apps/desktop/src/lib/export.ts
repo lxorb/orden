@@ -6,6 +6,7 @@ import {
   renderMarkdown,
   type Wikilink,
 } from '@nib/markdown'
+import { loadFor } from '@nib/markdown/engines'
 import { highlightedFence } from '@nib/markdown/highlight'
 import { embedKind } from '@nib/markdown/links'
 import { sourcesOf } from '@nib/markdown/sources'
@@ -199,7 +200,13 @@ export type Drawer = (code: string, language: string, scheme: Scheme) => Promise
 
 /** Draws every diagram and loads a parser for every language the note uses,
  *  so rendering can then picture and colour each fence without waiting. A
- *  diagram that will not draw stays as code, which beats an empty space. */
+ *  diagram that will not draw stays as code, which beats an empty space.
+ *
+ *  The formula engine and the emoji table are waited for here as well, where the
+ *  note turns out to want either. They are not fences, but they are the same
+ *  bargain - heavy, loaded on demand, and needed by a render that cannot wait -
+ *  and every surface that renders a whole note already awaits this one call. See
+ *  @nib/markdown/engines. */
 export async function prepareFences(
   source: string,
   scheme: Scheme,
@@ -245,6 +252,7 @@ export async function prepareFences(
 
   const [parsers] = await Promise.all([
     options.highlight === false ? new Map<string, Parser>() : loadParsers(languages),
+    loadFor(source),
     ...drawings,
     ...answering,
   ])

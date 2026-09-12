@@ -1,6 +1,10 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
+// The emoji table handed over outright: in the app it is fetched the first time a note
+// turns out to have a `:shortcode:` in it, and what is being built here is one pass of
+// decorations with no frame after it to fill anything in. See @nib/markdown/engines.
+import '@nib/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'

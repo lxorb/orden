@@ -35,7 +35,13 @@ import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
-import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@nib/glasses'
+import {
+  type Compaction,
+  DEFAULT_COMPACTION,
+  isCompaction,
+  MARKS,
+  type Marks,
+} from '@nib/glasses/choices'
 import { glassesKey } from './even/key.svelte'
 import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'

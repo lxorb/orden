@@ -13,7 +13,15 @@
  *
  *  An empty selection is left alone. CodeMirror copies the caret's line and
  *  remembers that it did, so that pasting puts the line back as a line, and
- *  nothing here improves on that. */
+ *  nothing here improves on that.
+ *
+ *  The one call to the renderer in the app that cannot wait for anything: both
+ *  flavours have to be on the clipboard before the copy event handler returns. So a
+ *  formula copied out of a note the formula engine has not been loaded for comes out
+ *  as its own source in the HTML flavour - which is what the markdown flavour beside
+ *  it says anyway, and it only happens where nothing has drawn a formula yet, since
+ *  the live preview loads the engine the moment a note has one. See
+ *  @nib/markdown/engines. */
 
 import type { EditorState, Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'

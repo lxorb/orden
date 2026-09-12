@@ -12,6 +12,8 @@
     "./code": "./src/code.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
+    "./eager": "./src/eager.ts",
+    "./engines": "./src/engines.ts",
     "./edits": "./src/edits.ts",
     "./fences": "./src/fences.ts",
     "./front-matter": "./src/front-matter.ts",

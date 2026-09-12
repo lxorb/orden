@@ -23,12 +23,30 @@
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
 import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
+import * as emoji from 'node-emoji'
+import { useEmoji } from '@nib/markdown/engines'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
 import { captionIn, languageIn } from '@nib/markdown/code'
 import { embedKind, type Wikilink } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
+import {
+  type Compaction,
+  COMPACTIONS,
+  DEFAULT_COMPACTION,
+  isCompaction,
+  MARKS,
+  type Marks,
+} from './choices'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
+
+// The emoji table, handed to the renderer outright. The app loads it when a note
+// turns out to have a `:shortcode:` in it, because most notes have none and the table
+// is a quarter of a megabyte; this module has it regardless, since `insteadOf` in
+// firmware.ts reads it for every emoji the firmware cannot draw - and the walk below
+// is over `lexMarkdown`'s tokens, where a shortcode with no table behind it would
+// reach the panel as the characters it was typed with. See @nib/markdown/engines.
+useEmoji(emoji)
 
 /** One line of the note, as the container will be given it.
  *
@@ -56,73 +74,14 @@ export interface Line {
   under: boolean
 }
 
-/** Which of a note's own markers are drawn on the glasses.
+/** What a reader chose, which is data rather than drawing and lives in its own
+ *  module so that the app's settings can have it without the text engine behind it:
+ *  see choices.ts. Named here as well because everything that draws a panel reads
+ *  the mapping, and one import of this module is what it should need.
  *
- *  Rule one above says which are worth drawing, and the defaults are that rule.
- *  This is the reader overruling it, per construct: somebody proof-reading their
- *  own markdown wants to see the asterisks, and somebody reading a note does not.
- *  A switch each rather than one "show markdown" switch, because the answer is
- *  different for a fence and for a bold word and that difference is the rule. */
-export interface Marks {
-  /** The `#` in front of a heading. Off: the capitals say what it is. */
-  heading: boolean
-  bold: boolean
-  italic: boolean
-  strike: boolean
-  highlight: boolean
-  /** The backticks around inline code. On: whether something is code changes
-   *  what it means. */
-  code: boolean
-  /** The ``` lines around a fence. On, for the same reason. */
-  fence: boolean
-  /** The brackets and the address of a link. Off: the words it shows are what
-   *  there is to read. */
-  link: boolean
-}
-
-/** What a note shows with nobody having said otherwise: code marked, style marks
- *  dropped, headings without their hashes. Emil's rule, as a value. */
-export const MARKS: Marks = {
-  heading: false,
-  bold: false,
-  italic: false,
-  strike: false,
-  highlight: false,
-  code: true,
-  fence: true,
-  link: false,
-}
-
-/** How much of a note's own white space reaches the panel.
- *
- *  Seven lines is not many, and how they are spent is a real choice rather than a
- *  detail. Emil's three, in his words:
- *
- *  - `none` shows every line break as written, even ten in a row;
- *  - `collapse` folds runs of blank lines into one break, so A, blank, blank, B
- *    shows A then B on the next line, while A, newline, B keeps two lines;
- *  - `aggressive` joins A, newline, B into one line, and only two or more
- *    newlines start a new line.
- *
- *  Whatever the level, **a line number is the line of the file**. That is the
- *  point of the numbers: a row that says 12 is line 12 of the note, whether ten
- *  lines were folded into it or none were. */
-export type Compaction = 'none' | 'collapse' | 'aggressive'
-
-export const COMPACTIONS: readonly Compaction[] = ['none', 'collapse', 'aggressive']
-
-/** What a reader who has never chosen gets: `collapse`, which is Emil's answer
- *  having read on a pair.
- *
- *  It was `aggressive`, which is what the plugin did before there was a choice at
- *  all. Said once, here, and read by the mapping, by the schema's own initial and by
- *  the store's default, so the three cannot drift; a device that has already saved a
- *  value keeps whatever it saved. */
-export const DEFAULT_COMPACTION: Compaction = 'collapse'
-
-export function isCompaction(value: unknown): value is Compaction {
-  return typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)
-}
+ *  Re-exported rather than moved out of sight - `MARKS` is rule one above as a
+ *  value, and a reader of this file should find it where the rule is. */
+export { type Compaction, COMPACTIONS, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks }
 
 export interface MarkOptions {
   /** How wide the body is, in pixels. Rules reach exactly this far and a table's

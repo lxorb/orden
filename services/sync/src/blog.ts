@@ -7,6 +7,12 @@ import {
   type Wikilink,
 } from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
+// The formula engine and the emoji table, imported outright rather than loaded when a
+// note turns out to want one. The app does the opposite, because it has a first paint
+// to make and a session to spread the loading over; an isolate answers one request and
+// is gone, so waiting for either would be waiting per request. See
+// @nib/markdown/engines.
+import '@nib/markdown/eager'
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'

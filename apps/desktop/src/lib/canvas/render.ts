@@ -12,6 +12,7 @@
 
 import { hardBreaks, renderMarkdown } from '@nib/markdown'
 import { assetUrl, joinPath } from '../tauri'
+import { enginesArrived } from '../engines.svelte'
 import { links } from '../link-index.svelte'
 import { pointer } from '../reading/render'
 
@@ -38,7 +39,12 @@ export function cardHtml(text: string, canvasPath: string | null, trusted: boole
   // Whether a single newline breaks the line is part of the key: it is the
   // renderer's own answer rather than an option passed in, so a card rendered
   // before the setting moved is no longer the card the renderer would draw.
-  const key = `${trusted ? 'own' : 'theirs'}\n${hardBreaks() ? 'br' : 'flow'}\n${canvasPath ?? ''}\n${text}`
+  //
+  // And so is how many of the renderer's heavy libraries have arrived, for exactly
+  // the same reason: a card with a formula in it drawn before KaTeX landed shows the
+  // formula's own source, and a canvas is only redrawn when something says so. This
+  // is what says so; see engines.svelte.ts.
+  const key = `${trusted ? 'own' : 'theirs'}\n${hardBreaks() ? 'br' : 'flow'}\n${enginesArrived()}\n${canvasPath ?? ''}\n${text}`
   const held = cache.get(key)
   if (held !== undefined) return held
 

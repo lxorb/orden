@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import type { EditorState, Line, Range, Text } from '@codemirror/state'
+import { type EditorState, type Line, type Range, StateEffect, type Text } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -21,6 +21,7 @@ import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
+import { onEngines } from '@nib/markdown/engines'
 import { readHighlight } from '@nib/markdown/highlights'
 import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
 import { readProperties } from '@nib/markdown/properties'
@@ -765,15 +766,28 @@ export function buildDecorations(
   return new Decorator(state).build(ranges)
 }
 
+/** Said when a library a decoration needs has arrived, so the note is drawn again
+ *  with it. The emoji table is the one that needs this: a `:shortcode:` with no table
+ *  behind it is left as the characters it was written with and gets no widget at all,
+ *  so there is nothing on screen to fill in later the way a formula's box is filled.
+ *  See @nib/markdown/engines. */
+const enginesLanded = StateEffect.define<null>()
+
 export const livePreviewDecorations = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
     atomic: DecorationSet
+    private readonly stopWaiting: () => void
 
     constructor(view: EditorView) {
       const built = buildDecorations(view.state, view.visibleRanges)
       this.decorations = built.decorations
       this.atomic = built.atomic
+      this.stopWaiting = onEngines(() => view.dispatch({ effects: enginesLanded.of(null) }))
+    }
+
+    destroy() {
+      this.stopWaiting()
     }
 
     update(update: ViewUpdate) {
@@ -806,6 +820,9 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex)
+      const landed = update.transactions.some((one) =>
+        one.effects.some((effect) => effect.is(enginesLanded)),
+      )
       if (
         update.docChanged ||
         update.viewportChanged ||
@@ -813,7 +830,8 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         released ||
         reparsed ||
         sealed ||
-        asked
+        asked ||
+        landed
       ) {
         const built = buildDecorations(update.view.state, update.view.visibleRanges)
         this.decorations = built.decorations

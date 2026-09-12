@@ -1,10 +1,7 @@
-import katex from 'katex'
-// Chemical equations: `\ce{H2O}` and friends, as Typora supports.
-import 'katex/contrib/mhchem'
 import type { MarkedExtension, Token, Tokens } from 'marked'
-import { get } from 'node-emoji'
 import { blockMath, definitionList } from './blocks'
 import { calloutChevron, calloutIcon, calloutOf } from './callouts'
+import { emojiTable, loadEmoji, loadMaths, mathsEngine } from './engines'
 import { closesFence, fenceMark } from './fences'
 import { readHighlight } from './highlights'
 import { escape, fragment } from './html'
@@ -26,18 +23,33 @@ const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>
  *  tall. Macro depth needs no number here: KaTeX caps expansion by default. */
 export const MOST_EMS = 100
 
-/** Renders TeX, or shows the source when it will not parse. */
+/** Renders TeX, or shows the source when it will not parse.
+ *
+ *  And shows the source, plainly, when the engine is not here yet: the whole of it
+ *  is three quarters of a megabyte and it is loaded when a note turns out to have a
+ *  formula in it rather than when the app starts, so a caller that can wait says
+ *  `await loadFor(source)` first and this never happens to it. The one that cannot
+ *  is the clipboard's HTML flavour, written inside a copy event - and what it writes
+ *  then is the formula's own source, which is what the plain-text flavour beside it
+ *  carries anyway. See engines.ts. */
 function math(tex: string, display: boolean): string {
+  const engine = mathsEngine()
+  const escaped = () => tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
+
+  if (!engine) {
+    void loadMaths()
+    return display ? `<pre>${escaped()}</pre>` : `<code>${escaped()}</code>`
+  }
+
   try {
-    return katex.renderToString(tex, {
+    return engine.renderToString(tex, {
       displayMode: display,
       throwOnError: false,
       output: 'html',
       maxSize: MOST_EMS,
     })
   } catch {
-    const escaped = tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
-    return display ? `<pre class="math-error">${escaped}</pre>` : `<code>${escaped}</code>`
+    return display ? `<pre class="math-error">${escaped()}</pre>` : `<code>${escaped()}</code>`
   }
 }
 
@@ -240,7 +252,17 @@ export const emoji: MarkedExtension = {
         const match = /^:([a-z0-9_+-]+):/i.exec(src)
         if (!match?.[1]) return undefined
 
-        const character = get(match[1])
+        // The table is a quarter of a megabyte and arrives when a note turns out to
+        // have a shortcode in it; until it does, `:smile:` is the characters it is
+        // written with, which is also what an unknown name has always shown. See
+        // engines.ts.
+        const table = emojiTable()
+        if (!table) {
+          void loadEmoji()
+          return undefined
+        }
+
+        const character = table.get(match[1])
         if (!character) return undefined
 
         return { type: 'emoji', raw: match[0], text: character }
