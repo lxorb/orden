@@ -337,6 +337,14 @@ export const insertChart = insertBlock(() => ({
   text: '```chart\ntype: bar\ntitle: \nlabels: [one, two, three]\nseries:\n  - data: [1, 2, 3]\n```\n',
   caret: 26,
 }))
+
+/** An ` ```ai ` fence with nothing in it and the caret inside.
+ *
+ *  Empty, unlike a chart: what goes in is a question in somebody's own words, and
+ *  a question written for them would be a question to delete. The answer goes
+ *  under the fence when it is asked; see ai/block.ts. */
+export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 7 }))
+
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
 
 /** A GitHub alert, which is the callout the renderer draws and the editor marks.

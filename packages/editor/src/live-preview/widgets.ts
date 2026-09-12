@@ -6,6 +6,8 @@ import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
 import { label as uiLabel } from '../labels'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/run'
+import { isAiLanguage } from '../ai/block'
+import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
 
 export class BulletWidget extends NibWidget {
   constructor(private readonly depth: number) {
@@ -142,6 +144,11 @@ export class FenceHeaderWidget extends NibWidget {
     /** Where the block's own first line begins, which is the place the code and a
      *  run are found by. */
     private readonly blockFrom: number,
+    /** Whether this block is an `ai` fence waiting on an answer, so its glyph
+     *  offers a stop. Part of the widget rather than read when it is drawn,
+     *  because that is what makes the glyph change: two widgets that compare
+     *  equal keep the DOM the first one built. */
+    private readonly asking = false,
   ) {
     super()
   }
@@ -151,7 +158,8 @@ export class FenceHeaderWidget extends NibWidget {
       other.language === this.language &&
       other.caption === this.caption &&
       other.infoFrom === this.infoFrom &&
-      other.blockFrom === this.blockFrom
+      other.blockFrom === this.blockFrom &&
+      other.asking === this.asking
     )
   }
 
@@ -200,6 +208,7 @@ export class FenceHeaderWidget extends NibWidget {
     controls.append(label)
 
     if (isRunnableLanguage(this.language)) controls.append(this.runButton(view))
+    else if (isAiLanguage(this.language)) controls.append(this.askButton(view))
 
     const copy = document.createElement('button')
     copy.className = 'nib-fence-copy'
@@ -291,32 +300,59 @@ export class FenceHeaderWidget extends NibWidget {
     return false
   }
 
-  /** Runs the block's code in a sandbox, with the output below it. Only on the
-   *  languages that are JavaScript; see run/run.ts for which and for why. */
-  private runButton(view: EditorView): HTMLElement {
-    const run = document.createElement('button')
-    run.className = 'nib-fence-run'
-    run.type = 'button'
-    run.title = uiLabel('run')
-    run.setAttribute('aria-label', uiLabel('runCode'))
+  /** A glyph at the end of the header row, drawn rather than written so it is the
+   *  same size in every language. Two fences carry one - JavaScript runs, and an
+   *  `ai` block's question is asked - and the two look and behave alike, so the
+   *  shape is one thing with the glyph and the press passed in. */
+  private glyphButton(title: string, spoken: string, path: string, press: () => void): HTMLElement {
+    const button = document.createElement('button')
+    button.className = 'nib-fence-run'
+    button.type = 'button'
+    button.title = title
+    button.setAttribute('aria-label', spoken)
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     svg.setAttribute('viewBox', '0 0 14 14')
-    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    triangle.setAttribute('d', 'M4 2.6l7 4.4-7 4.4z')
-    svg.append(triangle)
-    run.append(svg)
+    const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    shape.setAttribute('d', path)
+    svg.append(shape)
+    button.append(svg)
 
-    run.addEventListener('mousedown', (event) => {
+    button.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
+      press()
+    })
+
+    return button
+  }
+
+  /** Runs the block's code in a sandbox, with the output below it. Only on the
+   *  languages that are JavaScript; see run/run.ts for which and for why. */
+  private runButton(view: EditorView): HTMLElement {
+    return this.glyphButton(uiLabel('run'), uiLabel('runCode'), 'M4 2.6l7 4.4-7 4.4z', () => {
       // Read now rather than remembered: the same block, as the document holds it
       // at the moment of the press. Null where the block has stopped being one.
       const fence = runnableFenceAt(view.state, this.blockFrom)
       if (fence) runFence(view, fence)
     })
+  }
 
-    return run
+  /** Asks the question the block holds, and writes the answer into the note under
+   *  it; see ai/run.ts. The same triangle a run wears, because it is the same
+   *  gesture: this block does something, and this is the press that does it. While
+   *  an answer is arriving it is a square instead, which stops it. */
+  private askButton(view: EditorView): HTMLElement {
+    if (this.asking) {
+      return this.glyphButton(uiLabel('stop'), uiLabel('stop'), 'M4 4h6v6H4z', () =>
+        stopAskAt(view, this.blockFrom),
+      )
+    }
+
+    return this.glyphButton(uiLabel('ask'), uiLabel('askModel'), 'M4 2.6l7 4.4-7 4.4z', () => {
+      const fence = aiFenceAt(view.state, this.blockFrom)
+      if (fence) askAiFence(view, fence)
+    })
   }
 
   /** Turns the label into a field, and writes the name straight into the fence.

@@ -2,8 +2,10 @@ export { createEditor, type EditorOptions, editorState, type StateOptions } from
 export { HeldState, type StateView } from './held'
 export { type Peer, peersOf, remoteCarets, setPeers } from './carets'
 export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
+export { type AiAsk, type AiRunner, setAiRunner } from './ai/run'
 export {
   clearFormatting,
+  insertAiBlock,
   insertCallout,
   insertChart,
   insertCodeFence,

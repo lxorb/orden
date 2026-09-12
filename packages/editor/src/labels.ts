@@ -10,6 +10,12 @@ const DEFAULTS = {
   run: 'Run',
   runCode: 'Run the code',
   running: 'Running…',
+  /** The glyph on an `ai` fence, and the line it writes over the answer. The line
+   *  is file content rather than interface: it is written in the language the app
+   *  is set to and then left alone, so a note keeps whatever it was written in. */
+  ask: 'Ask',
+  askModel: 'Ask the model',
+  aiAnswered: 'answered by {model}, {date}',
   stop: 'Stop',
   stopped: 'Stopped',
   result: 'Result',

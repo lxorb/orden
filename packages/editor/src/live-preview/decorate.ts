@@ -9,6 +9,7 @@ import {
   type WidgetType,
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { askingAt, asksMoved } from '../ai/run'
 import { concealable, hide, meta } from './conceal'
 import { numberEquations } from './blocks'
 import { dragging } from './dragging'
@@ -436,6 +437,9 @@ class Decorator {
           // language leaves the caption after it alone.
           infoFrom + language.length,
           open.from,
+          // Only an `ai` fence can be waiting on anything; asked of every fence
+          // because the answer is a lookup in a list that is nearly always empty.
+          askingAt(this.state, open.from),
         ),
         side: 1,
       }).range(open.to),
@@ -766,6 +770,9 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // points at a note that exists is what decides how it is drawn, and the
       // answer changes when a note is saved, made or renamed - none of which
       // touches this document.
+      // A question being asked or stopped changes only the glyph on one fence's
+      // header, and nothing else in the document; see ai/run.ts.
+      const asked = asksMoved(update.startState, update.state)
       const sealed =
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
@@ -776,7 +783,8 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         settled ||
         released ||
         reparsed ||
-        sealed
+        sealed ||
+        asked
       ) {
         const built = buildDecorations(update.view.state, update.view.visibleRanges)
         this.decorations = built.decorations
