@@ -118,9 +118,18 @@ function desktopOnlyPlugins(): string[] {
 
 /** Exporting is the one feature that writes a file the reader named, and every
  *  byte of it goes through the app's own commands rather than through a plugin.
- *  That is the whole reason `notes::write_bytes` exists beside `write_note`: a
- *  command of ours judges the path first, in `paths::chosen`, while the fs plugin
- *  would write wherever the window asked. */
+ *
+ *  Not because the path is judged first: `paths::chosen` deliberately is not a
+ *  bound - it checks that the string names a file at all and says so in its own
+ *  doc, because a file worth editing is wherever it already is and the dialog is
+ *  what chose it. What `notes::write_bytes` is for is the writing. It goes through
+ *  `write_file`, which makes the folders the path needs and then hands the bytes to
+ *  `paths::write_atomically`: a hidden temp file beside the target, flushed, then
+ *  renamed over it, so a crash halfway through can never truncate the file that was
+ *  already there. And it is one command - one call site in `export/save.ts`, one in
+ *  the importer, one in the web shim - rather than a grant the whole window holds,
+ *  so what the app writes is a list somebody can read to the end. The fs plugin
+ *  offers neither: it writes where it is told, in place, from anywhere. */
 describe('writing an export', () => {
   test('goes through the app’s own commands, so no build grants the fs plugin', () => {
     for (const [build, granted] of [
@@ -138,6 +147,14 @@ describe('writing an export', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
     expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
     expect(read('../src/lib/export/save.ts')).toContain("invoke('write_bytes'")
+  })
+
+  /** And the reason it is a command of ours: the write is whole or it never
+   *  happened. The plugin writes in place, which truncates the file it is replacing
+   *  the moment it opens it. */
+  test('and the write is atomic, which is what the plugin could not give it', () => {
+    expect(read('../src-tauri/src/notes.rs')).toContain('write_atomically(&target, bytes)')
+    expect(read('../src-tauri/src/paths.rs')).toContain('fs::rename(&temp, target)')
   })
 
   test('asks the desktop where to save, which needs the save dialog', () => {
