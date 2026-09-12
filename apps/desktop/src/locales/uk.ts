@@ -1330,7 +1330,7 @@ export const uk: Dictionary = {
   'something went wrong here - try again': 'тут щось пішло не так - спробуйте знову',
   'this service cannot keep a secret safely': 'ця служба не може надійно зберігати секрет',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'лише зображення та PDF',
+  'images, PDFs and a site’s own css or js only': 'лише зображення, PDF та власні css чи js сайту',
   'that file is too big': 'цей файл завеликий',
   'that is more settings than an account holds': 'більше налаштувань акаунт не вміщує',
   'that is more bookmarks than a space holds': 'більше закладок простір не вміщує',
@@ -1338,6 +1338,7 @@ export const uk: Dictionary = {
   'that is more files than a space keeps': 'більше файлів простір не зберігає',
   'that is more than a space keeps about its graph': 'більше про свій граф простір не зберігає',
   'that is more folder icons than a space holds': 'більше значків папок простір не вміщує',
+  'that is more than a site keeps': 'це більше, ніж зберігає сайт',
   // Sharing a space, and being let into one.
   'nobody by that address': 'за цією адресою нікого немає',
   'nobody by that name': 'з таким іменем нікого немає',

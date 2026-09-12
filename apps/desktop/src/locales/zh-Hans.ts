@@ -1237,7 +1237,7 @@ export const zhHans: Dictionary = {
   'something went wrong here - try again': '这里出了点问题，请重试',
   'this service cannot keep a secret safely': '此服务无法安全保存密钥',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': '仅支持图片和PDF',
+  'images, PDFs and a site’s own css or js only': '仅支持图片、PDF 以及站点自己的 css 或 js',
   'that file is too big': '该文件太大',
   'that is more settings than an account holds': '设置项超出账户上限',
   'that is more bookmarks than a space holds': '书签数超出空间上限',
@@ -1245,6 +1245,7 @@ export const zhHans: Dictionary = {
   'that is more files than a space keeps': '文件数超出空间上限',
   'that is more than a space keeps about its graph': '关系图数据超出空间上限',
   'that is more folder icons than a space holds': '文件夹图标数超出空间上限',
+  'that is more than a site keeps': '超出了一个站点所能保存的数量',
   // Sharing a space, and being let into one.
   'nobody by that address': '没有使用该地址的人',
   'nobody by that name': '没有叫这个名字的人',

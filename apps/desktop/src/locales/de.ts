@@ -1300,7 +1300,8 @@ export const de: Dictionary = {
     'Dieser Dienst kann ein Geheimnis nicht sicher aufbewahren',
 
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'Nur Bilder und PDFs',
+  'images, PDFs and a site’s own css or js only':
+    'Nur Bilder, PDFs und das eigene css oder js einer Seite',
   'that file is too big': 'Diese Datei ist zu groß',
   'that is more settings than an account holds':
     'Das sind mehr Einstellungen, als ein Konto aufbewahrt',
@@ -1312,6 +1313,7 @@ export const de: Dictionary = {
     'Das ist mehr, als ein Bereich über seinen Graphen behält',
   'that is more folder icons than a space holds':
     'Das sind mehr Ordnersymbole, als ein Bereich aufbewahrt',
+  'that is more than a site keeps': 'Das ist mehr, als eine Seite aufbewahrt',
 
   // Sharing a space, and being let into one.
   'nobody by that address': 'Niemand unter dieser Adresse',

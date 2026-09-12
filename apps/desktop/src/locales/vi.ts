@@ -1257,7 +1257,7 @@ export const vi: Dictionary = {
   'something went wrong here - try again': 'có gì sai ở đây - thử lại',
   'this service cannot keep a secret safely': 'dịch vụ này không giữ khoá bí mật an toàn được',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'chỉ ảnh và PDF',
+  'images, PDFs and a site’s own css or js only': 'chỉ ảnh, PDF và css hoặc js của chính trang',
   'that file is too big': 'tệp đó quá lớn',
   'that is more settings than an account holds': 'nhiều cài đặt hơn một tài khoản chứa được',
   'that is more bookmarks than a space holds': 'nhiều dấu trang hơn một không gian chứa được',
@@ -1267,6 +1267,7 @@ export const vi: Dictionary = {
     'nhiều hơn mức một không gian giữ về sơ đồ của nó',
   'that is more folder icons than a space holds':
     'nhiều biểu tượng thư mục hơn một không gian chứa được',
+  'that is more than a site keeps': 'nhiều hơn mức một trang giữ được',
   // Sharing a space, and being let into one.
   'nobody by that address': 'không có ai ở địa chỉ đó',
   'nobody by that name': 'không có ai tên đó',

@@ -1272,7 +1272,7 @@ export const ps: Dictionary = {
   'something went wrong here - try again': 'دلته يو څه خراب شو - بيا هڅه وکړئ',
   'this service cannot keep a secret safely': 'دا خدمت راز په خوندي ډول نه شي ساتلی',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'يوازې انځورونه او PDF',
+  'images, PDFs and a site’s own css or js only': 'يوازې انځورونه، PDF او د سایټ خپل css یا js',
   'that file is too big': 'هغه دوتنه ډېره لويه ده',
   'that is more settings than an account holds': 'هغه له هغو امستنو ډېرې دي چې يو حساب ساتي',
   'that is more bookmarks than a space holds': 'هغه له هغو نښانو ډېرې دي چې يو ځای ساتي',
@@ -1281,6 +1281,7 @@ export const ps: Dictionary = {
   'that is more than a space keeps about its graph':
     'هغه له هغه ډېر دی چې يو ځای د خپل ګراف په اړه ساتي',
   'that is more folder icons than a space holds': 'هغه له هغو د دوتنپوښ نښو ډېرې دي چې يو ځای ساتي',
+  'that is more than a site keeps': 'دا د یو سایټ له ساتلو څخه ډېر دي',
   // Sharing a space, and being let into one.
   'nobody by that address': 'په هغه پته هيڅوک نشته',
   'nobody by that name': 'په هغه نوم هيڅوک نشته',

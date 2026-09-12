@@ -1288,7 +1288,7 @@ export const sw: Dictionary = {
   'something went wrong here - try again': 'kitu kilikwenda vibaya hapa - jaribu tena',
   'this service cannot keep a secret safely': 'huduma hii haiwezi kuhifadhi siri kwa usalama',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'picha na PDF pekee',
+  'images, PDFs and a site’s own css or js only': 'picha, PDF na css au js ya tovuti yenyewe pekee',
   'that file is too big': 'faili hiyo ni kubwa mno',
   'that is more settings than an account holds':
     'hiyo ni mipangilio mingi zaidi ya inayoshikwa na akaunti',
@@ -1302,6 +1302,7 @@ export const sw: Dictionary = {
     'hiyo ni zaidi ya nafasi inahifadhi kuhusu grafu yake',
   'that is more folder icons than a space holds':
     'hiyo ni aikoni za folda nyingi zaidi ya zinazoshikwa na nafasi',
+  'that is more than a site keeps': 'hiyo ni zaidi ya tovuti inavyoweka',
   // Sharing a space, and being let into one.
   'nobody by that address': 'hakuna mtu kwa anwani hiyo',
   'nobody by that name': 'hakuna mtu kwa jina hilo',

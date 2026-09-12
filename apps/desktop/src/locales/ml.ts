@@ -1285,7 +1285,8 @@ export const ml: Dictionary = {
   'something went wrong here - try again': 'ഇവിടെ എന്തോ പിഴച്ചു - വീണ്ടും ശ്രമിക്കുക',
   'this service cannot keep a secret safely': 'ഈ സേവനത്തിന് രഹസ്യം സുരക്ഷിതമായി സൂക്ഷിക്കാനാകില്ല',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ചിത്രങ്ങളും PDFഉം മാത്രം',
+  'images, PDFs and a site’s own css or js only':
+    'ചിത്രങ്ങൾ, PDF, സൈറ്റിന്റെ സ്വന്തം css അല്ലെങ്കിൽ js മാത്രം',
   'that file is too big': 'ആ ഫയൽ വളരെ വലുതാണ്',
   'that is more settings than an account holds': 'ഒരു അക്കൗണ്ട് കൊള്ളുന്നതിലധികം സെറ്റിംഗ്സ്',
   'that is more bookmarks than a space holds': 'ഒരു സ്പേസ് കൊള്ളുന്നതിലധികം ബുക്ക്‌മാർക്കുകൾ',
@@ -1294,6 +1295,7 @@ export const ml: Dictionary = {
   'that is more than a space keeps about its graph':
     'ഒരു സ്പേസ് അതിന്റെ ഗ്രാഫിനെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലധികം',
   'that is more folder icons than a space holds': 'ഒരു സ്പേസ് കൊള്ളുന്നതിലധികം ഫോൾഡർ ഐക്കണുകൾ',
+  'that is more than a site keeps': 'ഒരു സൈറ്റ് സൂക്ഷിക്കുന്നതിലും കൂടുതലാണ്',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ആ വിലാസത്തിൽ ആരുമില്ല',
   'nobody by that name': 'ആ പേരിൽ ആരുമില്ല',

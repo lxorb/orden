@@ -1269,7 +1269,7 @@ export const ur: Dictionary = {
   'something went wrong here - try again': 'یہاں کچھ غلط ہو گیا - دوبارہ کوشش کریں',
   'this service cannot keep a secret safely': 'یہ سروس راز محفوظ نہیں رکھ سکتی',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'صرف تصاویر اور PDF',
+  'images, PDFs and a site’s own css or js only': 'صرف تصاویر، PDF اور سائٹ کا اپنا css یا js',
   'that file is too big': 'یہ فائل بہت بڑی ہے',
   'that is more settings than an account holds': 'یہ اکاؤنٹ کی گنجائش سے زیادہ ترتیبات ہیں',
   'that is more bookmarks than a space holds': 'یہ اسپیس کی گنجائش سے زیادہ بک مارکس ہیں',
@@ -1277,6 +1277,7 @@ export const ur: Dictionary = {
   'that is more files than a space keeps': 'یہ اسپیس کی رکھی فائلوں سے زیادہ ہیں',
   'that is more than a space keeps about its graph': 'یہ اسپیس کے گراف کی گنجائش سے زیادہ ہے',
   'that is more folder icons than a space holds': 'یہ اسپیس کی گنجائش سے زیادہ فولڈر آئیکن ہیں',
+  'that is more than a site keeps': 'یہ اُس سے زیادہ ہے جو ایک سائٹ رکھتی ہے',
   // Sharing a space, and being let into one.
   'nobody by that address': 'اس پتے پر کوئی نہیں',
   'nobody by that name': 'اس نام کا کوئی نہیں',

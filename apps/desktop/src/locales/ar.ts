@@ -1350,7 +1350,8 @@ export const ar: Dictionary = {
   'something went wrong here - try again': 'حدث خطأ هنا - حاول مرة أخرى',
   'this service cannot keep a secret safely': 'هذه الخدمة لا تحفظ سرًا بأمان',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'صور وملفات PDF فقط',
+  'images, PDFs and a site’s own css or js only':
+    'صور وملفات PDF وملفات css أو js الخاصة بالموقع فقط',
   'that file is too big': 'الملف كبير جدًا',
   'that is more settings than an account holds': 'هذه إعدادات أكثر مما يحتمله حساب',
   'that is more bookmarks than a space holds': 'هذه إشارات مرجعية أكثر مما تحتمله مساحة',
@@ -1358,6 +1359,7 @@ export const ar: Dictionary = {
   'that is more files than a space keeps': 'هذه ملفات أكثر مما تحفظه مساحة',
   'that is more than a space keeps about its graph': 'هذا أكثر مما تحفظه مساحة عن رسمها البياني',
   'that is more folder icons than a space holds': 'هذه أيقونات مجلدات أكثر مما تحتمله مساحة',
+  'that is more than a site keeps': 'هذا أكثر مما يحفظه موقع',
   // Sharing a space, and being let into one.
   'nobody by that address': 'لا أحد بهذا العنوان',
   'nobody by that name': 'لا أحد بهذا الاسم',

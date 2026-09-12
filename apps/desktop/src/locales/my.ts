@@ -1258,7 +1258,8 @@ export const my: Dictionary = {
   'this service cannot keep a secret safely':
     'ဤဝန်ဆောင်မှုသည် လှျို့ဝှက်ချက်ကို လုံခြုံစွာ မထားနိုင်ပါ',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ပုံနှင့် PDF သာ',
+  'images, PDFs and a site’s own css or js only':
+    'ပုံ၊ PDF နှင့် ဆိုက်၏ ကိုယ်ပိုင် css သို့မဟုတ် js သာ',
   'that file is too big': 'ထိုဖိုင် အလွန်ကြီးသည်',
   'that is more settings than an account holds': 'ထိုအရာ အကောင့်ဆံ့သော ဆက်တင်ထက် ပိုသည်',
   'that is more bookmarks than a space holds': 'ထိုအရာ နေရာဆံ့သော အမှတ်အသားထက် ပိုသည်',
@@ -1266,6 +1267,7 @@ export const my: Dictionary = {
   'that is more files than a space keeps': 'ထိုအရာ နေရာထားသော ဖိုင်ထက် ပိုသည်',
   'that is more than a space keeps about its graph': 'ထိုအရာ နေရာက ဂရပ်အတွက် ထားသည်ထက် ပိုသည်',
   'that is more folder icons than a space holds': 'ထိုအရာ နေရာဆံ့သော ဖိုလ်ဒါအိုင်ကွန်ထက် ပိုသည်',
+  'that is more than a site keeps': 'ဆိုက်တစ်ခု သိမ်းနိုင်သည်ထက် ပိုသည်',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ထိုလိပ်စာတွင် မည်သူမျှ မရှိပါ',
   'nobody by that name': 'ထိုနာမည်ဖြင့် မည်သူမျှ မရှိပါ',

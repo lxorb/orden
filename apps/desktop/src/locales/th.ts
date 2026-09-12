@@ -1243,7 +1243,7 @@ export const th: Dictionary = {
   'something went wrong here - try again': 'มีอะไรผิดพลาดที่นี่ - ลองใหม่',
   'this service cannot keep a secret safely': 'บริการนี้เก็บรหัสลับอย่างปลอดภัยไม่ได้',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'รูปและ PDF เท่านั้น',
+  'images, PDFs and a site’s own css or js only': 'รูป PDF และ css หรือ js ของเว็บเท่านั้น',
   'that file is too big': 'ไฟล์นั้นใหญ่เกินไป',
   'that is more settings than an account holds': 'การตั้งค่ามากกว่าที่บัญชีเก็บได้',
   'that is more bookmarks than a space holds': 'บุ๊กมาร์กมากกว่าที่พื้นที่เก็บได้',
@@ -1251,6 +1251,7 @@ export const th: Dictionary = {
   'that is more files than a space keeps': 'ไฟล์มากกว่าที่พื้นที่เก็บได้',
   'that is more than a space keeps about its graph': 'มากกว่าที่พื้นที่เก็บเรื่องกราฟได้',
   'that is more folder icons than a space holds': 'ไอคอนโฟลเดอร์มากกว่าที่พื้นที่เก็บได้',
+  'that is more than a site keeps': 'มากกว่าที่เว็บเก็บได้',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ไม่มีใครใช้อีเมลนั้น',
   'nobody by that name': 'ไม่มีใครชื่อนั้น',

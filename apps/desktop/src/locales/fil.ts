@@ -1295,7 +1295,7 @@ export const fil: Dictionary = {
   'this service cannot keep a secret safely':
     'hindi maitatago nang ligtas ng serbisyong ito ang lihim',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'imahe at PDF lang',
+  'images, PDFs and a site’s own css or js only': 'imahe, PDF, at css o js ng site lang',
   'that file is too big': 'masyadong malaki ang file na iyon',
   'that is more settings than an account holds':
     'mas marami iyon sa setting na kayang hawakan ng isang account',
@@ -1308,6 +1308,7 @@ export const fil: Dictionary = {
     'mas marami iyon sa itinatago ng isang espasyo tungkol sa graph nito',
   'that is more folder icons than a space holds':
     'mas marami iyon sa folder icon na kayang hawakan ng isang espasyo',
+  'that is more than a site keeps': 'mas marami iyon sa kayang itago ng isang site',
   // Sharing a space, and being let into one.
   'nobody by that address': 'walang tao sa address na iyon',
   'nobody by that name': 'walang tao sa pangalang iyon',

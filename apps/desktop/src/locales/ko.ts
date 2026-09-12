@@ -1250,7 +1250,7 @@ export const ko: Dictionary = {
   'something went wrong here - try again': '여기서 문제가 생겼습니다 - 다시 하세요',
   'this service cannot keep a secret safely': '이 서비스는 비밀을 안전하게 보관할 수 없습니다',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': '이미지와 PDF만',
+  'images, PDFs and a site’s own css or js only': '이미지, PDF, 사이트 자체의 css 또는 js만',
   'that file is too big': '그 파일은 너무 큽니다',
   'that is more settings than an account holds': '계정이 담을 수 있는 설정보다 많습니다',
   'that is more bookmarks than a space holds': '공간이 담을 수 있는 북마크보다 많습니다',
@@ -1259,6 +1259,7 @@ export const ko: Dictionary = {
   'that is more than a space keeps about its graph':
     '공간이 그래프에 대해 보관하는 것보다 많습니다',
   'that is more folder icons than a space holds': '공간이 담을 수 있는 폴더 아이콘보다 많습니다',
+  'that is more than a site keeps': '사이트가 보관하는 양을 넘습니다',
   // Sharing a space, and being let into one.
   'nobody by that address': '그 주소에는 아무도 없습니다',
   'nobody by that name': '그 이름의 사람이 없습니다',

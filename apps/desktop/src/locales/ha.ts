@@ -1291,7 +1291,7 @@ export const ha: Dictionary = {
   'something went wrong here - try again': 'wani abu ya lalace nan - sake gwadawa',
   'this service cannot keep a secret safely': 'wannan hidimar ba za ta iya riƙe asiri lafiya ba',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'hotuna da PDF kawai',
+  'images, PDFs and a site’s own css or js only': 'hotuna, PDF da css ko js na shafin kawai',
   'that file is too big': 'wannan fayil ya yi girma sosai',
   'that is more settings than an account holds': 'wannan saituna sun fi abin da asusu ke riƙe',
   'that is more bookmarks than a space holds': 'wannan alamun shafi sun fi abin da wuri ke riƙe',
@@ -1301,6 +1301,7 @@ export const ha: Dictionary = {
     'wannan ya fi abin da wuri ke riƙe game da jadawalinsa',
   'that is more folder icons than a space holds':
     'wannan alamun babban fayil sun fi abin da wuri ke riƙe',
+  'that is more than a site keeps': 'hakan ya fi abin da shafi ke ajiye',
   // Sharing a space, and being let into one.
   'nobody by that address': 'babu kowa a wannan adireshin',
   'nobody by that name': 'babu kowa da wannan suna',

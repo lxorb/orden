@@ -1309,7 +1309,8 @@ export const es: Dictionary = {
   'this service cannot keep a secret safely':
     'este servicio no puede guardar un secreto de forma segura',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'solo imágenes y PDF',
+  'images, PDFs and a site’s own css or js only':
+    'solo imágenes, PDF y el css o js propio de un sitio',
   'that file is too big': 'ese archivo es demasiado grande',
   'that is more settings than an account holds': 'son más ajustes de los que admite una cuenta',
   'that is more bookmarks than a space holds': 'son más marcadores de los que admite un espacio',
@@ -1319,6 +1320,7 @@ export const es: Dictionary = {
     'es más de lo que un espacio guarda de su grafo',
   'that is more folder icons than a space holds':
     'son más iconos de carpeta de los que admite un espacio',
+  'that is more than a site keeps': 'eso es más de lo que un sitio guarda',
   // Sharing a space, and being let into one.
   'nobody by that address': 'no hay nadie con esa dirección',
   'nobody by that name': 'no hay nadie con ese nombre',

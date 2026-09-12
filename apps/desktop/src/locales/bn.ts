@@ -1268,7 +1268,7 @@ export const bn: Dictionary = {
   'something went wrong here - try again': 'এখানে কিছু ভুল হয়েছে - আবার চেষ্টা করুন',
   'this service cannot keep a secret safely': 'এই সার্ভিস গোপন কী নিরাপদে রাখতে পারে না',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'শুধু ছবি ও PDF',
+  'images, PDFs and a site’s own css or js only': 'শুধু ছবি, PDF ও সাইটের নিজের css বা js',
   'that file is too big': 'ফাইলটি অনেক বড়',
   'that is more settings than an account holds': 'একটি অ্যাকাউন্টে এর বেশি সেটিংস ধরে না',
   'that is more bookmarks than a space holds': 'একটি স্পেসে এর বেশি বুকমার্ক ধরে না',
@@ -1276,6 +1276,7 @@ export const bn: Dictionary = {
   'that is more files than a space keeps': 'একটি স্পেস এর বেশি ফাইল রাখে না',
   'that is more than a space keeps about its graph': 'একটি স্পেস তার গ্রাফ নিয়ে এর বেশি রাখে না',
   'that is more folder icons than a space holds': 'একটি স্পেসে এর বেশি ফোল্ডার আইকন ধরে না',
+  'that is more than a site keeps': 'একটি সাইট যা রাখে তার চেয়ে বেশি',
   // Sharing a space, and being let into one.
   'nobody by that address': 'এই ঠিকানায় কেউ নেই',
   'nobody by that name': 'এই নামে কেউ নেই',

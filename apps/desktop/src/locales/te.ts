@@ -1271,7 +1271,8 @@ export const te: Dictionary = {
   'something went wrong here - try again': 'ఇక్కడ ఏదో తప్పు జరిగింది - మళ్లీ ప్రయత్నించండి',
   'this service cannot keep a secret safely': 'ఈ సేవ రహస్యాన్ని సురక్షితంగా ఉంచలేదు',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'చిత్రాలు, PDFలు మాత్రమే',
+  'images, PDFs and a site’s own css or js only':
+    'చిత్రాలు, PDFలు, సైట్ దాని స్వంత css లేదా js మాత్రమే',
   'that file is too big': 'ఆ ఫైల్ చాలా పెద్దది',
   'that is more settings than an account holds': 'ఒక ఖాతా ఉంచగలిగే సెట్టింగ్‌ల కంటే ఎక్కువ',
   'that is more bookmarks than a space holds': 'ఒక స్పేస్ ఉంచగలిగే బుక్‌మార్క్‌ల కంటే ఎక్కువ',
@@ -1280,6 +1281,7 @@ export const te: Dictionary = {
   'that is more than a space keeps about its graph':
     'ఒక స్పేస్ తన గ్రాఫ్ గురించి ఉంచేదానికంటే ఎక్కువ',
   'that is more folder icons than a space holds': 'ఒక స్పేస్ ఉంచే ఫోల్డర్ ఐకాన్‌ల కంటే ఎక్కువ',
+  'that is more than a site keeps': 'ఒక సైట్ ఉంచేదానికి మించి ఉంది',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ఆ చిరునామాలో ఎవరూ లేరు',
   'nobody by that name': 'ఆ పేరుతో ఎవరూ లేరు',

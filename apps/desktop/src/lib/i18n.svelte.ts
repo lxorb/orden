@@ -192,7 +192,11 @@ export function catalogueFor(tag: string): string {
  *  to Norwegian and then to German is answered in German rather than in
  *  English, which is what a list of languages is a list for. */
 function systemCatalogue(): string {
-  const asked = navigator.languages.length ? navigator.languages : [navigator.language || 'en']
+  // The DOM types promise `languages` is always an array. A test's navigator is
+  // not the DOM, and one that answers `language` and nothing else reached this
+  // line and threw; hence the chain the types say is unnecessary.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const asked = navigator.languages?.length ? navigator.languages : [navigator.language || 'en']
 
   for (const tag of asked) {
     const found = catalogueFor(tag)

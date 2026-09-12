@@ -1262,7 +1262,7 @@ export const ja: Dictionary = {
   'something went wrong here - try again': '問題が発生しました。もう一度お試しください',
   'this service cannot keep a secret safely': 'このサービスは秘密を安全に保管できません',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': '画像とPDFのみ',
+  'images, PDFs and a site’s own css or js only': '画像、PDF、サイト自身の css または js のみ',
   'that file is too big': 'このファイルは大きすぎます',
   'that is more settings than an account holds': 'アカウントが保持できる設定の数を超えています',
   'that is more bookmarks than a space holds': 'スペースが保持できるブックマークの数を超えています',
@@ -1272,6 +1272,7 @@ export const ja: Dictionary = {
     'スペースがグラフについて保持できる量を超えています',
   'that is more folder icons than a space holds':
     'スペースが保持できるフォルダー記号の数を超えています',
+  'that is more than a site keeps': 'サイトが保持できる量を超えています',
   // Sharing a space, and being let into one.
   'nobody by that address': 'そのアドレスの人はいません',
   'nobody by that name': 'その名前の人はいません',

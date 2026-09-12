@@ -1277,7 +1277,8 @@ export const gsw: Dictionary = {
   'something went wrong here - try again': 'Da isch öppis schiefgange - probier s nomal',
   'this service cannot keep a secret safely': 'Dä Dienst cha es Gheimnis nöd sicher ufbewahre',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'Nur Bilder und PDFs',
+  'images, PDFs and a site’s own css or js only':
+    'Nur Bilder, PDFs und s eigene css oder js vo ere Site',
   'that file is too big': 'Die Datei isch z gross',
   'that is more settings than an account holds': 'Das sind mee Iistellige, als es Konto ufbewahrt',
   'that is more bookmarks than a space holds': 'Das sind mee Lesezeiche, als en Ablag ufbewahrt',
@@ -1287,6 +1288,7 @@ export const gsw: Dictionary = {
     'Das isch mee, als en Ablag über ire Graph behaltet',
   'that is more folder icons than a space holds':
     'Das sind mee Ordnersymbol, als en Ablag ufbewahrt',
+  'that is more than a site keeps': 'Das isch mee, als en Site ufbewahrt',
   // Sharing a space, and being let into one.
   'nobody by that address': 'Niemer under dere Adress',
   'nobody by that name': 'Niemer mit dem Name',

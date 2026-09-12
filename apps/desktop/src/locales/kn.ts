@@ -1280,7 +1280,7 @@ export const kn: Dictionary = {
   'something went wrong here - try again': 'ಇಲ್ಲಿ ಏನೋ ತಪ್ಪಾಯಿತು - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'this service cannot keep a secret safely': 'ಈ ಸೇವೆ ರಹಸ್ಯವನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಇಡಲಾಗದು',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ಚಿತ್ರ ಮತ್ತು PDF ಮಾತ್ರ',
+  'images, PDFs and a site’s own css or js only': 'ಚಿತ್ರ, PDF ಮತ್ತು ತಾಣದ ಸ್ವಂತ css ಅಥವಾ js ಮಾತ್ರ',
   'that file is too big': 'ಆ ಫೈಲ್ ತುಂಬಾ ದೊಡ್ಡದು',
   'that is more settings than an account holds': 'ಒಂದು ಖಾತೆ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
   'that is more bookmarks than a space holds': 'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
@@ -1290,6 +1290,7 @@ export const kn: Dictionary = {
     'ಒಂದು ಸ್ಪೇಸ್ ತನ್ನ ಗ್ರಾಫ್ ಬಗ್ಗೆ ಇಡುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
   'that is more folder icons than a space holds':
     'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಫೋಲ್ಡರ್ ಐಕಾನ್‌ಗಳು',
+  'that is more than a site keeps': 'ಒಂದು ತಾಣ ಇಟ್ಟುಕೊಳ್ಳುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ಆ ವಿಳಾಸದಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',
   'nobody by that name': 'ಆ ಹೆಸರಿನಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',

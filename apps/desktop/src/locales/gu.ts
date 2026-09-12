@@ -1262,7 +1262,7 @@ export const gu: Dictionary = {
   'something went wrong here - try again': 'અહીં કંઈ ખોટું થયું - ફરી પ્રયત્ન કરો',
   'this service cannot keep a secret safely': 'આ સેવા ગુપ્ત વસ્તુ સલામત રાખી શકતી નથી',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ફક્ત ચિત્ર અને PDF',
+  'images, PDFs and a site’s own css or js only': 'ફક્ત ચિત્ર, PDF અને સાઇટનું પોતાનું css કે js',
   'that file is too big': 'એ ફાઇલ બહુ મોટી છે',
   'that is more settings than an account holds': 'ખાતું જેટલી ગોઠવણ રાખે તેથી એ વધુ છે',
   'that is more bookmarks than a space holds': 'જગ્યા જેટલા બુકમાર્ક રાખે તેથી એ વધુ છે',
@@ -1271,6 +1271,7 @@ export const gu: Dictionary = {
   'that is more than a space keeps about its graph':
     'જગ્યા પોતાના ગ્રાફ વિશે જેટલું રાખે તેથી એ વધુ છે',
   'that is more folder icons than a space holds': 'જગ્યા જેટલાં ફોલ્ડર આઇકન રાખે તેથી એ વધુ છે',
+  'that is more than a site keeps': 'એક સાઇટ રાખે તેથી વધુ છે',
   // Sharing a space, and being let into one.
   'nobody by that address': 'એ સરનામે કોઈ નથી',
   'nobody by that name': 'એ નામે કોઈ નથી',

@@ -1305,7 +1305,7 @@ export const ptPT: Dictionary = {
   'something went wrong here - try again': 'algo correu mal aqui - tentar de novo',
   'this service cannot keep a secret safely': 'este serviço não guarda um segredo em segurança',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'só imagens e PDF',
+  'images, PDFs and a site’s own css or js only': 'só imagens, PDF e o css ou js do próprio sítio',
   'that file is too big': 'esse ficheiro é demasiado grande',
   'that is more settings than an account holds': 'são mais definições do que uma conta guarda',
   'that is more bookmarks than a space holds': 'são mais marcadores do que um espaço guarda',
@@ -1315,6 +1315,7 @@ export const ptPT: Dictionary = {
     'é mais do que um espaço guarda sobre o grafo dele',
   'that is more folder icons than a space holds':
     'são mais ícones de pasta do que um espaço guarda',
+  'that is more than a site keeps': 'isso é mais do que um sítio guarda',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ninguém com esse endereço',
   'nobody by that name': 'ninguém com esse nome',

@@ -1334,7 +1334,8 @@ export const ru: Dictionary = {
   'something went wrong here - try again': 'здесь что-то пошло не так - попробуйте снова',
   'this service cannot keep a secret safely': 'эта служба не может надёжно хранить секрет',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'только изображения и PDF',
+  'images, PDFs and a site’s own css or js only':
+    'только изображения, PDF и собственные css или js сайта',
   'that file is too big': 'этот файл слишком большой',
   'that is more settings than an account holds': 'больше настроек аккаунт не вмещает',
   'that is more bookmarks than a space holds': 'больше закладок пространство не вмещает',
@@ -1342,6 +1343,7 @@ export const ru: Dictionary = {
   'that is more files than a space keeps': 'больше файлов пространство не хранит',
   'that is more than a space keeps about its graph': 'больше о своём графе пространство не хранит',
   'that is more folder icons than a space holds': 'больше значков папок пространство не вмещает',
+  'that is more than a site keeps': 'это больше, чем хранит сайт',
   // Sharing a space, and being let into one.
   'nobody by that address': 'по этому адресу никого нет',
   'nobody by that name': 'с таким именем никого нет',

@@ -1270,7 +1270,8 @@ export const tr: Dictionary = {
   'something went wrong here - try again': 'burada bir şey ters gitti - yine deneyin',
   'this service cannot keep a secret safely': 'bu hizmet bir sırrı güvenle tutamıyor',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'yalnızca resim ve PDF',
+  'images, PDFs and a site’s own css or js only':
+    'yalnızca resim, PDF ve sitenin kendi css ya da js dosyası',
   'that file is too big': 'bu dosya çok büyük',
   'that is more settings than an account holds': 'bu, bir hesabın tutabileceğinden çok ayar',
   'that is more bookmarks than a space holds': 'bu, bir alanın tutabileceğinden çok yer imi',
@@ -1281,6 +1282,7 @@ export const tr: Dictionary = {
     'bu, bir alanın çizgesi hakkında tuttuğundan çok',
   'that is more folder icons than a space holds':
     'bu, bir alanın tutabileceğinden çok klasör simgesi',
+  'that is more than a site keeps': 'bu bir sitenin tuttuğundan fazla',
   // Sharing a space, and being let into one.
   'nobody by that address': 'bu adreste kimse yok',
   'nobody by that name': 'bu adda kimse yok',

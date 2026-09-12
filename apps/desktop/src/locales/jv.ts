@@ -1259,7 +1259,7 @@ export const jv: Dictionary = {
   'something went wrong here - try again': 'ana sing kleru ing kene - coba maneh',
   'this service cannot keep a secret safely': 'layanan iki ora bisa nyimpen wadi kanthi aman',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'mung gambar lan PDF',
+  'images, PDFs and a site’s own css or js only': 'mung gambar, PDF, lan css utawa js duwèkè situs',
   'that file is too big': 'berkas kuwi gedhe banget',
   'that is more settings than an account holds':
     'kuwi luwih akeh setelan tinimbang sing diemot akun',
@@ -1272,6 +1272,7 @@ export const jv: Dictionary = {
     'kuwi luwih akeh tinimbang sing disimpen papan bab grafike',
   'that is more folder icons than a space holds':
     'kuwi luwih akeh ikon folder tinimbang sing diemot papan',
+  'that is more than a site keeps': 'kuwi luwih saka sing disimpen situs',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ora ana sapa-sapa ing alamat kuwi',
   'nobody by that name': 'ora ana sapa-sapa kanthi jeneng kuwi',

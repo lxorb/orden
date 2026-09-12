@@ -1267,7 +1267,8 @@ export const mr: Dictionary = {
   'something went wrong here - try again': 'येथे काहीतरी चुकले - पुन्हा पाहा',
   'this service cannot keep a secret safely': 'ही सेवा गुप्त किल्ली सुरक्षित ठेवू शकत नाही',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'फक्त प्रतिमा आणि PDF',
+  'images, PDFs and a site’s own css or js only':
+    'फक्त प्रतिमा, PDF आणि संस्थळाचे स्वतःचे css किंवा js',
   'that file is too big': 'ती फाइल फार मोठी आहे',
   'that is more settings than an account holds': 'हे एका खात्यात बसणाऱ्या सेटिंग्जपेक्षा जास्त आहे',
   'that is more bookmarks than a space holds':
@@ -1278,6 +1279,7 @@ export const mr: Dictionary = {
     'हे एका स्पेसने आलेखाबद्दल ठेवण्यापेक्षा जास्त आहे',
   'that is more folder icons than a space holds':
     'हे एका स्पेसमध्ये बसणाऱ्या फोल्डर चिन्हांपेक्षा जास्त आहे',
+  'that is more than a site keeps': 'हे एक संस्थळ ठेवते त्याहून अधिक आहे',
   // Sharing a space, and being let into one.
   'nobody by that address': 'त्या पत्त्यावर कोणी नाही',
   'nobody by that name': 'त्या नावाचा कोणी नाही',

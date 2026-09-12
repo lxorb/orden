@@ -1275,7 +1275,7 @@ export const pa: Dictionary = {
   'something went wrong here - try again': 'ਇੱਥੇ ਕੁਝ ਗ਼ਲਤ ਹੋਇਆ - ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'this service cannot keep a secret safely': 'ਇਹ ਸੇਵਾ ਗੁਪਤ ਗੱਲ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਰੱਖ ਸਕਦੀ',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ਸਿਰਫ਼ ਤਸਵੀਰਾਂ ਤੇ PDF',
+  'images, PDFs and a site’s own css or js only': 'ਸਿਰਫ਼ ਤਸਵੀਰਾਂ, PDF ਤੇ ਸਾਈਟ ਦਾ ਆਪਣਾ css ਜਾਂ js',
   'that file is too big': 'ਉਹ ਫ਼ਾਈਲ ਬਹੁਤ ਵੱਡੀ ਹੈ',
   'that is more settings than an account holds': 'ਖਾਤਾ ਜਿੰਨੀਆਂ ਸੈਟਿੰਗਾਂ ਰੱਖਦਾ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
   'that is more bookmarks than a space holds': 'ਥਾਂ ਜਿੰਨੀਆਂ ਨਿਸ਼ਾਨੀਆਂ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
@@ -1284,6 +1284,7 @@ export const pa: Dictionary = {
   'that is more than a space keeps about its graph':
     'ਥਾਂ ਆਪਣੇ ਗ੍ਰਾਫ਼ ਬਾਰੇ ਜਿੰਨਾ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹੈ',
   'that is more folder icons than a space holds': 'ਥਾਂ ਜਿੰਨੇ ਫੋਲਡਰ ਆਈਕਨ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
+  'that is more than a site keeps': 'ਇਹ ਇੱਕ ਸਾਈਟ ਜੋ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹੈ',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ਉਸ ਪਤੇ ਉੱਤੇ ਕੋਈ ਨਹੀਂ',
   'nobody by that name': 'ਉਸ ਨਾਂ ਦਾ ਕੋਈ ਨਹੀਂ',

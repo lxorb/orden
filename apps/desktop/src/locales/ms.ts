@@ -1265,7 +1265,7 @@ export const ms: Dictionary = {
   'this service cannot keep a secret safely':
     'perkhidmatan ini tidak dapat menyimpan rahsia dengan selamat',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'imej dan PDF sahaja',
+  'images, PDFs and a site’s own css or js only': 'hanya imej, PDF dan css atau js milik laman',
   'that file is too big': 'fail itu terlalu besar',
   'that is more settings than an account holds':
     'itu lebih banyak tetapan daripada yang dimuatkan satu akaun',
@@ -1279,6 +1279,7 @@ export const ms: Dictionary = {
     'itu lebih banyak daripada yang disimpan satu ruang tentang grafnya',
   'that is more folder icons than a space holds':
     'itu lebih banyak ikon folder daripada yang dimuatkan satu ruang',
+  'that is more than a site keeps': 'itu lebih daripada yang disimpan sebuah laman',
   // Sharing a space, and being let into one.
   'nobody by that address': 'tiada sesiapa pada alamat itu',
   'nobody by that name': 'tiada sesiapa dengan nama itu',

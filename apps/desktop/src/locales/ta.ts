@@ -1288,7 +1288,8 @@ export const ta: Dictionary = {
   'something went wrong here - try again': 'இங்கே ஏதோ தவறாகிவிட்டது - மீண்டும் முயற்சிக்கவும்',
   'this service cannot keep a secret safely': 'இந்தச் சேவை ரகசியத்தைப் பாதுகாப்பாக வைக்க முடியாது',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'படங்கள் மற்றும் PDF கள் மட்டும்',
+  'images, PDFs and a site’s own css or js only':
+    'படங்கள், PDF கள், தளத்தின் சொந்த css அல்லது js மட்டும்',
   'that file is too big': 'அந்தக் கோப்பு மிகப் பெரியது',
   'that is more settings than an account holds': 'ஒரு கணக்கு வைக்கும் அளவைவிட அதிக அமைப்புகள்',
   'that is more bookmarks than a space holds': 'ஒரு இடம் வைக்கும் அளவைவிட அதிக புத்தகக்குறிகள்',
@@ -1297,6 +1298,7 @@ export const ta: Dictionary = {
   'that is more than a space keeps about its graph': 'ஒரு இடம் தன் வரைபடம் பற்றி வைப்பதைவிட அதிகம்',
   'that is more folder icons than a space holds':
     'ஒரு இடம் வைக்கும் அளவைவிட அதிக கோப்புறைச் சின்னங்கள்',
+  'that is more than a site keeps': 'ஒரு தளம் வைத்துக்கொள்வதை விட இது அதிகம்',
   // Sharing a space, and being let into one.
   'nobody by that address': 'அந்த முகவரியில் யாரும் இல்லை',
   'nobody by that name': 'அந்தப் பெயரில் யாரும் இல்லை',

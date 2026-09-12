@@ -1252,7 +1252,7 @@ export const am: Dictionary = {
   'something went wrong here - try again': 'እዚህ አንድ ስህተት ሆነ - እንደገና ሞክር',
   'this service cannot keep a secret safely': 'ይህ አገልግሎት ምስጢር አስተማማኝ በሆነ መንገድ መያዝ አይችልም',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'ምስሎችና PDF ብቻ',
+  'images, PDFs and a site’s own css or js only': 'ምስሎች፣ PDF እና የጣቢያው ራሱ css ወይም js ብቻ',
   'that file is too big': 'ያ ፋይል በጣም ትልቅ ነው',
   'that is more settings than an account holds': 'ያ መዝገብ ከሚይዘው ማስተካከያ በለጠ',
   'that is more bookmarks than a space holds': 'ያ ቦታ ከሚይዘው ምልክት በለጠ',
@@ -1260,6 +1260,7 @@ export const am: Dictionary = {
   'that is more files than a space keeps': 'ያ ቦታ ከሚይዘው ፋይል በለጠ',
   'that is more than a space keeps about its graph': 'ያ ቦታ ስለ ግራፉ ከሚይዘው በለጠ',
   'that is more folder icons than a space holds': 'ያ ቦታ ከሚይዘው የፎልደር ምልክት በለጠ',
+  'that is more than a site keeps': 'ይህ ጣቢያ ከሚያስቀምጠው በላይ ነው',
   // Sharing a space, and being let into one.
   'nobody by that address': 'በዚያ አድራሻ ማንም የለም',
   'nobody by that name': 'በዚያ ስም ማንም የለም',

@@ -1271,7 +1271,7 @@ export const fa: Dictionary = {
   'something went wrong here - try again': 'اینجا چیزی خراب شد - دوباره بیازمایید',
   'this service cannot keep a secret safely': 'این خدمت نمی‌تواند رازی را ایمن نگه دارد',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'تنها تصویر و PDF',
+  'images, PDFs and a site’s own css or js only': 'تنها تصویر، PDF و css یا js خودِ سایت',
   'that file is too big': 'آن پرونده بسیار بزرگ است',
   'that is more settings than an account holds': 'آن بیش از تنظیمی است که یک حساب نگه می‌دارد',
   'that is more bookmarks than a space holds': 'آن بیش از نشانکی است که یک فضا نگه می‌دارد',
@@ -1281,6 +1281,7 @@ export const fa: Dictionary = {
     'آن بیش از آن است که یک فضا درباره گرافش نگه می‌دارد',
   'that is more folder icons than a space holds':
     'آن بیش از نقشک پوشه‌ای است که یک فضا نگه می‌دارد',
+  'that is more than a site keeps': 'این بیش از آن است که یک سایت نگه می‌دارد',
   // Sharing a space, and being let into one.
   'nobody by that address': 'کسی با آن نشانی نیست',
   'nobody by that name': 'کسی با آن نام نیست',

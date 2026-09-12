@@ -1269,7 +1269,7 @@ export const hi: Dictionary = {
   'something went wrong here - try again': 'यहाँ कुछ गड़बड़ हुई - फिर कोशिश करें',
   'this service cannot keep a secret safely': 'यह सेवा गुप्त कुंजी सुरक्षित नहीं रख सकती',
   // Pictures, files and what an account has room for.
-  'images and PDFs only': 'केवल छवियाँ और PDF',
+  'images, PDFs and a site’s own css or js only': 'केवल छवियाँ, PDF और साइट का अपना css या js',
   'that file is too big': 'वह फ़ाइल बहुत बड़ी है',
   'that is more settings than an account holds': 'यह एक खाते की सेटिंग्स से ज़्यादा है',
   'that is more bookmarks than a space holds': 'यह एक स्पेस के बुकमार्क से ज़्यादा है',
@@ -1278,6 +1278,7 @@ export const hi: Dictionary = {
   'that is more than a space keeps about its graph':
     'यह एक स्पेस के ग्राफ़ के बारे में रखे से ज़्यादा है',
   'that is more folder icons than a space holds': 'यह एक स्पेस के फ़ोल्डर आइकन से ज़्यादा है',
+  'that is more than a site keeps': 'यह उससे अधिक है जितना एक साइट रखती है',
   // Sharing a space, and being let into one.
   'nobody by that address': 'उस पते पर कोई नहीं',
   'nobody by that name': 'उस नाम का कोई नहीं',
