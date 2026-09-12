@@ -68,8 +68,12 @@
 {#if recorder.on || recorder.saving}
   <!-- The bar shape every floating bar in the app wears, so this is one design and
        not a second one; only where it sits and what is in it is here. See
-       `.nib-bar` in base.css. -->
-  <div class="nib-bar pill" class:saving={!recorder.on}>
+       `.nib-bar` in base.css.
+
+       What went wrong is not said here: that is the line at the top of the document,
+       which is already where work that failed and carried on says so. See
+       Progress.svelte and busy.svelte.ts. -->
+  <div class="nib-bar recording" class:saving={!recorder.on}>
     <span class="dot" class:behind={recorder.retrying || recorder.waiting > 1}></span>
     <span class="clock">{spanOf(recorder.elapsed)}</span>
     <button
@@ -81,12 +85,6 @@
       <svg viewBox="0 0 12 12"><rect x="3" y="3" width="6" height="6" rx="1" /></svg>
     </button>
   </div>
-{/if}
-{#if recorder.trouble}
-  <!-- Said where the pill is, for a moment, and then gone. A recording carries on
-       through anything that goes wrong with its transcript, so this is something to
-       read rather than something to answer. -->
-  <p class="said">{recorder.trouble}</p>
 {/if}
 
 <!-- The one place the app says what is true of the note it is showing, so the
@@ -152,8 +150,11 @@
 
   /* The recording pill: the middle of the bottom edge, clear of the numbers in one
      corner, the vim mode in the other and the phone's own plus button. Fixed to the
-     window rather than to the note, because that is what a recording belongs to. */
-  .pill {
+     window rather than to the note, because that is what a recording belongs to.
+
+     Not called `.pill`: that is the name the buttons inside a sheet already wear, and
+     Sheet.svelte styles it globally. See Sheet.svelte. */
+  .recording {
     position: fixed;
     z-index: 26;
     left: 50%;
@@ -176,7 +177,7 @@
 
   /* Stopped, and still writing the file down. The dot has nothing to pulse about any
      more and the clock says how long the recording was. */
-  .pill.saving {
+  .recording.saving {
     opacity: 0.75;
   }
 
@@ -196,7 +197,7 @@
     animation: none;
   }
 
-  .pill.saving .dot {
+  .recording.saving .dot {
     background: var(--muted);
     animation: none;
   }
@@ -214,35 +215,17 @@
     color: var(--muted-strong);
   }
 
-  .pill svg {
+  .recording svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
     fill: currentColor;
-  }
-
-  /* What went wrong, above the pill, in the app's quietest voice. */
-  .said {
-    position: fixed;
-    z-index: 26;
-    left: 50%;
-    bottom: calc(var(--space-3) + var(--row-height-sm) + var(--space-2) + var(--inset-bottom));
-    max-width: min(36ch, 80vw);
-    margin: 0;
-    transform: translateX(-50%);
-    font-size: var(--text-xs);
-    line-height: 1.4;
-    color: var(--muted);
-    text-align: center;
-    text-wrap: balance;
-    animation: pill-in var(--dur-base) var(--ease-out);
   }
 
   /* A beat that is not moving is a dot that is simply there, which still says a
      microphone is open. */
   @media (prefers-reduced-motion: reduce) {
     .dot,
-    .pill,
-    .said {
+    .recording {
       animation: none;
     }
   }

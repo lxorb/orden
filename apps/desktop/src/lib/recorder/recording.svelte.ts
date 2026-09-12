@@ -67,10 +67,6 @@ const TICK = 500
  *  worth having in the note under what is being said now. */
 const MOST_WAITING = 4
 
-/** How long a sentence about something going wrong stays in the pill. The same length
- *  the line at the top of the document holds one for. */
-const TROUBLE_SHOWN = 5000
-
 /** What is being recorded, which is what decides what happens when it stops. */
 type Kind = 'note' | 'meeting'
 
@@ -97,10 +93,6 @@ class Recorder {
    *  something the reader can see rather than something they find out about later. */
   waiting = $state(0)
   retrying = $state(false)
-
-  /** What went wrong, for a moment. */
-  trouble = $state<string | null>(null)
-  private clearing: ReturnType<typeof setTimeout> | undefined
 
   private ticking: ReturnType<typeof setInterval> | undefined
   private started = new Date()
@@ -193,7 +185,8 @@ class Recorder {
     this.lost = 0
     this.path = null
     this.marker = transcriptHeading()
-    this.clear()
+    // Whatever the last run had to say about itself is not about this one.
+    busy.clear()
   }
 
   /** Stops, writes the file beside the note, and finishes what the kind asks for.
@@ -393,18 +386,15 @@ class Recorder {
     return path
   }
 
-  /** Something to say, for a moment. */
+  /** Something to say, for a moment.
+   *
+   *  The line at the top of the document, which is where work that failed and carried
+   *  on some other way already says so - an export that could not be written, a
+   *  picture that would not store. A recording never stops for any of this, so a
+   *  sentence that fades is the right size of saying it, and a second place to put one
+   *  would be a second design. See busy.svelte.ts and Progress.svelte. */
   private failed(reason: string) {
-    this.trouble = reason
-    clearTimeout(this.clearing)
-    this.clearing = setTimeout(() => {
-      this.trouble = null
-    }, TROUBLE_SHOWN)
-  }
-
-  clear() {
-    clearTimeout(this.clearing)
-    this.trouble = null
+    busy.failed(reason)
   }
 }
 

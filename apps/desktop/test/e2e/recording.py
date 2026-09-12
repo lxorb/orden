@@ -106,7 +106,10 @@ PLAYERS = """
       tag: player.tagName.toLowerCase(),
       src: new URL(player.src, location.href).pathname,
       ready: player.readyState,
-      duration: Number.isFinite(player.duration) ? Math.round(player.duration * 10) / 10 : 0,
+      // A file `MediaRecorder` wrote carries no duration in its header - it was a live
+      // stream when it was written - so a browser answers `Infinity` for it until it has
+      // read the whole thing. That is a decoded file, not a broken one.
+      duration: player.duration,
       wide: Math.round(player.getBoundingClientRect().width),
     })
   }
@@ -211,7 +214,10 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 40) -> No
             return
         page.wait_for_timeout(100)
 
-    raise SystemExit(f"gave up waiting for {what}")
+    # Whatever the app is complaining about, because a recording that could not start
+    # says so there rather than on the console.
+    said = page.evaluate("() => window.nibApp?.settings?.error ?? ''")
+    raise SystemExit(f"gave up waiting for {what}; the app says {said!r}")
 
 
 def shot(page: Page, name: str) -> None:
@@ -282,9 +288,12 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     # The account's own routes, answered here. Everything else the app would ask of
     # nibeditor.com is refused rather than answered: syncing is not what is under test,
     # and it is written to carry on when the service cannot be reached.
+    #
+    # The refusal is registered first on purpose: Playwright tries the newest route
+    # first, so the two that answer have to be added after the one that refuses.
+    page.route("https://nibeditor.com/**", lambda route: route.abort())
     page.route("**/v1/ask/heard*", whisper.listen)
     page.route("**/v1/ask/summary", whisper.summarise)
-    page.route("https://nibeditor.com/**", lambda route: route.abort())
 
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
@@ -302,20 +311,53 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     return page, whisper
 
 
+# The row whose words are exactly these, pressed. Exactly, because a palette narrowed by
+# "Record" holds `Recently deleted` and every recent note as well, and a drive that
+# pressed whatever came first would be testing the sorting.
+PRESS_ROW = """
+([label]) => {
+  const rows = [...document.querySelectorAll('[role=option]')]
+  const found = rows.find(
+    (one) => (one.querySelector('.nib-row-label')?.textContent ?? '').trim() === label,
+  )
+  if (!found) return rows.map((one) => one.textContent.trim())
+
+  // A command that cannot run wears `.dim` and does nothing when pressed, so saying
+  // which of the two happened is the difference between a broken drive and a row that
+  // is honestly not available.
+  const off = found.classList.contains('dim')
+  found.click()
+  return off ? 'greyed out' : 'pressed'
+}
+"""
+
+
 def run_command(page: Page, words: str) -> None:
     """Through the palette, which is how a reader with a keyboard reaches any of this.
     The same rows the Paragraph menu and the phone's plus show, out of one list."""
     page.keyboard.press("Control+P")
     page.wait_for_timeout(250)
-    page.keyboard.type(words)
-    page.wait_for_timeout(350)
-    page.keyboard.press("Enter")
+    # The palette answers with notes until the words open with `>`, which is what turns
+    # it into the command palette; see Palette.svelte.
+    page.keyboard.type(f">{words}")
+    page.wait_for_timeout(400)
+
+    answered = page.evaluate(PRESS_ROW, [words])
+    if answered != "pressed":
+        wrong(f"the palette would not run {words!r}: {json.dumps(answered)}")
+    page.wait_for_timeout(200)
+
+
+def trouble(page: Page) -> str:
+    """Whatever the app is complaining about, which is where a recording that could not
+    start says so."""
+    return page.evaluate("() => window.nibApp.settings.error ?? ''")
 
 
 def pill(page: Page) -> dict:
     return page.evaluate(
         """() => {
-      const box = document.querySelector('.pill')
+      const box = document.querySelector('.recording')
       if (!box) return { there: false }
       const dot = box.querySelector('.dot')
       return {
@@ -342,7 +384,7 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+End")
 
     run_command(page, "Record")
-    wait_for(page, "document.querySelector('.pill')", "the pill")
+    wait_for(page, "document.querySelector('.recording')", "the pill")
 
     state = pill(page)
     say(f"the pill says {json.dumps(state)}")
@@ -357,8 +399,8 @@ def drive(browser: Browser) -> None:
         wrong(f"the clock never moved: {ticking['clock']!r}")
 
     # The pill's own button, which is the same command the row ran.
-    page.click(".pill button")
-    wait_for(page, "!document.querySelector('.pill')", "the pill to go")
+    page.click(".recording button")
+    wait_for(page, "!document.querySelector('.recording')", "the pill to go")
     wait_for(page, "window.nibApp.workspace.active.doc.includes('![[recording-')", "the embed")
 
     said = note_says(page)
@@ -367,16 +409,24 @@ def drive(browser: Browser) -> None:
     if not embed.endswith(".weba]]") and not embed.endswith(".m4a]]"):
         wrong(f"the recording is named {embed}, which is not a sound file")
 
-    page.wait_for_timeout(1200)
+    # The caret is left after what was written, and the live preview leaves the markup
+    # a caret is standing in as markup. So the caret goes back to the top, which is what
+    # a reader does next anyway, and the player draws.
+    page.keyboard.press("Control+Home")
+    page.wait_for_timeout(1400)
     players = page.evaluate(PLAYERS)
     say(f"players: {json.dumps(players)}")
     if len(players) != 1:
         wrong(f"{len(players)} players in the note, not one")
     for player in players:
-        if player["ready"] < 1:
+        # Two is HAVE_CURRENT_DATA: the browser has decoded the file rather than merely
+        # been pointed at it, which is the honest question about an address.
+        if player["ready"] < 2:
             wrong(f"the player never read the file: {player}")
-        if player["duration"] <= 0:
-            wrong(f"the player has no sound behind it: {player}")
+        if not player["src"].startswith("/asset/"):
+            wrong(f"the player is not pointed at the space own asset store: {player}")
+        if player["wide"] < 100:
+            wrong(f"the player is drawn {player['wide']}px wide")
     shot(page, "player")
 
     # ── The transcript, off the embed's own menu ───────────────────────────
@@ -438,7 +488,7 @@ def meeting(browser: Browser) -> None:
     whisper.stumble = True
 
     run_command(page, "Meeting notes")
-    wait_for(page, "document.querySelector('.pill')", "the pill")
+    wait_for(page, "document.querySelector('.recording')", "the pill")
     wait_for(
         page,
         "window.nibApp.workspace.active?.doc.includes('## Transcript')",
@@ -468,9 +518,9 @@ def meeting(browser: Browser) -> None:
     if whisper.heard < 2:
         wrong(f"the piece that failed was never tried again ({whisper.heard} requests)")
 
-    page.click(".pill button")
+    page.click(".recording button")
     wait_for(page, "window.nibApp.workspace.active.doc.includes('Takeaways')", "the summary")
-    wait_for(page, "!document.querySelector('.pill')", "the pill to go", patience=60)
+    wait_for(page, "!document.querySelector('.recording')", "the pill to go", patience=60)
 
     said = note_says(page)
     say(f"the meeting note ends up as:\n{said}")
@@ -497,19 +547,10 @@ def phone(browser: Browser) -> None:
     say("--- a finger ---")
     page, _whisper = fresh(browser, finger=True)
 
-    page.click(".new")
-    page.wait_for_timeout(400)
-    rows = page.evaluate(
-        "() => [...document.querySelectorAll('[role=menu] button, [role=menuitem]')]"
-        ".map((one) => one.textContent.trim())"
-    )
-    say(f"a press on the plus makes a note; a long press offers {json.dumps(rows)}")
-
-    # A long press, which is what the plus answers on a phone.
-    box = page.locator(".new").bounding_box()
-    if box:
-        page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-    page.wait_for_timeout(300)
+    # The plus lives at the top of the list panel, which is a drawer on a phone and is
+    # shut until it is asked for.
+    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
+    page.wait_for_timeout(450)
 
     page.evaluate(
         """() => {
@@ -529,11 +570,11 @@ def phone(browser: Browser) -> None:
 
     if "Record" in rows:
         page.get_by_role("menuitem", name="Record").click()
-        wait_for(page, "document.querySelector('.pill')", "the pill on a phone")
+        wait_for(page, "document.querySelector('.recording')", "the pill on a phone")
 
         state = page.evaluate(
             """() => {
-          const box = document.querySelector('.pill')
+          const box = document.querySelector('.recording')
           const shown = box ? getComputedStyle(box) : null
           return {
             display: shown?.display ?? 'none',
@@ -550,7 +591,7 @@ def phone(browser: Browser) -> None:
         shot(page, "phone-pill")
 
         page.wait_for_timeout(1500)
-        page.click(".pill button")
+        page.click(".recording button")
         wait_for(
             page,
             "window.nibApp.workspace.active?.doc.includes('![[recording-')",
