@@ -1378,4 +1378,8 @@ export const fr: Dictionary = {
   'A pull past the top runs': 'Tirer au-delà du haut lance',
   'On the note, and on the list of them.': 'Sur la note et sur la liste.',
   Nothing: 'Rien',
+
+  // A way of looking at the space's graph, kept in the bookmarks.
+  'Bookmark this view': 'Garder cette vue',
+  Keep: 'Garder',
 }

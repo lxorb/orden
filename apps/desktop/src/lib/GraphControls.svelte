@@ -88,6 +88,18 @@
   function nextColour(index: number, colour: number) {
     setGroup(index, { colour: (colour % MOST_GROUPS) + 1 })
   }
+
+  /** Keeps this view under a name of its own. Asked for a name, because a view
+   *  is a row in a list of names and "Graph" twice is two rows nobody can tell
+   *  apart. The prompt is imported where it is used, the way the bookmarks' own
+   *  rows import it: it is a sheet, and a card should not carry one. */
+  async function keepView() {
+    const { prompt } = await import('./prompt.svelte')
+    const name = await prompt.ask({ title: t('Bookmark this view'), confirmLabel: t('Keep') })
+    if (!name) return
+
+    workspace.bookmarks.toggle(workspace.bookmarks.forGraph(name, settings))
+  }
 </script>
 
 <div class="corner">
@@ -245,6 +257,15 @@
       {/if}
 
       <div class="rule"></div>
+
+      <!-- The card says how this picture is drawn; this is how to come back to
+           it. The space already remembers the way it was left, so a bookmark is
+           for the second way of looking at the same space: the whole of it, one
+           project, what nothing links to. It lands in the row above the file
+           list with everything else that is kept; see Bookmarks.svelte. -->
+      <button class="nib-row" onclick={() => void keepView()}>
+        <span class="nib-row-label">{t('Bookmark this view')}</span>
+      </button>
 
       <button class="nib-row" onclick={() => workspace.graphSettings.reset()}>
         <span class="nib-row-label">{t('Reset')}</span>

@@ -388,6 +388,30 @@ async () => {
 )
 
 
+# What the picture is set to, which is what a bookmarked view carries.
+VIEW = """
+() => {
+  const one = window.nibApp.workspace.graphSettings.here
+  return { filter: one.filter, arrows: one.arrows, depth: one.depth }
+}
+"""
+
+# Keeps the view under a name, the way the card's own row does, and answers what
+# the bookmarks hold afterwards.
+KEEP_VIEW = """
+(name) => {
+  const ws = window.nibApp.workspace
+  ws.bookmarks.toggle(ws.bookmarks.forGraph(name, ws.graphSettings.here))
+  return ws.bookmarks.list.map((one) => `${one.kind}:${one.text}`)
+}
+"""
+
+# Which kind of document the tab in front is.
+TAB = """
+() => window.nibApp.workspace.active?.note?.kind ?? 'none'
+"""
+
+
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
@@ -561,6 +585,40 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] no depth stepper")
     else:
         say(f"[{name}] no picture switch in the panel")
+
+    # A view of this space, kept and come back to. The card writes it; the row
+    # above the file list opens it again.
+    say(f"[{name}] --- a bookmarked view ---")
+    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.wait_for_timeout(800)
+    page.evaluate(
+        "() => window.nibApp.workspace.graphSettings.set({ filter: 'ink', arrows: true })"
+    )
+    page.wait_for_timeout(600)
+    say(f"[{name}] the picture now: {page.evaluate(VIEW)}")
+
+    kept = page.evaluate(KEEP_VIEW, "Ink and arrows")
+    say(f"[{name}] the bookmarks hold: {kept}")
+
+    page.evaluate("() => window.nibApp.workspace.graphSettings.reset()")
+    page.wait_for_timeout(600)
+    say(f"[{name}] after a reset: {page.evaluate(VIEW)}")
+
+    # And pressing the row puts the whole view back.
+    # The bookmarks live over the file tree, which is the panel they are drawn
+    # in; see Sidebar.svelte.
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.wait_for_timeout(600)
+
+    row = page.locator('aside .row:has-text("Ink and arrows")').first
+    if row.count():
+        row.click(force=True)
+        page.wait_for_timeout(1200)
+        say(f"[{name}] after pressing the row: {page.evaluate(VIEW)}")
+        say(f"[{name}] and the tab in front is {page.evaluate(TAB)}")
+        shot("bookmarked-view")
+    else:
+        say(f"[{name}] no row for the view")
 
     context.close()
 

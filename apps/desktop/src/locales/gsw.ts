@@ -1335,4 +1335,8 @@ export const gsw: Dictionary = {
   'A pull past the top runs': 'Zieh über de Afang startet',
   'On the note, and on the list of them.': 'Uf de Notiz und uf de Lischte.',
   Nothing: 'Nüt',
+
+  // A way of looking at the space's graph, kept in the bookmarks.
+  'Bookmark this view': 'Die Asicht merke',
+  Keep: 'Merke',
 }

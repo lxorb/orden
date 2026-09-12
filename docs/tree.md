@@ -35,6 +35,27 @@ name is the note, the caret beside it is what it holds. A row that opened on a
 click in one place and folded on a click in another would be two kinds of row
 wearing one design.
 
+## What a bookmark may be
+
+The row above the list keeps notes, folders, headings, blocks, searches, groups -
+and one view of the space's graph. Each says where it points the way a link does,
+relative to the space, so the list travels to every machine signed in.
+
+A graph bookmark points at nothing on disk. It carries a whole set of graph
+settings - the filter, the colour groups, the spread, the arrows, the sizes, how
+far a neighbourhood reaches - as JSON in a field of its own, under the name the
+reader gave it, and pressing it writes those settings into the space's own graph
+settings and shows the graph. The space keeps one picture, which is what makes
+the graph a command rather than something to open; a view is a second way of
+looking at that one picture - the whole space, one project, what nothing links to
+- without setting the card up again each time. `Bookmark this view` is the row
+that makes one, at the foot of the graph's control card.
+
+A build older than this one draws no row for a kind it has never heard of, and
+writes the list back without it: a graph view made here disappears from a device
+running an older nib rather than arriving broken. See
+`workspace/bookmarks.svelte.ts` and `workspace/graph-settings.svelte.ts`.
+
 ## A folder somebody else made
 
 A vault out of Obsidian is full of folders with no note of their own -

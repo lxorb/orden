@@ -1321,4 +1321,8 @@ export const ja: Dictionary = {
   'A pull past the top runs': '先頭より下に引くと実行',
   'On the note, and on the list of them.': 'ノートとノートの一覧で。',
   Nothing: 'なし',
+
+  // A way of looking at the space's graph, kept in the bookmarks.
+  'Bookmark this view': 'この表示を保存',
+  Keep: '保存',
 }

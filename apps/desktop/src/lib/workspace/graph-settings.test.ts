@@ -132,6 +132,29 @@ describe('reading what storage answers with', () => {
   })
 })
 
+describe('a whole view, taken at once', () => {
+  test('is the picture that bookmark was kept from', () => {
+    graph.take('{"filter":"tag:work","arrows":true,"depth":2}')
+
+    expect(graph.here.filter).toBe('tag:work')
+    expect(graph.here.arrows).toBe(true)
+    expect(graph.here.depth).toBe(2)
+    // Everything the view did not name is the default, which is how anything
+    // written by another build is read here.
+    expect(graph.here.orphans).toBe(DEFAULT_GRAPH.orphans)
+  })
+
+  test('and a row with nothing in it leaves the picture alone', () => {
+    graph.set({ filter: 'tag:now' })
+
+    graph.take(undefined)
+    graph.take('not json')
+    graph.take('')
+
+    expect(graph.here.filter).toBe('tag:now')
+  })
+})
+
 describe('two sets of settings', () => {
   test('are the same when they say the same thing', () => {
     expect(sameGraph(DEFAULT_GRAPH, graphSettingsOf({}))).toBe(true)

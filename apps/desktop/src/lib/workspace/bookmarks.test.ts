@@ -500,3 +500,34 @@ describe('a bookmark of one block', () => {
     expect(marks.forBlock('Plan.md', '#^a1b2c3', '   ')?.text).toBe('#^a1b2c3')
   })
 })
+
+describe('a bookmark of one graph view', () => {
+  test('carries the whole of how the picture is drawn, under a name', () => {
+    const marks = store()
+    const mark = marks.forGraph('  Work  ', { filter: 'tag:work', arrows: true, depth: 2 })
+
+    expect(mark?.kind).toBe('graph')
+    expect(mark?.text).toBe('Work')
+    // Nothing on disk: a view is a way of looking at the space, not a file in it.
+    expect(mark?.path).toBe('')
+    expect(JSON.parse(mark?.view ?? '{}')).toEqual({ filter: 'tag:work', arrows: true, depth: 2 })
+  })
+
+  test('is nothing without a name', () => {
+    const marks = store()
+    expect(marks.forGraph('   ', { filter: '' })).toBeNull()
+  })
+
+  test('or with more in it than a view ever holds', () => {
+    const marks = store()
+    expect(marks.forGraph('Work', { filter: 'x'.repeat(500) })).toBeNull()
+  })
+
+  test('and survives the trip to the account and back', () => {
+    const marks = store()
+    marks.toggle(marks.forGraph('Work', { filter: 'tag:work' }))
+
+    expect(bookmarkList(JSON.parse(JSON.stringify(marks.list)))).toEqual(marks.list)
+    expect(marks.list[0]?.view).toBe('{"filter":"tag:work"}')
+  })
+})

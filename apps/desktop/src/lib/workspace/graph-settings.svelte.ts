@@ -4,8 +4,15 @@
  *  picture is filtered to and what its colours mean are facts about one space's
  *  notes, so they travel with the space to every machine signed in and come back
  *  with it when it is restored. It is also what lets the graph stay a command
- *  rather than something to bookmark - there is one picture of a space and it is
+ *  rather than something to open: there is one picture of a space and it is
  *  already the way you left it.
+ *
+ *  A bookmarked view is the other half of that, and does not make the graph a
+ *  thing to open either: a row in the bookmarks carries a whole set of these
+ *  settings, and pressing it writes them here and shows the graph. Which is what
+ *  gives a space a second way of being looked at - the whole of it, one project,
+ *  what nothing links to - without setting the card up again each time. See
+ *  `take`, and forGraph in workspace/bookmarks.svelte.ts.
  *
  *  Not the camera, though, and not the time the reader has scrubbed to. Where the
  *  view is looking is a gesture, not a setting; sending it up would make two
@@ -204,6 +211,31 @@ export class SpaceGraphSettings {
     if (root === null) return
 
     const next = graphSettingsOf({ ...this.of(root), ...change })
+    if (sameGraph(next, this.of(root))) return
+
+    this.put(root, next)
+  }
+
+  /** Takes a whole view at once, as a bookmarked one is kept: the JSON a graph
+   *  bookmark carries, read the way anything written by another build is read -
+   *  what makes sense is kept and the rest is the default. Nothing at all leaves
+   *  the picture alone, which is what a row with no view in it means.
+   *
+   *  See forGraph in workspace/bookmarks.svelte.ts, which writes it. */
+  take(view: string | undefined) {
+    if (!view) return
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(view)
+    } catch {
+      return
+    }
+
+    const root = this.root()
+    if (root === null) return
+
+    const next = graphSettingsOf(parsed)
     if (sameGraph(next, this.of(root))) return
 
     this.put(root, next)

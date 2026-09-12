@@ -25,12 +25,19 @@ const LONGEST_TEXT = 200
  *  make the space listing heavy for every device that reads it. */
 const MOST_BYTES = 8 * 1024
 
-const KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group'] as const
+const KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group', 'graph'] as const
 type Kind = (typeof KINDS)[number]
 
 /** The longest a group's own name may be. A name, not a path: it is what the
  *  rows in the group point back at. */
 const LONGEST_PARENT = 100
+
+/** The settings a bookmarked graph view carries, as JSON: a filter, up to six
+ *  colour groups and a handful of numbers. The app holds itself to the same
+ *  number. Read as text of a length rather than as a shape, for the reason the
+ *  ids elsewhere are read that way: what a view is made of is the app's, and a
+ *  server that knew it would have to be deployed before every new dial. */
+const LONGEST_VIEW = 400
 
 export interface Bookmark {
   kind: Kind
@@ -41,6 +48,9 @@ export interface Bookmark {
    *  from these, so a parent that did not travel would be a group that lost
    *  everything in it on the next machine. */
   parent?: string
+  /** What a graph bookmark is a bookmark of: one whole set of graph settings, as
+   *  the app writes them. Absent on every other kind. */
+  view?: string
 }
 
 /** What is wrong with the list that arrived, as one sentence the app can show,
@@ -61,9 +71,12 @@ function wrong(value: unknown): string | null {
       return `a bookmark's text must be text of at most ${LONGEST_TEXT} characters`
     }
 
-    const { parent } = one as Record<string, unknown>
+    const { parent, view } = one as Record<string, unknown>
     if (parent !== undefined && (typeof parent !== 'string' || parent.length > LONGEST_PARENT)) {
       return `a bookmark's group must be text of at most ${LONGEST_PARENT} characters`
+    }
+    if (view !== undefined && (typeof view !== 'string' || view.length > LONGEST_VIEW)) {
+      return `a bookmarked view must be text of at most ${LONGEST_VIEW} characters`
     }
     // A path climbing out of the space is not a place in it. The app already
     // sends a path the space speaks; this is so the column can never hold one
@@ -112,11 +125,12 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
 
   // Written from the fields that were checked rather than from what arrived, so
   // nothing else a client sent along ends up in the column.
-  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent }) => ({
+  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent, view }) => ({
     kind,
     path,
     text,
     ...(parent ? { parent } : {}),
+    ...(view ? { view } : {}),
   }))
   const written = JSON.stringify(kept)
   if (new TextEncoder().encode(written).length > MOST_BYTES) {

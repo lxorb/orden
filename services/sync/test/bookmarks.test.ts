@@ -133,6 +133,30 @@ describe('a list that is not one', () => {
   })
 })
 
+describe('a bookmark of a graph view', () => {
+  const view = { kind: 'graph', path: '', text: 'Work', view: '{"filter":"tag:work"}' }
+
+  test('keeps the view it carries', async () => {
+    const set = await put([view])
+    expect(set.status).toBe(200)
+    expect(set.json.bookmarks).toEqual([view])
+    expect(await listed()).toEqual([view])
+  })
+
+  test('and refuses one longer than a view ever is', async () => {
+    expect((await put([{ ...view, view: 'a'.repeat(401) }])).status).toBe(400)
+    expect((await put([{ ...view, view: 'a'.repeat(400) }])).status).toBe(200)
+    expect((await put([{ ...view, view: 7 }])).status).toBe(400)
+  })
+
+  test('a view on any other kind is kept as it was sent', async () => {
+    // Nothing here knows what a view is for: the app does, and a field read for
+    // its length rather than its meaning is a field the server never has to be
+    // deployed for.
+    expect((await put([{ kind: 'note', path: 'a.md', text: '', view: '{}' }])).status).toBe(200)
+  })
+})
+
 describe('a bookmark past its bounds', () => {
   test('is refused for a kind nothing knows', async () => {
     expect((await put([{ kind: 'tag', path: 'a', text: '' }])).status).toBe(400)

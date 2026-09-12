@@ -21,7 +21,15 @@ const PINNED_KEY = 'nib:pinned'
  *  the same number, so a list that fits here fits there. */
 export const MOST_BOOKMARKS = 60
 
-export const BOOKMARK_KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group'] as const
+export const BOOKMARK_KINDS = [
+  'note',
+  'folder',
+  'heading',
+  'search',
+  'block',
+  'group',
+  'graph',
+] as const
 type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
 
 export interface Bookmark {
@@ -40,7 +48,20 @@ export interface Bookmark {
    *  the whole list is the order it is drawn in and a tree of lists would have
    *  two orders to keep in step. */
   parent?: string
+  /** What a graph bookmark is a bookmark of: one whole set of graph settings, as
+   *  the JSON they are stored in everywhere else. Absent on every other kind.
+   *
+   *  A field of its own rather than crammed into `text`, which is the name the
+   *  reader gave the view: the row has to say what it is called, and a row named
+   *  after its own filter would be a row called `tag:work path:Notes`. See
+   *  workspace/graph-settings.svelte.ts, which is what reads it. */
+  view?: string
 }
+
+/** How long the settings of a bookmarked view may be, as JSON. A filter, six
+ *  colour groups and a handful of numbers; the service holds a space to the same
+ *  number. */
+export const LONGEST_VIEW = 400
 
 export function isBookmark(value: unknown): value is Bookmark {
   return (
@@ -48,7 +69,8 @@ export function isBookmark(value: unknown): value is Bookmark {
     BOOKMARK_KINDS.some((kind) => kind === value.kind) &&
     isString(value.path) &&
     isString(value.text) &&
-    (value.parent === undefined || isString(value.parent))
+    (value.parent === undefined || isString(value.parent)) &&
+    (value.view === undefined || (isString(value.view) && value.view.length <= LONGEST_VIEW))
   )
 }
 
@@ -74,6 +96,7 @@ export function bookmarkList(value: unknown): Bookmark[] {
       path: one.path,
       text: one.text,
       ...(one.parent ? { parent: one.parent } : {}),
+      ...(one.view ? { view: one.view } : {}),
     }))
     .slice(0, MOST_BOOKMARKS)
 }
@@ -346,6 +369,24 @@ export class Bookmarks {
   forSearch(query: string): Bookmark | null {
     const words = query.trim()
     return words ? { kind: 'search', path: '', text: words } : null
+  }
+
+  /** The graph as it is set right now, under a name: a view to come back to.
+   *
+   *  The space already remembers how its graph is drawn, which is what makes the
+   *  graph a command rather than something to open. This is the other half of
+   *  that: more than one way to look at the same space - the whole of it, one
+   *  project, what nothing links to - without setting the card up again each
+   *  time. Null for a name with nothing in it or a view too long to keep, which
+   *  is a view nobody wrote by hand. */
+  forGraph(name: string, settings: unknown): Bookmark | null {
+    const words = name.trim()
+    if (!words) return null
+
+    const view = JSON.stringify(settings)
+    if (view.length > LONGEST_VIEW) return null
+
+    return { kind: 'graph', path: '', text: words, view }
   }
 
   /** Takes over what the account holds for one space, and answers with the list

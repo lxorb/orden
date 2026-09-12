@@ -1365,4 +1365,8 @@ export const de: Dictionary = {
   'A pull past the top runs': 'Ziehen über den Anfang startet',
   'On the note, and on the list of them.': 'Auf der Notiz und auf der Liste.',
   Nothing: 'Nichts',
+
+  // A way of looking at the space's graph, kept in the bookmarks.
+  'Bookmark this view': 'Diese Ansicht merken',
+  Keep: 'Merken',
 }

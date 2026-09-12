@@ -13,7 +13,7 @@
   import Twist from './Twist.svelte'
   import { longPress } from './longpress'
   import { roving } from './roving'
-  import { SEARCH_MARK } from './panel-marks'
+  import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
   import { shownName } from './note-name'
   import { carryBookmark, draggedBookmark, isBookmarkDrag } from './drag-paths'
   import { insideSpace } from './space-paths'
@@ -61,7 +61,7 @@
   function rowFor(mark: Bookmark, at: number, depth: number, root: string): Row | null {
     const shared = { mark, at, depth }
 
-    if (mark.kind === 'group' || mark.kind === 'search') {
+    if (mark.kind === 'group' || mark.kind === 'search' || mark.kind === 'graph') {
       return { ...shared, label: mark.text, note: null, path: null, kind: null, active: false }
     }
 
@@ -145,6 +145,14 @@
         break
       case 'group':
         workspace.toggleGroup(mark.path)
+        break
+      case 'graph':
+        // The space keeps one picture and this is a way of looking at it, so the
+        // view is written into the space's own settings and the graph is opened.
+        // Every surface that draws a graph then reads one answer, which is what
+        // it did before there were views; see workspace/graph-settings.svelte.ts.
+        workspace.graphSettings.take(mark.view)
+        workspace.openGraph()
         break
     }
   }
@@ -320,6 +328,11 @@
               <FileMark mark={row.kind} path={row.path} />
             {:else if row.kind}
               <FileMark mark={row.kind} />
+            {:else if row.mark.kind === 'graph'}
+              <!-- The graph's own mark, which is what its tab and its command
+                   already wear: a view of the space reads as the space's picture
+                   rather than as a search. -->
+              <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
             {:else if row.mark.kind !== 'group'}
               <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
             {/if}
