@@ -93,6 +93,19 @@ describe('what a space offers', () => {
     expect(space).toContain("t('Move down')")
   })
 
+  /** The order is a column of the account's own space rows, and the push writes
+   *  it as one; a space somebody else shared is not a row there. So the move
+   *  has to be asked about the role and not only about the ends of the list, or
+   *  it is a row that looks like it worked and is back the next launch. */
+  test('but not for a space somebody else shared', () => {
+    const nudge = moduleBody(
+      read('lib/space-actions.ts'),
+      'function canNudge(space: Space, by: -1 | 1): boolean',
+    )
+
+    expect(nudge).toContain("roleOf(space.root) !== 'owner'")
+  })
+
   /** One list of entries, reached from the row in the switcher, from a right
    *  click on it and from a held finger. */
   test('through the one menu the switcher opens, however it is asked for', () => {

@@ -51,8 +51,16 @@ async function moveSpace(id: string, beforeId: string | null) {
   void sync.pushSpaceOrder()
 }
 
-/** Whether a space has anywhere to go in that direction. */
+/** Whether a space has anywhere to go in that direction.
+ *
+ *  Only a space of the reader's own. The order is a column of the account's own
+ *  space rows and the push writes it as one - `update spaces ... where user_id`
+ *  in services/sync/src/spaces/index.ts - and a space somebody else shared is
+ *  not a row there. Offering the move on one would be a row that appears to
+ *  work and is back where it was on the next launch. */
 function canNudge(space: Space, by: -1 | 1): boolean {
+  if (roleOf(space.root) !== 'owner') return false
+
   const at = workspace.spaces.findIndex((one) => one.id === space.id)
   const to = at + by
   return at >= 0 && to >= 0 && to < workspace.spaces.length
