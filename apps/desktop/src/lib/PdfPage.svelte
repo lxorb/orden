@@ -22,12 +22,14 @@
     toViewport,
     type Transform,
   } from './pdf/highlights'
+  import { t } from './i18n.svelte'
   import { PDF_TO_CSS, type PageBox, type Size } from './pdf/pages'
   import { pdfjs } from './pdf/document'
 
   const {
     doc,
     number,
+    count,
     box,
     zoom,
     marks,
@@ -40,6 +42,9 @@
     doc: PDFDocumentProxy
     /** Counting from one, as a reader and a link both count pages. */
     number: number
+    /** How many pages the document has, mounted or not: only the ones near the
+     *  view exist, so the page says where along the whole it is. */
+    count: number
     box: PageBox
     zoom: number
     marks: readonly Highlight[]
@@ -205,10 +210,18 @@
 </script>
 
 <!-- The page itself is not interactive: the words over it are what a pointer
-     reaches, and this only reads where a click landed. -->
-<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+     reaches, and this only reads where a click landed.
+
+     Which page this is and how many there are, because only the pages near the
+     view exist at all: without the two a reader is given a handful of sheets and
+     no idea where in the document they are. -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <div
   class="sheet"
+  role="listitem"
+  aria-setsize={count}
+  aria-posinset={number}
+  aria-label={t('Page {number} of {count}', { number, count })}
   style:top="{box.top}px"
   style:width="{box.width}px"
   style:height="{box.height}px"
@@ -216,6 +229,8 @@
   data-page={number}
   onclick={pick}
 >
+  <!-- The drawing of the page. What a reader gets instead is the words over it,
+       which are real text in `.words`; the picture of them says nothing twice. -->
   <canvas bind:this={canvas} aria-hidden="true"></canvas>
 
   <div class="marks" aria-hidden="true">

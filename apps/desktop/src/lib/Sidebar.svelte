@@ -366,6 +366,13 @@
   // The edge can go while a finger is still on it - Escape, the back gesture, a
   // note chosen on a phone - and then no pointerup ever reaches it.
   $effect(() => () => size.release())
+
+  /** The edge, moved with a key. What a press means is sidebar-width.svelte.ts,
+   *  which is where the drag's own bounds already are; this only keeps the press. */
+  function onEdgeKey(event: KeyboardEvent) {
+    if (viewport.touch) return
+    if (size.step(event.key, aside)) event.preventDefault()
+  }
 </script>
 
 <!-- On a desktop the sidebar slides open and shut, and the document slides
@@ -373,20 +380,42 @@
      a phone the drawer it sits in is what moves, and this must be its full
      width the moment it exists, or the drag that opened it measures a
      sidebar still growing. -->
+<!-- Named, because a region of the page that has no name is one a reader cannot
+     tell from the next: the words are the space's, which is what the panel is
+     about. -->
 <aside
   bind:this={aside}
+  aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
   class:resizing={size.dragging}
   style:width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
   transition:slide={{ axis: 'x', duration: dur(viewport.touch ? 0 : 210), easing: cubicOut }}
 >
   <!-- The strip along the right edge that changes the width. Not on a phone,
-       where the drawer is as wide as the drawer is. -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+       where the drawer is as wide as the drawer is.
+
+       A separator, which is what it is, and one a key can move: the arrows widen
+       and narrow it a step at a time, Home and End take it to either end and Enter
+       puts it back where it started - the same thing a double click does. It was a
+       `div` with a tooltip on it before, which is a control only a hand can reach
+       and nothing at all can read.
+
+       A separator that can be moved is a focusable separator, which is what a
+       window splitter is and what the practices call for; the rule below knows
+       only the kind that divides two things and is never touched. -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
   <div
     class="edge"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label={t('Panel width')}
+    aria-valuemin={size.narrowest}
+    aria-valuemax={size.widest}
+    aria-valuenow={size.pixels ?? undefined}
+    tabindex="0"
     title={t('Drag to resize')}
     onpointerdown={(event) => size.start(event, aside)}
     ondblclick={() => size.reset()}
+    onkeydown={onEdgeKey}
   ></div>
 
   <!-- Which space this is. A panel with no subject is a list of names belonging

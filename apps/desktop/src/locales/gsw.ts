@@ -1098,4 +1098,14 @@ export const gsw: Dictionary = {
   'this one': 'das da',
   End: 'Beände',
   'End every other session': 'Alli anderi Sitzige beände',
+
+  // Said and not shown: what a reader is told about a surface
+  '{space} panel': 'Bereich {space}',
+  'Panel width': 'Breiti vom Bereich',
+  Values: 'Wärt',
+  Pages: 'Site',
+  'Page {number} of {count}': 'Site {number} vo {count}',
+  'What is selected': 'Was uusgwählt isch',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Leinwand: {cards} Charte, {links} Verbindige, {drawings} Zeichnige',
 }

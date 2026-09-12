@@ -673,7 +673,17 @@
     {#if broken}
       <p class="trouble">{t('That PDF could not be opened')}</p>
     {:else}
-      <div class="column" style:height="{height}px" style:min-width="{columnWidth}px">
+      <!-- A list, and only the pages near the view are in it: each one says which
+           page it is and how many there are, the way the rows of the file list do,
+           or a reader is handed four sheets out of three hundred with nothing to
+           say so. See row-window.ts and docs/tree.md. -->
+      <div
+        class="column"
+        role="list"
+        aria-label={t('Pages')}
+        style:height="{height}px"
+        style:min-width="{columnWidth}px"
+      >
         {#if doc}
           {#each drawn as number (number)}
             {@const box = boxes[number - 1]}
@@ -683,6 +693,7 @@
                 {number}
                 {box}
                 {zoom}
+                count={sizes.length}
                 marks={marksByPage.get(number) ?? []}
                 selected={picked}
                 onmeasure={measured}
@@ -698,9 +709,17 @@
   </div>
 
   {#if control}
-    <!-- Two actions, in the shape the format bar over a selection already has;
-         see `.nib-bar` in the theme. -->
-    <div class="nib-bar nib-bar-at" style:left="{control.x}px" style:top="{control.y}px">
+    <!-- Two actions on what is selected, in the shape the format bar over a
+         selection already has; see `.nib-bar` in the theme. Both of them run on
+         the click, which is how a pointer and a key both arrive - they used to run
+         on the press as well, so a mouse asked for each of them twice. -->
+    <div
+      class="nib-bar nib-bar-at"
+      role="toolbar"
+      aria-label={t('What is selected')}
+      style:left="{control.x}px"
+      style:top="{control.y}px"
+    >
       <button
         class="pen"
         title={t('Highlight')}
@@ -709,7 +728,6 @@
         onmousedown={(event: MouseEvent) => {
           // The selection has to survive the press, or there is nothing to mark.
           event.preventDefault()
-          void highlight()
         }}
         onclick={() => void highlight()}
       >
@@ -720,10 +738,7 @@
       <button
         title={t('Copy a link')}
         aria-label={t('Copy a link')}
-        onmousedown={(event: MouseEvent) => {
-          event.preventDefault()
-          void copyLink()
-        }}
+        onmousedown={(event: MouseEvent) => event.preventDefault()}
         onclick={() => void copyLink()}
       >
         <svg viewBox="0 0 14 14">

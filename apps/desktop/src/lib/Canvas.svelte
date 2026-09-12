@@ -436,6 +436,17 @@
    *  out when the drawing changes rather than on every pointer event. */
   const inked = $derived(new Set(store.canvas.ink.map((stroke) => stroke.id)))
 
+  /** The one sentence a reader is given about the plane. The ink is drawn into a
+   *  canvas element, which is a picture nothing can read, so what is said instead
+   *  is what is on it; see the host element below. */
+  const describes = $derived(
+    t('Canvas: {cards} cards, {links} links, {drawings} drawings', {
+      cards: store.canvas.nodes.length,
+      links: store.canvas.edges.length,
+      drawings: store.canvas.ink.length,
+    }),
+  )
+
   /** Whether what is picked is ink, which is what the turn handle belongs to. */
   const lassoed = $derived(store.picked.length > 0 && store.picked.every((id) => inked.has(id)))
 
@@ -1631,6 +1642,11 @@
   }
 </script>
 
+<!-- Named by what is on it rather than by what it is: the plane said the one word
+     "Canvas" about a surface that might hold forty cards or nothing at all.
+     `role="application"` is what lets the plane keep its own keyboard - one letter
+     per tool - and it is also what stops a reader browsing the cards, so the
+     sentence above is the whole of what is said about them. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="canvas nib-host"
@@ -1638,7 +1654,8 @@
   style:cursor
   bind:this={host}
   role="application"
-  aria-label={t('Canvas')}
+  aria-roledescription={t('Canvas')}
+  aria-label={describes}
   tabindex="-1"
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}

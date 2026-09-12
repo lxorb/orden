@@ -1102,4 +1102,14 @@ export const fr: Dictionary = {
   'this one': 'celui-ci',
   End: 'Terminer',
   'End every other session': 'Terminer toutes les autres sessions',
+
+  // Said and not shown: what a reader is told about a surface
+  '{space} panel': 'Panneau {space}',
+  'Panel width': 'Largeur du panneau',
+  Values: 'Valeurs',
+  Pages: 'Pages',
+  'Page {number} of {count}': 'Page {number} sur {count}',
+  'What is selected': 'Ce qui est sélectionné',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Toile : {cards} cartes, {links} liens, {drawings} dessins',
 }

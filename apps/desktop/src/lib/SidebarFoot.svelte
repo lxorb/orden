@@ -83,7 +83,7 @@
     <button
       class="nib-glyph act"
       title={theme.current === 'dark' ? t('Light') : t('Dark')}
-      aria-label={t('Switch theme')}
+      aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
       disabled={!theme.switchable}
       onclick={() => theme.toggle()}
     >
@@ -109,6 +109,7 @@
       class:failed={sync.status === 'error'}
       title={syncTitle()}
       aria-label={t('Settings')}
+      aria-busy={sync.status === 'syncing'}
       onclick={() => settings.show()}
     >
       <!-- An actual gear: eight teeth around a hub. -->

@@ -40,6 +40,7 @@
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
   import { rooms } from './lib/rooms.svelte'
+  import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
@@ -497,6 +498,25 @@
       fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
     })
   }
+  /** Half of what the app tells somebody it tells with a colour: the gear in the
+   *  panel's foot is lit while a pass is running and red when the last one failed,
+   *  and the dot on a tab is amber until the note is on the disk. Neither has any
+   *  words anywhere in the page, so neither reached a reader who is listening.
+   *
+   *  Said here rather than in the two components, because the region is one
+   *  region: see said.svelte.ts. */
+  $effect(() => {
+    const status = sync.status
+    if (status === 'syncing') said.say(t('Syncing'))
+    else if (status === 'error') said.say(sync.lastError ?? t('Sync failed'))
+  })
+
+  $effect(() => {
+    const tab = workspace.active
+    const state = tab ? workspace.savingOf(tab) : undefined
+    if (state === 'saving') said.say(t('Saving'))
+    else if (state === 'saved') said.say(t('Saved'))
+  })
 </script>
 
 <!-- Nothing in the app ever shows the browser's own menu. -->
@@ -507,6 +527,17 @@
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
 />
+
+<!-- The page's one heading, which is the note in front of it. There was none at
+     all on a desktop: the phone's title bar draws the name as an `h1` and a desktop
+     draws it on a tab, so anything reading the page down found a window with no
+     top to it. Said and not shown, because the name is already on screen twice. -->
+<h1 class="nib-said">{workspace.active?.shown ?? 'nibeditor'}</h1>
+
+<!-- What just happened, for whoever is listening rather than looking. On the page
+     before there is anything in it and outside everything that can be made inert,
+     which is the whole of what makes a live region work; see said.svelte.ts. -->
+<p class="nib-said" role="status" aria-live="polite">{said.words}</p>
 
 <!-- The sidebar runs the full height, so the window's one header row sits beside
      it rather than above everything, and the panel and the document start on

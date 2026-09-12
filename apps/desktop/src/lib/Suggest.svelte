@@ -15,11 +15,17 @@
     values,
     typed,
     active,
+    id,
+    label,
     onchoose,
   }: {
     values: string[]
     typed: string
     active: number
+    /** The list's own id, so the field above can point at it and at the row the
+     *  arrows are on; see the combobox in Palette.svelte, which is the same shape. */
+    id: string
+    label: string
     onchoose: (value: string) => void
   } = $props()
 
@@ -37,11 +43,27 @@
   }
 </script>
 
-<ul class="nib-layer suggest" transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}>
+<!-- A box with a list under it is one control and not two, which is what the
+     palette is as well: the keyboard never leaves the field, the arrows move which
+     row the field is pointing at, and the rows are out of the tab sequence. This
+     was a plain list of buttons - nothing said it was a list of choices, nothing
+     said which one the arrows were on, and Tab walked into it one value at a
+     time. -->
+<ul
+  {id}
+  class="nib-layer suggest"
+  role="listbox"
+  aria-label={label}
+  transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}
+>
   {#each values as value, index (value)}
     {@const parts = split(value)}
-    <li>
+    <li role="none">
       <button
+        id="{id}-{index}"
+        role="option"
+        tabindex="-1"
+        aria-selected={index === active}
         class:on={index === active}
         onpointerdown={(event) => {
           event.preventDefault()

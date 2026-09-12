@@ -40,7 +40,7 @@
   const REDRAW = 200
 
   let scroller = $state<HTMLDivElement>()
-  let surface = $state<HTMLDivElement>()
+  let surface = $state<HTMLElement>()
   let html = $state('')
 
   /** Which render is the current one, so an older one that finishes later - the
@@ -470,10 +470,14 @@
     onclick={follow}
     oncontextmenu={showMenu}
   >
-    <div id="write" class="page" dir={direction} bind:this={surface}>
+    <!-- A piece of writing, and an `article` says so: everything under here is the
+         note's own headings and paragraphs, and a reader landing in a `div` has
+         nothing telling it where the document starts or what it is called. The id
+         stays what every theme selects on; see base.css and Typora's `#write`. -->
+    <article id="write" class="page" dir={direction} aria-label={tab.shown} bind:this={surface}>
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the export uses -->
       {@html html}
-    </div>
+    </article>
   </div>
 </div>
 

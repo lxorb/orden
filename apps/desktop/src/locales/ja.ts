@@ -1096,4 +1096,14 @@ export const ja: Dictionary = {
   'this one': 'この端末',
   End: '終了',
   'End every other session': '他のすべてのセッションを終了',
+
+  // Said and not shown: what a reader is told about a surface
+  '{space} panel': '{space} パネル',
+  'Panel width': 'パネルの幅',
+  Values: '値',
+  Pages: 'ページ',
+  'Page {number} of {count}': '{count} ページ中 {number} ページ',
+  'What is selected': '選択中のもの',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'キャンバス: カード {cards} 枚、リンク {links} 本、描画 {drawings} 点',
 }

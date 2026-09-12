@@ -310,11 +310,16 @@
              A long press stands in for the right click on a touch screen.
              Dragged, it goes along its own strip, into another pane's strip, or
              against a side of a pane to make one there. -->
+        <!-- Named by the note, and named on the button. A pinned tab is a mark and
+             no words, and the name used to be put on the `span` around the mark -
+             which has no role, so nothing read it and the tab was a button with
+             nothing to call it. -->
         <button
           class="pick"
           data-tab={tab.id}
           draggable={!viewport.touch}
           title={tab.shown}
+          aria-label={tab.shown}
           onclick={() => workspace.activate(tab.id)}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
@@ -333,7 +338,7 @@
                by sight. The name is still what it says to a reader who cannot
                see it, and what the title shows. -->
           {#if tab.pinned && markOf(tab.kind)}
-            <span class="pin" aria-label={tab.shown}>
+            <span class="pin" aria-hidden="true">
               <!-- With the path where there is one, so a note that chose an icon
                    wears it here as well; see FileMark.svelte. -->
               {#if tab.path}
@@ -346,9 +351,12 @@
           {#if tab.reading}
             <!-- An open book, quietly: the tab says which face of the note is up
                  without spending a word on it. -->
+            <!-- A drawing that says something, so it says what: an `svg` carrying a
+                 name and no role is a graphic nothing reads. -->
             <svg
               class="mark"
               viewBox="0 0 14 12"
+              role="img"
               aria-label={t('Reading')}
               transition:fade={{ duration: dur(140) }}
             >
@@ -376,6 +384,7 @@
           {#if rooms.present[tab.note.key]}
             <span
               class="here"
+              role="img"
               aria-label={t('Also open elsewhere')}
               title={t('Also open elsewhere')}
             >
@@ -385,10 +394,14 @@
             </span>
           {/if}
           {#if tab.unsaved || workspace.savingOf(tab)}
+            <!-- The dot says one of three things and says it in words too, which
+                 needs a role to be read at all. What it means as it changes is said
+                 once, out loud, in the app's one live region; see said.svelte.ts. -->
             <span
               class="dot"
               class:writing={workspace.savingOf(tab) === 'saving'}
               class:down={workspace.savingOf(tab) === 'saved'}
+              role="img"
               aria-label={saveLabel(tab)}
               title={saveLabel(tab)}
               transition:fade={{ duration: dur(190) }}

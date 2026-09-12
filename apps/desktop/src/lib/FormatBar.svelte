@@ -11,11 +11,18 @@
     type Transaction,
   } from '@nib/editor'
   import { t } from './i18n.svelte'
+  import { roving } from './roving'
   import { viewport } from './viewport.svelte'
 
   const { view }: { view?: EditorView | undefined } = $props()
 
   let at = $state<{ x: number; y: number } | null>(null)
+  let bar = $state<HTMLElement>()
+
+  /** One tab stop with the arrows inside it, which is what every strip in the app
+   *  is; see roving.ts and docs/keyboard.md. Enter and Space press the button the
+   *  arrows are on, and Escape gives the note the keyboard back. */
+  const keys = { across: true, rows: 'button' } as const
 
   /** Docked above the keyboard on a phone: there is no hovering over a
    *  selection with a thumb, and the buttons are wanted before the selection
@@ -28,9 +35,14 @@
   export function follow(current: EditorView) {
     const range = current.state.selection.main
 
+    // The bar goes when the note stops being written in - but not while the bar
+    // itself has the keyboard, or reaching a button with a key would take the bar
+    // away from under it and leave the focus on nothing at all.
+    const ours = bar?.contains(document.activeElement) ?? false
+
     if (
       range.empty ||
-      !current.hasFocus ||
+      (!current.hasFocus && !ours) ||
       current.state.readOnly ||
       selectedImage(current.state)
     ) {
@@ -73,32 +85,52 @@
   ]
 </script>
 
+<!-- A row of buttons that acts on what is selected, which is what a toolbar is,
+     and it says so: the words on the buttons are one letter each, so the name of
+     the row is the only thing that says what the row is for.
+
+     Every action runs on the click and not on the press. A press is how a pointer
+     arrives and a click is how a pointer and a key both do, and reading the press
+     meant the whole bar was a row of buttons that answered a finger, a mouse and
+     nothing else: Enter on one of them focused it and did not format a word. The
+     press is still read, for the one thing it is for - keeping the caret, and on a
+     phone the keyboard, where they are. -->
 {#if docked}
-  <div class="nib-bar docked" style:bottom="{viewport.keyboard}px">
+  <div
+    class="nib-bar docked"
+    role="toolbar"
+    aria-label={t('Format')}
+    bind:this={bar}
+    use:roving={keys}
+    style:bottom="{viewport.keyboard}px"
+  >
     {#each ACTIONS as action (action.title)}
       <button
         title={action.title}
         aria-label={action.title}
-        onpointerdown={(event) => {
-          // The editor must keep focus, or the keyboard closes under the bar.
-          event.preventDefault()
-          run(action.command)
-        }}
+        onpointerdown={(event) => event.preventDefault()}
+        onclick={() => run(action.command)}
       >
         {action.label}
       </button>
     {/each}
   </div>
 {:else if at}
-  <div class="nib-bar nib-bar-at" style:left="{at.x}px" style:top="{at.y}px">
+  <div
+    class="nib-bar nib-bar-at"
+    role="toolbar"
+    aria-label={t('Format')}
+    bind:this={bar}
+    use:roving={keys}
+    style:left="{at.x}px"
+    style:top="{at.y}px"
+  >
     {#each ACTIONS as action (action.title)}
       <button
         title={action.title}
         aria-label={action.title}
-        onmousedown={(event) => {
-          event.preventDefault()
-          run(action.command)
-        }}
+        onmousedown={(event) => event.preventDefault()}
+        onclick={() => run(action.command)}
       >
         {action.label}
       </button>

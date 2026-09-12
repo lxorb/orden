@@ -29,7 +29,15 @@ function keep(width: number | null) {
   }
 }
 
+/** One step of an arrow key. A whole row's worth rather than a pixel: a hand
+ *  moving the edge with a key is placing the panel, not measuring it. */
+const STEP = 16
+
 export class SidebarWidth {
+  /** The two ends, for the handle to say where along them it is. */
+  readonly narrowest = NARROWEST
+  readonly widest = WIDEST
+
   /** Null means the default width from the theme tokens. */
   pixels = $state<number | null>(saved())
 
@@ -44,6 +52,41 @@ export class SidebarWidth {
   reset() {
     this.pixels = null
     keep(null)
+  }
+
+  /** The same edge, moved with a key: the arrows a step at a time, Home and End
+   *  to either end, and Enter or Space the default back - which is what a double
+   *  click on the handle does. True when the press was the handle's.
+   *
+   *  Here and not in the component, because how far a step goes and how wide the
+   *  panel may be are this module's to say and the drag already says them. The
+   *  panel is measured for the one case where the width is still the theme's own
+   *  and there is no number yet to step from. */
+  step(key: string, panel: HTMLElement | undefined): boolean {
+    const from = this.pixels ?? panel?.getBoundingClientRect().width ?? NARROWEST
+
+    const put = (width: number) => {
+      this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
+      keep(this.pixels)
+      return true
+    }
+
+    switch (key) {
+      case 'ArrowLeft':
+        return put(from - STEP)
+      case 'ArrowRight':
+        return put(from + STEP)
+      case 'Home':
+        return put(NARROWEST)
+      case 'End':
+        return put(WIDEST)
+      case 'Enter':
+      case ' ':
+        this.reset()
+        return true
+      default:
+        return false
+    }
   }
 
   /** Ends the drag from outside it, for the one case where no `pointerup` will:

@@ -277,6 +277,11 @@
           ? t('path: tag: file: -word "…" /re/')
           : t('Search this space')}
         spellcheck="false"
+        role="combobox"
+        aria-label={t('Search this space')}
+        aria-expanded={suggestions.length > 0}
+        aria-controls="nib-search-values"
+        aria-activedescendant={suggestions.length ? `nib-search-values-${active}` : undefined}
         autofocus
       />
 
@@ -305,7 +310,14 @@
       {/if}
 
       {#if suggestions.length}
-        <Suggest values={suggestions} typed={asking?.typed ?? ''} {active} onchoose={take} />
+        <Suggest
+          id="nib-search-values"
+          label={t('Values')}
+          values={suggestions}
+          typed={asking?.typed ?? ''}
+          {active}
+          onchoose={take}
+        />
       {/if}
     </div>
 
