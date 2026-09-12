@@ -1,5 +1,6 @@
-"""Publishing part one, against the real Worker: which notes, what will change,
-where a page lives, what its head says, and a site behind a password.
+"""Publishing, against the real Worker: which notes, what will change, where a
+page lives, what its head says, what a reader is given besides the note, and a
+site behind a password.
 
 Two halves, because `wrangler dev` builds the URL the Worker sees from the origin
 it was given rather than from the request's Host header - so a run is either the
@@ -11,6 +12,11 @@ for is the site the first half published.
     the pages     what the hostname serves and what it does not
     the paths     a permalink, an alias, and the redirect a rename leaves
     the machines  the sitemap, the feed, robots and the favicon
+    the way round the tree, the contents, what links here, previous and next
+    the searching a word, a phrase, a refusal, a tag, a folder, and a draft
+    the forms     an answer taken on the page and read back on the account
+    the dressing  publish.css, and a counter named in the policy
+    the browser   the graph painted, the slash, the theme, and a hover card
     the password  the form, a wrong word, the right one, and the note behind it
 
 Run it from the repository root:
