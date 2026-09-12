@@ -334,9 +334,18 @@ def started(page: Page) -> None:
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
 
 
-def fresh(browser: Browser, finger: bool, share: dict | None = None) -> Page:
+def fresh(
+    browser: Browser,
+    finger: bool,
+    share: dict | None = None,
+    activity: bool = True,
+) -> Page:
     """A page with the activity behind it, and a share already waiting where one is
-    asked for - which is the cold start a share actually is."""
+    asked for - which is the cold start a share actually is.
+
+    `activity` off is a plain browser: no bridge to find, which is what a desktop, a
+    phone browser and the PWA all are. Dictation there is the web's own recogniser
+    rather than the phone's, and that is the only difference the page ever sees."""
     context = browser.new_context(
         viewport=PHONE if finger else {"width": 1180, "height": 900},
         color_scheme="light",
@@ -347,7 +356,7 @@ def fresh(browser: Browser, finger: bool, share: dict | None = None) -> Page:
     # Each of these is written as a function and run as one: an init script is
     # source that is evaluated, so an arrow function on its own would be evaluated
     # and thrown away.
-    for one in (ACTIVITY, SPEECH, PICKERS):
+    for one in ((ACTIVITY,) if activity else ()) + (SPEECH, PICKERS):
         context.add_init_script(f"({one})()")
 
     if share:
@@ -572,8 +581,10 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     page.wait_for_timeout(900)
     after = page.evaluate(STATE)
     say(f"[tile] new note: {json.dumps(after)}")
-    if after["tabs"] <= before["tabs"]:
-        wrong(f"the tile opened nothing: {before['tabs']} tabs, then {after['tabs']}")
+    # The row the tile carries is `new`, which opens a blank note - in the tab that
+    # was previewing one, the way the same row does from the palette.
+    if after["open"] is not None or after["doc"] != "" or after["name"] == before["name"]:
+        wrong(f"the tile did not open a blank note: {json.dumps(after)}")
 
     # And an id nothing answers to, which is what the recorder's tile is until the
     # recorder lands.
@@ -585,7 +596,7 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
            }"""
     )
     page.wait_for_timeout(700)
-    if page.evaluate(STATE)["tabs"] != quiet["tabs"]:
+    if page.evaluate(STATE) != quiet:
         wrong("a command the app does not have did something anyway")
 
     page.evaluate(
@@ -689,27 +700,53 @@ def the_camera_row(page: Page) -> None:
         wrong(f"the photograph did not land beside the note: {state['doc']!r}")
 
 
-def dictation(page: Page) -> None:
-    """The web's own recogniser, which is what every build but Android uses."""
+def dictation(page: Page, phone: bool) -> None:
+    """Saying a note instead of typing it.
+
+    Two recognisers behind one row: the phone's own where there is an activity, and
+    the web's where there is not. Everything but the recogniser is the same, and
+    that is the whole point of the row - so this runs twice and only the three
+    lines about who is listening differ."""
+    where = "phone" if phone else "browser"
     palette(page, "Dictate")
     listed = rows(page)
     row = next((one for one in listed if one["label"] == "Dictate"), None)
-    say(f"[dictation] the palette offers {json.dumps(listed[:3])}")
+    say(f"[{where}] the palette offers {json.dumps(listed[:3])}")
     if not row:
-        wrong("there is no dictation row")
+        wrong(f"{where}: there is no dictation row")
         page.keyboard.press("Escape")
         return
+    if row["dim"]:
+        wrong(f"{where}: the dictation row is greyed out")
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
 
-    started_it = page.evaluate("() => window.__speech?.started ?? 0")
-    heard = page.evaluate("() => ({ continuous: window.__speech.continuous, interim: window.__speech.interimResults, lang: window.__speech.lang })")
-    say(f"[dictation] started {started_it} times, {json.dumps(heard)}")
-    if started_it != 1:
-        wrong(f"the recogniser was started {started_it} times")
-    if not heard["continuous"] or heard["interim"]:
-        wrong(f"the recogniser is listening in the wrong shape: {heard}")
+    if phone:
+        # The activity was asked to listen, and the web's recogniser was left
+        # alone: a phone has one of its own and the page prefers it.
+        asked = page.evaluate("() => window.__android.said.listen")
+        say(f"[{where}] the activity was told {json.dumps(asked)}")
+        if asked != [True]:
+            wrong(f"the phone's recogniser was not asked to listen: {asked}")
+        if page.evaluate("() => window.__speech?.started ?? 0"):
+            wrong("the web's recogniser was started on a phone that has its own")
+    else:
+        started_it = page.evaluate("() => window.__speech?.started ?? 0")
+        heard = page.evaluate(
+            """() => ({
+                 continuous: window.__speech.continuous,
+                 interim: window.__speech.interimResults,
+                 lang: window.__speech.lang,
+               })"""
+        )
+        say(f"[{where}] started {started_it} times, {json.dumps(heard)}")
+        if started_it != 1:
+            wrong(f"the recogniser was started {started_it} times")
+        if not heard["continuous"] or heard["interim"]:
+            wrong(f"the recogniser is listening in the wrong shape: {heard}")
+        if not heard["lang"]:
+            wrong("the recogniser was not told which language to listen in")
 
     # The quiet mark: the line across the top, saying what it is doing, which is
     # the one the app already uses for work that takes a moment.
@@ -719,43 +756,71 @@ def dictation(page: Page) -> None:
              return found ? found.getAttribute('aria-label') : null
            }"""
     )
-    say(f"[dictation] the line says {listening!r}")
-    shot(page, "08-listening")
+    say(f"[{where}] the line says {listening!r}")
+    shot(page, f"08-listening-{where}")
     if listening != "Listening":
-        wrong(f"nothing on screen says it is listening: {listening!r}")
+        wrong(f"{where}: nothing on screen says it is listening: {listening!r}")
 
     before = page.evaluate(STATE)["doc"]
-    page.evaluate("() => window.__speech.hear('and then we left', false)")
-    page.wait_for_timeout(300)
-    if page.evaluate(STATE)["doc"] != before:
-        wrong("a half-heard sentence was written into the note")
+    if not phone:
+        # Only the web's recogniser offers half-heard words at all, and they are
+        # turned off; a sentence rewritten under the caret while somebody is
+        # talking is the caret jumping about.
+        page.evaluate("() => window.__speech.hear('and then we left', false)")
+        page.wait_for_timeout(300)
+        if page.evaluate(STATE)["doc"] != before:
+            wrong("a half-heard sentence was written into the note")
 
-    page.evaluate("() => window.__speech.hear('and then we left', true)")
+    if phone:
+        page.evaluate(
+            """() => window.__nibHeard(JSON.stringify({ state: 'listening', text: 'and then we left' }))"""
+        )
+    else:
+        page.evaluate("() => window.__speech.hear('and then we left', true)")
+
     page.wait_for_timeout(500)
     state = page.evaluate(STATE)
-    say(f"[dictation] the note now says {state['doc']!r}")
-    shot(page, "09-dictated")
+    say(f"[{where}] the note now says {state['doc']!r}")
+    shot(page, f"09-dictated-{where}")
     if "and then we left" not in state["doc"]:
-        wrong(f"what it heard is not in the note: {state['doc']!r}")
+        wrong(f"{where}: what it heard is not in the note: {state['doc']!r}")
+    # A sentence after a sentence is given the space the recogniser did not; see
+    # src/lib/mobile/dictation.test.ts.
+    if before and not before.endswith((" ", "\n")) and " and then we left" not in state["doc"]:
+        wrong(f"{where}: the sentence was glued onto the last word: {state['doc']!r}")
 
     palette(page, "Stop")
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
 
-    stopped = page.evaluate("() => window.__speech.stopped")
-    quiet = page.evaluate("() => document.querySelector('[role=status]')?.getAttribute('aria-label') ?? null")
-    say(f"[dictation] stopped {stopped} times, the line says {quiet!r}")
-    if stopped < 1:
-        wrong("the same row did not turn it off again")
+    if phone:
+        asked = page.evaluate("() => window.__android.said.listen")
+        say(f"[{where}] the activity was told {json.dumps(asked)}")
+        if asked != [True, False]:
+            wrong(f"the same row did not turn the phone's recogniser off: {asked}")
+    else:
+        stopped = page.evaluate("() => window.__speech.stopped")
+        say(f"[{where}] stopped {stopped} times")
+        if stopped < 1:
+            wrong("the same row did not turn it off again")
+
+    quiet = page.evaluate(
+        "() => document.querySelector('[role=status]')?.getAttribute('aria-label') ?? null"
+    )
+    say(f"[{where}] the line now says {quiet!r}")
     if quiet == "Listening":
-        wrong("the line still says it is listening")
+        wrong(f"{where}: the line still says it is listening")
 
 
-def not_on_a_desktop(browser: Browser) -> None:
-    """The camera row is offered where there is a camera behind the glass. A
-    desktop's `capture` is ignored by every browser, so the row there would be the
-    Picture row under another name."""
-    page = fresh(browser, finger=False)
+def on_a_desktop(browser: Browser) -> None:
+    """A plain browser, with no activity behind it at all.
+
+    Two things about it. The camera row is offered where there is a camera behind
+    the glass, and a desktop's `capture` is ignored by every browser, so the row
+    there would be the Picture row under another name. Dictation is offered, because
+    the browser has a recogniser of its own, and it is the same row doing the same
+    thing to the same note."""
+    page = fresh(browser, finger=False, activity=False)
     page.evaluate(SEED, NOTE)
     page.wait_for_timeout(600)
 
@@ -768,6 +833,19 @@ def not_on_a_desktop(browser: Browser) -> None:
     if photo and not photo["dim"]:
         wrong("a desktop is offered a camera row that would open the file chooser")
 
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+
+    # And nothing here has an activity to ask, so the widget and the share are not
+    # asked about either.
+    if page.evaluate("() => '__NIB_SYSTEM__' in window"):
+        wrong("the drive left an activity behind on a desktop")
+
+    page.evaluate(
+        "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
+    )
+    dictation(page, phone=False)
+
     page.context.close()
 
 
@@ -779,7 +857,7 @@ def drive(browser: Browser) -> None:
     a_tile_and_a_widget_row(page, note)
     what_the_widget_draws(page)
     the_camera_row(page)
-    dictation(page)
+    dictation(page, phone=True)
     page.context.close()
 
 
@@ -795,7 +873,7 @@ def main() -> int:
                 say("--- a phone ---")
                 drive(browser)
                 say("--- a desktop ---")
-                not_on_a_desktop(browser)
+                on_a_desktop(browser)
             finally:
                 browser.close()
     finally:

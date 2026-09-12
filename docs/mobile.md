@@ -137,6 +137,182 @@ Nib may hand another app a file out of, and those are Nib's own. Tauri's templat
 names the root of shared storage instead, which would offer every photo and
 download on the phone under Nib's authority.
 
+`apps/desktop/test/android.test.ts` holds both switches, and the rules resource,
+so a manifest edited for something else cannot quietly turn the backup back on.
+
+## What the app asks the phone for
+
+Two permissions, and the second is only for dictation:
+
+| | |
+| --- | --- |
+| `INTERNET` | sync, and the account |
+| `RECORD_AUDIO` | the speech recogniser, asked for the first time somebody turns dictation on |
+
+**Not the camera**, on purpose, and this one is load-bearing rather than tidy.
+Taking a photograph into a note is `ACTION_IMAGE_CAPTURE`, which the camera app
+serves and which needs no permission of ours. The webview decides whether to
+offer the camera for an `<input capture>` by asking whether the app has the
+CAMERA permission *or* has not declared it at all (`isMediaCaptureSupported` in
+wry's `RustWebChromeClient`), so declaring it and not holding it is the one state
+where the camera row silently opens a file picker instead. See
+`src/lib/insert-picture.ts`.
+
+And a `<queries>` block, which is not a permission but is the same kind of
+promise. From Android 11 an app sees only the other apps it has named, and both
+of the features below ask a question before they act: the webview asks whether
+anything answers `IMAGE_CAPTURE` before it offers the camera, and
+`SpeechRecognizer.isRecognitionAvailable` asks whether anything answers
+`RecognitionService`. Without the two `<intent>` rows in `<queries>` the answer is
+no on every phone from 11 on, and both features do nothing without saying why.
+
+## What another app may share with nib
+
+Anything, and it becomes a note.
+
+The intent filters sit on `MainActivity` rather than on an activity of their own,
+which is what puts the app's own icon and name in the share sheet's row, and what
+makes the second share of the day arrive in the app that is already open -
+`singleTask`, and `onNewIntent`. Three filters: `SEND`, `SEND_MULTIPLE`, and
+`VIEW` for a `.md` or a `.txt` opened from a file manager, a download or a mail
+attachment, which used to be the one thing on this list that could not be done at
+all.
+
+`*/*` on the share filters is deliberate. A note is where anything goes that
+somebody wants to keep a word about, Android only ever offers the row to somebody
+who asked to share something, and what the thing is decides what happens to it
+rather than whether it is allowed in.
+
+**How the bytes get in.** Android hands the activity a `content://` URI and a
+grant that lasts as long as the activity does. The page cannot read one: it has no
+file system of its own, and the crate refuses every path outside a space. So
+`Shared.kt` copies what arrived into the app's own cache while the grant is good,
+and hands it to the page in slices through the bridge - `shared()` for what it is,
+`sharedBytes(at, offset, length)` for a quarter of a megabyte at a time, and
+`sharedDone()` when the page has written it, which is when the copies go. Nothing
+is decided in Kotlin beyond what the intent itself says.
+
+**What it becomes**, in `src/lib/mobile/shared.ts`, which is one answer for every
+platform:
+
+- The words go under a heading, with `date` and, where what arrived carries an
+  address, `source` in the front matter. The same two things a clip carries, and
+  through the same writer the importers use.
+- A picture, and any other file, lands in the folder the Attachments setting names
+  - beside the note, in the space's `assets`, or in a folder named after the note
+  - and the note draws the picture and links the file.
+- A markdown or text file is its own note, under its own name and with its own
+  bytes. That is a note arriving, not a note being written about.
+- All of it goes through `applyImport`, which is the road every imported file
+  already travels: `write_note` and `write_bytes`, a name that steps aside rather
+  than overwriting anything, one undo for the lot, the file list reloaded and the
+  sync nudged.
+
+**Or into the note in front of you.** Where there is a note open to write in and
+the share is words and pictures - the two things that can go into a note that
+already exists - the app asks, with the same small sheet it asks every other
+question with: a note of its own, or this one. The words land at the caret and
+each picture goes through `storeImage`, which is exactly what a paste of the same
+two things does. Dismissing the sheet does nothing, which is what dismissing
+always means. A share carrying a file that is neither makes its own note without
+asking, because a file needs a name of its own in the space and the plan is what
+gives it one.
+
+## The tiles, and the widget
+
+Both of them carry the id of a row in the app's own registry and nothing else.
+The tile is pressed, the activity holds the id, the page asks for it and looks it
+up in `appCommands` - the same list the palette reads - so a tile cannot come to
+mean something slightly different from the row it is named after, and an id
+nothing answers to does nothing at all.
+
+**Quick settings**: New note (`new`), Search (`search-space`), and Record
+(`record`), which is another batch's. The recorder's tile is declared with
+`android:enabled="false"`, so the tile picker does not offer it: a row that does
+nothing is worse than a row that is not there. Turn it on in the same commit that
+adds the command; `test/android.test.ts` fails as soon as the command exists and
+the tile is still off.
+
+**The home screen** has one widget: the space's name and two marks along the top -
+search, and a new note - and then the notes last written in, one per row, each
+opening that note. Five rows, because five is what the layout has; it resizes
+either way and the launcher crops what it was given.
+
+A note pinned in the app comes first. That is what "open a chosen note" means
+here: the app already has one gesture for keeping a note to hand, and a picker
+written in Kotlin would be a second file list in a second language answering a
+question the app has already answered.
+
+Which notes, in which order, and under what names is decided in
+`src/lib/mobile/widgets.svelte.ts` and pushed across the bridge whenever it
+changes; Kotlin only draws it. The words in it - the heading, and the line for a
+space with nothing in it - are handed over with the rows, because Android's own
+`res/values/strings.xml` cannot reach the page's dictionaries; the strings there
+are what stands in a tile's label, which the system reads before the app has run,
+and English and German are both there.
+
+The widget follows the home screen's light and dark rather than the app's own
+theme row. A launcher inflates our layout in its own process with its own
+configuration, so `values-night` is the only switch there is, and the colours are
+the app's own two levels of ink on the app's own page colour.
+
+## A photograph into a note
+
+`<input type="file" accept="image/*" capture="environment">`, and nothing else.
+
+An Android webview reads `capture` and offers the camera app rather than the
+picker; a phone browser does the same; a desktop browser ignores it, which is why
+the row is only offered where the glass is under a finger - there it would be the
+Picture row above it under another name. What comes back is a `File`, and from
+there it is the road a pasted picture takes: `storeImage` puts it where the
+Attachments setting says, and the embed is written at the caret.
+
+So there is no camera code in this app at all, on any platform, and nothing to
+keep working. The permission note above is the price of that.
+
+## Dictation
+
+The web's `SpeechRecognition` is Chrome's and not the webview's, so the phone app
+has none: on Android it is the system recogniser, through `Speech.kt`, and
+everywhere else it is the web's own. Same row, same words at the caret, same note.
+
+It listens in turns, because that is what Android offers - a recogniser ends each
+time the speaker pauses - and the next turn is started while dictation is still
+on, so a pause between two sentences is a pause. Errors that mean "nothing was
+said" are part of that rhythm; anything else stops it, rather than restarting
+against the battery. Nothing is recorded and nothing is uploaded: what crosses the
+bridge is words.
+
+While it listens, the line across the top of the document sweeps and says
+`Listening` - the line an export and a stored picture already use. A mark somebody
+has to dismiss is not a quiet one, and there is no new overlay.
+
+## What the mirror does while the app is in the background
+
+Nothing, and that is the honest answer rather than a chosen one.
+
+Wry's activity calls `WebView.onPause()` when Android pauses it, which stops the
+page's timers; the sync loop is a `setTimeout` in the page (`sync.svelte.ts`), so
+it does not run. From Android 14 a cached process is frozen outright, and any
+process can be killed without notice. `backoff.ts` has a ten-minute poll for a
+window that is not on screen, which is the truth in a browser tab and not on a
+phone: there the pass simply does not happen until the app is opened again.
+
+A `WorkManager` periodic sync is not the answer either, and not because Android
+would refuse it. The mirror is JavaScript - the protocol, the content hashes, the
+cursors and the conflict rules are all in the page - and the session token lives
+in the webview's own storage. A worker would have to be a second implementation of
+the whole thing in Kotlin, holding a copy of the credential, and two
+implementations of a sync protocol is how notes get lost. The same is true of the
+account's own keychain: nothing in the Kotlin process is allowed near it.
+
+What makes it harmless is that a note is a file. Every edit is written to disk
+where the desktop and the next launch can see it, the mirror is offline-first and
+conflict-preserving by design, and the first pass after the app is opened pushes
+everything that was written while it was away. What is lost by not syncing in the
+background is time, not notes - and a phone that has not been opened is a phone
+whose notes nobody has read on another machine either.
+
 ## One size for a finger
 
 A phone is not a narrow desktop. Everything a thumb lands on is sized from one
@@ -331,18 +507,42 @@ There is a test on that, in `test/permissions.test.ts`.
 
 Three more are left out on purpose.
 
-- **Sharing a note to another app.** Tauri has no share sheet plugin, so this
+- **Sharing a note out to another app.** Tauri has no share sheet plugin, so this
   would be a plugin of our own on both platforms. Publishing a note through the
-  sync service already gets it out of the app.
-- **Opening a `.md` shared into the app.** Android hands over a `content://`
-  URI, not a path, and nothing in the crate can read one. It needs an intent
-  filter and Kotlin to copy the bytes across.
+  sync service already gets it out of the app. Sharing *into* nib is built; see
+  above.
+- **A share target in the browser build.** The PWA could be one too, through
+  `share_target` in the manifest, and the whole of what it would do afterwards is
+  already written and shared with the Android side. What it needs that Android did
+  not is a `POST` route inside `public/sw.js` to catch the form the browser sends,
+  which is the one part of the app that is a classic service worker and is not
+  this batch's to edit.
 - **Export to a file.** The webview has no download handler, so the browser
   build's blob download does nothing there. Publishing is the way out for now.
 
-Clippy is run for `aarch64-linux-android` and `aarch64-apple-ios` in the mobile
-workflow rather than in `check.yml`, because both need a cross toolchain that
-only those jobs set up.
+## What compiles the phone's own half
+
+`check.yml`'s `android-check` job, on every pull request that touches
+`apps/desktop/src-tauri/**`. It sets up a JDK, the SDK and the NDK, and assembles
+the debug APK for one ABI - which is the Kotlin compiled, the manifest merged and
+the resources built.
+
+It exists because nothing else did it. The `rust` job builds the crate for the
+runner's own platform, and `publish-mobile.yml` - the only thing that ever
+assembled the Android project - runs on pushes to main and on tags, not on pull
+requests. So a Kotlin file that did not compile or a manifest that would not merge
+reached main and was found by a release. The job that would have caught the
+`MasterKey` that was not in `security-crypto:1.0.0` is this one.
+
+The debug APK rather than the release one: same Kotlin, same resources, same
+manifest merge, without minifying and without a keystore. What a release adds is
+proguard, and what the page needs kept through it is asserted in
+`test/android.test.ts` instead - every `@JavascriptInterface` method the page calls
+by name, and the rule that keeps them.
+
+Clippy for `aarch64-linux-android` and `aarch64-apple-ios` stays in the mobile
+workflow, because the Android job above already compiles the crate for the phone
+and the iOS half needs a macOS runner.
 
 ## Locally
 
