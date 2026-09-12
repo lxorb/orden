@@ -22,6 +22,7 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
+import { insideOnly } from './automation/inside'
 import {
   folderOf as folderIn,
   insideSpace,
@@ -3400,8 +3401,18 @@ class Workspace {
 
     const here = this.active?.path ? folderIn(relativeTo(root, this.active.path)) : ''
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
-    const path = insideSpace(root, MARKDOWN.test(relative) ? relative : `${relative}.md`)
 
+    // What a link says is somebody's prose. A note out of a shared space, a room,
+    // a sync pull or a paste can say `[[../../../.bashrc]]`, and a note made under
+    // that name is a file written over somewhere else on the machine - `write_note`
+    // takes any path the app hands it and folds the `..` away rather than refusing
+    // it. So the same function the local endpoint and every `nib://` link are
+    // judged by decides this too: one rule for the three roads a path somebody
+    // else wrote takes into a space. See automation/inside.ts.
+    const safe = insideOnly(MARKDOWN.test(relative) ? relative : `${relative}.md`)
+    if (safe === null) return null
+
+    const path = insideSpace(root, safe)
     const content = `# ${noteName(relative)}\n\n`
     await invoke('write_note', { path, content })
     links.noteSaved(path, content)

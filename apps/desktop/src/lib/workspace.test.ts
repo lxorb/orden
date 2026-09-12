@@ -2014,3 +2014,53 @@ describe('a new file stepping aside from a name the folder already has', () => {
     expect(await madeIn('/space/v1.2', 'Note')).toBe('/space/v1.2/Note 2')
   })
 })
+
+describe('following a link to a note the space has not got', () => {
+  /** The jump a wikilink makes when the index resolved nothing: no path of its
+   *  own, only what the link said. */
+  const asked = (target: string) => ({
+    path: null,
+    target,
+    heading: null,
+    block: null,
+    page: null,
+  })
+
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.tabs = []
+    notes['/space/Plan.md'] = '# Plan\n\n'
+    sent.length = 0
+  })
+
+  afterEach(() => {
+    delete notes['/space/Plan.md']
+  })
+
+  test('makes it where the link would look for it', async () => {
+    await workspace.followLink(asked('Plan'))
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Plan.md')
+  })
+
+  /** What a link says is somebody's prose: a note out of a shared space, a room, a
+   *  sync pull or a paste can name a path that climbs out of the space, and the note
+   *  made under that name would be a file somewhere else on the machine written
+   *  over. Nothing is written and nothing is opened. */
+  test('and writes nothing at all for a link that climbs out of the space', async () => {
+    for (const target of [
+      '../../../.bashrc',
+      '..\\..\\Desktop\\evil',
+      'notes/../../x',
+      'C:/Windows/System32/x',
+      'NUL',
+    ]) {
+      sent.length = 0
+      workspace.tabs = []
+      await workspace.followLink(asked(target))
+
+      expect(sent, target).toEqual([])
+      expect(workspace.tabs, target).toEqual([])
+    }
+  })
+})
