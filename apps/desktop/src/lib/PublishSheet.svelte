@@ -607,8 +607,12 @@
     color: var(--text-strong);
   }
 
+  /* `align-self`, because a native checkbox in a row that stretches is drawn as
+     tall as the sentence beside it: two lines of warning made a bar rather than
+     a box. `flex: none` holds the width and says nothing about the height. */
   .danger-check input {
     flex: none;
+    align-self: start;
     margin-top: 3px;
     accent-color: var(--accent);
   }
