@@ -449,6 +449,8 @@ three bullet glyphs cannot carry it alone.
 
 ![Bold, italic and marked reduced to their words; inline code keeping its ticks](even/glasses-3.png)
 
+![A note of everything else on the phone: a captioned fence, callouts, tasks, a table](even/phone-everything.png)
+
 ![Tasks as boxes, a quote with its bar, and a callout saying which kind it is](even/glasses-2.png)
 
 ---
@@ -637,7 +639,7 @@ is open, or anything in the document is a `.sheet`, an open `dialog` or a
 `[role="dialog"]`. The drawer was the one thing missing from that list and the one a
 reader opens twenty times an hour.
 
-![The rail in the plugin, with the sidebar open and no card over it](even/phone-spaces.png)
+![The sidebar open over the note, with no card left on top of it](even/phone-spaces.png)
 
 ---
 
@@ -1126,7 +1128,7 @@ seconds later, so `workspace.device.reread()` runs when it lands. Reading again
 cannot undo a choice made in the meantime, because the second seeding only fills in
 keys nothing has written this launch.
 
-![The rail in the plugin: a space wearing the icon it chose, and one wearing its letter](even/phone-spaces.png)
+![The spaces in the plugin: one wearing the icon it chose, one wearing its letter](even/phone-spaces.png)
 
 ### What goes into the package, and why it is a build of its own
 
@@ -1407,7 +1409,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 79 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 87 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1457,6 +1459,12 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 79 checks:
 - **a space icon survived a launch through the phone app's own store**, which is the
   path everything that does not fit the cookie now takes: the drive's stand-in host
   keeps what it is given, so the icons are gone from the cookie and back from the host;
+- **a note holding everything the app has learned to write since** reached the panel
+  whole: a fence with a caption (the caption above the code, the language alone on the
+  fence line), callouts by name - known, unknown, titled and folded - tasks as boxes,
+  a table with its columns, maths with its dollars, and **nothing the reader was never
+  meant to see**: no `%%comment%%` either way it is written, and no properties from the
+  head of the note;
 - **a recogniser that refused handed over to the glasses' microphone**, the connection
   was opened before there was anything to send through it, and a spoken command was
   obeyed **112 ms** after the last sound of it, because the words were sent while the
@@ -1482,25 +1490,33 @@ and 640 rows:
 
 | | |
 | --- | --- |
-| The note paged when it is first opened | 32 ms mean, 60 ms worst |
-| **The same note re-paged after a keystroke** | **6.3 ms mean, 8.8 ms worst** |
-| Marking it into lines | 4.5 ms |
-| Folding 2,700 characters to what the font can draw | 0.06 ms |
-| Wrapping one line | 0.003 ms |
-| A spoken command, from the words arriving to the panel being written | 0.4 ms |
+| The note paged when it is first opened | 19 ms mean, 24 ms worst |
+| **The same note re-paged after a keystroke** | **6.3 ms mean, 11 ms worst** |
+| Marking it into lines | 4.4 ms |
+| Folding 2,700 characters to what the font can draw | 0.05 ms |
+| Wrapping one line | 0.004 ms |
+| A spoken command, from the words arriving to the panel being written | 2.4 ms |
 
 A keystroke is inside one frame at 60 Hz, which is what item three of the brief
 asks for, and a burst of edits arriving through a room is the same work. The cache
-in `firmware.ts` is why: a keystroke changes one line of a note and the other twelve
-hundred were broken before and are not broken again.
+in `firmware.ts` is why: a keystroke changes one line of a note and the other four
+hundred and eighty were broken before and are not broken again.
 
-Those milliseconds are a reading taken once, on an idle machine. What the tests hold
-the code to is the work underneath them, because a timing on a runner with the rest
-of the suite on it measures the queue in front of the work as much as the work.
-`measure.test.ts` prints that work and `pages.test.ts` asserts it, and the two
-numbers the table above rests on are these: **a cold paging of the note breaks 162 of
-its lines and measures 9,011 glyphs; the same note after a keystroke breaks one line,
-reads 479 out of the cache, and measures 3,444.** Every one of those is the same
+**These figures were re-taken on 2026-09-12, and the ones before them were for a
+panel the glasses have not got.** The cost suite paged a body fifty four pixels
+narrower than the real one - it had taken the line-number column off the width that
+`pagesOf` takes off itself - so every figure was for a note cut into more, shorter
+lines than a reader ever sees. The suite now shares one note and one `Paging` with
+`pages.test.ts`, and both are what the app sends.
+
+Those milliseconds are a reading taken once, on an idle machine, and the two headline
+rows move by a few milliseconds between runs. What the tests hold the code to is the
+work underneath them, because a timing on a runner with the rest of the suite on it
+measures the queue in front of the work as much as the work. `measure.test.ts` prints
+that work and `pages.test.ts` asserts it, and the numbers the table above rests on
+are these: **a cold paging of the note breaks 162 of its lines, reads 318 out of the
+cache and measures 9,112 glyphs; the same note after a keystroke breaks one line,
+reads 479 out of the cache, and measures 3,545.** Every one of those is the same
 number on a busy machine as on an idle one.
 
 Those are the plugin's own share. **What the radio costs is on top and is not

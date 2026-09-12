@@ -237,10 +237,16 @@ describe('the bundle a package is made of', () => {
 
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
-    // 6.0 MB as this is written, and 2.7 MB packed. The ceiling is close to it on
-    // purpose: this number went from 11.8 MB to 6.0 by leaving libraries out, and a
-    // megabyte back is a library that crept in again. Speed is the selling point,
-    // and on a phone the download is part of it.
+    // 6.8 MB as this is written, measured on 2026-09-12, and about 3 MB packed. The
+    // ceiling is close to it on purpose: this number went from 11.8 MB to 6.0 by
+    // leaving libraries out, and a megabyte back is a library that crept in again.
+    // Speed is the selling point, and on a phone the download is part of it.
+    //
+    // The biggest single file in it is not the app: it is node-emoji's table, 1.1 MB,
+    // which `insteadOf` in packages/glasses/src/firmware.ts uses to write an emoji
+    // the firmware cannot draw as its own `:name:` rather than as a box. That is a
+    // feature with a price, and it is the first thing to weigh if this ever has to
+    // come down.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 })
