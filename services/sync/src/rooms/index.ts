@@ -18,6 +18,7 @@
 import { Hono } from 'hono'
 import { subprotocol, tokenOf } from '@nib/rooms'
 import { now, sha256 } from '../crypto'
+import { note } from '../failed'
 import type { Env } from '../types'
 import { roomKind } from './kind'
 
@@ -78,6 +79,68 @@ select (select coalesce(user_id, guest_id) from me) as who,
        (select path from reached) as path,
        (select role from reached) as role`
 
+/** How long a client is told to wait before asking for the room again. A second:
+ *  about what replacing an object takes, and less than the app's own backoff waits
+ *  on its first try anyway. A browser cannot read this off a handshake that did
+ *  not become a socket - `new WebSocket` gives a page no headers - so what it is
+ *  for is every other client, and being the right answer. */
+const TRY_AGAIN_IN = '1'
+
+/** The room's half of the socket, asked of the object.
+ *
+ *  An object can be unavailable for a moment without anything being wrong, and
+ *  the commonest reason by far is a deploy: every object whose code changed is
+ *  reset, and a `fetch` in flight throws `Durable Object reset because its code
+ *  was updated`. This service deploys on every push, so that is every note anybody
+ *  had open at the time. It used to leave the route as a bare throw, which came
+ *  back as a 500 - the wrong thing to say twice over. A 500 reads as a bug in what
+ *  was asked rather than a moment to wait through, and there is nothing in it that
+ *  tells a client trying again is the whole of the fix.
+ *
+ *  So it is asked for twice, and the second ask lands on the object that replaced
+ *  the one that went - which is why one more is enough and a third would only be
+ *  slower to give up. Nothing was said to the client in between, so there is
+ *  nothing to take back.
+ *
+ *  Answered with nothing when both asks fail, and the failure is written down
+ *  first: a room that fails every time is a bug in the room rather than a deploy,
+ *  and the log line is where the two can be told apart. Nothing is written down
+ *  for an ask that worked the second time, which is what a deploy looks like and
+ *  is not a failure anybody saw. */
+async function reach(
+  namespace: DurableObjectNamespace,
+  noteId: string,
+  address: string,
+  headers: Record<string, string>,
+  ray: string | null,
+): Promise<Response | null> {
+  let last: unknown = null
+
+  for (let asked = 0; asked < 2; asked++) {
+    // A fresh stub each time: the point of asking again is not to ask the object
+    // that has already gone.
+    const room = namespace.get(namespace.idFromName(noteId))
+
+    try {
+      const answer = await room.fetch(new Request(address, { headers }))
+      // A handshake with nothing on it is the one answer that cannot be passed
+      // on: a Response may not be built with that status unless a socket comes
+      // with it, so handing it to the route below would be the throw again in a
+      // different place.
+      if (answer.status !== 101 || answer.webSocket) return answer
+
+      last = new Error('the room answered a handshake with no socket on it')
+    } catch (error) {
+      last = error
+    }
+  }
+
+  // Named by the room rather than by the route, so that one query finds every
+  // room that failed and the id says which file it was about.
+  note(`room ${noteId}`, last, ray)
+  return null
+}
+
 export const rooms = new Hono<{ Bindings: Env }>()
 
 rooms.get('/:noteId', async (context) => {
@@ -105,27 +168,44 @@ rooms.get('/:noteId', async (context) => {
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)
 
-  const room = namespace.get(namespace.idFromName(noteId))
-  const answer = await room.fetch(
-    new Request(context.req.url, {
-      headers: {
-        upgrade: 'websocket',
-        'x-nib-note': noteId,
-        'x-nib-space': allowed.space_id,
-        // Which shape the room's document is in, which is the file's name and
-        // nothing else. Said here because this is where the row was read.
-        'x-nib-kind': roomKind(allowed.path ?? ''),
-        // The one thing the room is told about the person on the other end.
-        // A reader is in the room and sees every keystroke; what the room does
-        // with this is refuse the messages that would change the text.
-        'x-nib-write': allowed.role === 'read' ? 'no' : 'yes',
-        // And who they are, as an id and nothing else. The room cannot look it
-        // up and never learns what it names; what it is for is being told that
-        // this one is not in the space any more. See `roomsRevoked`.
-        'x-nib-who': allowed.who,
-      },
-    }),
+  const answer = await reach(
+    namespace,
+    noteId,
+    context.req.url,
+    {
+      upgrade: 'websocket',
+      'x-nib-note': noteId,
+      'x-nib-space': allowed.space_id,
+      // Which shape the room's document is in, which is the file's name and
+      // nothing else. Said here because this is where the row was read.
+      'x-nib-kind': roomKind(allowed.path ?? ''),
+      // The one thing the room is told about the person on the other end.
+      // A reader is in the room and sees every keystroke; what the room does
+      // with this is refuse the messages that would change the text.
+      //
+      // Said the other way round - not `read` means yes - until a role the
+      // query could not name would have been a socket that writes. It is the
+      // one flag between a reader and the words, so the two roles that may are
+      // named and everything else reads, the way the room reads the header it
+      // arrives on; see `writesOf`.
+      'x-nib-write': allowed.role === 'write' || allowed.role === 'owner' ? 'yes' : 'no',
+      // And who they are, as an id and nothing else. The room cannot look it
+      // up and never learns what it names; what it is for is being told that
+      // this one is not in the space any more. See `roomsRevoked`.
+      'x-nib-who': allowed.who,
+    },
+    context.req.header('cf-ray') ?? null,
   )
+
+  // Not a refusal and not a bug: the room is a place that can be a moment away
+  // from answering, and this is the shape of saying so. The app's socket treats
+  // a handshake that did not open like any other close and comes back on its own
+  // backoff; see rooms/socket.ts.
+  if (!answer) {
+    return context.json({ error: 'this room is not answering - try again' }, 503, {
+      'retry-after': TRY_AGAIN_IN,
+    })
+  }
 
   // The browser refuses the socket unless the server names the subprotocol back.
   const headers = new Headers(answer.headers)

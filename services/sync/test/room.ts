@@ -188,13 +188,22 @@ export function running(env: Env): {
 
 /** A namespace that leads nowhere, so the door can be watched deciding without a
  *  runtime to make a Durable Object in. What it keeps is the headers the door
- *  sent, which are the whole of what it tells a room. */
-export function doorway(): { ROOMS: DurableObjectNamespace; asked: Headers[] } {
+ *  sent, which are the whole of what it tells a room.
+ *
+ *  `failing` is how many of the first asks throw the way a stub does when the
+ *  object it named has gone - a deploy, an overload - so that what the door does
+ *  about one can be watched. Past that many it answers. */
+export function doorway(failing = 0): { ROOMS: DurableObjectNamespace; asked: Headers[] } {
   const asked: Headers[] = []
+  let left = failing
 
   const stub = {
     fetch: (request: Request) => {
       asked.push(request.headers)
+      if (left-- > 0) {
+        return Promise.reject(new Error('Durable Object reset because its code was updated.'))
+      }
+
       // Not 101: a Response cannot be built with that status outside the
       // runtime, and the door only passes on whatever it is handed.
       return Promise.resolve(new Response(null, { status: 200 }))

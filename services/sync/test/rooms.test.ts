@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness'
 import { type Canvas, type InkStroke, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { stamped } from '@nib/markdown/canvas-merge'
@@ -613,6 +613,106 @@ describe('the door to a room', () => {
       expect(door.asked.at(-1)?.get('x-nib-kind'), path).toBe(kind)
     }
   })
+
+  /** The door's query is four joins wide because a share can be about a space or
+   *  about one file, and one person can hold both: a reader of the space who was
+   *  given this note to write in. Four joins that each matched would be four rows
+   *  in anything but this - the item is part of every key, so each matches at most
+   *  one - and the whole of it has to stay one row and one round trip, because a
+   *  scalar subquery over two rows would be the door quietly picking one of the
+   *  two roles. */
+  test('lets somebody who holds both the space and the file in at the stronger', async () => {
+    for (const [space, item, writes] of [
+      ['read', 'write', 'yes'],
+      ['write', 'read', 'yes'],
+      ['read', 'read', 'no'],
+    ] as const) {
+      const door = doorway()
+      env.close()
+      env = testEnv({ ROOMS: door.ROOMS })
+
+      const owner = await signIn(env, 'owner@example.com')
+      const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } }))
+        .json.space.id
+      const noteId = (
+        await call(env, `/v1/spaces/${spaceId}/notes`, {
+          token: owner,
+          body: { path: 'both.md', content: 'together' },
+        })
+      ).json.note.id
+
+      const email = 'both@example.com'
+      await call(env, `/v1/spaces/${spaceId}/share/invite`, {
+        token: owner,
+        body: { email, role: space },
+      })
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${noteId}`, {
+        token: owner,
+        body: { email, role: item },
+      })
+
+      // Both memberships are really there, or the rest of this says nothing.
+      expect(
+        env.db.prepare('select count(*) as held from space_members where email = ?').get(email),
+      ).toEqual({ held: 2 })
+
+      const said = `${space} of the space, ${item} of the file`
+      const answer = await call(env, `/rooms/${noteId}`, {
+        headers: {
+          upgrade: 'websocket',
+          'sec-websocket-protocol': subprotocol(await signIn(env, email)),
+        },
+      })
+
+      expect(answer.status, said).toBe(200)
+      // One row: one space, one role, one ask.
+      expect(door.asked, said).toHaveLength(1)
+      expect(door.asked[0]?.get('x-nib-space'), said).toBe(spaceId)
+      expect(door.asked[0]?.get('x-nib-write'), said).toBe(writes)
+    }
+  })
+
+  /** D1 takes a hundred parameters and the door is in front of every socket a file
+   *  opens, so what it asks must not grow with what anybody holds. */
+  test('asks the same three things however many shares somebody has', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const owner = await signIn(env, 'owner@example.com')
+    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json
+      .space.id
+
+    const notes: string[] = []
+    for (let made = 0; made < 8; made++) {
+      notes.push(
+        (
+          await call(env, `/v1/spaces/${spaceId}/notes`, {
+            token: owner,
+            body: { path: `note-${made}.md`, content: 'x' },
+          })
+        ).json.note.id,
+      )
+    }
+
+    const email = 'many@example.com'
+    for (const noteId of notes) {
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${noteId}`, {
+        token: owner,
+        body: { email, role: 'write' },
+      })
+    }
+
+    const token = await signIn(env, email)
+    const answer = await call(env, `/rooms/${notes[0] ?? ''}`, {
+      headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
+    })
+
+    expect(answer.status).toBe(200)
+    expect(door.asked[0]?.get('x-nib-write')).toBe('yes')
+    // The widest thing anything bound while all of that ran, the door included.
+    expect(env.widest().count).toBeLessThan(20)
+  })
 })
 
 /** A device on a plane, the way the app's client is one: its own document, and the
@@ -1052,5 +1152,203 @@ describe('somebody who stops being in the space while the file is open', () => {
     })
 
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+})
+
+/** A room that is a moment from answering.
+ *
+ *  A room is a Durable Object, and the commonest reason one is not there is a
+ *  deploy: every object whose code changed is reset, and the fetch in flight
+ *  throws. This service deploys on every push, so that is every note anybody had
+ *  open at the time - which is what four 500s on `GET /rooms/{id}` in one day
+ *  were. A 500 is the wrong answer twice over: it reads as a bug in what was
+ *  asked, and nothing in it says that asking again is the whole of the fix. */
+describe('a room that is not answering', () => {
+  let env: TestEnv
+
+  beforeEach(() => {
+    env = testEnv()
+  })
+
+  afterEach(() => {
+    env.close()
+    vi.restoreAllMocks()
+  })
+
+  /** Every line the log was written with while `work` ran. */
+  async function logged(work: () => Promise<unknown>): Promise<string[]> {
+    const lines: string[] = []
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
+      lines.push(String(line))
+    })
+
+    await work()
+    return lines
+  }
+
+  /** A note of somebody's own, with the door's namespace already in place. */
+  async function opening(door: ReturnType<typeof doorway>): Promise<[string, string]> {
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const token = await signIn(env, 'owner@example.com')
+    const spaceId = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space
+      .id
+    const noteId = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token,
+        body: { path: 'open.md', content: OPENING },
+      })
+    ).json.note.id
+
+    return [noteId, token]
+  }
+
+  function knock(noteId: string, token: string) {
+    return call(env, `/rooms/${noteId}`, {
+      headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
+    })
+  }
+
+  test('is a wait rather than a bug, and says how long', async () => {
+    const door = doorway(2)
+    const [noteId, token] = await opening(door)
+
+    let status = 0
+    let said: unknown = null
+    let wait: string | null = null
+    const lines = await logged(async () => {
+      const answer = await knock(noteId, token)
+      status = answer.status
+      said = answer.json.error
+      wait = answer.headers.get('retry-after')
+    })
+
+    expect(status).toBe(503)
+    expect(said).toBe('this room is not answering - try again')
+    expect(wait).toBe('1')
+
+    // And it is written down, once, with the room it was about: a room that fails
+    // every time is a bug rather than a deploy, and this is where the two part.
+    expect(lines).toHaveLength(1)
+    const written = JSON.parse(lines[0] ?? '{}') as Record<string, unknown>
+    expect(written.failed).toBe(`room ${noteId}`)
+    expect(String(written.said)).toContain('code was updated')
+  })
+
+  test('is asked once more, because a deploy replaces the object it reset', async () => {
+    const door = doorway(1)
+    const [noteId, token] = await opening(door)
+
+    let status = 0
+    const lines = await logged(async () => {
+      status = (await knock(noteId, token)).status
+    })
+
+    // The second ask landed on the object that replaced the one that went, so
+    // nobody waited and nothing was written down.
+    expect(status).toBe(200)
+    expect(door.asked).toHaveLength(2)
+    expect(lines).toEqual([])
+  })
+
+  test('is asked twice and no more', async () => {
+    const door = doorway(5)
+    const [noteId, token] = await opening(door)
+
+    await logged(() => knock(noteId, token))
+
+    expect(door.asked).toHaveLength(2)
+  })
+})
+
+/** What a room does when a store under it is the thing that is unwell.
+ *
+ *  Opening a room reaches two of them - its own storage and the note store - and a
+ *  failure used to be kept as though it were the room: `opened` held the
+ *  rejection, so every later join, every message and every settle was handed the
+ *  same moment again for as long as the object lived, and the store being well
+ *  again changed nothing about it. */
+describe('a room that could not be opened', () => {
+  let env: TestEnv
+
+  beforeEach(() => {
+    env = testEnv()
+  })
+
+  afterEach(() => env.close())
+
+  /** A note store that refuses until it is told to stop. */
+  function refusing(): { NOTES: R2Bucket; well: () => void } {
+    let failing = true
+    const notes = {
+      get: () =>
+        failing
+          ? Promise.reject(new Error('the note store is not answering'))
+          : Promise.resolve({ text: () => Promise.resolve(OPENING) }),
+      put: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+    }
+
+    return {
+      NOTES: notes as unknown as R2Bucket,
+      well: () => {
+        failing = false
+      },
+    }
+  }
+
+  test('opens on the next join once the store is answering again', async () => {
+    const store = refusing()
+    env.close()
+    env = testEnv({ NOTES: store.NOTES })
+    const { room: made } = room(env)
+
+    await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow(
+      'not answering',
+    )
+
+    store.well()
+    const socket = await join(made, { id: 'n1', spaceId: 's1', who: 'u1' })
+
+    // Greeted with what the room holds, which is what being in one is.
+    expect(socket.sent.length).toBeGreaterThan(0)
+  })
+
+  test('settles nothing while it has never held the file', async () => {
+    const store = refusing()
+    env.close()
+    env = testEnv({ NOTES: store.NOTES })
+    const { room: made, state } = room(env)
+
+    await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow()
+
+    // The alarm finds a room that knows which file it is and cannot read it, and
+    // what it must not do is write the empty document it is holding over the file.
+    await expect(made.alarm()).rejects.toThrow()
+    expect(env.keys()).toEqual([])
+    expect(state.getWebSockets()).toEqual([])
+  })
+
+  test('takes no socket when the row saying who has it open cannot be written', async () => {
+    const { room: made, state } = room(env)
+    env.db.exec('drop table room_sockets')
+
+    await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow('room_sockets')
+
+    // A socket in the room that no row names is one an owner cannot close, so
+    // there is no socket: the door answers 503 and the client asks again.
+    expect(state.getWebSockets()).toEqual([])
+  })
+
+  test('is one row and not a conflict when the same person joins again', async () => {
+    const { room: made } = room(env)
+
+    for (const again of [1, 2, 3]) {
+      const socket = await join(made, { id: 'n1', spaceId: 's1', who: 'u1' })
+      expect(socket.sent.length, String(again)).toBeGreaterThan(0)
+    }
+
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 1 })
   })
 })

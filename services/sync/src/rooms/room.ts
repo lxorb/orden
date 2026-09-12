@@ -192,17 +192,24 @@ export class NoteRoom implements DurableObject {
   ): Promise<void> {
     await this.open(held)
 
+    // Written down where a revocation can find it, and written before the socket
+    // is taken: the row is the whole of how an owner reaches this socket later, so
+    // a socket in the room that no row names is one nobody can close. Which is
+    // why a join that cannot be written down is a join to refuse rather than to
+    // half make - the door turns the failure into a 503 and the client asks again,
+    // with nothing accepted here in the meantime.
+    //
+    // Not a lock and not a session: the row says only that this person has this
+    // file open, so that the route that ends their access knows which rooms to
+    // tell.
+    await this.remember(held, joining.who)
+
     this.ctx.acceptWebSocket(server)
     server.serializeAttachment({
       clients: [],
       mayWrite: joining.writes,
       who: joining.who,
     } satisfies Attached)
-
-    // Written down where a revocation can find it. Not a lock and not a session:
-    // the row says only that this person has this file open, so that the route
-    // that ends their access knows which rooms to tell.
-    await this.remember(held, joining.who)
 
     // The greeting, both halves at once: what this room holds, and who is in it.
     server.send(syncStep1(this.state.doc))
@@ -343,14 +350,23 @@ export class NoteRoom implements DurableObject {
   }
 
   /** The room's document, read back out of storage or seeded from the note as the
-   *  store holds it. Runs once; every later call waits on the same promise. */
+   *  store holds it. Runs once; every later call waits on the same promise.
+   *
+   *  Once, but only once it has worked. Opening a room reaches two stores - its own
+   *  and the note's - and either can be a moment from answering; a failure kept as
+   *  "the room is open" is a room that hands the same moment back to every join,
+   *  every message and every settle for as long as the object lives, and the store
+   *  being well again changes nothing. So a failed attempt is let go of: everything
+   *  waiting on it hears the one failure, and the next join reads the document
+   *  again rather than the failure. What the door does with that failure is answer
+   *  503, so the client is already coming back. */
   private open(held: Held): Promise<void> {
     if (this.opened) return this.opened
 
     this.held = held
     // Nothing else may run against this object until the document is whole: a
     // second join that saw an empty room would seed it a second time.
-    this.opened = this.ctx.blockConcurrencyWhile(async () => {
+    const opening = this.ctx.blockConcurrencyWhile(async () => {
       await this.ctx.storage.put('note', held)
 
       // A room with nothing stored of its own is filled from the file as the store
@@ -370,7 +386,18 @@ export class NoteRoom implements DurableObject {
       if (waiting.length) this.send(syncStep1(this.state.doc), null)
     })
 
-    return this.opened
+    this.opened = opening
+    opening.catch(() => {
+      // And nothing is held about a room that did not open. `held` is what the
+      // settle writes from, and settling a document that was never read back
+      // would put an empty file where the words are.
+      if (this.opened !== opening) return
+
+      this.opened = null
+      this.held = null
+    })
+
+    return opening
   }
 
   /** An update somebody made: passed on to everyone else, and written down.
