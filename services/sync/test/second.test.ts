@@ -3,7 +3,25 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import worker from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { sha256 } from '../src/crypto'
-import { base32, codeAt, matches, newSecret, otpauth, recoveryCodes } from '../src/second'
+import {
+  base32,
+  codeAt,
+  costRecoveryLess,
+  matches,
+  newSecret,
+  otpauth,
+  RECOVERY_ROUNDS,
+  recoveryCodes,
+} from '../src/second'
+
+/** What a recovery code costs to hash, turned down for this file.
+ *
+ *  Every enrolment here writes ten hashed codes and every wrong guess reads one, so
+ *  the tests about the ceiling on guesses spend a hundred derivations - which at the
+ *  real cost is most of a minute of arithmetic no test is measuring, and on a loaded
+ *  machine a timeout. What they count is tries. The number the Worker actually uses is
+ *  asserted below, so this cannot become the default by being forgotten. */
+costRecoveryLess(200)
 
 /** The nightly job, run to the end: what it hands to `waitUntil` is what it is
  *  doing, so a test that wants the sweep awaits those. */
@@ -37,6 +55,16 @@ interface SecondView {
 /** The environment secret the factor is kept under. Absent in tests unless a
  *  test says otherwise, which is itself one of the cases. */
 const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
+
+describe('what a recovery code costs to hash', () => {
+  /** The cost is the whole of what hashing them buys: ten bytes behind a hundred
+   *  thousand rounds is not a table a leaked database hands anybody. Asserted here
+   *  because this file turns the cost down to run, and a default that quietly became
+   *  two hundred rounds would be the one change nobody would notice. */
+  test('is a hundred thousand rounds, whatever a test asks for', () => {
+    expect(RECOVERY_ROUNDS).toBe(100_000)
+  })
+})
 
 describe('the codes themselves', () => {
   test('are base32 the way RFC 4648 writes it', () => {

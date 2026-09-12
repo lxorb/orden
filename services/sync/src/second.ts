@@ -64,7 +64,26 @@ const RECOVERY_BYTES = 10
  *  (see ask/key.ts): a row that cannot say which scheme wrote it is a row nobody
  *  can migrate, and the bare digests written before this still have to work. */
 const RECOVERY_VERSION = '2'
-const ROUNDS = 100_000
+/** What hashing one recovery code costs, in PBKDF2 rounds. A hundred thousand is the
+ *  number, and the only reason it is not written straight into the call below is the
+ *  knob under it. */
+export const RECOVERY_ROUNDS = 100_000
+let rounds: number = RECOVERY_ROUNDS
+
+/** Turns the cost down. For tests, and for nothing else.
+ *
+ *  What a test about the ceiling on guesses counts is tries, not seconds: spending a
+ *  ceiling of twenty from four accounts is sixty derivations plus the forty that
+ *  writing the lists cost, and at production cost that is half a minute of a machine
+ *  doing arithmetic nothing is measuring. A test asserts the number above is still a
+ *  hundred thousand, so turning it down here cannot quietly become the default.
+ *
+ *  A function rather than a binding on the environment: a binding is configuration,
+ *  and a deploy that mistyped one would weaken every code at rest without anybody
+ *  writing a line of code. Nothing in the Worker calls this. */
+export function costRecoveryLess(count: number): void {
+  rounds = count
+}
 
 /** RFC 4648 base32, unpadded, which is the only way an authenticator app takes a
  *  secret. Written here because the codebase has no codec for it and it is
@@ -207,7 +226,7 @@ async function recoveryHash(userId: string, code: string): Promise<string> {
       name: 'PBKDF2',
       hash: 'SHA-256',
       salt: encoder.encode(`${SALT}:${userId}`),
-      iterations: ROUNDS,
+      iterations: rounds,
     },
     material,
     256,

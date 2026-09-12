@@ -204,6 +204,15 @@ in minutes, so a leaked database would have been a way past the factor on every
 account at once. Codes printed before that change still work; a row says which
 scheme wrote it.
 
+A hundred thousand rounds is a hundred thousand rounds, and the tests about the two
+ceilings above spend a hundred derivations between them - which is most of a minute
+of arithmetic nothing is measuring. So the cost has one knob, `costRecoveryLess` in
+`second.ts`, and it is a function rather than a binding on the environment: a
+binding is configuration, and a deploy that mistyped one would weaken every code at
+rest without anybody writing a line of code. Nothing in the Worker calls it, the
+test file that does says so in its first lines, and a test asserts the number the
+Worker uses is still a hundred thousand.
+
 Two operational facts worth writing down.
 
 The secret the authenticator secrets are encrypted under is the service's, so
