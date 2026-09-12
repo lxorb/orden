@@ -168,7 +168,11 @@
     aria-label={store.chosen?.name ?? t('Themes')}
     transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}
   >
-    <header>
+    <!-- The head of a sheet, and not the head of the page: a bare `header` is the
+         page's banner wherever it is not inside an article or a section, so this
+         one was a second banner over the app's own. It is the row the title and the
+         find box sit in, which is nothing in itself. -->
+    <header role="presentation">
       {#if store.chosen}
         <button
           class="nib-glyph back"
