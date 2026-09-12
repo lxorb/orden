@@ -3,6 +3,7 @@ import { account } from './account.svelte'
 import { arriving } from './arriving.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
+import { freePath } from '@nib/markdown/paths'
 import { taskAt } from '@nib/markdown/tasks'
 import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
@@ -2625,17 +2626,15 @@ class Workspace {
    *  for with a number after it. Every new file steps its name the same way, and a
    *  name typed into a row goes through it as well - the field can only know what
    *  the listing it was drawn from held, and a note that arrived from sync a moment
-   *  ago would otherwise be written over. */
+   *  ago would otherwise be written over.
+   *
+   *  How it steps is `freePath`, which is the one numbering in the app: a clip, an
+   *  import, an export and a note coming back out of Recently deleted all read it.
+   *  Its own copy took the last dot of the name for an extension however little was
+   *  in front of it, so `.hidden` came back as ` 2.hidden`. */
   private freeName(dir: string, wanted: string): string {
     const taken = this.everyPath()
-    const extension = /\.[^.]+$/.exec(wanted)?.[0] ?? ''
-    const stem = wanted.slice(0, wanted.length - extension.length)
-
-    let name = wanted
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `${stem} ${counter++}${extension}`
-
-    return name
+    return freePath(wanted, (candidate) => taken.has(joinPath(dir, candidate)))
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the

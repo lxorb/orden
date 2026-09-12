@@ -1965,3 +1965,52 @@ describe('a click in the file list landing inside a gesture that re-reads the no
     expect(moved.note.dirty).toBe(false)
   })
 })
+
+/** The number goes before the extension, and the extension is the last dot of the
+ *  file's own name. Not this store's rule any more but `freePath`'s, the one every
+ *  other part of the app steps a taken name aside with; see @nib/markdown/paths. */
+describe('a new file stepping aside from a name the folder already has', () => {
+  const row = (path: string, children?: Entry[]): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: children !== undefined,
+    modified: 0,
+    created: 0,
+    children: children ?? [],
+  })
+
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+    workspace.activeSpaceId = 's'
+  })
+
+  /** The path the new note was written to. */
+  async function madeIn(folder: string, named: string) {
+    sent.length = 0
+    await workspace.createNote(folder, named)
+    return sent.find((one) => one.command === 'write_note')?.path
+  }
+
+  test('takes the number in front of the extension', async () => {
+    workspace.tree = row('/space', [row('/space/Plan.md')])
+    expect(await madeIn('/space', 'Plan.md')).toBe('/space/Plan 2.md')
+  })
+
+  /** A name that is nothing but an extension is a name. This store's own copy read
+   *  `.hidden` as an extension of nothing and wrote ` 2.hidden`, a file whose name
+   *  begins with a space - the same bug the import's copy had. */
+  test('and a dot-file keeps the whole of its name', async () => {
+    workspace.tree = row('/space', [row('/space/.hidden')])
+    expect(await madeIn('/space', '.hidden')).toBe('/space/.hidden 2')
+  })
+
+  /** The dot that counts is the file's own. A folder with a dot in its name is not
+   *  an extension of the note inside it. */
+  test('and a folder with a dot in its name keeps its own', async () => {
+    workspace.tree = row('/space', [row('/space/v1.2', [row('/space/v1.2/Note')])])
+    expect(await madeIn('/space/v1.2', 'Note')).toBe('/space/v1.2/Note 2')
+  })
+})
