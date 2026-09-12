@@ -29,8 +29,10 @@ import { workspace } from './workspace.svelte'
 export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
 
 /** Names an exporter gives a file that say nothing about what is in it, so the
- *  import's folder is named after the app instead. */
-const MACHINE_MADE = /^(export|takeout|backup|notion|graph|roam|logseq|keep|archive)[\s_-]*/i
+ *  import's folder is named after the app instead. `AppleJournalEntries` is the
+ *  name Journal's own export has, for everybody, every time. */
+const MACHINE_MADE =
+  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)[\s_-]*/i
 
 class Importing {
   open = $state(false)
@@ -303,6 +305,10 @@ function nameOfFormat(format: FormatId): string {
       return 'OneNote'
     case 'tomboy':
       return 'Tomboy'
+    case 'apple-notes':
+      return 'Apple Notes'
+    case 'journal':
+      return 'Journal'
     case 'table':
     case 'markdown':
     case 'pandoc':
