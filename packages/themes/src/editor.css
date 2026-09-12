@@ -260,12 +260,15 @@
    block does. */
 /* A code line and a table row are laid out rather than read: base.css gives
    every block in a note the direction of its own first strong character, and
-   these two are the exceptions. A fence line that begins with an Arabic string
-   would turn round and take its indentation with it, and a table row would take
-   its pipes, so the columns would come apart row by row. Both keep the note's
-   own direction, whatever is written in them. */
-.cm-line.nib-code,
-.cm-line.nib-table {
+   these two are the exceptions. Named through `#write` so they outrank the rule
+   there, which reaches every block by the id.
+
+   A fence line that begins with an Arabic string would otherwise turn round and
+   take its indentation with it, and a table row would take its pipes, so the
+   columns would come apart row by row. Both keep the note's own direction,
+   whatever is written in them. */
+#write .cm-line.nib-code,
+#write .cm-line.nib-table {
   unicode-bidi: normal;
 }
 
