@@ -74,6 +74,68 @@ describe('the icon a space wears', () => {
   })
 })
 
+/** The colour that icon is drawn in. Kept beside it here and on the account, which
+ *  is what makes a space look like itself on the second machine rather than plain.
+ *  What `applyIcon` answers is the one thing that is not simply "the account wins";
+ *  see its own comment. */
+describe('the colour a space is drawn in', () => {
+  test('comes down with the icon, and the account is the one copy', () => {
+    const view = new DeviceView()
+    view.setIcon('/Notes', 'Book', 'violet')
+
+    expect(view.applyIcon('/Notes', 'Book', 'teal')).toBeNull()
+    expect(view.tintOf('/Notes')).toBe('teal')
+    expect(new DeviceView().tintOf('/Notes')).toBe('teal')
+  })
+
+  test('so a colour taken off on another machine is taken off here', () => {
+    const view = new DeviceView()
+    view.setIcon('/Notes', 'Book', 'violet')
+
+    // The account holds the icon and says there is no colour on it, which is a
+    // colour taken off rather than a service that cannot carry one.
+    expect(view.applyIcon('/Notes', 'Book', null)).toBeNull()
+    expect(view.tintOf('/Notes')).toBeNull()
+    expect(view.iconOf('/Notes')).toBe('Book')
+  })
+
+  /** The first pass against a service older than the colours: it carries the icon
+   *  and has nothing at all where the colour goes. Reading that silence as "no
+   *  colour" would undress every space dressed on this machine. */
+  test('stays when the account has no column for it, and asks to be sent up', () => {
+    const view = new DeviceView()
+    view.setIcon('/Notes', 'Book', 'violet')
+
+    expect(view.applyIcon('/Notes', 'Book')).toBe('violet')
+    expect(view.tintOf('/Notes')).toBe('violet')
+  })
+
+  test('and a space with no colour here has nothing to send', () => {
+    const view = new DeviceView()
+    view.setIcon('/Notes', 'Book')
+
+    expect(view.applyIcon('/Notes', 'Book')).toBeNull()
+  })
+
+  test('goes with the icon it was drawing', () => {
+    const view = new DeviceView()
+    view.setIcon('/Notes', 'Book', 'violet')
+
+    expect(view.applyIcon('/Notes', null, null)).toBeNull()
+    expect(view.iconOf('/Notes')).toBeNull()
+    expect(view.tintOf('/Notes')).toBeNull()
+  })
+
+  test('follows the folder when it is renamed, the way the icon does', () => {
+    const view = new DeviceView()
+    view.setIcon('/Uni', 'GraduationCap', 'teal')
+    view.moveIcon('/Uni', '/University')
+
+    expect(view.tintOf('/Uni')).toBeNull()
+    expect(view.tintOf('/University')).toBe('teal')
+  })
+})
+
 describe('storage that arrives after the store was built', () => {
   test('is read on the second asking, which is the plugin', () => {
     // Built against a storage with nothing in it: a packed plugin, before the phone

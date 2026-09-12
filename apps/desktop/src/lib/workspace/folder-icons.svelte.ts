@@ -14,8 +14,9 @@
  *  instead.
  *
  *  So: one map per space, from the folder's path as the space speaks it to the
- *  icon's name. Nothing is added to anybody's folders, the map is the size of what
- *  was chosen rather than of the space, and it goes where the space's other
+ *  icon's name, and a second map under the same keys for the colour each of those
+ *  icons is drawn in. Nothing is added to anybody's folders, the maps are the size
+ *  of what was chosen rather than of the space, and they go where the space's other
  *  settings already go - the account for a space the account knows, this machine
  *  for one it does not. A rename or a move rewrites the key, which is the one
  *  thing the dotfile would have got for free; see `moved`.
@@ -43,6 +44,15 @@ export const MOST_FOLDER_ICONS = 400
  *  nothing is kept here that would be refused there. */
 const LONGEST_PATH = 300
 const LONGEST_NAME = 64
+
+/** How long after the last choice the account is told, in milliseconds. The number
+ *  the graph settings wait, and for the reason they wait at all: the colours are
+ *  picked off a row of dots, and somebody trying four of them is four requests
+ *  otherwise, every one of them out of date before it lands. The tree and this
+ *  machine's storage are written on the spot either way; it is only the account that
+ *  catches up. Short enough that closing the window straight after does not lose
+ *  it. */
+const SETTLING = 700
 
 /** Whether a key names a folder inside its own space. The same reading the
  *  service does: a path on this disk, or one that climbs out of the space, is not
@@ -79,15 +89,23 @@ export function folderIconMap(value: unknown): Record<string, string> {
 interface Kept {
   icons: Record<string, string>
   /** The colour each stroked icon is drawn in, where one was chosen. A second map
-   *  because it is the rarer of the two, and because the account holds the icons and
-   *  not yet the colours: a folder's colour is this device's until there is a column
-   *  for it, the way a space's icon was until there was one. */
+   *  rather than a second field on each entry, because the first is a map of strings
+   *  that builds older than this one read and write back whole, and a value that is
+   *  not a string is a value they drop. The account holds both, under the same keys;
+   *  see spaces/icons.ts in the service. */
   colors: Record<string, string>
   /** The account this map has been folded into, or null while there was none. A
    *  different account signing in on this machine merges again; the same one
    *  signing in twice does not, or an icon it took away on another machine would
    *  be handed straight back to it. */
   account: string | null
+  /** Whether the account has heard what is here. False for a push that did not
+   *  land - offline, a token that had expired, a Worker that was being deployed -
+   *  and then the next pass keeps this machine's maps and sends them again instead
+   *  of taking the account's word for a choice the account never heard. Written
+   *  down rather than held in memory, because the laptop somebody chose a colour on
+   *  is the laptop they then shut. */
+  sent: boolean
 }
 
 function read(): Record<string, Kept> {
@@ -101,6 +119,9 @@ function read(): Record<string, Kept> {
       icons: folderIconMap(one.icons),
       colors: folderIconMap(one.colors),
       account: isString(one.account) ? one.account : null,
+      // Anything but a false written by this build reads as said: a record an older
+      // one wrote back has no such field, and what it holds did reach the account.
+      sent: one.sent !== false,
     }
   }
 
@@ -115,6 +136,9 @@ function same(one: Record<string, string>, other: Record<string, string>): boole
 
 export class FolderIcons {
   private spaces = $state<Record<string, Kept>>(read())
+  /** A push waiting for the choosing to stop, per space. Bookkeeping rather than
+   *  state: nothing on screen is drawn from it. */
+  private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
 
   /** Which space the rows on screen belong to. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
@@ -267,49 +291,76 @@ export class FolderIcons {
    *  away. Exactly what `bookmarks.adopt` does, and for the same reason. What the
    *  fold added is sent straight back up, so the account has it before the machine
    *  that had it is closed. */
-  adopt(root: string, theirs: unknown, accountId: string) {
+  adopt(root: string, theirs: unknown, theirTints: unknown, accountId: string) {
     // Read rather than trusted: the service is deployed on its own, so a build of
-    // it older than this app answers with no folder icons at all.
+    // it older than this app answers with no folder icons at all - and one older
+    // than this route with the icons and no colours.
     const account = folderIconMap(theirs)
+    // Null for a service with no column for the colours at all, which is not the
+    // same answer as a space with no colours in it: the first leaves what is here
+    // alone, the second takes it away.
+    const painted = theirTints === undefined ? null : folderIconMap(theirTints)
     const held = this.spaces[root]
     const first = held?.account !== accountId
-    const icons = first ? { ...account, ...(held?.icons ?? {}) } : account
+    // First contact, or a push that never landed. Either way what is here has not
+    // been said yet, so it is folded in and sent rather than replaced: the account
+    // cannot be the one copy of a choice it has not heard. Nothing is held for a
+    // space nothing was ever chosen in, and that space is first contact, which is
+    // why the second half of this only runs where there is a record to read.
+    const ours = first || !held.sent
+    const icons = ours ? { ...account, ...(held?.icons ?? {}) } : account
+    const mine = held?.colors ?? {}
+    const colors = painted === null ? mine : ours ? { ...painted, ...mine } : painted
 
-    if (held && !first && same(held.icons, icons)) return
+    if (held && !ours && same(held.icons, icons) && same(mine, colors)) return
 
-    this.spaces = {
-      ...this.spaces,
-      // The colours stay: the account does not hold them, so it has nothing to say
-      // about them, and a folder whose icon came down from the account simply has
-      // none until somebody here chooses one.
-      [root]: { icons, colors: held?.colors ?? {}, account: accountId },
-    }
+    // The two maps travel together and are adopted together: they are written by one
+    // gesture and sent in one request, so a pass that took one and left the other
+    // would draw an icon in last week's colour.
+    this.spaces = { ...this.spaces, [root]: { icons, colors, account: accountId, sent: true } }
     this.write()
 
-    if (first && !same(icons, account)) void this.push(root)
+    const told = same(icons, account) && (painted === null || same(colors, painted))
+    if (ours && !told) void this.push(root)
   }
 
   private put(root: string, icons: Record<string, string>, colors: Record<string, string>) {
     this.spaces = {
       ...this.spaces,
-      [root]: { icons, colors, account: this.spaces[root]?.account ?? null },
+      [root]: { icons, colors, account: this.spaces[root]?.account ?? null, sent: false },
     }
     this.write()
-    void this.push(root)
+    this.soon(root)
   }
 
-  /** The space's map as it now stands, sent up so every other machine draws the
-   *  same rows.
+  /** The account hears about it once the choosing stops.
+   *
+   *  One gesture in the picker writes an icon and a colour, and the colour is picked
+   *  off a row of dots that answers on the press: four dots tried is four writes
+   *  here and one request there. See `SETTLING`. */
+  private soon(root: string) {
+    const held = this.pushing[root]
+    if (held !== undefined) clearTimeout(held)
+
+    const waiting = setTimeout(() => {
+      this.pushing = without(this.pushing, root)
+      void this.push(root)
+    }, SETTLING)
+
+    this.pushing = { ...this.pushing, [root]: waiting }
+  }
+
+  /** The space's maps as they now stand, sent up so every other machine draws the
+   *  same rows in the same colours.
    *
    *  Signed out, in a space the account has never heard of, or in one shared to
-   *  read, it stays on this machine: the first two because there is nowhere to
-   *  send it yet, and the last because the account would refuse it anyway.
+   *  read, they stay on this machine: the first two because there is nowhere to
+   *  send them yet, and the last because the account would refuse them anyway.
    *
    *  Sent from here rather than from the syncing loop, which is where the space's
-   *  own icon is sent from, because this map is written by a gesture in the file
-   *  list and there is nothing to wait for. Imported where it is used: the loop
-   *  reads the workspace this store belongs to, and the two would import each
-   *  other. */
+   *  own icon is sent from, because these maps are written by a gesture in the file
+   *  list and a pass is minutes away. Imported where it is used: the loop reads the
+   *  workspace this store belongs to, and the two would import each other. */
   private async push(root: string) {
     const [{ account }, { api }, { sync }] = await Promise.all([
       import('../account.svelte'),
@@ -319,11 +370,35 @@ export class FolderIcons {
 
     const token = account.token
     const spaceId = sync.remoteIdFor(root)
-    if (!token || !spaceId) return
-    if (account.spaces.find((one) => one.id === spaceId)?.role === 'read') return
+    const role = spaceId ? account.spaces.find((one) => one.id === spaceId)?.role : undefined
 
-    await api.saveFolderIcons(token, spaceId, this.of(root)).catch(() => undefined)
-    await account.loadSpaces().catch(() => undefined)
+    // Nowhere to send it, and nowhere it will ever go: signed out, a space no account
+    // has a copy of, or one shared to read. Said rather than left waiting - what is
+    // kept as unsaid is what the next pass folds over the account's copy, and a space
+    // whose owner's icons this machine may only read must not spend for ever refusing
+    // to take them on. A sign-in later is first contact and folds anyway.
+    if (!token || !spaceId || role === 'read') {
+      this.said(root, true)
+      return
+    }
+
+    const landed = await api
+      .saveFolderIcons(token, spaceId, this.of(root), this.colorsOf(root))
+      .then(() => true)
+      .catch(() => false)
+
+    this.said(root, landed)
+    if (landed) await account.loadSpaces().catch(() => undefined)
+  }
+
+  /** Whether the account has heard the space's maps as they now stand. What the next
+   *  pass reads before it hands this machine the account's copy; see `adopt`. */
+  private said(root: string, landed: boolean) {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed) return
+
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    this.write()
   }
 
   private write() {

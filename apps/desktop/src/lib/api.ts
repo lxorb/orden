@@ -145,6 +145,10 @@ export interface RemoteSpace {
   /** Where it sits in the list of spaces, shared across machines. */
   position: number
   icon: string | null
+  /** The colour that icon is drawn in, as one of the app's own accents by its id.
+   *  Null for the plain foreground, and absent from a build of the service older
+   *  than this app - which is why the app reads it rather than trusting it. */
+  tint?: string | null
   /** What this account may do here. Everything the app offers in a space asks
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
@@ -166,6 +170,10 @@ export interface RemoteSpace {
    *  speaks it. A note and a canvas keep their own inside the file; a folder has
    *  no file, so its icon comes down with the space. `{}` until one is chosen. */
   icons: Record<string, string>
+  /** And the colour each of those icons is drawn in, under the same keys. Read
+   *  rather than trusted, for the reason the graph settings are: a build of the
+   *  service older than this app answers with nothing at all. */
+  tints?: unknown
   /** How the space's graph is drawn: what the picture is filtered to, which
    *  queries are coloured, how far apart it sits. Read rather than trusted, since
    *  a build of the service older than this app answers with nothing at all; see
@@ -624,8 +632,15 @@ export const api = {
   renameSpace: (token: string, id: string, name: string) =>
     request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { name } }),
 
-  setSpaceIcon: (token: string, id: string, icon: string | null) =>
-    request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { icon } }),
+  /** The space's own icon and the colour it is drawn in. One request, because they
+   *  are one gesture in the picker, and the service takes the colour beside the icon
+   *  for the same reason a note keeps `icon-color:` beside `icon:`. */
+  setSpaceIcon: (token: string, id: string, icon: string | null, tint: string | null = null) =>
+    request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, {
+      method: 'PATCH',
+      token,
+      body: { icon, tint },
+    }),
 
   /** The whole list of what a space keeps beside its notes. Answers which of the
    *  hashes the account has no blob for yet, so a thirty megabyte PDF is sent
@@ -648,13 +663,20 @@ export const api = {
 
   /** The whole map, for the same reason the bookmarks go whole: one folder's icon
    *  is not something the account keeps separately, and a map of a few dozen pairs
-   *  is smaller than the request that would carry one pair. */
-  saveFolderIcons: (token: string, id: string, icons: Record<string, string>) =>
-    request<{ icons: Record<string, string> }>(`/v1/spaces/${id}/icons`, {
-      method: 'PUT',
-      token,
-      body: { icons },
-    }),
+   *  is smaller than the request that would carry one pair.
+   *
+   *  And the colours under the same keys, in the same request: a folder's icon and
+   *  the colour it is drawn in are one gesture in the picker. */
+  saveFolderIcons: (
+    token: string,
+    id: string,
+    icons: Record<string, string>,
+    tints: Record<string, string>,
+  ) =>
+    request<{ icons: Record<string, string>; tints: Record<string, string> }>(
+      `/v1/spaces/${id}/icons`,
+      { method: 'PUT', token, body: { icons, tints } },
+    ),
 
   /** How the space's graph is drawn, whole, for the reason the folder icons go
    *  whole: it is one small object, and a switch turned in the card is smaller than

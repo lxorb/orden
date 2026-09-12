@@ -160,7 +160,7 @@
       const remote = id === null ? undefined : account.spaces.find((one) => one.id === id)
       if (!remote) continue
 
-      workspace.folderIcons.adopt(space.root, remote.icons, who)
+      workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
       workspace.excluded.adopt(space.root, remote.excluded, who)
     }

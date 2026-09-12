@@ -2147,12 +2147,11 @@ class Workspace {
     return space ? this.device.tintOf(space.root) : null
   }
 
-  /** An icon that came from the account rather than from this machine. The colour
-   *  stays as it was: the account holds the icon and not yet the colour, so it has
-   *  nothing to say about one. */
-  applyIcon(root: string, name: string | null) {
-    if (this.device.iconOf(root) === name) return
-    this.device.setIcon(root, name, this.device.tintOf(root))
+  /** An icon and its colour as they came down from the account, and the colour this
+   *  machine holds that the account has not heard - which is what asks for it to be
+   *  sent up. Which of the two copies wins is next door, in workspace/device. */
+  applyIcon(root: string, name: string | null, tint?: string | null): string | null {
+    return this.device.applyIcon(root, name, tint)
   }
 
   /** The icon a folder of the open space wears and the colour it is drawn in, or
@@ -2166,11 +2165,12 @@ class Workspace {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     if (!space) return
 
-    this.device.setIcon(space.root, name, name === null ? null : readTint(tint))
+    const colour = name === null ? null : readTint(tint)
+    this.device.setIcon(space.root, name, colour)
 
     // Imported here rather than at the top: syncing reads the workspace, and
     // the two would import each other.
-    void import('./sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name))
+    void import('./sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name, colour))
   }
 
   /** The picked rows. The tree reads it; every change to it goes through the

@@ -197,6 +197,28 @@ export class DeviceView {
     this.writeTints(withOrWithout(this.iconTints, root, name === null ? null : tint))
   }
 
+  /** An icon and its colour as the account holds them. Answers with the colour this
+   *  machine holds and the account does not, which is what asks for it to be sent
+   *  up, or null when there is nothing to say.
+   *
+   *  The account is the one copy of both: it is what makes a space look like itself
+   *  on a second machine, so a colour changed or taken off elsewhere lands here. The
+   *  one thing that is not the account's to say is a colour it has no column for -
+   *  `undefined` rather than null, which is what a build of the service older than
+   *  the colours answers with. Then what is here stays and is handed back to be sent
+   *  up; reading that silence as "no colour" would undress every space that had been
+   *  dressed on this machine. */
+  applyIcon(root: string, name: string | null, tint?: string | null): string | null {
+    const mine = this.tintOf(root)
+    const said = tint !== undefined
+    const colour = said ? tint : mine
+    const unsaid = said || name === null ? null : mine
+
+    if (this.iconOf(root) !== name || mine !== colour) this.setIcon(root, name, colour)
+
+    return unsaid
+  }
+
   /** Carries a chosen icon over to a renamed folder. Without this a rename
    *  looks like a space that never had an icon, and it falls back to a letter. */
   moveIcon(from: string, to: string) {

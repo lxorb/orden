@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { FolderIcons, folderIconMap, MOST_FOLDER_ICONS } from './folder-icons.svelte'
 
 /** The map a space keeps of what its folders wear.
@@ -9,7 +9,10 @@ import { FolderIcons, folderIconMap, MOST_FOLDER_ICONS } from './folder-icons.sv
  *  paths that are not there any more. That is most of what is tested here.
  *
  *  Nothing is pushed anywhere under node: the push imports the account and the
- *  syncing loop, both of which answer with nothing signed out. */
+ *  syncing loop, both of which answer with nothing signed out. It waits for the
+ *  choosing to stop, so the clock is held here rather than left to fire after this
+ *  file has finished - which is an import into an environment that has been torn
+ *  down. */
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -33,8 +36,14 @@ const ROOT = '/space'
 let icons: FolderIcons
 
 beforeEach(() => {
+  vi.useFakeTimers()
   localStorage.clear()
   icons = new FolderIcons(() => ROOT)
+})
+
+afterEach(() => {
+  vi.clearAllTimers()
+  vi.useRealTimers()
 })
 
 describe('the icon a folder wears', () => {
@@ -158,23 +167,23 @@ describe('a folder that moves', () => {
 describe('what the account says the folders wear', () => {
   test('is taken on, with what this machine had folded in the first time', () => {
     icons.set('/space/Work', 'rocket')
-    icons.adopt(ROOT, { Notes: 'anchor' }, 'someone')
+    icons.adopt(ROOT, { Notes: 'anchor' }, {}, 'someone')
 
     expect(icons.of(ROOT)).toEqual({ Work: 'rocket', Notes: 'anchor' })
   })
 
   test('and after that it is the one copy, so a removal elsewhere lands here', () => {
     icons.set('/space/Work', 'rocket')
-    icons.adopt(ROOT, { Work: 'rocket' }, 'someone')
-    icons.adopt(ROOT, {}, 'someone')
+    icons.adopt(ROOT, { Work: 'rocket' }, {}, 'someone')
+    icons.adopt(ROOT, {}, {}, 'someone')
 
     expect(icons.of(ROOT)).toEqual({})
   })
 
   test('a different account signing in folds again, since its copy is another one', () => {
     icons.set('/space/Work', 'rocket')
-    icons.adopt(ROOT, {}, 'someone')
-    icons.adopt(ROOT, { Notes: 'anchor' }, 'somebody else')
+    icons.adopt(ROOT, {}, {}, 'someone')
+    icons.adopt(ROOT, { Notes: 'anchor' }, {}, 'somebody else')
 
     expect(icons.of(ROOT)).toEqual({ Work: 'rocket', Notes: 'anchor' })
   })
@@ -183,9 +192,92 @@ describe('what the account says the folders wear', () => {
    *  answers with nothing at all where the map should be. */
   test('is read rather than trusted', () => {
     icons.set('/space/Work', 'rocket')
-    icons.adopt(ROOT, undefined, 'someone')
+    icons.adopt(ROOT, undefined, undefined, 'someone')
 
     expect(icons.of(ROOT)).toEqual({ Work: 'rocket' })
+  })
+})
+
+/** The colour each of those icons is drawn in. The same map with the same rules, a
+ *  key at a time, because the two are written by one gesture and sent in one
+ *  request: a pass that took the icons and left the colours would draw last week's
+ *  colour under this week's icon. */
+describe('what the account says those icons are drawn in', () => {
+  test('is taken on, with what this machine had folded in the first time', () => {
+    icons.set('/space/Work', 'rocket', 'violet')
+    icons.adopt(ROOT, { Notes: 'anchor' }, { Notes: 'teal' }, 'someone')
+
+    expect(icons.tintOf('/space/Work')).toBe('violet')
+    expect(icons.tintOf('/space/Notes')).toBe('teal')
+  })
+
+  test('and after that it is the one copy, so a colour taken away elsewhere lands', () => {
+    icons.set('/space/Work', 'rocket', 'violet')
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'violet' }, 'someone')
+    icons.adopt(ROOT, { Work: 'rocket' }, {}, 'someone')
+
+    expect(icons.iconOf('/space/Work')).toBe('rocket')
+    expect(icons.tintOf('/space/Work')).toBeNull()
+  })
+
+  test('and a colour changed elsewhere lands on the icon that was already here', () => {
+    icons.set('/space/Work', 'rocket', 'violet')
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'violet' }, 'someone')
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'red' }, 'someone')
+
+    expect(icons.tintOf('/space/Work')).toBe('red')
+  })
+
+  /** A Worker older than the route that carries them answers with the icons and
+   *  nothing about the colours. Folded rather than taken as "no colour", or the first
+   *  pass would undress a tree somebody had coloured. */
+  test('is read rather than trusted, so an older service takes nothing away', () => {
+    icons.set('/space/Work', 'rocket', 'violet')
+    icons.adopt(ROOT, { Work: 'rocket' }, undefined, 'someone')
+
+    expect(icons.tintOf('/space/Work')).toBe('violet')
+  })
+
+  /** A colour named by a build with a bigger palette. Kept as written: the app
+   *  resolves an accent when it draws one, and dropping a name this build does not
+   *  know would take it off the account on the next push. */
+  test('keeps a colour this build has never heard of', () => {
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'oxblood' }, 'someone')
+
+    expect(icons.tintOf('/space/Work')).toBe('oxblood')
+  })
+})
+
+/** What was chosen here and never reached the account.
+ *
+ *  A push that did not land - offline, a token that had expired - leaves the account
+ *  holding a map it was never told about. The pass after must not hand that map back
+ *  as the one copy, or a colour somebody chose on a plane goes away when they land. */
+describe('a choice the account has not heard', () => {
+  test('is kept and folded in rather than replaced by the account s copy', () => {
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'violet' }, 'someone')
+
+    // The push from this one cannot land: nothing here is signed in, so it is the
+    // same shape as a push that failed.
+    icons.set('/space/Work', 'rocket', 'teal')
+    icons.set('/space/Notes', 'anchor', 'red')
+
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'violet' }, 'someone')
+
+    expect(icons.tintOf('/space/Work')).toBe('teal')
+    expect(icons.tintOf('/space/Notes')).toBe('red')
+    expect(icons.iconOf('/space/Notes')).toBe('anchor')
+  })
+
+  test('and once the account has heard it, the account is the one copy again', () => {
+    icons.set('/space/Work', 'rocket', 'teal')
+
+    // The pass that folds it in says the account now holds it, which is what the
+    // push says when it lands.
+    icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'teal' }, 'someone')
+    icons.adopt(ROOT, {}, {}, 'someone')
+
+    expect(icons.of(ROOT)).toEqual({})
   })
 })
 

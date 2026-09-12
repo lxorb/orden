@@ -155,13 +155,15 @@ class Sync {
     await letting.catch(() => undefined)
   }
 
-  /** An icon chosen here, sent up so every other machine shows it too. */
-  async pushIcon(root: string, icon: string | null) {
+  /** An icon chosen here and the colour it is drawn in, sent up so every other
+   *  machine shows the same mark. One request: they are one gesture in the picker,
+   *  and the account keeps the colour beside the icon. */
+  async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
     const mirror = this.mirrors[root]
     if (!token || !mirror) return
 
-    await api.setSpaceIcon(token, mirror.spaceId, icon).catch(() => undefined)
+    await api.setSpaceIcon(token, mirror.spaceId, icon, tint).catch(() => undefined)
     await account.loadSpaces().catch(() => undefined)
   }
 
@@ -359,7 +361,16 @@ class Sync {
       const mirror = Object.values(this.mirrors).find((one) => one.spaceId === remote.id)
       if (!mirror) continue
 
-      workspace.applyIcon(mirror.root, remote.icon ?? null)
+      // The colour rides with the icon, and a listing with no word about it at all is
+      // a service older than the column: then this machine's colour is the one there
+      // is, and it is this machine's to send. Only for a space of this account's -
+      // the icon and its colour are the owner's, so somebody else's would be
+      // refused.
+      const unsaid = workspace.applyIcon(mirror.root, remote.icon ?? null, remote.tint)
+      if (unsaid && remote.role === 'owner') {
+        await this.pushIcon(mirror.root, remote.icon ?? null, unsaid)
+      }
+
       // Kept current, because a space that stops being shared - or starts -
       // changes what happens when it later goes missing from the listing.
       mirror.shared = remote.role !== 'owner'
