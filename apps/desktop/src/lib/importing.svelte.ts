@@ -14,7 +14,6 @@
 import { platform } from '@tauri-apps/plugin-os'
 
 import { message, t } from './i18n.svelte'
-import { NO_ACCESS, NO_DATABASE } from './import/apple'
 import { applyImport } from './import/apply'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
 import { detect, readAs } from './import/read'
@@ -136,18 +135,33 @@ class Importing {
     this.noAccess = false
     this.sources = []
 
+    // Imported the way every other reader is, so the module that reads a Mac's
+    // own notes is not in the bundle of a build with no Mac under it.
+    const apple = await import('./import/apple')
+
     try {
-      const { readMacNotes } = await import('./import/apple')
-      const plan = await readMacNotes()
+      const plan = await apple.readMacNotes()
 
       this.format = plan.format
       this.folder = nameOfFormat(plan.format)
       this.plan = plan
       this.stage = 'ready'
     } catch (error) {
+      // Two of these the crate answers as a mark rather than a sentence, because
+      // what to say about a permission is the sheet's business and not the
+      // crate's.
+      const answered = saidBy(error)
+
       this.stage = 'waiting'
-      this.error = whyNotRead(error)
-      this.noAccess = message(error, '') === NO_ACCESS
+      this.noAccess = answered === apple.NO_ACCESS
+
+      if (this.noAccess) {
+        this.error = t('macOS keeps those notes behind Full Disk Access.')
+      } else if (answered === apple.NO_DATABASE) {
+        this.error = t('There are no notes in Apple Notes on this Mac.')
+      } else {
+        this.error = message(error, t('Those notes could not be read.'))
+      }
     }
   }
 
@@ -251,21 +265,14 @@ export function onMac(): boolean {
   return isDesktop && platform() === 'macos'
 }
 
-/** Why a read of the Mac's own notes did not happen, in words. The crate answers
- *  two of these as marks rather than sentences, because what to say about a
- *  permission is the sheet's business and not the crate's. */
-function whyNotRead(error: unknown): string {
-  const said = message(error, '')
-
-  if (said === NO_ACCESS) {
-    return t('macOS keeps those notes behind Full Disk Access.')
-  }
-
-  if (said === NO_DATABASE) {
-    return t('There are no notes in Apple Notes on this Mac.')
-  }
-
-  return message(error, t('Those notes could not be read.'))
+/** What an error answered, whether it came back as one or as a word.
+ *
+ *  A command that answers `Err(String)` rejects with that string rather than with
+ *  an `Error`, and the two marks the Apple Notes reader uses are exactly that: a
+ *  word the sheet reads rather than a sentence it shows. */
+function saidBy(error: unknown): string {
+  if (typeof error === 'string') return error
+  return error instanceof Error ? error.message : ''
 }
 
 /** What the import's own folder is called: after the file that was picked, since

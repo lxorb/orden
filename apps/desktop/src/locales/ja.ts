@@ -1023,8 +1023,29 @@ export const ja: Dictionary = {
   'This space': 'このスペース',
   'Drop an export here': '書き出したファイルをここへ',
   'A zip, a folder, or a file another app wrote': 'ZIP、フォルダー、他のアプリが書き出したファイル',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
-    'Apple のメモと日記は、自分たちだけが開ける場所にノートを保存します。まず書き出して、それをインポートしてください。',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} 枚の写真は HEIC で、Apple 以外では表示されません',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} 件の気分とアクティビティのカードは絵なので、文字だけが入ります',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} 件のメモはパスワードで保護され、メモ以外では開けません',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} 件のメモは最近削除した項目にあり、そこに残ります',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} 件の手書きとスキャンはメモ自身が描く絵です',
+  '{count} tables inside notes do not come over': 'メモの中の {count} 件の表は入りません',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} 件の添付は iCloud にあり、この Mac にはありません',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS はそのメモをフルディスクアクセスの内側に置いています。',
+  'There are no notes in Apple Notes on this Mac.': 'この Mac の Apple メモにメモはありません。',
+  'Those notes could not be read.': 'そのメモは読めませんでした。',
+  'Read them from this Mac': 'この Mac から読む',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'フルディスクアクセスで nibeditor を有効にして、もう一度お試しください。',
+  'Open the setting': '設定を開く',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal には書き出しがあります: ジャーナル、設定、書き出し。Apple メモに書き出しはないので、そのメモがある Mac 以外では、書き出しツールが作ったフォルダを渡してください。',
   'Pandoc reads this one, from the file on your disk.':
     'これは pandoc がディスク上のファイルから読み込みます。',
   'Read it with pandoc': 'pandoc で読み込む',

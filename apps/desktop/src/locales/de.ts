@@ -1031,8 +1031,30 @@ export const de: Dictionary = {
   'Drop an export here': 'Export hierher ziehen',
   'A zip, a folder, or a file another app wrote':
     'Ein ZIP, ein Ordner oder eine Datei aus einer anderen App',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
-    'Apple Notizen und Apple Journal halten ihre Notizen dort, wo nur sie sie öffnen können. Erst dort exportieren, dann das hier importieren.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} Bilder kamen als HEIC, das nur Apple zeigt',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} Stimmungs- und Aktivitätskarten sind Zeichnungen: nur ihre Worte kommen mit',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} Notizen liegen hinter einem Passwort, das nur Notizen öffnet',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} Notizen liegen in Zuletzt gelöscht und bleiben dort',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} Zeichnungen und Scans sind Bilder, die Notizen selbst malt',
+  '{count} tables inside notes do not come over': '{count} Tabellen in Notizen kommen nicht mit',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} Anhänge liegen in iCloud und nicht auf diesem Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS hält diese Notizen hinter Festplattenvollzugriff.',
+  'There are no notes in Apple Notes on this Mac.':
+    'Auf diesem Mac gibt es keine Notizen in Apple Notizen.',
+  'Those notes could not be read.': 'Diese Notizen konnten nicht gelesen werden.',
+  'Read them from this Mac': 'Von diesem Mac lesen',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditor unter Festplattenvollzugriff einschalten, dann erneut fragen.',
+  'Open the setting': 'Einstellung öffnen',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal exportiert selbst: Journal, Einstellungen, Exportieren. Apple Notizen hat keinen Export: abseits des Macs, auf dem sie liegen, gehört der Ordner eines Exporters hierher.',
   'Pandoc reads this one, from the file on your disk.':
     'Das liest pandoc, direkt von der Datei auf der Festplatte.',
   'Read it with pandoc': 'Mit pandoc lesen',

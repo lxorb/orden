@@ -130,7 +130,9 @@
     {#if onMac()}
       <div class="card">
         <div class="row">
-          <span class="name">{t('Apple Notes')}</span>
+          <!-- Out of the same list the found format is named from, because an
+               app's name is its name in every language. -->
+          <span class="name">{FORMATS['apple-notes']}</span>
           <button
             class="pill"
             onclick={() => void importing.readMac()}
@@ -140,15 +142,10 @@
           </button>
         </div>
         {#if importing.noAccess}
-          <p class="hint">
-            {t('Turn nibeditor on under Full Disk Access, then ask again.')}
-          </p>
-          <div class="row">
-            <span class="name">{t('Full Disk Access')}</span>
-            <button class="pill" onclick={() => void importing.openAccess()}>
-              {t('Open the setting')}
-            </button>
-          </div>
+          <p class="hint">{t('Turn nibeditor on under Full Disk Access, then ask again.')}</p>
+          <button class="pill" onclick={() => void importing.openAccess()}>
+            {t('Open the setting')}
+          </button>
         {/if}
       </div>
     {/if}

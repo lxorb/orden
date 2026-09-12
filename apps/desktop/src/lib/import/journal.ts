@@ -108,7 +108,7 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
 
   if (heic) {
     plan.lost.push({
-      text: key("{count} pictures came as HEIC, which only Apple's own apps show"),
+      text: key('{count} pictures came as HEIC, which nothing but Apple shows'),
       values: { count: heic },
     })
   }

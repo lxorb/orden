@@ -1028,8 +1028,30 @@ export const fr: Dictionary = {
   'Drop an export here': 'Déposez un export ici',
   'A zip, a folder, or a file another app wrote':
     'Un zip, un dossier ou un fichier écrit par une autre application',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
-    'Apple Notes et Apple Journal gardent leurs notes là où elles seules peuvent les ouvrir. Exportez-les d’abord, puis importez le résultat.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} photos sont en HEIC, que seul Apple affiche',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} cartes d’humeur et d’activité sont des dessins : seuls leurs mots arrivent',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} notes sont protégées par un mot de passe que seul Notes peut ouvrir',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} notes sont dans Supprimés récemment et y restent',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} dessins et pages numérisées sont des images que Notes dessine lui-même',
+  '{count} tables inside notes do not come over': '{count} tableaux dans des notes n’arrivent pas',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} pièces jointes sont dans iCloud et non sur ce Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS garde ces notes derrière l’accès complet au disque.',
+  'There are no notes in Apple Notes on this Mac.':
+    'Il n’y a aucune note dans Apple Notes sur ce Mac.',
+  'Those notes could not be read.': 'Ces notes n’ont pas pu être lues.',
+  'Read them from this Mac': 'Les lire depuis ce Mac',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Activez nibeditor dans Accès complet au disque, puis redemandez.',
+  'Open the setting': 'Ouvrir le réglage',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal s’exporte lui-même : Journal, Réglages, Exporter. Apple Notes n’a pas d’export : loin du Mac où elles se trouvent, ce qu’il faut déposer est le dossier écrit par un exporteur.',
   'Pandoc reads this one, from the file on your disk.':
     'Pandoc lit celui-ci, depuis le fichier sur votre disque.',
   'Read it with pandoc': 'Lire avec pandoc',

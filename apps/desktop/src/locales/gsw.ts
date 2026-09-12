@@ -1025,8 +1025,29 @@ export const gsw: Dictionary = {
   'Drop an export here': 'Export do häre zieh',
   'A zip, a folder, or a file another app wrote':
     'Es ZIP, en Ordner oder e Datei us ere andere App',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
-    'Apple Notize und Apple Journal halted ihri Notize det, wo nur si sälber chönd ufmache. Zerscht dete exportiere, denn das da importiere.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} Bilder sind as HEIC cho, wo nur Apple zeigt',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} Stimmigs- und Aktivitätscharte sind Zeichnige: nur ihri Wort chömed mit',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} Notize sind hinder eme Passwort, wo nur Notize ufmacht',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} Notize sind i Zletscht glöscht und bliibed det',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} Zeichnige und Scans sind Bilder, wo Notize sälber malt',
+  '{count} tables inside notes do not come over': '{count} Tabelle i Notize chömed nöd mit',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} Aahäng sind i iCloud und nöd uf dem Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS haltet die Notize hinder Festplattevollzuegriff.',
+  'There are no notes in Apple Notes on this Mac.': 'Uf dem Mac git s kei Notize in Apple Notize.',
+  'Those notes could not be read.': 'Die Notize hend sich nöd läse laa.',
+  'Read them from this Mac': 'Vo dem Mac läse',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditor bi Festplattevollzuegriff aaschalte, denn no mal frage.',
+  'Open the setting': 'Iistellig ufmache',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal exportiert sälber: Journal, Iistellige, Exportiere. Apple Notize het kei Export: wäg vom Mac, wo si druf sind, ghört de Ordner vo eme Exporter do häre.',
   'Pandoc reads this one, from the file on your disk.':
     'Das liist pandoc, grad vo de Datei uf de Festplatte.',
   'Read it with pandoc': 'Mit pandoc läse',
