@@ -13,8 +13,11 @@ clipped: an element whose `scrollWidth` is past its `clientWidth` while its
 same width is the baseline, so only what the *translation* broke is a failure -
 a name that was already elided in English is the design working.
 
-Arabic is here for its text alone. Right-to-left layout is a later batch; what
-this drive does is write down what that batch will have to put right.
+Arabic, Persian, Pashto and Urdu are also written the other way round, and the
+whole interface turns round with them: so this measures the mirroring too - which
+side the list is on, which way a chevron points, which side the status bar sits -
+and it holds one thing still while everything else turns, the note, which reads
+whichever way it was written and never whichever way the app does.
 
 Run it with the repository's own Chromium, against a build:
 
@@ -67,10 +70,14 @@ LANGUAGES = {
     "en": "the baseline",
     "de": "long compounds",
     "ja": "no spaces, full-width punctuation",
-    "ar": "right to left, text only",
+    "ar": "right to left",
+    "ur": "right to left, Nastaliq hanging below the line",
     "th": "no spaces, stacked vowels",
     "bn": "tall glyphs",
 }
+
+# Which of them turn the interface round; the same four as direction.ts.
+RIGHT_TO_LEFT = {"ar", "fa", "ps", "ur"}
 
 WIDTHS = {"desktop": (1400, 900), "phone": (390, 844)}
 
@@ -224,6 +231,96 @@ BIDI = """
   return [...found].map(([where, one]) => ({ where, ...one })).sort((a, b) => b.rows - a.rows)
 }
 """
+
+
+# Which way round the app has actually laid itself out. Boxes rather than
+# stylesheets: where the list ended up, where the note ended up, where the bar at
+# the foot ended up, which way each mark that points along a line points, and -
+# the one thing that must not have turned - which way the note itself reads.
+MIRRORED = """
+() => {
+  const page = document.documentElement
+  const box = (selector) => {
+    const found = document.querySelector(selector)
+    if (!found) return null
+    const rect = found.getBoundingClientRect()
+    return {
+      left: Math.round(rect.left),
+      right: Math.round(rect.right),
+      width: Math.round(rect.width),
+    }
+  }
+
+  // `scaleX(-1)` is a matrix whose first component is negative; identity is 1.
+  // Only the marks actually on screen: a browser does not work a transform out
+  // for an element it is not drawing, and answers `none` for every one of the
+  // chevrons a desktop hides, which is not the same as a mark facing the wrong
+  // way.
+  const marks = [...document.querySelectorAll('.nib-mirror')]
+    .filter((one) => one.getBoundingClientRect().width > 1)
+    .map((one) => ({
+      where: [...one.classList].filter((name) => !name.startsWith('s-')).join('.'),
+      flipped: new DOMMatrix(getComputedStyle(one).transform).a < 0,
+    }))
+
+  const write = document.querySelector('#write')
+
+  return {
+    dir: page.dir || getComputedStyle(page).direction,
+    lang: page.lang,
+    window: window.innerWidth,
+    panels: box('.panels'),
+    note: box('.document'),
+    status: box('footer[data-region=status]'),
+    marks,
+    writing: write
+      ? { dir: write.getAttribute('dir'), direction: getComputedStyle(write).direction }
+      : null,
+  }
+}
+"""
+
+
+def mirroring(language: str, width: str, reading: dict) -> list[str]:
+    """What the layout got wrong about which way the app reads. The note is here
+    too, and is the one box that must not have turned: a Latin note in an Arabic
+    app still reads left to right."""
+    faults: list[str] = []
+    wanted = "rtl" if language in RIGHT_TO_LEFT else "ltr"
+    if reading["dir"] != wanted:
+        faults.append(f"the page says dir={reading['dir']!r} rather than {wanted!r}")
+
+    writing = reading["writing"]
+    if not writing:
+        faults.append("no writing surface on screen")
+    elif writing["direction"] != "ltr":
+        # The seeded note is Latin and its Right to left mode is off, so it reads
+        # left to right in every interface there is.
+        faults.append(f"the note followed the interface: {writing['direction']}")
+
+    for mark in reading["marks"]:
+        if mark["flipped"] != (wanted == "rtl"):
+            said = "is not turned over" if wanted == "rtl" else "is turned over"
+            faults.append(f"the mark .{mark['where']} {said}")
+
+    panels, note, status = reading["panels"], reading["note"], reading["status"]
+    edge = reading["window"]
+
+    # At a desktop width the list and the note are two columns of one row, so which
+    # of them is against which edge is the whole of the mirroring.
+    if width == "desktop" and panels and note and panels["width"] > 2:
+        if wanted == "rtl" and not (panels["right"] >= edge - 2 and note["left"] <= 2):
+            faults.append(f"the list is not against the right edge: {panels} in {edge}")
+        if wanted == "ltr" and not (panels["left"] <= 2 and note["right"] >= edge - 2):
+            faults.append(f"the list is not against the left edge: {panels} in {edge}")
+
+    if status and status["width"] > 2:
+        if wanted == "rtl" and status["left"] > 2:
+            faults.append(f"the status bar is not at the left edge: {status}")
+        if wanted == "ltr" and status["right"] < edge - 2:
+            faults.append(f"the status bar is not at the right edge: {status} in {edge}")
+
+    return faults
 
 
 def chrome() -> pathlib.Path:
@@ -488,6 +585,19 @@ def main() -> int:
                         open_note(page, MOD[width])
 
                         shots = Shots(page, language, width)
+
+                        # The list beside the note, which is what mirrors: the
+                        # window opens with it shut on a phone, and a column of
+                        # nothing says nothing about which side it is on.
+                        away(page)
+                        if page.locator(".panels").evaluate("one => one.clientWidth") < 2:
+                            page.click(".nib-glyph.toggle", timeout=4000)
+                            page.wait_for_timeout(500)
+
+                        shots.take("shell-open")
+                        turned = page.evaluate(MIRRORED)
+                        away(page)
+
                         missed = walk(page, shots, MOD[width])
 
                         said = f"{language} {width}"
@@ -510,15 +620,24 @@ def main() -> int:
                             if elided:
                                 report[f"{said}: elided where English fits"] = elided
 
-                        if language == "ar":
-                            # With a pane of words open: the shell on its own is
-                            # file names, which are whatever somebody typed.
-                            page.keyboard.press(f"{MOD[width]}+Comma")
-                            page.wait_for_timeout(700)
+                        # With a pane of the interface's own words open: the
+                        # shell on its own is file names, which are whatever
+                        # somebody typed, and the marks that point along a line
+                        # are mostly in the settings.
+                        page.keyboard.press(f"{MOD[width]}+Comma")
+                        page.wait_for_timeout(700)
+                        turned["marks"] = page.evaluate(MIRRORED)["marks"]
+                        if language in RIGHT_TO_LEFT:
                             report[f"{said}: right-to-left text in left-to-right boxes"] = (
                                 page.evaluate(BIDI)
                             )
-                            away(page)
+                        away(page)
+
+                        # Which way round the app laid itself out.
+                        report[f"{said}: laid out"] = turned
+                        turns = mirroring(language, width, turned)
+                        report[f"{said}: mirroring"] = turns or "the way it reads"
+                        failures += [f"{said}: {one}" for one in turns]
 
                         if problems:
                             report[f"{said}: page problems"] = problems[:6]
