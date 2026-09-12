@@ -4,8 +4,8 @@ A held finger opens a row's menu before any drag could begin, and a browser fire
 no drag events from a touch at all, so on a phone or a tablet the only outcome of
 pressing a note, a folder or a space was the menu. This drives the answer to that
 with real touch events on the real elements: the menu now carries a Move, a note
-goes where the sheet says and can be undone, and a space in the rail lifts and
-steps.
+goes where the sheet says and can be undone, and a space steps up the list from
+its own menu.
 
 Nothing here needs an account or the Worker: the browser build seeds its own notes
 and everything under test is local. So it serves the built page and drives it.
@@ -144,6 +144,12 @@ def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
 
     wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
     wait_for(page, "() => document.documentElement.hasAttribute('data-touch')", "a touch layout")
+    # A first visit in a browser is given a welcome note, and the app opens it
+    # after the space is there rather than with it; see `restore` in
+    # workspace.svelte.ts. On a phone the list is a drawer and opening a note
+    # shuts it, so a list opened before that happens is shut again underneath
+    # the finger. Let the app finish opening its own note first.
+    wait_for(page, "() => !!window.nibApp.workspace.active", f"[{label}] the app's own note")
     return page
 
 
@@ -202,13 +208,109 @@ SWIPE = """
 """
 
 
-def hold(page: Page, selector: str, label: str) -> None:
-    """Presses and holds until the menu opens, then lets go."""
-    if not page.evaluate(PRESS, selector):
-        raise SystemExit(f"[{label}] nothing matched {selector}")
+#: How many times to put the finger down before giving up on the menu.
+TRIES = 6
 
-    page.wait_for_selector('[role="menu"]:visible', timeout=5000)
-    page.evaluate("() => window.__nibRelease?.()")
+
+#: The same press, on the nth match rather than the first: a space is picked out
+#: of the switcher by where it sits, since CSS cannot pick a row by its name.
+PRESS_NTH = """
+(asked) => {
+  const nodes = document.querySelectorAll(asked.selector)
+  const node = nodes[asked.index]
+  if (!node) return false
+
+  const box = node.getBoundingClientRect()
+  const at = { clientX: box.left + 20, clientY: box.top + box.height / 2 }
+  const touch = new Touch({ identifier: 1, target: node, ...at })
+  const send = (kind) =>
+    node.dispatchEvent(
+      new TouchEvent(kind, {
+        touches: kind === 'touchend' ? [] : [touch],
+        targetTouches: kind === 'touchend' ? [] : [touch],
+        changedTouches: [touch],
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+
+  send('touchstart')
+  window.__nibRelease = () => send('touchend')
+  return true
+}
+"""
+
+
+def hold_for(page: Page, selector: str, index: int, wanted: str, label: str) -> None:
+    """Presses and holds the nth match until a menu offering `wanted` is up.
+
+    The switcher is itself a `role="menu"`, so waiting for one of those would be
+    answered by the list the space was picked from. What says the space's own
+    menu opened is the row that only it has."""
+    row = page.get_by_role("menuitem", name=wanted, exact=True)
+    page.wait_for_selector(selector, state="attached", timeout=10000)
+
+    for attempt in range(TRIES):
+        last = attempt == TRIES - 1
+
+        if not page.evaluate(PRESS_NTH, {"selector": selector, "index": index}):
+            if last:
+                raise SystemExit(f"[{label}] nothing matched {selector} at {index}")
+            page.wait_for_timeout(250)
+            continue
+
+        try:
+            row.first.wait_for(state="visible", timeout=2000)
+        except Exception:
+            page.evaluate("() => window.__nibRelease?.()")
+            if last:
+                raise SystemExit(f"[{label}] no menu offering {wanted!r} on {selector}")
+            continue
+
+        page.evaluate("() => window.__nibRelease?.()")
+        return
+
+
+
+
+def hold(page: Page, selector: str, label: str) -> None:
+    """Presses and holds until the menu opens, then lets go.
+
+    A press is half a second long, and the list redraws while the seed is still
+    landing: a row replaced under the finger takes the press with it, because
+    the action's `destroy` clears the pending hold. See longpress.ts. There is
+    no state to wait on that says the redrawing has stopped, so the press itself
+    is the test - it is put down again until one of them sticks, which is also
+    what a person does."""
+    # The row itself can be between renders at the moment of asking, so a press
+    # that lands on nothing is another go rather than the end of the drive.
+    # Attached rather than visible: the press is dispatched at the node, and on a
+    # phone the list is a drawer whose rows are in the page while it slides.
+    page.wait_for_selector(selector, state="attached", timeout=10000)
+
+    for attempt in range(TRIES):
+        last = attempt == TRIES - 1
+
+        if not page.evaluate(PRESS, selector):
+            if last:
+                raise SystemExit(f"[{label}] nothing matched {selector}")
+            page.wait_for_timeout(250)
+            continue
+
+        try:
+            page.wait_for_selector('[role="menu"]:visible', timeout=2000)
+        except Exception:
+            # Let go of the press that went nowhere, so the next one starts clean.
+            page.evaluate("() => window.__nibRelease?.()")
+            if last:
+                raise SystemExit(
+                    f"[{label}] the menu never opened on {selector}"
+                    f" after {TRIES} presses"
+                )
+            continue
+
+        page.evaluate("() => window.__nibRelease?.()")
+        return
 
 
 def seed(page: Page) -> None:
@@ -249,6 +351,12 @@ def tree_paths(page: Page) -> list[str]:
 
 def space_names(page: Page) -> list[str]:
     return page.evaluate("() => window.nibApp.workspace.spaces.map((one) => one.name)")
+
+
+def open_the_switcher(page: Page) -> None:
+    """The list of spaces, which is what the name at the top of the panel is."""
+    page.locator("aside .name").first.click(force=True)
+    page.wait_for_selector(".spaces .line button.nib-row", timeout=5000)
 
 
 def open_the_list(page: Page) -> None:
@@ -297,8 +405,11 @@ def main() -> int:
 
                 rows = [one.strip() for one in page.locator(".found-row").all_inner_texts()]
                 say(f"the picker offers {rows!r}")
+                # The name is what is looked for rather than the whole row: a
+                # space's row carries its mark as well, so "Uni" arrives as the
+                # badge letter and then the name.
                 for wanted in ("Work", "Uni"):
-                    if wanted not in rows:
+                    if not any(wanted in one for one in rows):
                         wrong(f"the picker does not offer {wanted}: {rows!r}")
 
                 # ── Tapping a target moves the note, and undo takes it back ─
@@ -342,40 +453,35 @@ def main() -> int:
                 else:
                     say("a finger that moves first opens no menu, so a drag can have it")
 
-                # ── A space in the rail lifts and steps ────────────────────
+                # ── A space steps up the list from its own menu ────────────
+                #
+                # The column of squares this order used to be dragged in is
+                # gone, and the menu is the whole of how a space is moved now -
+                # the same two rows on a desktop as under a thumb. See
+                # docs/design.md and space-actions.ts.
                 was = space_names(page)
-                hold(page, "nav button.space", "phone")
-                offered = [one.strip() for one in page.locator('[role="menuitem"]').all_inner_texts()]
-                if "Move" not in offered:
-                    wrong(f"a space's menu offers {offered!r}, with no Move")
-                page.get_by_role("menuitem", name="Move", exact=True).click()
+                open_the_switcher(page)
+                hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "phone")
 
-                page.wait_for_selector("nav button.space.lifted", timeout=5000)
-                page.wait_for_selector("nav button.nudge", timeout=5000)
+                offered = [
+                    one.strip() for one in page.locator('[role="menuitem"]').all_inner_texts()
+                ]
+                say(f"the second space's menu offers {offered!r}")
                 page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-rail-light.png"))
-                say("the square lifted and grew its steps")
+                page.screenshot(path=str(SHOTS / "touch-move-spaces-light.png"))
 
-                page.get_by_role("button", name="Move down").click()
+                page.get_by_role("menuitem", name="Move up", exact=True).first.click()
                 wait_for(
                     page,
                     "() => window.nibApp.workspace.spaces.map((one) => one.name).join() !== "
                     + json.dumps(",".join(was)),
-                    "the rail to reorder",
+                    "the list of spaces to reorder",
                 )
                 now = space_names(page)
                 if now != list(reversed(was)):
-                    wrong(f"one step down turned {was!r} into {now!r}")
+                    wrong(f"one step up turned {was!r} into {now!r}")
                 else:
-                    say(f"the rail went from {was!r} to {now!r}")
-
-                # Escape puts it down, like everything else the app opens.
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(250)
-                if page.locator("nav button.space.lifted").count():
-                    wrong("Escape did not put the square down")
-                else:
-                    say("Escape put it down")
+                    say(f"the spaces went from {was!r} to {now!r}")
             finally:
                 browser.close()
 
@@ -396,11 +502,10 @@ def main() -> int:
                 page.screenshot(path=str(SHOTS / "touch-move-picker-dark.png"))
 
                 page.keyboard.press("Escape")
-                hold(page, "nav button.space", "dark")
-                page.get_by_role("menuitem", name="Move", exact=True).click()
-                page.wait_for_selector("nav button.nudge", timeout=5000)
+                open_the_switcher(page)
+                hold_for(page, ".spaces .line button.nib-row", 1, "Move up", "dark")
                 page.wait_for_timeout(250)
-                page.screenshot(path=str(SHOTS / "touch-move-rail-dark.png"))
+                page.screenshot(path=str(SHOTS / "touch-move-spaces-dark.png"))
                 say("photographed all three in the dark")
             finally:
                 browser.close()
@@ -413,7 +518,7 @@ def main() -> int:
             print(f"  - {one}", flush=True)
         return 1
 
-    print("\na finger can move a note and reorder the rail", flush=True)
+    print("\na finger can move a note and reorder the spaces", flush=True)
     return 0
 
 

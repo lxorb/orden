@@ -235,8 +235,11 @@ def shot(page: Page, name: str) -> None:
 
 
 def pen_at(page: Page, index: int):
-    """One of the pens in the row, by where it sits."""
-    return page.locator(".cluster button.pen-slot").nth(index)
+    """One of the pens in the row, by where it sits.
+
+    `pen`, not `pen-slot`: the bar was rewritten into one bar for every device
+    and the class went with it. See CanvasBar.svelte."""
+    return page.locator(".cluster button.pen").nth(index)
 
 
 def kept_pens(page: Page) -> list[str]:
