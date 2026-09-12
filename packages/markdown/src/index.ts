@@ -58,13 +58,38 @@ export interface RenderOptions {
   /** Keep a single newline as a line break instead of the space CommonMark
    *  makes of it.
    *
-   *  Off everywhere a note is read as a document, which is what CommonMark says
-   *  and what every other renderer does with the same file. On for a deck: a
-   *  slide is a poster, its lines are placed rather than flowed, and three short
-   *  lines run into one sentence is not the slide that was written. A blank line
-   *  is still a paragraph, and the two-space hard break still works - this is a
-   *  superset of it, not a replacement. See docs/slides.md. */
+   *  Left out everywhere a note is read as a document, and then it is the
+   *  reader's own answer - `setHardBreaks` below, one setting for every surface,
+   *  CommonMark until somebody says otherwise. Said outright and true for a deck:
+   *  a slide is a poster, its lines are placed rather than flowed, and three
+   *  short lines run into one sentence is not the slide that was written, whatever
+   *  the setting says. A blank line is still a paragraph, and the two-space hard
+   *  break still works - this is a superset of it, not a replacement. See
+   *  docs/slides.md. */
   breaks?: boolean
+}
+
+/** Whether a single newline breaks the line, for every caller that has no answer
+ *  of its own.
+ *
+ *  Here rather than threaded through two dozen call sites, because the point of
+ *  the setting is that a note cannot look different on two surfaces: the reading
+ *  view, an export, a card on a canvas, the clipboard's HTML flavour and a hover
+ *  preview all go through this module, and all of them should say the same thing
+ *  without each remembering to ask. The app sets it once; see modes.svelte.ts.
+ *
+ *  A deck passes `breaks: true` and is unaffected either way, and the Worker that
+ *  publishes a note passes the author's answer per request rather than setting it
+ *  here - one isolate serves many readers, and a global would leak between
+ *  them. */
+let hard = false
+
+export function setHardBreaks(on: boolean) {
+  hard = on
+}
+
+export function hardBreaks(): boolean {
+  return hard
 }
 
 export interface CodeBlock {
@@ -368,8 +393,9 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
   // `breaks` is asked for per parse rather than built into the renderer, so the
   // two shared ones above serve a deck as well as a document: marked merges a
-  // call's options over the instance's and leaves the instance alone.
-  let html = marked.parse(body, { async: false, breaks: options.breaks === true })
+  // call's options over the instance's and leaves the instance alone. A caller
+  // that says nothing gets the reader's own answer; see `setHardBreaks`.
+  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hard })
 
   html = markAbbreviations(html, collectAbbreviations(body))
 

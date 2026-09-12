@@ -1153,4 +1153,15 @@ export const fr: Dictionary = {
   'Ask the model': 'Demander au modèle',
   'answered by {model}, {date}': 'répondu par {model}, {date}',
   'AI block': 'Bloc IA',
+  'Highlight colour': 'Couleur du surlignage',
+  'A single newline breaks the line': 'Un simple retour à la ligne coupe la ligne',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Désactivé, c’est le markdown standard: deux lignes d’un paragraphe se lisent comme une; Obsidian parle de sauts de ligne stricts.',
+  'New links': 'Nouveaux liens',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Un wikilien nomme la note, donc il survit à un renommage; les deux écritures sont lues.',
+  '[[Wikilinks]]': '[[Wikiliens]]',
+  'Markdown, shortest name': 'Markdown, nom le plus court',
+  'Markdown, relative path': 'Markdown, chemin relatif',
+  'Markdown, path in the space': 'Markdown, chemin dans l’espace',
 }

@@ -61,7 +61,19 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Inline math `$…$`
 - [x] Subscript `H~2~O`
 - [x] Superscript `X^2^`
-- [x] Highlight `==text==`
+- [x] Highlight `==text==`, in six colours: a colour emoji at the start of the
+      highlight, which is exactly what Obsidian 1.14.0 writes - "Add a color emoji
+      (🔴, 🟠, 🟢, 🔵, 🟣) to the start of a highlight to change its color".
+      Five colours, because five is what the emoji say, and the plain highlight is
+      the sixth answer; Obsidian has no yellow emoji because a plain highlight is
+      already its yellow. The six swatches sit behind the Highlight row of the
+      Format menu and behind the dot beside the highlight button on the formatting
+      bar, and the last colour chosen sticks - the button, the shortcut and the
+      table's own `h` all write it from then on. Drawn from `--canvas-1` and its
+      neighbours, the six tones the canvas and the charts already use, so the
+      editor, the reading view, every export and a published page all tint one
+      highlight the same. The emoji itself never reaches a page, an export, a
+      search or the glasses: it is the colour, not a word of the note
 - [x] Underline via `<u>`
 - [x] Smart punctuation (curly quotes, en/em dashes, ellipsis), off by default
 - [x] Ligatures: `->`, `<=`, `!=` and the like shown as arrows and signs, in prose and code, text untouched (off by default; the choice follows the account)
@@ -260,6 +272,25 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Copy as Markdown / paste as plain text, and a plain copy that carries the
       note as HTML as well, so a paste into Word or mail keeps its formatting
 - [x] Strict mode
+- [x] One switch for what a single newline is. Off, which is CommonMark and what
+      every other reader does with the same file: a paragraph hard wrapped over two
+      lines is one paragraph. On, a note reads the way it was typed. Obsidian asks
+      the same question the other way round and calls it strict line breaks, which
+      is what the sentence under the switch says. The one renderer answers it, so
+      the reading view, every export, a card on a canvas, the clipboard HTML
+      flavour, a hover preview and a published page cannot disagree about the same
+      note - a published page reads its author's answer off the account. A deck
+      keeps its single breaks whatever the switch says, because a slide is a poster
+      and its lines are placed rather than flowed
+- [x] One setting for how a link to a note is written: `[[wikilinks]]`, which is
+      what nib has always written and the default, or markdown links with the
+      shortest name, a path from this note's folder, or a path from the top of the
+      space - the same four answers Obsidian gives across two settings. It decides
+      only what is written: both spellings are read whatever it says, so a space
+      may hold both and nothing already written changes. Every writer in the app
+      goes through one function, so a split, a passage lifted out, a block's Copy
+      link, a page cited out of a PDF and an import that has just moved a note all
+      write the same spelling
 - [x] Text snippets
 - [x] Convert and reformat markdown
 

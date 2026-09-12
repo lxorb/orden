@@ -396,6 +396,45 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => modes.punctuation,
               set: () => modes.togglePunctuation(view),
             },
+            {
+              // What CommonMark says a single newline is, and what Obsidian's own
+              // "Strict line breaks" asks the other way round. Off, which is the
+              // standard and what every other reader does with the same file; the
+              // hint says what Obsidian calls it so nobody has to guess which
+              // switch is which.
+              kind: 'switch',
+              label: t('A single newline breaks the line'),
+              hint: t(
+                'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
+              ),
+              initial: false,
+              get: () => modes.hardBreaks,
+              set: () => modes.toggleHardBreaks(),
+            },
+          ],
+        },
+        {
+          // How a link to another note is written. Not what is read: both
+          // spellings are read whatever this says, so a space may hold both and
+          // nothing already written changes.
+          title: t('Links'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('New links'),
+              hint: t(
+                'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
+              ),
+              options: [
+                { value: 'wikilink', label: t('[[Wikilinks]]') },
+                { value: 'shortest', label: t('Markdown, shortest name') },
+                { value: 'relative', label: t('Markdown, relative path') },
+                { value: 'absolute', label: t('Markdown, path in the space') },
+              ],
+              initial: 'wikilink',
+              get: () => modes.linkFormat,
+              set: (value) => modes.setLinkFormat(value),
+            },
           ],
         },
         {

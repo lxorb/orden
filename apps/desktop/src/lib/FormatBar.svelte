@@ -1,16 +1,20 @@
 <script lang="ts">
   import {
     clearFormatting,
+    highlightSelection,
     insertLink,
     selectedImage,
     setHeading,
+    toggleHighlight,
     toggleQuote,
     toggleWrap,
     type EditorView,
     type StateCommand,
     type Transaction,
   } from '@nib/editor'
+  import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
   import { t } from './i18n.svelte'
+  import { modes } from './modes.svelte'
   import { roving } from './roving'
   import { viewport } from './viewport.svelte'
 
@@ -18,10 +22,14 @@
 
   let at = $state<{ x: number; y: number } | null>(null)
   let bar = $state<HTMLElement>()
+  /** Whether the colours are showing instead of the actions. */
+  let colouring = $state(false)
 
   /** One tab stop with the arrows inside it, which is what every strip in the app
    *  is; see roving.ts and docs/keyboard.md. Enter and Space press the button the
-   *  arrows are on, and Escape gives the note the keyboard back. */
+   *  arrows are on, and Escape gives the note the keyboard back. The colours are
+   *  buttons in that same row, so each is a stop of its own and the arrows reach
+   *  them without a second rule. */
   const keys = { across: true, rows: 'button' } as const
 
   /** Docked above the keyboard on a phone: there is no hovering over a
@@ -47,6 +55,7 @@
       selectedImage(current.state)
     ) {
       at = null
+      colouring = false
       return
     }
 
@@ -76,13 +85,31 @@
     { label: 'B', title: t('Bold'), command: toggleWrap('**') },
     { label: 'I', title: t('Italic'), command: toggleWrap('*') },
     { label: 'S', title: t('Strikethrough'), command: toggleWrap('~~') },
-    { label: 'M', title: t('Highlight'), command: toggleWrap('==') },
+    { label: 'M', title: t('Highlight'), command: highlightSelection },
     { label: '<>', title: t('Code'), command: toggleWrap('`') },
     { label: 'H', title: t('Heading'), command: setHeading(2) },
     { label: '"', title: t('Quote'), command: toggleQuote },
     { label: '#', title: t('Link'), command: insertLink },
     { label: '×', title: t('Clear formatting'), command: clearFormatting },
   ]
+
+  /** What the swatch beside the highlight button is drawn in: the colour that
+   *  button writes, so the bar says what it is about to do. A highlight with no
+   *  colour of its own wears the accent, which is what it is drawn in. */
+  const swatch = $derived(
+    modes.highlight.tone === null ? 'var(--accent-soft)' : `var(--mark-${modes.highlight.tone})`,
+  )
+
+  /** Highlights the selection in this colour, and keeps it: the button, the
+   *  shortcut and the menu row all write it from now on. */
+  function pick(tone: number | null) {
+    const colour = HIGHLIGHT_COLOURS.find((one) => one.tone === tone)
+    if (!colour) return
+
+    modes.setHighlightTone(tone)
+    colouring = false
+    run(toggleHighlight(colour))
+  }
 </script>
 
 <!-- A row of buttons that acts on what is selected, which is what a toolbar is,
@@ -94,7 +121,52 @@
      meant the whole bar was a row of buttons that answered a finger, a mouse and
      nothing else: Enter on one of them focused it and did not format a word. The
      press is still read, for the one thing it is for - keeping the caret, and on a
-     phone the keyboard, where they are. -->
+     phone the keyboard, where they are. Both handlers, because the two bars arrive
+     by different events and one list of buttons serves both.
+
+     One list of buttons for both bars, because they are the same bar in two
+     places: a strip over the keyboard on a phone, a callout by the selection
+     everywhere else. -->
+{#snippet press(title: string, label: string, act: () => void, on = false, dot?: string)}
+  <button
+    class:swatch={dot !== undefined}
+    class:on
+    {title}
+    aria-label={title}
+    aria-pressed={on}
+    style:--dot={dot}
+    onpointerdown={(event) => event.preventDefault()}
+    onmousedown={(event) => event.preventDefault()}
+    onclick={act}
+  >
+    {label}
+  </button>
+{/snippet}
+
+{#snippet buttons()}
+  <!-- The colours, in the bar rather than over it: a phone's bar is the width of
+       the screen and has nowhere to put a second surface, and one row is the same
+       bar on both. The swatch stays where it was, so pressing it again comes
+       back. -->
+  {@render press(t('Highlight colour'), '', () => (colouring = !colouring), colouring, swatch)}
+
+  {#if colouring}
+    {#each HIGHLIGHT_COLOURS as colour (colour.name)}
+      {@render press(
+        t(colour.name),
+        '',
+        () => pick(colour.tone),
+        colour.tone === modes.highlight.tone,
+        colour.tone === null ? 'var(--accent-soft)' : `var(--mark-${colour.tone})`,
+      )}
+    {/each}
+  {:else}
+    {#each ACTIONS as action (action.title)}
+      {@render press(action.title, action.label, () => run(action.command))}
+    {/each}
+  {/if}
+{/snippet}
+
 {#if docked}
   <div
     class="nib-bar docked"
@@ -104,16 +176,7 @@
     use:roving={keys}
     style:bottom="{viewport.keyboard}px"
   >
-    {#each ACTIONS as action (action.title)}
-      <button
-        title={action.title}
-        aria-label={action.title}
-        onpointerdown={(event) => event.preventDefault()}
-        onclick={() => run(action.command)}
-      >
-        {action.label}
-      </button>
-    {/each}
+    {@render buttons()}
   </div>
 {:else if at}
   <div
@@ -125,16 +188,7 @@
     style:left="{at.x}px"
     style:top="{at.y}px"
   >
-    {#each ACTIONS as action (action.title)}
-      <button
-        title={action.title}
-        aria-label={action.title}
-        onmousedown={(event) => event.preventDefault()}
-        onclick={() => run(action.command)}
-      >
-        {action.label}
-      </button>
-    {/each}
+    {@render buttons()}
   </div>
 {/if}
 
@@ -163,5 +217,50 @@
     min-width: 0;
     height: 44px;
     font-size: var(--text-base);
+  }
+
+  /* A colour, as the dot the whole app asks "which colour" with; the row of them
+     on the canvas is the same shape - see CanvasColours.svelte. The hairline is
+     the page's own ink at a whisper rather than black at a whisper, so a pale
+     wash on a pale bar still has an edge in both themes. */
+  .swatch {
+    display: grid;
+    place-items: center;
+  }
+
+  .swatch::after {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--dot);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
+    transition: scale var(--dur-fast) var(--ease-spring);
+  }
+
+  .swatch:hover::after,
+  .swatch.on::after {
+    scale: 1.12;
+  }
+
+  /* The chosen colour, and the swatch while its row is open: the ring the rest of
+     the app draws round a choice. */
+  .swatch.on::after {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent),
+      0 0 0 2px var(--surface-3),
+      0 0 0 4px var(--accent);
+  }
+
+  /* The bar tints a button on hover, which would swallow a dot's own colour. */
+  .swatch:hover,
+  .swatch:active {
+    background: none;
+  }
+
+  :global([data-touch]) .swatch::after {
+    width: 20px;
+    height: 20px;
   }
 </style>

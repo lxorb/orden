@@ -4,6 +4,7 @@ import {
   foldHeadings,
   foldLess,
   foldMore,
+  highlightSelection,
   insertComment,
   insertLink,
   openFind,
@@ -13,10 +14,12 @@ import {
   redoEdit,
   type StateCommand,
   toggleFold,
+  toggleHighlight,
   toggleWrap,
   undoEdit,
   unfoldEverything,
 } from '@nib/editor'
+import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
@@ -393,7 +396,25 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Highlight'),
           hint: shortcuts.hint('format.highlight'),
           disabled: !writable,
-          run: () => run(view, toggleWrap('==')),
+          run: () => run(view, highlightSelection),
+        },
+        {
+          // The colours, behind the one word that names them, because six rows in
+          // front of the list would be six rows about one thing. Picking one
+          // highlights the selection and sticks: the row above, the bar's own
+          // button and the shortcut all write that colour from then on. Five
+          // colours, which is what Obsidian encodes in the markdown, plus the
+          // plain highlight; see highlights.ts in @nib/markdown.
+          label: t('Highlight colour'),
+          disabled: !writable,
+          rows: HIGHLIGHT_COLOURS.map((colour) => ({
+            label: t(colour.name),
+            checked: colour.tone === modes.highlightTone,
+            run: () => {
+              modes.setHighlightTone(colour.tone)
+              run(view, toggleHighlight(colour))
+            },
+          })),
         },
         SPLIT,
         {

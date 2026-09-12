@@ -506,6 +506,30 @@ of a shared space says nothing about any row in it. `othersIn` in
 `sharing.svelte.ts`, beside `isShared`, because they are the same question asked
 of a note and of a space.
 
+### Which colour, and the six tones
+
+Six colours, once, named by number: `--canvas-1` to `--canvas-6` in
+`tokens.css`, restated per scheme like any other colour. They are Obsidian's own
+canvas palette, so a board coloured in either app reads the same in the other, and
+a chart in a note is drawn out of the same six (`chart.ts` in `@nib/markdown`,
+which carries a hex beside each token for the one surface that has no stylesheet -
+a picture pulled out of a document and looked at on its own).
+
+A coloured highlight is a wash of one of them rather than a seventh palette:
+`--mark-1`, `--mark-2`, `--mark-4`, `--mark-5` and `--mark-6`, each the tone
+at 22%, which is the strength `--accent-soft` is - a highlight has to be read
+through. Said once and not per scheme, because each is written in terms of a
+canvas tone and a custom property is substituted where it is used. There is no
+`--mark-3`: Obsidian writes no yellow emoji, because a plain highlight is already
+its yellow, and a colour nib could write but Obsidian could not read is not a
+colour.
+
+And it is asked the same way wherever it is asked: a row of dots, the chosen one
+ringed in the accent, each with a hairline of the page's own ink at 28% so a pale
+dot on a pale surface still has an edge in both themes. `CanvasColours.svelte`
+draws it for a pen and for a card; the formatting bar draws the same shape for a
+highlight, at the size a bar's button is.
+
 ### Switches
 
 One thing that is on or off, `.nib-switch` in `base.css`: a 38x22 track and a

@@ -20,6 +20,7 @@
  *  address into the app it came from is a fact about where the note used to live,
  *  and rewriting it to nothing would lose that. */
 
+import { linkTo } from '../composer'
 import { folderOf, isMarkdownPath, relativePath } from '../space-paths'
 
 /** Where a link points, once the import has decided where things go. */
@@ -60,10 +61,11 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
     const found = find(decoded(target), at.was)
     if (!found) return whole
 
-    // A note is pointed at by name, so the link survives it being renamed.
+    // A note is pointed at by name, so the link survives it being renamed - or in
+    // the spelling the Links setting asks for, since `linkTo` is the one place in
+    // the app that writes a link to a note and this is the app writing one.
     if (isMarkdownPath(found.path)) {
-      const shown = label && label !== found.name ? `|${label}` : ''
-      return `${bang}[[${found.name}${shown}]]`
+      return linkTo(found.name, label, { path: found.path, from: at.now, embed: bang === '!' })
     }
 
     const path = relativePath(folder, found.path)
@@ -71,11 +73,18 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
   })
 
   // `shown` is the second group, which a link with no `|` in it does not have: the
-  // replacer is handed `undefined` there whatever the types say.
+  // replacer is handed `undefined` there whatever the types say. Through `linkTo`
+  // as well, so an import writes one spelling throughout rather than keeping the
+  // exporting app's wherever it happened to match nib's.
   return linked.replace(WIKILINK, (whole, target: string, shown: string | undefined) => {
     const found = find(decoded(target.trim()), at.was)
     if (!found) return whole
-    return `${whole.startsWith('!') ? '!' : ''}[[${found.name}${shown ?? ''}]]`
+
+    return linkTo(found.name, shown?.slice(1) ?? null, {
+      path: found.path,
+      from: at.now,
+      embed: whole.startsWith('!'),
+    })
   })
 }
 

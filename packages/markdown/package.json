@@ -18,6 +18,7 @@
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",
     "./highlight": "./src/highlight.ts",
+    "./highlights": "./src/highlights.ts",
     "./links": "./src/links.ts",
     "./paths": "./src/paths.ts",
     "./properties": "./src/properties.ts",

@@ -313,6 +313,17 @@ export interface AccountSettings {
    *  sync/conflicts.ts. On the account rather than on the device, because it is
    *  a decision about the notes rather than about the machine. */
   conflicts?: string
+  /** Which colour the highlight button writes, as the palette tone it names, or
+   *  null for a highlight with no colour of its own; see highlights.ts in
+   *  @nib/markdown. How somebody marks up, not which machine they are at. */
+  highlightTone?: number | null
+  /** Whether a single newline breaks the line. On the account because it is about
+   *  how the notes read, and read by the blog as well, so a published page reads
+   *  the way its author reads it; see blog.ts in services/sync. */
+  hardBreaks?: boolean
+  /** How a link to another note is written: a wikilink, or a markdown link with
+   *  one of three shapes of target; see link-format.ts. */
+  linkFormat?: string
 }
 
 /** What any read can say about the account's OpenAI key.

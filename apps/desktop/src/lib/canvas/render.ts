@@ -10,7 +10,7 @@
  *  five hundred on every pan is a frozen surface, and a canvas that is only being
  *  looked at renders nothing at all. */
 
-import { renderMarkdown } from '@nib/markdown'
+import { hardBreaks, renderMarkdown } from '@nib/markdown'
 import { assetUrl, joinPath } from '../tauri'
 import { links } from '../link-index.svelte'
 import { pointer } from '../reading/render'
@@ -35,7 +35,10 @@ export function cardHtml(text: string, canvasPath: string | null, trusted: boole
     cache.clear()
   }
 
-  const key = `${trusted ? 'own' : 'theirs'}\n${canvasPath ?? ''}\n${text}`
+  // Whether a single newline breaks the line is part of the key: it is the
+  // renderer's own answer rather than an option passed in, so a card rendered
+  // before the setting moved is no longer the card the renderer would draw.
+  const key = `${trusted ? 'own' : 'theirs'}\n${hardBreaks() ? 'br' : 'flow'}\n${canvasPath ?? ''}\n${text}`
   const held = cache.get(key)
   if (held !== undefined) return held
 

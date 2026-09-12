@@ -411,6 +411,31 @@ function publishedDeck(source: string, options: Parameters<typeof renderMarkdown
   )
 }
 
+/** Whether the author reads a single newline as a line break, out of the settings
+ *  blob on their row.
+ *
+ *  A published page is the author's note read by somebody else, so it reads the way
+ *  the author reads it: a note that looks one way in the app and another way on the
+ *  web is the whole thing the setting is there to prevent. One key out of a blob
+ *  this module has no other business in, so it is read here rather than through the
+ *  settings module - and read per request, never into a global, because one isolate
+ *  serves many spaces. See `setHardBreaks` in @nib/markdown and the Markdown
+ *  settings in the app.
+ *
+ *  Off for an unreadable blob, a row that is not there, or an account that has
+ *  never said: off is CommonMark, which is what every other reader of the same file
+ *  does with it. */
+function hardBreaksIn(raw: string | null | undefined): boolean {
+  try {
+    const value: unknown = JSON.parse(raw ?? '{}')
+    return (
+      !!value && typeof value === 'object' && (value as Record<string, unknown>).hardBreaks === true
+    )
+  } catch {
+    return false
+  }
+}
+
 /** How many notes an index lists. Well past any blog anyone writes, and a
  *  ceiling so that one hostname cannot ask for an unbounded page. */
 const MOST_LISTED = 2000
@@ -433,10 +458,14 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   /** Whether the reader asked for the note as a talk rather than as a page. */
   const slides = url.searchParams.has(SLIDES_QUERY)
 
-  const owner = await env.DB.prepare('select name from users where id = ?')
+  // The owner's name and the one setting of theirs a page has to know: whether a
+  // single newline breaks the line. Both off the one row, because it is one row -
+  // a published page is on the hot path and this was already a query.
+  const owner = await env.DB.prepare('select name, settings from users where id = ?')
     .bind(space.user_id)
-    .first<{ name: string | null }>()
+    .first<{ name: string | null; settings: string | null }>()
   const author = owner?.name ?? null
+  const breaks = hardBreaksIn(owner?.settings)
 
   // A file the space keeps beside its notes, asked for by the path a link in one
   // of them wrote. Before the notes, because it is settled by the path alone.
@@ -466,6 +495,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     const reading = {
       escapeHtml: true,
       code: blogFence,
+      breaks,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
@@ -529,6 +559,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const reading = {
     escapeHtml: true,
     code: blogFence,
+    breaks,
     resolveLink: linkResolver(results, readSpaceFiles(space.files)),
     resolveEmbed: await embedded(env, space, results, source),
   }

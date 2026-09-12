@@ -6,6 +6,7 @@ import { get } from 'node-emoji'
 import { blockMath, definitionList } from './blocks'
 import { calloutChevron, calloutIcon, calloutOf } from './callouts'
 import { closesFence, fenceMark } from './fences'
+import { readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -40,7 +41,12 @@ function math(tex: string, display: boolean): string {
   }
 }
 
-/** `==marked==` */
+/** `==marked==`, and `==🔴 marked==` for one of the five colours Obsidian writes.
+ *
+ *  The colour comes off the front of the words before they are tokenized, so it
+ *  never reaches the page as an emoji and never reaches the glasses, an export or
+ *  a search as one either: what the reader sees is the words, tinted. See
+ *  highlights.ts, which is also what the editor reads. */
 export const highlight: MarkedExtension = {
   extensions: [
     {
@@ -51,15 +57,20 @@ export const highlight: MarkedExtension = {
         const match = /^==(?=\S)([\s\S]*?\S)==/.exec(src)
         if (!match?.[1]) return undefined
 
+        const { colour, from } = readHighlight(match[1])
+        const words = match[1].slice(from)
+
         return {
           type: 'highlight',
           raw: match[0],
-          text: match[1],
-          tokens: this.lexer.inlineTokens(match[1]),
+          text: words,
+          tone: colour.className,
+          tokens: this.lexer.inlineTokens(words),
         }
       },
       renderer(token: Tokens.Generic) {
-        return `<mark>${this.parser.parseInline(token.tokens ?? [])}</mark>`
+        const tone = typeof token.tone === 'string' && token.tone ? ` class="${token.tone}"` : ''
+        return `<mark${tone}>${this.parser.parseInline(token.tokens ?? [])}</mark>`
       },
     },
   ],

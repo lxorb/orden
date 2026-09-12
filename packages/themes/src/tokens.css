@@ -282,6 +282,24 @@
   --canvas-6: #a882ff;
   --canvas-dot: #2b323d;
 
+  /* A coloured highlight, as a wash of the tone it named. `==🔴 careful==` is how
+     Obsidian 1.14 says which colour, and these are the five it can say; see
+     highlights.ts in @nib/markdown. The same strength as `--accent-soft`, which is
+     what a highlight with no colour of its own still wears: words have to stay
+     readable through a highlight.
+
+     Said once and not per scheme, because each is written in terms of a canvas
+     tone and a custom property is substituted where it is used - so a light
+     theme's own `--canvas-1` is what a light page mixes. There is no `--mark-3`:
+     Obsidian writes no yellow emoji, because a plain highlight is already its
+     yellow, and a colour nib could write but Obsidian could not read is not a
+     colour. */
+  --mark-1: color-mix(in srgb, var(--canvas-1) 22%, transparent);
+  --mark-2: color-mix(in srgb, var(--canvas-2) 22%, transparent);
+  --mark-4: color-mix(in srgb, var(--canvas-4) 22%, transparent);
+  --mark-5: color-mix(in srgb, var(--canvas-5) 22%, transparent);
+  --mark-6: color-mix(in srgb, var(--canvas-6) 22%, transparent);
+
   /* The chevron on a dropdown, in this scheme's own muted grey. A picture and
      not a rule, so it cannot read `--muted` and has to be restated per scheme;
      see `select` in base.css. The angle brackets are written out because a

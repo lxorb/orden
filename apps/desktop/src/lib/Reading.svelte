@@ -102,6 +102,10 @@
       theme.current,
       trustsHtmlIn(tab.note),
       asks ? links.version : 0,
+      // Whether a single newline breaks the line: the renderer's own answer rather
+      // than an option passed in, so the page it built is no longer the page it
+      // would build. See `setHardBreaks` in @nib/markdown.
+      modes.hardBreaks,
     ]
     if (!reasons.length) return
 

@@ -60,7 +60,14 @@ function readsAsOneSentence(hint: string, label: string) {
 /** The `i` beside a label: for the settings whose name only means something to
  *  somebody who already knows the word. */
 describe('the sentence behind a setting', () => {
-  const HINTED = ['Strict CommonMark', 'Smart punctuation', 'Number headings', 'Number equations']
+  const HINTED = [
+    'Strict CommonMark',
+    'Smart punctuation',
+    'A single newline breaks the line',
+    'New links',
+    'Number headings',
+    'Number equations',
+  ]
 
   test('is there for the markdown switches a word does not explain', () => {
     for (const label of HINTED) {

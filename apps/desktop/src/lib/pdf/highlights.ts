@@ -10,6 +10,7 @@
  *  about a zoom and a screen: the same mark has to land on the same words at any
  *  zoom, on any machine, and in any other reader that ever opens the sidecar. */
 
+import { linkTo } from '../composer'
 import { isRecord, isNumber, isString } from '../stored'
 
 /** What the file is called: the PDF's whole name with this after it. The Rust
@@ -271,9 +272,14 @@ export function joinRuns(boxes: readonly Box[]): Box[] {
 }
 
 /** What the copy-link action puts on the clipboard: the link, and the words as a
- *  quote, so it pastes into a note as a citation rather than as a bare link. */
+ *  quote, so it pastes into a note as a citation rather than as a bare link.
+ *
+ *  The link itself is written by `linkTo`, like every other link in the app, so a
+ *  space set to markdown links gets one of those here too. The PDF's own name is
+ *  all this knows about it - a citation is copied while reading, with no note in
+ *  front of it to be relative to - which is the shortest spelling either way. */
 export function citation(name: string, page: number, text: string): string {
-  const link = `[[${name}#page=${page}]]`
+  const link = linkTo(name, null, { fragment: `page=${page}` })
   // Asked before the quote is built, not after: splitting nothing gives one
   // empty line, and an empty line quoted is a `>` with nothing after it.
   const words = text.trim()

@@ -9,7 +9,7 @@
  *  behind, what the link reads - so it can be tested without a disk. Which files
  *  are written, and what is undone, is workspace's business. */
 
-import { formatWikilink } from '@nib/markdown/links'
+import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './link-format'
 import { nameFromContent } from './note-name'
 
 /** How two notes are joined: a rule at the seam, so the merge is visible in the
@@ -28,16 +28,25 @@ export function merged(into: string, from: string): string {
   return `${head}${SEAM}${tail}\n`
 }
 
-/** A wikilink to a note, by the name a link uses for it. Words to show only when
- *  there are some and they are not the name already. */
-export function linkTo(name: string, shown?: string): string {
-  return formatWikilink({
-    target: name,
-    heading: null,
-    block: null,
-    alias: !shown || shown === name ? null : shown,
-    embed: false,
-  })
+/** A link to a note, by the name a link uses for it. Words to show only when
+ *  there are some and they are not the name already.
+ *
+ *  The one place in the app a link to a note is written. Everything that writes
+ *  one comes through here - a split, a passage lifted out, a block's Copy link, a
+ *  page cited out of a PDF, an import that has just moved a note - so the Links
+ *  setting is answered once instead of in six places that would drift. Which
+ *  spelling is link-format.ts; what a caller knows about the target is `about`,
+ *  and a caller that knows only a name still gets a link.
+ *
+ *  The format is a parameter with the setting as its default, so the arithmetic
+ *  here stays testable without a store behind it. */
+export function linkTo(
+  name: string,
+  shown?: string | null,
+  about: Omit<LinkTarget, 'name' | 'shown'> = {},
+  format: LinkFormat = linkWriting(),
+): string {
+  return formatLink({ ...about, name, ...(shown ? { shown } : {}) }, format)
 }
 
 export interface Split {

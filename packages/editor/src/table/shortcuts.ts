@@ -1,5 +1,6 @@
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
 import { insertLink, toggleWrap } from '../commands'
+import { highlightSelection } from '../highlight'
 
 /** A cell's text after one of the editor's inline commands ran on it. A cell
  *  is a document of one line, so the command that wraps a selection in the
@@ -34,7 +35,7 @@ export function inlineShortcut(event: KeyboardEvent): StateCommand | null {
 
   const key = event.key.toLowerCase()
   if (event.shiftKey) {
-    if (key === 'h') return toggleWrap('==')
+    if (key === 'h') return highlightSelection
     if (event.code === 'Backquote') return toggleWrap('`')
     return null
   }

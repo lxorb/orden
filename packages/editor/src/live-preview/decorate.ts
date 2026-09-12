@@ -21,6 +21,7 @@ import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
+import { readHighlight } from '@nib/markdown/highlights'
 import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
 import { readProperties } from '@nib/markdown/properties'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
@@ -216,6 +217,9 @@ class Decorator {
         // itself, and it is the link.
         else this.linkText(node.from, node.to, this.state.doc.sliceString(node.from, node.to))
         return true
+      case 'Highlight':
+        this.highlight(node)
+        return true
       case 'Subscript':
         this.marks.push(Decoration.mark({ class: 'nib-sub' }).range(node.from, node.to))
         return true
@@ -357,6 +361,31 @@ class Decorator {
     if (from >= to || this.isClaimed(from, to)) return
     if (show) this.marks.push(meta.range(from, to))
     else this.hidden.push(hide.range(from, to))
+  }
+
+  /** `==🔴 careful==` reads as the words, washed in the colour it named.
+   *
+   *  The emoji is the colour, not a word of the note, so it goes the way the `==`
+   *  around it goes: hidden until the caret is inside, and atomic while it is
+   *  hidden so the caret steps over it rather than into it. The `==` themselves
+   *  are `HighlightMark` nodes and conceal themselves on the walk below.
+   *
+   *  A highlight with no colour of its own is left entirely to the syntax theme,
+   *  which is what has always drawn it - and which is also what draws it in source
+   *  mode, where there is no preview at all. */
+  private highlight(node: SyntaxNode) {
+    const open = node.firstChild
+    const close = node.lastChild
+    if (!open || !close || open.name !== 'HighlightMark' || close.name !== 'HighlightMark') return
+
+    const inner = this.state.doc.sliceString(open.to, close.from)
+    const { colour, from } = readHighlight(inner)
+    if (colour.className === '') return
+
+    this.marks.push(
+      Decoration.mark({ class: `nib-mark ${colour.className}` }).range(node.from, node.to),
+    )
+    this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
   }
 
   private inlineWidget(node: SyntaxNode, widget: WidgetType, show: boolean) {

@@ -170,6 +170,35 @@
   text-underline-offset: 0.12em;
 }
 
+/* A highlight that named a colour, in the note being written. The same five
+   tones the reading view, an export and a published page draw it in - `--mark-*`
+   in tokens.css - so the highlight does not change colour when the note is read
+   somewhere else.
+
+   Written over the syntax theme, which paints every highlight `--accent-soft`
+   and goes on painting the ones with no colour of their own; see
+   `markTags.highlight` in theme.ts in @nib/editor. Two classes and an element
+   deep, so it wins over that one rule wherever CodeMirror puts the two. */
+.cm-content span.nib-mark.tone-1 {
+  background: var(--mark-1);
+}
+
+.cm-content span.nib-mark.tone-2 {
+  background: var(--mark-2);
+}
+
+.cm-content span.nib-mark.tone-4 {
+  background: var(--mark-4);
+}
+
+.cm-content span.nib-mark.tone-5 {
+  background: var(--mark-5);
+}
+
+.cm-content span.nib-mark.tone-6 {
+  background: var(--mark-6);
+}
+
 .nib-inline-code {
   background: var(--surface-2);
   border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);

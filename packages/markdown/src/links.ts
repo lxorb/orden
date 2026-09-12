@@ -402,11 +402,15 @@ function collect(line: string, offset: number, found: FoundLink[]) {
 
     const from = offset + match.index
     const targetFrom = from + whole.indexOf(written, label.length + bang.length + 2)
+    // `#^a1b2c3` names a block in a markdown link exactly as in a wikilink, which
+    // is how Obsidian writes one and how nib writes one when the Links setting
+    // asks for markdown links; see link-format.ts in the app.
+    const block = fragment.startsWith('^') ? fragment.slice(1) : null
 
     here.push({
       target: decodeTarget(target),
-      heading: fragment || null,
-      block: null,
+      heading: block === null ? fragment || null : null,
+      block,
       alias: label,
       embed: bang === '!',
       kind: 'markdown',

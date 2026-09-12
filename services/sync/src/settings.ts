@@ -157,6 +157,12 @@ const RECOVERY_DAYS = [1, 7, 30]
  *  alone until somebody says. See apps/desktop/src/lib/sync/mirror.ts. */
 const CONFLICT_RULES = ['both', 'newest', 'ask']
 
+/** How a link to another note is written: a wikilink, or a markdown link with one
+ *  of three shapes of target. A list rather than any string, for the reason every
+ *  other list here is one: the app shows it in a select. See link-format.ts in the
+ *  app, which is where the writing itself is decided. */
+const LINK_FORMATS = ['wikilink', 'shortest', 'relative', 'absolute']
+
 /** One of a list of numbers, said the way the app would say it. */
 function oneOf(name: string, allowed: readonly number[]): Check {
   return (value) =>
@@ -203,6 +209,18 @@ const KNOWN: Record<string, Check> = {
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
+  // Which colour the highlight button writes. A palette tone by number, or null
+  // for a highlight with no colour of its own; the app decides what a tone it has
+  // never heard of means, which is the plain one. See highlights.ts in
+  // @nib/markdown.
+  highlightTone: (value) =>
+    value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0)
+      ? null
+      : 'highlightTone must be a whole number or null',
+  // Whether a single newline breaks the line. Read by the blog as well as by the
+  // app, so a published note reads the way its author reads it; see blog.ts.
+  hardBreaks: switched('hardBreaks'),
+  linkFormat: wordOf('linkFormat', LINK_FORMATS),
 }
 
 /** How much of any of this an account may hold.

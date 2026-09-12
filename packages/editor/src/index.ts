@@ -54,6 +54,7 @@ export {
   toggleFold,
   unfoldEverything,
 } from './fold'
+export { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'

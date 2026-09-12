@@ -18,6 +18,7 @@ import {
   isSpellWord,
   setSpellcheck,
   setSpellWords,
+  setHighlightColour,
   setStrictMode,
   setTypewriterMode,
   setVim,
@@ -26,10 +27,13 @@ import {
   type VimMode,
   type EditorView,
 } from '@nib/editor'
+import { setHardBreaks } from '@nib/markdown'
+import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@nib/glasses'
 import { glassesKey } from './even/key.svelte'
@@ -112,6 +116,9 @@ interface Saved {
   vim: boolean
   attachments: string
   conflicts: string
+  highlightTone: number | null
+  hardBreaks: boolean
+  linkFormat: LinkFormat
 }
 
 /** The word the status bar shows for each mode modal editing has, in Vim's own
@@ -291,6 +298,33 @@ class Modes {
    *  machine; see sync/conflicts.ts. */
   conflicts = $state<ConflictRule>(DEFAULT_RULE)
 
+  /** Which colour the highlight button writes, as the palette tone it names, or
+   *  null for a highlight with no colour of its own - which is what nib has always
+   *  written and so is where this starts.
+   *
+   *  The last colour chosen sticks, because marking up a paper is one colour a
+   *  dozen times rather than a fresh decision each time. On the account: it is
+   *  about how somebody marks up, not about the machine they are at. See
+   *  highlights.ts in @nib/markdown for which tone each emoji is. */
+  highlightTone = $state<number | null>(null)
+
+  /** Whether a single newline breaks the line instead of being the space
+   *  CommonMark makes of it.
+   *
+   *  Off, which is CommonMark and what every other reader of the same file does
+   *  with it - a paragraph hard wrapped in the file is one paragraph. On, a note
+   *  reads the way it is typed. Either way it is the one renderer that answers, so
+   *  the reading view, an export, a card on a canvas and a published page all say
+   *  the same thing; a deck keeps its single breaks whatever this says, because a
+   *  slide is a poster. See `RenderOptions.breaks` in @nib/markdown. */
+  hardBreaks = $state(false)
+
+  /** How a link to another note is written: `[[wikilinks]]`, or markdown links
+   *  with the shortest name, a relative path or a path from the top of the space.
+   *  Wikilinks, which is what nib has always written and what survives a rename.
+   *  Reading both spellings already works either way; see link-format.ts. */
+  linkFormat = $state<LinkFormat>('wikilink')
+
   constructor() {
     // The editor package reports a view's mode as it changes and null when
     // that view leaves modal editing; see packages/editor/src/vim.ts.
@@ -346,7 +380,18 @@ class Modes {
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
+      if (isNumber(saved.highlightTone) || saved.highlightTone === null) {
+        this.highlightTone = highlightTone(saved.highlightTone).tone
+      }
+      this.hardBreaks = saved.hardBreaks === true
+      if (isLinkFormat(saved.linkFormat)) this.linkFormat = saved.linkFormat
     }
+    // The renderer and the one link writer are told once, here and in the setters
+    // below, rather than asked by every caller; see `setHardBreaks` in
+    // @nib/markdown and `setLinkWriting` in link-format.ts.
+    setHardBreaks(this.hardBreaks)
+    setLinkWriting(this.linkFormat)
+    setHighlightColour(this.highlight)
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
   }
@@ -532,6 +577,42 @@ class Modes {
     this.each(view, (one) => setLigatures(one, wanted))
     this.persist()
     this.share({ ligatures: wanted })
+  }
+
+  /** The colour the highlight button writes from now on. A tone the palette does
+   *  not name, or none at all, is the plain highlight. */
+  setHighlightTone(tone: number | null) {
+    const wanted = highlightTone(tone).tone
+    if (wanted === this.highlightTone) return
+
+    this.highlightTone = wanted
+    setHighlightColour(this.highlight)
+    this.persist()
+    this.share({ highlightTone: wanted })
+  }
+
+  /** The colour that button writes, as the renderer and the editor know it. */
+  get highlight(): HighlightColour {
+    return highlightTone(this.highlightTone)
+  }
+
+  /** Whether a single newline breaks the line, everywhere a note is read. */
+  toggleHardBreaks() {
+    this.hardBreaks = !this.hardBreaks
+    setHardBreaks(this.hardBreaks)
+    this.persist()
+    this.share({ hardBreaks: this.hardBreaks })
+  }
+
+  /** How a link to another note is written from now on. Nothing already written
+   *  changes: both spellings are read, so a space may hold both. */
+  setLinkFormat(format: string) {
+    if (!isLinkFormat(format) || format === this.linkFormat) return
+
+    this.linkFormat = format
+    setLinkWriting(format)
+    this.persist()
+    this.share({ linkFormat: format })
   }
 
   /** Which of the two ways a note reaches the glasses. */
@@ -746,6 +827,30 @@ class Modes {
     const clash = conflictRule(remote.conflicts)
     if (clash && unheard && clash !== this.conflicts) {
       this.conflicts = clash
+      this.persist()
+    }
+
+    const tone = remote.highlightTone
+    if ((isNumber(tone) || tone === null) && unheard) {
+      const wanted = highlightTone(tone).tone
+      if (wanted !== this.highlightTone) {
+        this.highlightTone = wanted
+        setHighlightColour(this.highlight)
+        this.persist()
+      }
+    }
+
+    const breaking = remote.hardBreaks
+    if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
+      this.hardBreaks = breaking
+      setHardBreaks(breaking)
+      this.persist()
+    }
+
+    const spelling = remote.linkFormat
+    if (isLinkFormat(spelling) && unheard && spelling !== this.linkFormat) {
+      this.linkFormat = spelling
+      setLinkWriting(spelling)
       this.persist()
     }
 
@@ -997,6 +1102,9 @@ class Modes {
       vim: this.vim,
       attachments: this.attachments,
       conflicts: this.conflicts,
+      highlightTone: this.highlightTone,
+      hardBreaks: this.hardBreaks,
+      linkFormat: this.linkFormat,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }

@@ -22,6 +22,7 @@ import {
 import { rewriting } from './ai/rewriting.svelte'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { countText } from './counts'
+import { linkTo } from './composer'
 import { composerEntries } from './composer-commands'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
@@ -132,7 +133,21 @@ function blockEntries(
       disabled: !name,
       run: () => {
         const target = name ? blockTarget(view, at) : null
-        if (name && target) void copyText(`[[${name}${target}]]`)
+        if (!name || !target) return
+
+        // Through `linkTo` like every other link the app writes, so a space set
+        // to markdown links gets one here too; see composer.ts. The block's own
+        // path and the note it is written from are both this note, which is what
+        // makes a relative link to it the bare file name.
+        const root = workspace.activeSpace?.root
+        const relative =
+          root !== undefined && path?.startsWith(root) ? relativeTo(root, path) : null
+        void copyText(
+          linkTo(name, null, {
+            fragment: target.slice(1),
+            ...(relative ? { path: relative, from: relative } : {}),
+          }),
+        )
       },
     },
     { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },

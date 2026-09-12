@@ -273,6 +273,31 @@ select option {
   box-decoration-break: clone;
 }
 
+/* A highlight that named a colour, drawn in the palette tone it named. The class
+   is written by the renderer and the same five rules dress it in the reading view,
+   in an export and on a published page; the editor says the same thing about what
+   is being typed, in editor.css. The tones themselves are `--mark-*` in
+   tokens.css, which is also where the missing yellow is explained. */
+#write mark.tone-1 {
+  background: var(--mark-1);
+}
+
+#write mark.tone-2 {
+  background: var(--mark-2);
+}
+
+#write mark.tone-4 {
+  background: var(--mark-4);
+}
+
+#write mark.tone-5 {
+  background: var(--mark-5);
+}
+
+#write mark.tone-6 {
+  background: var(--mark-6);
+}
+
 #write sub,
 #write sup {
   font-size: 0.72em;

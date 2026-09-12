@@ -40,6 +40,7 @@ import {
 } from './commands'
 import { findNext, findPrevious, openFind, openReplace } from './find'
 import { foldHeadings, foldLess, foldMore, toggleFold, unfoldEverything } from './fold'
+import { highlightSelection } from './highlight'
 import { copyMarkdown } from './copy'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
@@ -109,7 +110,7 @@ export const nibBindings: BindingSpec[] = [
   { id: 'format.underline', key: 'Mod-u', run: toggleWrap('<u>', '</u>'), preventDefault: true },
   { id: 'format.code', key: 'Mod-Shift-`', run: toggleWrap('`'), preventDefault: true },
   { id: 'format.strikethrough', key: 'Alt-Shift-5', run: toggleWrap('~~'), preventDefault: true },
-  { id: 'format.highlight', key: 'Mod-Shift-h', run: toggleWrap('=='), preventDefault: true },
+  { id: 'format.highlight', key: 'Mod-Shift-h', run: highlightSelection, preventDefault: true },
 
   { id: 'format.link', key: 'Mod-k', run: insertLink, preventDefault: true },
   { id: 'format.image', key: 'Mod-Shift-i', run: insertImage, preventDefault: true },

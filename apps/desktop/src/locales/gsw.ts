@@ -1149,4 +1149,15 @@ export const gsw: Dictionary = {
   'Ask the model': 'S Modäll fräge',
   'answered by {model}, {date}': 'gantwortet vo {model}, {date}',
   'AI block': 'KI-Block',
+  'Highlight colour': 'Hervorhäbigsfarb',
+  'A single newline breaks the line': 'En einzelne Zileumbruch bricht d Zile',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Us isch Standard-Markdown: zwoi Zile vom gliiche Abschnitt läse sich als eini; Obsidian sait em strikti Zileumbrüch.',
+  'New links': 'Nöi Links',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilinks nänned d Notiz, drum übersteht en Link s Umbenänne; gläse werded beidi Schriibwiise.',
+  '[[Wikilinks]]': '[[Wikilinks]]',
+  'Markdown, shortest name': 'Markdown, chürzischte Name',
+  'Markdown, relative path': 'Markdown, relative Pfad',
+  'Markdown, path in the space': 'Markdown, Pfad im Ruum',
 }

@@ -18,6 +18,7 @@
 
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
+import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
 
 /** What a note never contains.
  *
@@ -281,10 +282,20 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content) => (content ? `~~${content}~~` : ''),
   })
 
-  // Highlighted text has a markdown form here, so keep it rather than drop it.
+  // Highlighted text has a markdown form here, so keep it rather than drop it -
+  // and its colour has one too, so a highlight copied out of the reading view and
+  // pasted back is still the colour it was. The class is the one the renderer
+  // writes; a `<mark>` from anywhere else is a highlight with no colour of its
+  // own, which is what it looks like.
   service.addRule('highlight', {
     filter: ['mark'],
-    replacement: (content) => (content ? `==${content}==` : ''),
+    replacement: (content, node) => {
+      if (!content) return ''
+
+      const named = (node as Element).className
+      const found = HIGHLIGHT_COLOURS.find((one) => one.className && one.className === named)
+      return `==${found ? writeHighlight(content, found) : content}==`
+    },
   })
 
   // Underline has none, so the tag itself is the markdown; the editor renders it.
