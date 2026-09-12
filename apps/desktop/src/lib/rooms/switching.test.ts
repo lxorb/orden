@@ -26,7 +26,7 @@ const sockets = vi.hoisted(() => {
   interface Wire {
     opened: () => void
     heard: (message: Uint8Array) => void
-    closed: () => void
+    closed: (code: number) => void
   }
 
   class FakeSocket {
@@ -175,7 +175,6 @@ function previewing(path: string, words: string): InstanceType<typeof NoteDoc> {
  *  cannot be synchronous with a click; this is how a room finds out at once. */
 function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: string | null) {
   const arrivals = note.arrivals
-  const path = note.path
 
   const room = new Room({
     noteId: server.path,
@@ -186,7 +185,10 @@ function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: strin
     scheme: 'dark',
     onPeers: () => undefined,
     digest: (text: string) => Promise.resolve(text),
-    holds: () => note.arrivals === arrivals && note.path === path,
+    // How many notes the document has held, and nothing about its path: a rename
+    // moves a note, it does not make it another one. See `join` in rooms.svelte.ts.
+    holds: () => note.arrivals === arrivals,
+    gone: () => undefined,
   })
 
   return { room, socket: socketOf() }

@@ -48,6 +48,10 @@ export interface Joining {
   /** The hash of a string. Asked of the app because the platform answers it
    *  asynchronously and a room should not have a second way of doing it. */
   digest: (text: string) => Promise<string>
+  /** The room was thrown away and another will be built out of the file; see
+   *  `REBUILT` in door.ts. Nothing this room holds can carry on, so what answers is
+   *  whoever paired the two: it lets this one go and joins again. */
+  gone: () => void
   /** Whether the document above is still on the file this room was joined for.
    *
    *  A document outlives the file in it: the one tab that previews a note takes
@@ -81,6 +85,7 @@ export class Room {
       who: joining.who,
       caughtUp: () => this.together(),
       present: () => this.showPeers(),
+      gone: () => joining.gone(),
     })
   }
 

@@ -15,6 +15,7 @@
 
 import type { FoldLines } from '@nib/editor'
 import { identifier } from '../identifier'
+import { roomKind } from '../rooms/kind'
 import { isNumber, isRecord, isString, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
@@ -127,11 +128,28 @@ function isPanel(value: unknown): value is Panel {
 
 const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas']
 
-/** Which kind of tab an entry says it is. An entry written before there were
- *  kinds, or one naming a kind this version has never heard of, is a note: that
- *  is what a tab with a path and some words in it can always be read as. */
-function tabKind(value: unknown): TabKind {
-  return TAB_KINDS.find((kind) => kind === value) ?? 'note'
+/** Which kind of tab an entry is, which is its file's name first and what the entry
+ *  claims second.
+ *
+ *  The name wins because the name is what the file is, and because the service asks
+ *  the very same question of the very same string when it decides what shape of room
+ *  to open; see rooms/kind.ts, which states that rule once for both. An entry written
+ *  before there were canvases, one whose kind was lost, or one naming a kind this
+ *  version has never heard of used to come back as a note whatever it was called -
+ *  and a canvas restored as a note joins the room of a file the service is serving as
+ *  a plane, which is the two ends of one file building different documents for it.
+ *
+ *  A tab no file names is left to say for itself, because there is nothing to ask:
+ *  that is the graph, and an unsaved draft. Everything else a name has no opinion
+ *  about - a paper being read - it keeps. */
+function tabKind(value: unknown, path: unknown): TabKind {
+  const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'
+  if (typeof path !== 'string') return said
+
+  if (roomKind(path) === 'plane') return 'canvas'
+  // And the other way: a canvas over a file whose name says words would draw an
+  // empty plane over the prose in it.
+  return said === 'canvas' ? 'note' : said
 }
 
 function isSpace(value: unknown): value is Space {
@@ -174,7 +192,7 @@ export function readDraft(value: unknown): Draft | null {
   const shut = readFolds(folds)
 
   return {
-    kind: tabKind(kind),
+    kind: tabKind(kind, path),
     path,
     name,
     doc,

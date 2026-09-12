@@ -28,6 +28,9 @@ export interface Drawing {
   scheme: 'dark' | 'light'
   /** Told how many other devices are on the plane, whenever that changes. */
   onPeers: (present: number) => void
+  /** The room was thrown away and another will be built out of the file; see
+   *  `REBUILT` in door.ts. */
+  gone: () => void
 }
 
 export class PlaneRoom implements SharedPlane {
@@ -43,6 +46,7 @@ export class PlaneRoom implements SharedPlane {
       who: joining.who,
       caughtUp: () => this.together(),
       present: () => this.showHands(),
+      gone: () => joining.gone(),
     })
 
     this.binding = new PlaneBinding(this.door.doc, joining.surface)

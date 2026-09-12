@@ -129,8 +129,9 @@ function joining(file: string, words: string) {
     onPeers: () => undefined,
     digest: (text: string) => Promise.resolve(text),
     // One note the whole way through here; a tab moving on to another one is
-    // switching.test.ts.
+    // switching.test.ts, and a room the service rebuilt is following.test.ts.
     holds: () => true,
+    gone: () => undefined,
   })
 
   return { note, room, server, socket: socketOf() }

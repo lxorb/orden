@@ -18,8 +18,11 @@ export interface Wire {
   /** The socket is open and nothing has been said over it yet. */
   opened: () => void
   heard: (message: Uint8Array) => void
-  /** It has gone, and another will be along. */
-  closed: () => void
+  /** It has gone, and another will be along - with the code it went with, because
+   *  one of them means the room on the other end is not the room this document was
+   *  talking to any more. Whoever is listening may call `stop` from in here, and
+   *  nothing will be reconnected; see door.ts. */
+  closed: (code: number) => void
 }
 
 /** Where a note's room lives. */
@@ -103,11 +106,13 @@ export class RoomSocket {
       if (event.data instanceof ArrayBuffer) this.wire.heard(new Uint8Array(event.data))
     }
 
-    socket.onclose = () => {
+    socket.onclose = (event: CloseEvent) => {
       if (this.socket !== socket) return
 
       this.socket = null
-      this.wire.closed()
+      // Said first, so that a listener which decides this socket is not to come
+      // back can stop it before the wait for the next one is set going.
+      this.wire.closed(event.code)
       this.again()
     }
 

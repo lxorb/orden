@@ -18,6 +18,7 @@ import { type EditorView, sharedOf } from '@nib/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
 import { without } from './records'
+import { roomKind, type RoomKind } from './rooms/kind'
 import { PlaneRoom } from './rooms/plane'
 import { Room } from './rooms/room'
 import { deviceAccent, deviceName, personName } from './rooms/who'
@@ -38,12 +39,14 @@ interface Open {
   hash: string | null
 }
 
-/** One file in a room: the room, and which file the room is about - so a document
- *  that has moved on to another file is noticed and rejoined. */
+/** One file in a room: the room, which file the room is about - so a document that
+ *  has moved on to another file is noticed and rejoined - and which shape of room it
+ *  is, so a file whose name crossed the two is noticed the same way. */
 interface Joined {
   room: Room | PlaneRoom
   noteId: string
   note: NoteDoc
+  kind: RoomKind
 }
 
 function hex(digest: ArrayBuffer): string {
@@ -89,10 +92,21 @@ class Rooms {
     const wanted = new Map(token ? open.map((one) => [one.key, one]) : [])
 
     for (const [key, joined] of this.held) {
-      // Still open, and still the same file: leave it alone. A preview tab that has
-      // moved on is another note in the same document, and wants another room.
+      // Still open, still the same file, and still the same shape of file: leave it
+      // alone. A preview tab that has moved on is another note in the same document
+      // and wants another room; a file renamed from a note into a canvas, or back, is
+      // the same file wanting another kind of room, and a document of the shape it
+      // now is - which is a new one, because the two shapes are not the same
+      // document. What is not a reason to rejoin is a path that changed and nothing
+      // else: that is a space somebody renamed, and it is the same room.
       const still = wanted.get(key)
-      if (still?.noteId === joined.noteId && this.ready(still)) continue
+      if (
+        still?.noteId === joined.noteId &&
+        roomKind(still.note.path) === joined.kind &&
+        this.ready(still)
+      ) {
+        continue
+      }
 
       joined.room.leave()
       this.held.delete(key)
@@ -152,9 +166,31 @@ class Rooms {
   }
 
   /** Whether there is anything for a room to be about yet. Always, for a note; for
-   *  a canvas, once the surface has said it is there. */
+   *  a canvas, once the surface has said it is there.
+   *
+   *  A canvas by its name, not by what the tab holding it was opened as. Those two
+   *  can disagree - a session restored from before there were canvases, a file
+   *  renamed underneath an open tab - and the name is the one the service also asks,
+   *  so it is the one that decides; see rooms/kind.ts. Where they do disagree this
+   *  waits for a plane that is never coming, which is a file that collaborates in no
+   *  room at all rather than one that joins the wrong shape of room and writes the
+   *  wrong thing into it. The file sync carries it in the meantime, exactly as it
+   *  does for a note nobody else has open. */
   private ready(open: Open): boolean {
-    return open.note.kind !== 'canvas' || this.planes.has(open.key)
+    return roomKind(open.note.path) === 'words' || this.planes.has(open.key)
+  }
+
+  /** The room for this file was thrown away by the service and another will be built
+   *  out of the file; see `REBUILT` in rooms/door.ts. So this one is let go and the
+   *  pairing worked out again, which joins a room with a document of its own. */
+  private rebuild(key: string) {
+    const joined = this.held.get(key)
+    if (!joined) return
+
+    joined.room.leave()
+    this.held.delete(key)
+    this.present = without(this.present, key)
+    this.follow(this.open)
   }
 
   private join(key: string, open: Open, token: string) {
@@ -166,28 +202,39 @@ class Rooms {
     // depending on who else is there; which one is drawn is decided by whoever is
     // looking. See rooms/peers.ts.
     const who = { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() }
-    const shape = { noteId: open.noteId, token, who, scheme: theme.current, onPeers }
+    const gone = () => this.rebuild(key)
+    const shape = { noteId: open.noteId, token, who, scheme: theme.current, onPeers, gone }
 
+    // Which shape of room this file wants is its name, and nothing about the tab; see
+    // rooms/kind.ts, and `ready` above, which is what promises the plane is there.
+    const kind = roomKind(open.note.path)
     const surface = this.planes.get(key)
-    if (open.note.kind === 'canvas' && surface) {
+    if (kind === 'plane' && surface) {
       this.held.set(key, {
         room: new PlaneRoom({ ...shape, surface }),
         noteId: open.noteId,
         note: open.note,
+        kind,
       })
       return
     }
 
-    // Which note this document is on, as of now. A document outlives the file in
-    // it: the one tab that previews a note takes another note on rather than being
-    // swapped for another document, and `follow` above is an effect, so it hears
-    // about that a beat after the click. For that beat the room below is joined to
-    // words that are another note's, and `holds` is how it knows: the file it was
-    // joined for, and how many notes the document had held by then. See
-    // NoteDoc.arrivals, and rooms/room.ts.
-    const path = open.note.path
+    // Whether this document is still on the note this room is about. A document
+    // outlives the file in it: the one tab that previews a note takes another note on
+    // rather than being swapped for another document, and `follow` above is an
+    // effect, so it hears about that a beat after the click. For that beat the room
+    // below is joined to words that are another note's, and this is how it knows.
+    //
+    // `arrivals` is how many notes the document has held, which is exactly the
+    // question - documents.svelte.ts keeps it to tell "the same note, renamed" from
+    // "another note in the same tab". The path used to be compared beside it and
+    // that was the bug: renaming a space rewrites the path of every open note and
+    // keeps every id, so a room in perfectly good order read it as the document
+    // having moved on and refused everything in both directions - while still
+    // telling the file sync it held the file, which left the note mute on both
+    // channels until its tab was closed.
     const arrivals = open.note.arrivals
-    const holds = () => open.note.path === path && open.note.arrivals === arrivals
+    const holds = () => open.note.arrivals === arrivals
 
     // The words themselves are not handed over: the room reads them from the
     // document when it has something to compare them with, which is a round trip
@@ -200,7 +247,7 @@ class Rooms {
       holds,
     })
 
-    this.held.set(key, { room, noteId: open.noteId, note: open.note })
+    this.held.set(key, { room, noteId: open.noteId, note: open.note, kind })
   }
 }
 

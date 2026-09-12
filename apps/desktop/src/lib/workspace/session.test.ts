@@ -105,6 +105,37 @@ describe('reading one tab', () => {
       'reading',
     )
   })
+
+  /** What a tab holds is the file's, not the entry's. An entry written before there
+   *  were canvases, one whose kind was lost, or one naming a kind this version has
+   *  never heard of used to come back as a note whatever its name said - and a
+   *  canvas restored as a note joins the room of a file the service serves as a
+   *  plane, which is the two ends of one file building different shapes for it. */
+  test('reads the kind off the file’s name, whatever the entry claims', () => {
+    for (const claimed of [undefined, 'note', 'pdf', 'graph', 'nonsense', 7]) {
+      expect(
+        readDraft({ kind: claimed, path: '/Notes/Board.canvas', name: 'Board.canvas', doc: '' }),
+        JSON.stringify(claimed ?? null),
+      ).toMatchObject({ kind: 'canvas' })
+    }
+  })
+
+  test('and does not leave a canvas over a file whose name says words', () => {
+    expect(
+      readDraft({ kind: 'canvas', path: '/Notes/plan.md', name: 'plan.md', doc: '' }),
+    ).toMatchObject({ kind: 'note' })
+  })
+
+  test('leaves a tab no file names alone, which is the graph', () => {
+    expect(readDraft({ kind: 'graph', path: null, name: 'Graph', doc: '' })).toMatchObject({
+      kind: 'graph',
+    })
+    // And a paper is still a paper: its name says words, and `pdf` is not a kind
+    // the name can argue with.
+    expect(
+      readDraft({ kind: 'pdf', path: '/Notes/paper.pdf', name: 'paper.pdf', doc: '' }),
+    ).toMatchObject({ kind: 'pdf' })
+  })
 })
 
 describe('reading a closed tab', () => {

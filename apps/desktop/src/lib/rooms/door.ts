@@ -36,6 +36,19 @@ const ROOM = 'room'
  *  how an undo knows which changes were yours. */
 export const HERE = 'here'
 
+/** The code the service closes a socket with when it has thrown the room away and
+ *  will build another - because the file behind it is a different kind of file now;
+ *  see `crossed` in services/sync/src/rooms/room.ts.
+ *
+ *  It is not a connection that went. What comes next is a room built afresh out of
+ *  the file, which is a different document with a history of its own, and this
+ *  device's copy must not be reconnected to it: merging two documents that were
+ *  seeded from the same words separately is those words twice over. So the socket is
+ *  not retried and the room is let go instead, to be joined again from nothing - the
+ *  one path that ends in the meeting, where what each side holds is compared rather
+ *  than added together. See `gone` below, and rooms.svelte.ts. */
+const REBUILT = 1012
+
 /** What this device calls itself in a room, and the colour it wears there. Both
  *  names travel; which one is drawn belongs to whoever is looking. See who.ts. */
 export interface Who {
@@ -54,6 +67,10 @@ export interface Opening {
   caughtUp: () => Promise<void> | void
   /** Somebody arrived, left, or moved. */
   present: () => void
+  /** The room on the other end is not coming back: it was thrown away and another
+   *  will be built out of the file. Nothing here can carry on, so whoever joined
+   *  this room is asked to let it go and join again; see `REBUILT`. */
+  gone: () => void
 }
 
 export class RoomDoor {
@@ -81,7 +98,7 @@ export class RoomDoor {
     this.socket = new RoomSocket(opening.noteId, opening.token, {
       opened: () => this.greet(),
       heard: (message) => void this.hear(message),
-      closed: () => this.alone(),
+      closed: (code) => this.went(code),
     })
 
     this.awareness.setLocalStateField('who', this.who)
@@ -175,8 +192,25 @@ export class RoomDoor {
     }
   }
 
-  /** The connection went. Everybody else goes with it: where they are is no longer
-   *  something this device knows. */
+  /** The connection went, and the code says whether it is coming back.
+   *
+   *  Almost always it is: a network that dropped, a deploy, a laptop that slept, and
+   *  the socket is already waiting to try again. The one code that means otherwise is
+   *  the room having been thrown away, and then there is nothing here to reconnect -
+   *  the socket is stopped, which the socket allows from inside this very call, and
+   *  whoever joined the room is asked to join another. */
+  private went(code: number) {
+    if (code === REBUILT) {
+      this.socket.stop()
+      this.opening.gone()
+      return
+    }
+
+    this.alone()
+  }
+
+  /** Everybody else goes with the connection: where they are is no longer something
+   *  this device knows. */
   private alone() {
     const others = [...this.awareness.getStates().keys()].filter((id) => id !== this.doc.clientID)
     forget(this.awareness, others, 'gone')
