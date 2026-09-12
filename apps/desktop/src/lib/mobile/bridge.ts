@@ -14,7 +14,13 @@
  *  nothing. */
 
 /** Every method `MainActivity.Bridge` publishes. One list, so the page and the
- *  activity can be read against each other. */
+ *  activity can be read against each other; `test/android.test.ts` holds the two
+ *  sides to it.
+ *
+ *  The three about a secret are the AI providers' keys, and they are called from
+ *  ai/keys.ts rather than from here - that module asks the same object for its own
+ *  three by name, the way everything on this bridge is asked for. They are in the
+ *  list because the list is what the activity publishes, not what this file uses. */
 export interface NibSystem {
   /** The four edges the system bars keep, as JSON; see insets.ts. */
   insets(): string
@@ -34,6 +40,10 @@ export interface NibSystem {
   dictates(): boolean
   /** Turns dictation on or off; answers whether it is listening. */
   listen(on: boolean): boolean
+  /** An AI provider's key, out of the file the Keystore guards; see ai/keys.ts. */
+  secretRead(name: string): string | null
+  secretWrite(name: string, secret: string): void
+  secretForget(name: string): void
 }
 
 /** One method of the bridge, or nothing where there is no activity behind it. */

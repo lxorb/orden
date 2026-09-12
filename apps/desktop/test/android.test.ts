@@ -197,6 +197,25 @@ describe('the bridge the page talks over', () => {
     expect([...kotlin].sort()).toEqual([...typed].sort())
   })
 
+  /** The one thing a compiler cannot say until it has downloaded the artifact:
+   *  `MasterKey` is in androidx.security:security-crypto from 1.1.0, and 1.0.0
+   *  ships only the alias-based `MasterKeys` it replaced. With 1.0.0 on the path
+   *  the import does not resolve and the `create` call falls through to the
+   *  overload that takes a file name first, which is how this last failed - with a
+   *  message about a String where an activity was, and nothing about a version. */
+  test('asks for a version of the keystore library that has what it imports', () => {
+    const gradle = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'build.gradle.kts')
+    if (!activity.includes('MasterKey')) return
+
+    const version = /androidx\.security:security-crypto:(\d+)\.(\d+)\.(\d+)/.exec(gradle)
+    expect(version, 'the keystore library is not declared').not.toBe(null)
+
+    const [major, minor] = [Number(version?.[1]), Number(version?.[2])]
+    expect(major * 1000 + minor, `security-crypto ${version?.[0] ?? ''}`).toBeGreaterThanOrEqual(
+      1001,
+    )
+  })
+
   /** A release build minifies, so a method the page calls by name and proguard
    *  does not keep is a method that is there in debug and gone in the APK
    *  somebody installs. */
