@@ -6,11 +6,18 @@ import {
   type ChangeSpec,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 import { CodeMirror, Vim } from '@replit/codemirror-vim'
 import { modeExtensions } from './modes'
 import { type DocView, SharedDoc, sharing } from './shared'
-import { setVim, takeBackNibKeys } from './vim'
+import { loadVim, setVim } from './vim'
+import { takeBackNibKeys } from './vim-mode'
+
+// The library is loaded the first time modal editing is asked for; these tests turn
+// the mode on and read the state in the same breath, which in the app is a keymap
+// arriving in the next frame and here would be a keymap that never arrived. Once, for
+// the file: it is the library's own keymap and there is one of it. See vim.ts.
+beforeAll(() => loadVim())
 
 /** A view is a DOM thing and these tests are not, so this is all the setter
  *  under test actually touches: a state to dispatch into. */
