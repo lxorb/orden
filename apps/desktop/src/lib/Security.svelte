@@ -298,7 +298,7 @@
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
 
@@ -412,7 +412,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -440,7 +440,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     text-align: left;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
@@ -520,6 +520,12 @@
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .pill {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
     font-size: var(--touch-text);
   }
 

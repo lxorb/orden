@@ -503,7 +503,7 @@
     color: #fff;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -537,6 +537,14 @@
     min-height: var(--touch-row);
     gap: var(--touch-gap);
     padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  /* The two faces of a version - what it would change, and what it says - are
+     the other thing here to press. */
+  :global([data-touch]) .faces button {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-3);
     font-size: var(--touch-text);
   }
 

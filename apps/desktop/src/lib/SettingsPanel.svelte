@@ -289,7 +289,7 @@
   ></div>
 
   <div
-    class="sheet"
+    class="nib-screen sheet"
     class:phone={viewport.touch}
     style:height={pageHeight()}
     use:trap
@@ -1025,21 +1025,18 @@
     z-index: 40;
   }
 
+  /* The shape is `.nib-screen` in the themes package - the surface, the corner,
+     the shadow and the centring every panel of this kind wears. What is left
+     here is what this one alone is: how wide, how tall, how far down, and the two
+     columns inside it. */
   .sheet {
-    position: fixed;
+    --screen-width: 56rem;
     top: 10vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(56rem, calc(100vw - 3rem));
     height: 76vh;
     z-index: 41;
     /* Two columns: the list of panes, and the pane. */
     display: grid;
     grid-template-columns: 14rem 1fr;
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
   }
 
@@ -1070,7 +1067,7 @@
     padding: 0 10px;
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 620;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
 
@@ -1158,8 +1155,8 @@
   }
 
   .item .glyph {
-    width: 15px;
-    height: 15px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     flex: none;
     fill: none;
     stroke: currentColor;
@@ -1190,7 +1187,7 @@
     margin: 0 0 var(--space-2);
     font-family: var(--font-ui);
     font-size: 1.15em;
-    font-weight: 620;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
 
@@ -1198,7 +1195,7 @@
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
 
@@ -1328,7 +1325,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     text-align: left;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
@@ -1359,7 +1356,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -1498,7 +1495,7 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     cursor: default;
   }
 
@@ -1508,11 +1505,13 @@
     color: #fff;
   }
 
-  /* A key that may never arrive. Softened rather than red: on a browser
-     several of the defaults carry one of these, and a column of alarms about
-     something nobody has done yet reads as breakage. */
+  /* A key that may never arrive. Quiet rather than red: on a browser several of
+     the defaults carry one of these, and a column of alarms about something
+     nobody has done yet reads as breakage. Quiet is `--muted-strong`, which is a
+     colour somebody can read; the mix it used to be came out at 1.2:1 against
+     the surface, which is a warning nobody can. */
   .setting .name small.caution {
-    color: color-mix(in srgb, var(--danger) 55%, var(--muted));
+    color: var(--muted-strong);
   }
 
   /* A key that was turned down, which is an answer to something the reader
@@ -1531,7 +1530,7 @@
     margin: 0;
     font-size: var(--text-base);
     color: var(--text-strong);
-    font-weight: 550;
+    font-weight: var(--weight-row);
   }
 
   .note {
@@ -1564,7 +1563,7 @@
     border-radius: var(--radius-md);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-row);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -1778,7 +1777,7 @@
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--touch-text);
-    font-weight: 620;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
     white-space: nowrap;
     overflow: hidden;
@@ -2000,10 +1999,20 @@
     background: var(--surface-2);
   }
 
+  /* Every one of these is something a thumb has to land on, so every one of them
+     clears the platform floor on a phone. `--touch-target` is that floor; see
+     tokens.css. */
   .sheet.phone .key {
     min-width: 5.5rem;
+    min-height: var(--touch-target);
     padding: 7px 10px;
     font-size: var(--text-sm);
+  }
+
+  .sheet.phone .pill {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .revert {
@@ -2052,7 +2061,7 @@
   }
 
   .sheet.phone .swatch {
-    width: 36px;
-    height: 36px;
+    width: var(--touch-target);
+    height: var(--touch-target);
   }
 </style>
