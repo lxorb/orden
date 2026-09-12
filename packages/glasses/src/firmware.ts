@@ -188,15 +188,17 @@ const COMBINING = /^\p{Mn}$/u
 
 /** One character the firmware can draw, for one it cannot.
  *
- *  In order: the table above; nothing at all for something meant to be
- *  invisible; a compatibility decomposition, which rescues a whole class at once
- *  (`ⁿ` is `n`, `⁽` is `(`, `ﬁ` is `fi`, `µ` is `μ`); the same with the combining
- *  marks taken off, for an accent with no precomposed form; the emoji's own name,
- *  which carries far more than a box does; and a box. */
-function insteadOf(one: string, code: number): string {
+ *  In order: the table above; a compatibility decomposition, which rescues a whole
+ *  class at once (`ⁿ` is `n`, `⁽` is `(`, `ﬁ` is `fi`, `µ` is `μ`); the same with
+ *  the combining marks taken off, for an accent with no precomposed form; the
+ *  emoji's own name, which carries far more than a box does; and a box.
+ *
+ *  A character meant to be invisible never reaches here: the one caller answers
+ *  that before asking, because the font has a glyph for some of them and drawing
+ *  it would put a hyphen in the middle of a word. */
+function insteadOf(one: string): string {
   const mapped = INSTEAD[one]
   if (mapped !== undefined) return mapped
-  if (formatting(code)) return ''
 
   const wide = one.normalize('NFKD')
   if (wide !== one && drawable(wide)) return wide
@@ -308,7 +310,7 @@ export function fold(text: string): string {
       // Formatting before drawing, because the font does have a glyph for some
       // of them: a soft hyphen in the middle of a word would come out as a
       // hyphen in the middle of a word.
-      known = formatting(code) ? '' : draws(code) ? one : insteadOf(one, code)
+      known = formatting(code) ? '' : draws(code) ? one : insteadOf(one)
       folded.set(code, known)
     }
 
