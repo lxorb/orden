@@ -5,8 +5,12 @@
  *  package, and the file written straight into a folder on a phone where there
  *  is no dialog to ask in.
  *
- *  The rule is the app's own, the one `free_spot` in the crate follows: the
- *  number goes before the extension, so `Note 2.docx` and never `Note.docx 2`. */
+ *  The numbering itself is not the export's own: `freePath` in @nib/markdown/paths
+ *  is what every part of the app steps a taken name aside with, so `Note 2.docx`
+ *  here and a copy in the file list are numbered by one rule. What belongs to the
+ *  export is the shape its callers ask in - a set of the names they already hold. */
+
+import { freePath } from '@nib/markdown/paths'
 
 /** The note's name without whatever extension it had. */
 export function stemOf(name: string): string {
@@ -20,16 +24,7 @@ export function fileNameFor(name: string, extension: string): string {
 
 /** `wanted` if nothing has it, else the first free `name 2`, `name 3`... */
 export function freeName(wanted: string, taken: ReadonlySet<string>): string {
-  if (!taken.has(wanted)) return wanted
-
-  const dot = wanted.lastIndexOf('.')
-  const stem = dot > 0 ? wanted.slice(0, dot) : wanted
-  const extension = dot > 0 ? wanted.slice(dot) : ''
-
-  for (let counter = 2; ; counter++) {
-    const candidate = `${stem} ${counter}${extension}`
-    if (!taken.has(candidate)) return candidate
-  }
+  return freePath(wanted, (candidate) => taken.has(candidate))
 }
 
 /** The same, over a set that is then told about the name it gave out - which is
