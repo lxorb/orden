@@ -497,13 +497,14 @@ describe('the name a device sends for itself', () => {
   })
 
   test('and is never cut through the middle of a character', () => {
-    // Forty emoji is eighty units, and a bound counted in units left half of the
-    // fortieth in the column.
-    const cut = deviceIn('🙂'.repeat(60))
+    // Forty whole ones, which is eighty units: a bound counted in units kept forty
+    // units and left half of the twentieth behind.
+    expect(deviceIn('🙂'.repeat(60))).toBe('🙂'.repeat(40))
 
-    // Forty whole ones, which is eighty units: a bound counted in units kept
-    // forty units and left half of the twentieth behind.
-    expect([...cut]).toHaveLength(40)
-    expect(cut).toHaveLength(80)
+    // And a character a code point would have broken too: one family is seven
+    // code points joined, and half a family is three strangers.
+    const family = '👨‍👩‍👧'
+    expect(deviceIn(family.repeat(20))).toBe(family.repeat(20))
+    expect(deviceIn(family.repeat(60))).toBe(family.repeat(40))
   })
 })

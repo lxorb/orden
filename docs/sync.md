@@ -58,11 +58,25 @@ device's sweep uses, so the two histories read alike, run by the nightly cron wi
 a write budget: a sweep that tried to catch up on a year in one invocation would
 be stopped by the platform rather than by us.
 
+The budget is spent a statement per note rather than a statement per row, which is
+what makes those two rules true rather than aspirational. A note written in all day
+is 288 versions, of which 264 are crowded, so a budget counted in rows spent a
+whole night's on a single note - and with two busy notes the thinning never caught
+up at all: every night began the same distance behind, and the month was whatever
+had accumulated. A note now falls behind by at most one run of the sweep.
+
+**And at most 1024 versions of any one note**, held where the version is written
+rather than left to the sweep. A month under the two rules above comes to 984, so
+nothing anybody does reaches this by accident; what it does is put a number on what
+one note can cost, which a ceiling waiting on a nightly job cannot.
+
 **There is no setting for it.** The only thing a longer month would change is the
 bill for storage nobody asked to keep, and a reader who does not want their words
 on the account has a clearer lever than a slider, which is not to sync. Version
 bytes are also not counted against the account's quota: they are the service's
-promise rather than the reader's allowance.
+promise rather than the reader's allowance. Which is worth knowing the size of:
+even with the ceiling above, an account at its 1 GiB quota can have a few hundred
+times that behind it in version bodies, and nothing bills for them.
 
 **One place to read them.** The note's own history sheet lists both, newest first,
 with the device beside the ones the account holds. A save this device kept and then
@@ -78,7 +92,16 @@ other, undoable the same way, and nothing about it is special except how many
 notes it touches at once.
 
 A note written after that moment with no version at or before it is left alone:
-there is nothing to put back.
+there is nothing to put back. So is one whose body the sweep has already taken -
+a row naming bytes that are gone answers nothing rather than answering with an
+empty note, which is the one answer that would write over words somebody still
+has.
+
+One bound to know about: a rollback reaches 400 notes in a request, which is the
+same per-invocation budget the sweep and the change feed have. A space with more
+notes than that under the path named is put back 400 at a time, and neither the
+dry run nor the answer says so yet - so the count the sheet shows is what this
+request would do and not necessarily what the space holds.
 
 ## When the same note was written twice
 
@@ -125,6 +148,12 @@ nothing is not written down. A log of "nothing happened" every twenty seconds is
 log nobody can read, and a table on the server would mean a write on every pass for
 something almost nobody reads.
 
+It goes when the session does. A note waiting to be settled is held whole, because
+it is the copy the pass had in its hand, which makes this the one place on the device
+where somebody else's words sit outside the vault - and the vault is emptied on
+sign-out. Clearing the list by hand is the other thing, and that leaves what is
+still waiting: a clash is work, not a log line.
+
 The account's side of the same question is which device wrote a version, which the
 history sheet already shows. The Worker's own failures go to Workers Logs with the
 route, the error's name and the request's ray, and nothing about whose sign-in it
@@ -153,14 +182,40 @@ with a derivation of its own, the way an OpenAI key is, so a leaked database is 
 a drawer full of working authenticators. No secret configured means the pane offers
 nothing rather than storing one in the clear.
 
+**A code is spent the moment it works.** RFC 6238 says a verifier must not take the
+same one twice, and the reason is the ninety seconds a code stays inside the drift
+window: without this, one read over a shoulder, off a screen share or out of a
+phishing page was a second sign-in as well as the first. What is written down is
+the step the code was derived from, never the code.
+
+Two ceilings on the guessing, both per hour: twenty codes for one account, and
+sixty from one machine. The second is there because the first says nothing at all
+to a script working through a list of addresses twenty guesses at a time.
+
 **Recovery codes** are ten one-shot codes, hashed at rest and spent the moment they
 work, shown once. Losing a phone is the common case and this is the only honest way
-out of it.
+out of it. Ten bytes each, behind PBKDF2 salted with the account's own id - five
+bytes under a single digest is forty bits, which is a table a graphics card walks
+in minutes, so a leaked database would have been a way past the factor on every
+account at once. Codes printed before that change still work; a row says which
+scheme wrote it.
 
-One operational fact worth writing down: the secret those are encrypted under is
-the service's, so rotating it makes every enrolled authenticator stop verifying.
-The recovery codes still work - they are hashed, not encrypted - so nobody is
-locked out, but everyone would have to enrol again.
+Two operational facts worth writing down.
+
+The secret the authenticator secrets are encrypted under is the service's, so
+rotating it makes every enrolled authenticator stop verifying. The recovery codes
+still work - they are hashed, not encrypted - so there is a way back in, but
+everyone would have to enrol again. **An account that has spent all ten of its
+recovery codes before such a rotation has no way back in at all**, because asking
+for the second code is decided by whether the account has a factor and not by
+whether the service can still read it - which is the right way round for security
+and a dead end for that account. Rotating the secret means clearing `totp_at` and
+`totp_secret` in the same breath.
+
+An enrolment nobody finishes holds its secret in the clear for ten minutes, because
+until a code proves an app has it there is nothing to bind it to. The nightly job
+takes those rows away; before it did, closing the pane left a working secret in the
+table for the life of the database.
 
 ### The sessions, which matter more
 
@@ -188,7 +243,18 @@ CI needs it.
 
 The list is written as what is allowed rather than what is refused, so a route
 added tomorrow is closed to a token until somebody says otherwise; see
-`services/sync/src/programs.ts`.
+`services/sync/src/programs.ts`. Every route on it asks its own question again
+behind the door - which space, at what role - so the token opens the route and the
+membership still decides the answer. Nothing about the second factor or the sessions
+is on it: a credential in a CI secret that could see the sessions could end them,
+and one that could reach the factor could take it off, which is the account
+defending itself against exactly that credential leaking.
+
+One thing the listing does hand over that the list above would not: `GET /v1/spaces`
+answers with each space's blog settings, including the TXT value that proves a
+domain. It is a verification nonce rather than a credential - using it means already
+controlling the domain's DNS - but a token scoped to "notes and nothing about the
+account" can read it, and so can a guest.
 
 Then a script, `scripts/nib-sync.mjs`, forty lines of fetch:
 
@@ -229,10 +295,15 @@ writes rather than rows, because a Worker's ceiling is on writes.
   only once the last row naming it has gone.
 - `services/sync/test/second.test.ts` - the RFC 6238 vectors, the enrolment that
   turns nothing on until a code proves it, the half-finished sign-in that cannot be
-  finished twice, a recovery code spent the moment it works, and the sessions a
-  reader can see and end.
+  finished twice but survives a mistyped code, an app's code spent the moment it
+  works, a recovery code that is not a bare digest, both ceilings on the guessing,
+  the abandoned enrolment the nightly job takes away, and the sessions a reader can
+  see and end.
 - `services/sync/test/programs.test.ts` - exactly which routes a token acting for
-  somebody reaches, and that a read-only one reaches none that write.
+  somebody reaches, that a read-only one reaches none that write, and that neither
+  the factor, the sessions nor a rollback is one of them.
+- `services/sync/test/guests.test.ts` - and the same question for a guest, which
+  reaches none of those either.
 - `apps/desktop/src/lib/sync/conflicts.test.ts` - the rule read off the account and
   where the other copy goes.
 - `apps/desktop/src/lib/sync/mirror.test.ts` - the pass itself, including the three

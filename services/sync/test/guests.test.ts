@@ -475,6 +475,23 @@ describe('a guest session', () => {
           headers: { 'content-type': 'image/png' },
         }),
     },
+    // The account's record of its own notes, and the whole space at once. See the
+    // allowlist in guests.ts, which says why neither is a guest's.
+    { what: 'the versions of a note', go: (token) => call(env, '/v1/notes/x/versions', { token }) },
+    { what: 'one of them', go: (token) => call(env, '/v1/notes/x/versions/1', { token }) },
+    {
+      what: 'putting a space back to a moment',
+      go: (token) => call(env, `/v1/spaces/${space}/rollback`, { token, body: { at: Date.now() } }),
+    },
+    // And anything about the second factor or the sessions, which are the account
+    // itself: a guest has neither, and a token acting for somebody may not either.
+    { what: 'the second factor', go: (token) => call(env, '/v1/second', { token }) },
+    { what: 'turning it off', go: (token) => call(env, '/v1/second', { method: 'DELETE', token }) },
+    { what: 'the sessions', go: (token) => call(env, '/v1/sessions', { token }) },
+    {
+      what: 'ending every other one',
+      go: (token) => call(env, '/v1/sessions', { method: 'DELETE', token }),
+    },
   ]
 
   for (const closed of CLOSED) {

@@ -202,7 +202,7 @@ describe('signing in with it on', () => {
 
   test('a recovery code finishes it too, and is spent', async () => {
     // Fresh codes, so the test has one it knows. The next step's code rather
-        // than this one's: signing in above spent the code it used, and the app
+    // than this one's: signing in above spent the code it used, and the app
     // would be showing the next one by the time somebody pressed the button.
     const token = await signInWith(env, secret)
     const made = await call<SecondView>(env, '/v1/second/recovery', {

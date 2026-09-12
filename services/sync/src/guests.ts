@@ -158,17 +158,18 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   // and handed back from the same row. See spaces/share.ts.
   { method: 'GET', path: /^\/v1\/shared$/ },
   { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
-  // And the files a link granted on their own, which are not in any space a
-  // guest can reach: one note out of somebody's drawer, listed at the foot of
-  // the switcher and handed back from the same row. See spaces/share.ts.
-  { method: 'GET', path: /^\/v1\/shared$/ },
-  { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/notes$/ },
   { method: 'PUT', path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|files|graph|excluded)$/ },
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },
+  // Deliberately not the versions a note has on the account, nor putting a space
+  // back to a moment. The history is the account's record of its own notes, and a
+  // guest has no account; a rollback is the whole space at once, which is not
+  // something to do with a link somebody was handed. Both are reachable code for
+  // a guest - `reachedNote` answers about one - so this is the door, and it says
+  // so here rather than nowhere.
   // Letting themselves out, which is the one thing under `share` that is not
   // the owner's: being in a space is something a person can stop.
   { method: 'DELETE', path: /^\/v1\/spaces\/[^/]+\/share\/me$/ },

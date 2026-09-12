@@ -93,10 +93,23 @@ export function deviceIn(header: string | undefined): string {
   // somebody's client chose, shown in the history sheet and beside a session in
   // the Account pane. A newline was already taken out; the rest of the control
   // characters were not, and a name is words and not layout either way.
-  //
-  // Cut by code point rather than by unit, so a bound of forty never lands in
-  // the middle of an emoji and leaves half a character in the column.
-  return [...cleanName(header ?? '')].slice(0, DEVICE_LIMIT).join('')
+  const name = cleanName(header ?? '')
+  if (name.length <= DEVICE_LIMIT) return name
+
+  // Cut by what a reader would call a character rather than by UTF-16 unit, so a
+  // bound of forty never leaves half of one in the column. A code point is not
+  // that either: a flag is two of them and a family is seven.
+  const characters = new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(name)
+
+  let out = ''
+  let held = 0
+  for (const { segment } of characters) {
+    if (held === DEVICE_LIMIT) break
+    out += segment
+    held += 1
+  }
+
+  return out
 }
 
 /** Keeps what the account was just sent, unless it says nothing new.
@@ -145,9 +158,7 @@ export async function keepVersion(
  *  ceiling and a count on the note's own index is one seek. Over it, the oldest
  *  go - which is the same answer the month gives, arrived at sooner. */
 async function keepAtMost(env: Env, noteId: string): Promise<void> {
-  const held = await env.DB.prepare(
-    'select count(*) as many from note_versions where note_id = ?',
-  )
+  const held = await env.DB.prepare('select count(*) as many from note_versions where note_id = ?')
     .bind(noteId)
     .first<{ many: number }>()
 
@@ -163,7 +174,10 @@ async function keepAtMost(env: Env, noteId: string): Promise<void> {
     .bind(noteId, over)
     .all<{ hash: string }>()
 
-  await forgetBodies(env, results.map((one) => one.hash))
+  await forgetBodies(
+    env,
+    results.map((one) => one.hash),
+  )
 }
 
 /** The bodies of versions that have gone, for the hashes no row names any more.

@@ -150,7 +150,7 @@ export async function codeAt(secretHex: string, step: number): Promise<string> {
  *  The step rather than a yes, because a code that has been answered with must
  *  not be answered with again - RFC 6238 §5.2 - and the step is what can be
  *  written down to say so. The code itself is not ours to keep. */
-export async function stepMatching(
+async function stepMatching(
   secretHex: string,
   given: string,
   at = now(),
@@ -217,7 +217,9 @@ async function recoveryHash(userId: string, code: string): Promise<string> {
     256,
   )
 
-  const digest = [...new Uint8Array(bits)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  const digest = [...new Uint8Array(bits)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
   return `${RECOVERY_VERSION}.${digest}`
 }
 

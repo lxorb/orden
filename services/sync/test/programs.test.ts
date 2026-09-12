@@ -33,6 +33,34 @@ describe('what a program may reach', () => {
     expect(programMayReach('PUT', '/v1/spaces/abc/blog', false)).toBe(false)
   })
 
+  test('and nothing about the second factor or the sessions', () => {
+    // A token in a CI secret that could see the sessions could end them, and one
+    // that could reach the factor could take it off: both are the account
+    // defending itself against a stolen credential, which is what this is.
+    for (const path of ['/v1/second', '/v1/second/confirm', '/v1/second/recovery']) {
+      expect(programMayReach('GET', path, false)).toBe(false)
+      expect(programMayReach('POST', path, false)).toBe(false)
+      expect(programMayReach('DELETE', path, false)).toBe(false)
+    }
+
+    expect(programMayReach('GET', '/v1/sessions', false)).toBe(false)
+    expect(programMayReach('DELETE', '/v1/sessions', false)).toBe(false)
+    expect(programMayReach('DELETE', '/v1/sessions/abc', false)).toBe(false)
+  })
+
+  test('and not a rollback, which is the whole space at once', () => {
+    // Writing one note is what a job needs; writing every note in a space back to
+    // a moment on a bad argument is the thing the delete was left out to avoid.
+    expect(programMayReach('POST', '/v1/spaces/abc/rollback', false)).toBe(false)
+  })
+
+  test('and no path that only looks like one on the list', () => {
+    expect(programMayReach('GET', '/v1/notes/abc/', false)).toBe(false)
+    expect(programMayReach('GET', '/v1/notes/abc/versions/1/more', false)).toBe(false)
+    expect(programMayReach('GET', '/v1/spaces/abc/changes/x', false)).toBe(false)
+    expect(programMayReach('GET', '/v1/spaces/abc/notes', false)).toBe(false)
+  })
+
   test('and a token that may only read reaches nothing that writes', () => {
     expect(programMayReach('GET', '/v1/notes/abc', true)).toBe(true)
     expect(programMayReach('PUT', '/v1/notes/abc', true)).toBe(false)
