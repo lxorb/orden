@@ -1,8 +1,9 @@
 /** A note as pages the glasses set themselves.
  *
- *  Ten of the firmware's 27 pixel lines fit on the panel and the page keeps three
- *  of them for its own furniture, so a page of a note is seven lines; see
- *  `panel.ts`. This decides which seven.
+ *  Ten of the firmware's 27 pixel lines fit on the panel and the page keeps two of
+ *  them for its own furniture, so a page of a note is `BODY_ROWS` lines - eight;
+ *  see `panel.ts`, which says why it is not seven any more. This decides which
+ *  eight.
  *
  *  Three rules, and the first is the one worth reading twice:
  *

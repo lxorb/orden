@@ -166,8 +166,9 @@ const TASK_DONE = '■'
  *  is. A square with lines in it, which the font has. */
 const PICTURE = '▤'
 
-/** What a fence is written with. Three left quotes, because the firmware has no
- *  backtick and a left quote is the same stroke; see `firmware.ts`. */
+/** What a fence is written with. Three backticks, which `fold` turns into three
+ *  left quotes on the way to the panel: the firmware has no backtick and a left
+ *  quote is the same stroke. See `firmware.ts`. */
 const FENCE = '```'
 
 /** The digits a superscript and a subscript are set in.
@@ -212,15 +213,6 @@ function raise(text: string, digits: string): string | null {
   return out
 }
 
-/** Where each block began in the file.
- *
- *  The same walk `blocksOf` used, and for the same reason: marked gives every
- *  token the text it was made from, so a walk in document order finds each one
- *  after the last. A container is looked up without being consumed so that the
- *  tokens inside it are found within it. A blockquote is the exception, because
- *  the lexer hands its children their lines with the `>` already taken off and
- *  there is nothing left to search for; those fall back to the start of the
- *  quote, which is where a reader sent there would want to be anyway. */
 /** What marking a note did, in the four things it does per note.
  *
  *  Counted rather than timed, and here rather than in the test because only this
@@ -259,6 +251,14 @@ export function workDone(): Work {
   return done
 }
 
+/** Where each block began in the file.
+ *
+ *  Marked gives every token the text it was made from, so a walk in document order
+ *  finds each one after the last. A container is looked up without being consumed
+ *  so that the tokens inside it are found within it. A blockquote is the exception,
+ *  because the lexer hands its children their lines with the `>` already taken off
+ *  and there is nothing left to search for; those fall back to the start of the
+ *  quote, which is where a reader sent there would want to be anyway. */
 class Locator {
   private at = 0
 
