@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import type { Token, Tokens } from 'marked'
+import { lexMarkdown } from './index'
 import { deckOf, isDeck, slideAt } from './slides'
 
 /** The shown markdown of every slide, which is most of what a test asserts. */
@@ -243,5 +245,59 @@ describe('where a slide sits in the note', () => {
 
   test('a caret above the first slide is on the first slide', () => {
     expect(slideAt(deckOf('---\n\n# One'), 0)).toBe(0)
+  })
+})
+
+/** The list items the renderer's own grammar finds, in the order it emits them.
+ *  What `fragments` is counted against, reached the expensive way. */
+function itemsThroughTheRenderer(markdown: string): string[] {
+  const found: string[] = []
+
+  const walk = (tokens: readonly Token[]) => {
+    for (const token of tokens) {
+      if (token.type === 'list') {
+        for (const item of (token as Tokens.List).items) {
+          found.push(item.raw)
+          walk(item.tokens)
+        }
+        continue
+      }
+
+      const inside = (token as { tokens?: Token[] }).tokens
+      if (inside) walk(inside)
+    }
+  }
+
+  walk(lexMarkdown(markdown))
+  return found
+}
+
+describe('the grammar the fragments are counted with', () => {
+  /** Every shape where a lighter grammar could disagree with the renderer's about
+   *  which lines are list items: a construct that swallows lines, and one that
+   *  does not. */
+  const notes = [
+    '# One\n\n+ a\n+ b',
+    '# One\n\n- a\n  - b\n- c\n\n+ d',
+    '# One\n\n$$\n+ not an item\n$$\n\n+ mine',
+    '# One\n\n$$+ x$$\n\n+ mine',
+    '# One\n\nTerm\n: a meaning\n\n+ mine',
+    '# One\n\n- a\n: not a meaning',
+    '# One\n\n[^1]: a note\n\n+ mine',
+    '# One\n\n*[HTML]: HyperText\n\n+ mine',
+    '# One\n\n> - quoted\n> + stepped',
+    '# One\n\n```diff\n+ added\n```\n\n+ mine',
+    '# One\n\n:smile: and $x$\n\n+ mine',
+    '# One\n\n![[Other]]\n\n+ mine',
+  ]
+
+  test('finds the same items the renderer would, without loading the renderer', () => {
+    for (const note of notes) {
+      const [slide] = deckOf(note)
+      const items = itemsThroughTheRenderer(slide?.markdown ?? '')
+      const stepped = items.flatMap((raw, at) => (/^[ \t]*\+/.test(raw) ? [at] : []))
+
+      expect([note, slide?.fragments], note).toEqual([note, stepped])
+    }
   })
 })

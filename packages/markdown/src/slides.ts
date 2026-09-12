@@ -27,9 +27,9 @@
  *  Pure: a string in, slides out. The app, an export and a published page all
  *  read the same deck out of the same note. */
 
+import { Marked, type Token, type Tokens } from 'marked'
+import { blockMath, definitionList } from './blocks'
 import { closesFence, fenceMark } from './fences'
-import { lexMarkdown } from './index'
-import type { Token, Tokens } from 'marked'
 
 /** How a slide is laid out, read off what it holds rather than off an
  *  annotation nobody could open in another editor. */
@@ -183,12 +183,27 @@ function shapeOf(markdown: string): SlideShape {
   return onlyHeadings(body) ? 'title' : 'prose'
 }
 
+/** Where this module's blocks begin and end.
+ *
+ *  GFM, plus the two constructs of this package's own that reach past the line
+ *  they open on; see blocks.ts. That is the whole of what decides which lines are
+ *  list items: a `+ x` line inside a `$$` block is a formula rather than an item
+ *  in both this lexer and the renderer's, and everything else the package adds is
+ *  inline or one line of its own, which no list boundary depends on.
+ *
+ *  Its own grammar rather than the renderer's, because the renderer's is reached
+ *  through the package's entry point and drags KaTeX, its chemistry pack and the
+ *  emoji table in with it - and `isDeck` is asked about every note the editor
+ *  shows, which is the one place in the app that must load none of that. */
+const blocks = new Marked({ gfm: true, breaks: false })
+blocks.use({ extensions: [blockMath, definitionList] })
+
 /** Every list item the slide renders, in the order the renderer emits them.
  *
- *  Read through the same lexer the renderer uses rather than off the lines,
- *  because a list nested in a quote emits an item too and its line does not
- *  begin with a bullet. Depth first, which is the order the HTML comes out in:
- *  an item's own `<li>` opens before the list inside it. */
+ *  Read through a lexer rather than off the lines, because a list nested in a
+ *  quote emits an item too and its line does not begin with a bullet. Depth
+ *  first, which is the order the HTML comes out in: an item's own `<li>` opens
+ *  before the list inside it. */
 function listItems(markdown: string): Tokens.ListItem[] {
   const found: Tokens.ListItem[] = []
 
@@ -207,7 +222,7 @@ function listItems(markdown: string): Tokens.ListItem[] {
     }
   }
 
-  walk(lexMarkdown(markdown))
+  walk(blocks.lexer(markdown))
   return found
 }
 

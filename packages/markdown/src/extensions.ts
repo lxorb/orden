@@ -3,6 +3,7 @@ import katex from 'katex'
 import 'katex/contrib/mhchem'
 import type { MarkedExtension, Token, Tokens } from 'marked'
 import { get } from 'node-emoji'
+import { blockMath, definitionList } from './blocks'
 import { calloutChevron, calloutIcon, calloutOf } from './callouts'
 import { closesFence, fenceMark } from './fences'
 import { escape, fragment } from './html'
@@ -113,38 +114,12 @@ export const scripts: MarkedExtension = {
   ],
 }
 
-/** A `$$` that opens a block. Two shapes, and both of them take a whole line:
- *  `$$` on a line of its own with a closing one under it, or a single line that
- *  is nothing but `$$…$$`, which is how the formula is usually typed and how
- *  every other editor reads it.
- *
- *  Confirmed rather than assumed, and a whole line rather than anywhere on one,
- *  because `$$` in the middle of a sentence would otherwise cut the paragraph in
- *  two there: "Costs $$5 and $$6 in total" is prose about money. */
-const MATH_BLOCK = /\$\$(?:\r?\n[\s\S]+?\r?\n|(?![\s$])[^\n]*?(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/y
-
-function mathBlock(src: string, at: number): number | null {
-  const line = lineStart(src, at, { orString: true })
-  return line !== null && matchesAt(MATH_BLOCK, src, at) ? line : null
-}
-
-/** `$inline$`, and a `$$` block written either way. */
+/** `$inline$`, and a `$$` block written either way. Where the block begins and
+ *  ends is blocks.ts, which slides.ts reads without any of this. */
 export const maths: MarkedExtension = {
   extensions: [
     {
-      name: 'blockMath',
-      level: 'block',
-      start: (src: string) => firstStart(src, ['$$'], mathBlock),
-      tokenizer(src: string) {
-        const match =
-          /^\$\$(?:\r?\n([\s\S]+?)\r?\n|(?![\s$])([^\n]*?)(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/.exec(
-            src,
-          )
-        if (!match) return undefined
-
-        // Whichever of the two shapes matched is the one that captured.
-        return { type: 'blockMath', raw: match[0], text: match[1] ?? match[2] }
-      },
+      ...blockMath,
       renderer: (token: Tokens.Generic) =>
         `<div class="math-block">${math(String(token.text ?? ''), true)}</div>`,
     },
@@ -264,51 +239,11 @@ export const emoji: MarkedExtension = {
   ],
 }
 
-/** A term on one line, its meanings on the `:` lines under it:
- *
- *      Markdown
- *      : A way of writing formatted text.
- *      : Also the format itself.
- */
+/** A definition list, drawn. What one is, and how far it reaches, is blocks.ts. */
 export const definitionLists: MarkedExtension = {
   extensions: [
     {
-      name: 'definitionList',
-      level: 'block',
-      // No `start`. A list needs its term line, and a paragraph that has already
-      // swallowed the term line is not one this can rescue: cutting the paragraph
-      // short leaves the tokenizer looking at the `:` line alone, which is not a
-      // definition list either way. So the only place one is ever recognised is
-      // where a block begins, which is where the tokenizer runs regardless.
-      // Asking for the earliest colon in the rest of the document instead was
-      // more than half the cost of rendering a large note.
-      tokenizer(src: string) {
-        const block = /^((?:[^\n:][^\n]*\n(?:[ \t]{0,3}:[ \t]+[^\n]*(?:\n|$))+)+)/.exec(src)?.[1]
-        if (block === undefined) return undefined
-
-        const items: { term: string; details: string[] }[] = []
-
-        for (const line of block.split('\n')) {
-          if (!line.trim()) continue
-
-          const detail = /^[ \t]{0,3}:[ \t]+(.*)$/.exec(line)
-          if (detail) items.at(-1)?.details.push(detail[1] ?? '')
-          else items.push({ term: line.trim(), details: [] })
-        }
-
-        // A term with nothing under it is a paragraph, not a definition list.
-        if (!items.length || items.some((item) => !item.details.length)) return undefined
-
-        // Tokenized here: the lexer is only reachable from the tokenizer.
-        return {
-          type: 'definitionList',
-          raw: block,
-          items: items.map((item) => ({
-            term: this.lexer.inlineTokens(item.term),
-            details: item.details.map((detail) => this.lexer.inlineTokens(detail)),
-          })),
-        }
-      },
+      ...definitionList,
       renderer(token: Tokens.Generic) {
         const items = token.items as { term: Tokens.Generic[]; details: Tokens.Generic[][] }[]
 
