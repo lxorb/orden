@@ -141,7 +141,7 @@
           spellcheck="false"
           required
         />
-        <button type="submit" disabled={account.busy}>
+        <button class="nib-button" type="submit" disabled={account.busy}>
           {account.busy ? t('Sending') : t('Continue')}
         </button>
       </form>
@@ -284,36 +284,9 @@
     color: var(--muted);
   }
 
-  button {
-    padding: 10px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: var(--text-base);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  button:hover:not(:disabled) {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
-  }
-
-  /* Signing in is a round trip to a server: the button has to look pressed
-     before it looks busy. */
-  button:active:not(:disabled) {
-    background: var(--accent-press);
-    transform: translateY(0);
-  }
-
-  button:disabled {
-    opacity: 0.55;
-  }
+  /* The one thing this panel is for is `.nib-button` in the themes package,
+     which is where the lift on hover, the deeper fill under the finger and the
+     one fade for a button that cannot be pressed all live. */
 
   .sent {
     margin: 0 0 var(--space-4);
@@ -349,20 +322,25 @@
     }
   }
 
+  /* Asking for another code: a sentence you can press rather than a button, so
+     it is not `.nib-button` and says the whole of itself here. */
   .link {
     display: block;
     margin: var(--space-4) auto 0;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
+    border: none;
+    border-radius: var(--radius-row);
     background: none;
     color: var(--muted);
+    font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 400;
+    font-weight: var(--weight-row);
+    cursor: default;
+    transition: color var(--dur-fast) var(--ease-out);
   }
 
   .link:hover:not(:disabled) {
-    background: none;
     color: var(--accent);
-    transform: none;
   }
 
   .error {

@@ -23,8 +23,10 @@
   <p>{t('Nib {version} is ready to install.', { version })}</p>
 
   <div class="actions">
-    <button class="later" onclick={ondismiss}>{t('Later')}</button>
-    <button class="primary" disabled={restarting} onclick={restart}>{t('Restart now')}</button>
+    <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+    <button class="nib-button" disabled={restarting} onclick={restart}
+      >{t('Restart now')}</button
+    >
   </div>
 </div>
 
@@ -58,40 +60,14 @@
     flex: none;
   }
 
-  button {
-    padding: 6px 10px;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-ui);
+  /* Both buttons are `.nib-button` in the themes package - the accent one and
+     `is-quiet` beside it. They were their own pair here: a smaller corner, a
+     smaller type size, no lift under the pointer where the sign-in panel's
+     lifted, and a fade of 0.6 where the app's is 0.4. A notice is small, so the
+     words are the size the sentence beside them is read at. */
+  .nib-button {
+    padding: var(--space-1) var(--space-3);
     font-size: var(--text-sm);
-    cursor: default;
-  }
-
-  .later {
-    background: none;
-    color: var(--muted-strong);
-  }
-
-  .later:hover {
-    color: var(--text-strong);
-  }
-
-  .primary {
-    background: var(--accent);
-    color: #fff;
-    font-weight: var(--weight-strong);
-  }
-
-  .primary:hover {
-    background: var(--accent-hover);
-  }
-
-  .primary:active:not(:disabled) {
-    background: var(--accent-press);
-  }
-
-  .primary:disabled {
-    opacity: 0.6;
   }
 
   /* A phone has no room beside the text, so the buttons go under it and the

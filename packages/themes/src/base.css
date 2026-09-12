@@ -624,7 +624,14 @@ select option {
 
    What fills it is the caller's: `--badge-fill` and `--badge-ink` are set per
    badge for a person, who wears their own colour, and left alone everywhere
-   else. */
+   else.
+
+   The default fill is `--surface-3` and not `--surface-2`, which is what it was:
+   a badge sits on a panel or in a menu, both of which are `--surface`, and one
+   step off that is a difference of four values in either scheme - so the square
+   was only a square on the row that wore the accent, and every other space in
+   the switcher had a bare mark floating in front of its name. A rounded square
+   that is only there in one state is not a shape. */
 .nib-badge {
   flex: none;
   display: grid;
@@ -632,7 +639,7 @@ select option {
   width: var(--row-height-sm);
   height: var(--row-height-sm);
   border-radius: calc(var(--row-height-sm) * 0.32);
-  background: var(--badge-fill, var(--surface-2));
+  background: var(--badge-fill, var(--surface-3));
   color: var(--badge-ink, var(--muted-strong));
   font-family: var(--font-ui);
   font-size: calc(var(--row-height-sm) * 0.46);
@@ -726,6 +733,104 @@ select option {
 
 [data-touch] .nib-switch.on::after {
   transform: translateX(20px);
+}
+
+/* ── A button with words in it ─────────────── */
+
+/* The one thing a sheet or a dialog is there to do, the quieter answer beside it,
+   and the one that takes something away. Seven components drew their own, and
+   between them they had five paddings (`10px 14px`, `9px 14px`, `8px 14px`,
+   `7px 13px`, `5px 12px`), two type sizes, four fades for a button that cannot be
+   pressed, and three of them lifted a pixel under the pointer while four stayed
+   put - so two dialogs open in one session did not agree about what a button is.
+
+   Sized from the row scale rather than from its padding, which is what makes it a
+   thumb's target on a phone without a `[data-touch]` block of its own: the words
+   and their room come to 36px under a pointer, and `--row-height` takes it to 56
+   under a finger.
+
+   A press is answered twice over - the fill goes a step deeper and the lift comes
+   back down - because the one thing a dialog does is usually a round trip to a
+   server, and a button whose answer takes a moment has to look pressed before it
+   looks busy. */
+.nib-button {
+  min-height: var(--row-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-strong);
+  text-align: center;
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+@media (hover: hover) {
+  .nib-button:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
+}
+
+.nib-button:active:not(:disabled) {
+  background: var(--accent-press);
+  transform: none;
+}
+
+/* The answer beside the one thing: the same shape with nothing filled in, so
+   Cancel is a button and not a link pretending to be one. */
+.nib-button.is-quiet {
+  background: none;
+  color: var(--muted-strong);
+}
+
+@media (hover: hover) {
+  .nib-button.is-quiet:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-strong);
+    transform: none;
+  }
+}
+
+.nib-button.is-quiet:active:not(:disabled) {
+  background: var(--surface-press);
+  color: var(--text-strong);
+}
+
+/* Deleting. Deeper towards the ink rather than towards black: mixed with black
+   it came out darker than the danger colour on a dark theme, which is a press
+   that reads as fading, and `filter: brightness` brightens on both sides, which
+   is the wrong direction on one of them. */
+.nib-button.is-danger {
+  background: var(--danger);
+}
+
+@media (hover: hover) {
+  .nib-button.is-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger) 86%, var(--text-strong));
+  }
+}
+
+.nib-button.is-danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 74%, var(--text-strong));
+  transform: none;
+}
+
+/* The words at the size everything else on a touch screen is read at. Here
+   rather than in each sheet, which is how one of them ended up asking for a 48px
+   button while every row around it was 56. */
+[data-touch] .nib-button {
+  font-size: var(--touch-text);
 }
 
 /* ── Fields ────────────────────────────────── */

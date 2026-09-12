@@ -688,8 +688,20 @@
       color var(--dur-instant) var(--ease-out);
   }
 
+  /* Where there is a pointer, the bar answers it. Fifteen buttons over the plane
+     and none of them said the pointer was there: the tool in hand was tinted and
+     a press went to `--press`, so a hand moving across the bar looking for the
+     eraser got nothing back until it clicked. Every other bar, row and button in
+     the app lights on hover; this was the one that did not. */
+  @media (hover: hover) {
+    button:hover:not(:disabled):not(.on) {
+      background: var(--surface-hover);
+      color: var(--text-strong);
+    }
+  }
+
   button:active:not(:disabled) {
-    background: var(--press);
+    background: var(--surface-press);
   }
 
   /* The tool in hand is tinted rather than raised: one look says which one it is,
@@ -699,16 +711,16 @@
     color: var(--accent);
   }
 
-  button:disabled {
-    opacity: 0.3;
-  }
+  /* What a button that cannot be pressed looks like is the one fade in
+     base.css, not a third number here: this said 0.3 where the app says 0.4 and
+     the panel's foot said 0.5. */
 
   .split {
     flex: none;
     width: 1px;
     align-self: center;
     height: 20px;
-    margin: 0 5px;
+    margin: 0 var(--space-1);
     background: var(--line-strong);
   }
 

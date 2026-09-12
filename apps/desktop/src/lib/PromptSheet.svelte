@@ -155,24 +155,26 @@
           {#each prompt.options as option (option.id)}
             <button
               type="button"
-              class:primary={option.primary}
-              class:danger={option.danger}
-              class:quiet={!option.primary && !option.danger}
+              class="nib-button"
+              class:is-danger={option.danger}
+              class:is-quiet={!option.primary && !option.danger}
               onclick={() => prompt.pick(option.id)}
             >
               {t(option.label)}
             </button>
           {/each}
         {:else if prompt.mode === 'find'}
-          <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button
+          <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
+            >{t('Cancel')}</button
           >
         {:else}
-          <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button
+          <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
+            >{t('Cancel')}</button
           >
           <button
             type="submit"
-            class="primary"
-            class:danger={prompt.danger}
+            class="nib-button"
+            class:is-danger={prompt.danger}
             disabled={prompt.mode === 'text' && !prompt.value.trim()}
           >
             {t(prompt.confirmLabel)}
@@ -312,64 +314,12 @@
     color: var(--muted);
   }
 
-  button {
-    padding: 8px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .primary:hover:not(:disabled) {
-    background: var(--accent-hover);
-  }
-
-  .primary:active:not(:disabled) {
-    background: var(--accent-press);
-  }
-
-  .danger {
-    background: var(--danger);
-    color: #fff;
-  }
-
-  .danger:hover {
-    filter: brightness(1.08);
-  }
-
-  .primary:disabled {
-    opacity: 0.5;
-  }
-
-  .quiet {
-    background: none;
-    color: var(--muted);
-  }
-
-  .quiet:hover {
-    background: var(--surface-2);
-    color: var(--text-strong);
-  }
-
-  .quiet:active {
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .danger:active {
-    background: color-mix(in srgb, var(--danger) 82%, black);
-    filter: none;
-  }
+  /* The three buttons a question ever offers are `.nib-button` in the themes
+     package: the one thing, `is-quiet` beside it, and `is-danger` where the
+     answer takes something away. They were their own three here, at
+     `--text-sm` where the sign-in panel's are `--text-base`, with no lift where
+     its lift, and with a danger press mixed towards black - which on a dark
+     theme is a press that reads as fading. */
 
   :global([data-touch]) .sheet {
     top: auto;
@@ -383,9 +333,10 @@
   }
 
   /* The sheet a note is renamed in, at the size the tree behind it is read at:
-     the field, the buttons under it, and the names it suggests. */
+     the field and the names it suggests. The buttons under them take the row
+     scale from `.nib-button` in the themes package, which is where their touch
+     size and type size are said once. */
   :global([data-touch]) input,
-  :global([data-touch]) button,
   :global([data-touch]) .title {
     font-size: var(--touch-text);
   }
@@ -393,11 +344,6 @@
   :global([data-touch]) input {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
-  }
-
-  :global([data-touch]) button {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
   }
 
   :global([data-touch]) .found-row {

@@ -66,7 +66,7 @@
           autofocus
           required
         />
-        <button type="submit" disabled={joining.busy || !joining.told.trim()}>
+        <button class="nib-button" type="submit" disabled={joining.busy || !joining.told.trim()}>
           {joining.busy ? t('Asking') : t('Ask to join')}
         </button>
       </form>
@@ -77,10 +77,13 @@
       </p>
     {:else if joining.step === 'declined'}
       <p class="quiet">{t('{who} did not let you in', { who })}</p>
-      <button type="button" class="plain" onclick={() => joining.dismiss()}>{t('Done')}</button>
+      <button type="button" class="nib-button is-quiet" onclick={() => joining.dismiss()}
+        >{t('Done')}</button
+      >
     {:else}
       <p class="quiet">{t('That link does not open anything')}</p>
       <button
+        class="nib-button"
         type="button"
         onclick={() => {
           joining.dismiss()
@@ -183,43 +186,9 @@
     color: var(--muted);
   }
 
-  button {
-    padding: 10px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: var(--text-base);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  button:hover:not(:disabled) {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
-  }
-
-  button:active:not(:disabled) {
-    background: var(--accent-press);
-    transform: translateY(0);
-  }
-
-  button:disabled {
-    opacity: 0.55;
-  }
-
-  .plain {
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
-  .plain:hover:not(:disabled) {
-    background: var(--surface-3);
-  }
+  /* Both buttons are `.nib-button` in the themes package: the one thing this
+     asks, and `is-quiet` for the word that only closes it. `Done` used to wear a
+     filled `--surface-2` of its own, which made it a third kind of button. */
 
   .wrong {
     margin: 0;
