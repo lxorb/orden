@@ -77,7 +77,12 @@ One set at a time on a machine. Every drive serves the same
 a drive that is already running changes the asset hashes it is fetching, and the
 page fails on a chunk that is no longer there rather than on anything about the
 app. The runner is one drive at a time for that reason, and two runners at once
-undo it.
+undo it. Ports belong to the machine too, so a drive run by hand beside a set
+takes the port the set was going to want.
+
+A run leaves the working tree dirty in one place: `store-shot.py` writes
+`docs/media/screenshot.png`, which is tracked. Keep it when the app's look has
+changed and it is the shot you wanted; otherwise check it out again.
 
 Six of them - `collaborate`, `draw-together`, `first-sync`, `publishing`,
 `share`, `signin` - start the real Worker under `wrangler dev`, and two things
