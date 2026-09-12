@@ -123,12 +123,17 @@ export class EmbedWidget extends NibWidget {
     // appears with the keystroke that made it rather than after a round trip.
     frame.classList.add('nib-embed-loading')
 
+    // Asked rather than read: the frame is filled in over two round trips - the
+    // note off the disk, then the render - and the editor may have moved on
+    // through either of them. A call each time, so that what was true before the
+    // first await is not taken as true after the second.
+    const showing = () => body.isConnected
+
     void view.state
       .facet(noteIndex)
       .read(this.path)
-      .then((source) => {
-        // The editor may have moved on while the note was being read.
-        if (!body.isConnected) return
+      .then(async (source) => {
+        if (!showing()) return
 
         const section = source === null ? null : sectionOf(source, this.link)
         if (section === null) {
@@ -136,11 +141,16 @@ export class EmbedWidget extends NibWidget {
           return
         }
 
+        // The note's own path, not the open note's: an embed shows another file,
+        // and the pictures and links in it point from where that file sits.
+        const html = await renderNote(section.slice(0, MOST_EMBEDDED), this.path, view.state)
+        if (!showing()) return
+
         frame.classList.remove('nib-embed-loading')
-        body.innerHTML = renderNote(section.slice(0, MOST_EMBEDDED), view)
+        body.innerHTML = html
       })
       .catch(() => {
-        if (body.isConnected) missing()
+        if (showing()) missing()
       })
 
     return frame

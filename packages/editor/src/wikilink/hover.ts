@@ -54,6 +54,14 @@ export const notePreviews = hoverTooltip(
         dom.append(name)
 
         const body = document.createElement('div')
+        // The card is a writing surface like every other place a note is read.
+        // CodeMirror hangs a tooltip off the editor rather than inside its
+        // content, so without the id this sits outside `#write` - the one scope
+        // every prose rule in @nib/themes and in a reader's own theme is written
+        // against - and a code block in it would arrive with no frame and no
+        // colours, a callout with no icon, a table with no rules. Reading.svelte,
+        // a slide and the presenter carry it for the same reason.
+        body.id = 'write'
         body.className = 'nib-note-preview-body'
         body.textContent = label('loadingNote')
         dom.append(body)
@@ -63,19 +71,27 @@ export const notePreviews = hoverTooltip(
           return { dom }
         }
 
+        // Asked rather than read: the card is filled in over two round trips -
+        // the note off the disk, then the render - and the pointer may have moved
+        // on through either of them. A call each time, so that what was true
+        // before the first await is not taken as true after the second.
+        const showing = () => body.isConnected
+
         void index
           .read(path)
-          .then((source) => {
-            if (!body.isConnected) return
+          .then(async (source) => {
+            if (!showing()) return
             const section = source === null ? null : sectionOf(source, link)
             if (section === null) {
               body.textContent = label('noteNotFound')
               return
             }
-            body.innerHTML = renderNote(section.slice(0, MOST_PREVIEWED), view)
+
+            const html = await renderNote(section.slice(0, MOST_PREVIEWED), path, view.state)
+            if (showing()) body.innerHTML = html
           })
           .catch(() => {
-            if (body.isConnected) body.textContent = label('noteNotFound')
+            if (showing()) body.textContent = label('noteNotFound')
           })
 
         return { dom }

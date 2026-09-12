@@ -161,6 +161,29 @@ export function trustsHtmlIn(note: NoteDoc): boolean {
   return trustsHtml(originOfDocument(note))
 }
 
+/** The same question for a note that is not the document in the pane: the note
+ *  inside an `![[embed]]`, and the note behind a hover preview. Both show another
+ *  file, which has no `NoteDoc` to ask.
+ *
+ *  Two of the four facts are about the account and the space and are known from
+ *  the path. The other two are about a document this session has open, and
+ *  neither can change the answer: a space somebody else can reach is untrusted
+ *  whether or not they are in the file at this moment - `room` and `space` are the
+ *  same answer - and a paste lands in the document being typed in. So the one
+ *  reading this cannot make is a note being typed in, in a space nobody else is
+ *  in, previewed through a link to itself after markup was pasted into it; it is
+ *  read as words there, which is the safe side of the question. */
+export function trustsHtmlAt(path: string | null): boolean {
+  return trustsHtml(
+    originOf({
+      guest: account.guest !== null,
+      pasted: false,
+      shared: sharedAt(path),
+      peers: false,
+    }),
+  )
+}
+
 /** Anybody in a space who is not its owner, as the sheet names them: an address
  *  they were invited at, or the guest a link handed out. Exactly one of the two. */
 interface Someone {

@@ -2440,12 +2440,29 @@
   text-overflow: ellipsis;
 }
 
-.nib-note-preview-body {
+/* The body of the card carries `#write`, the one scope every prose rule in
+   nib - and in a reader's own theme, which the validator holds to it - is
+   written against. CodeMirror hangs a tooltip off the editor element rather than
+   inside its content, so the card sits outside the writing surface and would
+   otherwise get none of them: an uncoloured fence with no frame, a callout with
+   no icon, a table with no rules. The reading view, a slide and the presenter all
+   carry the same id for the same reason; see hover.ts.
+
+   What follows is the three things the surface means for a pane and not for a
+   card this size. Written as `#write.nib-note-preview-body` rather than as a
+   class alone because the surface's own rules are id rules and would otherwise
+   win: the card would be a column of 45vh with the measure of a page. */
+#write.nib-note-preview-body {
+  max-width: none;
   max-height: 17em;
+  margin: 0;
   padding: 0 var(--space-3);
   overflow: hidden;
   color: var(--text);
-  font-size: 0.9em;
+  /* A glance reads slightly smaller than the page it is a glance at, against the
+     note's own size rather than against whatever the tooltip inherited - the
+     surface sets one now. */
+  font-size: calc(var(--text-content) * 0.9);
   /* Rendered HTML, not source; see the embed above. */
   white-space: normal;
   /* The note runs out under a fade rather than at a hard edge, which says
@@ -2453,19 +2470,17 @@
   mask-image: linear-gradient(to bottom, #000 78%, transparent);
 }
 
-#write .nib-note-preview-body > :first-child,
-.nib-note-preview-body > :first-child {
+#write.nib-note-preview-body > :first-child {
   margin-top: 0.7em;
 }
 
-#write .nib-note-preview-body > :last-child,
-.nib-note-preview-body > :last-child {
+#write.nib-note-preview-body > :last-child {
   margin-bottom: 0.7em;
 }
 
 /* Before it has arrived, or when there is nothing to show: one line of words,
    which wants the padding the note's own paragraphs bring with them. */
-.nib-note-preview-body:not(:has(*)) {
+#write.nib-note-preview-body:not(:has(*)) {
   padding: var(--space-3);
   color: var(--muted);
   font-family: var(--font-ui);

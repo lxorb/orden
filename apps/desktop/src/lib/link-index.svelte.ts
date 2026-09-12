@@ -360,9 +360,42 @@ class Links {
       // widget holding the old one is not equal to one holding the new.
       query: (code) => queryRowsHtml(code, t('Nothing found')),
       pressRow: (target) => pressRow(target),
+      // How a note the editor shows rather than edits is rendered: an embed, and
+      // the preview over a link. The reading view's own call, so one render
+      // serves every place a note is read; see reading/render.ts.
+      render: (source, from) => this.shownHtml(source, from),
     }
     this.handed.set(key, made)
     return made
+  }
+
+  /** One note as the HTML that shows it, for the editor: the note inside an
+   *  `![[embed]]`, and the note behind a hover preview. The reading view's own
+   *  call, with the reading view's own options - there is one such call in the
+   *  app, which is what keeps a note glanced at from being a thinner rendering of
+   *  the note read.
+   *
+   *  `from` is a path relative to the space, which is what a link speaks in; the
+   *  render wants the path the app holds, since that is what resolves a picture
+   *  and reaches the space a wikilink points into. A note outside the open space
+   *  has no place here and is rendered as a note with no home, exactly as the
+   *  reading view renders one.
+   *
+   *  Everything is asked for where it is used rather than imported at the top.
+   *  The reading view's render reaches back into this index for the notes an embed
+   *  names and for what a query fence answers, and the sharing store reaches the
+   *  workspace, which reaches this file: either written statically is a cycle. */
+  private async shownHtml(source: string, from: string | null): Promise<string> {
+    const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
+      import('./reading/render'),
+      import('./theme.svelte'),
+      import('./sharing.svelte'),
+    ])
+
+    const root = this.root
+    const path = from === null || root === null ? null : insideSpace(root, from)
+
+    return readingHtml({ text: source, path }, theme.current, trustsHtmlAt(path))
   }
 
   private readonly handed = new Map<string, NoteIndex>()

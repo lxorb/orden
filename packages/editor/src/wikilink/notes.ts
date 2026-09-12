@@ -55,6 +55,23 @@ export interface NoteIndex {
    *  should read them; it answers whether it was one of its own, so the editor can
    *  keep the press rather than putting the caret inside the fence. */
   pressRow?: ((target: EventTarget | null) => boolean) | undefined
+  /** One note as the HTML that shows it: what an `![[embed]]` draws and what the
+   *  hover preview over a link shows. The app's own call, and the same one the
+   *  reading view makes, so a note glanced at is that note's reading view rather
+   *  than a second, thinner rendering of it - coloured fences, drawn diagrams,
+   *  answered query fences, its metadata as rows, its pictures where the host
+   *  says they live.
+   *
+   *  Handed the markdown and the note's path relative to the space, because both
+   *  the pictures and the links in a note resolve from where the note sits, and
+   *  an embed shows a note other than the one in the pane.
+   *
+   *  Here with `query` and `pressRow` rather than in a facet of its own for the
+   *  same reason they are: it is a thing the app can do and the editor cannot,
+   *  and it arrives and is replaced with the rest of what the space holds.
+   *  Absent where the editor stands on its own, and preview.ts then renders what
+   *  a renderer alone can. */
+  render?: ((source: string, path: string | null) => Promise<string>) | undefined
 }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }

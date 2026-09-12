@@ -73,6 +73,7 @@ export { imageResolver, type ImageSink } from './images'
 export { hrefOf, linkOpener } from './links'
 export {
   type NoteIndex,
+  noteIndexExtension,
   type NoteJump,
   type NoteRef,
   resolveFile,
@@ -81,6 +82,7 @@ export {
   noteIndexEffect,
   setNoteIndex,
 } from './wikilink/notes'
+export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, loadEmbed } from './web-frame'
 export { isSpellWord, LONGEST_WORD } from './spelling'

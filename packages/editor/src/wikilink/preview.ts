@@ -1,19 +1,23 @@
-import type { EditorView } from '@codemirror/view'
+import type { EditorState } from '@codemirror/state'
 import { renderMarkdown } from '@nib/markdown'
 import { mapSources } from '@nib/markdown/sources'
 import { attributeValue } from '../attributes'
 import { imageResolver } from '../images'
+import { noteIndex } from './notes'
 
 /** A note shown rather than edited: the HTML behind an embed and behind the
  *  hover preview.
  *
- *  The same renderer an export and a published page use, so a note reads the
- *  same in all three places, and in its publishing mode: raw HTML in a note is
- *  shown as the characters it is made of rather than run, which matters as much
- *  here as on the web - a note can arrive by sync from anywhere.
+ *  One call, and it is the app's. `NoteIndex.render` is the reading view's own
+ *  render, so a note inside an `![[embed]]` and a note glanced at over a link are
+ *  that note's reading view - coloured fences, drawn diagrams, callouts, tables,
+ *  maths, task boxes, its metadata as rows, the notes it embeds, its pictures
+ *  resolved from where it sits. A second, thinner rendering here is exactly how
+ *  the preview came to show a code block with no colours in it.
  *
- *  No resolver is handed to it, so a `[[…]]` inside an embedded note comes out
- *  as its own words. That is what keeps an embed one level deep. */
+ *  What is below is the editor standing on its own - no app around it, nothing
+ *  that can colour a fence or read another note - and is the least a renderer can
+ *  do rather than a second opinion about how a note should look. */
 
 const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 
@@ -27,11 +31,26 @@ function written(src: string): string {
   }
 }
 
-/** Some markdown as HTML, with the pictures in it pointing where the host says
- *  they live - the same resolver the live preview draws an image with. */
-export function renderNote(source: string, view: EditorView): string {
+/** Some markdown as HTML. `path` is the note it came out of, relative to the
+ *  space, so its pictures and its links resolve from where it sits rather than
+ *  from the note in the pane - an embed and a preview show another file.
+ *
+ *  Handed a state rather than a view: nothing here needs a viewport, and a render
+ *  that needs no DOM is one a test can compare against the reading view's. */
+export async function renderNote(
+  source: string,
+  path: string | null,
+  state: EditorState,
+): Promise<string> {
+  const host = state.facet(noteIndex).render
+  if (host) return host(source, path)
+
+  // No app: raw HTML in a note is shown as the characters it is made of, since
+  // nothing here can ask whose note it is, and the pictures go through the one
+  // resolver the editor does have - the open note's, which is the best a view
+  // with no space around it can say about a file it cannot see.
   const html = renderMarkdown(source, { footnotes: true, escapeHtml: true })
-  const resolve = view.state.facet(imageResolver)
+  const resolve = state.facet(imageResolver)
 
   return mapSources(html, (src) =>
     REMOTE.test(src) ? null : attributeValue(resolve(written(src))),
