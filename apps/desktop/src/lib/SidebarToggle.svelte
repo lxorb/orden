@@ -8,15 +8,18 @@
    *  glyph, the same words, the same movement, whichever of the two it is drawn
    *  in.
    *
-   *  One glyph, always: a panel with an edge in it. The edge slides out from the
-   *  frame's left side as the list arrives and back into it as the list goes, and
-   *  that movement is the whole of what says which state it is in.
+   *  One glyph, always, and the same one: a panel with an edge down its left side.
+   *  It is not redrawn, not faded and not moved between the two states - what says
+   *  which state it is in is `aria-pressed`, the words in the tooltip, and the
+   *  panel itself being there or not.
    *
-   *  It used to fade the edge away as well, and that turned one glyph into two: a
-   *  plain window when the list was shut, a split panel when it was open. A button
-   *  that redraws itself is a button you have to read twice, and there was nothing
-   *  for the eye to follow between the two readings. Now the shape is constant and
-   *  only the edge moves, which is the same thing the panel itself does. */
+   *  Both of the other answers have been tried and both turned one glyph into two.
+   *  Fading the edge away left a plain window when the list was shut. Sliding the
+   *  edge into the frame did the same thing more quietly: three and a half units of
+   *  a fourteen-unit box put it on top of the frame's own border, so the shut state
+   *  read as a window with a thick left edge - a different icon, which is what it
+   *  was reported as. A button that redraws itself is a button you have to read
+   *  twice, and the state is already said three ways. */
   import { t } from './i18n.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -27,7 +30,6 @@
 <button
   class="nib-glyph toggle"
   class:is-on={open}
-  class:on={open}
   title={label}
   aria-label={label}
   aria-pressed={open}
@@ -54,15 +56,8 @@
     stroke-width: 1.2;
   }
 
-  /* The panel's edge, which arrives from the left as the list does and leaves the
-     same way. The same curve and the same length as the drawer's own. Transform
-     only: it is always drawn, and where it is is what says whether the list is
-     out. Shut, it rests against the frame's left side. */
-  .edge {
-    transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  .toggle:not(.on) .edge {
-    transform: translateX(-3.6px);
-  }
+  /* The panel's edge. Drawn in one place, in both states, on every device: no
+     transform, no transition and no opacity of its own, because each of those is a
+     second drawing of the same button. The mark is constant and the state is said
+     in words; see the note at the top. */
 </style>

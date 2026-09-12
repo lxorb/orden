@@ -67,12 +67,27 @@ describe('the button that opens the file list', () => {
     expect(others, `these draw the sidebar glyph again: ${others.join(', ')}`).toEqual([])
   })
 
-  /** The glyph says what the press does, and moves while it does it: the panel's
-   *  edge slides out of the left of the window as the list arrives. */
-  test('says which way it is, and moves between the two', () => {
+  /** One glyph means one drawing, and the same one in both states. It was reported
+   *  as the wrong icon while the list was shut, twice: first the edge faded away,
+   *  then it slid into the frame's own border, and both left a plain window where
+   *  the split panel had been. So the mark does not move and does not change, and
+   *  what says which state it is in is said in words.
+   *
+   *  `shots/shell-polish` measures the rendered shapes in both states, which is
+   *  what catches the version of this that the markup alone cannot see. */
+  test('says which way it is in words rather than by redrawing itself', () => {
     expect(toggle).toContain('aria-pressed={open}')
-    expect(toggle).toMatch(/\.edge\s*\{[^}]*transition:/)
-    expect(toggle).toMatch(/\.toggle:not\(\.on\)\s*\.edge\s*\{[^}]*transform:/)
+    expect(toggle).toContain("t('Hide sidebar')")
+    expect(toggle).toContain("t('Show sidebar')")
+
+    const style = toggle.slice(toggle.indexOf('<style>'))
+    for (const shifting of [
+      /\.edge[^}]*transform:/,
+      /\.edge[^}]*opacity:/,
+      /\.edge[^}]*display:/,
+    ]) {
+      expect(style, `the edge is drawn one way: ${shifting.source}`).not.toMatch(shifting)
+    }
   })
 
   /** Where the sidebar is a drawer it covers the bar the button sits in, so the

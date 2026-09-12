@@ -151,16 +151,18 @@ describe('the mark that says shared', () => {
 })
 
 describe('the sidebar button', () => {
-  test('is one glyph, with only the edge moving', () => {
+  test('is one glyph, drawn one way in both states', () => {
     const style = declarations(named('lib/SidebarToggle.svelte').style)
     const edge = [...style.matchAll(/\.edge\s*\{([^}]*)\}|\.edge[^{]*\{([^}]*)\}/g)]
       .map((one) => one[1] ?? one[2] ?? '')
       .join(';')
 
-    // Transform only. An opacity that went to nothing is what turned one drawing
-    // into two: a plain window shut, a split panel open.
+    // Nothing about the edge changes with the state. An opacity that went to
+    // nothing turned one drawing into two - a plain window shut, a split panel
+    // open - and so did sliding it into the frame's own border, which is what it
+    // was reported as the second time. The state is said in words instead.
     expect(edge).not.toMatch(/opacity/)
-    expect(edge).toMatch(/transform/)
+    expect(edge).not.toMatch(/transform/)
   })
 
   test('and nothing in the component picks a second drawing by state', () => {
