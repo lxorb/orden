@@ -10,6 +10,9 @@ What it photographs, in both themes and on both shapes of device:
     the bar, the pen popover, the eraser popover, the bar folded to its handle,
     the bar docked to the top edge, and a stroke drawn at a fifth of its opacity
 
+It also measures the popover's row of colours: the eight that are always in it are
+one row at whatever width the panel has, and each is still a round dot.
+
 Run it from the repository root:
 
     python apps/desktop/test/e2e/pen-bar.py
@@ -178,6 +181,48 @@ window.__TAURI_OS_PLUGIN_INTERNALS__ = {
 };
 localStorage.setItem('nib:pen-seen', 'yes');
 localStorage.setItem('nib:finger-draws', 'yes');
+"""
+
+# The row of colours in the pen's popover, measured as rows rather than looked at.
+#
+# Eight dots are always in it - the six the theme names, the bare dot that is the ink
+# of the page, and the wheel behind which every other colour is - and they are one
+# row at every width the panel takes. They were not: a dot was 40px in a row that
+# wrapped, and the panel is `min(21rem, 100%)` less its padding, which is 320px, so
+# seven fitted and the wheel went down alone - the one colour that is not one of the
+# theme's own, orphaned. See `.colours` in CanvasColours.svelte.
+#
+# The circle is read off the pseudo-element that draws it rather than off the button,
+# which is the cell: what has to stay round as the cells narrow is the dot.
+COLOUR_ROWS = """
+() => {
+  const row = document.querySelector('.colours');
+  if (!row) return { none: true };
+
+  const dots = [...row.children].map((one) => {
+    const box = one.getBoundingClientRect();
+    const ink = getComputedStyle(one, '::after');
+    return {
+      name: one.getAttribute('aria-label') ?? one.title ?? '?',
+      top: Math.round(box.top),
+      cell: Math.round(box.width * 10) / 10,
+      wide: Math.round(parseFloat(ink.width) * 10) / 10,
+      tall: Math.round(parseFloat(ink.height) * 10) / 10,
+    };
+  });
+
+  const tops = [...new Set(dots.map((one) => one.top))];
+  const panel = row.parentElement.getBoundingClientRect();
+
+  return {
+    none: false,
+    dots: dots.length,
+    first: dots.slice(0, 8),
+    rows: tops.map((top) => dots.filter((one) => one.top === top).length),
+    panel: Math.round(panel.width),
+    over: Math.round(row.getBoundingClientRect().right - panel.right),
+  };
+}
 """
 
 AS_TABLET = """
@@ -351,6 +396,38 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_selector('input[aria-label="Opacity"]', timeout=5000)
         page.wait_for_timeout(300)
         shot(page, f"pen-settings-{device}-{theme}")
+
+        # The row of colours in it: eight to a row, none of them orphaned, and every
+        # dot still round as the cells share whatever width the panel has.
+        rows = page.evaluate(COLOUR_ROWS)
+        say(f"[{label}] the colours: {rows}")
+        if rows["none"]:
+            failures.append(f"{label}: the pen's popover has no row of colours")
+        else:
+            eight = rows["first"]
+            if len(eight) < 8:
+                failures.append(f"{label}: the row holds {len(eight)} dots rather than eight")
+            elif len({one['top'] for one in eight}) != 1:
+                failures.append(
+                    f"{label}: the eight colours are not one row"
+                    f" ({rows['rows']} per row, panel {rows['panel']}px)"
+                )
+            else:
+                say(f"[{label}] eight colours on one row of {rows['panel']}px")
+
+            if rows["over"] > 0:
+                failures.append(f"{label}: the row runs {rows['over']}px past its panel")
+
+            for one in eight:
+                if abs(one["wide"] - one["tall"]) > 0.6:
+                    failures.append(
+                        f"{label}: the {one['name']!r} dot is {one['wide']}x{one['tall']}"
+                        " rather than round"
+                    )
+                elif one["wide"] < 20:
+                    failures.append(
+                        f"{label}: the {one['name']!r} dot is down to {one['wide']}px"
+                    )
 
         # A colour and an alpha, set with the dials rather than from the console.
         page.locator('[aria-label="Colour 4"]').first.click()

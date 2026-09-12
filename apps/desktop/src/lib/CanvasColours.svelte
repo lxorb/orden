@@ -102,20 +102,35 @@
 </div>
 
 <style>
-  /* One row that wraps, so six presets and six remembered colours read as one
-     field of colour rather than as two lists. */
+  /* Eight to a row, and the row is a grid rather than a wrap, so the eight that are
+     always there - the six the theme names, the bare dot and the wheel - are one row
+     at every width this is drawn at, and the ones used lately fill even rows under
+     them.
+
+     It wrapped before, at whatever width the panel happened to be: a dot was 40px
+     wide and the pen's panel is `min(21rem, 100%)` less its padding, which is 320px
+     on a desktop, so seven dots fitted and the wheel went down alone - the one
+     colour that is not one of the theme's own, orphaned on a row of its own. A grid
+     of eight cannot do that, and it holds wherever the panel is narrower: the side
+     panel's `min(21rem, 60vw)`, a tablet, a phone.
+
+     `minmax(0, 40px)` rather than `1fr`, and that is the load-bearing part: 40px is
+     the size a dot is drawn at where there is room, so a surface that shrinks to fit
+     its contents - the bar over a picked card, whose panel has a `max-width` and no
+     width - still asks for a row of eight; and a narrower panel shares what it has
+     between the same eight columns instead of wrapping one off the end. */
   .colours {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 40px));
     gap: 2px;
   }
 
-  /* The dot is the whole button, with a finger's worth of room round it. */
+  /* The dot is the whole button, with a finger's worth of room round it: the cell's
+     width, which is a dot's 26px plus air at every width the panel takes. */
   .dot {
-    flex: none;
     display: grid;
     place-items: center;
-    width: 40px;
+    width: 100%;
     height: 40px;
     padding: 0;
     border: none;
@@ -126,11 +141,15 @@
   /* The hairline round every dot is the page's own ink at a whisper rather than
      black at a whisper: a white dot on a white panel has to have an edge, and so
      does a black one on a dark panel. One rule, both themes. */
+  /* Round at every width: the dot is 26px where the cell has room for it and the
+     cell where it has not, with the height following the width rather than being
+     stated, so a narrow panel draws eight smaller circles instead of eight
+     ellipses. */
   .dot::after {
     content: '';
     display: block;
-    width: 26px;
-    height: 26px;
+    width: min(26px, 100%);
+    aspect-ratio: 1;
     border-radius: 50%;
     background: var(--dot);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
