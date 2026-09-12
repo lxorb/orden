@@ -50,10 +50,14 @@ export function installAiRunner() {
     // The answer's span is written when the first words arrive rather than when the
     // request is made, so a question that was refused - a key that has expired, a
     // model that is gone - leaves the note exactly as it was.
-    let begun = false
+    //
+    // A holder rather than a variable, because it is written inside the callback
+    // below and read outside it: the compiler can see a field change and cannot see
+    // a local one, and read it back as false for ever.
+    const began = { yet: false }
     const wrote = (piece: string) => {
-      if (!begun) {
-        begun = true
+      if (!began.yet) {
+        began.yet = true
         ask.started(provider.model)
       }
       ask.wrote(piece)
@@ -74,7 +78,7 @@ export function installAiRunner() {
 
       // A stream that ended without a word in it. Nothing was written, so without a
       // line saying so the press would look like nothing happened at all.
-      if (!begun) busy.failed(t('The model did not answer.'))
+      if (!began.yet) busy.failed(t('The model did not answer.'))
     } catch (error) {
       // Stopping is not a failure: the reader pressed the square, and what arrived
       // before they did is in the note where they can see it.

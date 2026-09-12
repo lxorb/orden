@@ -240,12 +240,9 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
     ...(selected
       ? [
           DIVIDER,
-          {
-            label: t('Rewrite…'),
-            run: () => {
-              if (view) rewriting.show(view)
-            },
-          },
+          // `selected` is what says there is a view: it is false without one, which
+          // is why nothing here has to ask again.
+          { label: t('Rewrite…'), run: () => rewriting.show(view) },
         ]
       : []),
     DIVIDER,

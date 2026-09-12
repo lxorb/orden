@@ -39,6 +39,11 @@ class Fake {
   get text(): string {
     return this.state.doc.toString()
   }
+
+  /** Whether the one `ai` fence in the note is still waiting on an answer. */
+  get asking(): boolean {
+    return askingAt(this.state, this.text.indexOf('```ai'))
+  }
 }
 
 const NOTE = 'A note about herons.\n\n```ai\nSummarise @note\n```\n\nAfter it.\n'
@@ -76,10 +81,17 @@ function held() {
 
 afterEach(() => setAiRunner(null))
 
-/** The turn of the loop a finished run tidies up in: the closing mark is drawn
- *  under the answer and the run is forgotten once the promise the app returned has
- *  settled, which is a microtask after it resolves. */
-const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
+/** Waits until a finished run has tidied up: the blank space comes off the end of
+ *  the answer and the run is forgotten once the promise the app returned has
+ *  settled, which is a turn of the loop later.
+ *
+ *  Waited for rather than slept through. A fixed timeout is a test that passes on
+ *  an idle machine and fails on a loaded one, which is the worst kind. */
+async function settled(view: Fake): Promise<void> {
+  for (let turn = 0; turn < 200 && view.asking; turn++) {
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+}
 
 describe('finding the ai fence', () => {
   test('reaches it from inside the question', () => {
@@ -142,7 +154,7 @@ describe('asking', () => {
     runner.ask.wrote('Herons ')
     runner.ask.wrote('stand still.')
     runner.finish()
-    await settled()
+    await settled(view)
 
     expect(view.text).toBe(
       'A note about herons.\n\n```ai\nSummarise @note\n```\n\n' +
@@ -159,7 +171,7 @@ describe('asking', () => {
     runner.ask.started('m')
     runner.ask.wrote('One.\n\n\n')
     runner.finish()
-    await settled()
+    await settled(view)
 
     expect(view.text).toContain(`One.\n${ANSWER_CLOSE}`)
   })
@@ -172,14 +184,14 @@ describe('asking', () => {
     first.ask.started('m')
     first.ask.wrote('The first answer.')
     first.finish()
-    await settled()
+    await settled(view)
 
     const again = held()
     askAiFence(view, aiFenceAt(view.state, at)!)
     again.ask.started('m2')
     again.ask.wrote('The second.')
     again.finish()
-    await settled()
+    await settled(view)
 
     expect(view.text.match(new RegExp(ANSWER_OPEN, 'g'))).toHaveLength(1)
     expect(view.text).toContain('The second.')
@@ -195,7 +207,7 @@ describe('asking', () => {
     runner.ask.started('m')
     runner.ask.wrote('As far as')
     stopAskAt(view, PLAIN.indexOf('```ai'))
-    await settled()
+    await settled(view)
 
     expect(runner.aborted).toBe(true)
     expect(view.text).toContain(`As far as\n${ANSWER_CLOSE}`)
@@ -211,7 +223,7 @@ describe('asking', () => {
     view.dispatch({ changes: { from: 0, insert: 'A line typed above.\n' } })
     runner.ask.wrote('Still lands right.')
     runner.finish()
-    await settled()
+    await settled(view)
 
     expect(view.text).toContain(`\n\nStill lands right.\n${ANSWER_CLOSE}`)
     expect(view.text.startsWith('A line typed above.\nA note.')).toBe(true)
@@ -224,7 +236,7 @@ describe('asking', () => {
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
 
     view.dispatch({ changes: { from, to: from + 3, insert: '' } })
-    await settled()
+    await settled(view)
 
     expect(runner.aborted).toBe(true)
     expect(askingAt(view.state, from)).toBe(false)
@@ -254,7 +266,7 @@ describe('asking', () => {
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
     runner.ask.started('m')
     runner.finish()
-    await settled()
+    await settled(view)
     setLabels({})
 
     expect(view.text).toContain(`*von m am ${dated()} beantwortet*`)

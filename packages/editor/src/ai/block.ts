@@ -29,7 +29,7 @@
  *  hand can see and keep. */
 
 /** The fence language that makes a code block a question. */
-export const AI_LANGUAGE = 'ai'
+const AI_LANGUAGE = 'ai'
 
 export function isAiLanguage(language: string): boolean {
   return language.trim().toLowerCase() === AI_LANGUAGE
@@ -93,7 +93,7 @@ function offsetOf(lines: readonly string[], line: number): number {
 /** The quiet line over an answer. `label` is the wording the app translated, with
  *  `{model}` and `{date}` already filled in; this only puts it in italics, which
  *  is what makes it quiet in every renderer rather than only in nib's. */
-export function attribution(label: string): string {
+function attribution(label: string): string {
   return `*${label}*`
 }
 

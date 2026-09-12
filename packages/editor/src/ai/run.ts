@@ -261,7 +261,10 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
  *  question is pending. */
 function beginAnswer(view: AiView, id: number, model: string) {
   const live = runOf(view.state, id)
-  if (!live || live.body !== null) return
+  if (!live) return
+  // Said twice by a provider that sends more than one start. The first one wrote
+  // the span; a second would write another under it.
+  if (live.body !== null) return
 
   const found = aiFenceAt(view.state, live.from)
   if (!found) return
@@ -282,7 +285,8 @@ function beginAnswer(view: AiView, id: number, model: string) {
 
 function writeAnswer(view: AiView, id: number, text: string) {
   const live = runOf(view.state, id)
-  if (!live || live.at === null || !text) return
+  if (!live) return
+  if (live.at === null || !text) return
 
   view.dispatch({
     changes: { from: live.at, insert: text },
@@ -298,7 +302,8 @@ function writeAnswer(view: AiView, id: number, text: string) {
  *  there a block of its own. */
 function trimAnswer(view: AiView, id: number) {
   const live = runOf(view.state, id)
-  if (!live || live.body === null || live.at === null) return
+  if (!live) return
+  if (live.body === null || live.at === null) return
 
   const text = view.state.doc.sliceString(live.body, live.at)
   const kept = text.replace(/\s+$/, '')
