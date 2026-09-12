@@ -83,8 +83,13 @@ export class Page {
   back = $state(false)
   forward = $state(false)
   loading = $state(false)
-  /** What went wrong, for the one row that says so. */
-  fault = $state<string | null>(null)
+  /** Whether a webview could be made for this tab at all.
+   *
+   *  False only when the crate refused to build one - a platform where a second
+   *  webview is not to be had, or an address it would not open. The pane then shows
+   *  the card a browser build shows, because that is the one surface with somewhere
+   *  to send the reader. Given a new address it is worth trying again. */
+  openable = $state(true)
   /** What a browser build has in the pane. The card until the reader presses it,
    *  and the frame from then on: one press per tab, because saying yes to a site is
    *  about the tab rather than about each page in it. Never read on a desktop. */
@@ -155,9 +160,11 @@ class Pages {
       try {
         await invoke('web_open', { tab: tabId, url: page.url, pane, granted })
         page.live = true
-        page.fault = null
-      } catch (error) {
-        page.fault = String(error)
+        page.openable = true
+      } catch {
+        // No webview to be had here. Reported by the pane rather than by a message:
+        // it shows the card, which offers the page in the reader's own browser.
+        page.openable = false
       }
       return
     }
@@ -218,7 +225,7 @@ class Pages {
     if (!isWebAddress(url)) return
 
     page.url = url
-    page.fault = null
+    page.openable = true
     // The title belonged to the page that was there. Until the new one says what it
     // is called the bar shows the site, which is true of both.
     page.title = ''
@@ -232,8 +239,11 @@ class Pages {
 
     try {
       await invoke('web_navigate', { tab: tabId, url })
-    } catch (error) {
-      page.fault = String(error)
+    } catch {
+      // The webview has gone - unloaded while this was in the air, or the window
+      // closed under it. It holds the new address already, so the next placement
+      // opens it there.
+      page.live = false
     }
   }
 
@@ -243,8 +253,10 @@ class Pages {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
 
-    await invoke('web_step', { tab: tabId, step }).catch((error: unknown) => {
-      page.fault = String(error)
+    await invoke('web_step', { tab: tabId, step }).catch(() => {
+      // Same as an address that could not be sent: the page has gone, and the next
+      // placement opens it again where it was.
+      page.live = false
     })
   }
 
@@ -263,8 +275,10 @@ class Pages {
         tab: tabId,
         selection,
       })
-    } catch (error) {
-      page.fault = String(error)
+    } catch {
+      // A page that cannot be read is a clip of what the app knows about it: the
+      // address and the title, which is what a browser build always writes. See
+      // clip.ts.
       return null
     }
   }

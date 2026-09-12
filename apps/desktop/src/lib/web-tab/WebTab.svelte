@@ -170,7 +170,7 @@
     }}
   />
 
-  {#if isDesktop}
+  {#if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it: the page is a webview over this box, and
          anything here would be under it. Its colour is the page's own background
          while a page is loading, so the pane does not flash. -->
@@ -188,7 +188,11 @@
     <!-- A browser cannot say whether a site allows a frame until it has made one,
          and cannot say afterwards either: a page that arrived and a page that was
          refused report exactly the same thing. So the card asks, which is the same
-         gesture a page embedded in a note already uses. See frame.ts. -->
+         gesture a page embedded in a note already uses. See frame.ts.
+
+         A desktop that could not make its webview lands here too, rather than on an
+         empty hole: the card is the one surface that always has somewhere to send
+         the reader. -->
     <div class="card">
       {#if address}
         {#if marked}
