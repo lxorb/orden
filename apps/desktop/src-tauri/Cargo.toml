@@ -57,6 +57,18 @@ tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
+# An AI provider's key goes in the machine's own keychain and nowhere else: the
+# Credential Manager, the Keychain, the Secret Service. Named features rather than
+# the defaults, so only the three stores the three desktops have are compiled in -
+# `linux-native` is the kernel's session keyring, which forgets a key at logout,
+# and `crypto-rust` keeps the Secret Service transport off OpenSSL. A phone has
+# EncryptedSharedPreferences instead and a browser has nothing; see secrets.rs.
+keyring = { version = "3", default-features = false, features = [
+  "apple-native",
+  "windows-native",
+  "sync-secret-service",
+  "crypto-rust",
+] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

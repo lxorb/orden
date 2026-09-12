@@ -1,5 +1,6 @@
 package ch.emilvinu.nib
 
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +12,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 class MainActivity : TauriActivity() {
   // Back closes whatever is over the note rather than the app. Every layer the
@@ -93,9 +96,44 @@ class MainActivity : TauriActivity() {
     }
   }
 
+  /** Where an AI provider's key lives on a phone.
+   *
+   *  `EncryptedSharedPreferences` is Android's own answer to the keychain a desktop
+   *  has: the file is encrypted with a key held in the hardware-backed Keystore,
+   *  which never leaves the device and which no other app can reach. Built lazily
+   *  and kept, because building it derives the master key, and somebody who never
+   *  sets a key up should not pay for that on the way in.
+   *
+   *  See secrets.rs for the desktop's side of the same three calls, and keys.ts in
+   *  the app, which is what chooses between them. */
+  private val secrets: SharedPreferences by lazy {
+    EncryptedSharedPreferences.create(
+      this,
+      "nib-secrets",
+      MasterKey.Builder(this).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+      EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+      EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+    )
+  }
+
   /** The two things the page cannot see for itself; see insets.ts. */
   private inner class Bridge {
     @JavascriptInterface fun insets(): String = edges
+
+    /** The key kept under `name`, or null where there is none. */
+    @JavascriptInterface fun secretRead(name: String): String? = secrets.getString(name, null)
+
+    /** Writes one, replacing whatever was there. */
+    @JavascriptInterface
+    fun secretWrite(name: String, secret: String) {
+      secrets.edit().putString(name, secret).apply()
+    }
+
+    /** Takes one away. */
+    @JavascriptInterface
+    fun secretForget(name: String) {
+      secrets.edit().remove(name).apply()
+    }
 
     /** The clock, the battery and the gesture bar are the system's own icons
      *  drawn over our page: light on a dark theme, dark on a light one. Called

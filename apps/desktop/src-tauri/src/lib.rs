@@ -35,6 +35,8 @@ mod recent;
 mod regex;
 mod search;
 #[cfg(desktop)]
+mod secrets;
+#[cfg(desktop)]
 mod shell_menu;
 mod spaces;
 mod tags;
@@ -174,6 +176,9 @@ pub fn run() {
         pdf::pdf_supported,
         pdf::print_pdf,
         recent::remember_recent,
+        secrets::secret_forget,
+        secrets::secret_read,
+        secrets::secret_write,
         shell_menu::new_menu_registered,
         shell_menu::set_new_menu,
         updates::check_update,
