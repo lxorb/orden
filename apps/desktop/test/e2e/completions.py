@@ -200,6 +200,33 @@ def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
 
 
+def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
+    """Polls until a row says `holds`.
+
+    The index answers in the same breath as the keystroke, but the space's own
+    words are behind a worker that reads them off the store, and the first
+    question of a session waits for that. A question asked while it was cold can
+    also be answered with nothing rather than late, and nothing re-asks a popup
+    that has closed - so this asks again once, the way a reader would by typing
+    one more letter."""
+    until = time.monotonic() + patience
+    again = False
+
+    while time.monotonic() < until:
+        found = rows(page)
+        if any(holds in one for one in found):
+            return found
+
+        if not found and not again and time.monotonic() > until - patience + 4:
+            say("[asked again] the popup came back empty; asking the space once more")
+            page.keyboard.press("Control+Space")
+            again = True
+
+        page.wait_for_timeout(200)
+
+    return rows(page)
+
+
 def doc(page: Page) -> str:
     return page.evaluate("() => window.nib.state.doc.toString()")
 
@@ -268,7 +295,7 @@ def drive_headings(page: Page, names: list[str]) -> None:
     page.keyboard.type("[[##", delay=40)
     page.wait_for_timeout(700)
 
-    every = rows(page)
+    every = rows_holding(page, "The plan for Monday")
     say(f"[[[##] {len(every)} rows: {json.dumps(every[:6])}")
     shot(page, "01-every-heading")
     if len(every) < 4:
@@ -304,7 +331,7 @@ def drive_blocks(page: Page, names: list[str]) -> None:
     page.keyboard.type("[[^^", delay=40)
     page.wait_for_timeout(800)
 
-    named = rows(page)
+    named = rows_holding(page, "a1b2c3")
     say(f"[[[^^] {json.dumps(named)}")
     shot(page, "04-named-blocks")
     if not any("a1b2c3" in one for one in named):
@@ -312,8 +339,7 @@ def drive_blocks(page: Page, names: list[str]) -> None:
 
     # And the words of a block nobody has named, found through the app's search.
     page.keyboard.type("deepest", delay=60)
-    page.wait_for_timeout(1600)
-    found = rows(page)
+    found = rows_holding(page, "deepest kind of idea")
     say(f"[[[^^deepest] {json.dumps(found)}")
     shot(page, "05-found-blocks")
     if not any("deepest kind of idea" in one for one in found):
@@ -349,7 +375,7 @@ def drive_tags(page: Page) -> None:
     page.keyboard.type("Filed under #", delay=40)
     page.wait_for_timeout(700)
 
-    every = rows(page)
+    every = rows_holding(page, "reading")
     say(f"[#] {json.dumps(every)}")
     shot(page, "07-every-tag")
     if not any("work" in one for one in every):
@@ -434,7 +460,7 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
     page.keyboard.type(", rea", delay=60)
     page.wait_for_timeout(700)
 
-    listed = rows(page)
+    listed = rows_holding(page, "reading")
     say(f"[front matter] {json.dumps(listed)}")
     shot(page, "13-front-matter")
     if not listed or not any("reading" in one for one in listed):
@@ -457,7 +483,7 @@ def drive_finger(browser: Browser) -> None:
     page.keyboard.type("[[##", delay=40)
     page.wait_for_timeout(900)
 
-    every = rows(page)
+    every = rows_holding(page, "The plan for Monday")
     say(f"[phone] {len(every)} rows")
     shot(page, "20-phone")
     if not every:
