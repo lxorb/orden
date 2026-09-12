@@ -14,6 +14,15 @@ import {
   type Reached,
 } from './spaces/space'
 import type { Env, Note, Variables, Whoever } from './types'
+import {
+  deviceIn,
+  keepVersion,
+  presentVersion,
+  versionAt,
+  versionsAt,
+  versionsOf,
+  versionKey,
+} from './versions'
 
 /** The largest note the API will take. R2 would hold more; a note this size
  *  is already a file that wants to be split, and the ceiling keeps one
@@ -84,6 +93,7 @@ export async function addNote(
   spaceId: string,
   path: string,
   content: string,
+  by = '',
 ): Promise<Note> {
   const note: Note = {
     id: newId(),
@@ -118,6 +128,11 @@ export async function addNote(
     .run()
 
   await env.NOTES.put(noteKey(spaceId, note.id), content)
+
+  // What the note said when it arrived is the first thing its history has to
+  // say; see versions.ts.
+  await keepVersion(env, note, content, by).catch(() => undefined)
+
   return note
 }
 
@@ -150,6 +165,7 @@ export async function saveNote(
   note: Note,
   content: string,
   path: string,
+  by = '',
 ): Promise<Note | null> {
   const size = byteLength(content)
   const hash = await sha256(content)
@@ -188,6 +204,13 @@ export async function saveNote(
   if (!written.meta.changes) return null
 
   await env.NOTES.put(noteKey(note.space_id, note.id), content)
+
+  // The account's own history of the note, kept from the one place every body
+  // arrives through - a push, or a room settling what four devices wrote. Best
+  // effort: the note is already stored, and a version that could not be written
+  // is not a reason to answer the save with a failure. See versions.ts.
+  await keepVersion(env, updated, content, by).catch(() => undefined)
+
   return updated
 }
 
@@ -261,7 +284,13 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   // error's words, which are the database's to change.
   let note: Note
   try {
-    note = await addNote(context.env, space.id, path, content)
+    note = await addNote(
+      context.env,
+      space.id,
+      path,
+      content,
+      deviceIn(context.req.header('x-nib-device')),
+    )
   } catch (error) {
     const won = await noteAt(context.env, space.id, path)
     if (!won) throw error
@@ -311,6 +340,87 @@ notes.get('/notes/:id', async (context) => {
   const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
   return context.json({ note: presentNote(note), content: object ? await object.text() : '' })
 })
+
+/** Every version the account holds of this note, newest first, and what one of
+ *  them said.
+ *
+ *  Hung off the note rather than off the space, because a note is what the reader
+ *  is looking at when they ask; and read through the same reachability as the
+ *  note itself, so somebody who was handed one file can read its history and
+ *  nothing else. See versions.ts for what is kept and for how long. */
+notes.get('/notes/:id/versions', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: 'no such note' }, 404)
+
+  const held = await versionsOf(context.env, found.note.id)
+  return context.json({ versions: held.map(presentVersion) })
+})
+
+notes.get('/notes/:id/versions/:at', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: 'no such note' }, 404)
+
+  const asked = Math.floor(Number(context.req.param('at')))
+  const content = Number.isFinite(asked)
+    ? await versionAt(context.env, found.note.id, asked)
+    : null
+
+  if (content === null) return context.json({ error: 'no such version' }, 404)
+  return context.json({ at: asked, content })
+})
+
+/** Putting a space, or one folder of it, back to how it read at a moment.
+ *
+ *  What it writes is a new version of every note that has changed since, which is
+ *  what makes it undoable: a rollback is an edit like any other, and nothing
+ *  about it is special except how many notes it touches at once. A note that was
+ *  written after that moment and has no version at or before it is left alone -
+ *  there is nothing to put back - and so is one the account never held.
+ *
+ *  `dry` answers what would change without changing anything, which is what the
+ *  sheet shows before the reader presses the one button that matters. */
+notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (context) => {
+  const space = spaceOf(context)
+
+  const body = await readBody(context)
+  const under = body.text('under', PATH_LIMIT) ?? ''
+  const at = body.count('at')
+  const dry = body.flag('dry') === true
+  if (body.problem) return context.json({ error: body.problem }, 400)
+  if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
+
+  const found = await versionsAt(context.env, space.id, under.replace(/^\/+/, ''), at)
+  const changed = found.filter((one) => one.hash !== one.live)
+
+  if (dry) {
+    return context.json({
+      notes: changed.length,
+      paths: changed.slice(0, SHOWN_PATHS).map((one) => one.path),
+      more: changed.length > SHOWN_PATHS,
+    })
+  }
+
+  let written = 0
+  for (const one of changed) {
+    const note = await context.env.DB.prepare('select * from notes where id = ?')
+      .bind(one.note_id)
+      .first<Note>()
+
+    if (!note) continue
+
+    const object = await context.env.NOTES.get(versionKey(one.hash))
+    if (!object) continue
+
+    const saved = await saveNote(context.env, note, await object.text(), note.path, 'rolled back')
+    if (saved) written += 1
+  }
+
+  return context.json({ notes: written })
+})
+
+/** How many of the paths a rollback would touch it names. Enough to recognise
+ *  the space, few enough to read. */
+const SHOWN_PATHS = 40
 
 /** Optimistic concurrency: send the version you edited.
  *
@@ -372,7 +482,13 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: 'out of space' }, 507)
   }
 
-  const saved = await saveNote(context.env, note, content, path)
+  const saved = await saveNote(
+    context.env,
+    note,
+    content,
+    path,
+    deviceIn(context.req.header('x-nib-device')),
+  )
 
   // Somebody else - another device, or the room this note is open in - saved
   // between the row being read above and the write. The same answer a version

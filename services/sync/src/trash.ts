@@ -4,6 +4,7 @@ import { now } from './crypto'
 import { nextSeq, noteKey, presentNote } from './notes'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
+import { forgetVersions } from './versions'
 
 /** How long Recently deleted holds on to something. */
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
@@ -106,6 +107,10 @@ async function deletedNote(
  *  change feed relies on, and stops being listed. */
 async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   await env.NOTES.delete(noteKey(note.space_id, note.id))
+  // And what the account remembered it saying before. A version of a note whose
+  // words have gone for good is a version of nothing; the bodies go with the
+  // rows, each only once the last row naming it has gone. See versions.ts.
+  await forgetVersions(env, note.id)
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()

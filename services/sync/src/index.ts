@@ -7,6 +7,7 @@ import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { cleanName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
+import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
@@ -227,6 +228,7 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(expireRequests(env, at))
   context.waitUntil(expireClients(env, at))
   context.waitUntil(recheckDomains(env, at))
+  context.waitUntil(sweepVersions(env, at))
 }
 
 export default { fetch: app.fetch, scheduled }
