@@ -14,6 +14,7 @@
   import { shownName } from './note-name'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
+  import { siteIcon } from './site-icon'
   import SpaceMark from './SpaceMark.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -64,12 +65,60 @@
         : []),
   ])
 
+  /** How many names the changed list shows of each kind. Enough to recognise
+   *  what is about to happen, few enough to read at a glance. */
+  const SHOWN = 6
+
+  /** The folders a rule can be about: the top of the tree, where somebody thinks
+   *  in folders, plus any deeper one that already carries a rule - set here on
+   *  another day, or on another machine. Nothing is hidden, and a vault of four
+   *  hundred folders does not become four hundred rows. */
+  const ruled = $derived.by(() => {
+    const tops = new Set<string>()
+
+    if (showing) {
+      for (const note of workspace.notes) {
+        const folder = publish.relativeTo(note.path).split('/')[0]
+        if (folder && folder !== publish.relativeTo(note.path)) tops.add(folder)
+      }
+    }
+
+    for (const folder of [...publish.rules.include, ...publish.rules.exclude]) tops.add(folder)
+
+    return [...tops].sort((one, other) => one.localeCompare(other))
+  })
+
+  function ruleFor(folder: string): string {
+    if (publish.rules.include.includes(folder)) return 'in'
+    if (publish.rules.exclude.includes(folder)) return 'out'
+    return ''
+  }
+
+  function setRule(folder: string, value: string) {
+    publish.rule('include', folder, value === 'in')
+    publish.rule('exclude', folder, value === 'out')
+  }
+
+  const changes = $derived(publish.changes)
+
+  /** The badge the icon is drawn in, so that what the site wears is the mark the
+   *  app has already drawn; see site-icon.ts. */
+  let markBox = $state<HTMLElement | null>(null)
+
   // Filled from what the account holds, and again whenever it answers with
   // something new: publishing changes the blog under the form.
   $effect(() => {
     if (!publish.open) return
     publish.fill(blog)
     publish.confirmed = published
+  })
+
+  // And asked what those rules would put on the site, once, when the sheet opens
+  // on a space that is already published: the answer is what the reader is about
+  // to change, and it should be on screen before they change anything.
+  $effect(() => {
+    if (!publish.open || !publish.spaceId) return
+    publish.ask()
   })
 
   // Asked after while the sheet shows a domain, and left alone as soon as it
@@ -94,12 +143,18 @@
     <p class="wrong">{t(publish.error)}</p>
   {/if}
 
-  <!-- The consequence comes before the switch, not after it. -->
+  <!-- The consequence comes before the switch, not after it. What that
+       consequence is depends on the rules below, so it is said in the words the
+       rules make true rather than in one fixed sentence. -->
   <label class="danger-check">
     <input data-lands type="checkbox" bind:checked={publish.confirmed} disabled={published} />
     <span>
-      <strong>{t('Everything in this space becomes public.')}</strong>
-      {t('Every note, including drafts, is readable by anyone with the address.')}
+      <strong>
+        {publish.rules.otherwise === 'all'
+          ? t('Everything in this space becomes public.')
+          : t('The folders you choose become public.')}
+      </strong>
+      {t('Anyone with the address can read what is published, drafts included.')}
     </span>
   </label>
 
@@ -120,6 +175,79 @@
         </div>
       </div>
     </div>
+
+    <!-- Which notes, which is the question a space somebody already writes in
+         has to be able to answer. A note that says `publish:` for itself is not
+         listed here: what the author wrote in the file wins, and a row that
+         could not change it would be a row that lies. -->
+    {#if !publish.note}
+      <h3>{t('Which notes')}</h3>
+
+      <div class="card">
+        <div class="row">
+          <span class="name">{t('Notes outside a rule')}</span>
+          <div class="pick">
+            <Select
+              value={publish.rules.otherwise}
+              options={[
+                { value: 'all', label: t('Are published') },
+                { value: 'none', label: t('Stay private') },
+              ]}
+              onchange={(value: string) => publish.otherwise(value === 'none' ? 'none' : 'all')}
+              label={t('Notes outside a rule')}
+              plain={viewport.touch}
+            />
+          </div>
+        </div>
+      </div>
+
+      {#if ruled.length}
+        <div class="card">
+          {#each ruled as folder (folder)}
+            <div class="row">
+              <span class="name">{folder}</span>
+              <div class="pick">
+                <Select
+                  value={ruleFor(folder)}
+                  options={[
+                    { value: '', label: t('Follows the rule') },
+                    { value: 'in', label: t('Published') },
+                    { value: 'out', label: t('Private') },
+                  ]}
+                  onchange={(value: string) => setRule(folder, value)}
+                  label={folder}
+                  plain={viewport.touch}
+                />
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      <!-- What this will do, before it is done. A nib site is live - the page is
+           the note - so the only thing a publish changes is which pages exist,
+           and that is what this says. -->
+      {#if changes}
+        <p class="note" transition:slide={{ duration: dur(160) }}>
+          {t('{count} pages', { count: changes.pages })}
+          {#if changes.adds.length}· {t('{count} new', { count: changes.adds.length })}{/if}
+          {#if changes.removes.length}· {t('{count} gone', { count: changes.removes.length })}{/if}
+        </p>
+        {#if changes.adds.length || changes.removes.length}
+          <ul class="changed">
+            {#each changes.adds.slice(0, SHOWN) as path (path)}
+              <li class="added">{shownName(path)}</li>
+            {/each}
+            {#each changes.removes.slice(0, SHOWN) as path (path)}
+              <li class="gone">{shownName(path)}</li>
+            {/each}
+            {#if changes.more || changes.adds.length + changes.removes.length > SHOWN * 2}
+              <li class="rest">{t('and more')}</li>
+            {/if}
+          </ul>
+        {/if}
+      {/if}
+    {/if}
 
     <!-- One address or the other. The choice is the control, so there is no way
          to end up asking for both. -->
@@ -225,7 +353,65 @@
       </div>
     {/if}
 
-    <button class="primary go" disabled={!publish.ready} onclick={() => void publish.publish()}>
+    <!-- How a page of it looks to something that is not a person: a search
+         result, a link pasted into a chat, a browser tab. Each page says this for
+         itself in its own front matter; what is here is what the ones that say
+         nothing fall back on. -->
+    <h3>{t('How it appears')}</h3>
+
+    <div class="card">
+      <label class="row">
+        <span class="name">{t('Description')}</span>
+        <input
+          class="field wide"
+          bind:value={publish.description}
+          placeholder={t('What this site is')}
+          spellcheck="false"
+        />
+      </label>
+      <div class="row">
+        <span class="name">{t('Tab icon')}</span>
+        <!-- The space's own mark, which is what the site wears: one space, one
+             icon, changed where a space's icon is changed. -->
+        <span class="mark nib-badge" bind:this={markBox}>
+          <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
+        </span>
+      </div>
+    </div>
+
+    <!-- A word said out loud to a room, which is what this is for; see
+         services/sync/src/blog/gate.ts. -->
+    <h3>{t('Password')}</h3>
+
+    <div class="card">
+      <label class="row">
+        <span class="name">
+          {publish.hasPassword ? t('Set a new one') : t('Ask for a password')}
+        </span>
+        <input
+          class="field"
+          type="password"
+          bind:value={publish.password}
+          placeholder={publish.hasPassword ? '••••••' : t('No password')}
+          autocomplete="new-password"
+        />
+      </label>
+      {#if publish.hasPassword}
+        <button
+          class="action danger"
+          disabled={publish.busy}
+          onclick={() => void publish.removePassword()}
+        >
+          {t('Remove the password')}
+        </button>
+      {/if}
+    </div>
+
+    <button
+      class="primary go"
+      disabled={!publish.ready}
+      onclick={() => void publish.publish(siteIcon(markBox))}
+    >
       {published ? t('Update') : t('Publish')}
     </button>
   </fieldset>
@@ -286,6 +472,60 @@
   }
 
   /* Wide enough for the longest note name a space is likely to hold. */
+  /* What a publish would change: a short list of names, the new ones and the
+     ones going away told apart by the mark in front of them rather than by
+     colour alone. */
+  .changed {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    margin: calc(-1 * var(--space-2)) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+  }
+
+  .changed li::before {
+    display: inline-block;
+    width: 1.1em;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  .changed .added::before {
+    content: '+';
+    color: var(--success);
+  }
+
+  .changed .gone::before {
+    content: '−';
+    color: var(--danger);
+  }
+
+  .changed .rest {
+    color: var(--muted);
+  }
+
+  .changed .rest::before {
+    content: '';
+  }
+
+  /* The space's own mark, at the size a row's control would be: it is what the
+     site wears in a browser tab. */
+  .mark {
+    flex: none;
+  }
+
+  /* A description is a sentence rather than a word, so its field takes the rest
+     of the row. */
+  .field.wide {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+
   .pick {
     flex: none;
     width: 13rem;

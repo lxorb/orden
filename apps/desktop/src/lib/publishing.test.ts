@@ -45,6 +45,10 @@ vi.mock('./api', async (importOriginal) => {
           dns: [{ type: 'CNAME', name: 'notes', value: 'nibeditor.com' }],
         }),
       unpublish: (_token: string, id: string) => answer(`unpublish ${id}`, { ok: true }),
+      site: (_token: string, id: string, settings: Record<string, unknown>) =>
+        answer(`site ${id} ${JSON.stringify(settings)}`, { space: {}, site: {} }),
+      sitePreview: (_token: string, id: string) =>
+        answer(`preview ${id}`, { pages: 0, before: 0, adds: [], removes: [], more: false }),
       domainStatus: (_token: string, id: string) => answer(`status ${id}`, world.domain),
       verifyDomain: (_token: string, id: string) => answer(`verify ${id}`, world.domain),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
@@ -187,7 +191,12 @@ describe('the Publish sheet', () => {
     publish.note = 'Read me.md'
     await publish.publish()
 
-    expect(world.asked).toEqual(['publish space-1 {"subdomain":"emil","note":"Read me.md"}'])
+    // The site's own decisions first, then the address: one press of Publish is
+    // one statement, and the rules decide what the address then serves.
+    expect(world.asked).toEqual([
+      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":""}',
+      'publish space-1 {"subdomain":"emil","note":"Read me.md"}',
+    ])
   })
 
   test('the whole space is a note of none rather than an empty name', async () => {
@@ -197,7 +206,10 @@ describe('the Publish sheet', () => {
     publish.note = ''
     await publish.publish()
 
-    expect(world.asked).toEqual(['publish space-1 {"domain":"notes.example.com","note":null}'])
+    expect(world.asked).toEqual([
+      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":""}',
+      'publish space-1 {"domain":"notes.example.com","note":null}',
+    ])
   })
 
   test('keeps the records the server answered with', async () => {
@@ -262,6 +274,68 @@ describe('the Publish sheet', () => {
     publish.typeSubdomain('Emil’s Notes!')
 
     expect(publish.subdomain).toBe('emilsnotes')
+  })
+
+  test('the rules and whether there is a password come off the listing', () => {
+    account.spaces = [
+      remote('space-1', 'owner', {
+        enabled: true,
+        site: {
+          rules: { include: ['Public'], exclude: ['Drafts'], otherwise: 'none' },
+          description: 'Notes from the field.',
+          password: true,
+        },
+      }),
+    ]
+    publish.show(local('Notes'))
+    publish.fill(publish.blog)
+
+    expect(publish.rules).toEqual({
+      include: ['Public'],
+      exclude: ['Drafts'],
+      otherwise: 'none',
+    })
+    expect(publish.description).toBe('Notes from the field.')
+    expect(publish.hasPassword).toBe(true)
+    // Never the password itself: the account does not hand one back.
+    expect(publish.password).toBe('')
+  })
+
+  test('a folder is in one list or the other, never both', () => {
+    publish.show(local('Notes'))
+
+    publish.rule('exclude', 'Drafts', true)
+    expect(publish.rules.exclude).toEqual(['Drafts'])
+
+    publish.rule('include', 'Drafts', true)
+    publish.rule('exclude', 'Drafts', false)
+    expect(publish.rules).toEqual({ include: ['Drafts'], exclude: [], otherwise: 'all' })
+  })
+
+  test('what the rules would change is asked of the server that serves them', async () => {
+    publish.show(local('Notes'))
+    publish.otherwise('none')
+    await publish.askChanges()
+
+    expect(world.asked).toEqual(['preview space-1'])
+    expect(publish.changes?.pages).toBe(0)
+  })
+
+  test('an empty password field is not a password being taken off', async () => {
+    publish.show(local('Notes'))
+    publish.subdomain = 'emil'
+    publish.password = ''
+    await publish.publish()
+
+    expect(world.asked[0]).not.toContain('password')
+  })
+
+  test('and taking one off is its own request', async () => {
+    publish.show(local('Notes'))
+    await publish.removePassword()
+
+    expect(world.asked).toEqual(['site space-1 {"password":null}'])
+    expect(publish.hasPassword).toBe(false)
   })
 
   test('a note is named to the server relative to its own space', () => {

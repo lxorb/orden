@@ -521,7 +521,7 @@ function favicon(space: Space, site: Site): Response {
   const drawn =
     site.icon ??
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">` +
-      `<rect width="32" height="32" rx="7" fill="#6f5ce0"/>` +
+      `<rect width="32" height="32" rx="7" fill="#17161c"/>` +
       `<text x="16" y="23" text-anchor="middle" fill="#fff" font-family="ui-sans-serif,system-ui,sans-serif" font-size="19" font-weight="600">${letter}</text>` +
       `</svg>`
 

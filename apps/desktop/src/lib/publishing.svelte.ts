@@ -11,7 +11,15 @@
  *  other address, never both: a domain of one's own replaces the shared name, so
  *  the choice is the control rather than a pair of fields that could disagree. */
 
-import { api, ApiError, type DnsRecord, type DomainStatus, type RemoteSpace } from './api'
+import {
+  api,
+  ApiError,
+  type DnsRecord,
+  type DomainStatus,
+  type RemoteSpace,
+  type SiteChanges,
+  type SiteSettings,
+} from './api'
 import { account } from './account.svelte'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
@@ -41,6 +49,24 @@ class Publish {
   /** Publishing is a public act, so it is asked about outright rather than
    *  assumed from the button being pressed. */
   confirmed = $state(false)
+
+  /** Which folders the site publishes, and what a note that says nothing about
+   *  itself gets. A note that says `publish:` in its own front matter has
+   *  settled its own case; see services/sync/src/blog/site.ts. */
+  rules = $state<SiteSettings['rules']>({ include: [], exclude: [], otherwise: 'all' })
+  /** The description its pages fall back on, for a search result and a shared
+   *  link. */
+  description = $state('')
+  /** A password for the whole site: what has been typed, and whether there is one
+   *  on the account. The account never hands a password back, so these are two
+   *  different facts. */
+  password = $state('')
+  hasPassword = $state(false)
+
+  /** What publishing would change, as the server works it out. Null until the
+   *  rules have been asked about. */
+  changes = $state<SiteChanges | null>(null)
+  asking = $state(false)
 
   busy = $state(false)
   error = $state<string | null>(null)
@@ -94,6 +120,71 @@ class Publish {
     this.domain = blog?.domain ?? ''
     this.address = blog?.domain ? 'domain' : 'subdomain'
     this.note = blog?.note ?? ''
+
+    const site = blog?.site
+    this.rules = {
+      include: [...(site?.rules.include ?? [])],
+      exclude: [...(site?.rules.exclude ?? [])],
+      otherwise: site?.rules.otherwise ?? 'all',
+    }
+    this.description = site?.description ?? ''
+    this.hasPassword = !!site?.password
+    this.password = ''
+  }
+
+  /** A folder named in one of the two lists, or taken out of it. Written here
+   *  rather than in the sheet so that asking what it would change is one call in
+   *  one place. */
+  rule(which: 'include' | 'exclude', folder: string, wanted: boolean) {
+    const held = new Set(this.rules[which])
+    if (wanted) held.add(folder)
+    else held.delete(folder)
+
+    this.rules = { ...this.rules, [which]: [...held] }
+    this.ask()
+  }
+
+  otherwise(value: 'all' | 'none') {
+    this.rules = { ...this.rules, otherwise: value }
+    this.ask()
+  }
+
+  /** Which asking is the latest, for the same reason `checks` is: the rules can
+   *  be changed twice while the first answer is still in flight. */
+  private previews = 0
+  private askTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** What publishing these rules would change, from the server that serves them.
+   *
+   *  Asked of the account rather than worked out here, for two reasons: the
+   *  answer has to be the one the site will actually give, and what every note
+   *  says about itself is on the account already - the app would have to read a
+   *  thousand files off the disk to answer the same question. A moment after the
+   *  typing stops, like the address check beside it. */
+  ask() {
+    clearTimeout(this.askTimer)
+    this.askTimer = setTimeout(() => void this.askChanges(), 240)
+  }
+
+  /** And the question itself, for the moment the sheet opens and for a test that
+   *  would rather not wait a quarter of a second. */
+  async askChanges() {
+    const id = this.spaceId
+    if (!id || !account.accountToken) return
+
+    const asking = ++this.previews
+    this.asking = true
+
+    try {
+      const changes = await api.sitePreview(account.accountToken, id, this.rules)
+      if (asking !== this.previews) return
+      this.changes = changes
+    } catch {
+      // Left as it was: a question that failed says nothing about the site.
+      if (asking !== this.previews) return
+    } finally {
+      if (asking === this.previews) this.asking = false
+    }
   }
 
   /** The path the server knows a note by: relative to the space being
@@ -150,15 +241,68 @@ class Publish {
     }
   }
 
-  /** Only the chosen address goes up; the server lets the other one go. */
-  async publish() {
+  /** Only the chosen address goes up; the server lets the other one go.
+   *
+   *  The site's own decisions go in the same gesture: somebody who has just
+   *  chosen which folders are public and pressed Publish has said one thing, and
+   *  two requests are what makes a half-published site possible. The rules first,
+   *  because they decide what the address will then serve. */
+  async publish(icon: string | null = null) {
     const note = this.note || null
+
+    await this.saveSite(icon)
+    if (this.error) return
 
     await this.send(
       this.address === 'subdomain'
         ? { subdomain: this.subdomain, note }
         : { domain: this.domain, note },
     )
+  }
+
+  /** What the site decides, written whole. */
+  private async saveSite(icon: string | null) {
+    const id = this.spaceId
+    if (!id || !account.accountToken) return
+
+    try {
+      await api.site(account.accountToken, id, {
+        rules: this.rules,
+        description: this.description.trim(),
+        ...(icon ? { icon } : {}),
+        // A field left empty is not a password being taken off: the account
+        // never handed one back to put in it. Taking one off is its own gesture.
+        ...(this.password ? { password: this.password } : {}),
+      })
+
+      if (this.password) {
+        this.hasPassword = true
+        this.password = ''
+      }
+    } catch (error) {
+      this.error = message(error, 'could not publish')
+    }
+  }
+
+  /** The password, off. Said on its own, because an empty field means nothing
+   *  was typed rather than that nothing should be asked for. */
+  async removePassword() {
+    const id = this.spaceId
+    if (!id || !account.accountToken) return
+
+    this.busy = true
+    this.error = null
+
+    try {
+      await api.site(account.accountToken, id, { password: null })
+      this.hasPassword = false
+      this.password = ''
+      await account.loadSpaces()
+    } catch (error) {
+      this.error = message(error, 'that did not work')
+    } finally {
+      this.busy = false
+    }
   }
 
   private async send(settings: { subdomain?: string; domain?: string; note?: string | null }) {

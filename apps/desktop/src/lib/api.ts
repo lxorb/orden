@@ -185,7 +185,43 @@ export interface RemoteSpace {
     note: string | null
     /** What to add at the registrar for a domain of one's own. Empty otherwise. */
     dns: DnsRecord[]
+    /** What the site itself decides; see services/sync/src/blog/site.ts. */
+    site: SiteSettings
   }
+}
+
+/** Which notes a site publishes, and what its pages fall back on.
+ *
+ *  The rules are about folders; a note that says `publish:` in its own front
+ *  matter has settled its own case and no rule here changes that. `password` is
+ *  only ever whether there is one: the account never hands one back. */
+export interface SiteSettings {
+  rules: {
+    /** Folders published even where the default is to publish nothing. */
+    include: string[]
+    /** Folders never published, whatever the default is. */
+    exclude: string[]
+    /** What a note outside every rule, and silent about itself, gets. */
+    otherwise: 'all' | 'none'
+  }
+  description?: string
+  image?: string
+  /** The icon a browser tab shows, as the SVG this app drew of the space's own
+   *  mark; see site-icon.ts. */
+  icon?: string
+  password: boolean
+}
+
+/** What a publish would change: how many pages the site would have, which
+ *  appear, which disappear. A nib site is live - the page is the note - so this
+ *  is the only thing a publish can change and the only honest thing to show
+ *  before one. */
+export interface SiteChanges {
+  pages: number
+  before: number
+  adds: string[]
+  removes: string[]
+  more: boolean
 }
 
 export interface RemoteNote {
@@ -838,6 +874,34 @@ export const api = {
 
   unpublish: (token: string, spaceId: string) =>
     request<{ ok: true }>(`/v1/spaces/${spaceId}/blog`, { method: 'DELETE', token }),
+
+  /** What the site decides, written whole. Every field is optional and what is
+   *  left out stays as it was, except `password: null`, which is how taking one
+   *  off is said. */
+  site: (
+    token: string,
+    spaceId: string,
+    settings: {
+      rules?: SiteSettings['rules']
+      description?: string
+      image?: string
+      icon?: string
+      password?: string | null
+    },
+  ) =>
+    request<{ space: RemoteSpace; site: SiteSettings }>(`/v1/spaces/${spaceId}/site`, {
+      method: 'PUT',
+      token,
+      body: settings,
+    }),
+
+  /** And what those rules would change, before they are written. */
+  sitePreview: (token: string, spaceId: string, rules: SiteSettings['rules']) =>
+    request<SiteChanges>(`/v1/spaces/${spaceId}/site/preview`, {
+      method: 'POST',
+      token,
+      body: { rules },
+    }),
 
   domainStatus: (token: string, spaceId: string) =>
     request<DomainStatus>(`/v1/spaces/${spaceId}/blog/domain`, { token }),
