@@ -533,15 +533,16 @@ describe("a space's tags", () => {
     })
 
     const before = reads
-    expect(links.tagCounts()).toEqual([
-      { tag: 'paper', count: 2 },
-      { tag: 'work', count: 1 },
-      { tag: 'work/nib', count: 1 },
+    // A row per level: Plan is one note under `work` and under `work/nib` both, and
+    // it is one note under `work` whether it wrote the tag once or twice.
+    expect(links.spaceTags).toEqual([
+      { tag: 'paper', notes: 2 },
+      { tag: 'work', notes: 1 },
+      { tag: 'work/nib', notes: 1 },
     ])
 
     // Not one note read to answer it, however many times it is asked.
-    links.tagCounts()
-    links.tagCounts()
+    expect(links.spaceTags).toEqual(links.spaceTags)
     expect(reads - before).toBe(0)
   })
 
@@ -549,7 +550,17 @@ describe("a space's tags", () => {
     await space({ 'Plan.md': '#work #work #work\n', 'Ink.md': '#Work\n' })
 
     // Three uses in one note and one in another, spelled two ways: two notes.
-    expect(links.tagCounts()).toEqual([{ tag: 'work', count: 2 }])
+    expect(links.spaceTags).toEqual([{ tag: 'work', notes: 2 }])
+  })
+
+  test('and a note under two branches of one tag counts once for the branch', async () => {
+    await space({ 'Plan.md': '#work/nib and #work/lab\n' })
+
+    expect(links.spaceTags).toEqual([
+      { tag: 'work', notes: 1 },
+      { tag: 'work/lab', notes: 1 },
+      { tag: 'work/nib', notes: 1 },
+    ])
   })
 
   test('and follow a note being saved, without the space being read again', async () => {
@@ -557,8 +568,21 @@ describe("a space's tags", () => {
     const before = reads
 
     links.noteSaved(at('Plan.md'), '#paper\n')
-    expect(links.tagCounts()).toEqual([{ tag: 'paper', count: 1 }])
+    expect(links.spaceTags).toEqual([{ tag: 'paper', notes: 1 }])
     expect(reads - before).toBe(0)
+  })
+
+  test('and are the same list the editor is handed for its own popup', async () => {
+    await space({ 'Plan.md': '#work/nib\n', 'Ink.md': '#paper\n' })
+
+    // One answer, two surfaces: the `#` completion reads it off the index it is
+    // handed, and the tag tree reads it off the store. Neither counts its own.
+    expect(links.index(at('Plan.md')).tags).toEqual(links.spaceTags)
+    expect(links.spaceTags).toEqual([
+      { tag: 'paper', notes: 1 },
+      { tag: 'work', notes: 1 },
+      { tag: 'work/nib', notes: 1 },
+    ])
   })
 })
 

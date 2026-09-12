@@ -6,21 +6,22 @@
  *  same fact drawn, so a space can be looked through by its tags rather than
  *  read off a list of every one of them spelled out in full.
  *
- *  Pure. What the tags are is asked of the space (see `space_tags`), what a row
- *  looks like is TagTree.svelte's, and what a rename writes is tag-edits.ts. */
+ *  Pure, and an assembler rather than a counter: the counting is `spaceTags` in
+ *  link-index.svelte.ts, which already answers a row per level because the editor's
+ *  `#` popup wants the same numbers. What a row looks like is TagTree.svelte's, and
+ *  what a rename writes is tag-edits.ts. */
 
-import type { Tag } from './workspace.svelte'
+import type { SpaceTag } from '@nib/editor'
 
 export interface TagNode {
   /** The last segment, which is what a row shows. */
   name: string
   /** The whole path from the root, which is what `tag:` asks for. */
   path: string
-  /** Uses of this tag exactly, not counting the ones under it. */
-  own: number
-  /** Uses of this tag and of everything under it, which is the set `tag:path`
-   *  finds and so the number a row shows. */
-  total: number
+  /** How many notes this row's own search would find: the notes carrying this tag
+   *  or anything under it, each counted once. Whoever counted them already rolled
+   *  the levels up; see `spaceTags`. */
+  notes: number
   children: TagNode[]
 }
 
@@ -39,36 +40,48 @@ function segmentsOf(tag: string): string[] {
  *
  *  Folded, because the operator is: a note that wrote `#Work` and one that wrote
  *  `#work` are under one node, and a row that searched for one of them would
- *  otherwise find both and say the wrong number. The spelling shown is the first
- *  one the space offered, which for a list that arrives most-used first is the
- *  spelling most of the notes use. */
-export function tagTree(tags: readonly Tag[]): TagNode[] {
+ *  otherwise find both and say the wrong number.
+ *
+ *  The list holds a row per level already - `work` as well as `work/nib` - so this
+ *  hangs each one where its path says and takes its number as given. Adding them up
+ *  again here would count a note twice for every level it is under. A level the list
+ *  does not mention is still made, as a parent with nothing of its own to say, so a
+ *  gap in the list cannot lose the branch under it. */
+export function tagTree(tags: readonly SpaceTag[]): TagNode[] {
   const roots: TagNode[] = []
   const byPath = new Map<string, TagNode>()
 
-  for (const { tag, count } of tags) {
+  const make = (segments: readonly string[]): TagNode | null => {
+    let path = ''
+    let siblings = roots
+    let node: TagNode | null = null
+
+    for (const segment of segments) {
+      path = path ? `${path}/${segment.toLowerCase()}` : segment.toLowerCase()
+
+      let held = byPath.get(path)
+      if (!held) {
+        held = { name: segment, path, notes: 0, children: [] }
+        byPath.set(path, held)
+        siblings.push(held)
+      }
+
+      node = held
+      siblings = held.children
+    }
+
+    return node
+  }
+
+  for (const { tag, notes } of tags) {
     const segments = segmentsOf(tag)
     if (!segments.length) continue
 
-    let path = ''
-    let siblings = roots
-
-    for (const [depth, segment] of segments.entries()) {
-      path = path ? `${path}/${segment.toLowerCase()}` : segment.toLowerCase()
-
-      let node = byPath.get(path)
-      if (!node) {
-        node = { name: segment, path, own: 0, total: 0, children: [] }
-        byPath.set(path, node)
-        siblings.push(node)
-      }
-
-      // Every node on the way down holds the count too: that is what makes the
-      // number on a row the number of notes the row's own search would find.
-      node.total += count
-      if (depth === segments.length - 1) node.own += count
-      siblings = node.children
-    }
+    const node = make(segments)
+    // Added rather than set, so two spellings of one path land on one row with both
+    // their notes. Adding a row into the levels *above* it is the thing this must not
+    // do - that is what would count a note once per level it is under.
+    if (node) node.notes += notes
   }
 
   sort(roots)

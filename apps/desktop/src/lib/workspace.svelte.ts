@@ -1,4 +1,10 @@
-import { flushTableEdits, type FoldLines, type NoteJump, sameFolds } from '@nib/editor'
+import {
+  flushTableEdits,
+  type FoldLines,
+  type NoteJump,
+  sameFolds,
+  type SpaceTag,
+} from '@nib/editor'
 import { account } from './account.svelte'
 import { arriving } from './arriving.svelte'
 import { blankCanvas } from './canvas/format'
@@ -108,11 +114,6 @@ type NewKind = 'note' | 'canvas'
 const PLACEHOLDER: Record<NewKind, string> = {
   note: 'Untitled.md',
   canvas: 'Untitled.canvas',
-}
-
-export interface Tag {
-  tag: string
-  count: number
 }
 
 export type { Heading } from './outline'
@@ -266,7 +267,7 @@ class Workspace {
   readonly undone = new FileActions()
   /** The tabs this window has closed, newest last; see workspace/closed. */
   readonly closed = new ClosedTabs()
-  tags = $state<Tag[]>([])
+  tags = $state<SpaceTag[]>([])
   /** What this machine remembers about the list: which folders are open, what
    *  was opened lately, the icon each space wears. See workspace/device. */
   readonly device = new DeviceView()
@@ -2394,8 +2395,9 @@ class Workspace {
    *  one of them knows it already: the scan that reads every note for its links
    *  writes down its tags on the way past, while asking the space read every body
    *  again - twenty-two megabytes of strings on the thread the panel was opening on.
-   *  See `tagCounts` in link-index.svelte.ts, which is also where what the number
-   *  means is written down.
+   *  See `spaceTags` in link-index.svelte.ts, which is the one answer to what a
+   *  space is tagged with and the one place what a number beside a tag means is
+   *  written down - the editor's `#` popup is handed the same list.
    *
    *  A panel opened while the space is still being read shows what the index has so
    *  far and the rest of it when the scan lands, which is what the wait below is
@@ -2406,11 +2408,11 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    this.tags = links.tagCounts()
+    this.tags = links.spaceTags
     if (!links.scanning) return
 
     await links.scanned()
-    if (this.activeSpace.root === root) this.tags = links.tagCounts()
+    if (this.activeSpace.root === root) this.tags = links.spaceTags
   }
 
   /** Renames a tag, and everything under it, in every note of the space.

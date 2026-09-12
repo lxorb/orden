@@ -1,24 +1,28 @@
 import { describe, expect, test } from 'vitest'
 import { liftedFrom, nodesIn, renamedTo, type TagNode, tagTree } from './tag-tree'
 
-/** A tag and how often the space uses it, as `space_tags` answers. */
-const tag = (one: string, count = 1) => ({ tag: one, count })
+/** One row of what a space is tagged with, as `spaceTags` answers it: a row per
+ *  level, and the notes under that level already rolled up. So a note tagged
+ *  `#work/nib` is a row for `work` and a row for `work/nib`, and the tree hangs them
+ *  rather than adding them up again. See link-index.svelte.ts. */
+const tag = (one: string, notes = 1) => ({ tag: one, notes })
 
-/** The tree as `path count` lines, indented by depth, so a case says the whole
+/** The tree as `path notes` lines, indented by depth, so a case says the whole
  *  shape in one string rather than in a nest of objects. */
 function drawn(nodes: readonly TagNode[], depth = 0): string[] {
   return nodes.flatMap((node) => [
-    `${'  '.repeat(depth)}${node.path} ${node.own}/${node.total}`,
+    `${'  '.repeat(depth)}${node.path} ${node.notes}`,
     ...drawn(node.children, depth + 1),
   ])
 }
 
 describe('building the tree', () => {
   test('makes a node of every segment', () => {
-    expect(drawn(tagTree([tag('#work/nib/canvas')]))).toEqual([
-      'work 0/1',
-      '  work/nib 0/1',
-      '    work/nib/canvas 1/1',
+    // One note tagged `#work/nib/canvas`, which is one note under all three levels.
+    expect(drawn(tagTree([tag('#work'), tag('#work/nib'), tag('#work/nib/canvas')]))).toEqual([
+      'work 1',
+      '  work/nib 1',
+      '    work/nib/canvas 1',
     ])
   })
 
@@ -35,17 +39,23 @@ describe('building the tree', () => {
   })
 
   test('and joins the tags that share one', () => {
-    expect(drawn(tagTree([tag('#work/nib'), tag('#work/lab')]))).toEqual([
-      'work 0/2',
-      '  work/lab 1/1',
-      '  work/nib 1/1',
+    // Two notes, one under `work/nib` and one under `work/lab`: two notes under
+    // `work`, which is the row the counting already worked out.
+    expect(drawn(tagTree([tag('#work', 2), tag('#work/nib'), tag('#work/lab')]))).toEqual([
+      'work 2',
+      '  work/lab 1',
+      '  work/nib 1',
     ])
   })
 
-  test('with a parent that is a tag of its own counted in both', () => {
-    expect(drawn(tagTree([tag('#work', 3), tag('#work/nib', 2)]))).toEqual([
-      'work 3/5',
-      '  work/nib 2/2',
+  test('and takes the number on a row as given rather than adding the children up', () => {
+    // Three notes carry `#work` and two carry `#work/nib`: five notes are under
+    // `work`, and that is what the row says. Adding the child in again would say
+    // seven, and counting a note twice for a level it is under is the whole of what
+    // this must not do.
+    expect(drawn(tagTree([tag('#work', 5), tag('#work/nib', 2)]))).toEqual([
+      'work 5',
+      '  work/nib 2',
     ])
   })
 
@@ -56,18 +66,18 @@ describe('building the tree', () => {
   })
 
   test('folded, so one spelling is one node', () => {
-    expect(drawn(tagTree([tag('#Work/Nib'), tag('#work/nib')]))).toEqual([
-      'work 0/2',
-      '  work/nib 2/2',
-    ])
+    // The counting folds already, so this is what the tree does with two rows for
+    // one path rather than something it is ever handed: one node, both notes.
+    expect(drawn(tagTree([tag('#Work/Nib'), tag('#work/nib')]))).toEqual(['work 0', '  work/nib 2'])
+  })
+
+  test('and a level nothing mentioned is still a parent, with nothing of its own', () => {
+    // `a` has no row here, and the branch under it must not be lost for that.
+    expect(drawn(tagTree([tag('#a/b')]))).toEqual(['a 0', '  a/b 1'])
   })
 
   test('and a slash nobody meant makes no empty node', () => {
-    expect(drawn(tagTree([tag('#work/'), tag('#a//b')]))).toEqual([
-      'a 0/1',
-      '  a/b 1/1',
-      'work 1/1',
-    ])
+    expect(drawn(tagTree([tag('#work/'), tag('#a//b')]))).toEqual(['a 0', '  a/b 1', 'work 1'])
   })
 
   test('and nothing at all out of nothing', () => {

@@ -83,7 +83,7 @@
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
         >
           <span class="nib-row-label">{node.name}</span>
-          <span class="nib-row-meta">{node.total}</span>
+          <span class="nib-row-meta">{node.notes}</span>
         </button>
       </div>
 

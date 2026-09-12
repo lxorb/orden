@@ -132,20 +132,30 @@ class Links {
     })),
   )
 
-  /** Every tag of the space with the notes under it, most carried first, as the
-   *  editor's `#` popup needs to see it.
+  /** Every tag of the space with the notes under it, most carried first.
    *
-   *  Out of the same scan the links came from, which already read every note's
-   *  tags: a second walk for this would be a second walk over the whole space, and
-   *  `space_tags` counts uses where a popup wants to say how many notes a name
-   *  would file this one beside. A tag counts towards every level above it, since
-   *  `#work/nib` is a note under `work` as well - the slashes are a path, the way
-   *  the tag tree and the `tag:` operator both read them.
+   *  The one answer to "what is this space tagged with", and both surfaces that ask
+   *  read it: the editor's `#` popup, which is handed it with the rest of the index,
+   *  and the tag tree above the search field. They used to ask two different things
+   *  of two different places - the popup this, and the tree `space_tags`, which read
+   *  every body in the space again to count uses rather than notes.
+   *
+   *  What a number here means, said once. It is notes and not uses: a note that
+   *  writes `#work` three times is one note under `work`. It is folded: `#Work` and
+   *  `#work` are one tag, which is what the `tag:` operator already means and what
+   *  the tree already grouped by. And it counts towards every level above it, since
+   *  `#work/nib` is a note under `work` as well - the slashes are a path, the way the
+   *  tree and the operator both read them. So the list holds a row per level, and
+   *  whatever draws it takes the levels as given rather than rolling them up again.
+   *
+   *  Out of the same scan the links came from, which already read every note's tags:
+   *  asking the space instead was twenty-two megabytes of strings built on the thread
+   *  the panel was opening on, three to four hundred milliseconds of it.
    *
    *  Derived, so it is nothing at all until something asks and is built again only
    *  when the index has actually changed; see `refs` above for why the notes are
    *  raw state. */
-  private readonly tagCounts = $derived.by((): SpaceTag[] => {
+  readonly spaceTags = $derived.by((): SpaceTag[] => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const counts = new Map<string, number>()
 
@@ -277,32 +287,6 @@ class Links {
 
     return map
   })
-
-  /** Every tag in the space and how many notes carry it, most used first and
-   *  alphabetical within a count, which is the order the tag tree is drawn in.
-   *
-   *  From the one pass that already read every note. Asking the space instead read
-   *  every body again to count them - twenty-two megabytes of strings built on the
-   *  thread the panel was opening on, three to four hundred milliseconds of it; the
-   *  index has held each note's tags since the scan that found its links.
-   *
-   *  The number beside a tag is the notes carrying it, deduped and folded: a note
-   *  that writes `#work` three times is one note with that tag, and `#Work` and
-   *  `#work` are one tag. That is what a tag tree reads as - the tree already folds
-   *  the path it groups by - and it is what the index gives for nothing. The crate's
-   *  `space_tags` counts uses rather than notes and keeps the spelling; see the note
-   *  beside it in search.rs. */
-  tagCounts(): { tag: string; count: number }[] {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- counted and thrown away inside one call
-    const counts = new Map<string, number>()
-    for (const note of this.notes) {
-      for (const tag of note.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
-    }
-
-    return [...counts]
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((one, other) => other.count - one.count || (one.tag < other.tag ? -1 : 1))
-  }
 
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
@@ -448,7 +432,7 @@ class Links {
       // with the rest of what the space holds rather than through a facet of
       // their own, for the same reason the query fence does: they are the same
       // fact, and they are replaced when it changes.
-      tags: this.tagCounts,
+      tags: this.spaceTags,
       searchBlocks: (text, most) => this.searchBlocks(text, most),
       // What a ` ```query ` fence in the note answers with, and what a row in it
       // opens. Handed over with the rest of what the space holds, so a fence is
