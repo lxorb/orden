@@ -1275,36 +1275,36 @@ export const zhHans: Dictionary = {
   'that is a lot of listening - try again later': '收音过于频繁，请稍后重试',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '文字 {percent}%',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: '手机',
+  'The bar sits over the keyboard on a phone.': '在手机上，工具条位于键盘上方。',
+  'On the bar': '在条上',
+  'Everything else': '其余全部',
+  'Search commands': '搜索命令',
+  'Nothing on the bar.': '条上什么都没有。',
+  'Take it off': '移出',
+  'Put it on the bar': '放到条上',
+  'Reset the bar': '重置工具条',
+  'Pulling down': '下拉',
+  'A pull past the top runs': '从顶部再下拉则运行',
+  'On the note, and on the list of them.': '在笔记上，也在笔记列表上。',
+  Nothing: '无',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': '把此视图加入书签',
+  Keep: '保留',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': '移到右侧',
+  'Move to the left': '移到左侧',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': '账户上的历史',
+  'Keep versions': '保留版本',
+  'A month': '一个月',
+  'A year': '一年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    '最近一天的全部，之后每小时一个，一个月后每天一个，三个月后每周一个。',
 }

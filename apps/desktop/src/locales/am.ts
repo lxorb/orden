@@ -1290,36 +1290,36 @@ export const am: Dictionary = {
   'that is a lot of listening - try again later': 'ያ ብዙ ማዳመጥ ነው - ቆይተህ ሞክር',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% ጽሑፍ',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'ስልክ',
+  'The bar sits over the keyboard on a phone.': 'በስልክ ላይ አሞሌው ከቁልፍ ሰሌዳው በላይ ይቀመጣል።',
+  'On the bar': 'በአሞሌው ላይ',
+  'Everything else': 'ሌላው ሁሉ',
+  'Search commands': 'ትእዛዞችን ፈልግ',
+  'Nothing on the bar.': 'በአሞሌው ላይ ምንም የለም።',
+  'Take it off': 'አውጣው',
+  'Put it on the bar': 'በአሞሌው ላይ አድርግ',
+  'Reset the bar': 'አሞሌውን እንደነበር መልስ',
+  'Pulling down': 'ወደ ታች መጎተት',
+  'A pull past the top runs': 'ከላይ ማለፍ ያስኬዳል',
+  'On the note, and on the list of them.': 'በማስታወሻው ላይ፣ እና በዝርዝራቸው ላይ።',
+  Nothing: 'ምንም',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'ይህን እይታ ዕልባት አድርግ',
+  Keep: 'አቆይ',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ወደ ቀኝ አንቀሳቅስ',
+  'Move to the left': 'ወደ ግራ አንቀሳቅስ',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'በመዝገቡ ላይ ታሪክ',
+  'Keep versions': 'ዕትሞችን አቆይ',
+  'A month': 'አንድ ወር',
+  'A year': 'አንድ ዓመት',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'የመጨረሻው ቀን ሁሉ፣ ከዚያ በሰዓት አንድ፣ ከወር በኋላ በቀን አንድ፣ ከሦስት ወር በኋላ በሳምንት አንድ።',
 }

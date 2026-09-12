@@ -1311,36 +1311,36 @@ export const ps: Dictionary = {
   'that is a lot of listening - try again later': 'هغه ډېر اورېدل دي - وروسته بيا هڅه وکړئ',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% متن',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'موبایل',
+  'The bar sits over the keyboard on a phone.': 'په ګرځنده کې پټه د کیبورډ پر سر ښکاري.',
+  'On the bar': 'پر پټه',
+  'Everything else': 'نور هر څه',
+  'Search commands': 'د کمانډونو لټون',
+  'Nothing on the bar.': 'پر پټه هیڅ نشته.',
+  'Take it off': 'ایسته کول',
+  'Put it on the bar': 'پر پټه ایښودل',
+  'Reset the bar': 'پټه بیا تنظیمول',
+  'Pulling down': 'ښکته کشول',
+  'A pull past the top runs': 'له سر تېره کشونه چلوي',
+  'On the note, and on the list of them.': 'پر یادښت او پر لړ یې.',
+  Nothing: 'هیڅ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'دا لید نښه کول',
+  Keep: 'ساتل',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ښي ته وړل',
+  'Move to the left': 'کیڼ ته وړل',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'په حساب کې تاریخ',
+  'Keep versions': 'نسخې ساتل',
+  'A month': 'یوه میاشت',
+  'A year': 'یو کال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'د تېرې ورځې هر څه، بیا هر ساعت یوه، له یوې میاشتې وروسته هره ورځ یوه، او له درېو وروسته هره اونۍ یوه.',
 }

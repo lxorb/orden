@@ -1369,36 +1369,36 @@ export const uk: Dictionary = {
     'надто багато прослуховування - спробуйте пізніше',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% тексту',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Телефон',
+  'The bar sits over the keyboard on a phone.': 'На телефоні смужка стоїть над клавіатурою.',
+  'On the bar': 'На смужці',
+  'Everything else': 'Усе інше',
+  'Search commands': 'Пошук команд',
+  'Nothing on the bar.': 'На смужці нічого немає.',
+  'Take it off': 'Прибрати',
+  'Put it on the bar': 'Додати на смужку',
+  'Reset the bar': 'Скинути смужку',
+  'Pulling down': 'Потягування вниз',
+  'A pull past the top runs': 'Потягування за верх запускає',
+  'On the note, and on the list of them.': 'На нотатці й на їхньому списку.',
+  Nothing: 'Нічого',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Додати цей вигляд до закладок',
+  Keep: 'Зберегти',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Перенести праворуч',
+  'Move to the left': 'Перенести ліворуч',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Історія в обліковому записі',
+  'Keep versions': 'Зберігати версії',
+  'A month': 'Місяць',
+  'A year': 'Рік',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Усе за останню добу, потім по одній на годину, після місяця по одній на день, а після трьох по одній на тиждень.',
 }

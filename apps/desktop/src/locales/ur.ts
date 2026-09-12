@@ -1307,36 +1307,36 @@ export const ur: Dictionary = {
   'that is a lot of listening - try again later': 'بہت زیادہ سننا - بعد میں کوشش کریں',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% متن',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'موبائل',
+  'The bar sits over the keyboard on a phone.': 'فون پر پٹی کی بورڈ کے اوپر رہتی ہے۔',
+  'On the bar': 'پٹی پر',
+  'Everything else': 'باقی سب',
+  'Search commands': 'کمانڈ تلاش کریں',
+  'Nothing on the bar.': 'پٹی پر کچھ نہیں۔',
+  'Take it off': 'ہٹا دیں',
+  'Put it on the bar': 'پٹی پر رکھیں',
+  'Reset the bar': 'پٹی ری سیٹ کریں',
+  'Pulling down': 'نیچے کھینچنا',
+  'A pull past the top runs': 'اوپر سے کھینچنے پر چلے',
+  'On the note, and on the list of them.': 'نوٹ پر، اور ان کی فہرست پر۔',
+  Nothing: 'کچھ نہیں',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'اس منظر کو بک مارک کریں',
+  Keep: 'رکھیں',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'دائیں منتقل کریں',
+  'Move to the left': 'بائیں منتقل کریں',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'اکاؤنٹ پر تاریخ',
+  'Keep versions': 'ورژن رکھیں',
+  'A month': 'ایک ماہ',
+  'A year': 'ایک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'پچھلے دن کا سب کچھ، پھر ہر گھنٹے ایک، ایک ماہ بعد روز ایک، اور تین ماہ بعد ہفتے میں ایک۔',
 }

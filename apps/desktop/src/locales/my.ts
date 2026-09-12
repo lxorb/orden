@@ -1298,36 +1298,36 @@ export const my: Dictionary = {
   'that is a lot of listening - try again later': 'ထိုအရာ နားဆင်မှုများလွန်းသည် - နောက်မှ စမ်းပါ',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% စာ',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'ဖုန်း',
+  'The bar sits over the keyboard on a phone.': 'ဖုန်းတွင် ဘားသည် ကီးဘုတ်အပေါ်တွင် ရှိသည်။',
+  'On the bar': 'ဘားပေါ်တွင်',
+  'Everything else': 'အခြားအားလုံး',
+  'Search commands': 'အမိန့်များ ရှာပါ',
+  'Nothing on the bar.': 'ဘားပေါ်တွင် ဘာမှမရှိပါ။',
+  'Take it off': 'ဖယ်ရှားပါ',
+  'Put it on the bar': 'ဘားပေါ် တင်ပါ',
+  'Reset the bar': 'ဘားကို ပြန်စပါ',
+  'Pulling down': 'အောက်သို့ ဆွဲခြင်း',
+  'A pull past the top runs': 'အပေါ်မှ ဆွဲလွန်လျှင် အလုပ်လုပ်မည်',
+  'On the note, and on the list of them.': 'မှတ်စုပေါ်နှင့် စာရင်းပေါ်တွင်။',
+  Nothing: 'မရှိ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'ဤမြင်ကွင်းကို မှတ်ထားပါ',
+  Keep: 'ထားပါ',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ညာဘက် ရွှေ့ပါ',
+  'Move to the left': 'ဘယ်ဘက် ရွှေ့ပါ',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'အကောင့်ပေါ်ရှိ မှတ်တမ်း',
+  'Keep versions': 'ဗားရှင်းများ ထားပါ',
+  'A month': 'တစ်လ',
+  'A year': 'တစ်နှစ်',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'နောက်ဆုံးတစ်ရက်အားလုံး၊ ထို့နောက် နာရီတစ်ခုလျှင် တစ်ခု၊ တစ်လအကြာတွင် ရက်တစ်ခုလျှင် တစ်ခု၊ သုံးလအကြာတွင် အပတ်တစ်ခုလျှင် တစ်ခု။',
 }

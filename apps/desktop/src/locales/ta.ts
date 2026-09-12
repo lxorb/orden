@@ -1330,36 +1330,36 @@ export const ta: Dictionary = {
   'that is a lot of listening - try again later': 'அது நிறைய கேட்டல் - பிறகு முயற்சிக்கவும்',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% உரை',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'கைபேசி',
+  'The bar sits over the keyboard on a phone.': 'கைபேசியில் பட்டை விசைப்பலகைக்கு மேலே இருக்கும்.',
+  'On the bar': 'பட்டையில்',
+  'Everything else': 'மற்ற அனைத்தும்',
+  'Search commands': 'கட்டளைகளைத் தேடு',
+  'Nothing on the bar.': 'பட்டையில் ஒன்றுமில்லை.',
+  'Take it off': 'நீக்கு',
+  'Put it on the bar': 'பட்டையில் வை',
+  'Reset the bar': 'பட்டையை மீட்டமை',
+  'Pulling down': 'கீழே இழுத்தல்',
+  'A pull past the top runs': 'மேலிருந்து இழுத்தால் இயங்கும்',
+  'On the note, and on the list of them.': 'குறிப்பிலும், அவற்றின் பட்டியலிலும்.',
+  Nothing: 'ஒன்றுமில்லை',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'இந்தக் காட்சியைப் புத்தகக்குறியிடு',
+  Keep: 'வை',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'வலப்புறம் நகர்த்து',
+  'Move to the left': 'இடப்புறம் நகர்த்து',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'கணக்கில் வரலாறு',
+  'Keep versions': 'பதிப்புகளை வை',
+  'A month': 'ஒரு மாதம்',
+  'A year': 'ஒரு ஆண்டு',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'கடந்த நாளின் அனைத்தும், பிறகு மணிக்கு ஒன்று, ஒரு மாதத்திற்குப் பிறகு நாளுக்கு ஒன்று, மூன்றுக்குப் பிறகு வாரத்திற்கு ஒன்று.',
 }

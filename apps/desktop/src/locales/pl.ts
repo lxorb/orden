@@ -1374,36 +1374,36 @@ export const pl: Dictionary = {
   'that is a lot of listening - try again later': 'to dużo słuchania - spróbuj później',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% tekstu',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Telefon',
+  'The bar sits over the keyboard on a phone.': 'Na telefonie pasek jest nad klawiaturą.',
+  'On the bar': 'Na pasku',
+  'Everything else': 'Wszystko inne',
+  'Search commands': 'Szukaj poleceń',
+  'Nothing on the bar.': 'Nic na pasku.',
+  'Take it off': 'Zdejmij',
+  'Put it on the bar': 'Dodaj na pasek',
+  'Reset the bar': 'Przywróć pasek',
+  'Pulling down': 'Pociągnięcie w dół',
+  'A pull past the top runs': 'Pociągnięcie za górę uruchamia',
+  'On the note, and on the list of them.': 'Na notatce i na ich liście.',
+  Nothing: 'Nic',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Dodaj ten widok do zakładek',
+  Keep: 'Zachowaj',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Przenieś na prawo',
+  'Move to the left': 'Przenieś na lewo',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Historia na koncie',
+  'Keep versions': 'Zachowuj wersje',
+  'A month': 'Miesiąc',
+  'A year': 'Rok',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Wszystko z ostatniego dnia, potem jedna na godzinę, po miesiącu jedna na dzień, a po trzech jedna na tydzień.',
 }

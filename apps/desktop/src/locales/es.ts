@@ -1351,36 +1351,37 @@ export const es: Dictionary = {
   'that is a lot of listening - try again later': 'es mucha escucha - probar más tarde',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% de texto',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Móvil',
+  'The bar sits over the keyboard on a phone.':
+    'En el teléfono la barra se sitúa sobre el teclado.',
+  'On the bar': 'En la barra',
+  'Everything else': 'Todo lo demás',
+  'Search commands': 'Buscar comandos',
+  'Nothing on the bar.': 'Nada en la barra.',
+  'Take it off': 'Quitar',
+  'Put it on the bar': 'Poner en la barra',
+  'Reset the bar': 'Restablecer la barra',
+  'Pulling down': 'Tirar hacia abajo',
+  'A pull past the top runs': 'Un tirón más allá del principio ejecuta',
+  'On the note, and on the list of them.': 'En la nota y en la lista de notas.',
+  Nothing: 'Nada',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Marcar esta vista',
+  Keep: 'Conservar',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Mover a la derecha',
+  'Move to the left': 'Mover a la izquierda',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Historial en la cuenta',
+  'Keep versions': 'Conservar versiones',
+  'A month': 'Un mes',
+  'A year': 'Un año',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Todo del último día, luego una por hora, una al día después de un mes y una por semana después de tres.',
 }

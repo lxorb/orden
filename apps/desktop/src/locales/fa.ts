@@ -1311,36 +1311,36 @@ export const fa: Dictionary = {
   'that is a lot of listening - try again later': 'آن شنیدن بسیار است - بعداً بیازمایید',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% متن',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'موبایل',
+  'The bar sits over the keyboard on a phone.': 'نوار روی صفحه‌کلید گوشی می‌نشیند.',
+  'On the bar': 'روی نوار',
+  'Everything else': 'بقیه',
+  'Search commands': 'جست‌وجوی فرمان‌ها',
+  'Nothing on the bar.': 'چیزی روی نوار نیست.',
+  'Take it off': 'برداشتن',
+  'Put it on the bar': 'گذاشتن روی نوار',
+  'Reset the bar': 'بازنشانی نوار',
+  'Pulling down': 'کشیدن به پایین',
+  'A pull past the top runs': 'کشیدن از بالا اجرا می‌کند',
+  'On the note, and on the list of them.': 'روی یادداشت و روی فهرست آن‌ها.',
+  Nothing: 'هیچ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'نشانک‌گذاری این نما',
+  Keep: 'نگه داشتن',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'انتقال به راست',
+  'Move to the left': 'انتقال به چپ',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'تاریخچه در حساب',
+  'Keep versions': 'نگه داشتن نسخه‌ها',
+  'A month': 'یک ماه',
+  'A year': 'یک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'همه‌چیز از روز گذشته، سپس یکی در هر ساعت، پس از یک ماه یکی در روز، و پس از سه ماه یکی در هفته.',
 }

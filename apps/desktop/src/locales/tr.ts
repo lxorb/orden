@@ -1312,36 +1312,36 @@ export const tr: Dictionary = {
   'that is a lot of listening - try again later': 'bu çok dinleme - sonra yine deneyin',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% metin',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Telefon',
+  'The bar sits over the keyboard on a phone.': 'Telefonda çubuk klavyenin üstünde durur.',
+  'On the bar': 'Çubukta',
+  'Everything else': 'Geri kalan her şey',
+  'Search commands': 'Komutlarda ara',
+  'Nothing on the bar.': 'Çubukta hiçbir şey yok.',
+  'Take it off': 'Kaldır',
+  'Put it on the bar': 'Çubuğa ekle',
+  'Reset the bar': 'Çubuğu sıfırla',
+  'Pulling down': 'Aşağı çekme',
+  'A pull past the top runs': 'Üstten çekmek şunu çalıştırır',
+  'On the note, and on the list of them.': 'Notta ve notların listesinde.',
+  Nothing: 'Hiçbiri',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Bu görünümü yer imlerine ekle',
+  Keep: 'Sakla',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Sağa taşı',
+  'Move to the left': 'Sola taşı',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Hesapta geçmiş',
+  'Keep versions': 'Sürümleri sakla',
+  'A month': 'Bir ay',
+  'A year': 'Bir yıl',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Son günün tamamı, sonra saatte bir, bir aydan sonra günde bir, üç aydan sonra haftada bir.',
 }

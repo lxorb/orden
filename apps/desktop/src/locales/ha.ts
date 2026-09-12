@@ -1335,36 +1335,36 @@ export const ha: Dictionary = {
     'wannan saurara ta yi yawa - sake gwadawa daga baya',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% rubutu',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Waya',
+  'The bar sits over the keyboard on a phone.': 'A waya sandar tana kan madannai.',
+  'On the bar': 'A kan sanda',
+  'Everything else': 'Sauran duka',
+  'Search commands': 'Nemi umarni',
+  'Nothing on the bar.': 'Babu kome a kan sanda.',
+  'Take it off': 'Cire',
+  'Put it on the bar': 'Sa a kan sanda',
+  'Reset the bar': 'Mayar da sanda',
+  'Pulling down': 'Jawo kasa',
+  'A pull past the top runs': 'Jan sama yana tafiyar da',
+  'On the note, and on the list of them.': 'A kan bayanin, da kuma jerin su.',
+  Nothing: 'Babu',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Yi alama ga wannan kallo',
+  Keep: 'Ajiye',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Matsa dama',
+  'Move to the left': 'Matsa hagu',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Tarihi a asusun',
+  'Keep versions': 'Ajiye juyi',
+  'A month': 'Wata daya',
+  'A year': 'Shekara daya',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Duk na ranar da ta gabata, sannan daya a kowace awa, daya a kowace rana bayan wata daya, da daya a kowane mako bayan uku.',
 }

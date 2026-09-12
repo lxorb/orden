@@ -1373,36 +1373,36 @@ export const ru: Dictionary = {
   'that is a lot of listening - try again later': 'слишком много прослушивания - попробуйте позже',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% текста',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Телефон',
+  'The bar sits over the keyboard on a phone.': 'На телефоне панель стоит над клавиатурой.',
+  'On the bar': 'На панели',
+  'Everything else': 'Всё остальное',
+  'Search commands': 'Поиск команд',
+  'Nothing on the bar.': 'На панели ничего нет.',
+  'Take it off': 'Убрать',
+  'Put it on the bar': 'Добавить на панель',
+  'Reset the bar': 'Сбросить панель',
+  'Pulling down': 'Потягивание вниз',
+  'A pull past the top runs': 'Потягивание за верх запускает',
+  'On the note, and on the list of them.': 'На заметке и на их списке.',
+  Nothing: 'Ничего',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Добавить этот вид в закладки',
+  Keep: 'Сохранить',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Перенести направо',
+  'Move to the left': 'Перенести налево',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'История в аккаунте',
+  'Keep versions': 'Хранить версии',
+  'A month': 'Месяц',
+  'A year': 'Год',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Всё за последние сутки, затем по одной в час, после месяца по одной в день, после трёх по одной в неделю.',
 }

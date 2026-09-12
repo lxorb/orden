@@ -1340,36 +1340,36 @@ export const fil: Dictionary = {
   'that is a lot of listening - try again later': 'napakaraming pakikinig - subukan mamaya',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% teksto',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Telepono',
+  'The bar sits over the keyboard on a phone.': 'Sa telepono, nasa ibabaw ng keyboard ang bar.',
+  'On the bar': 'Sa bar',
+  'Everything else': 'Lahat ng iba',
+  'Search commands': 'Maghanap ng mga utos',
+  'Nothing on the bar.': 'Walang laman ang bar.',
+  'Take it off': 'Alisin',
+  'Put it on the bar': 'Ilagay sa bar',
+  'Reset the bar': 'I-reset ang bar',
+  'Pulling down': 'Paghila pababa',
+  'A pull past the top runs': 'Ang hila lampas sa itaas ay magpapatakbo ng',
+  'On the note, and on the list of them.': 'Sa tala, at sa listahan nila.',
+  Nothing: 'Wala',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'I-bookmark ang view na ito',
+  Keep: 'Itago',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Ilipat sa kanan',
+  'Move to the left': 'Ilipat sa kaliwa',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Kasaysayan sa account',
+  'Keep versions': 'Itago ang mga bersyon',
+  'A month': 'Isang buwan',
+  'A year': 'Isang taon',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Lahat mula sa huling araw, pagkatapos isa kada oras, isa kada araw pagkalipas ng isang buwan, at isa kada linggo pagkalipas ng tatlo.',
 }

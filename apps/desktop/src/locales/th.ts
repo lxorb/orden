@@ -1281,36 +1281,36 @@ export const th: Dictionary = {
   'that is a lot of listening - try again later': 'ฟังมากเกินไป - ลองใหม่ภายหลัง',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% ของข้อความ',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'มือถือ',
+  'The bar sits over the keyboard on a phone.': 'บนมือถือแถบจะอยู่เหนือแป้นพิมพ์',
+  'On the bar': 'บนแถบ',
+  'Everything else': 'ทุกอย่างที่เหลือ',
+  'Search commands': 'ค้นหาคำสั่ง',
+  'Nothing on the bar.': 'ไม่มีอะไรบนแถบ',
+  'Take it off': 'เอาออก',
+  'Put it on the bar': 'ใส่ไว้บนแถบ',
+  'Reset the bar': 'ตั้งแถบใหม่',
+  'Pulling down': 'การลากลง',
+  'A pull past the top runs': 'ลากเลยด้านบนแล้วสั่ง',
+  'On the note, and on the list of them.': 'บนโน้ตและบนรายการโน้ต',
+  Nothing: 'ไม่มี',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'บุ๊กมาร์กมุมมองนี้',
+  Keep: 'เก็บ',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ย้ายไปขวา',
+  'Move to the left': 'ย้ายไปซ้าย',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'ประวัติบนบัญชี',
+  'Keep versions': 'เก็บเวอร์ชัน',
+  'A month': 'หนึ่งเดือน',
+  'A year': 'หนึ่งปี',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'ทั้งหมดของวันล่าสุด แล้วชั่วโมงละหนึ่ง หลังหนึ่งเดือนวันละหนึ่ง และหลังสามเดือนสัปดาห์ละหนึ่ง',
 }

@@ -1289,36 +1289,36 @@ export const ko: Dictionary = {
   'that is a lot of listening - try again later': '듣기가 너무 많습니다 - 나중에 다시 하세요',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '텍스트 {percent}%',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: '모바일',
+  'The bar sits over the keyboard on a phone.': '휴대폰에서는 막대가 키보드 위에 놓입니다.',
+  'On the bar': '막대에',
+  'Everything else': '그 밖의 모두',
+  'Search commands': '명령 검색',
+  'Nothing on the bar.': '막대에 아무것도 없습니다.',
+  'Take it off': '빼기',
+  'Put it on the bar': '막대에 넣기',
+  'Reset the bar': '막대 초기화',
+  'Pulling down': '아래로 당기기',
+  'A pull past the top runs': '맨 위에서 더 당기면 실행',
+  'On the note, and on the list of them.': '노트에서, 그리고 노트 목록에서.',
+  Nothing: '없음',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': '이 보기를 북마크',
+  Keep: '보관',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': '오른쪽으로 옮기기',
+  'Move to the left': '왼쪽으로 옮기기',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': '계정의 기록',
+  'Keep versions': '버전 보관',
+  'A month': '한 달',
+  'A year': '한 해',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    '지난 하루는 모두, 그다음은 시간마다 하나, 한 달 뒤에는 하루에 하나, 세 달 뒤에는 주마다 하나.',
 }

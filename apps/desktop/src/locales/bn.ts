@@ -1307,36 +1307,36 @@ export const bn: Dictionary = {
   'that is a lot of listening - try again later': 'অনেক শোনা - পরে আবার চেষ্টা করুন',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% লেখা',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'মোবাইল',
+  'The bar sits over the keyboard on a phone.': 'ফোনে বারটি কীবোর্ডের উপরে থাকে।',
+  'On the bar': 'বারে',
+  'Everything else': 'বাকি সব',
+  'Search commands': 'কমান্ড খুঁজুন',
+  'Nothing on the bar.': 'বারে কিছু নেই।',
+  'Take it off': 'সরান',
+  'Put it on the bar': 'বারে রাখুন',
+  'Reset the bar': 'বার রিসেট করুন',
+  'Pulling down': 'নিচে টানা',
+  'A pull past the top runs': 'উপর থেকে টানলে চলবে',
+  'On the note, and on the list of them.': 'নোটে, আর তাদের তালিকায়।',
+  Nothing: 'কিছুই নয়',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'এই ভিউ বুকমার্ক করুন',
+  Keep: 'রাখুন',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ডানে সরান',
+  'Move to the left': 'বাঁয়ে সরান',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'অ্যাকাউন্টে ইতিহাস',
+  'Keep versions': 'সংস্করণ রাখুন',
+  'A month': 'এক মাস',
+  'A year': 'এক বছর',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'শেষ দিনের সবকিছু, তারপর ঘণ্টায় একটি, এক মাস পরে দিনে একটি, আর তিন মাস পরে সপ্তাহে একটি।',
 }

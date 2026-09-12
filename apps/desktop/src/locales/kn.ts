@@ -1321,36 +1321,36 @@ export const kn: Dictionary = {
   'that is a lot of listening - try again later': 'ಅದು ತುಂಬಾ ಕೇಳುವಿಕೆ - ನಂತರ ಪ್ರಯತ್ನಿಸಿ',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% ಪಠ್ಯ',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'ಮೊಬೈಲ್',
+  'The bar sits over the keyboard on a phone.': 'ಫೋನ್‌ನಲ್ಲಿ ಪಟ್ಟಿ ಕೀಬೋರ್ಡ್ ಮೇಲೆ ಇರುತ್ತದೆ.',
+  'On the bar': 'ಪಟ್ಟಿಯಲ್ಲಿ',
+  'Everything else': 'ಉಳಿದೆಲ್ಲ',
+  'Search commands': 'ಆದೇಶಗಳನ್ನು ಹುಡುಕಿ',
+  'Nothing on the bar.': 'ಪಟ್ಟಿಯಲ್ಲಿ ಏನೂ ಇಲ್ಲ.',
+  'Take it off': 'ತೆಗೆದುಹಾಕಿ',
+  'Put it on the bar': 'ಪಟ್ಟಿಗೆ ಸೇರಿಸಿ',
+  'Reset the bar': 'ಪಟ್ಟಿಯನ್ನು ಮರುಹೊಂದಿಸಿ',
+  'Pulling down': 'ಕೆಳಗೆ ಎಳೆಯುವುದು',
+  'A pull past the top runs': 'ಮೇಲಿನಿಂದ ಎಳೆದರೆ ಚಲಿಸುತ್ತದೆ',
+  'On the note, and on the list of them.': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿ, ಮತ್ತು ಅವುಗಳ ಪಟ್ಟಿಯಲ್ಲಿ.',
+  Nothing: 'ಏನೂ ಇಲ್ಲ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'ಈ ನೋಟವನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
+  Keep: 'ಇರಿಸಿ',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'ಬಲಕ್ಕೆ ಸರಿಸಿ',
+  'Move to the left': 'ಎಡಕ್ಕೆ ಸರಿಸಿ',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'ಖಾತೆಯಲ್ಲಿ ಇತಿಹಾಸ',
+  'Keep versions': 'ಆವೃತ್ತಿಗಳನ್ನು ಇರಿಸಿ',
+  'A month': 'ಒಂದು ತಿಂಗಳು',
+  'A year': 'ಒಂದು ವರ್ಷ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'ಕೊನೆಯ ದಿನದ ಎಲ್ಲವೂ, ನಂತರ ಗಂಟೆಗೆ ಒಂದು, ಒಂದು ತಿಂಗಳ ನಂತರ ದಿನಕ್ಕೆ ಒಂದು, ಮೂರು ತಿಂಗಳ ನಂತರ ವಾರಕ್ಕೆ ಒಂದು.',
 }

@@ -1334,36 +1334,36 @@ export const sw: Dictionary = {
   'that is a lot of listening - try again later': 'hiyo ni kusikiliza kwingi - jaribu tena baadaye',
 
   // The size of the text, said after a pinch or a key.
-  '{percent}% text': '{percent}% text',
+  '{percent}% text': '{percent}% maandishi',
 
   // The bar over the keyboard on a phone, and the pane it is put together in.
-  Mobile: 'Mobile',
-  'The bar sits over the keyboard on a phone.': 'The bar sits over the keyboard on a phone.',
-  'On the bar': 'On the bar',
-  'Everything else': 'Everything else',
-  'Search commands': 'Search commands',
-  'Nothing on the bar.': 'Nothing on the bar.',
-  'Take it off': 'Take it off',
-  'Put it on the bar': 'Put it on the bar',
-  'Reset the bar': 'Reset the bar',
-  'Pulling down': 'Pulling down',
-  'A pull past the top runs': 'A pull past the top runs',
-  'On the note, and on the list of them.': 'On the note, and on the list of them.',
-  Nothing: 'Nothing',
+  Mobile: 'Simu',
+  'The bar sits over the keyboard on a phone.': 'Kwenye simu upau hukaa juu ya kibodi.',
+  'On the bar': 'Kwenye upau',
+  'Everything else': 'Kila kitu kingine',
+  'Search commands': 'Tafuta amri',
+  'Nothing on the bar.': 'Hakuna kitu kwenye upau.',
+  'Take it off': 'Iondoe',
+  'Put it on the bar': 'Iweke kwenye upau',
+  'Reset the bar': 'Rejesha upau',
+  'Pulling down': 'Kuvuta chini',
+  'A pull past the top runs': 'Kuvuta kupita juu huendesha',
+  'On the note, and on the list of them.': 'Kwenye noti, na kwenye orodha yao.',
+  Nothing: 'Hakuna',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bookmark this view',
-  Keep: 'Keep',
+  'Bookmark this view': 'Weka alama mwonekano huu',
+  Keep: 'Weka',
 
   // Which side of the window a panel sits on.
-  'Move to the right': 'Move to the right',
-  'Move to the left': 'Move to the left',
+  'Move to the right': 'Sogeza kulia',
+  'Move to the left': 'Sogeza kushoto',
 
   // How long the account keeps what a note said before.
-  'History on the account': 'History on the account',
-  'Keep versions': 'Keep versions',
-  'A month': 'A month',
-  'A year': 'A year',
+  'History on the account': 'Historia kwenye akaunti',
+  'Keep versions': 'Weka matoleo',
+  'A month': 'Mwezi mmoja',
+  'A year': 'Mwaka mmoja',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
-    'Everything from the last day, then one an hour, one a day after a month, one a week after three.',
+    'Kila kitu cha siku ya mwisho, kisha moja kwa saa, moja kwa siku baada ya mwezi, na moja kwa wiki baada ya miezi mitatu.',
 }
