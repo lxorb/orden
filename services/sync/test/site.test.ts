@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frontOf } from '../src/blog/front'
 import { publishes } from '../src/blog/site'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 
 /** A site of a few notes, published on a name, so that everything below can ask
  *  the hostname what it serves. */
@@ -528,5 +528,53 @@ describe('the notes that came before', () => {
     })
 
     expect(asked.json.pages).toBe(0)
+  })
+})
+
+describe('what somebody who is not the owner is told about the site', () => {
+  beforeEach(async () => {
+    await note('One.md', '# One\n')
+    // A domain of one's own, because one of the records it wants is the TXT
+    // token that proves the domain is this account's.
+    await publish({ domain: 'notes.example.com' })
+    await setSite({ password: 'the quiet part', description: 'Notes from the field.' })
+  })
+
+  test('the owner is told what to add at the registrar', async () => {
+    const listed = await call(env, '/v1/spaces', { token })
+    const held = listed.json.spaces.find((one) => one.id === space)
+
+    expect(held?.blog.dns.some((one) => one.type === 'TXT')).toBe(true)
+    expect(held?.blog.site.password).toBe(true)
+  })
+
+  test('a guest is told neither the proof nor the site', async () => {
+    const made = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token,
+      body: { role: 'read', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(made.json.link?.url ?? '')?.[1] ?? ''
+    const guest = (await call(env, `/v1/join/${link}`, { method: 'POST' })).json.token
+
+    const listed = await call(env, '/v1/spaces', { token: guest })
+    const held = listed.json.spaces.find((one) => one.id === space)
+
+    expect(held?.id).toBe(space)
+    expect(held?.blog.dns).toEqual([])
+    expect(JSON.stringify(held)).not.toContain('_nib-verify')
+    expect(held?.blog.site.password).toBe(false)
+    expect(held?.blog.site.description).toBeUndefined()
+  })
+
+  test('and neither is a program acting for the owner', async () => {
+    const minted = await call(env, '/v1/mcp/token', { token, body: {} })
+    const program = minted.json.token
+
+    const listed = await call(env, '/v1/spaces', { token: program })
+    const held = listed.json.spaces.find((one) => one.id === space)
+
+    expect(held?.blog.dns).toEqual([])
+    expect(JSON.stringify(held)).not.toContain('_nib-verify')
   })
 })

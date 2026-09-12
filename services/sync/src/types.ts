@@ -157,7 +157,11 @@ export interface Note {
  *  makes reading it safe. `space` has always worked that way, being set only
  *  behind `atLeast`. */
 export interface Variables {
-  who: Whoever
+  /** Whoever is asking. `program` is set where that is an `nib_` token acting
+   *  for the account rather than somebody at a keyboard; a program is the
+   *  account for the routes it may reach, and the flag is for the two places
+   *  where being the account is not enough. See index.ts and programs.ts. */
+  who: Whoever & { program?: true; readOnly?: boolean }
   user: User
   guest: Guest
   space: Reached

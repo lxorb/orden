@@ -29,6 +29,7 @@ import {
   sharedAmong,
   spaceOf,
   type Role,
+  withoutSetup,
 } from './space'
 
 const NAME_LIMIT = 80
@@ -110,17 +111,24 @@ spaces.get('/', async (context) => {
     results.map((one) => one.id),
   )
 
+  // A program acting for the account is the account everywhere else, and here it
+  // is not: setting a domain up is done by somebody at a registrar. See
+  // `withoutSetup`.
+  const asking = context.get('who').program === true
+
   return context.json({
-    spaces: results.map((one) =>
-      presentSpace(
+    spaces: results.map((one) => {
+      const view = presentSpace(
         one,
         context.env,
         one.role,
         shared.has(one.id),
         held.get(one.id) ?? 0,
         items.get(one.id) ?? [],
-      ),
-    ),
+      )
+
+      return asking ? withoutSetup(view) : view
+    }),
     deleted: gone.results.map((one) => one.id),
   })
 })

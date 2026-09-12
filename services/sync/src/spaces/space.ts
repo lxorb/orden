@@ -19,6 +19,25 @@ import { readGraph } from './graph'
 import { readIcons } from './icons'
 import { presentSite, readSite } from '../blog/site'
 
+/** The same view with the setting up of the site taken out of it.
+ *
+ *  For an asker who is the account and is still not somebody at a registrar: a
+ *  program acting for it through an `nib_` token, whose whole stated reach is the
+ *  notes. The TXT record in `dns` is the proof that a domain is this account's,
+ *  and a token in somebody's CI has no business holding it. See index.ts, where a
+ *  program is told apart, and programs.ts for what one may reach. */
+export function withoutSetup<T extends ReturnType<typeof presentSpace>>(view: T): T {
+  return { ...view, blog: { ...view.blog, dns: [], site: EMPTY_SITE } }
+}
+
+/** What a space's site looks like to somebody who is not its owner: nothing.
+ *  The shape is kept so that nothing downstream has to ask whether the field is
+ *  there. */
+const EMPTY_SITE = {
+  rules: { include: [], exclude: [], otherwise: 'all' as const },
+  password: false,
+}
+
 /** What somebody may do in a space. Ordered: an owner may do what a writer may,
  *  and a writer what a reader may. */
 export type Role = 'owner' | 'write' | 'read'
@@ -378,12 +397,20 @@ export function presentSpace(
       note: space.blog_note,
       // Carried on the listing as well, so the pane can show what to add at
       // the registrar after a reload and not only right after publishing.
-      dns: dnsRecords(env, space),
+      //
+      // The owner alone, and that is not tidiness: one of these records is the
+      // TXT token that proves the domain is this account's, and it went out to
+      // everybody who could list the space - somebody the space is shared with,
+      // and a program token whose whole stated reach is notes. Whoever is setting
+      // a domain up is the owner; nobody else has anything to add at a registrar.
+      dns: role === 'owner' ? dnsRecords(env, space) : [],
       // What the site itself decides: which folders it publishes, what it falls
       // back on, whether it has a password. On the listing for the same reason
       // the bookmarks are - the sheet opens on what the account already holds
-      // rather than on a request of its own. See spaces/site.ts.
-      site: presentSite(readSite(space.site)),
+      // rather than on a request of its own - and the owner's for the same reason
+      // the records are: it is the pane's own state, and only they have the pane.
+      // See spaces/site.ts.
+      site: role === 'owner' ? presentSite(readSite(space.site)) : EMPTY_SITE,
     },
   }
 }
