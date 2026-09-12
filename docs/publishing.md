@@ -94,10 +94,13 @@ out of the same renderer and were already the same markup.
   is being in the app looking at it. A page is a page: its metadata became the
   title, the byline and the `<meta>` tags, so it is not also a table at the top.
   Same as an exported document.
-- **A mermaid diagram.** Mermaid needs a DOM to measure text in, and a Worker has
-  none, so a `mermaid`, `flow` or `sequence` fence stays a code block on the page
-  while the app draws it. No Worker-compatible renderer for it exists today.
-  Charts are fine: a ` ```chart ` fence is string-built SVG and always was.
+- **A mermaid diagram.** Both surfaces show the picture, and the page shows it as
+  an `<img>` rather than as the SVG itself: the app draws it, sends it up as a
+  blob and the page points at it, because mermaid needs a DOM to measure text in
+  and a Worker has none. What differs is only what a fence nobody has drawn yet
+  looks like - a code block, which is what it was before. See below.
+  Charts are fine either way: a ` ```chart ` fence is string-built SVG and always
+  was.
 - **A web card.** `![](https://youtube.com/watch?v=…)` is the same card in both,
   but in the app pressing it swaps in the frame and on a page it is a link out.
   Nothing a note carries may run on a published page, and that is the point of
@@ -507,22 +510,76 @@ the service's bill rather than the reader's allowance. If that ever needs a
 ceiling it is a ceiling on requests, not on bytes stored, and it is a pricing
 decision rather than an engineering one.
 
-## Mermaid, still not on a page
+## Mermaid on a page
 
-A `mermaid`, `flow` or `sequence` fence stays a code block, and this is the round
-in which that was reconsidered rather than assumed.
+A `mermaid`, `flow` or `sequence` fence is a picture on a published page. The
+round before this one reconsidered the two ways of getting there and refused both:
+rendering on the server needs a DOM to measure text in, which a Worker has none
+of, and rendering in the reader's browser means the mermaid bundle - about a
+megabyte the Worker would have to carry as source, paid for on every deploy and
+every cold start, on every site, for the pages that have no diagram. A CDN is what
+the KaTeX round deliberately removed.
 
-Rendering one on the server needs a DOM to measure text in, which a Worker has
-none of, and no Worker-safe renderer exists. Rendering one in the reader's browser
-means the mermaid bundle, which is about a megabyte: the Worker would have to
-carry it as source - the way it carries KaTeX's 254kB of faces - and every deploy
-and every cold start would pay for it, on every site, for the pages that have no
-diagram. A CDN is what the KaTeX round deliberately removed.
+So the side that has a DOM does the drawing, which is the app, exactly as the
+favicon a tab shows and the theme a site wears are drawn by the app and sent up as
+blobs.
 
-The honest way forward, if this matters: the app draws the diagram when the note
-is saved and stores the SVG beside it, the way the favicon and the theme are
-handled - the side that has a DOM does the drawing, and the page costs nothing at
-all. That is a batch of its own.
+**How it works.** On Publish, the app reads its own notes, finds every diagram
+fence in them and draws each one twice - once light, once dark - with the same
+mermaid the reading view uses. Each drawing goes up as an SVG blob named by a hash
+of the fence's contents, the language and the scheme, and the page writes
+
+```html
+<figure class="diagram"><img src="/i/<hash>.svg" alt="…" data-scheme="light">…</figure>
+```
+
+where the fence stood, once the blob is there. A fence nothing has drawn yet stays
+the code block it always was, so a space published from a device that has never
+seen the note still reads, and so does a diagram mermaid refuses - which is also
+what the editor shows for it.
+
+**What it costs.** An unchanged diagram is the same hash, so the second publish of
+a space draws nothing and sends nothing, and a reader's browser keeps the picture
+for ever because the address is the hash. A note with no fence in it costs a
+substring search. The Worker costs one query per page with a diagram on it, asking
+which of those names the space's owner keeps.
+
+**Why two pictures and not one.** A diagram's colours come from the scheme it was
+drawn in - mermaid writes them into a `<style>` inside the SVG - and a published
+page lets the reader choose the scheme. One file with the page's own custom
+properties in it cannot follow that: an `<img>` is a document of its own that
+neither the page's variables nor its stylesheet reach into. One file switching on
+`prefers-color-scheme` inside its own `<style>` cannot either, for a subtler
+reason - that query answers the reader's *system*, and the button in the bar is a
+reader saying something else, so a reader who asks for dark on a light machine
+would get a light diagram on a dark page. So both are written into the figure and
+the sheet shows the one for the scheme in force, stacked the same way the token
+blocks are: the light one by default, the dark one under
+`prefers-color-scheme: dark`, and both stated schemes again after that so the
+button outranks the system. The second file is fetched as well; it is a few
+kilobytes from the site's own domain, immutable for ever, and only on a page that
+has a diagram at all.
+
+**What the reader is told it says.** `accTitle` or `accDescr` in the fence, where
+the author wrote one - mermaid's own words for it - and the word `Diagram` where
+they did not. The fence's first line is `graph TD`, and reading that out loud is
+worse than saying nothing.
+
+**Two things about safety.** The name is derived from text a reader of the page can
+see, so it would be a name a stranger could compute and write a picture under; the
+space's id is in the hash, and no published page ever prints that, and the Worker
+asks for the name under the space owner's own account. And an SVG is a document:
+the app strips scripts, handlers and anything pointing outward before it uploads
+one, and the store serves it under `default-src 'none'; style-src 'unsafe-inline';
+sandbox` so the address opened on its own is a document that can do nothing. The
+page's own policy needed `'self'` added to `img-src`, which is also what lets a
+site read over plain http - a drive against a local Worker - show its own pictures.
+
+**What is left.** An edited diagram leaves its old picture in the account's
+storage, the way a replaced theme and a deleted picture already do; nothing in nib
+sweeps unreferenced blobs yet. And a diagram added to a note that is already
+published appears on the page after the next Publish rather than on the next save,
+because the drawing is a publish-time pass over the space.
 
 ### Checking this part
 
@@ -541,16 +598,30 @@ all. That is a batch of its own.
 - `services/sync/test/site-script.test.ts` - that the script a page runs is still
   the one the app's own modules make, which is what catches a forgotten
   `pnpm blog:js`.
+- `packages/markdown/src/diagrams.test.ts` - the name a diagram's picture is
+  stored under: the same one twice, one per scheme, a different one for an edited
+  diagram and a different one in another space; and the figure the page writes.
+- `apps/desktop/src/lib/site-diagrams.test.ts` - which fences a space has to
+  draw, a drawing turned into a file that has a size and no script in it, both
+  schemes or neither, and a second publish that sends nothing.
+- `services/sync/test/publishing.test.ts` - the fence as a code block until
+  something has drawn it, the figure once the blobs are there, the SVG served as
+  `image/svg+xml` under a policy that allows nothing, and a picture named for
+  another space or kept by another account that the page will not show.
 - `python apps/desktop/test/e2e/site.py` - the sheet on a desktop and a phone
   against a real Worker: a folder made private, what the sheet says will change, a
   page served and a page not served, a permalink, a rename that redirects, the
   feed and the sitemap, a password typed on the site itself, the favicon, the
   search box answering, the tree and the contents beside a page, what links to it,
   the graph, and a form answered on the page and read back on the account. The
-  last part of it is a real browser on the site, on a desktop and a phone: it
-  counts the pixels the graph painted, presses `/` and searches, presses the
-  theme button twice and reads the colour of the page each time, hovers a link
-  for its card, and leaves the screenshots beside the sheet's.
+  diagram is drawn by the real mermaid in the real browser the sheet is pressed
+  in, and read back off the page as two pictures the site serves itself. The last
+  part of it is a real browser on the site, on a desktop and a phone: it counts
+  the pixels the graph painted, presses `/` and searches, presses the theme button
+  twice and reads the colour of the page each time, hovers a link for its card,
+  shows the diagram with the system on light, on dark and with the button
+  disagreeing with the system, says that nobody but the site was asked for
+  anything, and leaves the screenshots beside the sheet's.
 
 ## How to check it
 

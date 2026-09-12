@@ -129,6 +129,18 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Mermaid syntax highlighting inside the fence
 - [x] ` ```chart ` - bar, line, pie and donut, drawn without a library, so a
       published page gets one too. See section 17
+- [x] A diagram on a published page, which Typora has no notion of and Obsidian
+      Publish draws in the reader's browser out of a megabyte of library. nib
+      draws it in the app instead - the side that has a DOM, which is what mermaid
+      needs to measure text in - and sends the SVG up as a blob named by a hash of
+      the fence, the way the favicon and the author's theme already travel. The
+      page writes a picture where the fence stood; an unchanged diagram is the same
+      hash and costs nothing, and a fence nothing has drawn yet stays the code
+      block it was. Two pictures per diagram, one per scheme, because an `<img>` is
+      a document of its own that the page's colours never reach into and because
+      `prefers-color-scheme` inside one would answer the reader's system rather
+      than the theme button on the page. A reader fetches it from the site itself
+      and nothing from anybody else. See docs/publishing.md
 
 ## 6. Code fences
 
