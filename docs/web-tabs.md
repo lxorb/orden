@@ -208,7 +208,19 @@ is the one that asks for the least.
 | --- | --- |
 | Ctrl+L | the address field, in the pane that has the focus |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with |
-| Escape in the field | puts the address back and gives the page the keyboard |
+| Escape in the field | puts the resting face back and lets go of the field |
+
+Ctrl+L is the chord CodeMirror selects a line with, and both keep it. That works
+because the bar reads it where the bar is rather than off the window: an app-level
+binding never reaches the editor, so the two could not have shared it, while a pane
+showing a page has no editor to shadow. It is in the registry like every other key
+- `web.address`, under View - so it can be found and changed. The canvas's keys are
+read the same way.
+
+**While the page itself has the keyboard, its keys are the page's.** After a click
+into a site, Ctrl+L is that site's shortcut and the app never sees the press: that
+is what a webview of its own means, and the alternative would be registering an
+accelerator with the operating system. The bar is one click away.
 
 The dots hold what a browser keeps in the same place: open in the browser, copy
 the address, clip the page, and what this site is allowed.
