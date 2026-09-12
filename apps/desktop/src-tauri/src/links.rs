@@ -100,25 +100,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
             continue;
         };
 
-        let relative = relative_to(&dir, &path);
-        let name = relative
-            .rsplit('/')
-            .next()
-            .unwrap_or(&relative)
-            .rsplit_once('.')
-            .map_or_else(|| relative.clone(), |(stem, _)| stem.to_string());
-
-        out.push(Note {
-            path: relative,
-            name,
-            headings: headings_in(&body),
-            blocks: block_ids_in(&body),
-            links: links_in(&body),
-            tags: note_tags(&body),
-            icon: front_matter::value(&body, "icon"),
-            icon_color: front_matter::value(&body, "icon-color"),
-            aliases: front_matter::list(&body, "aliases"),
-        });
+        out.push(note_at(relative_to(&dir, &path), &body));
     }
 
     // The canvases too, for the icon each one wears. A canvas is a file rather
@@ -142,6 +124,30 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         notes: out,
         files: others.iter().map(|path| relative_to(&dir, path)).collect(),
     })
+}
+
+/// A note as the link index sees it, off the one reading of it the scan makes.
+///
+/// Everything the index knows about a note is taken out here, so the walk above is
+/// the walk and nothing else - and so that what a note answers can be tested
+/// without a space on disk to walk.
+fn note_at(relative: String, body: &str) -> Note {
+    // The name a link uses, which is the file's own name without its extension.
+    let file = relative.rsplit('/').next().unwrap_or(&relative);
+    let stem = file.rsplit_once('.').map_or(file, |(stem, _)| stem);
+    let name = stem.to_string();
+
+    Note {
+        path: relative,
+        name,
+        headings: headings_in(body),
+        blocks: block_ids_in(body),
+        links: links_in(body),
+        tags: note_tags(body),
+        icon: front_matter::value(body, "icon"),
+        icon_color: front_matter::value(body, "icon-color"),
+        aliases: front_matter::list(body, "aliases"),
+    }
 }
 
 /// What a canvas file says that the index cares about.
@@ -713,9 +719,39 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, canvas_note, decode, heading_of, headings_in, links_in, note_tags,
+        block_id_of, canvas_note, decode, heading_of, headings_in, links_in, note_at, note_tags,
         without_code,
     };
+
+    /// One note as the index sees it, which is everything the scan takes out of
+    /// the one reading it makes.
+    #[test]
+    fn reads_a_note_into_what_the_index_holds() {
+        let read = note_at(
+            "Work/Meeting Notes.md".to_string(),
+            "---\nicon: rocket\nicon-color: blue\naliases: [Standup]\n---\n\n# Later\n\nSee [[Plan]] #work ^abc123\n",
+        );
+
+        assert_eq!(read.path, "Work/Meeting Notes.md");
+        assert_eq!(read.name, "Meeting Notes");
+        assert_eq!(read.headings, ["Later"]);
+        assert_eq!(read.blocks, ["abc123"]);
+        assert_eq!(read.tags, ["work"]);
+        assert_eq!(read.icon.as_deref(), Some("rocket"));
+        assert_eq!(read.icon_color.as_deref(), Some("blue"));
+        assert_eq!(read.aliases, ["Standup"]);
+        assert_eq!(read.links.len(), 1);
+        assert_eq!(read.links[0].target, "Plan");
+    }
+
+    #[test]
+    fn a_notes_name_is_its_own_and_loses_only_its_extension() {
+        // The extension is what follows the last dot, so a name that holds one of
+        // its own keeps it.
+        let dotted = note_at("Work/v1.2 plan.md".to_string(), "");
+        assert_eq!(dotted.name, "v1.2 plan");
+        assert_eq!(note_at("Idea.md".to_string(), "").name, "Idea");
+    }
 
     fn targets(body: &str) -> Vec<String> {
         links_in(body).into_iter().map(|one| one.target).collect()

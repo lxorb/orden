@@ -17,7 +17,11 @@ use crate::paths::{
 
 /// Bigger than any picture belongs in a document, and small enough that turning
 /// it into text cannot exhaust the memory of the window asking.
-const LIMIT: u64 = 12 * 1024 * 1024;
+///
+/// In megabytes as well, because a picture that is refused says the number, and a
+/// sentence carrying its own copy of it is a sentence that goes stale.
+const LIMIT_MB: u64 = 12;
+const LIMIT: u64 = LIMIT_MB * 1024 * 1024;
 
 /// How long a picture's file name may be, so the whole path stays inside the
 /// limits Windows puts on one.
@@ -49,7 +53,7 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = beside_a_note(&app, &path)?;
     let Some(bytes) = under(&target, LIMIT)? else {
-        return Err(format!("{path} is larger than 12 MB"));
+        return Err(format!("{path} is larger than {LIMIT_MB} MB"));
     };
 
     Ok(format!(

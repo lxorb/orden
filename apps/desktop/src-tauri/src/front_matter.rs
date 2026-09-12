@@ -102,7 +102,9 @@ pub fn list(body: &str, key: &str) -> Vec<String> {
 /// The block's own lines, without their breaks: from just past the opening fence
 /// to the line the closing one is on.
 fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
-    body.get(block.from..block.close).unwrap_or_default().lines()
+    body.get(block.from..block.close)
+        .unwrap_or_default()
+        .lines()
 }
 
 /// What one line says under `key`, trimmed, or None when the line is another key,
