@@ -1,0 +1,843 @@
+//! The words of an Apple Notes note, out of the shape Notes keeps them in.
+//!
+//! A note's body is not text on a row. It is a gzipped protobuf in
+//! `ZICNOTEDATA.ZDATA`, holding the note's plain text once and a list of runs
+//! over it saying what each stretch of it is: a heading, an item of a list, a
+//! box, bold, a link, or the place an attachment sits.
+//!
+//! That is the shape Obsidian's importer reads, and this is a port of the reading
+//! into Rust - the same field numbers, the same style numbers. The importer is
+//! MIT; the protobuf shape it carries is Ciofeca Forensics' reverse engineering of
+//! the format, MIT as well.
+//!
+//! Nothing here opens a database or a file, which is the point: a Mac is the only
+//! machine that has the database, and this way the decoding is compiled and
+//! tested on every platform the app is built for.
+//!
+//! What a run becomes is nib's own markdown rather than Obsidian's: `==marked==`
+//! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
+//! for a raised and a lowered run, `- [x]` for a ticked box.
+
+use std::io::Read;
+
+use flate2::read::{GzDecoder, ZlibDecoder};
+
+/// Where an attachment sits in the words. Notes writes one of these per
+/// attachment and says what it is in a run beside it.
+const OBJECT: char = '\u{fffc}';
+
+/// A line break inside a paragraph, which is what Notes writes for a return held
+/// with shift. The paragraph's style does not start again after one.
+const SOFT: char = '\u{2028}';
+
+/// The style of a paragraph that is only a paragraph.
+const PLAIN: i32 = -1;
+/// The note's own title, which is its first line.
+const TITLE: i32 = 0;
+const HEADING: i32 = 1;
+const SUBHEADING: i32 = 2;
+/// A monospaced paragraph, which is a code block one line at a time.
+const CODE: i32 = 4;
+const DOTTED: i32 = 100;
+const DASHED: i32 = 101;
+const NUMBERED: i32 = 102;
+const CHECKBOX: i32 = 103;
+
+/// Bold, italic, and the two at once, as `fontWeight` counts them.
+const BOLD: i32 = 1;
+const ITALIC: i32 = 2;
+const BOLD_ITALIC: i32 = 3;
+
+/// How far a run is raised or lowered.
+const SUPER: i32 = 1;
+const SUB: i32 = -1;
+
+/// How many spaces one level of a list is indented by, which is what nib's own
+/// markdown writes: the width of `- `, so a nested line lines up under the words
+/// above it.
+const STEP: &str = "  ";
+
+/// What Notes says about one stretch of a note's text.
+struct Run {
+    /// How many UTF-16 units of the text this run covers, which is how Notes
+    /// counts: an emoji is two.
+    length: usize,
+    /// Which paragraph this is, as `styleType` numbers them.
+    style: i32,
+    /// How deep in a list, counting from zero.
+    indent: u32,
+    /// Whether a box is ticked, for a paragraph that is one.
+    done: Option<bool>,
+    quote: bool,
+    /// Bold, italic or both, as `fontWeight` counts them.
+    weight: i32,
+    underlined: bool,
+    /// Notes stores this as a number rather than a flag, and so does this.
+    struck: i32,
+    /// Raised, lowered, or neither.
+    baseline: i32,
+    /// One of the five colours a highlight can be. Which one is not carried
+    /// over: nib has one highlight, and a note full of coloured circles is not
+    /// a note anybody wrote.
+    emphasis: i32,
+    link: Option<String>,
+    /// The attachment sitting here: its identifier, and what kind it is.
+    attachment: Option<(String, String)>,
+}
+
+impl Default for Run {
+    fn default() -> Self {
+        Self {
+            length: 0,
+            // Not zero: zero is the title, and a run that says nothing about its
+            // paragraph is a paragraph.
+            style: PLAIN,
+            indent: 0,
+            done: None,
+            quote: false,
+            weight: 0,
+            underlined: false,
+            struck: 0,
+            baseline: 0,
+            emphasis: 0,
+            link: None,
+            attachment: None,
+        }
+    }
+}
+
+/// A note as Notes stored it: its plain text, and the runs over it. An empty one
+/// is a row Notes wrote nothing into, which is what a note made and never typed
+/// in leaves behind.
+#[derive(Default)]
+pub struct Body {
+    /// UTF-16 units, because that is what a run's length counts.
+    text: Vec<u16>,
+    /// In the order they cover the text.
+    runs: Vec<Run>,
+}
+
+/// What an attachment becomes in the words. The words are the only thing this
+/// module knows about an attachment; which file it is and whether that file is
+/// on the disk is the database's business.
+pub trait Parts {
+    /// What sits at this attachment, or nothing at all for one that has no words
+    /// and no file.
+    fn attachment(&mut self, id: &str, uti: &str) -> Option<String>;
+}
+
+/// One note's body, out of the bytes on its row. None for bytes that are not a
+/// note: a row Notes left empty, or one written by a version this cannot read.
+pub fn decode(data: &[u8]) -> Option<Body> {
+    let bytes = inflate(data)?;
+
+    // `Document` holds the note under field 3. What is inside it is the note's
+    // text and the runs over it.
+    for (number, value) in Fields::new(&bytes) {
+        if number == 3 {
+            if let Value::Bytes(note) = value {
+                return Some(note_of(note));
+            }
+        }
+    }
+
+    None
+}
+
+/// The note's own first line, which is the title Notes shows in its list. The
+/// title on the row is the same words cut short, so this is the one to use.
+pub fn title(body: &Body) -> Option<String> {
+    let text = String::from_utf16_lossy(&body.text);
+
+    for line in text.split(['\n', SOFT]) {
+        let said = line.replace(OBJECT, "").trim().to_string();
+        if !said.is_empty() {
+            return Some(said);
+        }
+    }
+
+    None
+}
+
+/// The note, as markdown.
+pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
+    let mut out = String::new();
+    let mut fenced = false;
+    let mut counted = 0_u32;
+    let mut counting = (PLAIN, 0_u32);
+
+    for line in lines_of(body) {
+        let run = line.run().unwrap_or(&DEFAULT);
+        let code = run.style == CODE;
+
+        // A fence is opened once for however many monospaced paragraphs follow
+        // each other, which is what they were on screen: one block of code.
+        if code != fenced {
+            out.push_str("```\n");
+            fenced = code;
+        }
+
+        if run.style == NUMBERED && counting == (NUMBERED, run.indent) {
+            counted += 1;
+        } else {
+            counted = 1;
+            counting = (run.style, run.indent);
+        }
+
+        let words = inline(&line, parts);
+
+        if fenced {
+            out.push_str(&words);
+        } else {
+            out.push_str(&prefix(run, line.soft, counted));
+            out.push_str(words.trim_start());
+        }
+
+        out.push('\n');
+    }
+
+    if fenced {
+        out.push_str("```\n");
+    }
+
+    tidy(&out)
+}
+
+/// A run that says nothing, for a line with nothing in it at all.
+const DEFAULT: Run = Run {
+    length: 0,
+    style: PLAIN,
+    indent: 0,
+    done: None,
+    quote: false,
+    weight: 0,
+    underlined: false,
+    struck: 0,
+    baseline: 0,
+    emphasis: 0,
+    link: None,
+    attachment: None,
+};
+
+/// One line of the note: the pieces it is made of, each with the run it came
+/// out of.
+struct Line<'a> {
+    pieces: Vec<(&'a Run, String)>,
+    /// Whether this line is the second half of a paragraph rather than a
+    /// paragraph of its own, which is what a return held with shift makes.
+    soft: bool,
+}
+
+impl<'a> Line<'a> {
+    /// The run the line's style comes from, which is its first: Notes styles a
+    /// paragraph, and the first run of one carries what that style is.
+    fn run(&self) -> Option<&'a Run> {
+        self.pieces.first().map(|(run, _)| *run)
+    }
+}
+
+/// The note's text cut into lines, with each line's pieces still knowing which
+/// run they came from.
+fn lines_of(body: &Body) -> Vec<Line<'_>> {
+    let mut lines = vec![Line {
+        pieces: Vec::new(),
+        soft: false,
+    }];
+    let mut at = 0_usize;
+
+    for run in &body.runs {
+        let end = at.saturating_add(run.length).min(body.text.len());
+        let said = String::from_utf16_lossy(&body.text[at..end]);
+        at = end;
+
+        let mut first = true;
+        let mut soft = false;
+
+        for part in said.split_inclusive(['\n', SOFT]) {
+            if !first {
+                lines.push(Line {
+                    pieces: Vec::new(),
+                    soft,
+                });
+            }
+            first = false;
+
+            soft = part.ends_with(SOFT);
+            let words = part.trim_end_matches(['\n', SOFT]);
+
+            if let Some(line) = lines.last_mut() {
+                if !words.is_empty() {
+                    line.pieces.push((run, words.to_string()));
+                }
+            }
+        }
+
+        // A run that ends on a break leaves the next line to the run after it.
+        if said.ends_with('\n') || said.ends_with(SOFT) {
+            lines.push(Line {
+                pieces: Vec::new(),
+                soft: said.ends_with(SOFT),
+            });
+        }
+    }
+
+    lines
+}
+
+/// What a line starts with: its box, its bullet, its hashes, its quote mark and
+/// however deep in a list it sits.
+fn prefix(run: &Run, soft: bool, counted: u32) -> String {
+    let step = usize::try_from(run.indent).unwrap_or(0);
+    let pad = STEP.repeat(step);
+    let quote = if run.quote { "> " } else { "" };
+
+    // The second half of a paragraph carries no marker: it is the same item, so
+    // it is indented under the words above it instead.
+    if soft {
+        let listed = matches!(run.style, DOTTED | DASHED | NUMBERED | CHECKBOX);
+        return format!("{quote}{pad}{}", if listed { STEP } else { "" });
+    }
+
+    match run.style {
+        TITLE => format!("{quote}# "),
+        HEADING => format!("{quote}## "),
+        SUBHEADING => format!("{quote}### "),
+        DOTTED | DASHED => format!("{quote}{pad}- "),
+        NUMBERED => format!("{quote}{pad}{counted}. "),
+        CHECKBOX => {
+            let box_ = if run.done == Some(true) { 'x' } else { ' ' };
+            format!("{quote}{pad}- [{box_}] ")
+        }
+        _ => format!("{quote}{pad}"),
+    }
+}
+
+/// One line's words, with what each run says about them written around them.
+fn inline(line: &Line, parts: &mut dyn Parts) -> String {
+    let mut out = String::new();
+
+    for (run, said) in &line.pieces {
+        if let Some((id, uti)) = &run.attachment {
+            if let Some(words) = parts.attachment(id, uti) {
+                out.push_str(&words);
+            }
+            continue;
+        }
+
+        out.push_str(&wrapped(run, said));
+    }
+
+    out
+}
+
+/// One piece of a line, with its marks around it.
+///
+/// The spaces at either end stay outside the marks, because `** bold **` is not
+/// bold in any reader: a run of Apple's is as likely to start with a space as
+/// not, since it ends wherever the formatting changes.
+fn wrapped(run: &Run, said: &str) -> String {
+    let said = said.replace(OBJECT, "");
+    if said.trim().is_empty() {
+        return said;
+    }
+
+    let front = said.len() - said.trim_start().len();
+    let back = said.len() - said.trim_end().len();
+    let (before, rest) = said.split_at(front);
+    let (words, after) = rest.split_at(rest.len() - back);
+
+    let mut marked = escaped(words);
+
+    marked = match run.weight {
+        BOLD => format!("**{marked}**"),
+        ITALIC => format!("*{marked}*"),
+        BOLD_ITALIC => format!("***{marked}***"),
+        _ => marked,
+    };
+
+    if run.struck != 0 {
+        marked = format!("~~{marked}~~");
+    }
+
+    if run.underlined {
+        // nib has no mark of its own for an underline, and this is the one every
+        // markdown reader draws as one.
+        marked = format!("<u>{marked}</u>");
+    }
+
+    marked = match run.baseline {
+        SUPER => format!("^{marked}^"),
+        SUB => format!("~{marked}~"),
+        _ => marked,
+    };
+
+    if let Some(link) = &run.link {
+        if link != &marked {
+            marked = format!("[{marked}]({link})");
+        }
+    }
+
+    if run.emphasis != 0 {
+        marked = format!("=={marked}==");
+    }
+
+    format!("{before}{marked}{after}")
+}
+
+/// The two characters a note's own words would otherwise become a link with.
+/// Everything else is left as it was: a note that says `5 * 3` says that.
+fn escaped(words: &str) -> String {
+    words.replace('[', "\\[").replace(']', "\\]")
+}
+
+/// Blank lines collapsed and the ends trimmed, which is what every other reader
+/// in the import hands over.
+fn tidy(markdown: &str) -> String {
+    let mut out = String::new();
+    let mut blank = 0_u32;
+
+    for line in markdown.lines() {
+        let said = line.trim_end();
+        if said.is_empty() {
+            blank += 1;
+            if blank > 1 {
+                continue;
+            }
+        } else {
+            blank = 0;
+        }
+
+        out.push_str(said);
+        out.push('\n');
+    }
+
+    out.trim().to_string()
+}
+
+// ── The protobuf ──────────────────────────────────────────────────────
+
+/// One field of a message: a number, or the bytes of a string or a message
+/// inside it.
+enum Value<'a> {
+    Number(u64),
+    Bytes(&'a [u8]),
+}
+
+/// A message being walked, a field at a time. Enough protobuf to read what
+/// Notes wrote and no more: the two wire types it uses, plus the two fixed
+/// widths, stepped over rather than read.
+struct Fields<'a> {
+    bytes: &'a [u8],
+    at: usize,
+}
+
+impl<'a> Fields<'a> {
+    fn new(bytes: &'a [u8]) -> Self {
+        Self { bytes, at: 0 }
+    }
+
+    /// The next variable-width number, or nothing where the bytes run out.
+    fn varint(&mut self) -> Option<u64> {
+        let mut value = 0_u64;
+        let mut shift = 0_u32;
+
+        while let Some(byte) = self.bytes.get(self.at) {
+            self.at += 1;
+            value |= u64::from(byte & 0x7f) << shift;
+
+            if byte & 0x80 == 0 {
+                return Some(value);
+            }
+
+            shift += 7;
+            if shift > 63 {
+                return None;
+            }
+        }
+
+        None
+    }
+
+    fn take(&mut self, count: usize) -> Option<&'a [u8]> {
+        let end = self.at.checked_add(count)?;
+        let taken = self.bytes.get(self.at..end)?;
+        self.at = end;
+        Some(taken)
+    }
+}
+
+impl<'a> Iterator for Fields<'a> {
+    type Item = (u32, Value<'a>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let tag = self.varint()?;
+        let number = u32::try_from(tag >> 3).ok()?;
+
+        match tag & 7 {
+            0 => Some((number, Value::Number(self.varint()?))),
+            1 => Some((number, Value::Number(number_of(self.take(8)?)))),
+            2 => {
+                let count = usize::try_from(self.varint()?).ok()?;
+                Some((number, Value::Bytes(self.take(count)?)))
+            }
+            5 => Some((number, Value::Number(number_of(self.take(4)?)))),
+            _ => None,
+        }
+    }
+}
+
+/// A fixed-width field as a number. Nothing read here is one - a font's size is
+/// the only float Notes writes and nothing needs it - so this exists to step
+/// over them without losing the fields after.
+fn number_of(bytes: &[u8]) -> u64 {
+    bytes
+        .iter()
+        .rev()
+        .fold(0_u64, |value, byte| (value << 8) | u64::from(*byte))
+}
+
+/// A signed field, which protobuf writes as the same bits an unsigned one has.
+/// `styleType` is the reason its sign matters: a run that says nothing about its
+/// paragraph means -1, and -1 is written as the widest number there is.
+fn signed(value: u64) -> i32 {
+    let low = u32::try_from(value & 0xffff_ffff).unwrap_or(0);
+    i32::from_ne_bytes(low.to_ne_bytes())
+}
+
+fn text_of(bytes: &[u8]) -> String {
+    String::from_utf8_lossy(bytes).to_string()
+}
+
+/// The note inside a `Document`: its text once, and a run per stretch of it.
+fn note_of(bytes: &[u8]) -> Body {
+    let mut text = Vec::new();
+    let mut runs = Vec::new();
+
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (2, Value::Bytes(said)) => text = text_of(said).encode_utf16().collect(),
+            (5, Value::Bytes(run)) => runs.push(run_of(run)),
+            _ => {}
+        }
+    }
+
+    Body { text, runs }
+}
+
+/// One `AttributeRun`.
+fn run_of(bytes: &[u8]) -> Run {
+    let mut run = Run::default();
+
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (1, Value::Number(said)) => run.length = usize::try_from(said).unwrap_or(0),
+            (2, Value::Bytes(said)) => paragraph_of(said, &mut run),
+            (5, Value::Number(said)) => run.weight = signed(said),
+            (6, Value::Number(said)) => run.underlined = said != 0,
+            (7, Value::Number(said)) => run.struck = signed(said),
+            (8, Value::Number(said)) => run.baseline = signed(said),
+            (9, Value::Bytes(said)) => run.link = Some(text_of(said)),
+            (12, Value::Bytes(said)) => run.attachment = attachment_of(said),
+            (14, Value::Number(said)) => run.emphasis = signed(said),
+            _ => {}
+        }
+    }
+
+    run
+}
+
+/// One `ParagraphStyle`, which is what says a line is a heading, an item or a
+/// box, and how deep it sits.
+fn paragraph_of(bytes: &[u8], run: &mut Run) {
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (1, Value::Number(said)) => run.style = signed(said),
+            (4, Value::Number(said)) => run.indent = u32::try_from(said).unwrap_or(0),
+            (5, Value::Bytes(said)) => run.done = Some(ticked(said)),
+            (8, Value::Number(said)) => run.quote = said != 0,
+            _ => {}
+        }
+    }
+}
+
+/// Whether a box is ticked. A `Checklist` carries the box's own id as well,
+/// which nothing here needs.
+fn ticked(bytes: &[u8]) -> bool {
+    for (number, value) in Fields::new(bytes) {
+        if number == 2 {
+            if let Value::Number(done) = value {
+                return done != 0;
+            }
+        }
+    }
+
+    false
+}
+
+/// One `AttachmentInfo`: which attachment, and what kind of thing it is.
+fn attachment_of(bytes: &[u8]) -> Option<(String, String)> {
+    let mut id = String::new();
+    let mut uti = String::new();
+
+    for (number, value) in Fields::new(bytes) {
+        match (number, value) {
+            (1, Value::Bytes(said)) => id = text_of(said),
+            (2, Value::Bytes(said)) => uti = text_of(said),
+            _ => {}
+        }
+    }
+
+    if id.is_empty() {
+        return None;
+    }
+
+    Some((id, uti))
+}
+
+/// The bytes under the gzip, or under the zlib wrapper where a row has one.
+fn inflate(data: &[u8]) -> Option<Vec<u8>> {
+    let mut out = Vec::new();
+
+    match data.first().copied() {
+        Some(0x1f) => GzDecoder::new(data).read_to_end(&mut out).ok()?,
+        Some(0x78) => ZlibDecoder::new(data).read_to_end(&mut out).ok()?,
+        _ => return None,
+    };
+
+    Some(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{decode, markdown, title, Parts};
+
+    /// Names an attachment by its identifier, the way the database would.
+    struct Named;
+
+    impl Parts for Named {
+        fn attachment(&mut self, id: &str, uti: &str) -> Option<String> {
+            if uti == "com.apple.notes.table" {
+                return None;
+            }
+
+            Some(format!("![](assets/{id}.png)"))
+        }
+    }
+
+    /// A varint, as protobuf writes one.
+    fn varint(mut value: u64) -> Vec<u8> {
+        let mut out = Vec::new();
+
+        loop {
+            let byte = u8::try_from(value & 0x7f).unwrap_or(0);
+            value >>= 7;
+
+            if value == 0 {
+                out.push(byte);
+                return out;
+            }
+
+            out.push(byte | 0x80);
+        }
+    }
+
+    fn number(field: u32, value: u64) -> Vec<u8> {
+        let mut out = varint(u64::from(field) << 3);
+        out.extend(varint(value));
+        out
+    }
+
+    fn bytes(field: u32, value: &[u8]) -> Vec<u8> {
+        let mut out = varint((u64::from(field) << 3) | 2);
+        out.extend(varint(u64::try_from(value.len()).unwrap_or(0)));
+        out.extend_from_slice(value);
+        out
+    }
+
+    /// A `ParagraphStyle`.
+    fn style(kind: u64, indent: u64, done: Option<bool>) -> Vec<u8> {
+        let mut out = Vec::new();
+        out.extend(number(1, kind));
+
+        if indent > 0 {
+            out.extend(number(4, indent));
+        }
+
+        if let Some(ticked) = done {
+            out.extend(bytes(5, &number(2, u64::from(ticked))));
+        }
+
+        out
+    }
+
+    /// One `AttributeRun` over `length` UTF-16 units.
+    fn run(length: u64, parts: &[Vec<u8>]) -> Vec<u8> {
+        let mut body = number(1, length);
+        for part in parts {
+            body.extend_from_slice(part);
+        }
+
+        bytes(5, &body)
+    }
+
+    /// A whole note's row: a `Document` holding a `Note`, gzipped.
+    fn note(text: &str, runs: &[Vec<u8>]) -> Vec<u8> {
+        let mut inner = bytes(2, text.as_bytes());
+        for one in runs {
+            inner.extend_from_slice(one);
+        }
+
+        let document = bytes(3, &inner);
+
+        let mut gzipped = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        std::io::Write::write_all(&mut gzipped, &document).expect("gzip");
+        gzipped.finish().expect("gzip")
+    }
+
+    fn as_markdown(text: &str, runs: &[Vec<u8>]) -> String {
+        let body = decode(&note(text, runs)).expect("a note");
+        markdown(&body, &mut Named)
+    }
+
+    #[test]
+    fn a_title_and_a_paragraph() {
+        let text = "Groceries\nMilk and eggs\n";
+        let said = as_markdown(
+            text,
+            &[run(10, &[bytes(2, &style(0, 0, None))]), run(14, &[])],
+        );
+
+        assert_eq!(said, "# Groceries\nMilk and eggs");
+    }
+
+    #[test]
+    fn the_title_is_the_first_line_rather_than_the_row() {
+        let body = decode(&note("Groceries\nMilk\n", &[run(15, &[])])).expect("a note");
+        assert_eq!(title(&body).as_deref(), Some("Groceries"));
+    }
+
+    #[test]
+    fn boxes_come_over_in_the_state_they_were_left_in() {
+        let text = "Packing\nPassport\nCharger\n";
+        let said = as_markdown(
+            text,
+            &[
+                run(8, &[bytes(2, &style(0, 0, None))]),
+                run(9, &[bytes(2, &style(103, 0, Some(true)))]),
+                run(8, &[bytes(2, &style(103, 0, Some(false)))]),
+            ],
+        );
+
+        assert_eq!(said, "# Packing\n- [x] Passport\n- [ ] Charger");
+    }
+
+    #[test]
+    fn a_numbered_list_counts_itself_and_a_nested_one_is_indented() {
+        let text = "One\nTwo\nUnder\n";
+        let said = as_markdown(
+            text,
+            &[
+                run(4, &[bytes(2, &style(102, 0, None))]),
+                run(4, &[bytes(2, &style(102, 0, None))]),
+                run(6, &[bytes(2, &style(101, 1, None))]),
+            ],
+        );
+
+        assert_eq!(said, "1. One\n2. Two\n  - Under");
+    }
+
+    #[test]
+    fn marks_go_around_the_words_and_not_around_the_spaces() {
+        // `Bold ` is one run and `words` another, which is what Notes stores for
+        // a sentence with two words of it in bold.
+        let said = as_markdown("Bold words", &[run(5, &[number(5, 1)]), run(5, &[])]);
+
+        assert_eq!(said, "**Bold** words");
+    }
+
+    #[test]
+    fn a_highlight_is_nibs_own_mark_with_no_circle_in_front_of_it() {
+        let said = as_markdown("Marked", &[run(6, &[number(14, 3)])]);
+
+        assert_eq!(said, "==Marked==");
+    }
+
+    #[test]
+    fn a_link_keeps_the_words_it_was_written_on() {
+        let said = as_markdown(
+            "nibeditor",
+            &[run(9, &[bytes(9, b"https://nibeditor.com")])],
+        );
+
+        assert_eq!(said, "[nibeditor](https://nibeditor.com)");
+    }
+
+    #[test]
+    fn monospaced_paragraphs_become_one_block_of_code() {
+        let text = "let a = 1\nlet b = 2\nafter\n";
+        let said = as_markdown(
+            text,
+            &[
+                run(10, &[bytes(2, &style(4, 0, None))]),
+                run(10, &[bytes(2, &style(4, 0, None))]),
+                run(6, &[]),
+            ],
+        );
+
+        assert_eq!(said, "```\nlet a = 1\nlet b = 2\n```\nafter");
+    }
+
+    #[test]
+    fn an_attachment_becomes_what_the_database_says_it_is() {
+        // The run over the object character is the attachment's own.
+        let said = as_markdown(
+            "Look \u{fffc}",
+            &[
+                run(5, &[]),
+                run(1, &[bytes(12, &attachment("abc", "public.jpeg"))]),
+            ],
+        );
+
+        assert_eq!(said, "Look ![](assets/abc.png)");
+    }
+
+    #[test]
+    fn an_attachment_with_nothing_behind_it_leaves_no_words() {
+        let said = as_markdown(
+            "\u{fffc}",
+            &[run(
+                1,
+                &[bytes(12, &attachment("t1", "com.apple.notes.table"))],
+            )],
+        );
+
+        assert_eq!(said, "");
+    }
+
+    #[test]
+    fn a_return_held_with_shift_stays_in_the_same_item() {
+        let text = "First\u{2028}second\n";
+        let said = as_markdown(text, &[run(13, &[bytes(2, &style(101, 0, None))])]);
+
+        assert_eq!(said, "- First\n  second");
+    }
+
+    #[test]
+    fn an_emoji_is_two_units_long_the_way_notes_counts() {
+        // The run covers `Hi 🙂`, which is five UTF-16 units and not four.
+        let said = as_markdown("Hi 🙂 there", &[run(5, &[number(5, 1)]), run(6, &[])]);
+
+        assert_eq!(said, "**Hi 🙂** there");
+    }
+
+    #[test]
+    fn bytes_that_are_not_a_note_are_not_read_as_one() {
+        assert!(decode(b"not gzip at all").is_none());
+    }
+
+    fn attachment(id: &str, uti: &str) -> Vec<u8> {
+        let mut out = bytes(1, id.as_bytes());
+        out.extend(bytes(2, uti.as_bytes()));
+        out
+    }
+}

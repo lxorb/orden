@@ -11,6 +11,10 @@
 //! same folder under the documents directory, read and written by the same
 //! commands.
 
+#[cfg(desktop)]
+mod apple_notes;
+#[cfg(desktop)]
+mod apple_text;
 mod assets;
 mod clock;
 #[cfg(desktop)]
@@ -186,6 +190,8 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
         endpoint::automation_result,
+        apple_notes::read_apple_notes,
+        apple_notes::open_full_disk_access,
         launch::take_startup_files,
         launch::new_window,
         pandoc::has_pandoc,

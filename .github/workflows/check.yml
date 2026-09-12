@@ -43,16 +43,17 @@ jobs:
       - name: Tests
         run: pnpm test
 
-  # Both platforms, because the crate is not one body of code. The taskbar's
+  # All three platforms, because the crate is not one body of code. The taskbar's
   # recent documents list, Explorer's New menu and the PDF printer are behind a
-  # Windows cfg gate, and code a runner does not compile is code no lint reads
-  # and no test runs. Neither row waits on the other: a lint that only fires on
-  # one platform should say which.
+  # Windows cfg gate, the Apple Notes reader is behind a macOS one - SQLite,
+  # gzipped protobufs and a group container no other system has - and code a
+  # runner does not compile is code no lint reads and no test runs. No row waits
+  # on another: a lint that only fires on one platform should say which.
   rust:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -79,8 +80,9 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri
 
-      # Tauri needs the system webview to compile against. Windows has WebView2
-      # in the image already; only Linux has to be handed one.
+      # Tauri needs the system webview to compile against. Windows has WebView2 in
+      # the image already and macOS has WebKit in the system; only Linux has to be
+      # handed one.
       - name: System dependencies
         if: runner.os == 'Linux'
         run: |
