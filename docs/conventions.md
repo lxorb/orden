@@ -72,6 +72,13 @@ and exits with the number of drives that failed. Every drive is run with
 is a development one, because a production build hides the `window.nibApp` the
 drives seed through.
 
+One set at a time on a machine. Every drive serves the same
+`apps/desktop/dist`, and a drive that builds replaces it: a build landing under
+a drive that is already running changes the asset hashes it is fetching, and the
+page fails on a chunk that is no longer there rather than on anything about the
+app. The runner is one drive at a time for that reason, and two runners at once
+undo it.
+
 Six of them - `collaborate`, `draw-together`, `first-sync`, `publishing`,
 `share`, `signin` - start the real Worker under `wrangler dev`, and two things
 follow from that. They need `CLOUDFLARE_API_TOKEN` in the environment, because
