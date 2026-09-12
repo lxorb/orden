@@ -161,6 +161,80 @@ describe('a room', () => {
     expect(read.json.note.version).toBe(2)
   })
 
+  /** The versions of a note, newest first. */
+  function versionsOf(id: string): { by: string }[] {
+    return env.db
+      .prepare('select by from note_versions where note_id = ? order by at desc')
+      .all(id) as { by: string }[]
+  }
+
+  /** A note keeps a version from the moment it was made, and another is only kept
+   *  once that one is old enough to be worth a second; see `keepVersion`. So the one
+   *  it arrived with is aged out of the way, which is what every other test of the
+   *  versions does. */
+  function longAgo() {
+    env.db.exec('update note_versions set at = at - 600000')
+  }
+
+  /** Which device a version of a note says it came from.
+   *
+   *  Every other way a note is written names the device in a header, and the history
+   *  sheet puts that name beside the moment. A settle named nobody, so a note being
+   *  written in together - the one kind of note whose versions arrive thickest - had
+   *  a history of blank rows. The room knows: what a device calls itself is what it
+   *  announced to everybody else in the room, and which of them was typing is
+   *  whoever's update put this settle on the clock. */
+  test('says which device was typing when it settled', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    longAgo()
+    one.awareness.setLocalStateField('who', { name: 'Ada’s Mac', accent: 'violet' })
+    await say(made, state, one.socket, awarenessUpdate(one.awareness, [one.doc.clientID]))
+    await say(made, state, one.socket, one.type(11, 'typed here\n'))
+    await made.alarm()
+
+    const kept = versionsOf(noteId)
+    expect(kept[0]?.by).toBe('Ada’s Mac')
+  })
+
+  test('and names the one of them who was typing, not the room', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    const two = await arrive(made, state, { id: noteId, spaceId })
+
+    longAgo()
+    for (const [device, who] of [
+      ['Ada’s Mac', one],
+      ['Bella’s phone', two],
+    ] as const) {
+      who.awareness.setLocalStateField('who', { name: device, accent: 'violet' })
+      await say(made, state, who.socket, awarenessUpdate(who.awareness, [who.doc.clientID]))
+    }
+    await settle(made, state, [one, two])
+
+    // The second of them types, and hers is the keystroke the settle is about.
+    await say(made, state, two.socket, two.type(11, 'from the phone\n'))
+    await made.alarm()
+
+    const kept = versionsOf(noteId)
+    expect(kept[0]?.by).toBe('Bella’s phone')
+  })
+
+  test('and names nobody when nothing in the room said what it was', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    longAgo()
+    // A device that never announced itself: there is no name to put on the row, and
+    // an invented one would be worse than none.
+    await say(made, state, one.socket, one.type(11, 'from nowhere\n'))
+    await made.alarm()
+
+    const kept = versionsOf(noteId)
+    expect(kept[0]?.by).toBe('')
+  })
+
   test('writes nothing when the words did not change', async () => {
     const { room: made, state } = room(env)
     await arrive(made, state, { id: noteId, spaceId })

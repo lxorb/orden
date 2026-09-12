@@ -43,6 +43,7 @@ import { note as noted } from '../failed'
 import { MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
+import { deviceIn } from '../versions'
 import {
   fileOf,
   fill,
@@ -133,6 +134,33 @@ function whoOf(socket: WebSocket): string {
   return typeof held === 'string' ? held : ''
 }
 
+/** What the device on the other end of a socket calls itself.
+ *
+ *  Not something the room is told: it is what that device announced to everybody
+ *  else in the room, which is how the other carets in it are already labelled. The
+ *  socket's attachment says which awareness entries are its own, and the entry says
+ *  the name; a socket that has announced nothing has no name to give, and a name is
+ *  never invented for it.
+ *
+ *  Read at the boundary like anything else off the wire, because this one is: it
+ *  arrives from a client and ends up in a row the history sheet shows. */
+function deviceOf(socket: WebSocket, awareness: Awareness): string {
+  const states = awareness.getStates()
+
+  for (const client of announcedBy(socket)) {
+    const said: unknown = states.get(client)
+    if (typeof said !== 'object' || said === null) continue
+
+    const who: unknown = (said as { who?: unknown }).who
+    if (typeof who !== 'object' || who === null) continue
+
+    const name: unknown = (who as { name?: unknown }).name
+    if (typeof name === 'string' && name.trim()) return deviceIn(name)
+  }
+
+  return ''
+}
+
 export class NoteRoom implements DurableObject {
   private readonly state: RoomState
   private readonly awareness: Awareness
@@ -143,6 +171,11 @@ export class NoteRoom implements DurableObject {
   /** When the settle already on the clock will fire, or null for one this object
    *  did not put there itself; see `settleSoon`. */
   private settleAt: number | null = null
+  /** What the device whose update put that settle on the clock calls itself, so the
+   *  version the settle writes says where the words came from; see `deviceOf`. Empty
+   *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
+   *  no name is better than another device's. */
+  private settling = ''
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -477,6 +510,13 @@ export class NoteRoom implements DurableObject {
    *  alarm is asked for once rather than once per keystroke. */
   private async spread(update: Uint8Array, origin: unknown) {
     this.send(syncUpdate(update), origin)
+
+    // Whose keystrokes these were, for the version the settle after them writes. The
+    // last to arrive is the one the settle is about, which is what the sheet means by
+    // the device beside a moment: several devices in a note make a version each as
+    // each of them pauses.
+    if (isSocket(origin)) this.settling = deviceOf(origin, this.awareness)
+
     await this.state.record(update)
     await this.settleSoon()
   }
@@ -619,11 +659,14 @@ export class NoteRoom implements DurableObject {
     // still holding the words, so the answer is to come round again and write
     // them on top of what landed rather than to write over it from a row that
     // was already stale.
-    if (!(await saveNote(this.env, file, settled, file.path))) {
+    if (!(await saveNote(this.env, file, settled, file.path, this.settling))) {
       await this.settleSoon()
       return false
     }
 
+    // Said once. Whoever types next is whose the next version is, and a settle that
+    // writes nothing new must not put this name on it.
+    this.settling = ''
     return true
   }
 }

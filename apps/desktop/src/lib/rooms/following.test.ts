@@ -153,9 +153,18 @@ function latest(): Socket {
   return socket
 }
 
-/** Long enough for the hash and the greeting to have been answered. */
-function settled(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0))
+/** Until something is true, or long enough that it is not going to be.
+ *
+ *  Joining reaches for a real digest of the file, which is answered in its own time -
+ *  so what is waited for is the room saying it has caught up, rather than a number of
+ *  ticks that happens to be enough on an idle machine. */
+async function until(what: () => boolean, said: string): Promise<void> {
+  for (let tries = 0; tries < 2000; tries++) {
+    if (what()) return
+    await new Promise((resolve) => setTimeout(resolve, 1))
+  }
+
+  throw new Error(`gave up waiting for ${said}`)
 }
 
 /** Everything the device has said into the room, and everything back. */
@@ -180,7 +189,7 @@ async function following(note: Doc, server: Server, hash = words(note)) {
   const socket = latest()
   socket.arrive()
   carry(socket, server)
-  await settled()
+  await until(() => rooms.joined.has('note-1'), 'the room to catch up')
   carry(socket, server)
 
   return socket
@@ -322,7 +331,7 @@ describe('a room the service threw away and will build again', () => {
     const back = latest()
     back.arrive()
     carry(back, rebuilt)
-    await settled()
+    await until(() => rooms.joined.has('note-1'), 'the new room to catch up')
     carry(back, rebuilt)
 
     expect(rebuilt.file).toBe('# A\ntyped while it was away\n')
