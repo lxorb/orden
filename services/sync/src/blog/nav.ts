@@ -147,7 +147,13 @@ export function navigation(pages: readonly Listed[], current: string): string {
 
   const root = tree(pages)
   const body = rows(root, 0)
-  return body ? `<nav class="pages"><ul>${body}</ul></nav>` : ''
+  if (!body) return ''
+
+  // Wrapped in a disclosure, which is what a phone shows: one row that opens
+  // the whole tree, rather than a column of names above every note or a
+  // navigation a phone cannot reach at all. On a screen with a column for it the
+  // stylesheet opens it and hides the summary. See page.css.
+  return `<nav class="pages"><details class="all"><summary>Pages</summary><ul>${body}</ul></details></nav>`
 }
 
 /** Whether the page being read is anywhere under this folder. */

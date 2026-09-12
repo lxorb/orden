@@ -404,7 +404,7 @@ ${shell.bar ?? ''}
 ${shell.left ?? ''}
 <div class="middle"><main id="write">${body}
 <footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
-</main>${shell.under ?? ''}</div>
+</main>${shell.under ? `<div class="under">${shell.under}</div>` : ''}</div>
 ${shell.right ?? ''}
 </div></body></html>`
 

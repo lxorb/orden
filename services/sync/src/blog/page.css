@@ -211,6 +211,18 @@ body.site {
   min-width: 0;
 }
 
+/* A link that is furniture and not prose is quiet. The underline in the base
+   sheet is the writing surface's, drawn as a border under the words; outside it
+   a browser draws its own, and a column of names wearing one reads as a page of
+   links rather than as a way around one. */
+.site .bar a,
+.site .pages a,
+.site .toc-aside a,
+.site .under a {
+  border-bottom: 0;
+  text-decoration: none;
+}
+
 /* ── The bar ─────────────────────────────────────────────────────── */
 
 .site .bar {
@@ -228,7 +240,6 @@ body.site {
 
 .site .bar .home {
   flex: none;
-  border-bottom: 0;
   color: var(--text-strong);
   font-family: var(--font-ui);
   font-size: var(--text-base);
@@ -319,10 +330,8 @@ body.site {
 .site .pages a {
   display: block;
   padding: 5px 9px;
-  border-bottom: 0;
   border-radius: var(--radius-sm);
   color: var(--muted-strong);
-  text-decoration: none;
 }
 
 .site .pages a:hover {
@@ -335,7 +344,11 @@ body.site {
   color: var(--text-strong);
 }
 
-.site .pages summary {
+/* Every disclosure on a site is the same row: a folder of the tree, the tree
+   itself where a phone shows it as one row, and the contents. One mark, one
+   size, one place - a reader who has opened one knows what the others do. */
+.site .pages summary,
+.site .toc-aside summary {
   padding: 5px 9px;
   border-radius: var(--radius-sm);
   color: var(--muted);
@@ -344,39 +357,64 @@ body.site {
 }
 
 .site .pages summary::marker,
-.site .pages summary::-webkit-details-marker {
+.site .pages summary::-webkit-details-marker,
+.site .toc-aside summary::marker,
+.site .toc-aside summary::-webkit-details-marker {
   display: none;
 }
 
-.site .pages summary::before {
+.site .pages summary::before,
+.site .toc-aside summary::before {
   content: '›';
   display: inline-block;
   width: 1em;
   transition: rotate var(--dur-fast) var(--ease-out);
 }
 
-.site .pages details[open] > summary::before {
+.site .pages details[open] > summary::before,
+.site .toc-aside[open] > summary::before {
   rotate: 90deg;
 }
 
-.site .pages summary:hover {
+.site .pages summary:hover,
+.site .toc-aside summary:hover {
   color: var(--text-strong);
 }
 
-/* On a phone there is no column: the tree is a disclosure under the bar. */
+/* On a phone there is no column: the tree is one row under the bar that opens
+   the whole thing, which is the same markup a wide screen shows as a column. */
 @media (max-width: 63.99rem) {
+  /* Both rows above the note rather than the contents after it: the columns sit
+     either side of the note in the markup, which on one column would leave a
+     list of this page's headings at the foot of the page it lists. */
   .site .pages {
-    padding: var(--space-3) var(--space-4) 0;
+    order: 1;
+    padding: var(--space-2) var(--space-4);
   }
 
-  .site .pages > ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+  .site .toc-aside {
+    order: 2;
   }
 
-  .site .pages > ul > li > details {
+  .site .middle {
+    order: 3;
+  }
+}
+
+@media (min-width: 64rem) {
+  .site .pages .all > summary {
     display: none;
+  }
+
+  /* Open on a wide screen whatever the disclosure says, for the reason the
+     contents column is: see there. */
+  .site .pages .all::details-content {
+    display: block;
+    content-visibility: visible;
+  }
+
+  .site .pages .all > ul {
+    display: block;
   }
 }
 
@@ -386,14 +424,11 @@ body.site {
    script is needed to make one. Where there is a column for it, the stylesheet
    opens it and takes the summary away. */
 .site .toc-aside {
-  padding: var(--space-3) var(--space-4);
+  /* The tree's own padding, so the two rows a phone shows sit in one column
+     rather than half a space apart. */
+  padding: var(--space-2) var(--space-4);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-}
-
-.site .toc-aside summary {
-  color: var(--muted);
-  cursor: pointer;
 }
 
 @media (min-width: 86rem) {
@@ -410,8 +445,16 @@ body.site {
     display: none;
   }
 
-  /* A closed disclosure hides what is not its summary; an explicit display puts
-     it back, which is what makes one piece of markup serve both shapes. */
+  /* What lets one piece of markup serve both shapes - a row a phone can open, a
+     column on a screen with room for one. A closed disclosure hides its content
+     on `::details-content`, so that is where it is put back; a display on the
+     list inside cannot reach past it, and is here for a browser old enough to
+     hide the content itself. */
+  .site .toc-aside::details-content {
+    display: block;
+    content-visibility: visible;
+  }
+
   .site .toc-aside > .toc {
     display: block;
   }
@@ -426,7 +469,6 @@ body.site {
 .site .toc-aside .toc a {
   display: block;
   padding: 3px 0;
-  border-bottom: 0;
   color: var(--muted-strong);
 }
 
@@ -436,7 +478,12 @@ body.site {
 
 /* ── Under the note ─────────────────────────────────────────────── */
 
+/* Under the note, and lined up with it: the same measure and the same middle,
+   because a list of what links here that starts at the column's edge reads as
+   part of the furniture rather than as part of the page. */
 .site .under {
+  max-width: var(--measure);
+  margin: 0 auto;
   padding: 0 var(--space-5) var(--space-6);
 }
 
@@ -472,12 +519,13 @@ body.site {
   font-size: var(--text-sm);
 }
 
-.site .around a {
-  border-bottom: 0;
+/* Every name under the note reads as furniture: the same quiet colour as the
+   columns, and the accent only where the pointer is. */
+.site .under a {
   color: var(--muted-strong);
 }
 
-.site .around a:hover {
+.site .under a:hover {
   color: var(--accent);
 }
 
