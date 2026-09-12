@@ -152,8 +152,22 @@ describe('filling the numbers in', () => {
   })
 
   test('cannot have markdown of its own put after the link', () => {
+    // The same answer the converter gives for the same address; see the
+    // destination tests in @nib/markdown/from-html. Every bracket that could end
+    // the destination is encoded, so what comes out is one picture.
     expect(fill('![a](nib:0)', ['https://x.example/a.png)![](https://evil.example/b.png'])).toBe(
-      '![a](https://x.example/a.png%29!%5B%5D%28https://evil.example/b.png)',
+      '![a](https://x.example/a.png%29![]%28https://evil.example/b.png)',
+    )
+  })
+
+  test('leaves an address that already carries escapes as it is', () => {
+    // `absolutise` writes `URL.href`, which is percent-encoded already. This used
+    // to encode it a second time and save a picture nobody could fetch.
+    expect(fill('![a](nib:0)', ['https://x.example/a%20b.png'])).toBe(
+      '![a](https://x.example/a%20b.png)',
+    )
+    expect(fill('![a](nib:0)', ['https://x.example/caf%C3%A9.png'])).toBe(
+      '![a](https://x.example/caf%C3%A9.png)',
     )
   })
 })

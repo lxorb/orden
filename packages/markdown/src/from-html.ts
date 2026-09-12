@@ -183,11 +183,14 @@ const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
  *  left to end early. `File_(1).png`, which Wikipedia writes, comes out as one
  *  address rather than as an address and a bracket of prose.
  *
- *  The same shape the clipper's placeholders are filled with afterwards, so both
- *  halves of a clip say it the same way. The percent itself is not touched: an
- *  address that already carries escapes stays the address it was rather than
- *  becoming one that escapes its own escapes. */
-function destination(address: string): string {
+ *  Exported because the clipper fills its picture placeholders in after the
+ *  conversion, when there is a blob to point at, and both halves of a clip have to
+ *  say an address the same way. It had its own copy built on `encodeURI`, which
+ *  escapes the percent as well: an address the page had already escaped came back
+ *  escaping its own escapes, and `a%20b.png` was saved as `a%2520b.png`. The
+ *  percent is not touched here - an address that already carries escapes stays the
+ *  address it was. */
+export function destination(address: string): string {
   return address.replace(IN_DESTINATION, (character) => {
     return KEPT[character] ?? encodeURIComponent(character)
   })
