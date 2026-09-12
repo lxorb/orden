@@ -55,9 +55,12 @@ out of the same renderer and were already the same markup.
   same script writes a second sheet beside it from
   `packages/themes/src/slides.css`, another 3.5kB, which only a deck asks for.
 - **Light or dark from the reader.** The app is dark until you say otherwise and
-  says so with `data-theme`; a page has nobody to ask and no script to ask with.
-  So the light tokens are the default, the dark ones are restated under
-  `prefers-color-scheme: dark`, and print is light again because paper is.
+  says so with `data-theme`; a page starts from the reader's system instead. So
+  the light tokens are the default, the dark ones are restated under
+  `prefers-color-scheme: dark`, and print is light again because paper is. A
+  reader who says which they want beats both: the button in the bar writes that
+  same `data-theme`, and the two stated schemes are restated after the system's
+  so they outrank it.
 - **Coloured fences, server side.** `services/sync/src/blog/code.ts` carries
   thirteen Lezer grammars - the very parsers the editor loads through
   `@codemirror/lang-*` - and colours a fence with `@nib/markdown/highlight`, the
@@ -316,7 +319,9 @@ reads as its own pages first - in `order:` and then by name - and its folders
 after them, which is also the order previous and next follow at the foot of a
 page. `order:` is a number in the front matter; a page that says nothing is
 sorted by name after the ones that do, and a folder sits where the earliest
-`order:` under it puts it.
+`order:` under it puts it. On a phone there is no column for it, so the same
+markup is one row under the bar that opens the whole tree - the trick the
+contents use as well, described there.
 
 **The contents, down the right.** The headings of this page, from the same list
 `[toc]` writes - the renderer hands them over rather than being asked twice, so a
