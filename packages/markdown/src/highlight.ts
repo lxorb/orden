@@ -16,31 +16,15 @@
 
 import type { Parser } from '@lezer/common'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
-import { escape as escapeHtml } from './html'
+import { escape } from './html'
 
-/** Every group a fence is coloured in. The class is `hl-` and the name, and
- *  nothing else in a stylesheet has to know more than this list. */
-export const CODE_GROUPS = [
-  'keyword',
-  'string',
-  'number',
-  'comment',
-  'property',
-  'function',
-  'type',
-  'punctuation',
-  'invalid',
-  'inserted',
-  'deleted',
-] as const
-
-export type CodeGroup = (typeof CODE_GROUPS)[number]
-
-/** The same groups the editor colours; see code-theme.ts in @nib/editor, which
- *  says the same thing in styles rather than classes and explains the order.
- *  A name where it is given sits above the function rule, so a function's name
+/** Every group a fence is coloured in: the class is `hl-` and the group's name.
+ *
+ *  The same groups the editor colours; see code-theme.ts in @nib/editor, which
+ *  says the same thing in styles rather than classes and explains the order. A
+ *  name where it is given sits above the function rule, so a function's name
  *  stays a function. */
-export const codeHighlighter = tagHighlighter([
+const codeHighlighter = tagHighlighter([
   { tag: tags.keyword, class: 'hl-keyword' },
   { tag: [tags.string, tags.special(tags.string)], class: 'hl-string' },
   { tag: [tags.number, tags.bool, tags.null], class: 'hl-number' },
@@ -55,10 +39,17 @@ export const codeHighlighter = tagHighlighter([
   { tag: tags.deleted, class: 'hl-deleted' },
 ])
 
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
+const IN_CODE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
-function escape(text: string): string {
-  return text.replace(/[&<>]/g, (character) => ESCAPES[character] ?? character)
+/** Code as HTML, and not `escape` from html.ts.
+ *
+ *  The two differ in one place and deliberately: `escape` leaves an ampersand that
+ *  already opens an entity alone, because a note that wrote `&amp;` in its prose
+ *  meant the ampersand. Code is not prose - it is the source of something, and a
+ *  snippet that says `&amp;` says those five characters - so here every ampersand
+ *  is escaped and the block shows what the file holds. */
+function escapeCode(text: string): string {
+  return text.replace(/[&<>]/g, (character) => IN_CODE[character] ?? character)
 }
 
 /** The code as HTML, each token wrapped in its class. */
@@ -67,18 +58,18 @@ export function highlightCode(code: string, parser: Parser): string {
   let last = 0
 
   highlightTree(parser.parse(code), codeHighlighter, (from, to, classes) => {
-    out += escape(code.slice(last, from))
-    out += `<span class="${classes}">${escape(code.slice(from, to))}</span>`
+    out += escapeCode(code.slice(last, from))
+    out += `<span class="${classes}">${escapeCode(code.slice(from, to))}</span>`
     last = to
   })
 
-  return out + escape(code.slice(last))
+  return out + escapeCode(code.slice(last))
 }
 
 /** A whole fence, coloured: the markup marked's own code renderer writes, with
  *  the colouring inside it. One place, so the block an export writes and the one
  *  a published page serves are the same element with the same class on it. */
 export function highlightedFence(code: string, language: string, parser: Parser): string {
-  const name = language ? ` class="language-${escapeHtml(language)}"` : ''
+  const name = language ? ` class="language-${escape(language)}"` : ''
   return `<pre><code${name}>${highlightCode(code, parser)}\n</code></pre>\n`
 }
