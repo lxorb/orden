@@ -571,23 +571,34 @@ def phone(browser: Browser) -> None:
     if "Record" in rows:
         page.get_by_role("menuitem", name="Record").click()
         wait_for(page, "document.querySelector('.recording')", "the pill on a phone")
+        # The pill arrives from below, so where it *is* is only true once it has
+        # stopped moving; measured mid-animation it reads as sitting on the edge.
+        page.wait_for_timeout(600)
 
         state = page.evaluate(
             """() => {
           const box = document.querySelector('.recording')
           const shown = box ? getComputedStyle(box) : null
+          const seen = box?.getBoundingClientRect()
           return {
             display: shown?.display ?? 'none',
-            bottom: Math.round(box?.getBoundingClientRect().bottom ?? 0),
-            width: Math.round(box?.getBoundingClientRect().width ?? 0),
+            // How far the bottom edge of the pill is from the bottom of the screen,
+            // which is what says whether it is clear of the gesture bar or sitting on
+            // it, and how tall it is under a thumb.
+            above: Math.round(window.innerHeight - (seen?.bottom ?? 0)),
+            tall: Math.round(seen?.height ?? 0),
+            width: Math.round(seen?.width ?? 0),
           }
         }"""
         )
         say(f"the pill on a phone: {json.dumps(state)}")
         if state["display"] == "none":
             wrong("the pill is hidden on a phone, where it is the only thing that says so")
-        if state["bottom"] > 880:
-            wrong(f"the pill is off the bottom of the screen: {state}")
+        if state["above"] < 8:
+            wrong(f"the pill sits on the bottom edge of the screen: {state}")
+        # A thumb's target, which `.nib-bar` sizes from the touch row scale.
+        if state["tall"] < 40:
+            wrong(f"the pill is only {state['tall']}px tall under a thumb: {state}")
         shot(page, "phone-pill")
 
         page.wait_for_timeout(1500)
@@ -597,7 +608,14 @@ def phone(browser: Browser) -> None:
             "window.nibApp.workspace.active?.doc.includes('![[recording-')",
             "the embed on a phone",
         )
-        say("the recording landed in a note made by the plus")
+        # A player is a block, and the caret in a note the app has just opened is at
+        # the very top of it: the embed has to take a line of its own rather than
+        # weld itself onto the heading that was there.
+        said = note_says(page)
+        first = said.split("\n")[0]
+        say(f"the recording landed in a note made by the plus, which now opens {first!r}")
+        if "]]#" in said or "]]!" in said:
+            wrong(f"the embed was written into the line that was there: {first!r}")
         shot(page, "phone-note")
 
     page.context.close()

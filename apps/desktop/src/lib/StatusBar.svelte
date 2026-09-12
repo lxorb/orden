@@ -149,13 +149,16 @@
   }
 
   /* The recording pill: the middle of the bottom edge, clear of the numbers in one
-     corner, the vim mode in the other and the phone's own plus button. Fixed to the
-     window rather than to the note, because that is what a recording belongs to.
+     corner, the vim mode in the other and the phone's own plus button.
 
-     Not called `.pill`: that is the name the buttons inside a sheet already wear, and
-     Sheet.svelte styles it globally. See Sheet.svelte. */
+     Laid out the way the numbers and the mode beside it are - absolute, in the box
+     the bar is given - rather than fixed to the window. It looks like the same thing
+     and is not: a `fixed` element is positioned inside the nearest ancestor with a
+     transform on it, and on a phone that is the layer the drawer slides, so the pill
+     would have ridden the drawer sideways and sat on the gesture bar. The drive
+     measures where it actually lands. */
   .recording {
-    position: fixed;
+    position: absolute;
     z-index: 26;
     left: 50%;
     bottom: calc(var(--space-3) + var(--inset-bottom));

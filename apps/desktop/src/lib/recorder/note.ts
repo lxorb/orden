@@ -30,14 +30,26 @@ export function viewFor(path: string): EditorView | null {
   return null
 }
 
-/** Writes at the caret, the way a picture chosen from the menu does, and leaves the
- *  caret after what was written so the next thing typed follows it. */
+/** Writes at the caret, as a block of its own, and leaves the caret after it so the
+ *  next thing typed follows it.
+ *
+ *  A player is a block and not a word in a sentence, so it gets a line to itself: a
+ *  line break in front of it where there are already words behind the caret, and one
+ *  after it where there are words ahead. Without the second one, a recording started
+ *  with the caret at the very top of a note - which is where a note the app has just
+ *  opened has it - wrote `![[recording-….weba]]# Notes` and took the heading with it.
+ *  The same rule `insertBlock` uses in the editor package, for the same reason. */
 export function writeAtCaret(view: EditorView, text: string) {
   const range = view.state.selection.main
+  const line = view.state.doc.lineAt(range.from)
+
+  const before = range.from === line.from ? '' : '\n'
+  const after = range.to === line.to ? '' : '\n'
+  const insert = `${before}${text}${after}`
 
   view.dispatch({
-    changes: { from: range.from, to: range.to, insert: text },
-    selection: { anchor: range.from + text.length },
+    changes: { from: range.from, to: range.to, insert },
+    selection: { anchor: range.from + before.length + text.length },
     scrollIntoView: true,
     userEvent: 'input',
   })
