@@ -10,6 +10,7 @@
  *  Kept once it has been worked out, so a phone that reports itself differently
  *  after an update does not become a second device in the list. */
 
+import { keep } from './stored'
 import { isMobile, isNative } from './tauri'
 
 const STORAGE_KEY = 'nib:device'
@@ -55,11 +56,9 @@ export function deviceName(): string {
   }
 
   held = worked() || 'a device'
-  try {
-    localStorage.setItem(STORAGE_KEY, held)
-  } catch {
-    // Nothing to do about it, and nothing depends on it being kept.
-  }
+  // Nothing depends on this being kept: a device that cannot remember its name
+  // works one out again, and it works out the same one.
+  keep(STORAGE_KEY, held)
 
   return held
 }

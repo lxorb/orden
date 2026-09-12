@@ -14,6 +14,7 @@
  *  and none of it is a preference anybody would go looking for in Settings. One
  *  key, read once when the module loads and written whenever something moves. */
 
+import { keep } from '../stored'
 import { clampOpacity, type InkTool, isInkTool } from './format'
 import { INK_STYLES } from './ink'
 import { DEFAULT_INK } from './palette'
@@ -364,11 +365,7 @@ class Pens {
       partly: this.partly,
     }
 
-    try {
-      localStorage.setItem(KEY, JSON.stringify(held))
-    } catch {
-      // As above: not being able to remember is not worth telling anybody about.
-    }
+    keep(KEY, JSON.stringify(held))
   }
 }
 

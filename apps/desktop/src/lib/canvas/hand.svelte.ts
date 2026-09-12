@@ -13,6 +13,8 @@
  *  makes, and the other is a switch in the pen's own row for the one hand in a
  *  hundred that wants it. */
 
+import { keep } from '../stored'
+
 const SEEN = 'nib:pen-seen'
 const DRAWS = 'nib:finger-draws'
 
@@ -27,12 +29,9 @@ function saved(key: string): boolean {
   }
 }
 
-function keep(key: string, on: boolean) {
-  try {
-    localStorage.setItem(key, on ? 'yes' : 'no')
-  } catch {
-    // As above: not being able to remember is not worth telling anybody about.
-  }
+/** A yes or a no, as the word the store holds. */
+function remember(key: string, on: boolean) {
+  keep(key, on ? 'yes' : 'no')
 }
 
 class Hand {
@@ -46,13 +45,13 @@ class Hand {
     if (this.penSeen) return
 
     this.penSeen = true
-    keep(SEEN, true)
+    remember(SEEN, true)
   }
 
   /** The switch in the pen's row, flicked. */
   toggleFinger() {
     this.fingerDraws = !this.fingerDraws
-    keep(DRAWS, this.fingerDraws)
+    remember(DRAWS, this.fingerDraws)
   }
 }
 

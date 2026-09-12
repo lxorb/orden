@@ -1,3 +1,4 @@
+import { keep } from './stored'
 import { isDesktop } from './tauri'
 import { asChannel, type Channel, discard, stageUpdate } from './updater'
 
@@ -33,12 +34,10 @@ function savedChannel(): Channel {
   }
 }
 
+/** The choice, written down. It holds for this run whichever way that goes; a
+ *  machine that cannot keep it follows the releases again after a restart. */
 function keepChannel(channel: Channel) {
-  try {
-    localStorage.setItem(CHANNEL_KEY, channel)
-  } catch {
-    // As above: the choice holds for this run, just not after a restart.
-  }
+  keep(CHANNEL_KEY, channel)
 }
 
 /** How long since the last keystroke before the notice may appear. A box that

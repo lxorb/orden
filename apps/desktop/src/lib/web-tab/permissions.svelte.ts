@@ -17,7 +17,7 @@
  *  The store says so by counting, and the tab reopens itself; see pages.svelte.ts. */
 
 import { withOrWithout } from '../records'
-import { isRecord, stored, stringList } from '../stored'
+import { isRecord, keep, stored, stringList } from '../stored'
 import { plainOrigin } from './address'
 
 const STORAGE_KEY = 'nib:web-grants'
@@ -85,12 +85,9 @@ class Grants {
     this.by = all
     this.changed++
 
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-    } catch {
-      // A browser with storage turned off still refuses everything, which is the
-      // answer that matters; it just forgets what was allowed.
-    }
+    // A browser that cannot keep this still refuses everything, which is the
+    // answer that matters; it just forgets what was allowed.
+    keep(STORAGE_KEY, JSON.stringify(all))
   }
 }
 

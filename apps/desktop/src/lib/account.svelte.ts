@@ -1,6 +1,7 @@
 import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api'
 import { arriving } from './arriving.svelte'
 import { called } from './person'
+import { forget, keep } from './stored'
 
 const STORAGE_KEY = 'nib:session'
 
@@ -131,7 +132,7 @@ class Session {
 
     // Read back out of the other store: the page's own is what everything else
     // here writes, so putting it back keeps the two saying the same thing.
-    localStorage.setItem(STORAGE_KEY, saved)
+    keep(STORAGE_KEY, saved)
     this.token = saved
 
     for (const [attempt, pause] of [0, ...TRIES].entries()) {
@@ -226,7 +227,7 @@ class Session {
    *  two ways established it: one code, or a code and then a second one. */
   private async settleIn(token: string, user: Account): Promise<void> {
     this.guest = null
-    localStorage.setItem(STORAGE_KEY, token)
+    keep(STORAGE_KEY, token)
     // Nothing waits on the other store: the session is already in hand, and a
     // host that cannot be told is a host that will ask again next launch.
     void this.vault?.write(token).catch(() => undefined)
@@ -290,7 +291,7 @@ class Session {
    *  a space beside their own writing. */
   async arrive(token: string, who: { user?: Account; guest?: Guest }) {
     this.stopResendTimer()
-    localStorage.setItem(STORAGE_KEY, token)
+    keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
 
     if (who.user) this.settling = true
@@ -347,7 +348,7 @@ class Session {
 
   private forget() {
     arriving.reset()
-    localStorage.removeItem(STORAGE_KEY)
+    forget(STORAGE_KEY)
     void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
     this.token = null

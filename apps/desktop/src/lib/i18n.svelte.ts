@@ -1,4 +1,5 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
+import { keep } from './stored'
 
 /** The English string is its own key. A language that has not translated
  *  something falls back to it, so nothing can ever come out blank.
@@ -286,7 +287,7 @@ class I18n {
 
   select(id: string) {
     this.choice = id
-    localStorage.setItem(STORAGE_KEY, id)
+    keep(STORAGE_KEY, id)
     void this.load()
   }
 

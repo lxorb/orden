@@ -1,6 +1,7 @@
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
+import { forget, keep } from './stored'
 import { invoke } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
 
@@ -195,8 +196,8 @@ class Themes {
 
     this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
 
-    localStorage.setItem(STORAGE_KEY, this.id)
-    localStorage.setItem(SCHEME_KEY, this.scheme)
+    keep(STORAGE_KEY, this.id)
+    keep(SCHEME_KEY, this.scheme)
   }
 
   /** Whether to offer the contrast theme, which happens once or not at all.
@@ -223,11 +224,11 @@ class Themes {
 
     const had = localStorage.getItem(CONTRAST_KEY)
     // Read once. The switch is gone, and the key with it.
-    if (had !== null) localStorage.removeItem(CONTRAST_KEY)
+    if (had !== null) forget(CONTRAST_KEY)
 
     // Somebody who turned the switch off has answered the question already.
     if (had === 'off') {
-      localStorage.setItem(OFFERED_KEY, 'yes')
+      keep(OFFERED_KEY, 'yes')
       return
     }
 
@@ -235,7 +236,7 @@ class Themes {
     // next month gets the offer then, which is still only ever once.
     if (had !== 'on' && !window.matchMedia(MORE).matches) return
 
-    localStorage.setItem(OFFERED_KEY, 'yes')
+    keep(OFFERED_KEY, 'yes')
     this.offerContrast = true
   }
 
@@ -326,7 +327,7 @@ class Themes {
   select(id: string) {
     this.id = id
     this.apply()
-    localStorage.setItem(STORAGE_KEY, id)
+    keep(STORAGE_KEY, id)
   }
 
   /** Whether the light and dark switch has anywhere to go, which is what makes
@@ -357,7 +358,7 @@ class Themes {
     if (!this.offers(choice)) return
 
     this.scheme = choice
-    localStorage.setItem(SCHEME_KEY, choice)
+    keep(SCHEME_KEY, choice)
     this.apply()
   }
 
@@ -371,7 +372,7 @@ class Themes {
 
   setAccent(id: string) {
     this.accent = id
-    localStorage.setItem(ACCENT_KEY, id)
+    keep(ACCENT_KEY, id)
     this.paintAccent()
   }
 

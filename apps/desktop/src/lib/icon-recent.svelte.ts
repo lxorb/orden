@@ -11,7 +11,7 @@
  *  marking a month of folders reaches for the same eight icons, and reaching for them
  *  should not mean typing the same eight words again. */
 
-import { isString, stored, stringList } from './stored'
+import { isString, keep, stored, stringList } from './stored'
 
 const RECENT_KEY = 'nib:icons-recent'
 const SET_KEY = 'nib:icon-set'
@@ -40,14 +40,14 @@ class IconRecent {
     if (!value) return
 
     this.list = [value, ...this.list.filter((one) => one !== value)].slice(0, MOST_RECENT)
-    localStorage.setItem(RECENT_KEY, JSON.stringify(this.list))
+    keep(RECENT_KEY, JSON.stringify(this.list))
   }
 
   open(set: string) {
     if (this.set === set) return
 
     this.set = set
-    localStorage.setItem(SET_KEY, set)
+    keep(SET_KEY, set)
   }
 }
 

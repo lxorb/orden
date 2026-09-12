@@ -11,6 +11,8 @@
  *  recognised, dropping whatever it did not. A missing entry and a corrupt one
  *  come back the same way, which is the only sensible answer to both. */
 
+import { log } from './log'
+
 /** `JSON.parse` without the throw: null for missing text and for nonsense. */
 export function parsed(text: string | null): unknown {
   if (text === null) return null
@@ -46,14 +48,30 @@ export function stored(key: string): unknown {
  *  it, the cursor that pass had just moved; see `save` in sync.svelte.ts.
  *
  *  The answer is there for the one caller that has something better to do than
- *  shrug: writing less beats writing nothing. Everyone else ignores it. */
+ *  shrug: writing less beats writing nothing. Everyone else ignores it, and the
+ *  log hears about it once; see `lost`. */
 export function keep(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value)
     return true
   } catch {
+    lost()
     return false
   }
+}
+
+/** Whether the log has heard about it already. Once for the whole run: the reason
+ *  is the same every time, so is what follows from it, and forty lines of that is
+ *  a log nobody reads. Said at all because a machine that has stopped remembering
+ *  looks from the inside exactly like one that never had anything to remember -
+ *  every store carries on with what it holds, which is the state and is true. */
+let told = false
+
+function lost() {
+  if (told) return
+
+  told = true
+  log('warn', 'storage would take no more, so some of what this machine knows is not kept')
 }
 
 /** And forgetting one, which fails the same three ways and matters even less: a

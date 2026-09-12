@@ -13,6 +13,7 @@
  *  text writer's twin: the same path check, the same atomic write. */
 
 import { toBase64 } from '../bytes'
+import { keep } from '../stored'
 import { folderOf, invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
 import { fileNameFor, freeName } from './naming'
 
@@ -44,11 +45,8 @@ function rememberedFolder(): string | null {
 
 function remember(target: string) {
   const folder = folderOf(target)
-  try {
-    if (folder) localStorage.setItem(FOLDER_KEY, folder)
-  } catch {
-    // As above: worth nothing, never worth failing an export over.
-  }
+  // Worth nothing, and never worth failing an export over.
+  if (folder) keep(FOLDER_KEY, folder)
 }
 
 /** The save dialog, opened on the remembered folder. Answers null when the

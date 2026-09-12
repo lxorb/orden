@@ -10,7 +10,7 @@
  *  OpenAI-compatible providers, and the only thing that tells them apart is the name
  *  and the address. So the list is a list and the ids are handed out here. */
 
-import { isRecord, isString, stored } from '../stored'
+import { isRecord, isString, keep, stored } from '../stored'
 import { type Provider, type ProviderKind, usable } from './providers'
 
 const STORAGE_KEY = 'nib:ai'
@@ -69,15 +69,9 @@ class Ai {
   }
 
   private save() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ providers: this.providers, defaultId: this.defaultId }),
-      )
-    } catch {
-      // A browser told to keep no site data. The providers are still in this
-      // session, and a session is all such a browser can offer anybody.
-    }
+    // A browser told to keep no site data forgets them. The providers are still in
+    // this session, and a session is all such a browser can offer anybody.
+    keep(STORAGE_KEY, JSON.stringify({ providers: this.providers, defaultId: this.defaultId }))
   }
 
   /** Adds one of a kind, and makes it the default when there was none. Answers the

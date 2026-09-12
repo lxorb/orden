@@ -43,7 +43,7 @@ import { lineStarts } from './search/match'
 import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
-import { isRecord, stored } from './stored'
+import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
   type Draft,
@@ -1650,7 +1650,7 @@ class Workspace {
   }
 
   private persistTreeOptions() {
-    localStorage.setItem(TREE_KEY, JSON.stringify(this.treeOptions))
+    keep(TREE_KEY, JSON.stringify(this.treeOptions))
     void this.loadTree()
   }
 

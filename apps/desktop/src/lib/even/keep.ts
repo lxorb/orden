@@ -16,6 +16,7 @@
  *  Nothing in the plain web build reaches this file. */
 
 import type { Vault } from '../account.svelte'
+import { forget as forgetHere, keep as keepHere } from '../stored'
 import { connectStore } from './sdk'
 
 /** One place a value can be kept. Every method answers rather than throws: a
@@ -23,8 +24,9 @@ import { connectStore } from './sdk'
 export interface Keep {
   readonly name: string
   read(key: string): Promise<string | null>
-  /** Answers whether the value is now kept. A store that cannot say answers
-   *  true: only the phone app's own store reports back. */
+  /** Answers whether the value is now kept, as far as the store can say. The
+   *  cookie cannot and answers true; the page's own store and the phone app's
+   *  both report back. */
   write(key: string, value: string): Promise<boolean>
   clear(key: string): Promise<void>
 }
@@ -45,12 +47,11 @@ function some(value: string | null | undefined): string | null {
 const page: Keep = {
   name: 'localStorage',
   read: (key) => Promise.resolve(some(localStorage.getItem(key))),
-  write(key, value) {
-    localStorage.setItem(key, value)
-    return Promise.resolve(true)
-  },
+  // The setter throws where there is no room and where site data is blocked, and
+  // `keepHere` turns both into the answer this interface is for. See ../stored.ts.
+  write: (key, value) => Promise.resolve(keepHere(key, value)),
   clear(key) {
-    localStorage.removeItem(key)
+    forgetHere(key)
     return Promise.resolve()
   },
 }

@@ -12,6 +12,8 @@
  *  launch, the way it does for the session token. See even/keep.ts, and see
  *  welcome.ts for the whole of what went wrong. */
 
+import { keep } from './stored'
+
 const KEY = 'nib:seeded'
 
 /** A store that outlives a launch where the page's own does not. */
@@ -55,11 +57,7 @@ export async function wasSeeded(): Promise<boolean> {
 }
 
 export async function markSeeded(): Promise<void> {
-  try {
-    localStorage.setItem(KEY, 'yes')
-  } catch {
-    // Nothing to do about it, and one store failing is why there are two.
-  }
-
+  // One store failing is why there are two.
+  keep(KEY, 'yes')
   await elsewhere?.write().catch(() => undefined)
 }

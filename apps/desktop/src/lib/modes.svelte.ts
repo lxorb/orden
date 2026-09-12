@@ -46,7 +46,7 @@ import { glassesKey } from './even/key.svelte'
 import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
-import { isNumber, isRecord, isString, stored, stringList } from './stored'
+import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
 import { currentWindow } from './tauri'
 
 const STORAGE_KEY = 'nib:modes'
@@ -1112,7 +1112,7 @@ class Modes {
       hardBreaks: this.hardBreaks,
       linkFormat: this.linkFormat,
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    keep(STORAGE_KEY, JSON.stringify(state))
   }
 }
 

@@ -237,6 +237,15 @@ Values crossing a boundary (`invoke`, `JSON.parse`, `fetch`, `localStorage`,
 `postMessage`) are unknown until checked. Validate them once, at the
 boundary, into a typed shape; the rest of the code trusts the type.
 
+Storage is written through one place as well: `keep` and `forget` in
+`apps/desktop/src/lib/stored.ts`, never `localStorage.setItem` in a store of
+its own. A setter throws three ways - site data blocked, a private window with
+no quota, a storage that is full - and none of them is a reason for a method to
+throw: what a failed write loses is a cache, never the state, which is in
+memory and true. The failure is in the log once a run.
+`apps/desktop/src/lib/stored.test.ts` holds the rule and names the few files
+still to be converted.
+
 ## Lint
 
 The strict and stylistic typescript-eslint sets, plus Svelte's. A promise is

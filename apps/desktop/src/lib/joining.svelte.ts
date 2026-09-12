@@ -28,6 +28,7 @@ import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
 import { settleLocalNotes } from './settling'
 import { sharedWithYou } from './sharing.svelte'
+import { forget, keep } from './stored'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -226,7 +227,7 @@ class Joining {
   /** The calm page, and the asking behind it. */
   private wait() {
     this.step = 'waiting'
-    if (this.token) localStorage.setItem(WAITING_KEY, this.token)
+    if (this.token) keep(WAITING_KEY, this.token)
     if (this.asking) return
 
     this.asking = setInterval(() => void this.walkThrough(), ASK_EVERY)
@@ -235,7 +236,7 @@ class Joining {
   private stopAsking() {
     clearInterval(this.asking)
     this.asking = undefined
-    localStorage.removeItem(WAITING_KEY)
+    forget(WAITING_KEY)
   }
 
   /** A link that has been used, or has run out, or was never one. One line, and

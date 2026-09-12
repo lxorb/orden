@@ -17,7 +17,7 @@ import type { FoldLines } from '@nib/editor'
 import { isPagesTarget } from '@nib/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
-import { isNumber, isRecord, isString, stringList } from '../stored'
+import { isNumber, isRecord, isString, keep, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
@@ -430,14 +430,9 @@ export function writeSession(key: string, state: Session): boolean {
   return put(key, { ...shorter, ...(lean ? { layout: lean } : {}) })
 }
 
+/** One offer to storage. Answers whether it was taken: out of room, or a browser
+ *  that allows no site data at all, and either way the entry already there stays,
+ *  which is a better place to come back to than none. */
 function put(key: string, state: Session): boolean {
-  try {
-    localStorage.setItem(key, JSON.stringify({ version: VERSION, ...state }))
-    return true
-  } catch {
-    // Out of room, or a browser that allows no site data at all. Either way the
-    // entry already there stays, which is a better place to come back to than
-    // none.
-    return false
-  }
+  return keep(key, JSON.stringify({ version: VERSION, ...state }))
 }

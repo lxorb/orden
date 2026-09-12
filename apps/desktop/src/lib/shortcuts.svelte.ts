@@ -29,7 +29,7 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { isRecord, stored } from './stored'
+import { isRecord, keep, stored } from './stored'
 import { isNative } from './tauri'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
@@ -195,8 +195,8 @@ class Shortcuts {
    *  account. Everything that shows a key reads it from here, so the menus
    *  and the palette follow on their own. */
   private settle() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
-    localStorage.setItem(PRESET_KEY, this.preset)
+    keep(STORAGE_KEY, JSON.stringify(this.overrides))
+    keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
   }
@@ -245,8 +245,8 @@ class Shortcuts {
 
     this.overrides = usableOnes
     this.preset = named
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
-    localStorage.setItem(PRESET_KEY, this.preset)
+    keep(STORAGE_KEY, JSON.stringify(this.overrides))
+    keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 

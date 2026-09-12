@@ -11,7 +11,7 @@ import { fuzzyTerms } from './search/fuzzy'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { searchSpace } from './search/space'
-import { isBoolean, isRecord, stored } from './stored'
+import { isBoolean, isRecord, keep, stored } from './stored'
 import { workspace } from './workspace.svelte'
 
 /** How long after the last keystroke to ask. Long enough that a word typed at
@@ -111,7 +111,7 @@ class Search {
   setSort(sort: SearchSort) {
     const descending = this.ordering.sort === sort ? !this.ordering.descending : false
     this.ordering = { sort, descending }
-    localStorage.setItem(SORT_KEY, JSON.stringify(this.ordering))
+    keep(SORT_KEY, JSON.stringify(this.ordering))
   }
 
   /** One run of hits in the order asked for.

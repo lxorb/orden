@@ -19,7 +19,7 @@
 
 import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
-import { isRecord, parsed } from '../stored'
+import { forget, isRecord, keep, stored } from '../stored'
 import { invoke } from '../tauri'
 import type { Answer, Clash } from './conflicts'
 
@@ -77,7 +77,7 @@ class Record {
     // Read as an unknown and taken field by field, like every other store that
     // reads its own storage: the entry may have been written by another version
     // of the app, or edited by hand.
-    const held: unknown = parsed(localStorage.getItem(STORAGE_KEY))
+    const held: unknown = stored(STORAGE_KEY)
     const saved: Saved = isRecord(held) ? held : {}
 
     this.passes = Array.isArray(saved.passes) ? saved.passes.filter(isPass).slice(0, KEPT) : []
@@ -174,22 +174,13 @@ class Record {
     this.passes = []
     this.clashes = []
 
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // The same browser that cannot keep the log cannot be holding one.
-    }
+    forget(STORAGE_KEY)
   }
 
   private persist() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ passes: this.passes, clashes: this.clashes }),
-      )
-    } catch {
-      // A browser with storage turned off still syncs; it just forgets the log.
-    }
+    // A browser with storage turned off, and a full one, still sync; they just
+    // forget the log.
+    keep(STORAGE_KEY, JSON.stringify({ passes: this.passes, clashes: this.clashes }))
   }
 }
 

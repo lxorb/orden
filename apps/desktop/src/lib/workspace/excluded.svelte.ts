@@ -17,7 +17,7 @@
  *  which account a space's list has been folded into. */
 
 import { relativeTo } from '../space-paths'
-import { isRecord, isString, stored } from '../stored'
+import { isRecord, isString, keep, stored } from '../stored'
 import { without } from '../records'
 
 export const STORAGE_KEY = 'nib:excluded'
@@ -288,6 +288,6 @@ export class Excluded {
   }
 
   private write() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.spaces))
+    keep(STORAGE_KEY, JSON.stringify(this.spaces))
   }
 }

@@ -13,6 +13,7 @@
 import { platform } from '@tauri-apps/plugin-os'
 import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
+import { keep } from '../stored'
 import { isNative } from '../tauri'
 import { browserName } from './browser'
 
@@ -55,6 +56,6 @@ export function deviceAccent(): string {
   if (held && ACCENTS.some((accent) => accent.id === held)) return held
 
   const picked = ACCENTS[Math.floor(Math.random() * ACCENTS.length)]?.id ?? ACCENTS[0]?.id ?? ''
-  localStorage.setItem(KEY, picked)
+  keep(KEY, picked)
   return picked
 }

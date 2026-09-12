@@ -3,7 +3,7 @@ import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
-import { isRecord, isString, stored } from './stored'
+import { isRecord, isString, keep, stored } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 
 const PAGE_KEY = 'nib:page'
@@ -112,17 +112,17 @@ class Settings {
 
   setPage(patch: Partial<PageSetup>) {
     this.page = { ...this.page, ...patch }
-    localStorage.setItem(PAGE_KEY, JSON.stringify(this.page))
+    keep(PAGE_KEY, JSON.stringify(this.page))
   }
 
   setNoteIdFormat(format: string) {
     this.noteIdFormat = format
-    localStorage.setItem(NOTE_ID_KEY, format)
+    keep(NOTE_ID_KEY, format)
   }
 
   setExportAppearance(appearance: ExportAppearance) {
     this.exportAppearance = appearance
-    localStorage.setItem(APPEARANCE_KEY, appearance)
+    keep(APPEARANCE_KEY, appearance)
   }
 
   /** Reads `snippets.json` into the editor's completion source. */
