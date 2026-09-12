@@ -43,7 +43,7 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 |  | Open source | Built-in MCP | Win, mac, Linux | Web | Android, iOS | Backlinks & graph | Canvas | Pen & pressure | Live collaboration | Free sync | Free publishing |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **nibeditor** | ✅ | ✅ | ✅ | ✅ | Android | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Notion | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Obsidian | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Typora | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
