@@ -7,9 +7,9 @@
  *  where the page should be would not be a tab. So the pane measures itself and this
  *  tells the crate where to put the page; see src-tauri/src/web_tabs.rs.
  *
- *  In a browser and on a phone there is no second webview to place, and the state
- *  here is the same state with nothing behind it: the address, the title the page
- *  reported, and whether it may be framed at all. One store for all three builds, so
+ *  In a browser there is no second webview to place, and the state here is the same
+ *  state with nothing behind it: the address, the title, and whether the pane is
+ *  holding the card or the frame the reader asked for. One store for both builds, so
  *  the bar above the page is one bar.
  *
  *  Memory is honest about itself. A page nobody has looked at for a few minutes is

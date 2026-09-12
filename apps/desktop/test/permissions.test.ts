@@ -18,7 +18,9 @@ const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.m
 interface Capability {
   platforms: string[]
   permissions: string[]
-  windows: string[]
+  /** The desktop capability names webviews; see the labels block below. */
+  webviews?: string[]
+  windows?: string[]
 }
 
 const capabilities = JSON.parse(read('../src-tauri/capabilities/default.json')) as Capability
@@ -189,15 +191,30 @@ describe('looking for a new version', () => {
   })
 })
 
-/** A capability is granted to the window labels it names, and a window whose
- *  label matches none of them is granted nothing: no event channel, no dragging,
- *  no close. New window opens a second one, so the labels `launch::new_window`
- *  hands out have to be in the list beside `main`.
+/** A capability is granted to the labels it names, and a webview whose label
+ *  matches none of them is granted nothing: no event channel, no dragging, no
+ *  close. New window opens a second one, so the labels `launch::new_window` hands
+ *  out have to be in the list beside `main`.
  *
  *  Tauri matches a label against these as a glob, which is what `nib-[0-9]*`
  *  is: every label the counter can produce, and not `nib-presenter`, which is
- *  meant to have nothing. */
-describe('window labels', () => {
+ *  meant to have nothing.
+ *
+ *  Webviews, not windows, and the difference is a security one rather than a
+ *  spelling: a capability that names a window grants every webview inside it
+ *  whatever its own label says, and a web tab puts a website in a webview inside
+ *  the app's window. The webview a `WebviewWindowBuilder` makes carries the
+ *  window's label, so the two patterns cover the same two windows they always
+ *  did. See src-tauri/src/web_tabs.rs and docs/web-tabs.md. */
+describe('webview labels', () => {
+  /** Which key the desktop capability grants by. A file that went back to naming
+   *  windows would hand a site in a web tab the opener, the dialogs and the
+   *  updater, and nothing else here would notice. */
+  test('the desktop capability names webviews rather than windows', () => {
+    expect(capabilities.webviews).toBeDefined()
+    expect(capabilities.windows).toBeUndefined()
+  })
+
   /** The label format string in `free_label`, which is what a second window is
    *  named after. Read out of the crate so a rename cannot leave this behind. */
   function labelShape(): string {
@@ -218,7 +235,7 @@ describe('window labels', () => {
 
     for (const label of ['main', 'nib-2', 'nib-3', 'nib-17', 'nib-1000']) {
       expect(
-        capabilities.windows.some((pattern) => matches(pattern, label)),
+        (capabilities.webviews ?? []).some((pattern) => matches(pattern, label)),
         `${label} is granted nothing`,
       ).toBe(true)
     }
@@ -228,9 +245,13 @@ describe('window labels', () => {
     const label = /const LABEL = '([^']+)'/.exec(read('../src/lib/slides/presenter.ts'))?.[1]
     expect(label).toBe('nib-presenter')
 
-    expect(capabilities.windows.some((pattern) => matches(pattern, label ?? ''))).toBe(false)
+    expect((capabilities.webviews ?? []).some((pattern) => matches(pattern, label ?? ''))).toBe(
+      false,
+    )
   })
 
+  /** The phone has no child webviews - `add_child` is desktop only - so its file
+   *  has nothing to tell apart and names its one window. */
   test('the phone has one window and names it', () => {
     expect(mobile.windows).toEqual(['main'])
   })

@@ -4,9 +4,11 @@
    *  Three builds, one design, and the difference is only what fills the space under
    *  the bar. On a desktop it is a hole: the page is a webview of its own, placed
    *  over this rectangle by the crate, and what is in the document here is an empty
-   *  box that reports where it is. In a browser it is a frame, where the site allows
-   *  one. On a phone neither - the tab never opens there; the system browser does,
-   *  and `workspace.openWeb` says why.
+   *  box that reports where it is. In a browser it is a card until the reader asks
+   *  for the page and a frame from then on, because nothing there can tell a site
+   *  that allows framing from one that refuses it; see frame.ts. On a phone it is
+   *  neither - the tab never opens there and the system browser does; see
+   *  `workspace.openWeb` for why.
    *
    *  The hole has to follow the pane exactly, so it is measured rather than
    *  guessed: a resize observer for the pane being dragged, the window's own resize,
