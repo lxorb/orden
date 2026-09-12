@@ -12,6 +12,7 @@
  *  extension uses. Where it is written is the workspace's, which knows the space. */
 
 import { workspace } from '../workspace.svelte'
+import { plainOrigin } from './address'
 import { clipNote } from './note'
 import { pages } from './pages.svelte'
 
@@ -32,6 +33,11 @@ export async function clipPage(
   const url = read?.url ?? fallback.url
   if (url === null) return null
 
-  const page = read ?? { url, title: fallback.title, html: '' }
+  // A page that never said what it is called is named after the site, which is
+  // better than Untitled and is what the bar has been showing all along. A browser
+  // build is always in that position: a frame's title belongs to the site.
+  const title = read?.title || fallback.title || plainOrigin(url)
+  const page = { url, title, html: read?.html ?? '' }
+
   return workspace.noteFrom(clipNote(page, new Date()))
 }

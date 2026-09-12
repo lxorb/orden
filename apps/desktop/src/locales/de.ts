@@ -1230,6 +1230,7 @@ export const de: Dictionary = {
   'Allow the clipboard': 'Zwischenablage erlauben',
   'Open in the browser': 'Im Browser öffnen',
   'Copy the address': 'Adresse kopieren',
+  'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
 }

@@ -1221,6 +1221,7 @@ export const gsw: Dictionary = {
   'Allow the clipboard': 'Zwüschenablag erlaube',
   'Open in the browser': 'Im Browser ufmache',
   'Copy the address': 'Adrässe kopiere',
+  'Show it here': 'Da azeige',
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',
 }

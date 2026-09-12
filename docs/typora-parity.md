@@ -956,11 +956,13 @@ Features Typora does not have, which are the reason this exists.
 - [x] A page in a tab gets none of the app and none of this machine: its own cookie
       store, no nib command reachable from it, and the camera, the microphone, the
       clipboard, the location and every hardware bus taken away before its first
-      script runs. Two of them can be allowed by hand, per site. The web build falls
-      back to a sandboxed frame where the site allows framing and to a card with the
-      title, the favicon and one row to the reader's own browser where it does not; a
-      phone opens the system browser, which has their logins, their blocking and
-      their password manager. See docs/web-tabs.md
+      script runs. Two of them can be allowed by hand, per site. In a browser build the
+      pane shows a card - favicon, title, origin - with a row that frames the page
+      here and a row that opens it in the reader's own browser, because nothing on a
+      page can tell a framed site from a refused one: `load` fires, the location
+      throws and the document is null in both cases, measured. A phone opens the
+      system browser, which has their logins, their blocking and their password
+      manager. See docs/web-tabs.md
 
 - [x] A note decides whether it is published: `publish: true|false` in its front
       matter, which is Obsidian Publish's own key, so a vault moves between the

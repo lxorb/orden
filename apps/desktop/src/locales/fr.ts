@@ -1226,6 +1226,7 @@ export const fr: Dictionary = {
   'Allow the clipboard': 'Autoriser le presse-papiers',
   'Open in the browser': 'Ouvrir dans le navigateur',
   'Copy the address': 'Copier l’adresse',
+  'Show it here': 'Afficher ici',
   Website: 'Site web',
   'Open a website': 'Ouvrir un site web',
 }

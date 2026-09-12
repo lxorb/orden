@@ -15,7 +15,13 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
-import { folderOf as folderIn, insideSpace, isMarkdownPath, noteName, relativeTo } from './space-paths'
+import {
+  folderOf as folderIn,
+  insideSpace,
+  isMarkdownPath,
+  noteName,
+  relativeTo,
+} from './space-paths'
 import { key, t } from './i18n.svelte'
 import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
@@ -1031,6 +1037,11 @@ class Workspace {
    *  a bookmark there, which is what a website on a phone is worth being. Tauri has
    *  no child webviews on a phone either; see docs/web-tabs.md. */
   async openWeb(path: string) {
+    // Not in front of a pair of glasses, for the reason a canvas is not: there is no
+    // page on seven lines of a heads-up display, and the viewer is not in that build
+    // at all. See vite.even.config.ts.
+    if (isPlugin()) return
+
     const existing = this.tabs.find((tab) => tab.kind === 'web' && tab.path === path)
     if (existing) {
       this.activeTabId = existing.id
@@ -1211,11 +1222,6 @@ class Workspace {
     // open the page without anything reading the file twice. A file the index has
     // not reached yet opens as the note it also is, and the next pass settles it.
     if (isMarkdownPath(path) && links.urlOf(path) !== null) {
-      // Not in front of a pair of glasses, for the reason a canvas is not: there is
-      // no page on seven lines of a heads-up display, and the viewer is not in that
-      // build at all.
-      if (isPlugin()) return
-
       await this.openWeb(path)
       return
     }
@@ -3261,6 +3267,15 @@ class Workspace {
 
     const path = jump.path ? insideSpace(root, jump.path) : await this.makeLinked(jump.target, root)
     if (!path) return
+
+    // A note that is a website opens as the page it points at, which is what its row
+    // in the file list does; `[[Svelte docs]]` is a link to the document and the
+    // document is the page. A heading or a block in such a link means nothing, and
+    // the early return is the honest answer to it.
+    if (links.urlOf(path) !== null) {
+      await this.openWeb(path)
+      return
+    }
 
     await this.open(path)
     if (jump.heading === null && jump.block === null) return

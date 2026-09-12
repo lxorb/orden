@@ -41,9 +41,10 @@ export interface Rect {
 /** Which way a step goes, as the crate names them. */
 export type Step = 'back' | 'forward' | 'reload'
 
-/** How a browser build is getting on with framing the page: still finding out,
- *  showing it, or refused and showing the card instead. */
-export type Framing = 'asking' | 'framed' | 'refused'
+/** What a browser build is showing in the pane: the card that stands for the page,
+ *  or the frame the reader asked for. A desktop has neither - the page is a webview
+ *  of its own; see frame.ts for why a browser is asked at all. */
+export type Framing = 'card' | 'frame'
 
 /** What the crate says when a page moves. Read rather than trusted: an event is a
  *  boundary like any other. */
@@ -84,9 +85,10 @@ export class Page {
   loading = $state(false)
   /** What went wrong, for the one row that says so. */
   fault = $state<string | null>(null)
-  /** A browser build's answer about framing. Never asked on a desktop, where the
-   *  page is a webview and framing does not come into it. */
-  framing = $state<Framing>('asking')
+  /** What a browser build has in the pane. The card until the reader presses it,
+   *  and the frame from then on: one press per tab, because saying yes to a site is
+   *  about the tab rather than about each page in it. Never read on a desktop. */
+  framing = $state<Framing>('card')
 
   /** Whether there is a webview behind this tab at the moment. */
   live = $state(false)
@@ -106,20 +108,9 @@ export class Page {
 class Pages {
   private readonly held = new SvelteMap<string, Page>()
 
-  /** How many times somebody has asked for the address field, which is Ctrl+L.
-   *  A count rather than a call, because the key is pressed in the window and the
-   *  field is in whichever pane has the focus; the tab showing there watches this
-   *  and takes the keyboard. */
-  asked = $state(0)
-
   /** Started once, on the first web tab, and never taken down: the window hears
    *  about every page in it through one listener. */
   private listening = false
-
-  /** Ctrl+L: the address field, in the pane that has the focus. */
-  askForAddress() {
-    this.asked++
-  }
 
   /** The state for a tab, made the first time it is asked for. */
   of(tabId: string): Page {
@@ -232,13 +223,10 @@ class Pages {
     // is called the bar shows the site, which is true of both.
     page.title = ''
 
-    if (!isDesktop) {
-      // A browser build shows the page in a frame, and a frame is told where to go
-      // by its `src`. The component watches `url` for that; here there is nothing
-      // else to do.
-      page.framing = 'asking'
-      return
-    }
+    // A browser build shows the page in whatever the pane already holds: a frame is
+    // told where to go by its `src`, which the component watches `url` for, and a
+    // card that has not been pressed stays a card.
+    if (!isDesktop) return
 
     if (!page.live) return
 
@@ -263,7 +251,10 @@ class Pages {
   /** The page, read for a clip: where it is, what it is called, and the HTML of the
    *  part worth keeping. Null where there is nothing to read, which is a browser
    *  build - a frame's document belongs to the site and not to us. */
-  async read(tabId: string, selection: boolean): Promise<{ url: string; title: string; html: string } | null> {
+  async read(
+    tabId: string,
+    selection: boolean,
+  ): Promise<{ url: string; title: string; html: string } | null> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return null
 

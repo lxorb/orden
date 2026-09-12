@@ -60,10 +60,11 @@ PAGES = {
 }
 
 NOTE = "/Notes/Idea.md"
+# The space a browser build starts with; see `WELCOME_PATH` in lib/welcome.ts.
 NOTE_TEXT = "# Idea\n\nAn ordinary note, for the mark beside it.\n"
 
-WEB_NOTE = "/Reading/A page that frames.md"
-REFUSED_NOTE = "/Reading/A page that refuses.md"
+WEB_NOTE = "/Notes/A page that frames.md"
+REFUSED_NOTE = "/Notes/A page that refuses.md"
 
 
 def web_note(url: str, title: str) -> str:
@@ -75,18 +76,11 @@ def web_note(url: str, title: str) -> str:
 
 SEED = """
 async (files) => {
+  // Whatever version the app made, rather than a number this script would have to
+  // keep in step with web/store.ts: the page has already opened the database by the
+  // time this runs, so the stores are there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
-    request.onupgradeneeded = () => {
-      const made = request.result
-      if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('assets')) made.createObjectStore('assets', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('meta')) made.createObjectStore('meta')
-      if (!made.objectStoreNames.contains('snapshots')) {
-        const store = made.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
-        store.createIndex('notePath', 'notePath')
-      }
-    }
+    const request = indexedDB.open('nib')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -94,12 +88,14 @@ async (files) => {
   const now = Date.now()
   for (const [path, content] of files) {
     await new Promise((resolve, reject) => {
-      const request = db
-        .transaction('files', 'readwrite')
-        .objectStore('files')
-        .put({ path, content, modified: now, created: now })
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
+      // Two rows per file, because the app keeps the listing apart from the words:
+      // `files` is what a note is read from and `stats` is what the file list walks.
+      // See web/store.ts.
+      const change = db.transaction(['files', 'stats'], 'readwrite')
+      change.objectStore('files').put({ path, content, modified: now, created: now })
+      change.objectStore('stats').put({ path, modified: now, created: now })
+      change.oncomplete = () => resolve()
+      change.onerror = () => reject(change.error)
     })
   }
   return true
@@ -110,7 +106,7 @@ async (files) => {
 FILES = """
 async () => {
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
+    const request = indexedDB.open('nib')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -158,12 +154,23 @@ def free_port() -> int:
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    """The build, plus the two pages the drive needs, quietly."""
+    """The build, plus the two pages the drive needs and a mark for the card."""
 
     def log_message(self, *_args):
         pass
 
     def do_GET(self):
+        # The card asks the site for its own favicon; the built app has no
+        # `favicon.ico`, so this stands in as one and the card has its mark.
+        if self.path == "/favicon.ico":
+            body = (DIST / "icon-256.png").read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         page = PAGES.get(self.path)
         if page is None:
             super().do_GET()
@@ -211,6 +218,11 @@ def address(page) -> str:
 def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     shots: list[str] = []
 
+    # The file list, which a fresh browser opens without: Ctrl+Shift+E reveals it
+    # whether the sidebar was open or shut.
+    page.keyboard.press("Control+Shift+e")
+    page.wait_for_timeout(1200)
+
     # 1. The file list. A website is a row like any other, with a globe in front of
     #    it where a note has a page.
     marks = page.evaluate(MARKS)
@@ -221,24 +233,38 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
         failures.append(f"{scheme}: no row for the website")
     elif web == note:
         failures.append(f"{scheme}: the website wears the same mark as a note")
-    shots.append(shoot(page, "sidebar", scheme, ".sidebar"))
+    shots.append(shoot(page, "sidebar", scheme, "aside"))
 
-    # 2. Opening it: the bar, and the page in a frame.
+    # 2. Opening it: the bar, and the card that asks before it frames anything.
     open_row(page, "A page that frames")
     if not page.locator(".webbar").count():
         failures.append(f"{scheme}: no bar over the page")
         return
 
-    page.wait_for_timeout(1500)
-    framed = page.locator("iframe.framed").count() == 1
-    report[f"{scheme}: the page that allows framing"] = "framed" if framed else "carded"
-    if not framed:
-        failures.append(f"{scheme}: a page that allows framing was not framed")
+    page.wait_for_timeout(800)
+    carded = page.locator(".card").count() == 1
+    report[f"{scheme}: what a browser shows first"] = "card" if carded else "frame"
+    if not carded:
+        failures.append(f"{scheme}: a browser build framed a page without being asked")
+
+    rows = page.evaluate(
+        "() => [...document.querySelectorAll('.card button')].map((one) => one.textContent.trim())"
+    )
+    report[f"{scheme}: what the card offers"] = rows
+    shots.append(shoot(page, "card", scheme))
 
     resting = address(page)
     report[f"{scheme}: what the bar says"] = resting
     if "127.0.0.1" not in resting or "A page that frames" not in resting:
         failures.append(f"{scheme}: the bar says {resting!r} rather than the site and the title")
+
+    # The press, and the page itself.
+    page.click(".card button:has-text('Show it here')")
+    page.wait_for_timeout(2000)
+    framed = page.locator("iframe.framed").count() == 1
+    report[f"{scheme}: after the press"] = "framed" if framed else "still a card"
+    if not framed:
+        failures.append(f"{scheme}: pressing Show it here framed nothing")
     shots.append(shoot(page, "tab-framed", scheme))
 
     # 3. Ctrl+L, which is the address itself rather than the resting face.
@@ -250,15 +276,16 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
         failures.append(f"{scheme}: Ctrl+L left {typed!r} in the field")
     shots.append(shoot(page, "address-focused", scheme, ".webbar"))
 
-    # 4. Typing an address that refuses to be framed: the card stands in, with the
-    #    row that opens it in the reader's own browser.
+    # 4. Typing another address: the frame follows, because the reader has already
+    #    said yes to a frame in this tab. A site that refuses one is the browser's
+    #    own grey apology inside it, and there is nothing here that can tell the two
+    #    apart - which is why the card asked in the first place; see frame.ts.
     page.fill(".webbar input.address", f"{url.rstrip('/')}{REFUSED}")
     page.keyboard.press("Enter")
     page.wait_for_timeout(2500)
-    carded = page.locator(".card").count() == 1
-    report[f"{scheme}: the page that refuses framing"] = "carded" if carded else "framed"
-    if not carded:
-        failures.append(f"{scheme}: a page that refuses framing was framed anyway")
+    report[f"{scheme}: the frame after a second address"] = page.evaluate(
+        "() => document.querySelector('iframe.framed')?.getAttribute('src') ?? 'no frame'"
+    )
     shots.append(shoot(page, "tab-refused", scheme))
 
     # 5. Back to a page that frames, and clip it. In a browser the frame's words
@@ -353,8 +380,15 @@ def main() -> int:
 
                     drive(page, url, scheme, report, failures)
 
-                    report[f"{scheme}: page problems"] = problems[:10]
-                    failures += [f"{scheme}: {one}" for one in problems[:10]]
+                    # The refusal is the drive's own doing: it frames a page that
+                    # says DENY on purpose, and the browser says so. Anything else
+                    # on the console is a fault.
+                    loud = [one for one in problems if "X-Frame-Options" not in one]
+                    report[f"{scheme}: page problems"] = loud[:10]
+                    report[f"{scheme}: the browser refused the frame"] = any(
+                        "X-Frame-Options" in one for one in problems
+                    )
+                    failures += [f"{scheme}: {one}" for one in loud[:10]]
                 finally:
                     context.close()
         finally:

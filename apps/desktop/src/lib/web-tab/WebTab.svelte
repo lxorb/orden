@@ -22,7 +22,7 @@
   import { workspace } from '../workspace.svelte'
   import { plainOrigin, webAddress } from './address'
   import { clipPage } from './clip'
-  import { ALLOW, PATIENCE, refused, SANDBOX } from './frame'
+  import { ALLOW, SANDBOX } from './frame'
   import { webRows } from './menu'
   import { pages, type Rect, type Step } from './pages.svelte'
   import WebBar from './WebBar.svelte'
@@ -32,7 +32,10 @@
   const page = $derived(pages.of(tab.id))
 
   let hole = $state<HTMLElement>()
-  let frame = $state<HTMLIFrameElement>()
+  /** Whether the site's own favicon arrived. A site that has none, or one the
+   *  content policy will not load, leaves a broken picture where a mark should be -
+   *  and a card with nothing in that box reads better than a card with that. */
+  let marked = $state(true)
 
   /** Where the hole is, as the window measures it. Null before it is on the page. */
   function rect(): Rect | null {
@@ -142,29 +145,9 @@
     void clipPage(tab.id, { url: page.url, title: page.title })
   }
 
-  // A browser build finds out whether the site allows a frame at all. The frame is
-  // keyed on the address, so every new page asks again.
+  // A new page is a new mark to look for.
   $effect(() => {
-    if (isDesktop || !frame || !address) return
-
-    const showing = frame
-    page.framing = 'asking'
-
-    const decide = () => {
-      page.framing = refused(showing) ? 'refused' : 'framed'
-    }
-    const waited = setTimeout(() => {
-      // A site being slow and a site that will never answer look the same from
-      // here; after this long the difference has stopped mattering.
-      if (page.framing === 'asking') page.framing = 'refused'
-    }, PATIENCE)
-
-    showing.addEventListener('load', decide)
-
-    return () => {
-      clearTimeout(waited)
-      showing.removeEventListener('load', decide)
-    }
+    if (address) marked = true
   })
 </script>
 
@@ -173,7 +156,6 @@
     {page}
     {focused}
     reads={isDesktop}
-    asked={pages.asked}
     onstep={(step: Step) => void pages.step(tab.id, step)}
     onaddress={(typed: string) => {
       const url = webAddress(typed)
@@ -191,9 +173,8 @@
          anything here would be under it. Its colour is the page's own background
          while a page is loading, so the pane does not flash. -->
     <div class="hole" bind:this={hole}></div>
-  {:else if page.framing !== 'refused' && address}
+  {:else if page.framing === 'frame' && address}
     <iframe
-      bind:this={frame}
       class="framed"
       title={page.title || plainOrigin(address)}
       src={address}
@@ -202,17 +183,36 @@
       referrerpolicy="origin"
     ></iframe>
   {:else}
-    <!-- The site refuses to be framed, which is its right and is most of the web.
-         What is left to say is where it goes, said as the row that takes you
-         there. -->
+    <!-- A browser cannot say whether a site allows a frame until it has made one,
+         and cannot say afterwards either: a page that arrived and a page that was
+         refused report exactly the same thing. So the card asks, which is the same
+         gesture a page embedded in a note already uses. See frame.ts. -->
     <div class="card">
       {#if address}
-        <img class="mark" src={new URL('/favicon.ico', address).href} alt="" />
+        {#if marked}
+          <img
+            class="mark"
+            src={new URL('/favicon.ico', address).href}
+            alt=""
+            onerror={() => (marked = false)}
+          />
+        {/if}
         <p class="name">{page.title || plainOrigin(address)}</p>
         <p class="site">{plainOrigin(address)}</p>
-        <button class="nib-button" onclick={() => void openExternal(address)}>
-          {t('Open in the browser')}
-        </button>
+
+        <div class="rows">
+          <button
+            class="nib-button"
+            onclick={() => {
+              page.framing = 'frame'
+            }}
+          >
+            {t('Show it here')}
+          </button>
+          <button class="nib-button is-quiet" onclick={() => void openExternal(address)}>
+            {t('Open in the browser')}
+          </button>
+        </div>
       {:else}
         <p class="site">{t('Address')}</p>
       {/if}
@@ -261,15 +261,28 @@
     text-align: center;
   }
 
+  /* Twice the largest icon in a row, because this one is the only picture on a
+     card in the middle of an empty pane rather than a mark in front of a name. A
+     site's favicon is drawn at 32 or 16 and both read at this size. */
   .mark {
-    width: var(--icon-lg);
-    height: var(--icon-lg);
+    width: calc(var(--icon-lg) * 2);
+    height: calc(var(--icon-lg) * 2);
+    border-radius: var(--radius-row);
   }
 
   .name {
     margin: 0;
     color: var(--text-strong);
     font-size: var(--text-row);
+  }
+
+  /* The two rows the card offers, side by side at the pointer scale and stacked
+     where there is no room - the same reflow the find bar's controls take. */
+  .rows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
   }
 
   .site {

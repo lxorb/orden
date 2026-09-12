@@ -1,29 +1,32 @@
-/** Whether a browser build may show a page at all, and what a frame is allowed to
- *  do while it does.
+/** What a frame in a web tab is allowed, and why a browser build asks before it
+ *  makes one.
  *
- *  A page in a browser can only be shown in a frame, and most of the web refuses to
- *  be framed: `X-Frame-Options: DENY` and CSP's `frame-ancestors` are a header the
- *  site sends and the browser obeys, and nothing on this side can talk it round. The
- *  honest thing is to find out and say so, which is what the card is for.
+ *  A page in a browser can only be shown in a frame, and a great deal of the web
+ *  refuses to be framed: `X-Frame-Options: DENY` and CSP's `frame-ancestors` are a
+ *  header the site sends and the browser obeys. Nothing on this side can talk it
+ *  round, and - this is the part that decides the design - **nothing on this side
+ *  can find out either.**
  *
- *  Finding out without a server. The headers cannot be read from here - a
- *  cross-origin `HEAD` needs the site's permission, which is what CORS is - so the
- *  answer is read off the frame itself. A page that framed is cross-origin and its
- *  location cannot be touched; a page that was refused leaves the frame on
- *  `about:blank`, which is this origin's and reads back without throwing. That is the
- *  whole of the test. A `HEAD` through the Worker would be a second answer to the
- *  same question and would make the app's own server a fetcher of arbitrary
- *  addresses; see docs/web-tabs.md.
+ *  That was measured rather than assumed. A frame pointed at another origin reports
+ *  exactly the same thing whether the page arrived or was refused: `load` fires for
+ *  both, reading its location throws `SecurityError` for both, its document is null
+ *  for both, `length` is 0 for both, and the resource entry in the parent's timeline
+ *  is opaque for both - status 0, size 0. Only a page on this app's own origin reads
+ *  back, and no site is on this app's own origin. The four cases are written out side
+ *  by side in docs/web-tabs.md.
  *
- *  The sandbox is the one the app already grants an embedded page, for the reasons
- *  stated there: see web-frame.ts in @nib/editor. Nothing here grants more. */
-
-/** How long a page has to arrive before the card stands in for it.
+ *  So there are two honest designs: frame every page and leave whoever hit a refusal
+ *  looking at the browser's own grey apology, or ask first. This asks first, with the
+ *  same gesture the app already uses for a page embedded in a note: a card that says
+ *  what it stands for, and a press that swaps the frame in. One press per tab, not
+ *  per page - once the reader has said yes, the frame stays. See web-embed.ts in
+ *  @nib/markdown and web-frame.ts in @nib/editor, which are that pattern, and
+ *  docs/web-tabs.md for the decision.
  *
- *  A site that is being slow and a site that will never answer look the same from
- *  here, and after eight seconds the difference has stopped mattering to whoever is
- *  waiting. */
-export const PATIENCE = 8_000
+ *  A `HEAD` through the app's own Worker would answer it reliably, and is written
+ *  down as the way to get rid of the press. It was not taken here: it makes the
+ *  app's server a fetcher of arbitrary addresses on a reader's behalf, and it is a
+ *  round trip before a page a reader has already chosen. */
 
 /** What a frame in a web tab may do.
  *
@@ -33,7 +36,7 @@ export const PATIENCE = 8_000
  *  cross-origin here, where `allow-same-origin` grants the frame its own origin and
  *  never this one. Forms and popups, because a page that cannot be used is not worth
  *  framing. Not top navigation: a page must not be able to move the window the app
- *  is in. */
+ *  is in. The same tokens the editor's embed frames are allowed; see web-frame.ts. */
 export const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups'
 
 /** What a framed page is permitted, which is nothing.
@@ -43,25 +46,3 @@ export const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups
  *  gives by taking the APIs away; see permissions.svelte.ts. An `allow` that names
  *  nothing is a frame that may ask for nothing. */
 export const ALLOW = ''
-
-/** Whether the address a frame came back with is the page or the browser's refusal
- *  to show it.
- *
- *  Nothing at all, or still the blank page a frame starts on: the navigation never
- *  happened, which is what a refusal looks like from here. An address that reads back
- *  at all is this origin's, because a cross-origin page cannot be read - which is why
- *  a page that really loaded throws instead of answering. */
-export function refusedAt(at: string | null | undefined): boolean {
-  return at === undefined || at === null || at === '' || at === 'about:blank'
-}
-
-/** The same question of a frame that has finished loading. Only worth asking then:
- *  before that every frame is on `about:blank` and every answer is "refused". */
-export function refused(frame: HTMLIFrameElement): boolean {
-  try {
-    return refusedAt(frame.contentWindow?.location.href)
-  } catch {
-    // Reading across an origin threw, which only a page that really loaded can do.
-    return false
-  }
-}

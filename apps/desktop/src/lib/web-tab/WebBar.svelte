@@ -24,6 +24,7 @@
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
+  import { shortcuts } from '../shortcuts.svelte'
   import { plainOrigin } from './address'
   import type { Page } from './pages.svelte'
 
@@ -32,13 +33,9 @@
     /** Whether a clip can read the page's words. In a browser it cannot - the
      *  frame's document is the site's - so the glyph says it will keep the link. */
     reads,
-    /** Whether the pane this bar is in has the focus, so Ctrl+L lands in one bar
-     *  rather than in all of them. */
+    /** Whether the pane this bar is in has the focus, so the address key lands in
+     *  one bar rather than in all of them. */
     focused,
-    /** How many times somebody has asked for the address field. A count rather than
-     *  a call, because the key is pressed in the window and the field is in whichever
-     *  pane has the focus; see pages.svelte.ts. */
-    asked,
     onstep,
     onaddress,
     onclip,
@@ -48,7 +45,6 @@
     page: Page
     reads: boolean
     focused: boolean
-    asked: number
     onstep: (step: 'back' | 'forward' | 'reload') => void
     onaddress: (typed: string) => void
     onclip: () => void
@@ -79,19 +75,28 @@
     if (box && !editing && box.value !== resting) box.value = resting
   })
 
-  /** Ctrl+L. Only the bar in the pane that has the focus answers. */
-  let answered = asked
-  $effect(() => {
-    if (asked === answered) return
-
-    answered = asked
-    if (focused) take()
-  })
-
-  /** A tab with nowhere to go yet: the field takes the keyboard, because typing an
-   *  address is the only thing to do with an empty tab. */
+  /** Ctrl+L, read here rather than off the window: an app-level key never reaches
+   *  the editor, and this one has to share the chord that selects a line. A pane
+   *  showing a page has no editor, so only the bar in the focused pane answers.
+   *
+   *  While the page itself has the keyboard - after a click into it - the key is the
+   *  page's and the app never sees it; that is what a webview of its own means. The
+   *  bar is one press away either way.
+   *
+   *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
+   *  an address is the only thing to do with an empty tab. */
   onMount(() => {
     if (page.url === null && focused) take()
+
+    const key = (event: KeyboardEvent) => {
+      if (!focused || !shortcuts.pressed('web.address', event)) return
+
+      event.preventDefault()
+      take()
+    }
+
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
   })
 
   function take() {

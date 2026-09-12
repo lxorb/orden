@@ -30,7 +30,6 @@ import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { invoke } from '../tauri'
 import type { Platform } from '../keys'
-import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 
 /** Where an entry sits in the list. The first five are the app's own menus,
@@ -314,15 +313,18 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.goBack(),
   },
   {
-    // A browser's key for its address bar, which is what a web tab's field is. It
-    // does nothing anywhere else: the pane that has the focus is the one that
-    // answers, and a pane holding a note has no address to focus.
+    // A browser's key for its address bar, which is what a web tab's field is.
+    //
+    // Read where the surface is rather than off the window, which is what lets it
+    // share the key the editor selects a line with: a pane showing a page has no
+    // editor in it, and a pane showing a note never sees this. The same arrangement
+    // the canvas's own keys have; see WebBar.svelte and `shortcuts.pressed`.
     id: 'web.address',
     label: () => t('Address'),
     category: 'view',
-    scope: 'app',
+    scope: 'panel',
     key: 'Mod-l',
-    run: () => pages.askForAddress(),
+    contextual: true,
   },
   {
     id: 'app.forward',

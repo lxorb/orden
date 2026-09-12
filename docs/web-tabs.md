@@ -77,7 +77,7 @@ under every click would be a file no link could point at.
 | Windows | a child webview: WebView2, Chromium | the only embedding that renders a site the way a browser does |
 | macOS | a child webview: WKWebView, WebKit | same, with Safari's engine |
 | Linux | a child webview: WebKitGTK | same |
-| the browser build | a sandboxed `<iframe>`, and a card where the site refuses to be framed | a page in a browser has nowhere else to go |
+| the browser build | a card, and a sandboxed `<iframe>` once the reader presses it | a page in a browser has nowhere else to go, and no way to know whether a frame will work |
 | Android and iOS | the system browser, not a tab | see below |
 
 ### A desktop: a webview over the pane
@@ -127,31 +127,45 @@ a back arrow that is always lit is an arrow that lies half the time. A redirect
 can leave an extra entry in the trail; that is the price of not having the engine's
 own answer.
 
-### The browser build: a frame, or a card
+### The browser build: a card, and a frame when asked
 
 A page in a browser can only be shown in a frame, and a great deal of the web
 refuses to be framed: `X-Frame-Options: DENY` and CSP's `frame-ancestors` are a
-header the site sends and the browser obeys, and nothing on this side can talk it
-round.
+header the site sends and the browser obeys.
 
-So the app finds out and says so. The frame is given the address; when it has
-loaded, its own location is read. A page that framed is cross-origin and reading
-it throws, which is the answer "it worked"; a page that was refused leaves the
-frame on `about:blank`, which is this origin's and reads back without throwing.
-Eight seconds with no answer counts as refused, because a site being slow and a
-site that will never answer look the same from here.
+**A page cannot find out whether framing worked.** That was measured rather than
+assumed, with all four cases served side by side:
 
-Where it is refused the pane shows a card: the site's own favicon, the title, the
-origin, and one row that opens the page in the reader's browser. The card is the
-honest end of the road rather than a spinner that never stops.
+| the frame was pointed at | `load` | its location | its document | `length` | the resource entry |
+| --- | --- | --- | --- | --- | --- |
+| this origin, allowed | fires | reads back | readable | 0 | `iframe:200:363` |
+| another origin, allowed | fires | throws `SecurityError` | null | 0 | `iframe:0:0` |
+| another origin, refused | fires | throws `SecurityError` | null | 0 | `iframe:0:0` |
 
-**Not a HEAD request through the Worker.** It was the other option - ask
-`services/sync` to fetch the headers and report whether framing is allowed - and
-it was not taken. It would make the app's own server a fetcher of arbitrary
-addresses on a reader's behalf, which is a thing that gets used for something
-else; it needs the reader to be online and signed in to find out something about a
-page in front of them; and it answers a question the frame answers for itself a
-second later. One answer, on the device.
+The two rows that matter are identical in every column. No site is on the app's own
+origin, so there is nothing to read: the first design here tried to tell them apart
+by the frame's own location and was simply wrong - it called a refusal a success,
+which is the worse of the two mistakes.
+
+So a browser build asks. The pane shows a card - the site's favicon, the page's
+title, the origin - and two rows: **Show it here**, which swaps the frame in, and
+**Open in the browser**, which takes the page where it will certainly work. One
+press per tab and not per page: saying yes to a site is about this tab, and once
+the frame is up, typing another address re-points it.
+
+That is the gesture the app already has for a page embedded in a note, for the same
+two reasons - the card cannot know whether the frame will work, and nothing should
+be loaded from a site before the reader asks for it. See `web-embed.ts` in
+`@nib/markdown` and `web-frame.ts` in `@nib/editor`.
+
+**A HEAD request through the Worker would get rid of the press**, and is the only
+thing that would: ask `services/sync` to fetch the headers and report. It was not
+taken. It makes the app's own server a fetcher of arbitrary addresses on a reader's
+behalf, which is a thing that gets used for something else; it is a round trip
+before a page the reader has already chosen; and it needs the Worker reachable to
+answer something about a page in front of them. If the press ever grates, that is
+the route to write, with the loopback and private ranges refused and the answer
+cached.
 
 ### A phone: the system browser
 
@@ -228,6 +242,21 @@ The clip does not open in a tab. The page is still what the reader is looking at
 and a note that opened over it would take them away from what they were reading;
 the row appears in the file list, which is where a clip belongs.
 
+### The content policy
+
+The app runs under a policy written once in `apps/desktop/src/csp.ts`, and a web
+tab needed nothing added to it.
+
+On a desktop the page is not in the app's document at all: a child webview loads a
+site over the network, and Tauri's policy is injected into what Tauri's own
+protocols serve. The site is governed by whatever policy the site sends, which is
+how a browser works.
+
+In a browser build the frame is the app's, and `frame-src 'self' https:` is already
+what it needs - the line is there for the embed cards, and a web tab frames the same
+way for the same reasons. The favicon on the card is covered by `img-src`'s `https:`,
+and a card whose mark will not load shows no mark rather than a broken picture.
+
 ## Privacy and safety
 
 **A page shares no session with the app.** The child webview is given a data
@@ -283,7 +312,7 @@ a document at all. The file syncs like every other note.
 | `apps/desktop/src-tauri/capabilities/default.json` | webviews, not windows |
 | `apps/desktop/src/lib/web-tab/note.ts` | what the file says, and what a clip says. Pure, tested |
 | `apps/desktop/src/lib/web-tab/address.ts` | what somebody typed, and the origin plainly. Pure, tested |
-| `apps/desktop/src/lib/web-tab/frame.ts` | whether a browser framed the page, and what a frame may do |
+| `apps/desktop/src/lib/web-tab/frame.ts` | what a frame may do, and the measurements behind asking first |
 | `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, the five-minute sleep |
 | `apps/desktop/src/lib/web-tab/permissions.svelte.ts` | what each site is allowed, which is nothing |
 | `apps/desktop/src/lib/web-tab/clip.ts` | where the HTML comes from |
@@ -300,6 +329,9 @@ a document at all. The file syncs like every other note.
   under the window's own HTML, so an overlay means hiding the page. The fix if it
   ever grates is the one reactive flag every overlay already could bump, rather
   than the element test the app makes now.
+- **A browser build asks before it frames a page.** Nothing on the page can tell a
+  framed site from a refused one, so the card asks; the Worker route above is what
+  would remove the press.
 - **A redirect can leave a spare entry in the back trail.** The engine will not
   say whether a navigation was a redirect, and the alternative is a back arrow
   that lies.

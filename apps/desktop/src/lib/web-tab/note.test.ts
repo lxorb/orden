@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { frontMatterValue } from '@nib/markdown/front-matter'
 import { clipNote, webNote, webTitleOf, webUrlOf } from './note'
-import { refusedAt } from './frame'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
@@ -96,19 +95,5 @@ describe('the note a clip is', () => {
       WHEN,
     )
     expect(frontMatterValue(note, 'title')).toBe('One Two')
-  })
-})
-
-describe('whether a browser framed the page', () => {
-  test('a frame still on the blank page was refused', () => {
-    expect(refusedAt('about:blank')).toBe(true)
-    expect(refusedAt('')).toBe(true)
-    expect(refusedAt(undefined)).toBe(true)
-  })
-
-  /** Only this origin's addresses read back at all; a page that really loaded throws
-   *  instead of answering, which `refused` catches. */
-  test('an address that reads back as the page is a page', () => {
-    expect(refusedAt('https://svelte.dev/docs')).toBe(false)
   })
 })

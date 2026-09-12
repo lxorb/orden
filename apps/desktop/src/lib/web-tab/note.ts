@@ -30,7 +30,7 @@ import { frontMatterValue, oneLine, writeFrontMatter } from '@nib/markdown/front
 import { isWebAddress } from './address'
 
 /** The key that makes a note a website. */
-export const URL_KEY = 'url'
+const URL_KEY = 'url'
 
 /** The file a web tab keeps itself as.
  *

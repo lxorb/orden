@@ -11,7 +11,7 @@ import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { openExternal } from '../tauri'
 import type { Page } from './pages.svelte'
-import { type Grant, grants, siteOf } from './permissions.svelte'
+import { type Grant, GRANTS, grants, siteOf } from './permissions.svelte'
 
 /** What each grant is called on the row that gives it.
  *
@@ -29,7 +29,7 @@ export function webRows(page: Page, onclip: () => void): MenuEntry[] {
   const permissions: MenuEntry[] = site
     ? [
         DIVIDER,
-        ...(Object.keys(NAMES) as Grant[]).map((grant) => ({
+        ...GRANTS.map((grant) => ({
           label: NAMES[grant](),
           run: () => grants.set(site, grant, !grants.has(site, grant)),
           // A tick is what a menu has for a thing that is on, and the menu draws

@@ -1218,6 +1218,7 @@ export const ja: Dictionary = {
   'Allow the clipboard': 'クリップボードを許可',
   'Open in the browser': 'ブラウザーで開く',
   'Copy the address': 'アドレスをコピー',
+  'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
 }
