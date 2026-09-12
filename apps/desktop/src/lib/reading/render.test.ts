@@ -11,13 +11,24 @@ const bodies: Record<string, string> = {
   'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
 }
 
-const asked: { embeds: string[]; index: (string | null)[] } = { embeds: [], index: [] }
+const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
 
+/** The index stands in for the whole space, and `targetOf` is the one thing the
+ *  reading view asks it: which note a link means. Resolved here the way the real
+ *  one resolves it - the end of a path, folded - because what this file tests is
+ *  that the view asks and what it does with the answer, not the resolver, which is
+ *  tested in link-index.test.ts. */
 vi.mock('../link-index.svelte', () => ({
   links: {
-    index: (path: string | null) => {
-      asked.index.push(path)
-      return { notes: NOTES, path, read: () => Promise.resolve(null) }
+    targetOf: (from: string | null, link: { target: string }) => {
+      asked.from.push(from)
+      const wanted = link.target.toLowerCase().replace(/\.md$/, '')
+      const found = NOTES.find((note) => {
+        const path = note.path.toLowerCase().replace(/\.md$/, '')
+        return path === wanted || path.endsWith(`/${wanted}`)
+      })
+
+      return found?.path ?? null
     },
     embedSource: (target: string) => {
       asked.embeds.push(target)
@@ -48,7 +59,7 @@ describe('the space a note is read in', () => {
     const html = await readingHtml(note('Read [[Plan]] first.\n'), 'light', true)
 
     expect(html).toContain('<a class="wikilink" href="Plan.md">Plan</a>')
-    expect(asked.index).toContain('/space/Notes/Today.md')
+    expect(asked.from).toContain('/space/Notes/Today.md')
   })
 
   test('carries the heading a link names, as the anchor on the page', async () => {

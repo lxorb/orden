@@ -8,9 +8,7 @@
  *  picture keeps the path the note wrote, resolved to something the webview will
  *  load, rather than being carried inside the document. */
 
-import { resolveFile, resolveNote } from '@nib/editor'
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
-import { isTabFile } from '@nib/markdown/links'
 import { mapSources } from '@nib/markdown/sources'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
@@ -34,22 +32,20 @@ export interface Note {
  *  inside the app, and a link in one has to reach the same note it would reach in
  *  the reading view. */
 export function pointer(note: Note): (link: Wikilink) => { href: string | null } | null {
-  const index = links.index(note.path)
-
   return (link) => {
     // `[[#Heading]]` names a place on this very page, and the `#anchor` the
     // renderer writes after the target is the whole of what it needs.
     if (!link.target) return link.heading === null ? null : { href: '' }
 
-    // A PDF is a file rather than a note, and the renderer writes the `#page=`
-    // after it as the link had it; see `anchored` in the renderer.
-    if (isTabFile(link.target)) {
-      const file = resolveFile(index, link.target, 'wikilink')
-      return file === null ? null : { href: file }
-    }
-
-    const found = resolveNote(index, link.target)
-    return found ? { href: found.path } : null
+    // Through the index's own resolver rather than over the notes it holds: both
+    // read a target the same way, and only one of them has the name index and the
+    // memo behind it. A PDF is a file rather than a note, and the renderer writes
+    // the `#page=` after it as the link had it - which `targetOf` answers as well,
+    // since a link naming a file is what `isTabFile` decides on either side. See
+    // `targetOf` in link-index.svelte.ts for what walking the notes instead cost a
+    // long note.
+    const found = links.targetOf(note.path, { kind: 'wikilink', target: link.target })
+    return found === null ? null : { href: found }
   }
 }
 

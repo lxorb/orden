@@ -435,10 +435,44 @@ class Links {
    *  what a link can open beside a note, so a note that links a paper or a plane
    *  is a note that links somewhere. Anything else beside the notes stays
    *  unresolved. */
-  private resolveFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
+  /** Where a link written in one note points, as a path relative to the space,
+   *  or null for a link the space cannot answer.
+   *
+   *  The one way in for every surface that draws a link, so that all of them get
+   *  the name index and the memo above rather than only the editor. What it is
+   *  worth: the reading view used to resolve each link by filtering every note in
+   *  the space, so a note of twenty thousand lines with eighteen hundred links in
+   *  it compared nine million paths to draw one page - 1.7 seconds of the five it
+   *  took, all of it in `comparable`. Through here it is one lookup per distinct
+   *  target and nothing at all for a target already seen.
+   *
+   *  `from` is an absolute path, the way a tab holds one, or null for a note with
+   *  no home yet. */
+  targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
+    return this.resolveFrom(from === null ? null : this.relative(from), link)
+  }
+
+  /** How many notes the resolver has compared paths with, ever - a running total,
+   *  read as a difference either side of whatever is being asked about.
+   *
+   *  Counted rather than timed, for the reason fuzzy.ts gives beside its own
+   *  counters: a clock says what the machine was doing and a count says what the
+   *  code did. That this is the number of links rather than the number of links
+   *  times the size of the space is the whole of the paragraph above, and it is
+   *  asserted in link-index.test.ts. */
+  examined = 0
+
+  private resolveFrom(
+    source: string | null,
+    link: { kind: LinkKind; target: string },
+  ): string | null {
     if (!link.target) return null
 
-    const key = `${folderOf(source)}\0${link.kind}\0${link.target}`
+    // A note with no home of its own is not the same question as a note at the
+    // root of the space: the first has no folder to be beside, and `nearest`
+    // reads the two differently. So they are not one another's answer.
+    const where = source === null ? '\0nowhere' : folderOf(source)
+    const key = `${where}\0${link.kind}\0${link.target}`
     const held = this.resolved.get(key)
     if (held !== undefined) return held
 
@@ -450,11 +484,14 @@ class Links {
     return found
   }
 
-  private noteFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
+  private noteFrom(source: string | null, link: { kind: LinkKind; target: string }): string | null {
     // Only the notes the target could name at all; see `byName`.
     const last = comparable(link.target).split('/').pop() ?? ''
+    const candidates = this.byName.get(last) ?? []
+    this.examined += candidates.length
+
     const index: NoteIndex = {
-      notes: this.byName.get(last) ?? [],
+      notes: candidates,
       files: [],
       path: source,
       read: nothing,

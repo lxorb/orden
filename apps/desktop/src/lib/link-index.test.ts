@@ -445,3 +445,76 @@ describe('the icon a note says it wears', () => {
     expect(links.iconOf('/elsewhere/Plan.md')).toBeNull()
   })
 })
+
+/** What drawing a page of links costs, counted.
+ *
+ *  Every surface that draws one asks `targetOf`, and the thing it must not do is
+ *  ask the space about each link in turn. The reading view used to: it filtered
+ *  every note in the space per link, so a note of eighteen hundred links over five
+ *  thousand notes compared nine million paths to draw one page - 1.7 seconds of the
+ *  five that page took, all of it folding paths. Counted rather than timed, for the
+ *  reason the counter's own comment gives. */
+describe('resolving a page of links', () => {
+  /** A space of five hundred notes, and one note linking to three hundred of them,
+   *  which is the shape of a long note with a link every few lines. */
+  async function page() {
+    const contents: Record<string, string> = {}
+    for (let one = 0; one < 500; one++) contents[`note-${one}.md`] = `# Note ${one}\n`
+
+    const lines: string[] = []
+    for (let one = 0; one < 300; one++) lines.push(`See [[note-${one}]] on this.`)
+    contents['long.md'] = lines.join('\n')
+
+    await space(contents)
+    return lines.map((_, one) => `note-${one}`)
+  }
+
+  test('compares the links, not the links times the space', async () => {
+    const targets = await page()
+    // What asking the space per link walks, per link: all of it.
+    expect(links.index(at('long.md')).notes).toHaveLength(501)
+
+    const before = links.examined
+    for (const target of targets) links.targetOf(at('long.md'), { kind: 'wikilink', target })
+
+    // One candidate per link and no more: three hundred comparisons, against the
+    // hundred and fifty thousand the same page cost when every link asked the
+    // whole space.
+    expect(links.examined - before).toBe(targets.length)
+  })
+
+  test('asks once for a target however many links name it', async () => {
+    const targets = await page()
+
+    const before = links.examined
+    for (let round = 0; round < 5; round++) {
+      for (const target of targets) links.targetOf(at('long.md'), { kind: 'wikilink', target })
+    }
+
+    // Five passes over the same page, and only the first one asks: what a target
+    // means is remembered until the space changes.
+    expect(links.examined - before).toBe(targets.length)
+  })
+
+  test('answers what walking the whole space answers', async () => {
+    const { resolveNote } = await import('@nib/editor')
+
+    await space({
+      'Plan.md': '# Plan',
+      'ideas/Plan.md': '# The other plan',
+      'ideas/Later.md': '---\naliases:\n  - Eventually\n---\n',
+      'Notes/Today.md': 'a note that links out',
+    })
+
+    const asked = ['Plan', 'ideas/Plan', 'Later', 'ideas/later', 'Eventually', 'Nowhere', 'PLAN']
+
+    for (const from of ['Notes/Today.md', 'ideas/Later.md']) {
+      const index = links.index(at(from))
+      for (const target of asked) {
+        expect(links.targetOf(at(from), { kind: 'wikilink', target })).toBe(
+          resolveNote(index, target)?.path ?? null,
+        )
+      }
+    }
+  })
+})
