@@ -44,3 +44,7 @@ apps/clipper/*.zip
 
 # What Python leaves behind when one drive imports another
 __pycache__/
+
+# What `wrangler dev` reads a secret out of. Never committed: a drive writes
+# one to exercise the second factor and takes it away again.
+.dev.vars

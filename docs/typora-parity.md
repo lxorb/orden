@@ -692,3 +692,48 @@ Features Typora does not have, which are the reason this exists.
       with the count shown before anything is written and one thing to undo
       afterwards. Roam's `[[page]]` is deliberately not in the list: it is already
       a wikilink and already means what it says here
+- [x] What a note said before, kept on the account as well as on the device: a
+      month of versions, one every five minutes at most, thinned to one an hour
+      after the first day. The device's own history is instant and goes back
+      further, and it is keyed by the note's path on that machine - so a rename
+      orphans it, another machine never sees it, and a laptop that dies takes it
+      with it. The account's is keyed by the note's id, which is the one name for a
+      note that every device agrees on, and the history sheet shows the two as one
+      list with the device beside each version the account holds. A version is a
+      body the account was already sent, stored under its own hash, so nothing is
+      diffed, nothing is sent twice and two notes that say the same thing cost one
+      object. See docs/sync.md
+- [x] A space, or one folder of it, put back to how it read at a moment, for the
+      day a device syncs something wrong over everything. It says how many notes
+      would change before it changes any, and what it writes is a new version of
+      each - so a rollback is an edit like any other and can itself be undone
+- [x] One choice about the same note being written in two places, on the account
+      rather than on the device because it is a decision about the notes: keep both
+      copies, which is what nib has always done and still the default; let the
+      newest win, which is only safe because the words that lose are in the
+      histories above; or be asked, which leaves the note alone, holds the other
+      copy, and does not push until somebody answers. A canvas is none of the three
+      and never was: both copies merge, because everything on one has an id
+- [x] What synced, said quietly: the last few dozen passes, one line each, with
+      what came down, what went up and what went wrong in the server's own words.
+      On the device, and only for a pass that did something - a log of "nothing
+      happened" every twenty seconds is a log nobody reads, and a table on the
+      server would be a write per pass for something almost nobody looks at
+- [x] A second code when signing in, from an authenticator app, with ten one-shot
+      recovery codes shown once. Not passkeys, and the reason is written down: a
+      passkey is bound to one origin, and nib runs at `tauri://localhost`, at
+      `127.0.0.1` on a fresh port every launch inside the glasses plugin, and at
+      its own domain on the web - so a passkey would work on the web and refuse to
+      exist on the other two, which is a second class of reader rather than a
+      second factor
+- [x] The sessions an account has open, by the device that opened each and when it
+      was last seen, with any of them endable and a row for ending every one but
+      this. Which is the half that matters more: a second factor stops somebody
+      getting in and says nothing about somebody already inside, and until now a
+      session row said nothing but its own hash
+- [x] A space pulled or pushed without the app, for a repository of notes that
+      publishes from CI. No new credential and no second API: the `nib_` token that
+      already exists for an LLM connector now reaches the sync routes as well, and
+      `scripts/nib-sync.mjs` is forty lines of fetch over the change feed. Not a
+      delete, ever - a script that can delete is a script that can empty a space on
+      a bad `if`

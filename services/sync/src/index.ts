@@ -45,7 +45,11 @@ app.use(
       )
         ? origin
         : '',
-    allowHeaders: ['authorization', 'content-type'],
+    // `x-nib-device` is what a version the account keeps says it came from; a
+    // header that is not named here is dropped by the browser before the request
+    // leaves, which is a thing that only shows up on the builds whose origin is
+    // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
+    allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     maxAge: 86400,
   }),
