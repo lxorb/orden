@@ -136,7 +136,15 @@
     border-top: 1px solid var(--line);
   }
 
-  button {
+  /* The account row, and only it. This used to be written as `button`, which a
+     scoped rule turns into `button.svelte-xxx` - a class and an element, which
+     out-specifies the shared `.nib-glyph` by exactly one element. So `display:
+     flex` landed on the two switches as well, the grid that centres a glyph in its
+     square lost, and both marks sat hard against the left of a 28px button: the
+     two switches looked out of line with each other and with the row, which is
+     what was reported. A component's own rule says which of its controls it is
+     about. */
+  .who {
     display: flex;
     align-items: center;
     border: none;
@@ -148,27 +156,9 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
-  }
 
-  button:focus-visible {
-    outline-offset: -1px;
-  }
-
-  @media (hover: hover) {
-    button:hover:not(:disabled) {
-      background: var(--surface-hover);
-      color: var(--text-strong);
-    }
-  }
-
-  button:active:not(:disabled) {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
-  /* The one part of the row that gives way: a long name is cut, the switches at
-     the other end are not. */
-  .who {
+    /* The one part of the row that gives way: a long name is cut, the switches
+       at the other end are not. */
     flex: 1;
     min-width: 0;
     gap: var(--row-gap);
@@ -176,6 +166,23 @@
     padding: 0 calc(var(--row-pad) - var(--space-1));
     font-size: var(--text-row);
     text-align: left;
+  }
+
+  button:focus-visible {
+    outline-offset: -1px;
+  }
+
+  /* The switches wear `.nib-glyph`'s own hover and press; this is the row's. */
+  @media (hover: hover) {
+    .who:hover:not(:disabled) {
+      background: var(--surface-hover);
+      color: var(--text-strong);
+    }
+  }
+
+  .who:active:not(:disabled) {
+    background: var(--surface-press);
+    color: var(--text-strong);
   }
 
   /* The name starts beside its mark, the way a name in the list above starts

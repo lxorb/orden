@@ -395,8 +395,15 @@
   }
 
   /* The rows are `.nib-row`, the same row every list in the app is made of.
-     What is left here is what a menu row has that a list row does not. */
-  button {
+     What is left here is what a menu row has that a list row does not: a row of
+     words in a menu is read rather than scanned, so it is darker than a row in a
+     list.
+
+     Every button but the mark. Written as `button`, this landed on the trigger as
+     well - a scoped rule is a class and an element, which out-specifies the shared
+     `.nib-glyph` - and the three bars came out a shade darker than the sidebar
+     button beside them in the same row. Two glyphs in one bar are one ink. */
+  button:not(.nib-glyph) {
     color: var(--text);
   }
 
@@ -407,7 +414,7 @@
     color: var(--text-strong);
   }
 
-  button:disabled {
+  button:not(.nib-glyph):disabled {
     color: var(--muted);
   }
 
