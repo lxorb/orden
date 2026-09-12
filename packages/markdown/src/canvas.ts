@@ -460,7 +460,7 @@ function readShape(value: unknown): ShapeNode | null {
     x: pixels(value.x, 0),
     y: pixels(value.y, 0),
     width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
-    height: Math.max(1, pixels(value.height, DEFAULT_WIDTH)),
+    height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
     ...colour(value.color),
     ...(value.fill === true ? { fill: true } : {}),
     ...(value.up === true ? { up: true } : {}),

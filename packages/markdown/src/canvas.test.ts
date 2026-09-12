@@ -418,6 +418,18 @@ describe('what Nib keeps beyond the spec', () => {
     expect(canvas.nodes[1]).not.toHaveProperty('text')
   })
 
+  test('a shape with no size falls back to the same box a card does', () => {
+    // The height fell back to the default *width*, so a shape from a file that
+    // recorded no size came in four times as tall as it should be.
+    const canvas = readCanvas(
+      JSON.stringify({ nodes: [], nib: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } }),
+    )
+    const card = readCanvas(JSON.stringify({ nodes: [{ id: 'b', type: 'text', text: 'hi' }] }))
+
+    expect(canvas.nodes[0]?.width).toBe(card.nodes[0]?.width)
+    expect(canvas.nodes[0]?.height).toBe(card.nodes[0]?.height)
+  })
+
   test('says which names are shapes', () => {
     for (const shape of SHAPES) expect(isShape(shape), shape).toBe(true)
     expect(isShape('blob')).toBe(false)
