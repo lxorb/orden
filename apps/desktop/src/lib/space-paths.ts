@@ -45,6 +45,42 @@ export function insideSpace(root: string, relative: string): string {
   return joinPath(root, relative)
 }
 
+/** An absolute path that arrived from outside the app, as a path inside one of
+ *  these spaces - or null for one that is inside none of them.
+ *
+ *  The phone's own road names a note this way round: a widget row is drawn from a
+ *  path on disk, so the row hands that path back when it is tapped. The activity
+ *  carrying it is exported, which means any app on the phone can send one, so
+ *  what arrives is a path only once it is under a root this app knows and the
+ *  rest of it has been through `insideOnly` - the same judgement a `nib://` link
+ *  gets, in the same place, rather than a second rule that could differ from it.
+ *
+ *  What comes back is rebuilt from the root rather than handed on as it arrived,
+ *  so nothing the caller wrote survives the trip.
+ *
+ *  Given the roots rather than reading them: which folders are spaces belongs to
+ *  the workspace, and what a path may be belongs here. */
+export function insideAnyOf(roots: readonly string[], said: string): string | null {
+  const folded = said.replace(/\\/g, '/').trim()
+
+  for (const root of roots) {
+    if (!root) continue
+
+    // The separator is part of the prefix, so a space at `/notes` does not claim
+    // a path in `/notes-elsewhere`.
+    const head = root.replace(/\\/g, '/').replace(/\/+$/, '')
+    if (!folded.startsWith(`${head}/`)) continue
+
+    // The separators between the root and the rest are separators, however many
+    // of them were written: what is left has to reach `insideOnly` as a relative
+    // path or it would be refused for being absolute.
+    const safe = insideOnly(folded.slice(head.length).replace(/^\/+/, ''))
+    if (safe) return insideSpace(root, safe)
+  }
+
+  return null
+}
+
 /** The folder a path sits in, or the empty string for one at the top. */
 export function folderOf(relative: string): string {
   const at = relative.lastIndexOf('/')

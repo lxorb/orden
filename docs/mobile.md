@@ -251,6 +251,15 @@ here: the app already has one gesture for keeping a note to hand, and a picker
 written in Kotlin would be a second file list in a second language answering a
 question the app has already answered.
 
+A row hands back the note's path on disk, and the activity that carries it is
+exported - which is what makes a widget tappable at all, and also means anything
+on the phone can send that intent. So the path is a path only once
+`insideAnyOf` has found it under one of this app's own space roots and the rest
+of it has been through `insideOnly`, the same judgement a `nib://` link gets; what
+is opened is rebuilt from the root rather than taken as it arrived, and a path
+under no space is refused in the log and on screen. See
+`src/lib/space-paths.ts`.
+
 Which notes, in which order, and under what names is decided in
 `src/lib/mobile/widgets.svelte.ts` and pushed across the bridge whenever it
 changes; Kotlin only draws it. The words in it - the heading, and the line for a

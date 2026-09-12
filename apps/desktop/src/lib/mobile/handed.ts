@@ -23,6 +23,7 @@ import { putPicture, writeAtCaret } from '../insert-picture'
 import { log } from '../log'
 import { modes } from '../modes.svelte'
 import { prompt } from '../prompt.svelte'
+import { insideAnyOf } from '../space-paths'
 import { joinPath } from '../tauri'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
@@ -91,12 +92,30 @@ function run(id: string): boolean {
   return true
 }
 
+/** The note a widget row named, if it named one this app has any business
+ *  opening.
+ *
+ *  A widget row hands back a path on disk, and the activity that carries it is
+ *  exported: anything on the phone can send that intent, so the path is judged
+ *  against the spaces before it reaches the disk. Refused quietly on screen and
+ *  in the log, because the reader did not ask for whatever this was. */
+export function openable(said: string): string | null {
+  const found = insideAnyOf(
+    workspace.spaces.map((one) => one.root),
+    said,
+  )
+  if (!found) log('error', `handed: ${said} is not a note in any space`)
+
+  return found
+}
+
 /** Everything one intent was carrying, in the order it matters: the note a widget
  *  row named, then the command a tile asked for, then whatever was shared. */
 async function take(): Promise<void> {
   const asked = askedFrom(method('handed')?.() ?? '')
 
-  if (asked.open) await workspace.open(asked.open).catch(() => undefined)
+  const open = asked.open ? openable(asked.open) : null
+  if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
 
   await taken()

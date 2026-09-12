@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { folderOf, nameOf, noteName, relativePath, relativeTo } from './space-paths'
+import { folderOf, insideAnyOf, nameOf, noteName, relativePath, relativeTo } from './space-paths'
 
 describe('a path as the space speaks of it', () => {
   test('drops the root and the platform separators', () => {
@@ -39,5 +39,41 @@ describe('how a markdown link writes its way to a note', () => {
 
   test('a note in a sibling folder climbs and descends', () => {
     expect(relativePath('ideas', 'later/Plan.md')).toBe('../later/Plan.md')
+  })
+})
+
+/** A path that arrived from outside the app. The phone's widget hands one back
+ *  from an exported activity, so anything on the device can send one. */
+describe('an absolute path from somewhere else', () => {
+  const windows = ['C:', 'Notes', 'Home'].join('\\')
+  const roots = ['/notes/work', windows]
+
+  test('is a path when it is inside a space, in either platform’s writing', () => {
+    expect(insideAnyOf(roots, '/notes/work/ideas/Plan.md')).toBe('/notes/work/ideas/Plan.md')
+    expect(insideAnyOf(roots, `${windows}\\Plan.md`)).toBe(`${windows}\\Plan.md`)
+  })
+
+  test('and nothing at all when it is inside none of them', () => {
+    expect(insideAnyOf(roots, '/etc/passwd')).toBeNull()
+    expect(insideAnyOf(roots, '/data/data/com.nib.app/databases/notes.db')).toBeNull()
+    expect(insideAnyOf([], '/notes/work/Plan.md')).toBeNull()
+  })
+
+  test('a root is a whole folder, not the letters it starts with', () => {
+    expect(insideAnyOf(roots, '/notes/work-elsewhere/Plan.md')).toBeNull()
+    expect(insideAnyOf(roots, '/notes/work')).toBeNull()
+  })
+
+  test('and the way out of a space is the way out of this', () => {
+    // The same judgement a link gets, so one road cannot have a hole the other
+    // does not; see automation/inside.ts.
+    expect(insideAnyOf(roots, '/notes/work/../../etc/passwd')).toBeNull()
+    expect(insideAnyOf(roots, '/notes/work/ideas/../../../Plan.md')).toBeNull()
+    expect(insideAnyOf(roots, `/notes/work/${String.fromCharCode(0)}.md`)).toBeNull()
+  })
+
+  test('what comes back is built from the root, not from what arrived', () => {
+    expect(insideAnyOf(roots, '/notes/work//ideas/./Plan.md')).toBe('/notes/work/ideas/Plan.md')
+    expect(insideAnyOf(roots, '  /notes/work/Plan.md  ')).toBe('/notes/work/Plan.md')
   })
 })
