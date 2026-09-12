@@ -416,8 +416,14 @@ function decodeTarget(target: string): string {
   }
 }
 
-/** The name a block link points at, when a line ends by naming one. */
+/** The name a block link points at, when a line ends by naming one.
+ *
+ *  Asked of every line of every note, and of every visible line on every
+ *  keystroke by the live preview, so a line with no caret in it at all is
+ *  answered by a byte scan rather than by the pattern. Nearly every line is one:
+ *  this was the second-most-run pattern in the preview. */
 export function blockIdOf(line: string): string | null {
+  if (!line.includes('^')) return null
   return BLOCK_ID.exec(line)?.[1] ?? null
 }
 
