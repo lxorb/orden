@@ -5,7 +5,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { describe, expect, test } from 'vitest'
 import { clearFormatting, insertHorizontalRule, setHeading, toggleWrap } from './commands'
 import { external } from './external'
@@ -15,6 +15,7 @@ import {
   modeEffects,
   type ModeSettings,
   modeExtensions,
+  parsedFully,
   setCodeLineNumbers,
   setEquationNumbers,
   setFocusMode,
@@ -24,6 +25,7 @@ import {
   setRightToLeft,
   setSourceMode,
   setTypewriterMode,
+  tooLongToParse,
 } from './modes'
 import { reformatDocument } from './reformat'
 import { parsed } from '../test/parsed'
@@ -256,6 +258,26 @@ describe('source mode and read-only mode', () => {
 })
 
 /** Every class a mode puts on the editor, as the editor itself writes them. */
+/** Every mode at its default, which is the note a reader opens. Module scope
+ *  because two suites below apply the modes to a state. */
+const DEFAULTS: ModeSettings = {
+  source: false,
+  readOnly: false,
+  focus: false,
+  typewriter: false,
+  punctuation: true,
+  numbers: false,
+  lineNumbers: false,
+  codeTheme: 'follow',
+  rtl: false,
+  strict: false,
+  equationNumbers: false,
+  spellcheck: false,
+  closeBrackets: true,
+  ligatures: 'off',
+  vim: false,
+}
+
 function editorClasses(state: EditorState): string[] {
   return state
     .facet(EditorView.editorAttributes)
@@ -339,24 +361,6 @@ describe('the classes the stylesheet works from', () => {
  *  is no decoration - which is how a note went raw for a frame at a time while
  *  the divider between two panes was being dragged. */
 describe('applying every mode again', () => {
-  const DEFAULTS: ModeSettings = {
-    source: false,
-    readOnly: false,
-    focus: false,
-    typewriter: false,
-    punctuation: true,
-    numbers: false,
-    lineNumbers: false,
-    codeTheme: 'follow',
-    rtl: false,
-    strict: false,
-    equationNumbers: false,
-    spellcheck: false,
-    closeBrackets: true,
-    ligatures: 'off',
-    vim: false,
-  }
-
   /** Longer than one state's parse budget, so a parse thrown away shows. */
   function long(): string {
     const sections: string[] = []
@@ -393,5 +397,110 @@ describe('applying every mode again', () => {
     }).state
 
     expect(editorClasses(after)).toContain('nib-numbered')
+  })
+})
+
+/** The parse, left out of a document too long to be worth it.
+ *
+ *  Markdown is parsed from the top, so showing the end of a note of twenty thousand
+ *  lines means parsing all twenty thousand of them - and `@codemirror/language` does
+ *  it in idle slices that ran back to back at a hundred milliseconds each. The ten
+ *  keystrokes after such a note opened were all painted together, two seconds after
+ *  the first of them was typed.
+ *
+ *  So past `PARSED_AT_MOST` the language goes and the note is shown as plain text.
+ *  What is counted here is the parse: whether there is a tree at all, and over how
+ *  much of the document - which is the work, where a clock would be the machine. */
+describe('a document too long to parse', () => {
+  /** A document of `characters`, in lines of prose with syntax in them, so a parse
+   *  would have something to do. */
+  function note(characters: number): string {
+    const lines: string[] = []
+    let held = 0
+    for (let at = 0; held < characters; at++) {
+      const line =
+        at % 12 === 0
+          ? `## Part ${at}`
+          : `Line ${at} with **bold**, *italic* and a [[link]] in it.`
+      lines.push(line)
+      held += line.length + 1
+    }
+
+    return lines.join('\n')
+  }
+
+  const SHORT = note(64 * 1024)
+  const LONG = note(1024 * 1024)
+
+  /** A state as the app makes one: created, then dressed by the modes, which is the
+   *  transaction every pane sends when it takes a note on. */
+  function opened(doc: string): EditorState {
+    const made = EditorState.create({ doc, extensions: modeExtensions() })
+    return made.update({ effects: modeEffects(DEFAULTS) }).state
+  }
+
+  test('is not parsed at all, and a short one still is', () => {
+    expect(parsedFully(opened(SHORT))).toBe(true)
+    expect(parsedFully(opened(LONG))).toBe(false)
+  })
+
+  test('so nothing of it is walked, however long the parse is given', () => {
+    const long = opened(LONG)
+    // Ten seconds offered and no tree built: there is no parser to build one.
+    ensureSyntaxTree(long, long.doc.length, 10_000)
+    expect(syntaxTree(long).length).toBe(0)
+
+    // Against the same measurement on a note under the size, which is parsed.
+    const short = opened(SHORT)
+    ensureSyntaxTree(short, short.doc.length, 10_000)
+    expect(syntaxTree(short).length).toBeGreaterThan(0)
+  })
+
+  test('and the words, the lines and the caret are all still there', () => {
+    const long = opened(LONG)
+
+    expect(long.doc.toString()).toBe(LONG)
+    expect(long.doc.lines).toBe(LONG.split('\n').length)
+
+    // And it takes an edit like any other document.
+    const typed = long.update({ changes: { from: long.doc.length, insert: 'x' } }).state
+    expect(typed.doc.sliceString(typed.doc.length - 1)).toBe('x')
+    expect(parsedFully(typed)).toBe(false)
+  })
+
+  test('a document that grows past the size loses its parse', () => {
+    const short = opened(SHORT)
+    expect(parsedFully(short)).toBe(true)
+
+    const grown = short.update({ changes: { from: short.doc.length, insert: LONG } }).state
+    expect(parsedFully(grown)).toBe(false)
+  })
+
+  test('and one that is cut back below it gets the parse again', () => {
+    const long = opened(LONG)
+    const cut = long.update({ changes: { from: SHORT.length, to: long.doc.length } }).state
+
+    expect(parsedFully(cut)).toBe(true)
+    ensureSyntaxTree(cut, cut.doc.length, 10_000)
+    expect(syntaxTree(cut).length).toBeGreaterThan(0)
+  })
+
+  test('a mode set on a long document does not put the parse back', () => {
+    // `modeEffects` reconfigures the language whenever a pane takes a note on, and
+    // it is not told how long the note is; the guard has the last word.
+    const long = opened(LONG)
+    const again = long.update({ effects: modeEffects({ ...DEFAULTS, numbers: true }) }).state
+
+    expect(parsedFully(again)).toBe(false)
+    expect(editorClasses(again)).toContain('nib-numbered')
+  })
+
+  test('and strict mode on a short one is still strict', () => {
+    const strict = opened(SHORT).update({ effects: modeEffects({ ...DEFAULTS, strict: true }) })
+      .state
+
+    expect(parsedFully(strict)).toBe(true)
+    // Strict markdown has no tables, which is the one thing to see from here.
+    expect(tooLongToParse(strict.doc.length)).toBe(false)
   })
 })

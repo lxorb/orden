@@ -101,6 +101,8 @@ export {
   setHeadingNumbers,
   modeEffects,
   type ModeSettings,
+  parsedFully,
+  tooLongToParse,
   setLigatures,
   setLineHeight,
   setMeasure,

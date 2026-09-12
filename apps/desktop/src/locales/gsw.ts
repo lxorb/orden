@@ -264,6 +264,9 @@ export const gsw: Dictionary = {
   'Next slide': 'Nächschti Folie',
   'Previous slide': 'Vorheri Folie',
   'Read-only': 'Schriibgschützt',
+  'No preview': 'Kei Vorschau',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Wird as eifache Text zeigt, damit s Tippe i so ere lange Note sofort chunnt',
   'Leave read-only': 'Schriibschutz ufhebe',
   Next: 'Wiiter',
   Previous: 'Zrugg',

@@ -1,4 +1,10 @@
-import { Compartment, EditorState, type Extension, type StateEffect } from '@codemirror/state'
+import {
+  Compartment,
+  EditorState,
+  type Extension,
+  StateEffect,
+  StateField,
+} from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -6,7 +12,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { syntaxTree } from '@codemirror/language'
+import { language as currentLanguage, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
@@ -69,6 +75,99 @@ const markdownFor = once((strict: boolean): Extension =>
     addKeymap: false,
   }),
 )
+
+/** How long a document may be before the incremental parse is left out of it, in
+ *  characters.
+ *
+ *  Half a megabyte, which is about eight thousand lines of prose. Past that the
+ *  parse costs more than it is worth: `@codemirror/language` builds the tree in
+ *  idle slices, and on a note of twenty thousand lines those slices ran back to
+ *  back for two seconds at a hundred milliseconds each - so the ten keystrokes
+ *  after the note opened were all painted at once, two seconds after the first of
+ *  them. A reader typing at the end of a long note is the case, and a keystroke that
+ *  arrives when it is typed is worth more than coloured syntax in a document nobody
+ *  can see all of.
+ *
+ *  What is lost is written down beside `parseGuard`. Every threshold of this kind is
+ *  a guess; this one is where the slices stop fitting inside a frame on the machine
+ *  this was measured on, rounded down to a round number. Obsidian and VS Code both
+ *  stop highlighting past a size for the same reason. */
+const PARSED_AT_MOST = 512 * 1024
+
+/** Whether a document is long enough that the parse is left out of it. Exported so
+ *  the app can say so where it says what else is true of the note; see
+ *  `parsedFully` in index.ts. */
+export function tooLongToParse(length: number): boolean {
+  return length > PARSED_AT_MOST
+}
+
+/** Which language a view's compartment holds when it holds one at all: strict mode
+ *  is plain CommonMark, and everything else is markdown with Nib's own extensions.
+ *
+ *  Kept in the state rather than in a variable, because the guard below has to be
+ *  able to put the right one back and there is a view per pane. */
+const strictly = StateEffect.define<boolean>()
+
+const strictness = StateField.define<boolean>({
+  create: () => false,
+  update: (was, transaction) => {
+    for (const effect of transaction.effects) {
+      if (effect.is(strictly)) return effect.value
+    }
+
+    return was
+  },
+})
+
+/** The parse, taken away from a document too long to be worth it and given back to
+ *  one that is short enough.
+ *
+ *  A plugin rather than a decision at the call sites, because the call sites do not
+ *  all know how long the document is: `modeEffects` is handed the modes and puts the
+ *  language back whenever a pane takes a note on, a sync can replace a short document
+ *  with a long one, and a paste can make a short one long. This is the one place that
+ *  decides, and it decides from the document.
+ *
+ *  What a document with no parse loses: the syntax colouring, the code inside a
+ *  fence coloured by its own language, folding a section from the gutter, and
+ *  bracket matching. What it keeps: every widget the live preview draws, the
+ *  wikilink widgets and their completion, the tables, the maths, list continuation
+ *  on Enter, the outline, the find bar and everything the formatting bar does - all
+ *  of those read the lines rather than the tree. See `parsedFully`, which is how the
+ *  app says so to whoever is reading. */
+/** Whether this state has been through a transaction yet. A state is created with
+ *  the language in it, because nothing at that point knows how long the document is;
+ *  the first transaction is where the guard below looks. */
+const seen = StateField.define<boolean>({ create: () => false, update: () => true })
+
+const parseGuard = EditorState.transactionExtender.of((transaction) => {
+  const was = transaction.startState
+  const plain = tooLongToParse(transaction.newDoc.length)
+
+  // Three moments, and no others: the document crossed the size, somebody set the
+  // language - `modeEffects` does, whenever a pane takes a note on, and it is not
+  // told how long the note is - and the first transaction after a state was made,
+  // which is where a note that was already long is caught.
+  const crossed = plain !== tooLongToParse(was.doc.length)
+  const set = transaction.effects.some((effect) => effect.is(strictly))
+  if (!crossed && !set && was.field(seen, false) === true) return null
+
+  return {
+    effects: language.reconfigure(
+      plain ? [] : markdownFor(strictnessAfter(was, transaction.effects)),
+    ),
+  }
+})
+
+/** Which language this transaction leaves the view in, strict or not: what it says
+ *  if it says anything, and what was already true otherwise. */
+function strictnessAfter(was: EditorState, effects: readonly StateEffect<unknown>[]): boolean {
+  for (const effect of effects) {
+    if (effect.is(strictly)) return effect.value
+  }
+
+  return was.field(strictness, false) ?? false
+}
 
 const dim = Decoration.line({ class: 'nib-dim' })
 
@@ -145,6 +244,11 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
 export function modeExtensions(): Extension {
   return [
     language.of(markdownFor(false)),
+    // Which language the compartment holds when it holds one, and the guard that
+    // takes it away from a document too long to be worth parsing.
+    strictness,
+    seen,
+    parseGuard,
     preview.of(previewFor(false)),
     focus.of(focusFor(false)),
     typewriter.of(typewriterFor(false)),
@@ -338,6 +442,9 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
   flushTableEdits()
 
   return [
+    // Said whether the language is going in or not, because it is what the guard
+    // puts back when a document is short enough to parse again.
+    strictly.of(settings.strict),
     language.reconfigure(markdownFor(settings.strict)),
     preview.reconfigure(previewFor(settings.source)),
     // Source mode and read-only are opposite answers to the same question, and
@@ -362,7 +469,20 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
 export function setStrictMode(view: EditorView, on: boolean) {
   // Strict mode has no tables; a cell still being typed in would go with them.
   flushTableEdits()
-  view.dispatch({ effects: language.reconfigure(markdownFor(on)) })
+  view.dispatch({
+    effects: [strictly.of(on), language.reconfigure(markdownFor(on))],
+  })
+}
+
+/** Whether the document in this state is being parsed, which is what decides
+ *  whether its syntax is coloured, whether a fence's own language colours the code
+ *  in it, and whether a section can be folded from the gutter.
+ *
+ *  False for a document past `PARSED_AT_MOST`. Read by the app so it can say so
+ *  rather than leave a reader wondering why a long note came out grey; see
+ *  `parseGuard` for what such a note keeps. */
+export function parsedFully(state: EditorState): boolean {
+  return state.facet(currentLanguage) !== null
 }
 
 /** Numbers display equations and lets `\eqref` point at them. */

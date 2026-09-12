@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { VimMode } from '@nib/editor'
+  import { tooLongToParse, type VimMode } from '@nib/editor'
   import { countText } from './counts'
   import { t } from './i18n.svelte'
   import { VIM_WORDS } from './modes.svelte'
@@ -10,6 +10,15 @@
     reading = false,
     vimMode = null,
   }: { doc?: string; reading?: boolean; vimMode?: VimMode | null } = $props()
+
+  /** Whether this note is long enough that the editor leaves the parse out of it,
+   *  which is what colours the syntax and draws the live preview. Said here because
+   *  a note that suddenly reads as plain source is a reader wondering what broke -
+   *  and said quietly, beside the other things that are true of the note, because
+   *  nothing is wrong: the words are all there and typing at the end of it lands in
+   *  the frame it was typed in, which is the whole of why. See `PARSED_AT_MOST` in
+   *  packages/editor/src/modes.ts. */
+  const plain = $derived(tooLongToParse(doc.length))
 
   /** Whether the pointer is on the numbers. They are invisible until then, and
    *  counting the words of a large note is not something to do on the way past:
@@ -66,6 +75,13 @@
 >
   {#if reading}
     <span class="reading">{t('Read-only')}</span>
+  {/if}
+  {#if plain}
+    <span
+      class="reading"
+      title={t('Shown as plain text, so typing stays instant in a note this long')}
+      >{t('No preview')}</span
+    >
   {/if}
   {#if counts}
     <!-- With something selected the words and the characters read as "this many

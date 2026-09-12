@@ -262,6 +262,9 @@ export const de: Dictionary = {
   'Next slide': 'Nächste Folie',
   'Previous slide': 'Vorherige Folie',
   'Read-only': 'Schreibgeschützt',
+  'No preview': 'Keine Vorschau',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Wird als einfacher Text angezeigt, damit das Tippen in einer so langen Notiz sofort erscheint',
   'Leave read-only': 'Schreibschutz aufheben',
   Next: 'Weiter',
   Previous: 'Zurück',

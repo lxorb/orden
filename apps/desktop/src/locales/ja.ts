@@ -262,6 +262,9 @@ export const ja: Dictionary = {
   'Next slide': '次のスライド',
   'Previous slide': '前のスライド',
   'Read-only': '読み取り専用',
+  'No preview': 'プレビューなし',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'この長さのノートでは入力がすぐ表示されるよう、プレーンテキストで表示します',
   'Leave read-only': '読み取り専用を終了',
   Next: '次へ',
   Previous: '前へ',

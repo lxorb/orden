@@ -262,6 +262,9 @@ export const fr: Dictionary = {
   'Next slide': 'Diapositive suivante',
   'Previous slide': 'Diapositive précédente',
   'Read-only': 'Lecture seule',
+  'No preview': 'Aucun aperçu',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Affichée en texte brut, pour que la frappe reste instantanée dans une note aussi longue',
   'Leave read-only': 'Quitter la lecture seule',
   Next: 'Suivant',
   Previous: 'Précédent',
