@@ -39,5 +39,5 @@ export async function clipPage(
   const named = (read?.title ?? fallback.title).trim()
   const page = { url, title: named.length ? named : plainOrigin(url), html: read?.html ?? '' }
 
-  return workspace.noteFrom(clipNote(page, new Date()))
+  return workspace.noteFrom(await clipNote(page, new Date()))
 }

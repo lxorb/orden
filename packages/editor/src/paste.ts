@@ -1,6 +1,24 @@
 import { EditorSelection, type Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+
+/** The converter, fetched the first time a web page is pasted.
+ *
+ *  Turndown and the GFM rules over it are what turn HTML into the markdown this app
+ *  writes, and a window that opens on a note has no use for either: most pastes carry
+ *  no HTML at all, and the ones that do are a page somebody went and copied. So it
+ *  arrives with the first such paste. One promise, kept, so only that paste ever
+ *  waits - and it waits for a fetch from the cache, which is a beat rather than a
+ *  round trip.
+ *
+ *  Everything a paste decides without it stays where it was: a spreadsheet's tabs are
+ *  read here, and a clipboard holding nothing but plain text is handed straight back
+ *  to CodeMirror. See `richPaste`.
+ *
+ *  Nothing held on the side: a module is fetched once and kept by the loader, so every
+ *  paste after the first is answered out of the cache in the turn that asked. */
+function converter(): Promise<(html: string) => string> {
+  return import('@nib/markdown/from-html').then((one) => one.htmlToMarkdown)
+}
 
 /** Spreadsheet cells arrive as tab-separated lines; Typora turns them into a
  *  table, which is nearly always what was meant. */
@@ -51,13 +69,19 @@ function insert(view: EditorView, text: string) {
 }
 
 /** What a clipboard's two flavours come to, as markdown. Null where there is
- *  nothing worth inserting, which leaves the paste to whoever asked. */
-export function pastedMarkdown(html: string, text: string): string | null {
+ *  nothing worth inserting, which leaves the paste to whoever asked.
+ *
+ *  Answered rather than returned, because turning HTML into markdown means fetching
+ *  the converter. Only the HTML flavour does: a spreadsheet and a clipboard of plain
+ *  text are both settled before anything is asked for. */
+export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
   // A spreadsheet puts both on the clipboard; the plain text is the table.
   const table = delimitedToTable(text)
   if (table) return table
 
   if (!html.trim()) return null
+
+  const htmlToMarkdown = await converter()
   return htmlToMarkdown(html) || null
 }
 
@@ -73,11 +97,38 @@ export function richPaste(): Extension {
       const data = event.clipboardData
       if (!data || data.files.length) return false
 
-      const markdown = pastedMarkdown(data.getData('text/html'), data.getData('text/plain'))
-      if (markdown === null) return false
+      const html = data.getData('text/html')
+      const text = data.getData('text/plain')
 
+      // A spreadsheet puts both flavours on the clipboard and the plain text is the
+      // table, so that paste is worked out here and lands in the frame it happened in.
+      const table = delimitedToTable(text)
+      if (table) {
+        event.preventDefault()
+        insert(view, table)
+        return true
+      }
+
+      // Nothing but plain text: handed back to CodeMirror, exactly as before.
+      if (!html.trim()) return false
+
+      // A web page. The event has to be answered now - a paste the browser has
+      // already carried out cannot be taken back - and the converter may still be on
+      // its way, so the words are inserted when it lands. That is one beat, on the
+      // first page pasted in a run of the app and on no other.
       event.preventDefault()
-      insert(view, markdown)
+      void converter()
+        .then((htmlToMarkdown) => {
+          // A page that comes to nothing - all chrome and no prose - is pasted as the
+          // plain text beside it, which is what handing the paste back would have
+          // done with it.
+          const words = htmlToMarkdown(html) || text
+          if (words) insert(view, words)
+        })
+        .catch(() => {
+          if (text) insert(view, text)
+        })
+
       return true
     },
   })
@@ -97,9 +148,9 @@ export const pasteHere: Command = (view) => {
   if (view.state.readOnly) return false
 
   void readClipboard()
-    .then((clipboard) => {
+    .then(async (clipboard) => {
       if (!clipboard) return
-      const markdown = pastedMarkdown(clipboard.html, clipboard.text)
+      const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       const text = markdown ?? clipboard.text
       if (text) insert(view, text)
     })

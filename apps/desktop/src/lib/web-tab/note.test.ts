@@ -57,9 +57,11 @@ describe('which notes are websites', () => {
   })
 })
 
+/** Awaited, because the converter that turns a page into markdown is fetched when a
+ *  page is clipped rather than when the window opens; see note.ts. */
 describe('the note a clip is', () => {
-  test('says where it came from and when, and holds the page as markdown', () => {
-    const note = clipNote(
+  test('says where it came from and when, and holds the page as markdown', async () => {
+    const note = await clipNote(
       {
         url: 'https://example.com/post',
         title: 'A post',
@@ -78,19 +80,22 @@ describe('the note a clip is', () => {
 
   /** A browser build cannot read the frame's document, so a clip there is the link,
    *  which is what the glyph said it would be. */
-  test('a page with no words to keep says the one thing it knows', () => {
-    const note = clipNote({ url: 'https://example.com/post', title: 'A post', html: '' }, WHEN)
+  test('a page with no words to keep says the one thing it knows', async () => {
+    const note = await clipNote(
+      { url: 'https://example.com/post', title: 'A post', html: '' },
+      WHEN,
+    )
     expect(note).toContain('<https://example.com/post>')
   })
 
-  test('a page with no title at all is still a note', () => {
-    const note = clipNote({ url: 'https://example.com/post', title: '', html: '' }, WHEN)
+  test('a page with no title at all is still a note', async () => {
+    const note = await clipNote({ url: 'https://example.com/post', title: '', html: '' }, WHEN)
     expect(frontMatterValue(note, 'title')).toBe('Untitled')
     expect(note).toContain('\n# Untitled\n')
   })
 
-  test('a title that is a paragraph is cut to a line', () => {
-    const note = clipNote(
+  test('a title that is a paragraph is cut to a line', async () => {
+    const note = await clipNote(
       { url: 'https://example.com/a', title: 'One\nTwo', html: '<p>x</p>' },
       WHEN,
     )

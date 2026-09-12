@@ -25,7 +25,6 @@
  *  ordinary note with the page's words in it - `source:` rather than `url:` - because
  *  a clip is the words as they were, not a window on the site. See clip.ts. */
 
-import { htmlToMarkdown } from '@nib/markdown/from-html'
 import { frontMatterValue, oneLine, writeFrontMatter } from '@nib/markdown/front-matter'
 import { isWebAddress } from './address'
 
@@ -87,9 +86,20 @@ const UNTITLED = 'Untitled'
  *  comes off the heading; see `workspace.noteFrom`.
  *
  *  A page with no words to keep says the one thing it knows, as a link somebody can
- *  follow. */
-export function clipNote(page: { url: string; title: string; html: string }, when: Date): string {
+ *  follow.
+ *
+ *  Answered rather than returned, because turning a page's HTML into markdown means
+ *  fetching the converter: turndown and the GFM rules over it are thirty kilobytes
+ *  that a window opening on a note has no use for, and the three functions above are
+ *  read by the file list on every launch while this one is read by a web tab. Clipping
+ *  is already a wait - the page has to be asked for its words first - so the fetch
+ *  costs the reader nothing. See clip.ts, the only caller. */
+export async function clipNote(
+  page: { url: string; title: string; html: string },
+  when: Date,
+): Promise<string> {
   const title = oneLine(page.title).slice(0, LONGEST_TITLE).trim() || UNTITLED
+  const { htmlToMarkdown } = await import('@nib/markdown/from-html')
   const words = page.html.trim() ? htmlToMarkdown(page.html).trim() : ''
 
   const block = writeFrontMatter([

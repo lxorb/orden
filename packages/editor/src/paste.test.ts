@@ -3,25 +3,30 @@ import { delimitedToTable, pastedMarkdown } from './paste'
 
 /** The conversion itself is `@nib/markdown/from-html`, tested there. What is
  *  tested here is the choosing: a clipboard carries two flavours at once, and
- *  which of them a paste reads decides what lands in the note. */
+ *  which of them a paste reads decides what lands in the note.
+ *
+ *  Awaited, because the converter is fetched the first time a page is pasted and not
+ *  before - so what a clipboard comes to is an answer rather than a value. The two
+ *  flavours that need nothing fetched are still settled in the call: a spreadsheet,
+ *  and a clipboard with no HTML on it at all. */
 describe('what a clipboard comes to', () => {
-  test('a page arrives as markdown', () => {
-    expect(pastedMarkdown('<h2>Title</h2>', 'Title')).toBe('## Title')
+  test('a page arrives as markdown', async () => {
+    await expect(pastedMarkdown('<h2>Title</h2>', 'Title')).resolves.toBe('## Title')
   })
 
-  test('a spreadsheet arrives as a table, from the plain text beside the HTML', () => {
+  test('a spreadsheet arrives as a table, from the plain text beside the HTML', async () => {
     const html = '<table><tr><td>Name</td><td>Size</td></tr><tr><td>a</td><td>1</td></tr></table>'
-    expect(pastedMarkdown(html, 'Name\tSize\na\t1')).toBe(
+    await expect(pastedMarkdown(html, 'Name\tSize\na\t1')).resolves.toBe(
       ['| Name | Size |', '| --- | --- |', '| a | 1 |'].join('\n'),
     )
   })
 
-  test('plain text with no HTML beside it is nothing to convert', () => {
-    expect(pastedMarkdown('', 'just words')).toBeNull()
+  test('plain text with no HTML beside it is nothing to convert', async () => {
+    await expect(pastedMarkdown('', 'just words')).resolves.toBeNull()
   })
 
-  test('HTML that comes to nothing is nothing to insert', () => {
-    expect(pastedMarkdown('<style>p{}</style>', '')).toBeNull()
+  test('HTML that comes to nothing is nothing to insert', async () => {
+    await expect(pastedMarkdown('<style>p{}</style>', '')).resolves.toBeNull()
   })
 })
 
