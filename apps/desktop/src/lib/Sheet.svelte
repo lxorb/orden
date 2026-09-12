@@ -66,7 +66,12 @@
       {#if mark}
         <span class="nib-badge" aria-hidden="true">{@render mark()}</span>
       {/if}
-      <p class="title">{title}</p>
+      <!-- The heading of the layer, and said to be one: the sheets that hang off
+           this one head their own sections with an `h3`, and with a paragraph up
+           here the outline of the page went from the note's name straight to those.
+           The class already says the size, the weight and that it has no margin, so
+           nothing about it is drawn differently. -->
+      <h2 class="title">{title}</h2>
       <button class="nib-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
         <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
       </button>
