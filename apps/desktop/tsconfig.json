@@ -12,6 +12,8 @@
     "src/**/*.ts",
     "src/**/*.svelte",
     "../../packages/editor/src/env.d.ts",
-    "test/**/*.ts"
+    "test/**/*.ts",
+    // The components the effect tests mount; see test/effects.
+    "test/**/*.svelte"
   ]
 }
