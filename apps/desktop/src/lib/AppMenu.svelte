@@ -4,6 +4,7 @@
   import type { EditorView } from '@nib/editor'
   import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT, walkableRows } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
+  import { steppedKey } from './direction'
   import { overlays } from './overlays'
   import { trap } from './trap'
   import { t } from './i18n.svelte'
@@ -142,7 +143,10 @@
 
     const row = cursor === null || cursor === BACK ? null : rows[cursor]
 
-    switch (event.key) {
+    // In reading terms: a submenu opens towards the end of the line, so under an
+    // interface that reads right to left it is the left arrow that goes into one
+    // and the right arrow that comes back out. See `steppedKey` in direction.ts.
+    switch (steppedKey(event.key)) {
       case 'Enter':
       case ' ':
         event.preventDefault()

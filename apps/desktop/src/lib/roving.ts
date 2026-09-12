@@ -19,6 +19,7 @@
  *  which are pure and tested; what is here is the part that has to hold a real
  *  element and move a real focus. */
 
+import { steppedKey } from './direction'
 import { focusEditor } from './focus'
 import { spelled, type Spelling } from './list-keys'
 import { walked } from './walk'
@@ -204,7 +205,15 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     // The two ends of a list are not anybody's to rebind, and the registry says so
     // in as many words: see `fixed.lists`. So they are read off the event even in a
     // list whose arrows do come from the registry.
-    const key = ENDS.has(event.key) ? event.key : settings.keyOf ? settings.keyOf(event) : event.key
+    // In reading terms: in a list that runs across, and in a tree that opens to
+    // one side, the two sideways keys trade places under an interface that reads
+    // right to left. See `steppedKey` in direction.ts.
+    const pressed = ENDS.has(event.key)
+      ? event.key
+      : settings.keyOf
+        ? settings.keyOf(event)
+        : event.key
+    const key = pressed === null ? null : steppedKey(pressed)
 
     const moves = settings.across ? ACROSS : DOWN
     const move = key === null ? undefined : moves[key]

@@ -445,12 +445,62 @@ number - see "What needs deciding" at the end of this file.
 
 ### Alignment
 
-One left edge per panel, at `--row-pad` from its side. The header's words, the
+One starting edge per panel, at `--row-pad` from its side. The header's words, the
 search pill, the section labels and every row's mark all start there, and every
 name starts at `--row-pad + --icon-md + --row-gap`. A level of a tree adds
 `--row-indent` and nothing else - no second indent for the mark, because the
 mark's box is a fixed width whether it holds a folder's twist, a file's kind or
 nothing.
+
+### Which way the words run
+
+Arabic, Persian, Pashto and Urdu read right to left, and the interface reads the
+way its language does. One attribute says so - `dir` on the root element, written
+beside `lang` when a language is chosen - and everything else follows from it, so
+there is one design rather than a second layout to keep in step.
+
+What follows from it:
+
+- **Every side that is about reading is logical.** `padding-inline-start` rather
+  than `padding-left`, `inset-inline-end` rather than `right`, `text-align: start`
+  rather than `left`. The browser turns the whole shell round for free: the list
+  panel, the strip of notes, the title bar's buttons, the status bar, the drawers
+  on a phone.
+- **What is about the screen stays physical**, and there are only a handful:
+  `--inset-top/right/bottom/left` are where the notch is, a canvas is a plane
+  whose nodes sit where somebody put them, the segmented control's surface is
+  moved by a measured `offsetLeft`, and a picture's four resize corners are
+  compass points the drag arithmetic already has a sign for. Each of those says so
+  where it stands.
+- **What a logical property cannot say reads `--dir`**, which is `1` one way and
+  `-1` the other: a switch's knob sliding to its end, a row nudging under the
+  pointer, the shimmer crossing a progress bar, a drawer following a thumb.
+  `--dir-start` and `--dir-end` are the same two sides as words, for
+  `transform-origin`, which has no logical spelling. `--inset-start` and
+  `--inset-end` are the notch, named by reading.
+- **A mark that points along a line is turned over rather than drawn twice**:
+  `.nib-mirror` in `base.css` on back, forward, a step into a list and a link that
+  leaves the app. A tick, a cross, a chevron pointing down and a magnifying glass
+  are not marked, because they mean the same thing either way.
+- **A name is placed as one piece.** A row's label and a tab's name are
+  `unicode-bidi: isolate`, and a name put into a translated sentence is wrapped in
+  a first-strong isolate where it reads the other way, so `khutta.md` keeps its own
+  extension at its own end. See `isolated` in `direction.ts`.
+- **A note is not the interface.** Every block in `#write` takes the direction of
+  its own first strong character, so an Arabic note in an English app and an
+  English note in an Arabic app both read right, and a note with both in it reads
+  right block by block. Code and a markdown table are the exceptions: those are
+  laid out rather than read.
+
+Urdu is the one language that asks for another face. Nastaliq hangs each word
+down and back rather than standing its letters on a line, so `:root[lang|='ur']`
+names it where a platform has one and raises the leading and the row height that
+have to grow with it. Nothing is fetched: a platform with no Nastaliq keeps the
+naskh face the other three use.
+
+`scripts/locale-e2e.py` drives all of it at both sizes: which side the list is on,
+which way each mark points, that nothing is clipped that English does not clip,
+and that the note never followed the interface.
 
 ### Badges
 

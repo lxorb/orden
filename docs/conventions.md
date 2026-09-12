@@ -351,6 +351,24 @@ Rules the tests enforce:
   catalogue; the ones a correct client never sends (`send an object`, `not a
   request`) are deliberately left in English.
 
+### A language that reads the other way
+
+Arabic, Persian, Pashto and Urdu turn the interface round. `directionOf` in
+`apps/desktop/src/lib/direction.ts` names them, `i18n.load` writes the answer as
+`dir` on the root element beside `lang`, and everything that mirrors keys off that
+one attribute - so adding a fifth is a line in that list and nothing else. A note
+is a separate question and answers it itself: see *Which way the words run* in
+`docs/design.md` for what mirrors, what stays physical and why.
+
+Two things to keep in mind while writing a string:
+
+- **A name goes in through a placeholder**, never around one. `t()` isolates a
+  value that reads the other way from the sentence, which is what keeps a Latin
+  file name from losing its extension inside an Arabic sentence.
+- **Left and right in a label mean the screen's sides**, because that is what
+  somebody looking at the screen means by them. A region or a key that means
+  "further along the line" is named for that instead; see `docs/keyboard.md`.
+
 ### Adding a language
 
 1. Add it to `LANGUAGES` and to `CATALOGUES` in `i18n.svelte.ts`, named the way
@@ -367,7 +385,10 @@ Rules the tests enforce:
 4. `python scripts/locale-e2e.py --languages <id>` photographs every surface at
    desktop and phone widths and fails on anything the translation cut off that
    the English does not. A row that asked for the ellipsis it was offered is
-   listed rather than failed: the element said its text may be cut.
+   listed rather than failed: the element said its text may be cut. For a language
+   that reads right to left it also measures which side the list ended up on,
+   which way each mark points, and that the note did not follow the interface, so
+   add the id to `RIGHT_TO_LEFT` there as well as in `direction.ts`.
 
 ### The clipper's half
 

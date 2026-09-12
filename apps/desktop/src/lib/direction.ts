@@ -60,6 +60,24 @@ export function readingFactor(): number {
   return factorOf(reading())
 }
 
+/** The arrow a press means, in reading terms rather than in screen terms.
+ *
+ *  Right is "further along" everywhere a list runs across the window or a tree
+ *  opens to one side: the next tab, into a folder, into a submenu. Under an
+ *  interface that reads right to left all three of those go the other way - the
+ *  next tab is to the left, and the mark on a closed folder points that way too -
+ *  so the two keys trade places and every list that walks sideways gets it at
+ *  once. Up and down are not here: a list still runs down the screen.
+ *
+ *  The keys on the keyboard are not renamed by this: Left still moves left. What
+ *  changes is which of the two means "in" and which means "out". */
+export function steppedKey(key: string): string {
+  if (reading() === 'ltr') return key
+  if (key === 'ArrowLeft') return 'ArrowRight'
+  if (key === 'ArrowRight') return 'ArrowLeft'
+  return key
+}
+
 /** Letters read right to left: Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan
  *  and the Arabic presentation forms. Enough to recognise a name written in one
  *  of them, which is all the rule below asks of it. */

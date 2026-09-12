@@ -127,6 +127,25 @@ those belong to the window, and the left side carries them - so what is over
 there is its own tab strip and whichever panel it holds, and a reader stepping
 out of the note wants that panel rather than four stops inside it.
 
+#### Which way round, under a language that reads the other way
+
+Arabic, Persian, Pashto and Urdu turn the whole interface round: the list is on
+the right of the window, the note on the left, the bar at the foot at the far
+left. None of that changes the ring. F6 walks the regions in the order the window
+is built in, which is the order a reader of that language reads them in, and
+`left` and `right` in the table above are names for the two sides of the window
+rather than for two edges of the glass: the `right` side is the side a line ends
+on, so under Arabic it is against the left of the screen. The command that moves
+a panel over says the screen's own side, because that is what somebody looking at
+the screen means by it.
+
+Inside a list the two sideways keys trade places. A list that runs across the
+window runs the other way, and a closed folder's own mark points the other way,
+so under Arabic it is Left that steps into what a row holds and into a submenu,
+and Right that comes back out - the key pointing the way the mark does. Up and
+down are untouched: a list still runs down the screen. See `steppedKey` in
+`apps/desktop/src/lib/direction.ts`, which is the one place that says so.
+
 The space switcher is a menu that drops out of the panel header, so
 Ctrl+Shift+Space presses that header's own control rather than opening a second
 copy of the list somewhere else - and the list it opens walks with the arrows,

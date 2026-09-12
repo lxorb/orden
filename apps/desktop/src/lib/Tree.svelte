@@ -56,6 +56,7 @@
   import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
   import { folderOf } from './tauri'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
+  import { steppedKey } from './direction'
   import { treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
@@ -272,7 +273,10 @@
    *  rebinds one is obeyed; see tree-keys.ts. */
   function walkKey(event: KeyboardEvent): string | null {
     for (const [id, key] of TREE_MOVES) {
-      if (shortcuts.pressed(id, event)) return key
+      // In reading terms: under an interface that reads right to left, the key
+      // that steps into a folder is the one pointing the way the closed row's own
+      // mark points. See `steppedKey` in direction.ts.
+      if (shortcuts.pressed(id, event)) return steppedKey(key)
     }
 
     return null
