@@ -127,7 +127,7 @@ describe('what links to a page', () => {
       page('One.md', { links: ['the-plan'] }),
     ]
 
-    expect(backlinks(pages, pages[0] as Listed)).toContain('One')
+    expect(backlinks(pages, pages[0]!)).toContain('One')
   })
 
   test('never a page the site does not publish', () => {
@@ -135,7 +135,7 @@ describe('what links to a page', () => {
     // in it and cannot be named. This is the whole reason backlinks are built
     // from the site's own list rather than from a link index.
     const pages = [page('Plan.md')]
-    expect(backlinks(pages, pages[0] as Listed)).toBe('')
+    expect(backlinks(pages, pages[0]!)).toBe('')
   })
 })
 
@@ -273,7 +273,7 @@ describe('a site with forms on it', () => {
 
     const held = await call(env, `/v1/spaces/${space}/answers`, { token })
     expect(held.json.answers).toHaveLength(1)
-    expect(held.json.answers?.[0]?.answers).toEqual({ 'Your name': 'Ada' })
+    expect(held.json.answers[0]?.answers).toEqual({ 'Your name': 'Ada' })
   })
 
   test('and says so on the page it comes back to', async () => {
@@ -331,5 +331,21 @@ describe('a site with forms on it', () => {
     expect(csv.headers.get('content-type')).toContain('text/csv')
     expect(csv.text).toContain('"Your name"')
     expect(csv.text).toContain('"Ada"')
+  })
+
+  test('and the theme the author chose is linked after the site’s own sheet', async () => {
+    // The app has the themes installed, so the app sends the stylesheet up as a
+    // blob and the site keeps its name and hash; the page links it from where
+    // every other blob is served, and after its own sheet so it wins.
+    const hash = 'a'.repeat(64)
+    await call(env, `/v1/spaces/${space}/site`, {
+      method: 'PUT',
+      token,
+      body: { theme: { name: 'Paper', hash } },
+    })
+
+    const answer = await call(env, '/hello', { host: HOST })
+    expect(answer.text).toContain(`/i/${hash}.css`)
+    expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
   })
 })
