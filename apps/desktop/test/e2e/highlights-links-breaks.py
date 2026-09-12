@@ -62,7 +62,8 @@ NOTE = (
         for number, one in enumerate(EMOJI, start=1)
     )
     + "One with ==\U0001F535 **bold** inside== it.\n\n"
-    "A last paragraph.\n"
+    "A last paragraph.\n\n"
+    "A closing paragraph, for the keyboard to highlight.\n"
 )
 
 # A paragraph hard wrapped in the file, which is the whole of the newline
@@ -389,6 +390,18 @@ def the_bar(page: Page) -> None:
     wait_for(page, "document.querySelector('.nib-bar-at')", "the formatting bar")
     shot(page, "bar-actions")
 
+    # The bar is a toolbar with one tab stop and the arrows inside it, and the dot
+    # is a button in that row rather than a surface of its own - so it is a stop
+    # like every other button and needs no rule of its own. See roving.ts.
+    shape = page.evaluate(
+        """() => {
+          const bar = document.querySelector('.nib-bar-at')
+          return { role: bar.getAttribute('role'), label: bar.getAttribute('aria-label') }
+        }"""
+    )
+    is_true(shape["role"] == "toolbar", f"the bar says what it is: {shape}")
+    is_true(bool(shape["label"]), "and it is named, since every button on it is one letter")
+
     dots = page.locator(".nib-bar-at button.swatch")
     is_true(dots.count() == 1, f"one dot beside the actions, not {dots.count()}")
     dots.first.click()
@@ -421,6 +434,38 @@ def the_bar(page: Page) -> None:
     page.wait_for_timeout(400)
     text = page.evaluate("() => window.nib.state.doc.toString()")
     is_true("==\U0001F534 A plain==" in text, "the button writes the colour that stuck")
+
+    # A key, not a pointer. Every button on the bar acts on the click rather than
+    # on the press, so Enter on one of them formats a word instead of merely
+    # focusing it - and a colour is a button on that bar like any other. The arrows
+    # move within the one tab stop, which is what makes the dots reachable at all.
+    page.evaluate("() => window.nibApp.modes.setHighlightTone(null)")
+    select(page, at(page, "A closing"), at(page, "A closing", 9))
+    page.wait_for_timeout(300)
+    page.locator(".nib-bar-at button.swatch").first.focus()
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(400)
+    is_true(
+        page.locator(".nib-bar-at button.swatch").count() == 6,
+        "Enter on the dot opens the colours",
+    )
+
+    page.locator(".nib-bar-at button.swatch").first.focus()
+    page.keyboard.press("ArrowRight")
+    page.wait_for_timeout(200)
+    moved = page.evaluate(
+        """() => {
+          const on = document.activeElement
+          const dots = [...document.querySelectorAll('.nib-bar-at button.swatch')]
+          return dots.indexOf(on)
+        }"""
+    )
+    is_true(moved == 1, f"the arrows step along the colours, landing on {moved}")
+
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(500)
+    text = page.evaluate("() => window.nib.state.doc.toString()")
+    is_true("==\U0001F534 A closing==" in text, "and Enter on a colour highlights in it")
 
     # And the plain one is still reachable, and takes the colour off.
     page.evaluate("() => window.nibApp.modes.setHighlightTone(null)")
