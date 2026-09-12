@@ -212,9 +212,11 @@ class Worker:
             raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
 
         # The four publishing carries: the note's front matter and the site's
-        # own block, then the search index and the answers a form takes.
-        named = sum(done.stdout.count(one) for one in ('0029', '0030', '0031', '0032'))
-        say(f"{named} of the four publishing migrations named")
+        # own block, then the search index and the answers a form takes. By file
+        # name, because a bare number is in every hash the output prints.
+        wanted = ("0029_note_front", "0030_space_site", "0031_site_search", "0032_form_answers")
+        named = [one for one in wanted if one in done.stdout]
+        say(f"{len(named)} of the four publishing migrations named")
 
     def sql(self, statement: str) -> str:
         done = npx(
