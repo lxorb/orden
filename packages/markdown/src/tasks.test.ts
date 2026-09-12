@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { taskAt, taskToggled } from './tasks'
+import { taskAt } from './tasks'
 
 /** The words of the task, which is what `marker` is for. */
 const words = (line: string) => {
@@ -55,14 +55,14 @@ describe('a task item', () => {
   })
 })
 
-describe('ticking a box', () => {
-  test('writes one character and leaves the rest of the line alone', () => {
-    expect(taskToggled('- [ ] buy milk')).toBe('- [x] buy milk')
-    expect(taskToggled('  * [x] buy milk')).toBe('  * [ ] buy milk')
-    expect(taskToggled('1. [-] buy milk')).toBe('1. [ ] buy milk')
-  })
-
-  test('and says so when there is no box', () => {
-    expect(taskToggled('- buy milk')).toBeNull()
+describe('where a tick is written', () => {
+  test('the box, so one character changes and the rest of the line does not', () => {
+    // Every caller edits the file at an offset rather than rewriting the line:
+    // the editor dispatches a one-character change and the app records one for
+    // undo. So what this package answers with is where the box is.
+    const task = taskAt('  * [x] buy milk')
+    expect(task?.box).toBe(4)
+    expect(task?.done).toBe(true)
+    expect(taskAt('- buy milk')).toBeNull()
   })
 })

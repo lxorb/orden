@@ -50,12 +50,3 @@ export function taskAt(line: string): TaskItem | null {
     indent: indent.length,
   }
 }
-
-/** The line with its box the other way round. Null where there is no box, so a
- *  caller can tell "nothing to tick" from "ticked". */
-export function taskToggled(line: string): string | null {
-  const task = taskAt(line)
-  if (!task) return null
-
-  return line.slice(0, task.box + 1) + (task.done ? ' ' : 'x') + line.slice(task.box + 2)
-}
