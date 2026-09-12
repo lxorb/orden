@@ -55,6 +55,8 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
+#[cfg(desktop)]
+mod web_tabs;
 
 use paths::Opened;
 #[cfg(desktop)]
@@ -189,6 +191,12 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder.manage(endpoint::Waiting::default());
 
+    // Which page each web tab is on, so a back arrow is lit only where there is
+    // something behind it. A phone has no child webviews to keep a trail for; see
+    // web_tabs.rs and docs/web-tabs.md.
+    #[cfg(desktop)]
+    let builder = builder.manage(web_tabs::WebTabs::default());
+
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
         endpoint::automation_result,
@@ -208,6 +216,12 @@ pub fn run() {
         shell_menu::new_menu_registered,
         shell_menu::set_new_menu,
         updates::check_update,
+        web_tabs::web_open,
+        web_tabs::web_place,
+        web_tabs::web_navigate,
+        web_tabs::web_step,
+        web_tabs::web_clip,
+        web_tabs::web_close,
     ]);
 
     #[cfg(mobile)]

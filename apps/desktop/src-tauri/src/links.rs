@@ -74,6 +74,15 @@ pub struct Note {
     /// the same pass and for the same reason as the icon: the space is already
     /// being read, and a link may use any of them.
     aliases: Vec<String>,
+    /// The address a note points at, for a note that is a website rather than
+    /// words: `url:` in its front matter. None for every ordinary note, which is
+    /// almost all of them.
+    ///
+    /// Read on this pass for the reason the icon is - the space is already being
+    /// read - and read at all because it is what tells the two apart: the file list
+    /// marks such a row with a globe and a click on it opens a web tab rather than
+    /// an editor. See file-mark.ts and docs/web-tabs.md.
+    url: Option<String>,
 }
 
 /// A whole space's links.
@@ -149,6 +158,7 @@ fn note_at(relative: String, body: &str) -> Note {
         icon: front_matter::value(body, "icon"),
         icon_color: front_matter::value(body, "icon-color"),
         aliases: front_matter::list(body, "aliases"),
+        url: front_matter::value(body, "url"),
     }
 }
 
@@ -251,6 +261,9 @@ fn canvas_note(relative: String, body: &str) -> Note {
         icon: said(read.nib.icon),
         icon_color: said(read.nib.icon_color),
         aliases: Vec::new(),
+        // A plane of cards is never a website: a canvas has no front matter to say
+        // so, and JSON Canvas has no key for one.
+        url: None,
     }
 }
 
@@ -750,8 +763,22 @@ mod tests {
         assert_eq!(read.icon.as_deref(), Some("rocket"));
         assert_eq!(read.icon_color.as_deref(), Some("blue"));
         assert_eq!(read.aliases, ["Standup"]);
+        assert!(read.url.is_none());
         assert_eq!(read.links.len(), 1);
         assert_eq!(read.links[0].target, "Plan");
+    }
+
+    /// A website in the space is a note whose front matter says where it points.
+    /// The index is what tells the file list and the tab strip, so it has to come
+    /// back off the same one reading.
+    #[test]
+    fn a_note_that_is_a_website_says_where_it_points() {
+        let read = note_at(
+            "Reading/Svelte.md".to_string(),
+            "---\nurl: https://svelte.dev/docs\ntitle: Svelte docs\n---\n\n# Svelte docs\n",
+        );
+
+        assert_eq!(read.url.as_deref(), Some("https://svelte.dev/docs"));
     }
 
     #[test]

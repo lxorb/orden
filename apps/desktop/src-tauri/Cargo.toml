@@ -35,7 +35,16 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 # `protocol-asset` is what lets the webview load a picture from disk. Without it
 # every local image in a note is a broken image.
-tauri = { version = "2", features = ["protocol-asset"] }
+#
+# `unstable` is what a web tab needs: putting a second webview inside a window and
+# giving it bounds of its own is behind that flag, and it is the only embedding
+# that renders a site the way a browser does. Unstable in Tauri means the API may
+# be renamed in a minor release, not that it is experimental in the engine - the
+# webview underneath is the same WebView2 or WKWebView the app itself runs in. The
+# whole of what nib calls is `Window::add_child`, `Manager::get_webview` and the
+# handful of methods on the webview it hands back, all in src/web_tabs.rs, so an
+# upstream rename is one file to follow.
+tauri = { version = "2", features = ["protocol-asset", "unstable"] }
 # Links leave the app the same way on every platform: the system browser on a
 # desktop, the browser app on a phone.
 tauri-plugin-opener = "2"
