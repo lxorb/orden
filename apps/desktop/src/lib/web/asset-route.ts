@@ -59,8 +59,8 @@ const TYPES: Record<string, string> = {
 export const UNKNOWN_TYPE = 'application/octet-stream'
 
 export function mimeOfPath(path: string): string {
-  const extension = /\.([a-z0-9]+)$/i.exec(path)?.[1]?.toLowerCase()
-  return (extension && TYPES[extension]) || UNKNOWN_TYPE
+  const extension = /\.([a-z0-9]+)$/i.exec(path)?.[1]?.toLowerCase() ?? ''
+  return TYPES[extension] ?? UNKNOWN_TYPE
 }
 
 /** The type to hand out for a stored file: what its name says, falling back to

@@ -83,6 +83,7 @@ function load(rows: readonly Row[], options: { store?: boolean; broken?: boolean
     },
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call -- the worker is a classic script in this repository rather than a module anything can import, and running it with a window of our own is the only way to ask it anything without a browser
   new Function('self', 'indexedDB', SOURCE)(self, indexedDB)
 
   return {
@@ -182,7 +183,9 @@ describe('the asset worker', () => {
   })
 
   test('a row that is not base64 is a miss rather than a broken picture', async () => {
-    const odd = load([{ path: '/Work/a.png', type: 'image/png', data: 'not base64!!', modified: 1 }])
+    const odd = load([
+      { path: '/Work/a.png', type: 'image/png', data: 'not base64!!', modified: 1 },
+    ])
     expect((await odd.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
   })
 

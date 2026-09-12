@@ -97,6 +97,14 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
+    // The asset worker is a page of its own: a classic script served from the
+    // root of the site rather than a module in the app's graph, so no tsconfig
+    // covers it and the rules that need types cannot see it. The plain rules
+    // still apply. See apps/desktop/public/sw.js for why it is written that way.
+    files: ['apps/desktop/public/*.js'],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
     files: ['**/*.test.ts', '**/test/**/*.ts'],
     rules: {
       // A stub standing in for a promise-returning API is written `async`
