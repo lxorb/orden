@@ -268,6 +268,45 @@ function measure(text: string): number {
   return getTextWidth(text)
 }
 
+/** How much of a text the font has no glyph for, from zero to one.
+ *
+ *  What decides which language the *panel* is written in. The firmware draws Latin,
+ *  Cyrillic, Greek, CJK and emoji, and `insteadOf` puts a box where it has nothing -
+ *  so an interface catalogue in Devanagari, Bengali, Tamil, Telugu, Kannada,
+ *  Malayalam, Gurmukhi, Gujarati, Arabic, Persian, Pashto, Urdu, Thai, Burmese or
+ *  Amharic reaches the glass as a row of boxes, however correct the words are.
+ *
+ *  Measured rather than listed. What a reader's words are made of is not a question
+ *  about scripts or about tags: it is a question about this font, and this file is
+ *  where the answers about this font live. A catalogue nobody has thought about in a
+ *  script the firmware later gains is drawable the day the metrics say so, and a
+ *  hand list of fifteen scripts would still say no.
+ *
+ *  Spaces, digits and punctuation are left out of the count: every catalogue is full
+ *  of them and they are drawable in all of them, so counting them would make a
+ *  Devanagari catalogue look a third drawable. What is counted is the letters. */
+export function undrawable(text: string): number {
+  let letters = 0
+  let missing = 0
+
+  for (const one of text.normalize('NFC')) {
+    // A letter or a mark on one, in any script. The marks count because a script
+    // whose vowels are marks is unreadable without them, however many of its
+    // consonants the font may have.
+    if (!/\p{L}|\p{M}/u.test(one)) continue
+
+    letters += 1
+    // What the font has, first: `insteadOf` is only ever asked about a character
+    // the font cannot draw, and asking it about one the font has would answer with a
+    // box for every letter of Russian. Then whether there is anything to put in its
+    // place - a decomposition rescues a whole class of them, and that is not a loss.
+    if (drawable(one)) continue
+    if (insteadOf(one) === TOFU) missing += 1
+  }
+
+  return letters === 0 ? 0 : missing / letters
+}
+
 /** A string the firmware can actually draw, character for character.
  *
  *  Newlines are left alone: the container breaks on them, and they are the only

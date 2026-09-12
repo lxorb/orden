@@ -8,7 +8,19 @@
  *  See docs/even.md for the panel, the mapping table, and why the glasses are
  *  written to rather than drawn on. */
 
-export { fit, fold, rightward, rows, ruleOf, SPACE, spread, TICK, width, wrap } from './firmware'
+export {
+  fit,
+  fold,
+  rightward,
+  rows,
+  ruleOf,
+  SPACE,
+  spread,
+  TICK,
+  undrawable,
+  width,
+  wrap,
+} from './firmware'
 export {
   type Compaction,
   COMPACTIONS,
