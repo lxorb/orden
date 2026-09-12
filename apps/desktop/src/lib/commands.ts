@@ -46,6 +46,14 @@ import { canPrint, printNote } from './export/print'
 import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
+import {
+  canRecord,
+  canTakeMeetingNotes,
+  meeting,
+  meetingLabel,
+  record,
+  recordLabel,
+} from './recorder/commands'
 import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
 import { prompt } from './prompt.svelte'
@@ -529,7 +537,9 @@ const BLOCKS: Block[] = [
   {
     id: 'photo',
     label: () => t('Photo'),
-    apply: (view) => void takePhoto(view),
+    apply: (view) => {
+      if (view) void takePhoto(view)
+    },
     ready: (view) => canTakePhoto(view),
   },
   // Saying it instead of typing it. One row for both states, because there is one
@@ -538,9 +548,19 @@ const BLOCKS: Block[] = [
   {
     id: 'dictate',
     label: () => (dictating() ? t('Stop') : t('Dictate')),
-    apply: (view) => toggleDictation(view),
+    apply: (view) => {
+      if (view) toggleDictation(view)
+    },
     ready: (view) => canDictate(view),
   },
+  // And the microphone kept as sound, as two rows beside the picture: the same kind
+  // of thing, which is something of the reader's own put into the note rather than
+  // markup written into it. Both read as what they will do next, because one press
+  // starts and the next stops; neither needs a note open, because either will make
+  // one. See recorder/commands.ts, which is what the quick settings tile on Android
+  // calls by these very ids.
+  { id: 'record', label: recordLabel, apply: () => record(), ready: canRecord },
+  { id: 'meeting', label: meetingLabel, apply: () => meeting(), ready: canTakeMeetingNotes },
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),
   block('paragraph.toc', () => t('Table of contents'), insertToc),

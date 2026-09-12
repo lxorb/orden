@@ -27,6 +27,8 @@ import { composerEntries } from './composer-commands'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
+import { recordingAt, transcribeEmbed } from './recorder/commands'
+import { canTranscribe } from './recorder/transcribe'
 import { shortcuts } from './shortcuts.svelte'
 import { noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
@@ -359,6 +361,22 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
   ]
 }
 
+/** The row a recording in the note offers: turning it into words.
+ *
+ *  On the embed's own menu because that is where it is about something: the file the
+ *  press landed on, rather than a row in the palette that would have to guess which of
+ *  the recordings in a note was meant. The words go under the player through the same
+ *  Whisper path a meeting's live transcript goes through; see recorder/commands.ts.
+ *
+ *  Only with an account, because that path is on the Worker. Left out rather than
+ *  greyed out: somebody with no account has nothing to press it for. */
+function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
+  if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
+  if (!recordingAt(view, at)) return []
+
+  return [DIVIDER, { label: t('Transcribe'), run: () => void transcribeEmbed(view, at) }]
+}
+
 /** Opens it at the pointer. One place, so the two things a right click on the
  *  text has to do - build the menu for this moment and place it - stay
  *  together. */
@@ -375,7 +393,11 @@ export function showEditorMenu(
 
   menu.show(
     event,
-    [...editorMenu(view, blockEntries(view, at, path)), ...spellingEntries(view, event)],
+    [
+      ...editorMenu(view, blockEntries(view, at, path)),
+      ...recordingEntries(view, at),
+      ...spellingEntries(view, event),
+    ],
     { near: true },
   )
 }

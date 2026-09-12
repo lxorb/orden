@@ -3,10 +3,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
-      Dictation, and nothing else. The words go straight into the note through
-      Android's own recogniser and are never kept as sound; see Speech.kt and
-      mobile/dictation.ts. Asked for the first time somebody turns it on rather
-      than at install.
+      The microphone, for the two things that listen, and nothing else.
+
+      Dictation, where the words go straight into the note through Android's own
+      recogniser and are never kept as sound; see Speech.kt and mobile/dictation.ts.
+      And the recorder, where the sound *is* the point: `getUserMedia` inside the
+      WebView asks the app for this same permission, and an app that never declared
+      it is refused before the reader is ever asked. See
+      apps/desktop/src/lib/recorder. Either way it is asked for the first time
+      somebody starts one rather than at install.
 
       There is deliberately no CAMERA permission. Taking a photo into a note is
       `ACTION_IMAGE_CAPTURE`, which the camera app serves and which needs nothing

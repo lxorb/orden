@@ -3,6 +3,8 @@
   import { countText } from './counts'
   import { t } from './i18n.svelte'
   import { VIM_WORDS } from './modes.svelte'
+  import { recorder } from './recorder/recording.svelte'
+  import { spanOf } from './recorder/transcript'
   import { views } from './views.svelte'
 
   const {
@@ -53,6 +55,38 @@
      Muted while a keystroke is a command, in the accent while it is text. -->
 {#if vimMode}
   <span class="mode" class:writing={vimMode !== 'normal'}>{t(VIM_WORDS[vimMode])}</span>
+{/if}
+
+<!-- The one thing the app says about a microphone that is open: a dot, the time so
+     far, and a stop. Here because a recording belongs to the window rather than to the
+     note - it goes on while you move between notes - and this is where the window says
+     what is true of itself.
+
+     On a phone as well as on a desktop, which is why it is not inside the footer
+     below: those numbers are a hover away and there is no hover on a phone, while a
+     red dot somebody started has to be there to be pressed. -->
+{#if recorder.on || recorder.saving}
+  <!-- The bar shape every floating bar in the app wears, so this is one design and
+       not a second one; only where it sits and what is in it is here. See
+       `.nib-bar` in base.css. -->
+  <div class="nib-bar pill" class:saving={!recorder.on}>
+    <span class="dot" class:behind={recorder.retrying || recorder.waiting > 1}></span>
+    <span class="clock">{spanOf(recorder.elapsed)}</span>
+    <button
+      title={t('Stop recording')}
+      aria-label={t('Stop recording')}
+      disabled={!recorder.on}
+      onclick={() => recorder.toggle(recorder.kind)}
+    >
+      <svg viewBox="0 0 12 12"><rect x="3" y="3" width="6" height="6" rx="1" /></svg>
+    </button>
+  </div>
+{/if}
+{#if recorder.trouble}
+  <!-- Said where the pill is, for a moment, and then gone. A recording carries on
+       through anything that goes wrong with its transcript, so this is something to
+       read rather than something to answer. -->
+  <p class="said">{recorder.trouble}</p>
 {/if}
 
 <!-- The one place the app says what is true of the note it is showing, so the
@@ -114,6 +148,103 @@
 
   .mode.writing {
     color: var(--accent);
+  }
+
+  /* The recording pill: the middle of the bottom edge, clear of the numbers in one
+     corner, the vim mode in the other and the phone's own plus button. Fixed to the
+     window rather than to the note, because that is what a recording belongs to. */
+  .pill {
+    position: fixed;
+    z-index: 26;
+    left: 50%;
+    bottom: calc(var(--space-3) + var(--inset-bottom));
+    transform: translateX(-50%);
+    align-items: center;
+    gap: var(--space-2);
+    padding-left: var(--space-3);
+    animation: pill-in var(--dur-base) var(--ease-spring);
+  }
+
+  /* Up from the edge it is pinned to, which is where a thing that has just started
+     comes from. */
+  @keyframes pill-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, var(--space-3));
+    }
+  }
+
+  /* Stopped, and still writing the file down. The dot has nothing to pulse about any
+     more and the clock says how long the recording was. */
+  .pill.saving {
+    opacity: 0.75;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    animation: pill-beat 1.8s var(--ease-in-out) infinite;
+  }
+
+  /* A transcript that is behind, or a piece being sent again: the dot holds still and
+     goes to the accent. Nothing else changes, because the recording itself is fine and
+     a second red thing would read as the recording being in trouble. */
+  .dot.behind {
+    background: var(--accent);
+    animation: none;
+  }
+
+  .pill.saving .dot {
+    background: var(--muted);
+    animation: none;
+  }
+
+  @keyframes pill-beat {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  .clock {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-strong);
+  }
+
+  .pill svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: currentColor;
+  }
+
+  /* What went wrong, above the pill, in the app's quietest voice. */
+  .said {
+    position: fixed;
+    z-index: 26;
+    left: 50%;
+    bottom: calc(var(--space-3) + var(--row-height-sm) + var(--space-2) + var(--inset-bottom));
+    max-width: min(36ch, 80vw);
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    color: var(--muted);
+    text-align: center;
+    text-wrap: balance;
+    animation: pill-in var(--dur-base) var(--ease-out);
+  }
+
+  /* A beat that is not moving is a dot that is simply there, which still says a
+     microphone is open. */
+  @media (prefers-reduced-motion: reduce) {
+    .dot,
+    .pill,
+    .said {
+      animation: none;
+    }
   }
 
   /* Numbers only, and only when looked for. Floated rather than laid out, so

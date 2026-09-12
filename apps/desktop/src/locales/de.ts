@@ -1233,4 +1233,37 @@ export const de: Dictionary = {
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
+  // Recording, meetings and what a model wrote
+  Record: 'Aufnehmen',
+  Recording: 'Aufnahme',
+  'Stop recording': 'Aufnahme beenden',
+  'Meeting notes': 'Gesprächsnotizen',
+  Meeting: 'Gespräch',
+  'Stop the meeting': 'Gespräch beenden',
+  Transcribe: 'Transkribieren',
+  Transcript: 'Transkript',
+  'Transcript ({language})': 'Transkript ({language})',
+  'Written by {model}': 'Geschrieben von {model}',
+  'Saving the recording': 'Aufnahme wird gespeichert',
+  'Turning the recording into words': 'Aufnahme wird in Text umgewandelt',
+  'Open a space to record into.': 'Öffne einen Bereich, um darin aufzunehmen.',
+  'Sign in to take meeting notes.': 'Zum Protokollieren anmelden.',
+  'Sign in to turn a recording into words.': 'Zum Umwandeln einer Aufnahme in Text anmelden.',
+  'That microphone could not be opened.': 'Dieses Mikrofon konnte nicht geöffnet werden.',
+  'That recording could not be saved.': 'Diese Aufnahme konnte nicht gespeichert werden.',
+  'That recording could not be turned into words.':
+    'Diese Aufnahme konnte nicht in Text umgewandelt werden.',
+  'That recording is not in this space.': 'Diese Aufnahme liegt nicht in diesem Bereich.',
+  'That recording is too long to turn into words in one go.':
+    'Diese Aufnahme ist zu lang, um sie in einem Zug in Text umzuwandeln.',
+  'That is as much as one recording may hold.': 'Mehr passt in eine Aufnahme nicht hinein.',
+  'Nothing could be heard in that recording.': 'In dieser Aufnahme war nichts zu hören.',
+  'A piece of the transcript is being tried again.':
+    'Ein Stück des Transkripts wird erneut versucht.',
+  'The transcript is behind and losing pieces.': 'Das Transkript hinkt nach und verliert Stücke.',
+  '{count} pieces of this meeting were lost.':
+    '{count} Stücke dieses Gesprächs sind verloren gegangen.',
+  'Choose a model in settings to summarise a meeting.':
+    'Wähle in den Einstellungen ein Modell, um ein Gespräch zusammenzufassen.',
+  'The summary could not be written.': 'Die Zusammenfassung konnte nicht geschrieben werden.',
 }

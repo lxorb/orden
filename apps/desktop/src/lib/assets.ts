@@ -50,6 +50,28 @@ export async function storeImage(file: File, notePath: string | null): Promise<s
 
   if (!notePath) return null
 
+  return storeBeside(bytes, notePath, `${hash.slice(0, 16)}.${extension}`)
+}
+
+/** Bytes written beside a note under a name the caller chose, and the relative path
+ *  to put in the note.
+ *
+ *  The second half of `storeImage`, on its own so that a recording takes the same
+ *  road as a pasted picture: the same Attachments setting, the same folder, the same
+ *  command, and the same refusal to write anywhere outside the space. A recording
+ *  brings its own name rather than a hash of its bytes - two recordings are never the
+ *  same bytes, and a name with the date in it is one somebody can find in a folder -
+ *  and it never goes to the account instead, because a note names it as
+ *  `![[recording-….weba]]` and a wikilink resolves against the files of the space.
+ *
+ *  Null when it could not be written, which the caller says out loud: a recording
+ *  that was made and not kept is the one failure here worth interrupting somebody
+ *  for. */
+export function storeBeside(
+  bytes: ArrayBuffer,
+  notePath: string,
+  name: string,
+): Promise<string | null> {
   // The folder is decided here and checked there: the command joins it onto the
   // note's own folder and refuses one that would leave the space.
   const folder = attachmentFolder(modes.attachments, notePath, workspace.activeSpace?.root ?? null)
@@ -57,7 +79,7 @@ export async function storeImage(file: File, notePath: string | null): Promise<s
   return invoke<string>('save_asset', {
     notePath,
     folder,
-    name: `${hash.slice(0, 16)}.${extension}`,
+    name,
     bytes: [...new Uint8Array(bytes)],
   }).catch(() => null)
 }

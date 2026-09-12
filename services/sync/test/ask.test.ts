@@ -830,3 +830,158 @@ describe('a guest', () => {
     expect((await state(as)).status).toBe(403)
   })
 })
+
+/* ── A piece of a recording, and a meeting summarised ──────────────────── */
+
+/** The recorder sends the same WAV the glasses do and asks the same question of the
+ *  same models; what differs is the length. A spoken command is a second or two, a
+ *  piece of a meeting is twenty, and a route that refused the second at twelve
+ *  seconds would be a route the recorder could not use at all.
+ *
+ *  See apps/desktop/src/lib/recorder/transcribe.ts, which is what cuts a recording
+ *  into pieces this size, and heard.ts for why the two ceilings are two numbers. */
+describe('a piece of a recording', () => {
+  /** A WAV header saying 16 kHz mono, `seconds` of it, the way the recorder writes
+   *  one; see recorder/wav.ts. The ceiling is measured off these fields. */
+  function wav(seconds: number): Uint8Array {
+    const rate = 16_000
+    const bytes = Math.round(seconds * rate * 2)
+    const file = new Uint8Array(44 + bytes)
+    const view = new DataView(file.buffer)
+    const write = (at: number, text: string) => {
+      for (let step = 0; step < text.length; step++) file[at + step] = text.charCodeAt(step)
+    }
+
+    write(0, 'RIFF')
+    view.setUint32(4, 36 + bytes, true)
+    write(8, 'WAVEfmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, 1, true)
+    view.setUint32(24, rate, true)
+    view.setUint32(28, rate * 2, true)
+    view.setUint16(32, 2, true)
+    view.setUint16(34, 16, true)
+    write(36, 'data')
+    view.setUint32(40, bytes, true)
+    return file
+  }
+
+  function piece(body: BodyInit, of = '1') {
+    return call(env, `/v1/ask/heard?piece=${of}`, {
+      method: 'POST',
+      token,
+      raw: body,
+      headers: { 'content-type': 'audio/wav' },
+    })
+  }
+
+  test('may be far longer than a spoken command', async () => {
+    env.AI = { run: () => Promise.resolve({ text: 'and then we agreed on the fonts' }) }
+
+    const { status, json } = await piece(wav(30))
+    expect(status).toBe(200)
+    expect(json.said).toBe('and then we agreed on the fonts')
+  })
+
+  test('but not longer than one request should hold', async () => {
+    env.AI = { run: () => Promise.resolve({ text: 'never asked' }) }
+
+    const over = await piece(wav(130))
+    expect(over.status).toBe(413)
+    expect(over.json.error).toContain('too long')
+  })
+
+  /** Without the flag it is a spoken command again, and the old ceiling stands: one
+   *  route, two callers, and neither reaches the other's rules by accident. */
+  test('and the glasses keep their own ceiling', async () => {
+    env.AI = { run: () => Promise.resolve({ text: 'never asked' }) }
+
+    const over = await piece(wav(30), '0')
+    expect(over.status).toBe(413)
+    expect(over.json.error).toContain('spoken command')
+  })
+
+  /** A transcript in a note says what language it is in; a spoken command has no use
+   *  for one and reads the same field as empty. Only the turbo model says. */
+  test('comes back with the language the model settled on', async () => {
+    env.AI = {
+      run: () =>
+        Promise.resolve({
+          text: 'Guten Morgen',
+          transcription_info: { language: 'de', language_probability: 0.99 },
+        }),
+    }
+
+    const { json } = await piece(wav(20))
+    expect(json.said).toBe('Guten Morgen')
+    expect(json.language).toBe('de')
+  })
+
+  test('and with no language where the model did not name one', async () => {
+    env.AI = { run: () => Promise.resolve({ text: 'morning' }) }
+    expect((await piece(wav(20))).json.language).toBe('')
+  })
+})
+
+describe('a meeting summarised', () => {
+  beforeEach(async () => {
+    await put(KEY)
+  })
+
+  function summary(body: unknown, as = token) {
+    return call(env, '/v1/ask/summary', { token: as, body })
+  }
+
+  test('comes back as the model wrote it, with the account model named', async () => {
+    const sent = fakeAsking([said('## Takeaways\n\n- The fonts are decided\n')])
+
+    const { status, json } = await summary({
+      text: 'so about the fonts. yes. we will use the firmware one.',
+      model: 'gpt-6-astra',
+      effort: 'low',
+    })
+
+    expect(status).toBe(200)
+    expect(json.summary).toBe('## Takeaways\n\n- The fonts are decided')
+    expect(sent[0]?.model).toBe('gpt-6-astra')
+    // One round and no tools: a transcript is the whole of what there is to read.
+    expect(sent).toHaveLength(1)
+    expect(sent[0]?.tools).toBeUndefined()
+  })
+
+  test('needs words, a model, and a key', async () => {
+    fakeAsking([said('never asked')])
+
+    expect((await summary({ text: '   ', model: 'gpt-6-astra' })).status).toBe(400)
+    expect((await summary({ text: 'words', model: '' })).status).toBe(400)
+    expect(
+      (await summary({ text: 'words', model: 'gpt-6-astra', effort: 'sideways' })).status,
+    ).toBe(400)
+
+    await call(env, '/v1/ask/key', { method: 'DELETE', token })
+    const none = await summary({ text: 'words', model: 'gpt-6-astra' })
+    expect(none.status).toBe(400)
+    expect(none.json.error).toContain('OpenAI key')
+  })
+
+  /** The same hourly allowance a question counts against: it is one request to the
+   *  same endpoint on the same credit. */
+  test('counts against the questions the account may ask', async () => {
+    fakeAsking([said('never asked')])
+    env.db
+      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
+      .run('ask', userId(), 60, Date.now() + 60 * 60 * 1000)
+
+    const over = await summary({ text: 'words', model: 'gpt-6-astra' })
+    expect(over.status).toBe(429)
+  })
+
+  test('says what the model refused with', async () => {
+    fakeAsking([{ error: { message: 'this model cannot read that' } }])
+
+    const refused = await summary({ text: 'words', model: 'gpt-6-astra' })
+    expect(refused.status).toBe(502)
+    expect(refused.json.error).toBe('this model cannot read that')
+  })
+})

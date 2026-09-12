@@ -41,8 +41,16 @@ export const MIME_TYPES: Readonly<Record<string, string>> = {
   pdf: 'application/pdf',
   mp3: 'audio/mpeg',
   m4a: 'audio/mp4',
+  aac: 'audio/aac',
   wav: 'audio/wav',
   ogg: 'audio/ogg',
+  oga: 'audio/ogg',
+  opus: 'audio/ogg',
+  // The spelling that says a WebM holds sound rather than a film, which is what a
+  // recording made on Chromium is; see recorder/container.ts. `audio/webm` rather
+  // than `audio/opus`, which is not a type any browser plays: the codec is inside
+  // the container and the container is what a player is told about.
+  weba: 'audio/webm',
   flac: 'audio/flac',
   mp4: 'video/mp4',
   webm: 'video/webm',

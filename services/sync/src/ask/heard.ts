@@ -50,6 +50,20 @@ const WHISPERS = ['@cf/openai/whisper-large-v3-turbo', '@cf/openai/whisper'] as 
  *  has one, because the point is the seconds rather than the bytes. */
 const LONGEST_SECONDS = 12
 
+/** And how long a piece of a recording may be.
+ *
+ *  Two minutes, which is the byte ceiling in seconds: the route holds a request to
+ *  four megabytes and a second of what the app sends is 32 kB. The app cuts a
+ *  recording into pieces well under this and sends them one at a time - see
+ *  apps/desktop/src/lib/recorder/transcribe.ts - so this is the ceiling on a piece
+ *  and never on a recording.
+ *
+ *  A separate number from the one above rather than the same one raised, because
+ *  they are two different claims. Twelve seconds says "that was not somebody
+ *  talking to their glasses", which is a thing worth refusing; this one says only
+ *  "that is more than this Worker should hold at once". */
+export const PIECE_SECONDS = 120
+
 /** What a second of the glasses' own audio comes to: 16 kHz, sixteen bits, one
  *  channel. Used only where a file arrived without a header to say otherwise. */
 const BYTES_A_SECOND = 32_000
@@ -75,9 +89,11 @@ function secondsIn(audio: ArrayBuffer): number {
   return (bytes.length - 44) / rate
 }
 
-/** Whether an utterance is short enough to be somebody talking to their glasses. */
-export function shortEnough(audio: ArrayBuffer): boolean {
-  return secondsIn(audio) <= LONGEST_SECONDS
+/** Whether an utterance is short enough to be somebody talking to their glasses,
+ *  or - for a piece of a recording, which is not that at all - short enough to hold
+ *  in one request. */
+export function shortEnough(audio: ArrayBuffer, longest = LONGEST_SECONDS): boolean {
+  return secondsIn(audio) <= longest
 }
 
 function base64(audio: ArrayBuffer): string {
@@ -100,7 +116,29 @@ function textIn(answer: unknown): string {
   return typeof said === 'string' ? said.trim() : ''
 }
 
-/** One utterance, as words, or null when nothing was heard.
+/** And which language it heard them in, where the model said.
+ *
+ *  The turbo model answers with a `transcription_info` object carrying the language
+ *  it settled on; the older one says nothing, and so does OpenAI's plain-text
+ *  reply. Empty for all of those, which is a transcript with no language named
+ *  rather than a transcript refused: what was said matters more than what it was
+ *  said in.
+ *
+ *  A tag as the model gave it - `de`, `en`, sometimes a whole word - and it is the
+ *  app that turns one into a name the reader knows; see recorder/transcript.ts. */
+function languageIn(answer: unknown): string {
+  if (typeof answer !== 'object' || answer === null) return ''
+
+  const info = (answer as { transcription_info?: unknown }).transcription_info
+  if (typeof info !== 'object' || info === null) return ''
+
+  const said = (info as { language?: unknown }).language
+  // A tag, not a sentence: the field is somebody else's JSON and this is the one
+  // place to say how much of it may be believed.
+  return typeof said === 'string' ? said.trim().slice(0, 20) : ''
+}
+
+/** One utterance, as words, with `said` null when nothing was heard.
  *
  *  Null rather than an error: an utterance nothing could make anything of is the
  *  ordinary case of a door closing, and the plugin's own answer to it is to say
@@ -124,11 +162,21 @@ export async function heard(
   audio: ArrayBuffer,
   key: string | null,
   like = '',
-): Promise<string | null> {
+): Promise<Heard> {
   const said = await whisperHeard(env, audio, like)
-  if (said) return said
+  if (said.said) return said
 
-  return key ? openAiHeard(audio, key, like) : null
+  const otherwise = key ? await openAiHeard(audio, key, like) : null
+  return { said: otherwise, language: '' }
+}
+
+/** What was heard, and what it was heard in. One shape rather than a string,
+ *  because a transcript in a note says which language it is - a spoken command does
+ *  not care, and reads the same field as empty. */
+export interface Heard {
+  said: string | null
+  /** The language tag the model settled on, or empty where it did not say. */
+  language: string
 }
 
 async function openAiHeard(audio: ArrayBuffer, key: string, like = ''): Promise<string | null> {
@@ -155,9 +203,10 @@ async function openAiHeard(audio: ArrayBuffer, key: string, like = ''): Promise<
   return null
 }
 
-async function whisperHeard(env: Env, audio: ArrayBuffer, like = ''): Promise<string | null> {
+async function whisperHeard(env: Env, audio: ArrayBuffer, like = ''): Promise<Heard> {
   const ai = env.AI
-  if (!ai) return null
+  const nothing: Heard = { said: null, language: '' }
+  if (!ai) return nothing
 
   for (const model of WHISPERS) {
     // The turbo model takes the file as base64, and a prompt to lean on; the older
@@ -168,8 +217,9 @@ async function whisperHeard(env: Env, audio: ArrayBuffer, like = ''): Promise<st
         : { audio: [...new Uint8Array(audio)] }
 
     try {
-      const said = textIn(await ai.run(model, input))
-      if (said) return said
+      const answer = await ai.run(model, input)
+      const said = textIn(answer)
+      if (said) return { said, language: languageIn(answer) }
     } catch {
       // A model that is not there any more, or a shape it stopped taking: the next
       // one is asked, and silence is the answer if neither will.
@@ -177,5 +227,5 @@ async function whisperHeard(env: Env, audio: ArrayBuffer, like = ''): Promise<st
     }
   }
 
-  return null
+  return nothing
 }

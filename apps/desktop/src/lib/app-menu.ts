@@ -362,7 +362,16 @@ export function appMenu(context: Context): MenuGroup[] {
         SPLIT,
         ...blocks('paragraph.bullet-list', 'paragraph.ordered-list', 'paragraph.task-list'),
         SPLIT,
-        ...blocks('picture', 'paragraph.footnote', 'paragraph.toc', 'paragraph.front-matter'),
+        ...blocks(
+          'picture',
+          // The microphone, beside the picture: both put something of the reader's own
+          // into the note. See recorder/commands.ts.
+          'record',
+          'meeting',
+          'paragraph.footnote',
+          'paragraph.toc',
+          'paragraph.front-matter',
+        ),
         SPLIT,
         // A new slide is a rule with a blank line above it, which is what breaks
         // a deck into its next one; see packages/markdown/src/slides.ts.

@@ -935,6 +935,23 @@ class Links {
   fileNamed(name: string): string | null {
     return resolveFile(this.spaceFiles(null), name, 'wikilink')
   }
+
+  /** A file that was not there when the space was read: a recording the app has just
+   *  written beside a note.
+   *
+   *  The notes look after themselves - every save goes through `noteSaved` - and until
+   *  now nothing but a fresh scan of the whole space ever added a file. A recording
+   *  cannot wait for one: the embed naming it is written into the note in the same
+   *  breath, and a name the index has never heard of resolves to nothing and draws no
+   *  player. So one path, appended, kept in the order a walk would have found it in.
+   *
+   *  Relative to the space's root, which is how a walk reports one. */
+  fileAdded(relative: string) {
+    if (!relative || this.files.includes(relative)) return
+
+    this.files = [...this.files, relative].sort()
+    this.changed()
+  }
 }
 
 const nothing = () => Promise.resolve(null)

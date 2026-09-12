@@ -461,6 +461,34 @@ function about(item: string): string {
   return item ? `?item=${encodeURIComponent(item)}` : ''
 }
 
+/** Sound, as words. Sent as the bytes it is, which is why it is here rather than
+ *  through `request`.
+ *
+ *  One function for the two things that send sound - a phrase said into a pair of
+ *  glasses, and a piece of a recording - because it is one route and the difference
+ *  between them is a query. `language` is the tag the model settled on, or empty
+ *  where it did not say; a spoken command has no use for one. */
+async function listen(
+  token: string,
+  wav: Uint8Array<ArrayBuffer>,
+  query: string,
+): Promise<{ said: string | null; language: string }> {
+  const response = await fetch(`${BASE}/v1/ask/heard${query}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
+    body: wav,
+  })
+
+  const body = parsed(await response.text())
+
+  if (!response.ok) {
+    const said = isRecord(body) && isString(body.error) ? body.error : null
+    throw new ApiError(response.status, said ?? 'could not be heard')
+  }
+
+  return body as { said: string | null; language: string }
+}
+
 export const api = {
   requestCode: (email: string) =>
     request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
@@ -583,30 +611,29 @@ export const api = {
     void fetch(`${BASE}/health`, { method: 'GET', keepalive: true }).catch(() => undefined)
   },
 
-  /** One utterance, as words. Null when nothing was heard. Sent as the bytes it is,
-   *  which is why it is here rather than through `request`.
+  /** One utterance, as words. Null when nothing was heard.
    *
    *  `like` is the handful of words the plugin is hoping to hear - the spoken
    *  commands, as this reader has them. Whisper takes a prompt and biases what it
    *  writes towards it, which is the difference between "next" and "text" on a
    *  half-second of speech. */
-  askHeard: async (token: string, wav: Uint8Array<ArrayBuffer>, like = '') => {
-    const where = like ? `?like=${encodeURIComponent(like.slice(0, 300))}` : ''
-    const response = await fetch(`${BASE}/v1/ask/heard${where}`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
-      body: wav,
-    })
+  askHeard: (token: string, wav: Uint8Array<ArrayBuffer>, like = '') =>
+    listen(token, wav, like ? `?like=${encodeURIComponent(like.slice(0, 300))}` : ''),
 
-    const body = parsed(await response.text())
+  /** One piece of a recording, as words.
+   *
+   *  The same route and the same models; `piece` says only that this is part of
+   *  something somebody recorded rather than a phrase said into a pair of glasses, so
+   *  the twelve-second ceiling a spoken command is held to does not apply. See
+   *  recorder/transcribe.ts, which cuts the pieces, and services/sync/src/ask. */
+  askPiece: (token: string, wav: Uint8Array<ArrayBuffer>) => listen(token, wav, '?piece=1'),
 
-    if (!response.ok) {
-      const said = isRecord(body) && isString(body.error) ? body.error : null
-      throw new ApiError(response.status, said ?? 'could not be heard')
-    }
-
-    return body as { said: string | null }
-  },
+  /** A transcript, as takeaways and the tasks it left open.
+   *
+   *  The account's own key and the account's own model, on the Worker, because that
+   *  is the only place the key can be opened. */
+  askSummary: (token: string, text: string, model: string, effort: string) =>
+    request<{ summary: string }>('/v1/ask/summary', { token, body: { text, model, effort } }),
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
   putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {
