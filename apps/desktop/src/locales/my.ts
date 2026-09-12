@@ -7,6 +7,12 @@ export const my: Dictionary = {
   'Open file': 'ဖိုင်ဖွင့်',
   'New note inside': 'အထဲတွင်မှတ်စုအသစ်',
   'New canvas': 'ကန်ဗတ်အသစ်',
+  'New page note': 'စာမျက်နှာမှတ်စုအသစ်',
+  'Add a page': 'စာမျက်နှာထည့်ပါ',
+  'Add a page after this': 'ဤအပြီး စာမျက်နှာထည့်ပါ',
+  'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',
+  'Page {number}': 'စာမျက်နှာ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',
   'Note or picture': 'မှတ်စုသို့မဟုတ်ပုံ',
@@ -34,7 +40,8 @@ export const my: Dictionary = {
   'Create a space': 'အလုပ်ခွင်ဖန်တီး',
   'Delete space': 'အလုပ်ခွင်ဖျက်',
   'Delete {name}?': '{name} ဖျက်မလား?',
-  'Every note in this space is deleted from your computer.': 'ဤအလုပ်ခွင်ရှိမှတ်စုအားလုံးကိုသင့်ကွန်ပျူတာမှဖျက်လိုက်မည်။',
+  'Every note in this space is deleted from your computer.':
+    'ဤအလုပ်ခွင်ရှိမှတ်စုအားလုံးကိုသင့်ကွန်ပျူတာမှဖျက်လိုက်မည်။',
   'The notes inside it go too.': 'အထဲရှိမှတ်စုများပါလိုက်ပျောက်မည်။',
   Journal: 'ဒိုင်ယာရီ',
   Create: 'ဖန်တီး',
@@ -206,7 +213,8 @@ export const my: Dictionary = {
   'Image not found': 'ပုံမတွေ့',
   'Delete {count} items': 'အချက် {count} ခုဖျက်',
   'Recently deleted': 'မကြာမီဖျက်ခဲ့သည်',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'ဖျက်လိုက်သောမှတ်စုနှင့်အလုပ်ခွင်များဤနေရာတွင် 14 ရက်စောင့်ပြီးအပြီးအပိုင်ပျောက်သည်။',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'ဖျက်လိုက်သောမှတ်စုနှင့်အလုပ်ခွင်များဤနေရာတွင် 14 ရက်စောင့်ပြီးအပြီးအပိုင်ပျောက်သည်။',
   'Nothing here.': 'ဘာမှမရှိပါ။',
   Empty: 'သုတ်သင်',
   Spaces: 'အလုပ်ခွင်',
@@ -257,7 +265,8 @@ export const my: Dictionary = {
   'Previous slide': 'ရှေ့ဆလိုက်',
   'Read-only': 'ဖတ်သာ',
   'No preview': 'အကြိုကြည့်ရှုမရှိ',
-  'Shown as plain text, so typing stays instant in a note this long': 'ဤမျှရှည်သောမှတ်စုတွင် စာရိုက်မှု ချက်ချင်းဖြစ်နေစေရန် ရိုးရိုးစာအဖြစ် ပြသည်',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'ဤမျှရှည်သောမှတ်စုတွင် စာရိုက်မှု ချက်ချင်းဖြစ်နေစေရန် ရိုးရိုးစာအဖြစ် ပြသည်',
   'Leave read-only': 'ဖတ်သာမှထွက်',
   Next: 'နောက်',
   Previous: 'ရှေ့',
@@ -353,16 +362,19 @@ export const my: Dictionary = {
   'OpenAI key': 'OpenAI ကီး',
   Model: 'မော်ဒယ်',
   Reasoning: 'ဆင်ခြင်မှု',
-  'Kept encrypted on your account, and never shown again.': 'သင့်အကောင့်တွင်ကုဒ်ဖြင့်သိမ်းထားပြီးထပ်မပြပါ။',
+  'Kept encrypted on your account, and never shown again.':
+    'သင့်အကောင့်တွင်ကုဒ်ဖြင့်သိမ်းထားပြီးထပ်မပြပါ။',
   'set, ends in …{tail}': 'သတ်မှတ်ပြီး၊ အဆုံး …{tail}',
   'Saving the key': 'ကီးသိမ်းနေသည်',
   'this server cannot keep a key yet': 'ဤဆာဗာကကီးမသိမ်းနိုင်သေး',
   'that does not look like a key': 'ထိုအရာကီးပုံမပေါက်',
   'that key could not be saved': 'ထိုကီးမသိမ်းနိုင်',
   'Sign in to ask a question.': 'မေးခွန်းမေးရန်အကောင့်ဝင်ပါ။',
-  'Asking OpenAI which models this key can use': 'ဤကီးသုံးနိုင်သောမော်ဒယ်များကို OpenAI တွင်စုံစမ်းနေသည်',
+  'Asking OpenAI which models this key can use':
+    'ဤကီးသုံးနိုင်သောမော်ဒယ်များကို OpenAI တွင်စုံစမ်းနေသည်',
   'Could not reach OpenAI': 'OpenAI နှင့်မဆက်သွယ်နိုင်',
-  'That key cannot use any of the models Nib asks for.': 'ဤကီးက Nib လိုအပ်သောမော်ဒယ်တစ်ခုမှမသုံးနိုင်ပါ။',
+  'That key cannot use any of the models Nib asks for.':
+    'ဤကီးက Nib လိုအပ်သောမော်ဒယ်တစ်ခုမှမသုံးနိုင်ပါ။',
   'No reasoning': 'ဆင်ခြင်မှုမလုပ်',
   Minimal: 'အနည်းငယ်',
   Low: 'နိမ့်',
@@ -448,11 +460,14 @@ export const my: Dictionary = {
   'Line numbers': 'လိုင်းနံပါတ်',
   Syntax: 'သဒ္ဒါ',
   'Strict CommonMark': 'CommonMark တင်းကျပ်',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'စံ Markdown စည်းမျဉ်းသာ၊ ဇယား၊ အလုပ်စာရင်း၊ အောက်ခြေမှတ်ချက်မပါ။',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'စံ Markdown စည်းမျဉ်းသာ၊ ဇယား၊ အလုပ်စာရင်း၊ အောက်ခြေမှတ်ချက်မပါ။',
   'Smart punctuation': 'ပုဒ်ထီးပုဒ်မအလိုအလျောက်',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'ရိုက်နေစဉ်ကိုးကားအမှတ်အတည့်နှင့်မျဉ်းတိုများကိုစာစီပုံစံသို့ပြောင်းသည်။',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'ရိုက်နေစဉ်ကိုးကားအမှတ်အတည့်နှင့်မျဉ်းတိုများကိုစာစီပုံစံသို့ပြောင်းသည်။',
   'Puts 1., 1.1, 1.2 in front of headings.': 'ခေါင်းစဉ်ရှေ့တွင် 1., 1.1, 1.2 ထည့်သည်။',
-  'Numbers display equations so you can refer to them.': 'ညီမျှခြင်းဘလောက်များကိုနံပါတ်တပ်ပေးသဖြင့်ရည်ညွှန်းနိုင်သည်။',
+  'Numbers display equations so you can refer to them.':
+    'ညီမျှခြင်းဘလောက်များကိုနံပါတ်တပ်ပေးသဖြင့်ရည်ညွှန်းနိုင်သည်။',
   Ligatures: 'စာလုံးတွဲ',
   Off: 'ပိတ်',
   'Code only': 'ကုဒ်တွင်သာ',
@@ -515,7 +530,8 @@ export const my: Dictionary = {
   'Send a new code': 'ကုဒ်အသစ်ပို့',
   'Code sent to': 'ကုဒ်ပို့လိုက်သည်',
   'You already have notes on this computer.': 'ဤကွန်ပျူတာတွင်သင့်မှတ်စုများရှိပြီးသား။',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'ထားလိုက်ပါကသင့်အကောင့်သို့ပါဝင်မည်။ ဖျက်လိုက်ပါကအကောင့်တွင်ရှိပြီးသားများသာကျန်မည် - ပြန်ဖျက်မရပါ။',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'ထားလိုက်ပါကသင့်အကောင့်သို့ပါဝင်မည်။ ဖျက်လိုက်ပါကအကောင့်တွင်ရှိပြီးသားများသာကျန်မည် - ပြန်ဖျက်မရပါ။',
   'Keep them': 'ထားလိုက်',
   'Erase them': 'ဖျက်လိုက်',
   'Digit {number}': 'ဂဏန်း {number}',
@@ -531,7 +547,8 @@ export const my: Dictionary = {
   'Only {name}': '{name} သာ',
   'Publish this space as a blog': 'ဤနေရာကို ဘလော့အဖြစ် တင်ပါ',
   'Everything in this space becomes public.': 'ဤနေရာရှိအရာအားလုံး အများမြင်ဖြစ်မည်။',
-  'Every note, including drafts, is readable by anyone with the address.': 'မူကြမ်းအပါအဝင် မှတ်စုတိုင်းကို လိပ်စာရှိသူတိုင်း ဖတ်နိုင်သည်။',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'မူကြမ်းအပါအဝင် မှတ်စုတိုင်းကို လိပ်စာရှိသူတိုင်း ဖတ်နိုင်သည်။',
   Address: 'လိပ်စာ',
   'Add these at your registrar, then verify.': 'ဤအရာများကို သင့်စာရင်းသွင်းသူတွင် ထည့်၍ အတည်ပြုပါ။',
   Verify: 'အတည်ပြုပါ',
@@ -544,7 +561,8 @@ export const my: Dictionary = {
   'checking…': 'စစ်နေသည်…',
   // LLM
   'Connect an LLM to your notes': 'သင့်မှတ်စုများနှင့် LLM ချိတ်ပါ',
-  'Sign in first - the connector reaches the notes in your account.': 'ဦးစွာဝင်ပါ - ချိတ်ဆက်သူသည် သင့်အကောင့်ရှိ မှတ်စုများကို ရောက်သည်။',
+  'Sign in first - the connector reaches the notes in your account.':
+    'ဦးစွာဝင်ပါ - ချိတ်ဆက်သူသည် သင့်အကောင့်ရှိ မှတ်စုများကို ရောက်သည်။',
   'Let it write to my notes, not only read them': 'ကျွန်ုပ်မှတ်စုများကို ဖတ်ရုံမက ရေးခွင့်ပြုပါ',
   'Create a token': 'တိုကင်ဖန်တီးပါ',
   'Replace the token': 'တိုကင်အစားထိုးပါ',
@@ -560,27 +578,37 @@ export const my: Dictionary = {
   'Reads your notes.': 'သင့်မှတ်စုများကို ဖတ်သည်။',
   'Reads and writes your notes.': 'သင့်မှတ်စုများကို ဖတ်၍ ရေးသည်။',
   Other: 'အခြား',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI လက်ထောက်သည် သင့်မှတ်စုများကို ဖတ်နိုင်သည် - ခွင့်ပြုပါက ပြောင်းလဲနိုင်သည်။ သင့် Nib အီးမေးလ်ဖြင့် ဝင်သည်၊ ကပ်စရာမရှိပါ။',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude တွင် Settings → Connectors ဖွင့်၍ Add custom connector ကို နှိပ်ပါ။',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI လက်ထောက်သည် သင့်မှတ်စုများကို ဖတ်နိုင်သည် - ခွင့်ပြုပါက ပြောင်းလဲနိုင်သည်။ သင့် Nib အီးမေးလ်ဖြင့် ဝင်သည်၊ ကပ်စရာမရှိပါ။',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude တွင် Settings → Connectors ဖွင့်၍ Add custom connector ကို နှိပ်ပါ။',
   'Open Claude’s connectors': 'Claude ၏ connectors ဖွင့်ပါ',
   'Fill in the two fields and click Add.': 'ကွက်လပ်နှစ်ခုကို ဖြည့်၍ Add နှိပ်ပါ။',
   'Click Connect and sign in with your Nib email.': 'Connect နှိပ်၍ သင့် Nib အီးမေးလ်ဖြင့် ဝင်ပါ။',
   'Using Claude Code instead?': 'Claude Code ကို အသုံးပြုသလား',
   Command: 'အမိန့်',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'တာမီနယ်တွင် ဖွင့်ပါ၊ ထို့နောက် ဝင်ရန် Claude Code တွင် /mcp ရိုက်ပါ။',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'တာမီနယ်တွင် ဖွင့်ပါ၊ ထို့နောက် ဝင်ရန် Claude Code တွင် /mcp ရိုက်ပါ။',
   'Fill in the form and click Create.': 'ပုံစံကို ဖြည့်၍ Create နှိပ်ပါ။',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT တွင် Settings → Plugins ဖွင့်၍ အပေါင်းခလုတ် နှိပ်ပါ။',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT တွင် Settings → Plugins ဖွင့်၍ အပေါင်းခလုတ် နှိပ်ပါ။',
   'Open ChatGPT’s plugins': 'ChatGPT ၏ plugins ဖွင့်ပါ',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins အပိုင်း သို့ အပေါင်းခလုတ် မရှိဘူးလား။ ဦးစွာ Settings → Security and login တွင် Developer mode ဖွင့်ပါ။',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT မေးသောအခါ သင့် Nib အီးမေးလ်ဖြင့် ဝင်ပါ။',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins အပိုင်း သို့ အပေါင်းခလုတ် မရှိဘူးလား။ ဦးစွာ Settings → Security and login တွင် Developer mode ဖွင့်ပါ။',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT မေးသောအခါ သင့် Nib အီးမေးလ်ဖြင့် ဝင်ပါ။',
   'To use it in a chat, type @ and pick Nib.': 'စကားပြောတွင် အသုံးပြုရန် @ ရိုက်၍ Nib ရွေးပါ။',
   'Server URL': 'ဆာဗာ URL',
   Authentication: 'အတည်ပြုမှု',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'အဆင့်မြင့် OAuth ဆက်တင်များကို ရှိသလိုထား၍ “I understand and want to continue” ကို အမှတ်ခြစ်ပါ။',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth ဖြင့် Streamable HTTP ကို အသုံးပြုသော မည်သည့် MCP ကလိုင်းရင့်မဆို။ URL ကို ပေးပါ၊ မိမိကိုယ်တိုင် စာရင်းသွင်း၍ Nib ၏ ဝင်ရန်စာမျက်နှာ ဖွင့်သည်။',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'အဆင့်မြင့် OAuth ဆက်တင်များကို ရှိသလိုထား၍ “I understand and want to continue” ကို အမှတ်ခြစ်ပါ။',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth ဖြင့် Streamable HTTP ကို အသုံးပြုသော မည်သည့် MCP ကလိုင်းရင့်မဆို။ URL ကို ပေးပါ၊ မိမိကိုယ်တိုင် စာရင်းသွင်း၍ Nib ၏ ဝင်ရန်စာမျက်နှာ ဖွင့်သည်။',
   'Show config': 'စီစဉ်ချက်ပြပါ',
-  'For a client that takes a JSON block instead of a URL.': 'URL အစား JSON ဘလောက် လက်ခံသော ကလိုင်းရင့်အတွက်။',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'ဝင်မရသော ကလိုင်းရင့်ကို အစားထိုး တိုကင်ပေးနိုင်သည်။ တစ်ကြိမ်သာ ပြသည်။',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL အစား JSON ဘလောက် လက်ခံသော ကလိုင်းရင့်အတွက်။',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'ဝင်မရသော ကလိုင်းရင့်ကို အစားထိုး တိုကင်ပေးနိုင်သည်။ တစ်ကြိမ်သာ ပြသည်။',
   // Export
   'Plain text': 'ရိုးရိုးစာ',
   'Markdown with the pictures': 'ပုံများပါသော markdown',
@@ -604,8 +632,10 @@ export const my: Dictionary = {
   'Version history': 'ဗားရှင်းမှတ်တမ်း',
   'Copy link to this note': 'ဤမှတ်စု၏လင့်ကူးပါ',
   'that link could not be followed': 'ထိုလင့်ကို လိုက်မရပါ',
-  'Save this note first; there is nothing to compare against yet.': 'ဦးစွာ ဤမှတ်စုကို သိမ်းပါ၊ နှိုင်းယှဉ်စရာ မရှိသေးပါ။',
-  'No earlier versions yet. One is kept each time you save.': 'ယခင်ဗားရှင်း မရှိသေးပါ။ သိမ်းတိုင်း တစ်ခု ထားသည်။',
+  'Save this note first; there is nothing to compare against yet.':
+    'ဦးစွာ ဤမှတ်စုကို သိမ်းပါ၊ နှိုင်းယှဉ်စရာ မရှိသေးပါ။',
+  'No earlier versions yet. One is kept each time you save.':
+    'ယခင်ဗားရှင်း မရှိသေးပါ။ သိမ်းတိုင်း တစ်ခု ထားသည်။',
   'Restore this version': 'ဤဗားရှင်းကို ပြန်ယူပါ',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ထိုနေရာတွင် မှတ်စုရှိပြီးသား',
@@ -666,7 +696,8 @@ export const my: Dictionary = {
   'use a domain of your own': 'ကိုယ်ပိုင်ဒိုမိန်း အသုံးပြုပါ',
   'the domain no longer points here': 'ဒိုမိန်းသည် ဤနေရာကို မညွှန်တော့ပါ',
   'Cloudflare has blocked this domain': 'Cloudflare ဤဒိုမိန်းကို ပိတ်ထားသည်',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ဒိုမိန်းအရင်းတွင် သင့်ပေးသူ CNAME ကို ခွင့်မပြုပါက ALIAS သို့ ANAME မှတ်တမ်း၊ သို့ CNAME flattening အသုံးပြုပါ။',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ဒိုမိန်းအရင်းတွင် သင့်ပေးသူ CNAME ကို ခွင့်မပြုပါက ALIAS သို့ ANAME မှတ်တမ်း၊ သို့ CNAME flattening အသုံးပြုပါ။',
   // Shortcuts
   Shortcuts: 'အတိုကောက်များ',
   'Search shortcuts': 'အတိုကောက်ရှာပါ',
@@ -677,7 +708,8 @@ export const my: Dictionary = {
   'Reset all shortcuts': 'အတိုကောက်အားလုံး ပြန်ထားပါ',
   'Take it over': 'ယူပါ',
   '{key} already runs {name}.': '{key} သည် {name} ကို လုပ်နေပြီးဖြစ်သည်။',
-  'Esc stops recording, Backspace takes the key away.': 'Esc သည် မှတ်တမ်းတင်မှုကို ရပ်သည်၊ Backspace သည် ခလုတ်ကို ဖယ်သည်။',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc သည် မှတ်တမ်းတင်မှုကို ရပ်သည်၊ Backspace သည် ခလုတ်ကို ဖယ်သည်။',
   Tables: 'ဇယားများ',
   Pictures: 'ပုံများ',
   'Fixed keys': 'အတည်ခလုတ်များ',
@@ -713,7 +745,8 @@ export const my: Dictionary = {
   'Always on top': 'အမြဲအပေါ်တွင်',
   'What is new': 'အသစ်ဘာရှိလဲ',
   'Report an issue': 'ပြဿနာတိုင်ပါ',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ဒစ်ခ်ပေါ်တွင် ပြောင်းသွားပြီ။ တည်းဖြတ်စက်ထဲရှိသည် သင့်ပိုင်ဖြစ်သည်။',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ဒစ်ခ်ပေါ်တွင် ပြောင်းသွားပြီ။ တည်းဖြတ်စက်ထဲရှိသည် သင့်ပိုင်ဖြစ်သည်။',
   'Move the line up': 'လိုင်းကို အထက်ရွှေ့ပါ',
   'Move the line down': 'လိုင်းကို အောက်ရွှေ့ပါ',
   'Copy the line up': 'လိုင်းကို အထက်ကူးပါ',
@@ -748,26 +781,33 @@ export const my: Dictionary = {
   Escape: 'Escape',
   Quit: 'ထွက်ပါ',
   'The clipboard belongs to the system.': 'ကလစ်ဘုတ်သည် စနစ်ပိုင်ဖြစ်သည်။',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'မြားခလုတ်များ၊ Home၊ End၊ Page up နှင့် Page down သည် စာပိုင်ဖြစ်သည်။',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'မြားခလုတ်များ၊ Home၊ End၊ Page up နှင့် Page down သည် စာပိုင်ဖြစ်သည်။',
   'Backspace and Delete belong to the text.': 'Backspace နှင့် Delete သည် စာပိုင်ဖြစ်သည်။',
-  'Enter closes a code block and carries a list on.': 'Enter သည် ကုဒ်ဘလောက်ကို ပိတ်၍ စာရင်းကို ဆက်သည်။',
-  'Tab moves on through the app as well as indenting.': 'Tab သည် အတွင်းတွန်းရုံမက အက်ပ်တွင်းလည်း ရွှေ့သည်။',
+  'Enter closes a code block and carries a list on.':
+    'Enter သည် ကုဒ်ဘလောက်ကို ပိတ်၍ စာရင်းကို ဆက်သည်။',
+  'Tab moves on through the app as well as indenting.':
+    'Tab သည် အတွင်းတွန်းရုံမက အက်ပ်တွင်းလည်း ရွှေ့သည်။',
   'Escape closes whatever is open.': 'Escape သည် ဖွင့်ထားသမျှကို ပိတ်သည်။',
-  'Your system takes this key before the app sees it.': 'အက်ပ် မမြင်မီ သင့်စနစ်သည် ဤခလုတ်ကို ယူသည်။',
-  'Your browser takes this key before the app sees it.': 'အက်ပ် မမြင်မီ သင့်ဘရောက်ဇာသည် ဤခလုတ်ကို ယူသည်။',
+  'Your system takes this key before the app sees it.':
+    'အက်ပ် မမြင်မီ သင့်စနစ်သည် ဤခလုတ်ကို ယူသည်။',
+  'Your browser takes this key before the app sees it.':
+    'အက်ပ် မမြင်မီ သင့်ဘရောက်ဇာသည် ဤခလုတ်ကို ယူသည်။',
   'That is not a key combination.': 'ထိုအရာ ခလုတ်တွဲမဟုတ်ပါ။',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl၊ Alt သို့ Cmd ကိုပါ ဖိထားပါ။',
   'File list': 'ဖိုင်စာရင်း',
   'Select every file': 'ဖိုင်တိုင်းရွေးပါ',
   'Clear the selection': 'ရွေးချယ်မှုရှင်းပါ',
   'Delete the selected files': 'ရွေးထားသောဖိုင်များဖျက်ပါ',
-  'The file could not be written, so it goes to the print dialog': 'ဖိုင်ကို ရေးမရသဖြင့် ပုံနှိပ်ဝင်းဒိုးသို့ သွားသည်',
+  'The file could not be written, so it goes to the print dialog':
+    'ဖိုင်ကို ရေးမရသဖြင့် ပုံနှိပ်ဝင်းဒိုးသို့ သွားသည်',
   'Next file': 'နောက်ဖိုင်',
   'Previous file': 'ရှေ့ဖိုင်',
   'Show what it holds': 'အထဲရှိသည်ကို ပြပါ',
   'Hide what it holds': 'အထဲရှိသည်ကို ဖျောက်ပါ',
   'Moving through a list': 'စာရင်းအတွင်း ရွေ့လျားမှု',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'မြားခလုတ်များ၊ Enter နှင့် Esc သည် ဖွင့်ထားသမျှတွင် အလုပ်လုပ်သည်၊ အတိုကောက်မဟုတ်ပါ။',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'မြားခလုတ်များ၊ Enter နှင့် Esc သည် ဖွင့်ထားသမျှတွင် အလုပ်လုပ်သည်၊ အတိုကောက်မဟုတ်ပါ။',
   'Split right': 'ညာသို့ခွဲပါ',
   'Split down': 'အောက်သို့ခွဲပါ',
   'Other pane': 'အခြားအကန့်',
@@ -789,7 +829,8 @@ export const my: Dictionary = {
   'Follow the link': 'လင့်ကို လိုက်ပါ',
   'Replace your own keys?': 'သင့်ကိုယ်ပိုင်ခလုတ်များ အစားထိုးမလား',
   Replace: 'အစားထိုးပါ',
-  'The keys you changed go back to what this keyboard says.': 'သင်ပြောင်းထားသောခလုတ်များ ဤကီးဘုတ်ပြောသည့်အတိုင်း ပြန်သွားမည်။',
+  'The keys you changed go back to what this keyboard says.':
+    'သင်ပြောင်းထားသောခလုတ်များ ဤကီးဘုတ်ပြောသည့်အတိုင်း ပြန်သွားမည်။',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +952,8 @@ export const my: Dictionary = {
   Leave: 'ထွက်ပါ',
   'Leave space': 'နေရာမှ ထွက်ပါ',
   'Leave {name}?': '{name} မှ ထွက်မလား',
-  'It stays with everybody else. Its notes go from your computer.': 'အခြားသူများအတွက် ကျန်နေမည်။ ၏မှတ်စုများ သင့်ကွန်ပျူတာမှ ပျောက်မည်။',
+  'It stays with everybody else. Its notes go from your computer.':
+    'အခြားသူများအတွက် ကျန်နေမည်။ ၏မှတ်စုများ သင့်ကွန်ပျူတာမှ ပျောက်မည်။',
   '{who} shared {space} with you': '{who} သည် {space} ကို သင့်နှင့် မျှဝေခဲ့သည်',
   'Shared with you': 'သင့်နှင့် မျှဝေထားသည်',
   'That link does not open anything': 'ထိုလင့်သည် မည်သည့်အရာမျှ မဖွင့်ပါ',
@@ -928,7 +970,8 @@ export const my: Dictionary = {
   'Release channel': 'ထုတ်လွှင့်လမ်းကြောင်း',
   Stable: 'တည်ငြိမ်',
   Unstable: 'မတည်ငြိမ်',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'တည်ငြိမ်သည် တရားဝင်ထုတ်လွှင့်မှုများကို လိုက်သည်၊ မတည်ငြိမ်သည် main သို့ တင်သမျှကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'တည်ငြိမ်သည် တရားဝင်ထုတ်လွှင့်မှုများကို လိုက်သည်၊ မတည်ငြိမ်သည် main သို့ တင်သမျှကို လိုက်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',
@@ -939,14 +982,21 @@ export const my: Dictionary = {
   'Rewrite {count} things?': 'အရာ {count} ကို ပြန်ရေးမလား',
   'In {count} notes.': 'မှတ်စု {count} တွင်။',
   Rewrite: 'ပြန်ရေးပါ',
-  '{count} passages are encrypted, and nothing can read them without Evernote': 'အပိုင်း {count} ကို ကုဒ်ဖြင့်ထားသည်၊ Evernote မရှိလျှင် မည်သည့်အရာမျှ မဖတ်နိုင်ပါ',
-  '{count} notes had a reminder, which the export does not carry': 'မှတ်စု {count} တွင် သတိပေးချက်ရှိခဲ့သည်၊ ထုတ်မှုတွင် မပါဝင်ပါ',
-  '{count} notes were in the bin and stay there': 'မှတ်စု {count} သည် ပုံးထဲတွင်ရှိ၍ ထိုတွင် ကျန်နေမည်',
-  '{count} archived notes are in a folder called Archive': 'သိမ်းထားသော မှတ်စု {count} သည် Archive ဖိုလ်ဒါတွင် ရှိသည်',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    'အပိုင်း {count} ကို ကုဒ်ဖြင့်ထားသည်၊ Evernote မရှိလျှင် မည်သည့်အရာမျှ မဖတ်နိုင်ပါ',
+  '{count} notes had a reminder, which the export does not carry':
+    'မှတ်စု {count} တွင် သတိပေးချက်ရှိခဲ့သည်၊ ထုတ်မှုတွင် မပါဝင်ပါ',
+  '{count} notes were in the bin and stay there':
+    'မှတ်စု {count} သည် ပုံးထဲတွင်ရှိ၍ ထိုတွင် ကျန်နေမည်',
+  '{count} archived notes are in a folder called Archive':
+    'သိမ်းထားသော မှတ်စု {count} သည် Archive ဖိုလ်ဒါတွင် ရှိသည်',
   'The colours a note had are not kept': 'မှတ်စုတွင်ရှိခဲ့သော အရောင်များ မထားပါ',
-  '{count} block references were written out as the words they pointed at': 'ဘလောက်ရည်ညွှန်း {count} ကို ညွှန်ခဲ့သော စကားလုံးများအဖြစ် ရေးလိုက်သည်',
-  '{count} saved views are left out, and every row is in the table': 'သိမ်းထားသော အမြင် {count} ကို ချန်ထားသည်၊ အတန်းတိုင်း ဇယားထဲတွင် ရှိသည်',
-  '{count} pages came as HTML, so their words are kept and their look is not': 'စာမျက်နှာ {count} သည် HTML အဖြစ် ရောက်လာသည်၊ စကားလုံးများ ကျန်သော်လည်း အမြင် မကျန်ပါ',
+  '{count} block references were written out as the words they pointed at':
+    'ဘလောက်ရည်ညွှန်း {count} ကို ညွှန်ခဲ့သော စကားလုံးများအဖြစ် ရေးလိုက်သည်',
+  '{count} saved views are left out, and every row is in the table':
+    'သိမ်းထားသော အမြင် {count} ကို ချန်ထားသည်၊ အတန်းတိုင်း ဇယားထဲတွင် ရှိသည်',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    'စာမျက်နှာ {count} သည် HTML အဖြစ် ရောက်လာသည်၊ စကားလုံးများ ကျန်သော်လည်း အမြင် မကျန်ပါ',
   'There are no rows in this file.': 'ဤဖိုင်တွင် အတန်းမရှိပါ။',
   'Nothing in there can be read as notes.': 'အထဲရှိအရာ မှတ်စုအဖြစ် မဖတ်နိုင်ပါ။',
   'That export could not be read.': 'ထိုထုတ်မှုကို ဖတ်မရပါ။',
@@ -957,20 +1007,46 @@ export const my: Dictionary = {
   'This space': 'ဤနေရာ',
   'Drop an export here': 'ထုတ်မှုကို ဤနေရာတွင် ချပါ',
   'A zip, a folder, or a file another app wrote': 'zip၊ ဖိုလ်ဒါ၊ သို့ အခြားအက်ပ်ရေးသောဖိုင်',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes နှင့် Apple Journal သည် မိမိတို့သာ ဖွင့်နိုင်သောနေရာတွင် မှတ်စုများကို ထားသည်။ ဦးစွာ ထုတ်ပါ၊ ထို့နောက် ထိုအရာကို သွင်းပါ။',
-  'Pandoc reads this one, from the file on your disk.': 'ဤအရာကို pandoc သည် သင့်ဒစ်ခ်ရှိဖိုင်မှ ဖတ်သည်။',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    'ပုံ {count} ပုံ HEIC အဖြစ် ရောက်လာသည်၊ Apple သာ ပြနိုင်သည်',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    'စိတ်နေနှင့် လုပ်ရပ်ကတ် {count} ခု ပုံဆွဲများဖြစ်၍ စာသာ ပါလာသည်',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    'မှတ်စု {count} ခု Notes သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
+  '{count} notes are in Recently Deleted, and stay there':
+    'မှတ်စု {count} ခု မကြာမီဖျက်ခဲ့သည်တွင်ရှိ၍ ထိုတွင် ကျန်မည်',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    'ပုံဆွဲနှင့် စကင်ဖတ်စာမျက်နှာ {count} ခု Notes ကိုယ်တိုင်ဆွဲသော ပုံများဖြစ်သည်',
+  '{count} tables inside notes do not come over': 'မှတ်စုအတွင်း ဇယား {count} ခု ပါမလာပါ',
+  '{count} attachments are in iCloud rather than on this Mac':
+    'တွဲဖိုင် {count} ခု ဤ Mac တွင်မဟုတ်ဘဲ iCloud တွင် ရှိသည်',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS သည် ထိုမှတ်စုများကို Full Disk Access နောက်တွင် ထားသည်။',
+  'There are no notes in Apple Notes on this Mac.': 'ဤ Mac ၏ Apple Notes တွင် မှတ်စုမရှိပါ။',
+  'Those notes could not be read.': 'ထိုမှတ်စုများကို ဖတ်မရပါ။',
+  'Read them from this Mac': 'ဤ Mac မှ ဖတ်ပါ',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access တွင် nibeditor ကို ဖွင့်၍ ထပ်စမ်းပါ။',
+  'Open the setting': 'ဆက်တင်ဖွင့်ပါ',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal သည် ကိုယ်တိုင် ထုတ်သည်ၦ Journal၊ Settings၊ Export။ Apple Notes တွင် ထုတ်မှုမရှိသဖြင့် ၏ရှိရာ Mac မှ ခွာသောအခါ ချရမည်မှာ ထုတ်ယူကိရိယာရေးထားသော ဖိုလ်ဒါဖြစ်သည်။',
+  'Pandoc reads this one, from the file on your disk.':
+    'ဤအရာကို pandoc သည် သင့်ဒစ်ခ်ရှိဖိုင်မှ ဖတ်သည်။',
   'Read it with pandoc': 'pandoc ဖြင့် ဖတ်ပါ',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'ဤအရာကို pandoc သာ ဖတ်သည်၊ ဤစက်တွင် မတင်ထားပါ။',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'ဤအရာကို pandoc သာ ဖတ်သည်၊ ဤစက်တွင် မတင်ထားပါ။',
   Rows: 'အတန်းများ',
   'As a table': 'ဇယားအဖြစ်',
   'One note per row': 'အတန်းတစ်တန်းလျှင် မှတ်စုတစ်ခု',
   Into: 'ဤအရာထဲ',
   'Worth knowing': 'သိထားသင့်သည်',
   '{count} notes arrived.': 'မှတ်စု {count} ရောက်လာပြီ။',
-  '{count} names were taken, so those files stepped aside.': 'နာမည် {count} ကို အသုံးပြုနေသဖြင့် ထိုဖိုင်များ ဘေးရွှေ့သွားသည်။',
+  '{count} names were taken, so those files stepped aside.':
+    'နာမည် {count} ကို အသုံးပြုနေသဖြင့် ထိုဖိုင်များ ဘေးရွှေ့သွားသည်။',
   'A table': 'ဇယားတစ်ခု',
   'Markdown files': 'markdown ဖိုင်များ',
   'A document': 'စာရွက်စာတမ်းတစ်ခု',
+  'A PDF, as pages to write on': 'PDF၊ အပေါ်ရေးရန် စာမျက်နှာများအဖြစ်',
   'Undo the import': 'သွင်းမှုကို ပြန်ပါ',
   'Choose an export': 'ထုတ်မှုတစ်ခုရွေးပါ',
   Under: 'အောက်တွင်',
@@ -982,13 +1058,15 @@ export const my: Dictionary = {
   'Keep both copies': 'မိတ္တူနှစ်ခုစလုံးထားပါ',
   'Let the newest win': 'အသစ်ဆုံးကို အောင်ပါစေ',
   'Ask me each time': 'အကြိမ်တိုင်း မေးပါ',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'မည်သည့်အရာမျှ မပစ်ပါ၊ အောင်မရသည်ကို ဗားရှင်းအဖြစ် ထားသည်။',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'မည်သည့်အရာမျှ မပစ်ပါ၊ အောင်မရသည်ကို ဗားရှင်းအဖြစ် ထားသည်။',
   'Waiting for you': 'သင့်ကို စောင့်နေသည်',
   'Keep mine': 'ကျွန်ုပ်၏ကို ထားပါ',
   'Take theirs': 'သူတို့၏ကို ယူပါ',
   'Keep both': 'နှစ်ခုစလုံးထားပါ',
   'What synced': 'ဘာချိန်ကိုက်ခဲ့သလဲ',
-  'Nothing yet. A pass that moves nothing is not written down.': 'မရှိသေးပါ။ မည်သည့်အရာမျှ မရွှေ့သော အလှည့်ကို မမှတ်တမ်းတင်ပါ။',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'မရှိသေးပါ။ မည်သည့်အရာမျှ မရွှေ့သော အလှည့်ကို မမှတ်တမ်းတင်ပါ။',
   'Clear the list': 'စာရင်းရှင်းပါ',
   '{count} down': '{count} ဆင်း',
   '{count} up': '{count} တက်',
@@ -998,19 +1076,23 @@ export const my: Dictionary = {
   'This space, as it was': 'ဤနေရာ၊ ယခင်အတိုင်း',
   '{count} days ago': '{count} ရက်က',
   'What would change?': 'ဘာပြောင်းမလဲ',
-  '{count} notes would go back to what they said then.': 'မှတ်စု {count} သည် ထိုအချိန်အတိုင်း ပြန်သွားမည်။',
+  '{count} notes would go back to what they said then.':
+    'မှတ်စု {count} သည် ထိုအချိန်အတိုင်း ပြန်သွားမည်။',
   'Nothing has changed since then.': 'ထိုအချိန်မှစ၍ မည်သည့်အရာမျှ မပြောင်းပါ။',
   '{count} notes went back.': 'မှတ်စု {count} ပြန်သွားပြီ။',
-  'The account keeps a month of versions of every note that syncs.': 'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်လစာ ဗားရှင်းများကို ထားသည်။',
+  'The account keeps a month of versions of every note that syncs.':
+    'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်လစာ ဗားရှင်းများကို ထားသည်။',
   'That did not work.': 'ထိုအရာ အလုပ်မလုပ်ပါ။',
   'Signing in': 'ဝင်မှု',
   'Ask for a code from an app': 'အက်ပ်မှ ကုဒ်တောင်းပါ',
   'Turn on': 'ဖွင့်ပါ',
   'Turn off': 'ပိတ်ပါ',
-  'Put this into your authenticator app, then type its code.': 'ဤအရာကို သင့်အတည်ပြုအက်ပ်တွင် ထည့်၍ ကုဒ်ကို ရိုက်ပါ။',
+  'Put this into your authenticator app, then type its code.':
+    'ဤအရာကို သင့်အတည်ပြုအက်ပ်တွင် ထည့်၍ ကုဒ်ကို ရိုက်ပါ။',
   Secret: 'လှျို့ဝှက်ချက်',
   'Code from the app': 'အက်ပ်မှ ကုဒ်',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'ဤအရာများကို လုံခြုံသောနေရာတွင် ထားပါ။ တစ်ခုစီ တစ်ကြိမ်သာ အလုပ်လုပ်၍ ထပ်မပြပါ။',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'ဤအရာများကို လုံခြုံသောနေရာတွင် ထားပါ။ တစ်ခုစီ တစ်ကြိမ်သာ အလုပ်လုပ်၍ ထပ်မပြပါ။',
   'Recovery codes': 'ပြန်ယူကုဒ်များ',
   'Recovery code': 'ပြန်ယူကုဒ်',
   'Recovery codes left': 'ကျန်ပြန်ယူကုဒ်များ',
@@ -1032,7 +1114,8 @@ export const my: Dictionary = {
   Pages: 'စာမျက်နှာများ',
   'Page {number} of {count}': 'စာမျက်နှာ {number}/{count}',
   'What is selected': 'ရွေးထားသည်',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ကမ္ဗာ: ကတ် {cards}၊ လင့် {links}၊ ပုံ {drawings}',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ကမ္ဗာ: ကတ် {cards}၊ လင့် {links}၊ ပုံ {drawings}',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ပေးသူများ',
@@ -1046,8 +1129,10 @@ export const my: Dictionary = {
   'Asking…': 'မေးနေသည်…',
   'No providers yet.': 'ပေးသူ မရှိသေးပါ။',
   'Add {name}': '{name} ထည့်ပါ',
-  'Keys stay in the secure store on this device.': 'သော့များ ဤစက်၏ လုံခြုံသောသိမ်းဆည်းမှုတွင် ကျန်နေသည်။',
-  'This browser holds the keys in its own storage.': 'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
+  'Keys stay in the secure store on this device.':
+    'သော့များ ဤစက်၏ လုံခြုံသောသိမ်းဆည်းမှုတွင် ကျန်နေသည်။',
+  'This browser holds the keys in its own storage.':
+    'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
   'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
   'That provider is not set up yet.': 'ထိုပေးသူ မစီစဉ်ရသေးပါ။',
@@ -1069,20 +1154,93 @@ export const my: Dictionary = {
   'AI block': 'AI ဘလောက်',
   'Highlight colour': 'မီးမောင်းအရောင်',
   'A single newline breaks the line': 'လိုင်းအသစ်တစ်ခုတည်းဖြင့် လိုင်းပြတ်သည်',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ပိတ်သည် စံ markdown ဖြစ်သည်၊ အပိုဒ်တစ်ခု၏ လိုင်းနှစ်လိုင်းကို တစ်လိုင်းအဖြစ် ဖတ်သည်၊ Obsidian က တင်းကြပ်လိုင်းပြတ်ဟု ခေါ်သည်။',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ပိတ်သည် စံ markdown ဖြစ်သည်၊ အပိုဒ်တစ်ခု၏ လိုင်းနှစ်လိုင်းကို တစ်လိုင်းအဖြစ် ဖတ်သည်၊ Obsidian က တင်းကြပ်လိုင်းပြတ်ဟု ခေါ်သည်။',
   'New links': 'လင့်အသစ်များ',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'ဝီကီလင့်သည် မှတ်စုနာမည်ကို ရည်ညွှန်းသဖြင့် နာမည်ပြောင်းသော်လည်း လင့်ကျန်သည်၊ အရေးအသားနှစ်မျိုးစလုံး ဖတ်နိုင်သည်။',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'ဝီကီလင့်သည် မှတ်စုနာမည်ကို ရည်ညွှန်းသဖြင့် နာမည်ပြောင်းသော်လည်း လင့်ကျန်သည်၊ အရေးအသားနှစ်မျိုးစလုံး ဖတ်နိုင်သည်။',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown၊ အတိုဆုံးနာမည်',
   'Markdown, relative path': 'markdown၊ ဆက်စပ်လမ်းကြောင်း',
   'Markdown, path in the space': 'markdown၊ နေရာအတွင်းလမ်းကြောင်း',
+  // Publishing part one.
+  'The folders you choose become public.': 'ရွေးသော ဖိုလ်ဒါများ အများမြင်ဖြစ်သည်။',
+  'Anyone with the address can read what is published, drafts included.':
+    'လိပ်စာရှိသူတိုင်း တင်ထားသည်ကို မူကြမ်းအပါအဝင် ဖတ်နိုင်သည်။',
+  'Which notes': 'မည်သည့်မှတ်စု',
+  'Notes outside a rule': 'စည်းမျဉ်းမပါ မှတ်စု',
+  'Are published': 'တင်သည်',
+  'Stay private': 'သီးသန့်ဖြစ်နေမည်',
+  'Follows the rule': 'စည်းမျဉ်းအတိုင်း',
+  Published: 'တင်ပြီး',
+  Private: 'သီးသန့်',
+  '{count} pages': 'စာမျက်နှာ {count}',
+  '{count} new': 'အသစ် {count}',
+  '{count} gone': 'ဖယ်လိုက် {count}',
+  'and more': 'နှင့် အခြား',
+  'How it appears': 'မြင်ပုံ',
+  Description: 'ဖော်ပြချက်',
+  'What this site is': 'ဤဆိုက်အကြောင်း',
+  'Tab icon': 'တဘ်အိုင်ကွန်',
+  Password: 'စကားဝှက်',
+  'Set a new one': 'အသစ်သတ်မှတ်ပါ',
+  'Ask for a password': 'စကားဝှက်တောင်းပါ',
+  'No password': 'စကားဝှက်မရှိ',
+  'Remove the password': 'စကားဝှက်ဖယ်ပါ',
+  'Scan this with your authenticator app, then type its code.':
+    'ဤအရာကို အတည်ပြုအက်ပ်ဖြင့် စကင်ဖတ်၍ ကုဒ်ကို ရိုက်ပါ။',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ဓာတ်ပုံ',
+  Dictate: 'အသံဖြင့်ရေးပါ',
+  'Add to {name}': '{name} သို့ထည့်ပါ',
+  // Web tabs
+  Reload: 'ပြန်ဖွင့်ပါ',
+  'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
+  'Clip the link': 'လင့်သိမ်းပါ',
+  'Allow the camera': 'ကင်မရာခွင့်ပြုပါ',
+  'Allow the clipboard': 'ကလစ်ဘုတ်ခွင့်ပြုပါ',
+  'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
+  'Copy the address': 'လိပ်စာကူးပါ',
+  'Show it here': 'ဤတွင်ပြပါ',
+  Website: 'ဝဘ်ဆိုက်',
+  'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
+  // Recording, meetings and what a model wrote
+  Record: 'အသံသွင်းပါ',
+  Recording: 'အသံဖိုင်',
+  'Stop recording': 'အသံသွင်းမှုရပ်ပါ',
+  'Meeting notes': 'အစည်းအဝေးမှတ်စု',
+  Meeting: 'အစည်းအဝေး',
+  'Stop the meeting': 'အစည်းအဝေးပြီးဆုံးပါ',
+  Transcribe: 'စာအဖြစ်ပြောင်းပါ',
+  Transcript: 'စာသား',
+  'Transcript ({language})': 'စာသား ({language})',
+  'Written by {model}': '{model} ရေးသည်',
+  'Saving the recording': 'အသံဖိုင်သိမ်းနေသည်',
+  'Turning the recording into words': 'အသံဖိုင်ကို စာအဖြစ် ပြောင်းနေသည်',
+  'Open a space to record into.': 'သွင်းမည့်နေရာကို ဖွင့်ပါ။',
+  'Sign in to take meeting notes.': 'အစည်းအဝေးမှတ်စုရေးရန် ဝင်ပါ။',
+  'Sign in to turn a recording into words.': 'အသံဖိုင်ကို စာအဖြစ်ပြောင်းရန် ဝင်ပါ။',
+  'That microphone could not be opened.': 'ထိုမိုက်ခရိုဖုန်းကို ဖွင့်မရပါ။',
+  'That recording could not be saved.': 'ထိုအသံဖိုင်ကို သိမ်းမရပါ။',
+  'That recording could not be turned into words.': 'ထိုအသံဖိုင်ကို စာအဖြစ် ပြောင်းမရပါ။',
+  'That recording is not in this space.': 'ထိုအသံဖိုင် ဤနေရာတွင် မရှိပါ။',
+  'That recording is too long to turn into words in one go.':
+    'ထိုအသံဖိုင်သည် တစ်ကြိမ်တည်း စာအဖြစ်ပြောင်းရန် အလွန်ရှည်သည်။',
+  'That is as much as one recording may hold.': 'အသံဖိုင်တစ်ခု ဤမျှသာ ဆံ့သည်။',
+  'Nothing could be heard in that recording.': 'ထိုအသံဖိုင်တွင် မည်သည့်အသံမျှ မကြားပါ။',
+  'A piece of the transcript is being tried again.': 'စာသား၏ အပိုင်းတစ်ခုကို ထပ်စမ်းနေသည်။',
+  'The transcript is behind and losing pieces.': 'စာသား နောက်ကျ၍ အပိုင်းများ ပျောက်နေသည်။',
+  '{count} pieces of this meeting were lost.': 'ဤအစည်းအဝေး၏ အပိုင်း {count} ပျောက်သွားသည်။',
+  'Add an AI provider in settings to summarise.': 'အနှစ်ချုပ်ရန် ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
+  'The summary could not be written.': 'အနှစ်ချုပ်ကို ရေးမရပါ။',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'စာပို့မရပါ - ထပ်စမ်းပါ',
   'start again - that took too long': 'ပြန်စပါ - အလွန်ကြာသွားပြီ',
   'sign in to do that': 'ထိုအရာလုပ်ရန် ဝင်ပါ',
   'that is not something a token can do': 'ထိုအရာ တိုကင်လုပ်နိုင်သည် မဟုတ်ပါ',
   'something went wrong here - try again': 'ဤနေရာတွင် အမှားတစ်ခုဖြစ်သည် - ထပ်စမ်းပါ',
-  'this service cannot keep a secret safely': 'ဤဝန်ဆောင်မှုသည် လှျို့ဝှက်ချက်ကို လုံခြုံစွာ မထားနိုင်ပါ',
+  'this service cannot keep a secret safely':
+    'ဤဝန်ဆောင်မှုသည် လှျို့ဝှက်ချက်ကို လုံခြုံစွာ မထားနိုင်ပါ',
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'ပုံနှင့် PDF သာ',
   'that file is too big': 'ထိုဖိုင် အလွန်ကြီးသည်',
@@ -1100,7 +1258,8 @@ export const my: Dictionary = {
   'that link is busy, try again in a minute': 'ထိုလင့် အလုပ်ရှုပ်နေသည်၊ တစ်မိနစ်အကြာ ထပ်စမ်းပါ',
   // Versions, the bin, and a room two people write in.
   'no such version': 'ထိုဗားရှင်း မရှိပါ',
-  'this note was shared with you, not its folder': 'ဤမှတ်စုကို သင့်နှင့် မျှဝေခဲ့သည်၊ ၏ဖိုလ်ဒါကို မဟုတ်ပါ',
+  'this note was shared with you, not its folder':
+    'ဤမှတ်စုကို သင့်နှင့် မျှဝေခဲ့သည်၊ ၏ဖိုလ်ဒါကို မဟုတ်ပါ',
   'nothing to restore': 'ပြန်ယူစရာ မရှိပါ',
   'restore its space first': 'ဦးစွာ ၏နေရာကို ပြန်ယူပါ',
   'nothing to delete': 'ဖျက်စရာ မရှိပါ',

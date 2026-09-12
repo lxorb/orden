@@ -7,6 +7,12 @@ export const jv: Dictionary = {
   'Open file': 'Bukak berkas',
   'New note inside': 'Cathetan anyar ing njero',
   'New canvas': 'Kanvas anyar',
+  'New page note': 'Cathetan kaca anyar',
+  'Add a page': 'Tambah kaca',
+  'Add a page after this': 'Tambah kaca sawise iki',
+  'Delete this page': 'Busak kaca iki',
+  'Page {number}': 'Kaca {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanvas',
   Card: 'Kartu',
   'Note or picture': 'Cathetan utawa gambar',
@@ -34,7 +40,8 @@ export const jv: Dictionary = {
   'Create a space': 'Gawe papan',
   'Delete space': 'Busak papan',
   'Delete {name}?': 'Busak {name}?',
-  'Every note in this space is deleted from your computer.': 'Saben cathetan ing papan iki dibusak saka komputer sampeyan.',
+  'Every note in this space is deleted from your computer.':
+    'Saben cathetan ing papan iki dibusak saka komputer sampeyan.',
   'The notes inside it go too.': 'Cathetan ing njerone uga ilang.',
   Journal: 'Buku dina',
   Create: 'Gawe',
@@ -206,7 +213,8 @@ export const jv: Dictionary = {
   'Image not found': 'Gambar ora ketemu',
   'Delete {count} items': 'Busak {count} item',
   'Recently deleted': 'Anyar dibusak',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Cathetan lan papan sing dibusak ngenteni ing kene 14 dina, banjur ilang tenan.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Cathetan lan papan sing dibusak ngenteni ing kene 14 dina, banjur ilang tenan.',
   'Nothing here.': 'Ora ana apa-apa ing kene.',
   Empty: 'Kosongake',
   Spaces: 'Papan',
@@ -257,7 +265,8 @@ export const jv: Dictionary = {
   'Previous slide': 'Slide sadurunge',
   'Read-only': 'Mung diwaca',
   'No preview': 'Ora ana pratinjau',
-  'Shown as plain text, so typing stays instant in a note this long': 'Ditampilake minangka teks lugu supaya nulis tetep cepet ing cathetan sadawa iki',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Ditampilake minangka teks lugu supaya nulis tetep cepet ing cathetan sadawa iki',
   'Leave read-only': 'Metu saka mung diwaca',
   Next: 'Sabanjure',
   Previous: 'Sadurunge',
@@ -353,16 +362,19 @@ export const jv: Dictionary = {
   'OpenAI key': 'Kunci OpenAI',
   Model: 'Model',
   Reasoning: 'Panalaran',
-  'Kept encrypted on your account, and never shown again.': 'Disimpen sinandi ing akun sampeyan lan ora ditampilake maneh.',
+  'Kept encrypted on your account, and never shown again.':
+    'Disimpen sinandi ing akun sampeyan lan ora ditampilake maneh.',
   'set, ends in …{tail}': 'wis disetel, pungkasane …{tail}',
   'Saving the key': 'Nyimpen kunci',
   'this server cannot keep a key yet': 'server iki durung bisa nyimpen kunci',
   'that does not look like a key': 'kuwi ora katon kaya kunci',
   'that key could not be saved': 'kunci kuwi ora bisa disimpen',
   'Sign in to ask a question.': 'Mlebu kanggo takon.',
-  'Asking OpenAI which models this key can use': 'Takon OpenAI model apa sing bisa dipakai kunci iki',
+  'Asking OpenAI which models this key can use':
+    'Takon OpenAI model apa sing bisa dipakai kunci iki',
   'Could not reach OpenAI': 'Ora bisa nggayuh OpenAI',
-  'That key cannot use any of the models Nib asks for.': 'Kunci kuwi ora bisa nganggo model apa wae sing dijaluk Nib.',
+  'That key cannot use any of the models Nib asks for.':
+    'Kunci kuwi ora bisa nganggo model apa wae sing dijaluk Nib.',
   'No reasoning': 'Tanpa panalaran',
   Minimal: 'Sethithik',
   Low: 'Cendhek',
@@ -448,11 +460,14 @@ export const jv: Dictionary = {
   'Line numbers': 'Angka larik',
   Syntax: 'Sintaksis',
   'Strict CommonMark': 'CommonMark ketat',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Mung aturan markdown baku, tanpa tabel, dhaptar tugas utawa cathetan sikil.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Mung aturan markdown baku, tanpa tabel, dhaptar tugas utawa cathetan sikil.',
   'Smart punctuation': 'Tandha wacan pinter',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Ngowahi tandha petik jejeg lan garis dadi wujud tipografi nalika sampeyan nulis.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Ngowahi tandha petik jejeg lan garis dadi wujud tipografi nalika sampeyan nulis.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Nyelehake 1., 1.1, 1.2 ing ngarep irah-irahan.',
-  'Numbers display equations so you can refer to them.': 'Ngangkani petungan sing dipamerake supaya bisa diacu.',
+  'Numbers display equations so you can refer to them.':
+    'Ngangkani petungan sing dipamerake supaya bisa diacu.',
   Ligatures: 'Ligatur',
   Off: 'Mati',
   'Code only': 'Mung kode',
@@ -515,7 +530,8 @@ export const jv: Dictionary = {
   'Send a new code': 'Kirim kode anyar',
   'Code sent to': 'Kode dikirim menyang',
   'You already have notes on this computer.': 'Sampeyan wis duwe cathetan ing komputer iki.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Simpen lan cathetane gabung karo akun sampeyan. Busak lan mung isi akun sampeyan sing kari - iki ora bisa dibalekake.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Simpen lan cathetane gabung karo akun sampeyan. Busak lan mung isi akun sampeyan sing kari - iki ora bisa dibalekake.',
   'Keep them': 'Simpen',
   'Erase them': 'Busak',
   'Digit {number}': 'Angka {number}',
@@ -531,9 +547,11 @@ export const jv: Dictionary = {
   'Only {name}': 'Mung {name}',
   'Publish this space as a blog': 'Terbitake papan iki minangka blog',
   'Everything in this space becomes public.': 'Kabeh ing papan iki dadi umum.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Saben cathetan, kalebu draf, bisa diwaca sapa wae sing ngerti alamate.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Saben cathetan, kalebu draf, bisa diwaca sapa wae sing ngerti alamate.',
   Address: 'Alamat',
-  'Add these at your registrar, then verify.': 'Tambahake iki ing registrar sampeyan, banjur priksa.',
+  'Add these at your registrar, then verify.':
+    'Tambahake iki ing registrar sampeyan, banjur priksa.',
   Verify: 'Priksa',
   'that record is not answering yet': 'rekaman kuwi durung mangsuli',
   'Stop publishing': 'Mandheg nerbitake',
@@ -544,7 +562,8 @@ export const jv: Dictionary = {
   'checking…': 'mriksa…',
   // LLM
   'Connect an LLM to your notes': 'Sambungake LLM menyang cathetan sampeyan',
-  'Sign in first - the connector reaches the notes in your account.': 'Mlebu dhisik - panyambung nggayuh cathetan ing akun sampeyan.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Mlebu dhisik - panyambung nggayuh cathetan ing akun sampeyan.',
   'Let it write to my notes, not only read them': 'Ulehake nulis ing cathetanku, ora mung maca',
   'Create a token': 'Gawe token',
   'Replace the token': 'Ganti token',
@@ -560,27 +579,39 @@ export const jv: Dictionary = {
   'Reads your notes.': 'Maca cathetan sampeyan.',
   'Reads and writes your notes.': 'Maca lan nulis cathetan sampeyan.',
   Other: 'Liyane',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Asisten AI bisa maca cathetan sampeyan - lan ngowahi, yen diulehake. Mlebune nganggo email Nib sampeyan; ora ana sing kudu ditempel.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Ing Claude, bukak Settings → Connectors banjur klik Add custom connector.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Asisten AI bisa maca cathetan sampeyan - lan ngowahi, yen diulehake. Mlebune nganggo email Nib sampeyan; ora ana sing kudu ditempel.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Ing Claude, bukak Settings → Connectors banjur klik Add custom connector.',
   'Open Claude’s connectors': 'Bukak connectors Claude',
   'Fill in the two fields and click Add.': 'Isi loro kolome banjur klik Add.',
-  'Click Connect and sign in with your Nib email.': 'Klik Connect banjur mlebu nganggo email Nib sampeyan.',
+  'Click Connect and sign in with your Nib email.':
+    'Klik Connect banjur mlebu nganggo email Nib sampeyan.',
   'Using Claude Code instead?': 'Nganggo Claude Code?',
   Command: 'Printah',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Lakokake ing terminal, banjur tulis /mcp ing Claude Code kanggo mlebu.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Lakokake ing terminal, banjur tulis /mcp ing Claude Code kanggo mlebu.',
   'Fill in the form and click Create.': 'Isi formulir banjur klik Create.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'Ing ChatGPT, bukak Settings → Plugins banjur klik tombol plus.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Ing ChatGPT, bukak Settings → Plugins banjur klik tombol plus.',
   'Open ChatGPT’s plugins': 'Bukak plugins ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Ora ana bagean Plugins utawa tombol plus? Uripake Developer mode dhisik, ing Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Mlebu nganggo email Nib sampeyan nalika ChatGPT takon.',
-  'To use it in a chat, type @ and pick Nib.': 'Kanggo nganggo ing obrolan, tulis @ banjur pilih Nib.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Ora ana bagean Plugins utawa tombol plus? Uripake Developer mode dhisik, ing Settings → Security and login.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Mlebu nganggo email Nib sampeyan nalika ChatGPT takon.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Kanggo nganggo ing obrolan, tulis @ banjur pilih Nib.',
   'Server URL': 'URL server',
   Authentication: 'Autentikasi',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Setelan OAuth lanjut ditinggal kaya mestine banjur centhang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Klien MCP apa wae sing nganggo Streamable HTTP lan OAuth. Wenehi URL: dheweke ndhaftar dhewe lan mbukak kaca mlebu Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Setelan OAuth lanjut ditinggal kaya mestine banjur centhang “I understand and want to continue”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Klien MCP apa wae sing nganggo Streamable HTTP lan OAuth. Wenehi URL: dheweke ndhaftar dhewe lan mbukak kaca mlebu Nib.',
   'Show config': 'Tuduhake konfigurasi',
-  'For a client that takes a JSON block instead of a URL.': 'Kanggo klien sing nampa blok JSON tinimbang URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Klien sing ora bisa mlebu bisa diwenehi token. Ditampilake mung sepisan.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Kanggo klien sing nampa blok JSON tinimbang URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Klien sing ora bisa mlebu bisa diwenehi token. Ditampilake mung sepisan.',
   // Export
   'Plain text': 'Teks lugu',
   'Markdown with the pictures': 'Markdown karo gambare',
@@ -604,8 +635,10 @@ export const jv: Dictionary = {
   'Version history': 'Riwayat versi',
   'Copy link to this note': 'Salin pranala cathetan iki',
   'that link could not be followed': 'pranala kuwi ora bisa dituruti',
-  'Save this note first; there is nothing to compare against yet.': 'Simpen cathetan iki dhisik; durung ana sing dibandhingake.',
-  'No earlier versions yet. One is kept each time you save.': 'Durung ana versi sadurunge. Siji disimpen saben sampeyan nyimpen.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Simpen cathetan iki dhisik; durung ana sing dibandhingake.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Durung ana versi sadurunge. Siji disimpen saben sampeyan nyimpen.',
   'Restore this version': 'Balekake versi iki',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'wis ana cathetan ing kono',
@@ -618,7 +651,8 @@ export const jv: Dictionary = {
   'you can only read this space': 'sampeyan mung bisa maca papan iki',
   'only the owner can do that': 'mung sing duwe bisa nindakake kuwi',
   'this space is already yours': 'papan iki wis dadi duwekmu',
-  'that is as many people as one space holds': 'kuwi wis sakehe wong sing bisa dilebokake sak papan',
+  'that is as many people as one space holds':
+    'kuwi wis sakehe wong sing bisa dilebokake sak papan',
   'that invitation was sent to another address': 'undangan kuwi dikirim menyang alamat liya',
   'that link has expired': 'pranala kuwi wis kadaluwarsa',
   'that code has expired - ask for a new one': 'kode kuwi wis kadaluwarsa - njaluk anyar',
@@ -666,7 +700,8 @@ export const jv: Dictionary = {
   'use a domain of your own': 'gunakake domain dhewe',
   'the domain no longer points here': 'domaine wis ora nuding mrene',
   'Cloudflare has blocked this domain': 'Cloudflare wis mblokir domain iki',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Ing oyod domain, gunakake rekaman ALIAS utawa ANAME, utawa CNAME flattening, yen panyedhiya sampeyan ora ngulehake CNAME ing kono.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Ing oyod domain, gunakake rekaman ALIAS utawa ANAME, utawa CNAME flattening, yen panyedhiya sampeyan ora ngulehake CNAME ing kono.',
   // Shortcuts
   Shortcuts: 'Dalan cekak',
   'Search shortcuts': 'Golek dalan cekak',
@@ -677,7 +712,8 @@ export const jv: Dictionary = {
   'Reset all shortcuts': 'Balekake kabeh dalan cekak',
   'Take it over': 'Jupuk',
   '{key} already runs {name}.': '{key} wis nglakokake {name}.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc mandhegake ngrekam, Backspace njupuk tombole.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc mandhegake ngrekam, Backspace njupuk tombole.',
   Tables: 'Tabel',
   Pictures: 'Gambar',
   'Fixed keys': 'Tombol tetep',
@@ -713,7 +749,8 @@ export const jv: Dictionary = {
   'Always on top': 'Tansah ing ndhuwur',
   'What is new': 'Apa sing anyar',
   'Report an issue': 'Lapurake masalah',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} owah ing disk. Sing ana ing panyunting iku duwekmu.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} owah ing disk. Sing ana ing panyunting iku duwekmu.',
   'Move the line up': 'Munggahake larike',
   'Move the line down': 'Mudhunake larike',
   'Copy the line up': 'Salin larike munggah',
@@ -748,26 +785,31 @@ export const jv: Dictionary = {
   Escape: 'Escape',
   Quit: 'Metu',
   'The clipboard belongs to the system.': 'Papan salin iku duweke sistem.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Tombol panah, Home, End, Page up lan Page down iku duweke teks.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Tombol panah, Home, End, Page up lan Page down iku duweke teks.',
   'Backspace and Delete belong to the text.': 'Backspace lan Delete iku duweke teks.',
   'Enter closes a code block and carries a list on.': 'Enter nutup blok kode lan nerusake dhaptar.',
   'Tab moves on through the app as well as indenting.': 'Tab obah ing aplikasi kajaba nglebokake.',
   'Escape closes whatever is open.': 'Escape nutup apa wae sing dibukak.',
-  'Your system takes this key before the app sees it.': 'Sistem sampeyan njupuk tombol iki sadurunge aplikasine weruh.',
-  'Your browser takes this key before the app sees it.': 'Panjelajah sampeyan njupuk tombol iki sadurunge aplikasine weruh.',
+  'Your system takes this key before the app sees it.':
+    'Sistem sampeyan njupuk tombol iki sadurunge aplikasine weruh.',
+  'Your browser takes this key before the app sees it.':
+    'Panjelajah sampeyan njupuk tombol iki sadurunge aplikasine weruh.',
   'That is not a key combination.': 'Kuwi dudu kombinasi tombol.',
   'Hold Ctrl, Alt or Cmd as well.': 'Pencet uga Ctrl, Alt utawa Cmd.',
   'File list': 'Dhaptar berkas',
   'Select every file': 'Pilih kabeh berkas',
   'Clear the selection': 'Busak pilihan',
   'Delete the selected files': 'Busak berkas sing dipilih',
-  'The file could not be written, so it goes to the print dialog': 'Berkase ora bisa ditulis, mula mlaku menyang dialog cetak',
+  'The file could not be written, so it goes to the print dialog':
+    'Berkase ora bisa ditulis, mula mlaku menyang dialog cetak',
   'Next file': 'Berkas sabanjure',
   'Previous file': 'Berkas sadurunge',
   'Show what it holds': 'Tuduhake isine',
   'Hide what it holds': 'Umpetake isine',
   'Moving through a list': 'Obah ing dhaptar',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Tombol panah, Enter lan Esc mlaku apa wae sing dibukak; kuwi dudu dalan cekak.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Tombol panah, Enter lan Esc mlaku apa wae sing dibukak; kuwi dudu dalan cekak.',
   'Split right': 'Pisah nengen',
   'Split down': 'Pisah mudhun',
   'Other pane': 'Panel liya',
@@ -789,7 +831,8 @@ export const jv: Dictionary = {
   'Follow the link': 'Tut pranalane',
   'Replace your own keys?': 'Ganti tombol sampeyan dhewe?',
   Replace: 'Ganti',
-  'The keys you changed go back to what this keyboard says.': 'Tombol sing sampeyan owahi bali menyang sing dikandhakake papan tombol iki.',
+  'The keys you changed go back to what this keyboard says.':
+    'Tombol sing sampeyan owahi bali menyang sing dikandhakake papan tombol iki.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +954,8 @@ export const jv: Dictionary = {
   Leave: 'Metu',
   'Leave space': 'Metu saka papan',
   'Leave {name}?': 'Metu saka {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Tetep ana kanggo liyane. Cathetane ilang saka komputer sampeyan.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Tetep ana kanggo liyane. Cathetane ilang saka komputer sampeyan.',
   '{who} shared {space} with you': '{who} mbagi {space} karo sampeyan',
   'Shared with you': 'Dibagi karo sampeyan',
   'That link does not open anything': 'Pranala kuwi ora mbukak apa-apa',
@@ -928,7 +972,8 @@ export const jv: Dictionary = {
   'Release channel': 'Saluran wedalan',
   Stable: 'Mantep',
   Unstable: 'Ora mantep',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Mantep ngetutake wedalan resmi, Ora mantep ngetutake saben dorongan menyang main lan bisa rusak.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Mantep ngetutake wedalan resmi, Ora mantep ngetutake saben dorongan menyang main lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -939,16 +984,24 @@ export const jv: Dictionary = {
   'Rewrite {count} things?': 'Tulis maneh {count} bab?',
   'In {count} notes.': 'Ing {count} cathetan.',
   Rewrite: 'Tulis maneh',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} bagean disinandi, lan ora ana sing bisa maca tanpa Evernote',
-  '{count} notes had a reminder, which the export does not carry': '{count} cathetan duwe pangeling, sing ora digawa ekspor',
-  '{count} notes were in the bin and stay there': '{count} cathetan ana ing kranjang lan tetep ing kono',
-  '{count} archived notes are in a folder called Archive': '{count} cathetan arsip ana ing folder jenenge Archive',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} bagean disinandi, lan ora ana sing bisa maca tanpa Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} cathetan duwe pangeling, sing ora digawa ekspor',
+  '{count} notes were in the bin and stay there':
+    '{count} cathetan ana ing kranjang lan tetep ing kono',
+  '{count} archived notes are in a folder called Archive':
+    '{count} cathetan arsip ana ing folder jenenge Archive',
   'The colours a note had are not kept': 'Warna sing didhuweni cathetan ora disimpen',
-  '{count} block references were written out as the words they pointed at': '{count} referensi blok ditulis minangka tembung sing dituding',
-  '{count} saved views are left out, and every row is in the table': '{count} tampilan simpenan ora dilebokake, lan saben larik ana ing tabel',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} kaca teka minangka HTML, mula tembunge disimpen lan wewujudane ora',
+  '{count} block references were written out as the words they pointed at':
+    '{count} referensi blok ditulis minangka tembung sing dituding',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} tampilan simpenan ora dilebokake, lan saben larik ana ing tabel',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} kaca teka minangka HTML, mula tembunge disimpen lan wewujudane ora',
   'There are no rows in this file.': 'Ora ana larik ing berkas iki.',
-  'Nothing in there can be read as notes.': 'Ora ana ing njerone sing bisa diwaca minangka cathetan.',
+  'Nothing in there can be read as notes.':
+    'Ora ana ing njerone sing bisa diwaca minangka cathetan.',
   'That export could not be read.': 'Ekspor kuwi ora bisa diwaca.',
   'That export is too big to read in one go.': 'Ekspor kuwi gedhe banget kanggo diwaca sepisanan.',
   'Import into': 'Impor menyang',
@@ -956,21 +1009,48 @@ export const jv: Dictionary = {
   '{count} files': '{count} berkas',
   'This space': 'Papan iki',
   'Drop an export here': 'Selehake ekspor ing kene',
-  'A zip, a folder, or a file another app wrote': 'Zip, folder, utawa berkas sing ditulis aplikasi liya',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes lan Apple Journal nyimpen cathetane ing papan sing mung dheweke bisa mbukak. Ekspor dhisik, banjur impor kuwi.',
-  'Pandoc reads this one, from the file on your disk.': 'Pandoc maca sing iki, saka berkas ing disk sampeyan.',
+  'A zip, a folder, or a file another app wrote':
+    'Zip, folder, utawa berkas sing ditulis aplikasi liya',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} gambar teka minangka HEIC, sing mung Apple bisa nuduhake',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} kartu swasana lan kegiatan iku gambar, mula mung tembunge sing mlebu',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} cathetan ana ing mburi tembung sandhi sing mung Notes bisa mbukak',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} cathetan ana ing Anyar dibusak lan tetep ing kono',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} gambar lan kaca pindaian iku gambar sing digawe Notes dhewe',
+  '{count} tables inside notes do not come over': '{count} tabel ing cathetan ora mlebu',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} lampiran ana ing iCloud, dudu ing Mac iki',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS nyimpen cathetan kuwi ing mburi Full Disk Access.',
+  'There are no notes in Apple Notes on this Mac.': 'Ing Mac iki Apple Notes ora duwe cathetan.',
+  'Those notes could not be read.': 'Cathetan kuwi ora bisa diwaca.',
+  'Read them from this Mac': 'Waca saka Mac iki',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Uripake nibeditor ing Full Disk Access, banjur coba maneh.',
+  'Open the setting': 'Bukak setelan',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal ngekspor dhewe: Journal, Setelan, Ekspor. Apple Notes ora duwe ekspor, mula adoh saka Mac sing nyimpen, sing diselehake ing kene iku folder sing ditulis ekspor.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc maca sing iki, saka berkas ing disk sampeyan.',
   'Read it with pandoc': 'Waca nganggo pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Mung pandoc sing maca sing iki, lan durung dipasang ing mesin iki.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Mung pandoc sing maca sing iki, lan durung dipasang ing mesin iki.',
   Rows: 'Larik',
   'As a table': 'Minangka tabel',
   'One note per row': 'Siji cathetan saben larik',
   Into: 'Menyang',
   'Worth knowing': 'Kudu dingerteni',
   '{count} notes arrived.': '{count} cathetan wis teka.',
-  '{count} names were taken, so those files stepped aside.': '{count} jeneng wis kepacak, mula berkas kuwi minggir.',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} jeneng wis kepacak, mula berkas kuwi minggir.',
   'A table': 'Sawijining tabel',
   'Markdown files': 'Berkas markdown',
   'A document': 'Sawijining dokumen',
+  'A PDF, as pages to write on': 'PDF, minangka kaca kanggo ditulisi',
   'Undo the import': 'Balekake impor',
   'Choose an export': 'Pilih ekspor',
   Under: 'Ing ngisor',
@@ -982,13 +1062,15 @@ export const jv: Dictionary = {
   'Keep both copies': 'Simpen loro tulade',
   'Let the newest win': 'Ulehake sing paling anyar menang',
   'Ask me each time': 'Takon aku saben wektu',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Ora ana sing diguwang: sing ora menang disimpen minangka versi.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Ora ana sing diguwang: sing ora menang disimpen minangka versi.',
   'Waiting for you': 'Ngenteni sampeyan',
   'Keep mine': 'Simpen duwekku',
   'Take theirs': 'Jupuk duweke',
   'Keep both': 'Simpen loro-lorone',
   'What synced': 'Apa sing diselarasake',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Durung ana. Liwatan sing ora mindhah apa-apa ora dicathet.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Durung ana. Liwatan sing ora mindhah apa-apa ora dicathet.',
   'Clear the list': 'Busak dhaptare',
   '{count} down': '{count} mudhun',
   '{count} up': '{count} munggah',
@@ -998,19 +1080,23 @@ export const jv: Dictionary = {
   'This space, as it was': 'Papan iki, kaya mbiyen',
   '{count} days ago': '{count} dina kepungkur',
   'What would change?': 'Apa sing bakal owah?',
-  '{count} notes would go back to what they said then.': '{count} cathetan bakal bali menyang isine nalika kuwi.',
+  '{count} notes would go back to what they said then.':
+    '{count} cathetan bakal bali menyang isine nalika kuwi.',
   'Nothing has changed since then.': 'Ora ana sing owah wiwit kuwi.',
   '{count} notes went back.': '{count} cathetan wis dibalekake.',
-  'The account keeps a month of versions of every note that syncs.': 'Akun nyimpen versi sasi kanggo saben cathetan sing diselarasake.',
+  'The account keeps a month of versions of every note that syncs.':
+    'Akun nyimpen versi sasi kanggo saben cathetan sing diselarasake.',
   'That did not work.': 'Kuwi ora kasil.',
   'Signing in': 'Mlebu',
   'Ask for a code from an app': 'Njaluk kode saka aplikasi',
   'Turn on': 'Uripake',
   'Turn off': 'Patenana',
-  'Put this into your authenticator app, then type its code.': 'Lebokake iki ing aplikasi autentikator sampeyan, banjur tulis kodene.',
+  'Put this into your authenticator app, then type its code.':
+    'Lebokake iki ing aplikasi autentikator sampeyan, banjur tulis kodene.',
   Secret: 'Wadi',
   'Code from the app': 'Kode saka aplikasi',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Simpen iki ing papan sing aman. Saben mung mlaku sepisan lan ora ditampilake maneh.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Simpen iki ing papan sing aman. Saben mung mlaku sepisan lan ora ditampilake maneh.',
   'Recovery codes': 'Kode pambalen',
   'Recovery code': 'Kode pambalen',
   'Recovery codes left': 'Kode pambalen sing kari',
@@ -1032,7 +1118,8 @@ export const jv: Dictionary = {
   Pages: 'Kaca',
   'Page {number} of {count}': 'Kaca {number}/{count}',
   'What is selected': 'Sing dipilih',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Kanvas: {cards} kartu, {links} pranala, {drawings} gambar',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Kanvas: {cards} kartu, {links} pranala, {drawings} gambar',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Panyedhiya',
@@ -1047,7 +1134,8 @@ export const jv: Dictionary = {
   'No providers yet.': 'Durung ana panyedhiya.',
   'Add {name}': 'Tambah {name}',
   'Keys stay in the secure store on this device.': 'Kunci tetep ing panyimpenan aman piranti iki.',
-  'This browser holds the keys in its own storage.': 'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
+  'This browser holds the keys in its own storage.':
+    'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
   'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',
   'That provider is not set up yet.': 'Panyedhiya kuwi durung disetel.',
@@ -1069,13 +1157,86 @@ export const jv: Dictionary = {
   'AI block': 'Blok AI',
   'Highlight colour': 'Warna sorot',
   'A single newline breaks the line': 'Siji larik anyar wis misahake larike',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Mati iku markdown baku: larik loro ing sak paragraf diwaca dadi siji; Obsidian ngarani pamisah larik ketat.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Mati iku markdown baku: larik loro ing sak paragraf diwaca dadi siji; Obsidian ngarani pamisah larik ketat.',
   'New links': 'Pranala anyar',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink nyebut jeneng cathetan, mula pranalane slamet nalika jenenge diganti; loro wujude tetep diwaca.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink nyebut jeneng cathetan, mula pranalane slamet nalika jenenge diganti; loro wujude tetep diwaca.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, jeneng paling cendhek',
   'Markdown, relative path': 'Markdown, dalan relatif',
   'Markdown, path in the space': 'Markdown, dalan ing papan',
+  // Publishing part one.
+  'The folders you choose become public.': 'Folder sing dipilih dadi umum.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Sapa wae sing duwe alamat bisa maca sing diterbitake, kalebu draf.',
+  'Which notes': 'Cathetan sing endi',
+  'Notes outside a rule': 'Cathetan tanpa aturan',
+  'Are published': 'Diterbitake',
+  'Stay private': 'Tetep pribadi',
+  'Follows the rule': 'Manut aturan',
+  Published: 'Diterbitake',
+  Private: 'Pribadi',
+  '{count} pages': '{count} kaca',
+  '{count} new': '{count} anyar',
+  '{count} gone': '{count} dijupuk',
+  'and more': 'lan liyane',
+  'How it appears': 'Carane katon',
+  Description: 'Katrangan',
+  'What this site is': 'Bab apa situs iki',
+  'Tab icon': 'Ikon tab',
+  Password: 'Tembung sandhi',
+  'Set a new one': 'Setel sing anyar',
+  'Ask for a password': 'Njaluk tembung sandhi',
+  'No password': 'Tanpa tembung sandhi',
+  'Remove the password': 'Busak tembung sandhi',
+  'Scan this with your authenticator app, then type its code.':
+    'Pindai iki nganggo aplikasi autentikator, banjur tulis kodene.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Foto',
+  Dictate: 'Didikte',
+  'Add to {name}': 'Tambahake menyang {name}',
+  // Web tabs
+  Reload: 'Emot maneh',
+  'Clip this page': 'Simpen kaca iki',
+  'Clip the link': 'Simpen pranalane',
+  'Allow the camera': 'Ulehake kamera',
+  'Allow the clipboard': 'Ulehake papan salin',
+  'Open in the browser': 'Bukak ing panjelajah',
+  'Copy the address': 'Salin alamate',
+  'Show it here': 'Tuduhake ing kene',
+  Website: 'Situs web',
+  'Open a website': 'Bukak situs web',
+  // Recording, meetings and what a model wrote
+  Record: 'Rekam',
+  Recording: 'Rekaman',
+  'Stop recording': 'Mandhegake rekaman',
+  'Meeting notes': 'Cathetan rapat',
+  Meeting: 'Rapat',
+  'Stop the meeting': 'Pungkasi rapat',
+  Transcribe: 'Transkripake',
+  Transcript: 'Transkrip',
+  'Transcript ({language})': 'Transkrip ({language})',
+  'Written by {model}': 'Ditulis {model}',
+  'Saving the recording': 'Nyimpen rekaman',
+  'Turning the recording into words': 'Ngowahi rekaman dadi tembung',
+  'Open a space to record into.': 'Bukak papan kanggo ngrekam.',
+  'Sign in to take meeting notes.': 'Mlebu kanggo nggawe cathetan rapat.',
+  'Sign in to turn a recording into words.': 'Mlebu kanggo ngowahi rekaman dadi tembung.',
+  'That microphone could not be opened.': 'Mikrofon kuwi ora bisa dibukak.',
+  'That recording could not be saved.': 'Rekaman kuwi ora bisa disimpen.',
+  'That recording could not be turned into words.': 'Rekaman kuwi ora bisa diowahi dadi tembung.',
+  'That recording is not in this space.': 'Rekaman kuwi ora ana ing papan iki.',
+  'That recording is too long to turn into words in one go.':
+    'Rekaman kuwi dawa banget kanggo diowahi dadi tembung sepisanan.',
+  'That is as much as one recording may hold.': 'Semono sing bisa dimuat siji rekaman.',
+  'Nothing could be heard in that recording.': 'Ing rekaman kuwi ora ana sing keprungu.',
+  'A piece of the transcript is being tried again.': 'Sak bagean transkrip dicoba maneh.',
+  'The transcript is behind and losing pieces.': 'Transkrip keri lan kelangan bagean.',
+  '{count} pieces of this meeting were lost.': '{count} bagean rapat iki ilang.',
+  'Add an AI provider in settings to summarise.':
+    'Tambahake panyedhiya AI ing setelan kanggo ngringkes.',
+  'The summary could not be written.': 'Ringkesan ora bisa ditulis.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ora bisa ngirim layang - coba maneh',
   'start again - that took too long': 'wiwiti maneh - kuwi suwe banget',
@@ -1086,12 +1247,17 @@ export const jv: Dictionary = {
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'mung gambar lan PDF',
   'that file is too big': 'berkas kuwi gedhe banget',
-  'that is more settings than an account holds': 'kuwi luwih akeh setelan tinimbang sing diemot akun',
-  'that is more bookmarks than a space holds': 'kuwi luwih akeh tandha buku tinimbang sing diemot papan',
-  'that is more paths than a space leaves out': 'kuwi luwih akeh dalan tinimbang sing ditinggal papan',
+  'that is more settings than an account holds':
+    'kuwi luwih akeh setelan tinimbang sing diemot akun',
+  'that is more bookmarks than a space holds':
+    'kuwi luwih akeh tandha buku tinimbang sing diemot papan',
+  'that is more paths than a space leaves out':
+    'kuwi luwih akeh dalan tinimbang sing ditinggal papan',
   'that is more files than a space keeps': 'kuwi luwih akeh berkas tinimbang sing disimpen papan',
-  'that is more than a space keeps about its graph': 'kuwi luwih akeh tinimbang sing disimpen papan bab grafike',
-  'that is more folder icons than a space holds': 'kuwi luwih akeh ikon folder tinimbang sing diemot papan',
+  'that is more than a space keeps about its graph':
+    'kuwi luwih akeh tinimbang sing disimpen papan bab grafike',
+  'that is more folder icons than a space holds':
+    'kuwi luwih akeh ikon folder tinimbang sing diemot papan',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ora ana sapa-sapa ing alamat kuwi',
   'nobody by that name': 'ora ana sapa-sapa kanthi jeneng kuwi',
@@ -1100,7 +1266,8 @@ export const jv: Dictionary = {
   'that link is busy, try again in a minute': 'pranala kuwi lagi sibuk, coba maneh sak menit',
   // Versions, the bin, and a room two people write in.
   'no such version': 'ora ana versi kuwi',
-  'this note was shared with you, not its folder': 'cathetan iki dibagi karo sampeyan, dudu foldere',
+  'this note was shared with you, not its folder':
+    'cathetan iki dibagi karo sampeyan, dudu foldere',
   'nothing to restore': 'ora ana sing dibalekake',
   'restore its space first': 'balekake papane dhisik',
   'nothing to delete': 'ora ana sing dibusak',

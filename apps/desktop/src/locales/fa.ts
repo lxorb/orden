@@ -7,6 +7,12 @@ export const fa: Dictionary = {
   'Open file': 'گشودن پرونده',
   'New note inside': 'یادداشت تازه در آن',
   'New canvas': 'بوم تازه',
+  'New page note': 'یادداشت صفحه‌ای تازه',
+  'Add a page': 'افزودن صفحه',
+  'Add a page after this': 'افزودن صفحه پس از این',
+  'Delete this page': 'حذف این صفحه',
+  'Page {number}': 'صفحه {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'بوم',
   Card: 'کارت',
   'Note or picture': 'یادداشت یا تصویر',
@@ -34,7 +40,8 @@ export const fa: Dictionary = {
   'Create a space': 'ساختن فضا',
   'Delete space': 'حذف فضا',
   'Delete {name}?': '{name} حذف شود؟',
-  'Every note in this space is deleted from your computer.': 'هر یادداشت این فضا از رایانه شما حذف می‌شود.',
+  'Every note in this space is deleted from your computer.':
+    'هر یادداشت این فضا از رایانه شما حذف می‌شود.',
   'The notes inside it go too.': 'یادداشت‌های درونش هم می‌روند.',
   Journal: 'روزنگار',
   Create: 'ساختن',
@@ -206,7 +213,8 @@ export const fa: Dictionary = {
   'Image not found': 'تصویر یافت نشد',
   'Delete {count} items': { one: 'حذف {count} درآیه', other: 'حذف {count} درآیه' },
   'Recently deleted': 'تازه حذف‌شده',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'یادداشت‌ها و فضاهای حذف‌شده ۱۴ روز اینجا می‌مانند، سپس برای همیشه می‌روند.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'یادداشت‌ها و فضاهای حذف‌شده ۱۴ روز اینجا می‌مانند، سپس برای همیشه می‌روند.',
   'Nothing here.': 'اینجا چیزی نیست.',
   Empty: 'تخلیه',
   Spaces: 'فضاها',
@@ -257,7 +265,8 @@ export const fa: Dictionary = {
   'Previous slide': 'اسلاید پیشین',
   'Read-only': 'تنها خواندنی',
   'No preview': 'پیش‌نمایشی نیست',
-  'Shown as plain text, so typing stays instant in a note this long': 'به شکل نوشته ساده نشان داده می‌شود تا تایپ در یادداشتی این‌قدر بلند بی‌درنگ بماند',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'به شکل نوشته ساده نشان داده می‌شود تا تایپ در یادداشتی این‌قدر بلند بی‌درنگ بماند',
   'Leave read-only': 'بیرون آمدن از تنها خواندنی',
   Next: 'پسین',
   Previous: 'پیشین',
@@ -353,16 +362,19 @@ export const fa: Dictionary = {
   'OpenAI key': 'کلید OpenAI',
   Model: 'مدل',
   Reasoning: 'استدلال',
-  'Kept encrypted on your account, and never shown again.': 'رمزگذاری‌شده در حساب شما نگه داشته می‌شود و دیگر نشان داده نمی‌شود.',
+  'Kept encrypted on your account, and never shown again.':
+    'رمزگذاری‌شده در حساب شما نگه داشته می‌شود و دیگر نشان داده نمی‌شود.',
   'set, ends in …{tail}': 'گذاشته شده، به …{tail} پایان می‌یابد',
   'Saving the key': 'ذخیره کلید',
   'this server cannot keep a key yet': 'این کارساز هنوز نمی‌تواند کلید نگه دارد',
   'that does not look like a key': 'آن به کلید نمی‌ماند',
   'that key could not be saved': 'آن کلید ذخیره نشد',
   'Sign in to ask a question.': 'برای پرسیدن وارد شوید.',
-  'Asking OpenAI which models this key can use': 'پرسیدن از OpenAI که این کلید چه مدل‌هایی را می‌تواند به کار برد',
+  'Asking OpenAI which models this key can use':
+    'پرسیدن از OpenAI که این کلید چه مدل‌هایی را می‌تواند به کار برد',
   'Could not reach OpenAI': 'OpenAI در دسترس نبود',
-  'That key cannot use any of the models Nib asks for.': 'آن کلید هیچ‌یک از مدل‌هایی که Nib می‌خواهد را نمی‌تواند به کار برد.',
+  'That key cannot use any of the models Nib asks for.':
+    'آن کلید هیچ‌یک از مدل‌هایی که Nib می‌خواهد را نمی‌تواند به کار برد.',
   'No reasoning': 'بی‌استدلال',
   Minimal: 'کمینه',
   Low: 'کم',
@@ -403,7 +415,10 @@ export const fa: Dictionary = {
   'Add a word': 'افزودن واژه',
   'Add {word} to the dictionary': 'افزودن {word} به واژه‌نامه',
   'Remove {word} from the dictionary': 'برداشتن {word} از واژه‌نامه',
-  '{count} things in this theme were left out.': { one: '{count} چیز در این پوسته کنار گذاشته شد.', other: '{count} چیز در این پوسته کنار گذاشته شد.' },
+  '{count} things in this theme were left out.': {
+    one: '{count} چیز در این پوسته کنار گذاشته شد.',
+    other: '{count} چیز در این پوسته کنار گذاشته شد.',
+  },
   'A note': 'یک یادداشت',
   'Words with {bold} and a {link}.': 'واژه‌هایی با {bold} و یک {link}.',
   bold: 'سیاه',
@@ -448,11 +463,14 @@ export const fa: Dictionary = {
   'Line numbers': 'شماره خط',
   Syntax: 'نحو',
   'Strict CommonMark': 'CommonMark سخت',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'تنها قاعده‌های استاندارد markdown، بی جدول، فهرست کار یا پانویس.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'تنها قاعده‌های استاندارد markdown، بی جدول، فهرست کار یا پانویس.',
   'Smart punctuation': 'نقطه‌گذاری هوشمند',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'گیومه و خط تیره راست را هنگام تایپ به شکل حروف‌چینی درمی‌آورد.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'گیومه و خط تیره راست را هنگام تایپ به شکل حروف‌چینی درمی‌آورد.',
   'Puts 1., 1.1, 1.2 in front of headings.': '۱.، ۱.۱، ۱.۲ را پیش سرنویس‌ها می‌گذارد.',
-  'Numbers display equations so you can refer to them.': 'به معادله‌های نمایشی شماره می‌دهد تا بتوان به آن‌ها اشاره کرد.',
+  'Numbers display equations so you can refer to them.':
+    'به معادله‌های نمایشی شماره می‌دهد تا بتوان به آن‌ها اشاره کرد.',
   Ligatures: 'پیوندهای حرفی',
   Off: 'خاموش',
   'Code only': 'تنها کد',
@@ -515,13 +533,17 @@ export const fa: Dictionary = {
   'Send a new code': 'فرستادن کد تازه',
   'Code sent to': 'کد فرستاده شد به',
   'You already have notes on this computer.': 'شما هم‌اکنون روی این رایانه یادداشت دارید.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'نگه‌شان دارید و به حساب شما می‌پیوندند. پاک‌شان کنید و تنها آنچه حساب شما دارد می‌ماند - این واگرد نمی‌شود.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'نگه‌شان دارید و به حساب شما می‌پیوندند. پاک‌شان کنید و تنها آنچه حساب شما دارد می‌ماند - این واگرد نمی‌شود.',
   'Keep them': 'نگه داشتن',
   'Erase them': 'پاک کردن',
   'Digit {number}': 'رقم {number}',
   'Resend in {seconds}s': 'فرستادن دوباره در {seconds} ثانیه',
   'Last synced {time}.': 'آخرین همگام‌سازی {time}.',
-  '{count} spaces sync to your account.': { one: '{count} فضا با حساب شما همگام می‌شود.', other: '{count} فضا با حساب شما همگام می‌شود.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} فضا با حساب شما همگام می‌شود.',
+    other: '{count} فضا با حساب شما همگام می‌شود.',
+  },
   Update: 'به‌روزرسانی',
   'Live at': 'روی',
   // Publishing
@@ -531,9 +553,11 @@ export const fa: Dictionary = {
   'Only {name}': 'تنها {name}',
   'Publish this space as a blog': 'انتشار این فضا به شکل وبلاگ',
   'Everything in this space becomes public.': 'هر چه در این فضا است همگانی می‌شود.',
-  'Every note, including drafts, is readable by anyone with the address.': 'هر یادداشت، از جمله پیش‌نویس‌ها، برای هر کس که نشانی را دارد خواندنی است.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'هر یادداشت، از جمله پیش‌نویس‌ها، برای هر کس که نشانی را دارد خواندنی است.',
   Address: 'نشانی',
-  'Add these at your registrar, then verify.': 'این‌ها را در ثبت‌کننده خود بیفزایید، سپس بررسی کنید.',
+  'Add these at your registrar, then verify.':
+    'این‌ها را در ثبت‌کننده خود بیفزایید، سپس بررسی کنید.',
   Verify: 'بررسی',
   'that record is not answering yet': 'آن رکورد هنوز پاسخ نمی‌دهد',
   'Stop publishing': 'ایستاندن انتشار',
@@ -544,7 +568,8 @@ export const fa: Dictionary = {
   'checking…': 'در حال بررسی…',
   // LLM
   'Connect an LLM to your notes': 'پیوند دادن یک LLM به یادداشت‌های شما',
-  'Sign in first - the connector reaches the notes in your account.': 'نخست وارد شوید - رابط به یادداشت‌های حساب شما می‌رسد.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'نخست وارد شوید - رابط به یادداشت‌های حساب شما می‌رسد.',
   'Let it write to my notes, not only read them': 'بگذار در یادداشت‌های من بنویسد، نه تنها بخواند',
   'Create a token': 'ساختن ژتون',
   'Replace the token': 'جایگزینی ژتون',
@@ -560,27 +585,39 @@ export const fa: Dictionary = {
   'Reads your notes.': 'یادداشت‌های شما را می‌خواند.',
   'Reads and writes your notes.': 'یادداشت‌های شما را می‌خواند و می‌نویسد.',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه Nib شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'در Claude، Settings → Connectors را بگشایید و Add custom connector را بزنید.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه Nib شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'در Claude، Settings → Connectors را بگشایید و Add custom connector را بزنید.',
   'Open Claude’s connectors': 'گشودن رابط‌های Claude',
   'Fill in the two fields and click Add.': 'دو خانه را پر کنید و Add را بزنید.',
-  'Click Connect and sign in with your Nib email.': 'Connect را بزنید و با رایانامه Nib خود وارد شوید.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect را بزنید و با رایانامه Nib خود وارد شوید.',
   'Using Claude Code instead?': 'از Claude Code استفاده می‌کنید؟',
   Command: 'فرمان',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'آن را در پایانه اجرا کنید، سپس برای ورود در Claude Code بنویسید /mcp.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'آن را در پایانه اجرا کنید، سپس برای ورود در Claude Code بنویسید /mcp.',
   'Fill in the form and click Create.': 'برگه را پر کنید و Create را بزنید.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'در ChatGPT، Settings → Plugins را بگشایید و دکمه افزودن را بزنید.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'در ChatGPT، Settings → Plugins را بگشایید و دکمه افزودن را بزنید.',
   'Open ChatGPT’s plugins': 'گشودن افزونه‌های ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'بخش Plugins یا دکمه افزودن نیست؟ نخست Developer mode را در Settings → Security and login روشن کنید.',
-  'Sign in with your Nib email when ChatGPT asks.': 'هنگامی که ChatGPT پرسید، با رایانامه Nib خود وارد شوید.',
-  'To use it in a chat, type @ and pick Nib.': 'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و Nib را برگزینید.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'بخش Plugins یا دکمه افزودن نیست؟ نخست Developer mode را در Settings → Security and login روشن کنید.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'هنگامی که ChatGPT پرسید، با رایانامه Nib خود وارد شوید.',
+  'To use it in a chat, type @ and pick Nib.':
+    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و Nib را برگزینید.',
   'Server URL': 'نشانی کارساز',
   Authentication: 'اصالت‌سنجی',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'تنظیم‌های پیشرفته OAuth را همان‌گونه بگذارید و “I understand and want to continue” را بزنید.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود Nib را می‌گشاید.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'تنظیم‌های پیشرفته OAuth را همان‌گونه بگذارید و “I understand and want to continue” را بزنید.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود Nib را می‌گشاید.',
   'Show config': 'نمایش پیکربندی',
-  'For a client that takes a JSON block instead of a URL.': 'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'به کارخواهی که نمی‌تواند وارد شود می‌توان ژتون داد. تنها یک بار نشان داده می‌شود.',
+  'For a client that takes a JSON block instead of a URL.':
+    'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'به کارخواهی که نمی‌تواند وارد شود می‌توان ژتون داد. تنها یک بار نشان داده می‌شود.',
   // Export
   'Plain text': 'نوشته ساده',
   'Markdown with the pictures': 'markdown همراه تصویرها',
@@ -604,8 +641,10 @@ export const fa: Dictionary = {
   'Version history': 'تاریخ نسخه‌ها',
   'Copy link to this note': 'رونوشت پیوند این یادداشت',
   'that link could not be followed': 'آن پیوند دنبال نشد',
-  'Save this note first; there is nothing to compare against yet.': 'نخست این یادداشت را ذخیره کنید؛ هنوز چیزی برای سنجش نیست.',
-  'No earlier versions yet. One is kept each time you save.': 'هنوز نسخه پیشینی نیست. هر بار که ذخیره کنید یکی نگه داشته می‌شود.',
+  'Save this note first; there is nothing to compare against yet.':
+    'نخست این یادداشت را ذخیره کنید؛ هنوز چیزی برای سنجش نیست.',
+  'No earlier versions yet. One is kept each time you save.':
+    'هنوز نسخه پیشینی نیست. هر بار که ذخیره کنید یکی نگه داشته می‌شود.',
   'Restore this version': 'بازگرداندن این نسخه',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'آنجا از پیش یادداشتی هست',
@@ -666,7 +705,8 @@ export const fa: Dictionary = {
   'use a domain of your own': 'دامنه‌ای از خودتان به کار برید',
   'the domain no longer points here': 'دامنه دیگر به اینجا اشاره نمی‌کند',
   'Cloudflare has blocked this domain': 'Cloudflare این دامنه را بسته است',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'در ریشه یک دامنه، اگر فراهم‌کننده شما CNAME را آنجا روا نمی‌دارد، رکورد ALIAS یا ANAME یا CNAME flattening به کار برید.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'در ریشه یک دامنه، اگر فراهم‌کننده شما CNAME را آنجا روا نمی‌دارد، رکورد ALIAS یا ANAME یا CNAME flattening به کار برید.',
   // Shortcuts
   Shortcuts: 'کلیدهای میان‌بر',
   'Search shortcuts': 'جست‌وجوی میان‌برها',
@@ -677,7 +717,8 @@ export const fa: Dictionary = {
   'Reset all shortcuts': 'بازنشانی همه میان‌برها',
   'Take it over': 'گرفتن آن',
   '{key} already runs {name}.': '{key} از پیش {name} را اجرا می‌کند.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc ضبط را می‌ایستاند، Backspace کلید را برمی‌دارد.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc ضبط را می‌ایستاند، Backspace کلید را برمی‌دارد.',
   Tables: 'جدول‌ها',
   Pictures: 'تصویرها',
   'Fixed keys': 'کلیدهای ثابت',
@@ -713,7 +754,8 @@ export const fa: Dictionary = {
   'Always on top': 'همیشه رو',
   'What is new': 'تازه‌ها',
   'Report an issue': 'گزارش مشکل',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} روی دیسک تغییر کرد. آنچه در ویرایشگر است از شماست.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} روی دیسک تغییر کرد. آنچه در ویرایشگر است از شماست.',
   'Move the line up': 'جابه‌جایی خط به بالا',
   'Move the line down': 'جابه‌جایی خط به پایین',
   'Copy the line up': 'رونوشت خط به بالا',
@@ -748,26 +790,33 @@ export const fa: Dictionary = {
   Escape: 'Escape',
   Quit: 'بیرون رفتن',
   'The clipboard belongs to the system.': 'تخته‌گیره از سامانه است.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'کلیدهای پیکان، Home، End، Page up و Page down از نوشته‌اند.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'کلیدهای پیکان، Home، End، Page up و Page down از نوشته‌اند.',
   'Backspace and Delete belong to the text.': 'Backspace و Delete از نوشته‌اند.',
-  'Enter closes a code block and carries a list on.': 'Enter بلوک کد را می‌بندد و فهرست را پیش می‌برد.',
-  'Tab moves on through the app as well as indenting.': 'Tab جدا از تودرآوری، در برنامه هم پیش می‌رود.',
+  'Enter closes a code block and carries a list on.':
+    'Enter بلوک کد را می‌بندد و فهرست را پیش می‌برد.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab جدا از تودرآوری، در برنامه هم پیش می‌رود.',
   'Escape closes whatever is open.': 'Escape هر چه گشوده است را می‌بندد.',
-  'Your system takes this key before the app sees it.': 'سامانه شما این کلید را پیش از دیدن برنامه می‌گیرد.',
-  'Your browser takes this key before the app sees it.': 'مرورگر شما این کلید را پیش از دیدن برنامه می‌گیرد.',
+  'Your system takes this key before the app sees it.':
+    'سامانه شما این کلید را پیش از دیدن برنامه می‌گیرد.',
+  'Your browser takes this key before the app sees it.':
+    'مرورگر شما این کلید را پیش از دیدن برنامه می‌گیرد.',
   'That is not a key combination.': 'آن ترکیب کلید نیست.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl، Alt یا Cmd را هم نگه دارید.',
   'File list': 'فهرست پرونده',
   'Select every file': 'گزینش هر پرونده',
   'Clear the selection': 'پاک کردن گزینش',
   'Delete the selected files': 'حذف پرونده‌های گزیده',
-  'The file could not be written, so it goes to the print dialog': 'پرونده نوشته نشد، پس به گفت‌وگوی چاپ می‌رود',
+  'The file could not be written, so it goes to the print dialog':
+    'پرونده نوشته نشد، پس به گفت‌وگوی چاپ می‌رود',
   'Next file': 'پرونده پسین',
   'Previous file': 'پرونده پیشین',
   'Show what it holds': 'نمایش درون آن',
   'Hide what it holds': 'نهفتن درون آن',
   'Moving through a list': 'گذر در فهرست',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'کلیدهای پیکان، Enter و Esc هر چه گشوده باشد کار می‌کنند؛ میان‌بر نیستند.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'کلیدهای پیکان، Enter و Esc هر چه گشوده باشد کار می‌کنند؛ میان‌بر نیستند.',
   'Split right': 'شکافتن به راست',
   'Split down': 'شکافتن به پایین',
   'Other pane': 'تخته دیگر',
@@ -789,7 +838,8 @@ export const fa: Dictionary = {
   'Follow the link': 'دنبال کردن پیوند',
   'Replace your own keys?': 'کلیدهای خودتان جایگزین شوند؟',
   Replace: 'جایگزینی',
-  'The keys you changed go back to what this keyboard says.': 'کلیدهایی که تغییر دادید به آنچه این صفحه‌کلید می‌گوید بازمی‌گردند.',
+  'The keys you changed go back to what this keyboard says.':
+    'کلیدهایی که تغییر دادید به آنچه این صفحه‌کلید می‌گوید بازمی‌گردند.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +961,8 @@ export const fa: Dictionary = {
   Leave: 'بیرون رفتن',
   'Leave space': 'بیرون رفتن از فضا',
   'Leave {name}?': 'از {name} بیرون بروید؟',
-  'It stays with everybody else. Its notes go from your computer.': 'برای دیگران می‌ماند. یادداشت‌هایش از رایانه شما می‌روند.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'برای دیگران می‌ماند. یادداشت‌هایش از رایانه شما می‌روند.',
   '{who} shared {space} with you': '{who} فضای {space} را با شما هم‌رساند',
   'Shared with you': 'با شما هم‌رسانده',
   'That link does not open anything': 'آن پیوند چیزی نمی‌گشاید',
@@ -928,7 +979,8 @@ export const fa: Dictionary = {
   'Release channel': 'کانال انتشار',
   Stable: 'پایدار',
   Unstable: 'ناپایدار',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'پایدار انتشارهای رسمی را پی می‌گیرد، ناپایدار هر فرستادن به main را و می‌تواند بشکند.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'پایدار انتشارهای رسمی را پی می‌گیرد، ناپایدار هر فرستادن به main را و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',
@@ -939,14 +991,20 @@ export const fa: Dictionary = {
   'Rewrite {count} things?': { one: '{count} جا بازنویسی شود؟', other: '{count} جا بازنویسی شود؟' },
   'In {count} notes.': { one: 'در {count} یادداشت.', other: 'در {count} یادداشت.' },
   Rewrite: 'بازنویسی',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} بند رمزگذاری‌شده‌اند و بی Evernote چیزی آن‌ها را نمی‌خواند',
-  '{count} notes had a reminder, which the export does not carry': '{count} یادداشت یادآور داشتند که برون‌بری آن را نمی‌برد',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} بند رمزگذاری‌شده‌اند و بی Evernote چیزی آن‌ها را نمی‌خواند',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} یادداشت یادآور داشتند که برون‌بری آن را نمی‌برد',
   '{count} notes were in the bin and stay there': '{count} یادداشت در سبد بودند و همان‌جا می‌مانند',
-  '{count} archived notes are in a folder called Archive': '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',
+  '{count} archived notes are in a folder called Archive':
+    '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',
   'The colours a note had are not kept': 'رنگ‌هایی که یادداشت داشت نگه داشته نمی‌شوند',
-  '{count} block references were written out as the words they pointed at': '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
-  '{count} saved views are left out, and every row is in the table': '{count} نمای ذخیره‌شده کنار گذاشته شد و هر سطر در جدول است',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} صفحه به شکل HTML آمد، پس واژه‌هایشان می‌مانند و نمایشان نه',
+  '{count} block references were written out as the words they pointed at':
+    '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} نمای ذخیره‌شده کنار گذاشته شد و هر سطر در جدول است',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} صفحه به شکل HTML آمد، پس واژه‌هایشان می‌مانند و نمایشان نه',
   'There are no rows in this file.': 'در این پرونده سطری نیست.',
   'Nothing in there can be read as notes.': 'چیزی در آن به شکل یادداشت خوانده نمی‌شود.',
   'That export could not be read.': 'آن برون‌بری خوانده نشد.',
@@ -956,21 +1014,50 @@ export const fa: Dictionary = {
   '{count} files': { one: '{count} پرونده', other: '{count} پرونده' },
   'This space': 'این فضا',
   'Drop an export here': 'یک برون‌بری را اینجا بیندازید',
-  'A zip, a folder, or a file another app wrote': 'یک zip، یک پوشه، یا پرونده‌ای که برنامه دیگری نوشته',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes و Apple Journal یادداشت‌هایشان را جایی نگه می‌دارند که تنها خودشان می‌گشایند. نخست برون‌بری کنید، سپس آن را درون‌آورید.',
-  'Pandoc reads this one, from the file on your disk.': 'این یکی را pandoc از پرونده روی دیسک شما می‌خواند.',
+  'A zip, a folder, or a file another app wrote':
+    'یک zip، یک پوشه، یا پرونده‌ای که برنامه دیگری نوشته',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} تصویر به شکل HEIC آمد که تنها Apple نشان می‌دهد',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} کارت حال و فعالیت نقش‌اند، پس تنها واژه‌هایشان می‌آید',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} یادداشت پشت گذرواژه‌ای است که تنها Notes می‌گشاید',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} یادداشت در «تازه حذف‌شده» است و همان‌جا می‌ماند',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} نقش و صفحه پویش‌شده تصویرهایی است که Notes خودش می‌کشد',
+  '{count} tables inside notes do not come over': '{count} جدول درون یادداشت‌ها نمی‌آید',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} پیوست در iCloud است و نه روی این Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS آن یادداشت‌ها را پشت Full Disk Access نگه می‌دارد.',
+  'There are no notes in Apple Notes on this Mac.': 'روی این Mac در Apple Notes یادداشتی نیست.',
+  'Those notes could not be read.': 'آن یادداشت‌ها خوانده نشد.',
+  'Read them from this Mac': 'از این Mac بخوان',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditor را در Full Disk Access روشن کنید و دوباره بیازمایید.',
+  'Open the setting': 'گشودن تنظیم',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal خودش برون‌بری می‌کند: Journal، تنظیمات، برون‌بری. Apple Notes برون‌بری ندارد، پس دور از Macی که رویش است، آنچه اینجا انداخته می‌شود پوشه‌ای است که یک برون‌بر نوشته.',
+  'Pandoc reads this one, from the file on your disk.':
+    'این یکی را pandoc از پرونده روی دیسک شما می‌خواند.',
   'Read it with pandoc': 'خواندن با pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'این یکی را تنها pandoc می‌خواند و روی این دستگاه نصب نیست.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'این یکی را تنها pandoc می‌خواند و روی این دستگاه نصب نیست.',
   Rows: 'سطرها',
   'As a table': 'به شکل جدول',
   'One note per row': 'یک یادداشت برای هر سطر',
   Into: 'به',
   'Worth knowing': 'دانستنی',
   '{count} notes arrived.': { one: '{count} یادداشت رسید.', other: '{count} یادداشت رسید.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} نام گرفته بود، پس آن پرونده کنار رفت.', other: '{count} نام گرفته بود، پس آن پرونده‌ها کنار رفتند.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} نام گرفته بود، پس آن پرونده کنار رفت.',
+    other: '{count} نام گرفته بود، پس آن پرونده‌ها کنار رفتند.',
+  },
   'A table': 'یک جدول',
   'Markdown files': 'پرونده‌های markdown',
   'A document': 'یک سند',
+  'A PDF, as pages to write on': 'یک PDF، به شکل صفحه‌هایی برای نوشتن روی آن',
   'Undo the import': 'واگرد درون‌آوری',
   'Choose an export': 'گزینش یک برون‌بری',
   Under: 'زیر',
@@ -982,13 +1069,15 @@ export const fa: Dictionary = {
   'Keep both copies': 'نگه داشتن هر دو رونوشت',
   'Let the newest win': 'تازه‌ترین برنده شود',
   'Ask me each time': 'هر بار از من بپرس',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'هیچ چیز دور انداخته نمی‌شود: آنچه برنده نشود به شکل نسخه نگه داشته می‌شود.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'هیچ چیز دور انداخته نمی‌شود: آنچه برنده نشود به شکل نسخه نگه داشته می‌شود.',
   'Waiting for you': 'در انتظار شما',
   'Keep mine': 'نگه داشتن از من',
   'Take theirs': 'گرفتن از آن‌ها',
   'Keep both': 'نگه داشتن هر دو',
   'What synced': 'چه همگام شد',
-  'Nothing yet. A pass that moves nothing is not written down.': 'هنوز چیزی نیست. گذری که چیزی جابه‌جا نکند نوشته نمی‌شود.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'هنوز چیزی نیست. گذری که چیزی جابه‌جا نکند نوشته نمی‌شود.',
   'Clear the list': 'پاک کردن فهرست',
   '{count} down': '{count} پایین',
   '{count} up': '{count} بالا',
@@ -998,19 +1087,28 @@ export const fa: Dictionary = {
   'This space, as it was': 'این فضا، چنان که بود',
   '{count} days ago': { one: '{count} روز پیش', other: '{count} روز پیش' },
   'What would change?': 'چه تغییر می‌کند؟',
-  '{count} notes would go back to what they said then.': { one: '{count} یادداشت به آنچه آن زمان می‌گفت بازمی‌گردد.', other: '{count} یادداشت به آنچه آن زمان می‌گفتند بازمی‌گردند.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} یادداشت به آنچه آن زمان می‌گفت بازمی‌گردد.',
+    other: '{count} یادداشت به آنچه آن زمان می‌گفتند بازمی‌گردند.',
+  },
   'Nothing has changed since then.': 'از آن زمان چیزی تغییر نکرده.',
-  '{count} notes went back.': { one: '{count} یادداشت بازگشت.', other: '{count} یادداشت بازگشتند.' },
-  'The account keeps a month of versions of every note that syncs.': 'حساب یک ماه نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
+  '{count} notes went back.': {
+    one: '{count} یادداشت بازگشت.',
+    other: '{count} یادداشت بازگشتند.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'حساب یک ماه نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
   'That did not work.': 'آن کار نکرد.',
   'Signing in': 'ورود',
   'Ask for a code from an app': 'خواستن کد از یک برنامه',
   'Turn on': 'روشن کردن',
   'Turn off': 'خاموش کردن',
-  'Put this into your authenticator app, then type its code.': 'این را در برنامه اصالت‌سنج خود بگذارید، سپس کدش را بنویسید.',
+  'Put this into your authenticator app, then type its code.':
+    'این را در برنامه اصالت‌سنج خود بگذارید، سپس کدش را بنویسید.',
   Secret: 'راز',
   'Code from the app': 'کد از برنامه',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'این‌ها را جایی امن نگه دارید. هر یک یک بار کار می‌کند و دیگر نشان داده نمی‌شوند.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'این‌ها را جایی امن نگه دارید. هر یک یک بار کار می‌کند و دیگر نشان داده نمی‌شوند.',
   'Recovery codes': 'کدهای بازیابی',
   'Recovery code': 'کد بازیابی',
   'Recovery codes left': 'کدهای بازیابی مانده',
@@ -1032,7 +1130,8 @@ export const fa: Dictionary = {
   Pages: 'صفحه‌ها',
   'Page {number} of {count}': 'صفحه {number} از {count}',
   'What is selected': 'آنچه گزیده است',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'بوم: {cards} کارت، {links} پیوند، {drawings} نقش',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'بوم: {cards} کارت، {links} پیوند، {drawings} نقش',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'هوش مصنوعی',
   Providers: 'فراهم‌کنندگان',
@@ -1047,7 +1146,8 @@ export const fa: Dictionary = {
   'No providers yet.': 'هنوز فراهم‌کننده‌ای نیست.',
   'Add {name}': 'افزودن {name}',
   'Keys stay in the secure store on this device.': 'کلیدها در انبار امن این دستگاه می‌مانند.',
-  'This browser holds the keys in its own storage.': 'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'This browser holds the keys in its own storage.':
+    'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
   'That provider is not set up yet.': 'آن فراهم‌کننده هنوز برپا نشده.',
@@ -1069,13 +1169,86 @@ export const fa: Dictionary = {
   'AI block': 'بلوک هوش مصنوعی',
   'Highlight colour': 'رنگ پُررنگ',
   'A single newline breaks the line': 'یک خط تازه خط را می‌شکند',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'خاموش همان markdown استاندارد است: دو خط یک بند یکی خوانده می‌شود؛ Obsidian آن را شکست خط سخت می‌نامد.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'خاموش همان markdown استاندارد است: دو خط یک بند یکی خوانده می‌شود؛ Obsidian آن را شکست خط سخت می‌نامد.',
   'New links': 'پیوندهای تازه',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'ویکی‌پیوند نام یادداشت را می‌آورد، پس پیوند از تغییر نام جان می‌برد؛ هر دو شکل خوانده می‌شوند.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'ویکی‌پیوند نام یادداشت را می‌آورد، پس پیوند از تغییر نام جان می‌برد؛ هر دو شکل خوانده می‌شوند.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown، کوتاه‌ترین نام',
   'Markdown, relative path': 'markdown، مسیر نسبی',
   'Markdown, path in the space': 'markdown، مسیر در فضا',
+  // Publishing part one.
+  'The folders you choose become public.': 'پوشه‌هایی که برمی‌گزینید همگانی می‌شوند.',
+  'Anyone with the address can read what is published, drafts included.':
+    'هر کس نشانی را داشته باشد منتشرشده را می‌خواند، پیش‌نویس‌ها هم.',
+  'Which notes': 'کدام یادداشت‌ها',
+  'Notes outside a rule': 'یادداشت‌های بی‌قاعده',
+  'Are published': 'منتشر می‌شوند',
+  'Stay private': 'خصوصی می‌مانند',
+  'Follows the rule': 'از قاعده پیروی می‌کند',
+  Published: 'منتشرشده',
+  Private: 'خصوصی',
+  '{count} pages': '{count} صفحه',
+  '{count} new': '{count} تازه',
+  '{count} gone': '{count} برداشته',
+  'and more': 'و بیشتر',
+  'How it appears': 'چگونه دیده می‌شود',
+  Description: 'توضیح',
+  'What this site is': 'این سایت درباره چیست',
+  'Tab icon': 'نقشک زبانه',
+  Password: 'گذرواژه',
+  'Set a new one': 'گذاشتن تازه',
+  'Ask for a password': 'خواستن گذرواژه',
+  'No password': 'بی‌گذرواژه',
+  'Remove the password': 'برداشتن گذرواژه',
+  'Scan this with your authenticator app, then type its code.':
+    'این را با برنامه اصالت‌سنج خود بپویید و کدش را بنویسید.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'عکس',
+  Dictate: 'گفتن',
+  'Add to {name}': 'افزودن به {name}',
+  // Web tabs
+  Reload: 'بارگذاری دوباره',
+  'Clip this page': 'ذخیره این صفحه',
+  'Clip the link': 'ذخیره پیوند',
+  'Allow the camera': 'اجازه دوربین',
+  'Allow the clipboard': 'اجازه تخته‌گیره',
+  'Open in the browser': 'گشودن در مرورگر',
+  'Copy the address': 'رونوشت نشانی',
+  'Show it here': 'نمایش اینجا',
+  Website: 'وب‌گاه',
+  'Open a website': 'گشودن وب‌گاه',
+  // Recording, meetings and what a model wrote
+  Record: 'ضبط',
+  Recording: 'ضبط',
+  'Stop recording': 'ایستاندن ضبط',
+  'Meeting notes': 'یادداشت‌های نشست',
+  Meeting: 'نشست',
+  'Stop the meeting': 'پایان نشست',
+  Transcribe: 'پیاده‌سازی',
+  Transcript: 'متن پیاده‌شده',
+  'Transcript ({language})': 'متن پیاده‌شده ({language})',
+  'Written by {model}': 'نوشته {model}',
+  'Saving the recording': 'ذخیره ضبط',
+  'Turning the recording into words': 'تبدیل ضبط به واژه',
+  'Open a space to record into.': 'فضایی برای ضبط در آن بگشایید.',
+  'Sign in to take meeting notes.': 'برای یادداشت نشست وارد شوید.',
+  'Sign in to turn a recording into words.': 'برای تبدیل ضبط به واژه وارد شوید.',
+  'That microphone could not be opened.': 'آن میکروفون گشوده نشد.',
+  'That recording could not be saved.': 'آن ضبط ذخیره نشد.',
+  'That recording could not be turned into words.': 'آن ضبط به واژه تبدیل نشد.',
+  'That recording is not in this space.': 'آن ضبط در این فضا نیست.',
+  'That recording is too long to turn into words in one go.':
+    'آن ضبط برای تبدیل یک‌باره به واژه بسیار بلند است.',
+  'That is as much as one recording may hold.': 'یک ضبط همین اندازه جا دارد.',
+  'Nothing could be heard in that recording.': 'در آن ضبط چیزی شنیده نشد.',
+  'A piece of the transcript is being tried again.': 'پاره‌ای از متن دوباره آزموده می‌شود.',
+  'The transcript is behind and losing pieces.': 'متن عقب افتاده و پاره‌ها را از دست می‌دهد.',
+  '{count} pieces of this meeting were lost.': '{count} پاره از این نشست از دست رفت.',
+  'Add an AI provider in settings to summarise.':
+    'برای چکیده‌سازی در تنظیمات فراهم‌کننده هوش مصنوعی بیفزایید.',
+  'The summary could not be written.': 'چکیده نوشته نشد.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'نامه فرستاده نشد - دوباره بیازمایید',
   'start again - that took too long': 'از نو آغاز کنید - آن بسیار درازید',
@@ -1090,8 +1263,10 @@ export const fa: Dictionary = {
   'that is more bookmarks than a space holds': 'آن بیش از نشانکی است که یک فضا نگه می‌دارد',
   'that is more paths than a space leaves out': 'آن بیش از مسیری است که یک فضا کنار می‌گذارد',
   'that is more files than a space keeps': 'آن بیش از پرونده‌ای است که یک فضا نگه می‌دارد',
-  'that is more than a space keeps about its graph': 'آن بیش از آن است که یک فضا درباره گرافش نگه می‌دارد',
-  'that is more folder icons than a space holds': 'آن بیش از نقشک پوشه‌ای است که یک فضا نگه می‌دارد',
+  'that is more than a space keeps about its graph':
+    'آن بیش از آن است که یک فضا درباره گرافش نگه می‌دارد',
+  'that is more folder icons than a space holds':
+    'آن بیش از نقشک پوشه‌ای است که یک فضا نگه می‌دارد',
   // Sharing a space, and being let into one.
   'nobody by that address': 'کسی با آن نشانی نیست',
   'nobody by that name': 'کسی با آن نام نیست',

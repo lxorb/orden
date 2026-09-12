@@ -7,6 +7,12 @@ export const ms: Dictionary = {
   'Open file': 'Buka fail',
   'New note inside': 'Nota baharu di dalam',
   'New canvas': 'Kanvas baharu',
+  'New page note': 'Nota halaman baharu',
+  'Add a page': 'Tambah halaman',
+  'Add a page after this': 'Tambah halaman selepas ini',
+  'Delete this page': 'Hapuskan halaman ini',
+  'Page {number}': 'Halaman {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanvas',
   Card: 'Kad',
   'Note or picture': 'Nota atau gambar',
@@ -34,7 +40,8 @@ export const ms: Dictionary = {
   'Create a space': 'Cipta ruang',
   'Delete space': 'Hapuskan ruang',
   'Delete {name}?': 'Hapuskan {name}?',
-  'Every note in this space is deleted from your computer.': 'Setiap nota dalam ruang ini dihapuskan daripada komputer anda.',
+  'Every note in this space is deleted from your computer.':
+    'Setiap nota dalam ruang ini dihapuskan daripada komputer anda.',
   'The notes inside it go too.': 'Nota di dalamnya turut hilang.',
   Journal: 'Jurnal',
   Create: 'Cipta',
@@ -206,7 +213,8 @@ export const ms: Dictionary = {
   'Image not found': 'Imej tidak ditemui',
   'Delete {count} items': 'Hapuskan {count} item',
   'Recently deleted': 'Baru dihapuskan',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Nota dan ruang yang dihapuskan menunggu di sini selama 14 hari, kemudian hilang terus.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Nota dan ruang yang dihapuskan menunggu di sini selama 14 hari, kemudian hilang terus.',
   'Nothing here.': 'Tiada apa-apa di sini.',
   Empty: 'Kosongkan',
   Spaces: 'Ruang',
@@ -257,7 +265,8 @@ export const ms: Dictionary = {
   'Previous slide': 'Slaid sebelumnya',
   'Read-only': 'Baca sahaja',
   'No preview': 'Tiada pralihat',
-  'Shown as plain text, so typing stays instant in a note this long': 'Ditunjukkan sebagai teks biasa supaya menaip kekal serta-merta dalam nota sepanjang ini',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Ditunjukkan sebagai teks biasa supaya menaip kekal serta-merta dalam nota sepanjang ini',
   'Leave read-only': 'Keluar daripada baca sahaja',
   Next: 'Seterusnya',
   Previous: 'Sebelumnya',
@@ -353,16 +362,19 @@ export const ms: Dictionary = {
   'OpenAI key': 'Kunci OpenAI',
   Model: 'Model',
   Reasoning: 'Penaakulan',
-  'Kept encrypted on your account, and never shown again.': 'Disimpan tersulit pada akaun anda dan tidak ditunjukkan lagi.',
+  'Kept encrypted on your account, and never shown again.':
+    'Disimpan tersulit pada akaun anda dan tidak ditunjukkan lagi.',
   'set, ends in …{tail}': 'ditetapkan, berakhir …{tail}',
   'Saving the key': 'Menyimpan kunci',
   'this server cannot keep a key yet': 'pelayan ini belum dapat menyimpan kunci',
   'that does not look like a key': 'itu tidak nampak seperti kunci',
   'that key could not be saved': 'kunci itu tidak dapat disimpan',
   'Sign in to ask a question.': 'Masuk untuk bertanya.',
-  'Asking OpenAI which models this key can use': 'Bertanya kepada OpenAI model mana yang boleh digunakan kunci ini',
+  'Asking OpenAI which models this key can use':
+    'Bertanya kepada OpenAI model mana yang boleh digunakan kunci ini',
   'Could not reach OpenAI': 'Tidak dapat menghubungi OpenAI',
-  'That key cannot use any of the models Nib asks for.': 'Kunci itu tidak boleh menggunakan mana-mana model yang Nib minta.',
+  'That key cannot use any of the models Nib asks for.':
+    'Kunci itu tidak boleh menggunakan mana-mana model yang Nib minta.',
   'No reasoning': 'Tiada penaakulan',
   Minimal: 'Minimum',
   Low: 'Rendah',
@@ -448,11 +460,14 @@ export const ms: Dictionary = {
   'Line numbers': 'Nombor baris',
   Syntax: 'Sintaksis',
   'Strict CommonMark': 'CommonMark ketat',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Hanya peraturan markdown standard, tanpa jadual, senarai tugas atau nota kaki.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Hanya peraturan markdown standard, tanpa jadual, senarai tugas atau nota kaki.',
   'Smart punctuation': 'Tanda baca pintar',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Menukar tanda petik lurus dan sengkang menjadi bentuk tipografi semasa anda menaip.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Menukar tanda petik lurus dan sengkang menjadi bentuk tipografi semasa anda menaip.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Meletakkan 1., 1.1, 1.2 di depan tajuk.',
-  'Numbers display equations so you can refer to them.': 'Menomborkan persamaan paparan supaya boleh dirujuk.',
+  'Numbers display equations so you can refer to them.':
+    'Menomborkan persamaan paparan supaya boleh dirujuk.',
   Ligatures: 'Ligatur',
   Off: 'Mati',
   'Code only': 'Kod sahaja',
@@ -515,7 +530,8 @@ export const ms: Dictionary = {
   'Send a new code': 'Hantar kod baharu',
   'Code sent to': 'Kod dihantar ke',
   'You already have notes on this computer.': 'Anda sudah ada nota pada komputer ini.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Simpan dan nota itu bergabung dengan akaun anda. Hapuskan dan hanya isi akaun anda yang kekal - ini tidak boleh dibuat asal.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Simpan dan nota itu bergabung dengan akaun anda. Hapuskan dan hanya isi akaun anda yang kekal - ini tidak boleh dibuat asal.',
   'Keep them': 'Simpan',
   'Erase them': 'Hapuskan',
   'Digit {number}': 'Digit {number}',
@@ -531,7 +547,8 @@ export const ms: Dictionary = {
   'Only {name}': 'Hanya {name}',
   'Publish this space as a blog': 'Terbitkan ruang ini sebagai blog',
   'Everything in this space becomes public.': 'Segala dalam ruang ini menjadi umum.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Setiap nota, termasuk draf, boleh dibaca sesiapa yang tahu alamatnya.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Setiap nota, termasuk draf, boleh dibaca sesiapa yang tahu alamatnya.',
   Address: 'Alamat',
   'Add these at your registrar, then verify.': 'Tambah ini pada pendaftar anda, kemudian sahkan.',
   Verify: 'Sahkan',
@@ -544,8 +561,10 @@ export const ms: Dictionary = {
   'checking…': 'memeriksa…',
   // LLM
   'Connect an LLM to your notes': 'Sambungkan LLM ke nota anda',
-  'Sign in first - the connector reaches the notes in your account.': 'Masuk dahulu - penyambung mencapai nota dalam akaun anda.',
-  'Let it write to my notes, not only read them': 'Benarkan ia menulis pada nota saya, bukan hanya membaca',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Masuk dahulu - penyambung mencapai nota dalam akaun anda.',
+  'Let it write to my notes, not only read them':
+    'Benarkan ia menulis pada nota saya, bukan hanya membaca',
   'Create a token': 'Cipta token',
   'Replace the token': 'Ganti token',
   'Last used {time}.': 'Terakhir digunakan {time}.',
@@ -560,27 +579,38 @@ export const ms: Dictionary = {
   'Reads your notes.': 'Membaca nota anda.',
   'Reads and writes your notes.': 'Membaca dan menulis nota anda.',
   Other: 'Lain-lain',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Pembantu AI boleh membaca nota anda - dan mengubahnya, jika anda benarkan. Ia masuk dengan e-mel Nib anda; tiada apa-apa untuk ditampal.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Dalam Claude, buka Settings → Connectors dan klik Add custom connector.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Pembantu AI boleh membaca nota anda - dan mengubahnya, jika anda benarkan. Ia masuk dengan e-mel Nib anda; tiada apa-apa untuk ditampal.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Dalam Claude, buka Settings → Connectors dan klik Add custom connector.',
   'Open Claude’s connectors': 'Buka connectors Claude',
   'Fill in the two fields and click Add.': 'Isi kedua-dua medan dan klik Add.',
   'Click Connect and sign in with your Nib email.': 'Klik Connect dan masuk dengan e-mel Nib anda.',
   'Using Claude Code instead?': 'Menggunakan Claude Code?',
   Command: 'Perintah',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Jalankan dalam terminal, kemudian taip /mcp dalam Claude Code untuk masuk.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Jalankan dalam terminal, kemudian taip /mcp dalam Claude Code untuk masuk.',
   'Fill in the form and click Create.': 'Isi borang dan klik Create.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'Dalam ChatGPT, buka Settings → Plugins dan klik butang tambah.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Dalam ChatGPT, buka Settings → Plugins dan klik butang tambah.',
   'Open ChatGPT’s plugins': 'Buka plugins ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Tiada bahagian Plugins atau butang tambah? Hidupkan Developer mode dahulu, di Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Masuk dengan e-mel Nib anda apabila ChatGPT bertanya.',
-  'To use it in a chat, type @ and pick Nib.': 'Untuk menggunakannya dalam sembang, taip @ dan pilih Nib.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Tiada bahagian Plugins atau butang tambah? Hidupkan Developer mode dahulu, di Settings → Security and login.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Masuk dengan e-mel Nib anda apabila ChatGPT bertanya.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Untuk menggunakannya dalam sembang, taip @ dan pilih Nib.',
   'Server URL': 'URL pelayan',
   Authentication: 'Pengesahan',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Biarkan tetapan OAuth lanjutan seperti adanya dan tandakan “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Mana-mana klien MCP yang bertutur Streamable HTTP dengan OAuth. Beri URL kepadanya: ia mendaftar sendiri dan membuka halaman masuk Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Biarkan tetapan OAuth lanjutan seperti adanya dan tandakan “I understand and want to continue”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Mana-mana klien MCP yang bertutur Streamable HTTP dengan OAuth. Beri URL kepadanya: ia mendaftar sendiri dan membuka halaman masuk Nib.',
   'Show config': 'Tunjukkan konfigurasi',
-  'For a client that takes a JSON block instead of a URL.': 'Untuk klien yang menerima blok JSON dan bukan URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Klien yang tidak boleh masuk boleh diberi token. Ia ditunjukkan sekali sahaja.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Untuk klien yang menerima blok JSON dan bukan URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Klien yang tidak boleh masuk boleh diberi token. Ia ditunjukkan sekali sahaja.',
   // Export
   'Plain text': 'Teks biasa',
   'Markdown with the pictures': 'Markdown dengan gambar',
@@ -604,8 +634,10 @@ export const ms: Dictionary = {
   'Version history': 'Sejarah versi',
   'Copy link to this note': 'Salin pautan ke nota ini',
   'that link could not be followed': 'pautan itu tidak dapat diikuti',
-  'Save this note first; there is nothing to compare against yet.': 'Simpan nota ini dahulu; belum ada apa-apa untuk dibandingkan.',
-  'No earlier versions yet. One is kept each time you save.': 'Belum ada versi terdahulu. Satu disimpan setiap kali anda menyimpan.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Simpan nota ini dahulu; belum ada apa-apa untuk dibandingkan.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Belum ada versi terdahulu. Satu disimpan setiap kali anda menyimpan.',
   'Restore this version': 'Pulihkan versi ini',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'sudah ada nota di situ',
@@ -618,7 +650,8 @@ export const ms: Dictionary = {
   'you can only read this space': 'anda hanya boleh membaca ruang ini',
   'only the owner can do that': 'hanya pemilik boleh melakukannya',
   'this space is already yours': 'ruang ini sudah milik anda',
-  'that is as many people as one space holds': 'itu sudah sebanyak orang yang boleh dimuatkan satu ruang',
+  'that is as many people as one space holds':
+    'itu sudah sebanyak orang yang boleh dimuatkan satu ruang',
   'that invitation was sent to another address': 'jemputan itu dihantar ke alamat lain',
   'that link has expired': 'pautan itu telah luput',
   'that code has expired - ask for a new one': 'kod itu telah luput - minta yang baharu',
@@ -629,9 +662,11 @@ export const ms: Dictionary = {
   'that path is not usable': 'laluan itu tidak boleh digunakan',
   'this note changed elsewhere': 'nota ini berubah di tempat lain',
   'too many tries - ask for a new code': 'terlalu banyak cubaan - minta kod baharu',
-  'too many messages from here - try again later': 'terlalu banyak mesej dari sini - cuba lagi nanti',
+  'too many messages from here - try again later':
+    'terlalu banyak mesej dari sini - cuba lagi nanti',
   'too much mail today - try again tomorrow': 'terlalu banyak mel hari ini - cuba lagi esok',
-  'that many people are already waiting to be let in': 'sudah sebanyak itu orang menunggu untuk dibenarkan masuk',
+  'that many people are already waiting to be let in':
+    'sudah sebanyak itu orang menunggu untuk dibenarkan masuk',
   'use 2–32 letters, numbers or hyphens': 'guna 2–32 huruf, nombor atau sengkang',
   'sync failed': 'penyegerakan gagal',
   'could not publish': 'tidak dapat menerbitkan',
@@ -666,7 +701,8 @@ export const ms: Dictionary = {
   'use a domain of your own': 'guna domain milik anda sendiri',
   'the domain no longer points here': 'domain itu tidak lagi menghala ke sini',
   'Cloudflare has blocked this domain': 'Cloudflare telah menyekat domain ini',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Pada akar domain, guna rekod ALIAS atau ANAME, atau CNAME flattening, jika pembekal anda tidak membenarkan CNAME di sana.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Pada akar domain, guna rekod ALIAS atau ANAME, atau CNAME flattening, jika pembekal anda tidak membenarkan CNAME di sana.',
   // Shortcuts
   Shortcuts: 'Pintasan',
   'Search shortcuts': 'Cari pintasan',
@@ -677,7 +713,8 @@ export const ms: Dictionary = {
   'Reset all shortcuts': 'Set semula semua pintasan',
   'Take it over': 'Ambil alih',
   '{key} already runs {name}.': '{key} sudah menjalankan {name}.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc menghentikan rakaman, Backspace membuang kekuncinya.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc menghentikan rakaman, Backspace membuang kekuncinya.',
   Tables: 'Jadual',
   Pictures: 'Gambar',
   'Fixed keys': 'Kekunci tetap',
@@ -713,7 +750,8 @@ export const ms: Dictionary = {
   'Always on top': 'Sentiasa di atas',
   'What is new': 'Apa yang baharu',
   'Report an issue': 'Laporkan isu',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} berubah pada cakera. Apa yang ada dalam penyunting adalah milik anda.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} berubah pada cakera. Apa yang ada dalam penyunting adalah milik anda.',
   'Move the line up': 'Alihkan baris ke atas',
   'Move the line down': 'Alihkan baris ke bawah',
   'Copy the line up': 'Salin baris ke atas',
@@ -748,26 +786,33 @@ export const ms: Dictionary = {
   Escape: 'Escape',
   Quit: 'Keluar',
   'The clipboard belongs to the system.': 'Papan klip milik sistem.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Kekunci anak panah, Home, End, Page up dan Page down milik teks.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Kekunci anak panah, Home, End, Page up dan Page down milik teks.',
   'Backspace and Delete belong to the text.': 'Backspace dan Delete milik teks.',
-  'Enter closes a code block and carries a list on.': 'Enter menutup blok kod dan meneruskan senarai.',
-  'Tab moves on through the app as well as indenting.': 'Tab bergerak dalam aplikasi selain menginden.',
+  'Enter closes a code block and carries a list on.':
+    'Enter menutup blok kod dan meneruskan senarai.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab bergerak dalam aplikasi selain menginden.',
   'Escape closes whatever is open.': 'Escape menutup apa sahaja yang terbuka.',
-  'Your system takes this key before the app sees it.': 'Sistem anda mengambil kekunci ini sebelum aplikasi melihatnya.',
-  'Your browser takes this key before the app sees it.': 'Pelayar anda mengambil kekunci ini sebelum aplikasi melihatnya.',
+  'Your system takes this key before the app sees it.':
+    'Sistem anda mengambil kekunci ini sebelum aplikasi melihatnya.',
+  'Your browser takes this key before the app sees it.':
+    'Pelayar anda mengambil kekunci ini sebelum aplikasi melihatnya.',
   'That is not a key combination.': 'Itu bukan gabungan kekunci.',
   'Hold Ctrl, Alt or Cmd as well.': 'Tahan juga Ctrl, Alt atau Cmd.',
   'File list': 'Senarai fail',
   'Select every file': 'Pilih semua fail',
   'Clear the selection': 'Kosongkan pilihan',
   'Delete the selected files': 'Hapuskan fail yang dipilih',
-  'The file could not be written, so it goes to the print dialog': 'Fail tidak dapat ditulis, jadi ia dibawa ke dialog cetak',
+  'The file could not be written, so it goes to the print dialog':
+    'Fail tidak dapat ditulis, jadi ia dibawa ke dialog cetak',
   'Next file': 'Fail seterusnya',
   'Previous file': 'Fail sebelumnya',
   'Show what it holds': 'Tunjukkan isinya',
   'Hide what it holds': 'Sembunyikan isinya',
   'Moving through a list': 'Bergerak dalam senarai',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Kekunci anak panah, Enter dan Esc berfungsi apa sahaja yang terbuka; ia bukan pintasan.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Kekunci anak panah, Enter dan Esc berfungsi apa sahaja yang terbuka; ia bukan pintasan.',
   'Split right': 'Pisah ke kanan',
   'Split down': 'Pisah ke bawah',
   'Other pane': 'Anak tetingkap lain',
@@ -789,7 +834,8 @@ export const ms: Dictionary = {
   'Follow the link': 'Ikut pautan',
   'Replace your own keys?': 'Ganti kekunci anda sendiri?',
   Replace: 'Ganti',
-  'The keys you changed go back to what this keyboard says.': 'Kekunci yang anda ubah kembali kepada apa yang dinyatakan papan kekunci ini.',
+  'The keys you changed go back to what this keyboard says.':
+    'Kekunci yang anda ubah kembali kepada apa yang dinyatakan papan kekunci ini.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +957,8 @@ export const ms: Dictionary = {
   Leave: 'Tinggalkan',
   'Leave space': 'Tinggalkan ruang',
   'Leave {name}?': 'Tinggalkan {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Ia kekal bagi orang lain. Notanya hilang daripada komputer anda.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Ia kekal bagi orang lain. Notanya hilang daripada komputer anda.',
   '{who} shared {space} with you': '{who} berkongsi {space} dengan anda',
   'Shared with you': 'Dikongsi dengan anda',
   'That link does not open anything': 'Pautan itu tidak membuka apa-apa',
@@ -928,7 +975,8 @@ export const ms: Dictionary = {
   'Release channel': 'Saluran keluaran',
   Stable: 'Stabil',
   Unstable: 'Tidak stabil',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Stabil mengikut keluaran rasmi, Tidak stabil mengikut setiap tolakan ke main dan boleh rosak.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Stabil mengikut keluaran rasmi, Tidak stabil mengikut setiap tolakan ke main dan boleh rosak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Import',
@@ -939,14 +987,21 @@ export const ms: Dictionary = {
   'Rewrite {count} things?': 'Tulis semula {count} bahagian?',
   'In {count} notes.': 'Dalam {count} nota.',
   Rewrite: 'Tulis semula',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} bahagian tersulit dan tiada apa-apa boleh membacanya tanpa Evernote',
-  '{count} notes had a reminder, which the export does not carry': '{count} nota mempunyai peringatan, yang tidak dibawa oleh eksport',
-  '{count} notes were in the bin and stay there': '{count} nota ada dalam tong sampah dan kekal di sana',
-  '{count} archived notes are in a folder called Archive': '{count} nota terarkib ada dalam folder bernama Archive',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} bahagian tersulit dan tiada apa-apa boleh membacanya tanpa Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} nota mempunyai peringatan, yang tidak dibawa oleh eksport',
+  '{count} notes were in the bin and stay there':
+    '{count} nota ada dalam tong sampah dan kekal di sana',
+  '{count} archived notes are in a folder called Archive':
+    '{count} nota terarkib ada dalam folder bernama Archive',
   'The colours a note had are not kept': 'Warna yang ada pada nota tidak disimpan',
-  '{count} block references were written out as the words they pointed at': '{count} rujukan blok ditulis sebagai perkataan yang dirujuknya',
-  '{count} saved views are left out, and every row is in the table': '{count} paparan tersimpan ditinggalkan, dan setiap baris ada dalam jadual',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} halaman datang sebagai HTML, jadi perkataannya disimpan dan rupanya tidak',
+  '{count} block references were written out as the words they pointed at':
+    '{count} rujukan blok ditulis sebagai perkataan yang dirujuknya',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} paparan tersimpan ditinggalkan, dan setiap baris ada dalam jadual',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} halaman datang sebagai HTML, jadi perkataannya disimpan dan rupanya tidak',
   'There are no rows in this file.': 'Tiada baris dalam fail ini.',
   'Nothing in there can be read as notes.': 'Tiada apa-apa di dalamnya boleh dibaca sebagai nota.',
   'That export could not be read.': 'Eksport itu tidak dapat dibaca.',
@@ -956,21 +1011,48 @@ export const ms: Dictionary = {
   '{count} files': '{count} fail',
   'This space': 'Ruang ini',
   'Drop an export here': 'Lepaskan satu eksport di sini',
-  'A zip, a folder, or a file another app wrote': 'Satu zip, folder, atau fail yang ditulis aplikasi lain',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes dan Apple Journal menyimpan notanya di tempat yang hanya boleh dibuka olehnya. Eksport dahulu, kemudian import hasilnya.',
-  'Pandoc reads this one, from the file on your disk.': 'Pandoc membaca yang ini, daripada fail pada cakera anda.',
+  'A zip, a folder, or a file another app wrote':
+    'Satu zip, folder, atau fail yang ditulis aplikasi lain',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} imej datang sebagai HEIC, yang hanya Apple tunjukkan',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} kad suasana dan aktiviti ialah lukisan, jadi hanya perkataannya sampai',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} nota berada di sebalik kata laluan yang hanya Notes boleh buka',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} nota berada dalam Baru dihapuskan dan kekal di sana',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} lukisan dan halaman terpindai ialah imej yang Notes lukis sendiri',
+  '{count} tables inside notes do not come over': '{count} jadual dalam nota tidak sampai',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} lampiran berada dalam iCloud, bukan pada Mac ini',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS menyimpan nota itu di sebalik Akses Cakera Penuh.',
+  'There are no notes in Apple Notes on this Mac.': 'Tiada nota dalam Apple Notes pada Mac ini.',
+  'Those notes could not be read.': 'Nota itu tidak dapat dibaca.',
+  'Read them from this Mac': 'Baca dari Mac ini',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Hidupkan nibeditor dalam Akses Cakera Penuh, kemudian cuba lagi.',
+  'Open the setting': 'Buka tetapan',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal mengeksport sendiri: Journal, Tetapan, Eksport. Apple Notes tiada eksport, jadi jauh dari Mac tempatnya, yang dilepaskan di sini ialah folder yang ditulis oleh sebuah pengeksport.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc membaca yang ini, daripada fail pada cakera anda.',
   'Read it with pandoc': 'Baca dengan pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Hanya pandoc membaca yang ini, dan ia tidak dipasang pada mesin ini.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Hanya pandoc membaca yang ini, dan ia tidak dipasang pada mesin ini.',
   Rows: 'Baris',
   'As a table': 'Sebagai jadual',
   'One note per row': 'Satu nota bagi setiap baris',
   Into: 'Ke',
   'Worth knowing': 'Perlu diketahui',
   '{count} notes arrived.': '{count} nota telah masuk.',
-  '{count} names were taken, so those files stepped aside.': '{count} nama sudah digunakan, jadi fail itu mengalih.',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} nama sudah digunakan, jadi fail itu mengalih.',
   'A table': 'Satu jadual',
   'Markdown files': 'Fail markdown',
   'A document': 'Satu dokumen',
+  'A PDF, as pages to write on': 'Sebuah PDF, sebagai halaman untuk ditulis di atasnya',
   'Undo the import': 'Buat asal import',
   'Choose an export': 'Pilih satu eksport',
   Under: 'Di bawah',
@@ -982,13 +1064,15 @@ export const ms: Dictionary = {
   'Keep both copies': 'Simpan kedua-dua salinan',
   'Let the newest win': 'Biarkan yang terbaharu menang',
   'Ask me each time': 'Tanya saya setiap kali',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Tiada apa-apa dibuang: yang tidak menang disimpan sebagai versi.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Tiada apa-apa dibuang: yang tidak menang disimpan sebagai versi.',
   'Waiting for you': 'Menunggu anda',
   'Keep mine': 'Simpan milik saya',
   'Take theirs': 'Ambil milik mereka',
   'Keep both': 'Simpan kedua-duanya',
   'What synced': 'Apa yang disegerakkan',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Belum ada. Laluan yang tidak mengalihkan apa-apa tidak dicatat.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Belum ada. Laluan yang tidak mengalihkan apa-apa tidak dicatat.',
   'Clear the list': 'Kosongkan senarai',
   '{count} down': '{count} turun',
   '{count} up': '{count} naik',
@@ -998,19 +1082,23 @@ export const ms: Dictionary = {
   'This space, as it was': 'Ruang ini, seperti dahulu',
   '{count} days ago': '{count} hari lalu',
   'What would change?': 'Apa yang akan berubah?',
-  '{count} notes would go back to what they said then.': '{count} nota akan kembali kepada isinya ketika itu.',
+  '{count} notes would go back to what they said then.':
+    '{count} nota akan kembali kepada isinya ketika itu.',
   'Nothing has changed since then.': 'Tiada apa-apa berubah sejak itu.',
   '{count} notes went back.': '{count} nota telah dikembalikan.',
-  'The account keeps a month of versions of every note that syncs.': 'Akaun menyimpan versi sebulan bagi setiap nota yang disegerakkan.',
+  'The account keeps a month of versions of every note that syncs.':
+    'Akaun menyimpan versi sebulan bagi setiap nota yang disegerakkan.',
   'That did not work.': 'Itu tidak berjaya.',
   'Signing in': 'Masuk',
   'Ask for a code from an app': 'Minta kod daripada satu aplikasi',
   'Turn on': 'Hidupkan',
   'Turn off': 'Matikan',
-  'Put this into your authenticator app, then type its code.': 'Masukkan ini ke dalam aplikasi pengesah anda, kemudian taip kodnya.',
+  'Put this into your authenticator app, then type its code.':
+    'Masukkan ini ke dalam aplikasi pengesah anda, kemudian taip kodnya.',
   Secret: 'Rahsia',
   'Code from the app': 'Kod daripada aplikasi',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Simpan ini di tempat selamat. Setiap satu berfungsi sekali dan tidak ditunjukkan lagi.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Simpan ini di tempat selamat. Setiap satu berfungsi sekali dan tidak ditunjukkan lagi.',
   'Recovery codes': 'Kod pemulihan',
   'Recovery code': 'Kod pemulihan',
   'Recovery codes left': 'Kod pemulihan yang tinggal',
@@ -1018,7 +1106,8 @@ export const ms: Dictionary = {
   'Use a recovery code': 'Guna kod pemulihan',
   'Now the code from your authenticator app': 'Sekarang kod daripada aplikasi pengesah anda',
   'That code is not right.': 'Kod itu tidak betul.',
-  'This service cannot keep a second factor.': 'Perkhidmatan ini tidak dapat menyimpan faktor kedua.',
+  'This service cannot keep a second factor.':
+    'Perkhidmatan ini tidak dapat menyimpan faktor kedua.',
   'Signed in on': 'Masuk pada',
   'A device': 'Satu peranti',
   'this one': 'yang ini',
@@ -1032,7 +1121,8 @@ export const ms: Dictionary = {
   Pages: 'Halaman',
   'Page {number} of {count}': 'Halaman {number}/{count}',
   'What is selected': 'Yang dipilih',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Kanvas: {cards} kad, {links} pautan, {drawings} lukisan',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Kanvas: {cards} kad, {links} pautan, {drawings} lukisan',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Pembekal',
@@ -1046,8 +1136,10 @@ export const ms: Dictionary = {
   'Asking…': 'Bertanya…',
   'No providers yet.': 'Belum ada pembekal.',
   'Add {name}': 'Tambah {name}',
-  'Keys stay in the secure store on this device.': 'Kunci kekal dalam simpanan selamat peranti ini.',
-  'This browser holds the keys in its own storage.': 'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
+  'Keys stay in the secure store on this device.':
+    'Kunci kekal dalam simpanan selamat peranti ini.',
+  'This browser holds the keys in its own storage.':
+    'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
   'Used by the glasses': 'Digunakan cermin mata',
   'Could not read the models.': 'Tidak dapat membaca senarai model.',
   'That provider is not set up yet.': 'Pembekal itu belum disiapkan.',
@@ -1069,29 +1161,110 @@ export const ms: Dictionary = {
   'AI block': 'Blok AI',
   'Highlight colour': 'Warna sorotan',
   'A single newline breaks the line': 'Satu baris baharu memutuskan baris',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Mati ialah markdown standard: dua baris satu perenggan dibaca sebagai satu; Obsidian menamakannya pemutus baris ketat.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Mati ialah markdown standard: dua baris satu perenggan dibaca sebagai satu; Obsidian menamakannya pemutus baris ketat.',
   'New links': 'Pautan baharu',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink menamakan nota, jadi pautan kekal apabila nota dinamakan semula; kedua-dua ejaan tetap dibaca.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink menamakan nota, jadi pautan kekal apabila nota dinamakan semula; kedua-dua ejaan tetap dibaca.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, nama terpendek',
   'Markdown, relative path': 'Markdown, laluan relatif',
   'Markdown, path in the space': 'Markdown, laluan dalam ruang',
+  // Publishing part one.
+  'The folders you choose become public.': 'Folder yang anda pilih menjadi umum.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Sesiapa dengan alamatnya boleh membaca yang diterbitkan, termasuk draf.',
+  'Which notes': 'Nota yang mana',
+  'Notes outside a rule': 'Nota tanpa peraturan',
+  'Are published': 'Diterbitkan',
+  'Stay private': 'Kekal peribadi',
+  'Follows the rule': 'Mengikut peraturan',
+  Published: 'Diterbitkan',
+  Private: 'Peribadi',
+  '{count} pages': '{count} halaman',
+  '{count} new': '{count} baharu',
+  '{count} gone': '{count} ditarik',
+  'and more': 'dan lagi',
+  'How it appears': 'Cara ia kelihatan',
+  Description: 'Keterangan',
+  'What this site is': 'Tentang laman ini',
+  'Tab icon': 'Ikon tab',
+  Password: 'Kata laluan',
+  'Set a new one': 'Tetapkan yang baharu',
+  'Ask for a password': 'Minta kata laluan',
+  'No password': 'Tiada kata laluan',
+  'Remove the password': 'Buang kata laluan',
+  'Scan this with your authenticator app, then type its code.':
+    'Imbas ini dengan aplikasi pengesah anda, kemudian taip kodnya.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Foto',
+  Dictate: 'Imlak',
+  'Add to {name}': 'Tambah ke {name}',
+  // Web tabs
+  Reload: 'Muat semula',
+  'Clip this page': 'Simpan halaman ini',
+  'Clip the link': 'Simpan pautan',
+  'Allow the camera': 'Benarkan kamera',
+  'Allow the clipboard': 'Benarkan papan klip',
+  'Open in the browser': 'Buka dalam pelayar',
+  'Copy the address': 'Salin alamat',
+  'Show it here': 'Tunjukkan di sini',
+  Website: 'Laman web',
+  'Open a website': 'Buka laman web',
+  // Recording, meetings and what a model wrote
+  Record: 'Rakam',
+  Recording: 'Rakaman',
+  'Stop recording': 'Henti rakaman',
+  'Meeting notes': 'Nota mesyuarat',
+  Meeting: 'Mesyuarat',
+  'Stop the meeting': 'Tamatkan mesyuarat',
+  Transcribe: 'Transkripkan',
+  Transcript: 'Transkrip',
+  'Transcript ({language})': 'Transkrip ({language})',
+  'Written by {model}': 'Ditulis oleh {model}',
+  'Saving the recording': 'Menyimpan rakaman',
+  'Turning the recording into words': 'Menukar rakaman menjadi perkataan',
+  'Open a space to record into.': 'Buka satu ruang untuk merakam ke dalamnya.',
+  'Sign in to take meeting notes.': 'Masuk untuk membuat nota mesyuarat.',
+  'Sign in to turn a recording into words.': 'Masuk untuk menukar rakaman menjadi perkataan.',
+  'That microphone could not be opened.': 'Mikrofon itu tidak dapat dibuka.',
+  'That recording could not be saved.': 'Rakaman itu tidak dapat disimpan.',
+  'That recording could not be turned into words.':
+    'Rakaman itu tidak dapat ditukar menjadi perkataan.',
+  'That recording is not in this space.': 'Rakaman itu tiada dalam ruang ini.',
+  'That recording is too long to turn into words in one go.':
+    'Rakaman itu terlalu panjang untuk ditukar menjadi perkataan sekali gus.',
+  'That is as much as one recording may hold.': 'Itulah sebanyak yang dimuat satu rakaman.',
+  'Nothing could be heard in that recording.': 'Tiada apa yang didengar dalam rakaman itu.',
+  'A piece of the transcript is being tried again.': 'Sekeping transkrip sedang dicuba semula.',
+  'The transcript is behind and losing pieces.': 'Transkrip ketinggalan dan kehilangan kepingan.',
+  '{count} pieces of this meeting were lost.': '{count} kepingan mesyuarat ini hilang.',
+  'Add an AI provider in settings to summarise.':
+    'Tambah pembekal AI dalam tetapan untuk meringkaskan.',
+  'The summary could not be written.': 'Ringkasan tidak dapat ditulis.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'tidak dapat menghantar mel - cuba lagi',
   'start again - that took too long': 'mula semula - itu mengambil masa terlalu lama',
   'sign in to do that': 'masuk untuk melakukannya',
   'that is not something a token can do': 'itu bukan sesuatu yang boleh dilakukan token',
   'something went wrong here - try again': 'ada sesuatu yang tidak kena di sini - cuba lagi',
-  'this service cannot keep a secret safely': 'perkhidmatan ini tidak dapat menyimpan rahsia dengan selamat',
+  'this service cannot keep a secret safely':
+    'perkhidmatan ini tidak dapat menyimpan rahsia dengan selamat',
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'imej dan PDF sahaja',
   'that file is too big': 'fail itu terlalu besar',
-  'that is more settings than an account holds': 'itu lebih banyak tetapan daripada yang dimuatkan satu akaun',
-  'that is more bookmarks than a space holds': 'itu lebih banyak penanda daripada yang dimuatkan satu ruang',
-  'that is more paths than a space leaves out': 'itu lebih banyak laluan daripada yang dikecualikan satu ruang',
-  'that is more files than a space keeps': 'itu lebih banyak fail daripada yang disimpan satu ruang',
-  'that is more than a space keeps about its graph': 'itu lebih banyak daripada yang disimpan satu ruang tentang grafnya',
-  'that is more folder icons than a space holds': 'itu lebih banyak ikon folder daripada yang dimuatkan satu ruang',
+  'that is more settings than an account holds':
+    'itu lebih banyak tetapan daripada yang dimuatkan satu akaun',
+  'that is more bookmarks than a space holds':
+    'itu lebih banyak penanda daripada yang dimuatkan satu ruang',
+  'that is more paths than a space leaves out':
+    'itu lebih banyak laluan daripada yang dikecualikan satu ruang',
+  'that is more files than a space keeps':
+    'itu lebih banyak fail daripada yang disimpan satu ruang',
+  'that is more than a space keeps about its graph':
+    'itu lebih banyak daripada yang disimpan satu ruang tentang grafnya',
+  'that is more folder icons than a space holds':
+    'itu lebih banyak ikon folder daripada yang dimuatkan satu ruang',
   // Sharing a space, and being let into one.
   'nobody by that address': 'tiada sesiapa pada alamat itu',
   'nobody by that name': 'tiada sesiapa dengan nama itu',

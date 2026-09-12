@@ -7,6 +7,12 @@ export const zhHantHK: Dictionary = {
   'Open file': '開啟檔案',
   'New note inside': '在其中新增筆記',
   'New canvas': '新增畫布',
+  'New page note': '新增分頁筆記',
+  'Add a page': '加一頁',
+  'Add a page after this': '在此頁之後加一頁',
+  'Delete this page': '刪除此頁',
+  'Page {number}': '第 {number} 頁',
+  '{at} / {count}': '{at} / {count}',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',
@@ -34,7 +40,8 @@ export const zhHantHK: Dictionary = {
   'Create a space': '建立空間',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
-  'Every note in this space is deleted from your computer.': '此空間中的每一篇筆記都會從這部電腦刪除。',
+  'Every note in this space is deleted from your computer.':
+    '此空間中的每一篇筆記都會從這部電腦刪除。',
   'The notes inside it go too.': '其中的筆記也會一併刪除。',
   Journal: '日記',
   Create: '建立',
@@ -206,7 +213,8 @@ export const zhHantHK: Dictionary = {
   'Image not found': '找不到圖片',
   'Delete {count} items': '刪除{count}項',
   'Recently deleted': '最近刪除',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': '刪除的筆記和空間會在此保留14天，之後永久清除。',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    '刪除的筆記和空間會在此保留14天，之後永久清除。',
   'Nothing here.': '這裏沒有內容。',
   Empty: '清空',
   Spaces: '空間',
@@ -257,7 +265,8 @@ export const zhHantHK: Dictionary = {
   'Previous slide': '上一張幻燈片',
   'Read-only': '唯讀',
   'No preview': '無預覽',
-  'Shown as plain text, so typing stays instant in a note this long': '以純文字顯示，這麼長的筆記輸入起來才不會卡',
+  'Shown as plain text, so typing stays instant in a note this long':
+    '以純文字顯示，這麼長的筆記輸入起來才不會卡',
   'Leave read-only': '離開唯讀',
   Next: '下一個',
   Previous: '上一個',
@@ -448,9 +457,11 @@ export const zhHantHK: Dictionary = {
   'Line numbers': '行號',
   Syntax: '語法',
   'Strict CommonMark': '嚴格CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': '只採用標準Markdown規則，沒有表格、待辦列表和腳註。',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    '只採用標準Markdown規則，沒有表格、待辦列表和腳註。',
   'Smart punctuation': '智能標點',
-  'Turns straight quotes and dashes into typographic ones as you type.': '輸入時將直引號和連字符轉為印刷體符號。',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    '輸入時將直引號和連字符轉為印刷體符號。',
   'Puts 1., 1.1, 1.2 in front of headings.': '在標題前加上1.、1.1、1.2。',
   'Numbers display equations so you can refer to them.': '為獨立公式編號，方便引用。',
   Ligatures: '連字',
@@ -515,7 +526,8 @@ export const zhHantHK: Dictionary = {
   'Send a new code': '重新發送驗證碼',
   'Code sent to': '驗證碼已發送至',
   'You already have notes on this computer.': '這部電腦上已經有筆記了。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': '保留它們，它們會併入你的帳戶。清除它們，則只留下帳戶中已有的內容，此操作無法復原。',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    '保留它們，它們會併入你的帳戶。清除它們，則只留下帳戶中已有的內容，此操作無法復原。',
   'Keep them': '保留',
   'Erase them': '清除',
   'Digit {number}': '第{number}位',
@@ -531,7 +543,8 @@ export const zhHantHK: Dictionary = {
   'Only {name}': '只有{name}',
   'Publish this space as a blog': '將此空間發佈為博客',
   'Everything in this space becomes public.': '此空間中的所有內容都會公開。',
-  'Every note, including drafts, is readable by anyone with the address.': '只要知道網址，任何人都能讀到每一篇筆記，草稿也一樣。',
+  'Every note, including drafts, is readable by anyone with the address.':
+    '只要知道網址，任何人都能讀到每一篇筆記，草稿也一樣。',
   Address: '網址',
   'Add these at your registrar, then verify.': '請在域名註冊商處新增這些記錄，然後驗證。',
   Verify: '驗證',
@@ -544,7 +557,8 @@ export const zhHantHK: Dictionary = {
   'checking…': '檢查中…',
   // LLM
   'Connect an LLM to your notes': '將LLM連接到你的筆記',
-  'Sign in first - the connector reaches the notes in your account.': '請先登入，連接器讀取的是你帳戶中的筆記。',
+  'Sign in first - the connector reaches the notes in your account.':
+    '請先登入，連接器讀取的是你帳戶中的筆記。',
   'Let it write to my notes, not only read them': '允許它寫入我的筆記，不只是讀取',
   'Create a token': '建立令牌',
   'Replace the token': '更換令牌',
@@ -560,27 +574,35 @@ export const zhHantHK: Dictionary = {
   'Reads your notes.': '讀取你的筆記。',
   'Reads and writes your notes.': '讀取並寫入你的筆記。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI助手可以讀取你的筆記，若你允許，也能修改。它用你的Nib電郵登入，不需要貼上任何東西。',
-  'In Claude, open Settings → Connectors and click Add custom connector.': '在Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI助手可以讀取你的筆記，若你允許，也能修改。它用你的Nib電郵登入，不需要貼上任何東西。',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    '在Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
   'Open Claude’s connectors': '開啟Claude的連接器',
   'Fill in the two fields and click Add.': '填好這兩個欄位，然後點擊「新增」。',
   'Click Connect and sign in with your Nib email.': '點擊「連接」，用你的Nib電郵登入。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': '在終端機中運行，然後在Claude Code輸入/mcp登入。',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    '在終端機中運行，然後在Claude Code輸入/mcp登入。',
   'Fill in the form and click Create.': '填好表單，然後點擊「建立」。',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': '在ChatGPT中開啟「設定→插件」，點擊加號按鈕。',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    '在ChatGPT中開啟「設定→插件」，點擊加號按鈕。',
   'Open ChatGPT’s plugins': '開啟ChatGPT的插件',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': '沒有「插件」一節或加號按鈕？請先在「設定→安全與登入」中開啟開發者模式。',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    '沒有「插件」一節或加號按鈕？請先在「設定→安全與登入」中開啟開發者模式。',
   'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT詢問時，用你的Nib電郵登入。',
   'To use it in a chat, type @ and pick Nib.': '在對話中輸入@並選擇Nib即可使用。',
   'Server URL': '伺服器網址',
   Authentication: '驗證方式',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': '任何支援Streamable HTTP和OAuth的MCP客戶端。把網址給它：它會自行註冊並開啟Nib的登入頁面。',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    '任何支援Streamable HTTP和OAuth的MCP客戶端。把網址給它：它會自行註冊並開啟Nib的登入頁面。',
   'Show config': '顯示設定檔',
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址的客戶端。',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': '無法登入的客戶端可以改用令牌。令牌只顯示一次。',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    '無法登入的客戶端可以改用令牌。令牌只顯示一次。',
   // Export
   'Plain text': '純文字',
   'Markdown with the pictures': '含圖片的Markdown',
@@ -604,8 +626,10 @@ export const zhHantHK: Dictionary = {
   'Version history': '版本歷史',
   'Copy link to this note': '複製此筆記的連結',
   'that link could not be followed': '無法開啟該連結',
-  'Save this note first; there is nothing to compare against yet.': '請先儲存此筆記，目前還沒有可比對的內容。',
-  'No earlier versions yet. One is kept each time you save.': '還沒有更早的版本。每次儲存都會保留一個。',
+  'Save this note first; there is nothing to compare against yet.':
+    '請先儲存此筆記，目前還沒有可比對的內容。',
+  'No earlier versions yet. One is kept each time you save.':
+    '還沒有更早的版本。每次儲存都會保留一個。',
   'Restore this version': '還原此版本',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': '那裏已經有一篇筆記',
@@ -666,7 +690,8 @@ export const zhHantHK: Dictionary = {
   'use a domain of your own': '請使用你自己的域名',
   'the domain no longer points here': '該域名已不再指向這裏',
   'Cloudflare has blocked this domain': 'Cloudflare已封鎖此域名',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': '若服務商不允許在域名根層使用CNAME，請改用ALIAS或ANAME記錄，或CNAME攤平。',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    '若服務商不允許在域名根層使用CNAME，請改用ALIAS或ANAME記錄，或CNAME攤平。',
   // Shortcuts
   Shortcuts: '快捷鍵',
   'Search shortcuts': '搜尋快捷鍵',
@@ -713,7 +738,8 @@ export const zhHantHK: Dictionary = {
   'Always on top': '總在最上層',
   'What is new': '更新內容',
   'Report an issue': '報告問題',
-  '{name} changed on the disk. What is in the editor is yours.': '{name}在硬盤上已更改。編輯器中的內容仍是你的。',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name}在硬盤上已更改。編輯器中的內容仍是你的。',
   'Move the line up': '此行上移',
   'Move the line down': '此行下移',
   'Copy the line up': '向上複製此行',
@@ -748,7 +774,8 @@ export const zhHantHK: Dictionary = {
   Escape: 'Esc',
   Quit: '退出',
   'The clipboard belongs to the system.': '剪貼板由系統掌管。',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': '方向鍵、Home、End、Page up和Page down屬於文字。',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    '方向鍵、Home、End、Page up和Page down屬於文字。',
   'Backspace and Delete belong to the text.': 'Backspace和Delete屬於文字。',
   'Enter closes a code block and carries a list on.': 'Enter結束代碼區塊，並延續列表。',
   'Tab moves on through the app as well as indenting.': 'Tab除了縮進，也在應用程式中往前移動。',
@@ -767,7 +794,8 @@ export const zhHantHK: Dictionary = {
   'Show what it holds': '展開內容',
   'Hide what it holds': '收起內容',
   'Moving through a list': '在列表中移動',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': '方向鍵、Enter和Esc在任何開啟的畫面都有效，它們不是快捷鍵。',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    '方向鍵、Enter和Esc在任何開啟的畫面都有效，它們不是快捷鍵。',
   'Split right': '向右拆分',
   'Split down': '向下拆分',
   'Other pane': '另一個窗格',
@@ -789,7 +817,8 @@ export const zhHantHK: Dictionary = {
   'Follow the link': '開啟連結',
   'Replace your own keys?': '替換你改過的按鍵？',
   Replace: '替換',
-  'The keys you changed go back to what this keyboard says.': '你改過的按鍵會回到此鍵盤配置的設定。',
+  'The keys you changed go back to what this keyboard says.':
+    '你改過的按鍵會回到此鍵盤配置的設定。',
   NORMAL: '一般',
   INSERT: '插入',
   VISUAL: '視覺',
@@ -911,7 +940,8 @@ export const zhHantHK: Dictionary = {
   Leave: '離開',
   'Leave space': '離開空間',
   'Leave {name}?': '離開{name}？',
-  'It stays with everybody else. Its notes go from your computer.': '它對其他人維持不變。其中的筆記會從你的電腦移除。',
+  'It stays with everybody else. Its notes go from your computer.':
+    '它對其他人維持不變。其中的筆記會從你的電腦移除。',
   '{who} shared {space} with you': '{who}與你分享了{space}',
   'Shared with you': '與你分享',
   'That link does not open anything': '該連結打不開任何東西',
@@ -928,7 +958,8 @@ export const zhHantHK: Dictionary = {
   'Release channel': '發佈通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.': '穩定版跟着正式發佈走，開發版跟着main的每次推送，可能會壞掉。',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    '穩定版跟着正式發佈走，開發版跟着main的每次推送，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -939,14 +970,20 @@ export const zhHantHK: Dictionary = {
   'Rewrite {count} things?': '改寫{count}處？',
   'In {count} notes.': '涉及{count}篇筆記。',
   Rewrite: '改寫',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '有{count}段內容已加密，離開Evernote就無法讀取',
-  '{count} notes had a reminder, which the export does not carry': '{count}篇筆記設有提醒，匯出檔不會帶着提醒',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '有{count}段內容已加密，離開Evernote就無法讀取',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count}篇筆記設有提醒，匯出檔不會帶着提醒',
   '{count} notes were in the bin and stay there': '{count}篇筆記在垃圾桶裏，仍留在那裏',
-  '{count} archived notes are in a folder called Archive': '{count}篇已歸檔的筆記放在名為Archive的檔案夾中',
+  '{count} archived notes are in a folder called Archive':
+    '{count}篇已歸檔的筆記放在名為Archive的檔案夾中',
   'The colours a note had are not kept': '筆記原有的顏色不會保留',
-  '{count} block references were written out as the words they pointed at': '{count}處區塊引用已寫成它指向的文字',
-  '{count} saved views are left out, and every row is in the table': '{count}個已儲存的視圖被忽略，所有行都在表格中',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count}個頁面以HTML進來，文字保留，外觀不保留',
+  '{count} block references were written out as the words they pointed at':
+    '{count}處區塊引用已寫成它指向的文字',
+  '{count} saved views are left out, and every row is in the table':
+    '{count}個已儲存的視圖被忽略，所有行都在表格中',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count}個頁面以HTML進來，文字保留，外觀不保留',
   'There are no rows in this file.': '此檔案中沒有任何行。',
   'Nothing in there can be read as notes.': '其中沒有能讀成筆記的內容。',
   'That export could not be read.': '無法讀取該匯出檔。',
@@ -957,20 +994,45 @@ export const zhHantHK: Dictionary = {
   'This space': '此空間',
   'Drop an export here': '把匯出檔拖到這裏',
   'A zip, a folder, or a file another app wrote': '一個zip、一個檔案夾，或其他應用程式寫出的檔案',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple備忘錄和Apple日誌把筆記放在只有它們打得開的地方。請先在那裏匯出，再把它匯入。',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} 張圖片係 HEIC 格式，只有蘋果顯示得到',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} 則筆記加了密碼，只有「備忘錄」開得到',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} 則筆記在「最近刪除」，仍然留在嗰度',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} 幅圖畫同掃描頁係「備忘錄」自己畫嘅圖片',
+  '{count} tables inside notes do not come over': '筆記內嘅 {count} 個表格唔會轉入',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} 個附件在 iCloud，唔係在這部 Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS 將這些筆記放在「完整磁碟存取權」之後。',
+  'There are no notes in Apple Notes on this Mac.': '這部 Mac 嘅「備忘錄」裡面沒有筆記。',
+  'Those notes could not be read.': '讀唔到這些筆記。',
+  'Read them from this Mac': '從這部 Mac 讀取',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    '在「完整磁碟存取權」開啟 nibeditor，然後再試一次。',
+  'Open the setting': '開啟設定',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    '「日誌」可以自己匯出：日誌、設定、匯出。「備忘錄」沒有匯出，所以在筆記所在嘅 Mac 以外，要拖入嘅係匯出工具寫出嘅資料夾。',
   'Pandoc reads this one, from the file on your disk.': '這種格式由pandoc直接從硬盤上的檔案讀取。',
   'Read it with pandoc': '用pandoc讀取',
-  'Only pandoc reads this one, and it is not installed on this machine.': '這種格式只有pandoc讀得懂，而這部機器上沒有安裝pandoc。',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    '這種格式只有pandoc讀得懂，而這部機器上沒有安裝pandoc。',
   Rows: '行',
   'As a table': '當成表格',
   'One note per row': '每行一篇筆記',
   Into: '目標',
   'Worth knowing': '值得一提',
   '{count} notes arrived.': '已匯入{count}篇筆記。',
-  '{count} names were taken, so those files stepped aside.': '有{count}個名稱已被佔用，這些檔案已改名讓位。',
+  '{count} names were taken, so those files stepped aside.':
+    '有{count}個名稱已被佔用，這些檔案已改名讓位。',
   'A table': '一個表格',
   'Markdown files': 'Markdown檔案',
   'A document': '一份文檔',
+  'A PDF, as pages to write on': '一份 PDF，當作可以寫字嘅頁面',
   'Undo the import': '復原這次匯入',
   'Choose an export': '選擇匯出檔',
   Under: '位於',
@@ -982,13 +1044,15 @@ export const zhHantHK: Dictionary = {
   'Keep both copies': '兩份都保留',
   'Let the newest win': '以最新的為準',
   'Ask me each time': '每次都問我',
-  'Nothing is ever thrown away: what does not win is kept as a version.': '不會丟掉任何東西：沒被採用的那份會留成一個版本。',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    '不會丟掉任何東西：沒被採用的那份會留成一個版本。',
   'Waiting for you': '等你處理',
   'Keep mine': '保留我的',
   'Take theirs': '採用對方的',
   'Keep both': '兩者都留',
   'What synced': '同步記錄',
-  'Nothing yet. A pass that moves nothing is not written down.': '還沒有記錄。沒有搬動任何東西的同步不會記下來。',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    '還沒有記錄。沒有搬動任何東西的同步不會記下來。',
   'Clear the list': '清空列表',
   '{count} down': '下載{count}',
   '{count} up': '上載{count}',
@@ -1001,16 +1065,19 @@ export const zhHantHK: Dictionary = {
   '{count} notes would go back to what they said then.': '{count}篇筆記會回到當時的內容。',
   'Nothing has changed since then.': '從那時起沒有任何變化。',
   '{count} notes went back.': '{count}篇筆記已回溯。',
-  'The account keeps a month of versions of every note that syncs.': '帳戶會為每篇同步的筆記保留一個月的版本。',
+  'The account keeps a month of versions of every note that syncs.':
+    '帳戶會為每篇同步的筆記保留一個月的版本。',
   'That did not work.': '沒有成功。',
   'Signing in': '登入',
   'Ask for a code from an app': '要求應用程式提供驗證碼',
   'Turn on': '開啟',
   'Turn off': '關閉',
-  'Put this into your authenticator app, then type its code.': '把它加進你的驗證器應用程式，然後輸入它的驗證碼。',
+  'Put this into your authenticator app, then type its code.':
+    '把它加進你的驗證器應用程式，然後輸入它的驗證碼。',
   Secret: '密鑰',
   'Code from the app': '應用程式中的驗證碼',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': '請妥善保存。每一個只能用一次，而且不會再顯示。',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    '請妥善保存。每一個只能用一次，而且不會再顯示。',
   'Recovery codes': '恢復碼',
   'Recovery code': '恢復碼',
   'Recovery codes left': '剩餘恢復碼',
@@ -1032,7 +1099,8 @@ export const zhHantHK: Dictionary = {
   Pages: '頁',
   'Page {number} of {count}': '第{number}頁，共{count}頁',
   'What is selected': '所選內容',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': '畫布：{cards}張卡片、{links}條連線、{drawings}處繪製',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    '畫布：{cards}張卡片、{links}條連線、{drawings}處繪製',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '服務商',
@@ -1069,13 +1137,84 @@ export const zhHantHK: Dictionary = {
   'AI block': 'AI區塊',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': '關閉即標準Markdown：同一段的兩行讀成一行；Obsidian稱之為嚴格斷行。',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    '關閉即標準Markdown：同一段的兩行讀成一行；Obsidian稱之為嚴格斷行。',
   'New links': '新連結',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink以名稱指向筆記，重新命名後連結依然有效；兩種寫法都讀得懂。',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink以名稱指向筆記，重新命名後連結依然有效；兩種寫法都讀得懂。',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown，最短名稱',
   'Markdown, relative path': 'Markdown，相對路徑',
   'Markdown, path in the space': 'Markdown，空間內路徑',
+  // Publishing part one.
+  'The folders you choose become public.': '揀咗嘅資料夾會公開。',
+  'Anyone with the address can read what is published, drafts included.':
+    '知道網址嘅任何人都讀得到已發佈嘅內容，包括草稿。',
+  'Which notes': '邊些筆記',
+  'Notes outside a rule': '不在規則內嘅筆記',
+  'Are published': '會發佈',
+  'Stay private': '保持私密',
+  'Follows the rule': '跟從規則',
+  Published: '已發佈',
+  Private: '私密',
+  '{count} pages': '{count} 頁',
+  '{count} new': '新增 {count}',
+  '{count} gone': '撤下 {count}',
+  'and more': '還有更多',
+  'How it appears': '顯示方式',
+  Description: '說明',
+  'What this site is': '本站簡介',
+  'Tab icon': '分頁圖示',
+  Password: '密碼',
+  'Set a new one': '設定新密碼',
+  'Ask for a password': '要求密碼',
+  'No password': '沒有密碼',
+  'Remove the password': '移除密碼',
+  'Scan this with your authenticator app, then type its code.':
+    '用驗證器應用程式掃描此碼，然後輸入佢給出嘅驗證碼。',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: '相片',
+  Dictate: '語音輸入',
+  'Add to {name}': '加入 {name}',
+  // Web tabs
+  Reload: '重新載入',
+  'Clip this page': '儲存此頁',
+  'Clip the link': '儲存連結',
+  'Allow the camera': '允許使用相機',
+  'Allow the clipboard': '允許使用剪貼簿',
+  'Open in the browser': '在瀏覽器開啟',
+  'Copy the address': '複製網址',
+  'Show it here': '在此顯示',
+  Website: '網站',
+  'Open a website': '開啟網站',
+  // Recording, meetings and what a model wrote
+  Record: '錄音',
+  Recording: '錄音',
+  'Stop recording': '停止錄音',
+  'Meeting notes': '會議筆記',
+  Meeting: '會議',
+  'Stop the meeting': '結束會議',
+  Transcribe: '轉成文字',
+  Transcript: '文字記錄',
+  'Transcript ({language})': '文字記錄（{language}）',
+  'Written by {model}': '由 {model} 撰寫',
+  'Saving the recording': '正在儲存錄音',
+  'Turning the recording into words': '正在將錄音轉成文字',
+  'Open a space to record into.': '開啟一個空間嚟錄入。',
+  'Sign in to take meeting notes.': '登入之後可以記會議筆記。',
+  'Sign in to turn a recording into words.': '登入之後可以將錄音轉成文字。',
+  'That microphone could not be opened.': '開唔到嗰個麥克風。',
+  'That recording could not be saved.': '儲存唔到嗰段錄音。',
+  'That recording could not be turned into words.': '轉唔到嗰段錄音成文字。',
+  'That recording is not in this space.': '嗰段錄音不在此空間內。',
+  'That recording is too long to turn into words in one go.': '嗰段錄音太長，一次轉唔成文字。',
+  'That is as much as one recording may hold.': '一段錄音最多就得咁多。',
+  'Nothing could be heard in that recording.': '嗰段錄音聽唔到任何聲音。',
+  'A piece of the transcript is being tried again.': '正在重試文字記錄嘅一段。',
+  'The transcript is behind and losing pieces.': '文字記錄落後並且遺失片段。',
+  '{count} pieces of this meeting were lost.': '今次會議遺失咗 {count} 個片段。',
+  'Add an AI provider in settings to summarise.': '在設定加入 AI 供應商嚟產生摘要。',
+  'The summary could not be written.': '寫唔出摘要。',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '無法發出郵件，請再試一次',
   'start again - that took too long': '花太久了，請重新開始',

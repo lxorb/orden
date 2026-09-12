@@ -7,6 +7,12 @@ export const th: Dictionary = {
   'Open file': 'เปิดไฟล์',
   'New note inside': 'สร้างโน้ตข้างใน',
   'New canvas': 'แคนวาสใหม่',
+  'New page note': 'โน้ตแบบหน้าใหม่',
+  'Add a page': 'เพิ่มหน้า',
+  'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
+  'Delete this page': 'ลบหน้านี้',
+  'Page {number}': 'หน้า {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',
   'Note or picture': 'โน้ตหรือรูป',
@@ -34,7 +40,8 @@ export const th: Dictionary = {
   'Create a space': 'สร้างพื้นที่',
   'Delete space': 'ลบพื้นที่',
   'Delete {name}?': 'ลบ {name}?',
-  'Every note in this space is deleted from your computer.': 'โน้ตทุกอันในพื้นที่นี้จะถูกลบจากเครื่องของคุณ',
+  'Every note in this space is deleted from your computer.':
+    'โน้ตทุกอันในพื้นที่นี้จะถูกลบจากเครื่องของคุณ',
   'The notes inside it go too.': 'โน้ตที่อยู่ข้างในจะถูกลบไปด้วย',
   Journal: 'ไดอารี่',
   Create: 'สร้าง',
@@ -206,7 +213,8 @@ export const th: Dictionary = {
   'Image not found': 'ไม่พบรูป',
   'Delete {count} items': 'ลบ {count} รายการ',
   'Recently deleted': 'ลบล่าสุด',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'โน้ตและพื้นที่ที่ลบจะอยู่ที่นี่ 14 วัน แล้วหายไปถาวร',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'โน้ตและพื้นที่ที่ลบจะอยู่ที่นี่ 14 วัน แล้วหายไปถาวร',
   'Nothing here.': 'ไม่มีอะไร',
   Empty: 'ล้าง',
   Spaces: 'พื้นที่',
@@ -257,7 +265,8 @@ export const th: Dictionary = {
   'Previous slide': 'สไลด์ก่อนหน้า',
   'Read-only': 'อ่านเท่านั้น',
   'No preview': 'ไม่มีตัวอย่าง',
-  'Shown as plain text, so typing stays instant in a note this long': 'แสดงเป็นข้อความล้วนเพื่อให้การพิมพ์ในโน้ตยาวเช่นนี้ยังทันที',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'แสดงเป็นข้อความล้วนเพื่อให้การพิมพ์ในโน้ตยาวเช่นนี้ยังทันที',
   'Leave read-only': 'เลิกอ่านเท่านั้น',
   Next: 'ถัดไป',
   Previous: 'ก่อนหน้า',
@@ -353,7 +362,8 @@ export const th: Dictionary = {
   'OpenAI key': 'คีย์ OpenAI',
   Model: 'โมเดล',
   Reasoning: 'การให้เหตุผล',
-  'Kept encrypted on your account, and never shown again.': 'เก็บแบบเข้ารหัสไว้ในบัญชีของคุณ และไม่แสดงอีก',
+  'Kept encrypted on your account, and never shown again.':
+    'เก็บแบบเข้ารหัสไว้ในบัญชีของคุณ และไม่แสดงอีก',
   'set, ends in …{tail}': 'ตั้งแล้ว ลงท้าย …{tail}',
   'Saving the key': 'กำลังบันทึกคีย์',
   'this server cannot keep a key yet': 'เซิร์ฟเวอร์นี้ยังเก็บคีย์ไม่ได้',
@@ -448,9 +458,11 @@ export const th: Dictionary = {
   'Line numbers': 'เลขบรรทัด',
   Syntax: 'ไวยากรณ์',
   'Strict CommonMark': 'CommonMark เคร่งครัด',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'ใช้แค่กฎ Markdown มาตรฐาน ไม่มีตาราง รายการงาน หรือเชิงอรรถ',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'ใช้แค่กฎ Markdown มาตรฐาน ไม่มีตาราง รายการงาน หรือเชิงอรรถ',
   'Smart punctuation': 'วรรคตอนอัตโนมัติ',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'เปลี่ยนอัญประกาศตรงและขีดให้เป็นแบบตัวพิมพ์ขณะพิมพ์',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'เปลี่ยนอัญประกาศตรงและขีดให้เป็นแบบตัวพิมพ์ขณะพิมพ์',
   'Puts 1., 1.1, 1.2 in front of headings.': 'ใส่ 1., 1.1, 1.2 ไว้หน้าหัวข้อ',
   'Numbers display equations so you can refer to them.': 'ใส่เลขให้สมการแบบบล็อกเพื่ออ้างอิงได้',
   Ligatures: 'ลิเกเจอร์',
@@ -515,7 +527,8 @@ export const th: Dictionary = {
   'Send a new code': 'ส่งรหัสใหม่',
   'Code sent to': 'ส่งรหัสไปที่',
   'You already have notes on this computer.': 'คุณมีโน้ตอยู่บนเครื่องนี้แล้ว',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'เก็บไว้แล้วโน้ตจะรวมเข้าบัญชีของคุณ ลบทิ้งแล้วจะเหลือแค่สิ่งที่บัญชีมีอยู่ - ย้อนกลับไม่ได้',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'เก็บไว้แล้วโน้ตจะรวมเข้าบัญชีของคุณ ลบทิ้งแล้วจะเหลือแค่สิ่งที่บัญชีมีอยู่ - ย้อนกลับไม่ได้',
   'Keep them': 'เก็บไว้',
   'Erase them': 'ลบทิ้ง',
   'Digit {number}': 'หลัก {number}',
@@ -531,7 +544,8 @@ export const th: Dictionary = {
   'Only {name}': 'แค่ {name}',
   'Publish this space as a blog': 'เผยแพร่พื้นที่นี้เป็นบล็อก',
   'Everything in this space becomes public.': 'ทุกอย่างในพื้นที่นี้จะเป็นสาธารณะ',
-  'Every note, including drafts, is readable by anyone with the address.': 'ทุกโน้ตรวมถึงฉบับร่าง ใครมีที่อยู่ก็อ่านได้',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ทุกโน้ตรวมถึงฉบับร่าง ใครมีที่อยู่ก็อ่านได้',
   Address: 'ที่อยู่',
   'Add these at your registrar, then verify.': 'เพิ่มค่าเหล่านี้ที่ผู้จดโดเมน แล้วกดตรวจสอบ',
   Verify: 'ตรวจสอบ',
@@ -544,7 +558,8 @@ export const th: Dictionary = {
   'checking…': 'กำลังตรวจ…',
   // LLM
   'Connect an LLM to your notes': 'เชื่อม LLM กับโน้ตของคุณ',
-  'Sign in first - the connector reaches the notes in your account.': 'เข้าสู่ระบบก่อน - ตัวเชื่อมจะเข้าถึงโน้ตในบัญชีของคุณ',
+  'Sign in first - the connector reaches the notes in your account.':
+    'เข้าสู่ระบบก่อน - ตัวเชื่อมจะเข้าถึงโน้ตในบัญชีของคุณ',
   'Let it write to my notes, not only read them': 'ให้เขียนโน้ตได้ ไม่ใช่อ่านเท่านั้น',
   'Create a token': 'สร้างโทเคน',
   'Replace the token': 'เปลี่ยนโทเคน',
@@ -560,27 +575,37 @@ export const th: Dictionary = {
   'Reads your notes.': 'อ่านโน้ตของคุณ',
   'Reads and writes your notes.': 'อ่านและเขียนโน้ตของคุณ',
   Other: 'อื่นๆ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล Nib ของคุณ ไม่ต้องวางอะไร',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'ใน Claude เปิด Settings → Connectors แล้วคลิก Add custom connector',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล Nib ของคุณ ไม่ต้องวางอะไร',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'ใน Claude เปิด Settings → Connectors แล้วคลิก Add custom connector',
   'Open Claude’s connectors': 'เปิด Connectors ของ Claude',
   'Fill in the two fields and click Add.': 'กรอกสองช่องแล้วคลิก Add',
-  'Click Connect and sign in with your Nib email.': 'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล Nib ของคุณ',
+  'Click Connect and sign in with your Nib email.':
+    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล Nib ของคุณ',
   'Using Claude Code instead?': 'ใช้ Claude Code อยู่?',
   Command: 'คำสั่ง',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'รันในเทอร์มินัล แล้วพิมพ์ /mcp ใน Claude Code เพื่อเข้าสู่ระบบ',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'รันในเทอร์มินัล แล้วพิมพ์ /mcp ใน Claude Code เพื่อเข้าสู่ระบบ',
   'Fill in the form and click Create.': 'กรอกฟอร์มแล้วคลิก Create',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ใน ChatGPT เปิด Settings → Plugins แล้วคลิกปุ่มบวก',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ใน ChatGPT เปิด Settings → Plugins แล้วคลิกปุ่มบวก',
   'Open ChatGPT’s plugins': 'เปิด Plugins ของ ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'ไม่เห็นส่วน Plugins หรือปุ่มบวก? เปิด Developer mode ก่อนที่ Settings → Security and login',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'ไม่เห็นส่วน Plugins หรือปุ่มบวก? เปิด Developer mode ก่อนที่ Settings → Security and login',
   'Sign in with your Nib email when ChatGPT asks.': 'เข้าสู่ระบบด้วยอีเมล Nib เมื่อ ChatGPT ถาม',
   'To use it in a chat, type @ and pick Nib.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก Nib',
   'Server URL': 'URL เซิร์ฟเวอร์',
   Authentication: 'การยืนยันตัวตน',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'ปล่อยการตั้งค่า OAuth ขั้นสูงไว้ตามเดิม แล้วติ๊ก “I understand and want to continue”',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ Nib',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'ปล่อยการตั้งค่า OAuth ขั้นสูงไว้ตามเดิม แล้วติ๊ก “I understand and want to continue”',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ Nib',
   'Show config': 'แสดงคอนฟิก',
-  'For a client that takes a JSON block instead of a URL.': 'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'ไคลเอนต์ที่เข้าสู่ระบบไม่ได้ให้ใช้โทเคนแทน แสดงครั้งเดียวเท่านั้น',
+  'For a client that takes a JSON block instead of a URL.':
+    'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'ไคลเอนต์ที่เข้าสู่ระบบไม่ได้ให้ใช้โทเคนแทน แสดงครั้งเดียวเท่านั้น',
   // Export
   'Plain text': 'ข้อความล้วน',
   'Markdown with the pictures': 'Markdown พร้อมรูป',
@@ -604,8 +629,10 @@ export const th: Dictionary = {
   'Version history': 'ประวัติเวอร์ชัน',
   'Copy link to this note': 'คัดลอกลิงก์ของโน้ตนี้',
   'that link could not be followed': 'เปิดลิงก์นั้นไม่ได้',
-  'Save this note first; there is nothing to compare against yet.': 'บันทึกโน้ตนี้ก่อน ยังไม่มีอะไรให้เทียบ',
-  'No earlier versions yet. One is kept each time you save.': 'ยังไม่มีเวอร์ชันก่อนหน้า ระบบเก็บหนึ่งเวอร์ชันทุกครั้งที่บันทึก',
+  'Save this note first; there is nothing to compare against yet.':
+    'บันทึกโน้ตนี้ก่อน ยังไม่มีอะไรให้เทียบ',
+  'No earlier versions yet. One is kept each time you save.':
+    'ยังไม่มีเวอร์ชันก่อนหน้า ระบบเก็บหนึ่งเวอร์ชันทุกครั้งที่บันทึก',
   'Restore this version': 'กู้คืนเวอร์ชันนี้',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'มีโน้ตอยู่ที่นั่นแล้ว',
@@ -666,7 +693,8 @@ export const th: Dictionary = {
   'use a domain of your own': 'ใช้โดเมนของคุณเอง',
   'the domain no longer points here': 'โดเมนไม่ชี้มาที่นี่แล้ว',
   'Cloudflare has blocked this domain': 'Cloudflare บล็อกโดเมนนี้',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ที่รูทของโดเมน ให้ใช้เรคคอร์ด ALIAS หรือ ANAME หรือ CNAME flattening ถ้าผู้ให้บริการไม่ยอมให้ใช้ CNAME ที่นั่น',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ที่รูทของโดเมน ให้ใช้เรคคอร์ด ALIAS หรือ ANAME หรือ CNAME flattening ถ้าผู้ให้บริการไม่ยอมให้ใช้ CNAME ที่นั่น',
   // Shortcuts
   Shortcuts: 'ทางลัด',
   'Search shortcuts': 'ค้นหาทางลัด',
@@ -713,7 +741,8 @@ export const th: Dictionary = {
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
   'Report an issue': 'แจ้งปัญหา',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} เปลี่ยนบนดิสก์ สิ่งที่อยู่ในตัวแก้ไขเป็นของคุณ',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} เปลี่ยนบนดิสก์ สิ่งที่อยู่ในตัวแก้ไขเป็นของคุณ',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',
   'Copy the line up': 'คัดลอกบรรทัดขึ้น',
@@ -748,7 +777,8 @@ export const th: Dictionary = {
   Escape: 'Esc',
   Quit: 'ออกจากโปรแกรม',
   'The clipboard belongs to the system.': 'คลิปบอร์ดเป็นของระบบ',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'ปุ่มลูกศร Home End Page up และ Page down เป็นของข้อความ',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'ปุ่มลูกศร Home End Page up และ Page down เป็นของข้อความ',
   'Backspace and Delete belong to the text.': 'Backspace และ Delete เป็นของข้อความ',
   'Enter closes a code block and carries a list on.': 'Enter ปิดบล็อกโค้ดและต่อรายการ',
   'Tab moves on through the app as well as indenting.': 'Tab เลื่อนไปในแอปและเยื้องด้วย',
@@ -761,13 +791,15 @@ export const th: Dictionary = {
   'Select every file': 'เลือกทุกไฟล์',
   'Clear the selection': 'ล้างการเลือก',
   'Delete the selected files': 'ลบไฟล์ที่เลือก',
-  'The file could not be written, so it goes to the print dialog': 'เขียนไฟล์ไม่ได้ จึงไปที่หน้าต่างพิมพ์',
+  'The file could not be written, so it goes to the print dialog':
+    'เขียนไฟล์ไม่ได้ จึงไปที่หน้าต่างพิมพ์',
   'Next file': 'ไฟล์ถัดไป',
   'Previous file': 'ไฟล์ก่อนหน้า',
   'Show what it holds': 'แสดงสิ่งที่อยู่ข้างใน',
   'Hide what it holds': 'ซ่อนสิ่งที่อยู่ข้างใน',
   'Moving through a list': 'การเลื่อนในรายการ',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'ปุ่มลูกศร Enter และ Esc ทำงานกับทุกอย่างที่เปิดอยู่ ไม่ใช่ทางลัด',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'ปุ่มลูกศร Enter และ Esc ทำงานกับทุกอย่างที่เปิดอยู่ ไม่ใช่ทางลัด',
   'Split right': 'แยกไปขวา',
   'Split down': 'แยกลงล่าง',
   'Other pane': 'บานอื่น',
@@ -789,7 +821,8 @@ export const th: Dictionary = {
   'Follow the link': 'เปิดลิงก์',
   'Replace your own keys?': 'แทนปุ่มที่คุณตั้งไว้?',
   Replace: 'แทนที่',
-  'The keys you changed go back to what this keyboard says.': 'ปุ่มที่คุณเปลี่ยนจะกลับไปตามแป้นพิมพ์นี้',
+  'The keys you changed go back to what this keyboard says.':
+    'ปุ่มที่คุณเปลี่ยนจะกลับไปตามแป้นพิมพ์นี้',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +944,8 @@ export const th: Dictionary = {
   Leave: 'ออก',
   'Leave space': 'ออกจากพื้นที่',
   'Leave {name}?': 'ออกจาก {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'พื้นที่ยังอยู่กับคนอื่น โน้ตจะหายจากเครื่องของคุณ',
+  'It stays with everybody else. Its notes go from your computer.':
+    'พื้นที่ยังอยู่กับคนอื่น โน้ตจะหายจากเครื่องของคุณ',
   '{who} shared {space} with you': '{who} แชร์ {space} กับคุณ',
   'Shared with you': 'แชร์กับคุณ',
   'That link does not open anything': 'ลิงก์นั้นไม่เปิดอะไรเลย',
@@ -928,7 +962,8 @@ export const th: Dictionary = {
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
   Unstable: 'ไม่เสถียร',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',
@@ -939,14 +974,20 @@ export const th: Dictionary = {
   'Rewrite {count} things?': 'เขียนใหม่ {count} อย่าง?',
   'In {count} notes.': 'ใน {count} โน้ต',
   Rewrite: 'เขียนใหม่',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ช่วงถูกเข้ารหัส อ่านไม่ได้ถ้าไม่มี Evernote',
-  '{count} notes had a reminder, which the export does not carry': '{count} โน้ตมีการเตือน ซึ่งไฟล์ส่งออกไม่มีมาด้วย',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ช่วงถูกเข้ารหัส อ่านไม่ได้ถ้าไม่มี Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} โน้ตมีการเตือน ซึ่งไฟล์ส่งออกไม่มีมาด้วย',
   '{count} notes were in the bin and stay there': '{count} โน้ตอยู่ในถังขยะและยังอยู่ที่นั่น',
-  '{count} archived notes are in a folder called Archive': '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',
+  '{count} archived notes are in a folder called Archive':
+    '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',
   'The colours a note had are not kept': 'สีที่โน้ตมีจะไม่ถูกเก็บไว้',
-  '{count} block references were written out as the words they pointed at': '{count} การอ้างบล็อกถูกเขียนเป็นข้อความที่มันชี้ไป',
-  '{count} saved views are left out, and every row is in the table': '{count} มุมมองที่บันทึกไว้ถูกข้าม และทุกแถวอยู่ในตาราง',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} หน้ามาเป็น HTML จึงเก็บข้อความไว้แต่ไม่เก็บรูปแบบ',
+  '{count} block references were written out as the words they pointed at':
+    '{count} การอ้างบล็อกถูกเขียนเป็นข้อความที่มันชี้ไป',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} มุมมองที่บันทึกไว้ถูกข้าม และทุกแถวอยู่ในตาราง',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} หน้ามาเป็น HTML จึงเก็บข้อความไว้แต่ไม่เก็บรูปแบบ',
   'There are no rows in this file.': 'ไฟล์นี้ไม่มีแถว',
   'Nothing in there can be read as notes.': 'ในนั้นไม่มีอะไรอ่านเป็นโน้ตได้',
   'That export could not be read.': 'อ่านไฟล์ส่งออกนั้นไม่ได้',
@@ -957,20 +998,46 @@ export const th: Dictionary = {
   'This space': 'พื้นที่นี้',
   'Drop an export here': 'วางไฟล์ส่งออกที่นี่',
   'A zip, a folder, or a file another app wrote': 'ไฟล์ zip โฟลเดอร์ หรือไฟล์ที่แอปอื่นเขียน',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes และ Apple Journal เก็บโน้ตไว้ที่มีแค่ตัวมันเปิดได้ ให้ส่งออกก่อน แล้วนำเข้าไฟล์นั้น',
-  'Pandoc reads this one, from the file on your disk.': 'Pandoc อ่านไฟล์นี้ได้ จากไฟล์บนดิสก์ของคุณ',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    'ภาพ {count} รูปมาเป็น HEIC ซึ่งมีแต่ Apple แสดงได้',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    'การ์ดอารมณ์และกิจกรรม {count} ใบเป็นภาพวาด จึงมาแต่ข้อความ',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Notes เปิดได้',
+  '{count} notes are in Recently Deleted, and stay there':
+    'โน้ต {count} รายการอยู่ในที่ลบเมื่อเร็วๆ นี้ และยังอยู่ที่นั่น',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    'ภาพวาดและหน้าที่สแกน {count} รายการเป็นภาพที่ Notes วาดเอง',
+  '{count} tables inside notes do not come over': 'ตาราง {count} ตารางในโน้ตไม่ถูกนำมา',
+  '{count} attachments are in iCloud rather than on this Mac':
+    'ไฟล์แนบ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS เก็บโน้ตเหล่านั้นไว้หลังการเข้าถึงดิสก์ทั้งหมด',
+  'There are no notes in Apple Notes on this Mac.': 'บน Mac เครื่องนี้ไม่มีโน้ตใน Apple Notes',
+  'Those notes could not be read.': 'อ่านโน้ตเหล่านั้นไม่ได้',
+  'Read them from this Mac': 'อ่านจาก Mac เครื่องนี้',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'เปิด nibeditor ในการเข้าถึงดิสก์ทั้งหมดแล้วลองอีกครั้ง',
+  'Open the setting': 'เปิดการตั้งค่า',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal ส่งออกเอง: Journal, การตั้งค่า, ส่งออก. Apple Notes ไม่มีการส่งออก จึงเมื่ออยู่ห่างจาก Mac ที่เก็บไว้ สิ่งที่ต้องวางคือโฟลเดอร์ที่ตัวส่งออกเขียนไว้',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc อ่านไฟล์นี้ได้ จากไฟล์บนดิสก์ของคุณ',
   'Read it with pandoc': 'อ่านด้วย pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'มีแค่ pandoc ที่อ่านไฟล์นี้ได้ และเครื่องนี้ไม่ได้ติดตั้งไว้',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'มีแค่ pandoc ที่อ่านไฟล์นี้ได้ และเครื่องนี้ไม่ได้ติดตั้งไว้',
   Rows: 'แถว',
   'As a table': 'เป็นตาราง',
   'One note per row': 'หนึ่งโน้ตต่อแถว',
   Into: 'ไปที่',
   'Worth knowing': 'ควรรู้',
   '{count} notes arrived.': 'ได้ {count} โน้ต',
-  '{count} names were taken, so those files stepped aside.': '{count} ชื่อถูกใช้แล้ว ไฟล์เหล่านั้นจึงหลบไป',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} ชื่อถูกใช้แล้ว ไฟล์เหล่านั้นจึงหลบไป',
   'A table': 'ตาราง',
   'Markdown files': 'ไฟล์ Markdown',
   'A document': 'เอกสาร',
+  'A PDF, as pages to write on': 'PDF ในรูปหน้าสำหรับเขียนทับ',
   'Undo the import': 'เลิกนำเข้า',
   'Choose an export': 'เลือกไฟล์ส่งออก',
   Under: 'ใต้',
@@ -982,13 +1049,15 @@ export const th: Dictionary = {
   'Keep both copies': 'เก็บทั้งสองสำเนา',
   'Let the newest win': 'ให้อันใหม่สุดชนะ',
   'Ask me each time': 'ถามฉันทุกครั้ง',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ไม่มีอะไรถูกทิ้ง อันที่ไม่ชนะจะถูกเก็บเป็นเวอร์ชัน',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ไม่มีอะไรถูกทิ้ง อันที่ไม่ชนะจะถูกเก็บเป็นเวอร์ชัน',
   'Waiting for you': 'รอคุณอยู่',
   'Keep mine': 'เก็บของฉัน',
   'Take theirs': 'เอาของเขา',
   'Keep both': 'เก็บทั้งสอง',
   'What synced': 'ซิงก์อะไรไป',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ยังไม่มี รอบที่ไม่ย้ายอะไรจะไม่ถูกบันทึก',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ยังไม่มี รอบที่ไม่ย้ายอะไรจะไม่ถูกบันทึก',
   'Clear the list': 'ล้างรายการ',
   '{count} down': 'ลง {count}',
   '{count} up': 'ขึ้น {count}',
@@ -1001,16 +1070,19 @@ export const th: Dictionary = {
   '{count} notes would go back to what they said then.': '{count} โน้ตจะกลับไปเป็นอย่างที่เคยเป็น',
   'Nothing has changed since then.': 'ไม่มีอะไรเปลี่ยนตั้งแต่ตอนนั้น',
   '{count} notes went back.': '{count} โน้ตย้อนกลับแล้ว',
-  'The account keeps a month of versions of every note that syncs.': 'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งเดือนของทุกโน้ตที่ซิงก์',
+  'The account keeps a month of versions of every note that syncs.':
+    'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งเดือนของทุกโน้ตที่ซิงก์',
   'That did not work.': 'ทำไม่สำเร็จ',
   'Signing in': 'กำลังเข้าสู่ระบบ',
   'Ask for a code from an app': 'ขอรหัสจากแอป',
   'Turn on': 'เปิด',
   'Turn off': 'ปิด',
-  'Put this into your authenticator app, then type its code.': 'ใส่สิ่งนี้ในแอปยืนยันตัวตน แล้วพิมพ์รหัสของมัน',
+  'Put this into your authenticator app, then type its code.':
+    'ใส่สิ่งนี้ในแอปยืนยันตัวตน แล้วพิมพ์รหัสของมัน',
   Secret: 'รหัสลับ',
   'Code from the app': 'รหัสจากแอป',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'เก็บไว้ในที่ปลอดภัย แต่ละรหัสใช้ได้ครั้งเดียว และไม่แสดงอีก',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'เก็บไว้ในที่ปลอดภัย แต่ละรหัสใช้ได้ครั้งเดียว และไม่แสดงอีก',
   'Recovery codes': 'รหัสกู้คืน',
   'Recovery code': 'รหัสกู้คืน',
   'Recovery codes left': 'รหัสกู้คืนที่เหลือ',
@@ -1032,7 +1104,8 @@ export const th: Dictionary = {
   Pages: 'หน้า',
   'Page {number} of {count}': 'หน้า {number} จาก {count}',
   'What is selected': 'ส่วนที่เลือก',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ผ้าใบ: การ์ด {cards} ลิงก์ {links} ภาพวาด {drawings}',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ผ้าใบ: การ์ด {cards} ลิงก์ {links} ภาพวาด {drawings}',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ผู้ให้บริการ',
@@ -1069,13 +1142,85 @@ export const th: Dictionary = {
   'AI block': 'บล็อก AI',
   'Highlight colour': 'สีไฮไลต์',
   'A single newline breaks the line': 'ขึ้นบรรทัดใหม่ครั้งเดียวก็ตัดบรรทัด',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ปิดคือ markdown มาตรฐาน สองบรรทัดในย่อหน้าเดียวอ่านเป็นบรรทัดเดียว Obsidian เรียกว่าการตัดบรรทัดแบบเข้มงวด',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ปิดคือ markdown มาตรฐาน สองบรรทัดในย่อหน้าเดียวอ่านเป็นบรรทัดเดียว Obsidian เรียกว่าการตัดบรรทัดแบบเข้มงวด',
   'New links': 'ลิงก์ใหม่',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'วิกิลิงก์อ้างชื่อโน้ต ลิงก์จึงอยู่รอดเมื่อเปลี่ยนชื่อ และอ่านได้ทั้งสองแบบ',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'วิกิลิงก์อ้างชื่อโน้ต ลิงก์จึงอยู่รอดเมื่อเปลี่ยนชื่อ และอ่านได้ทั้งสองแบบ',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown ชื่อสั้นสุด',
   'Markdown, relative path': 'Markdown เส้นทางสัมพัทธ์',
   'Markdown, path in the space': 'Markdown เส้นทางในสเปซ',
+  // Publishing part one.
+  'The folders you choose become public.': 'โฟลเดอร์ที่เลือกจะเป็นสาธารณะ',
+  'Anyone with the address can read what is published, drafts included.':
+    'ใครมีที่อยู่ก็อ่านสิ่งที่เผยแพร่ได้ รวมถึงฉบับร่าง',
+  'Which notes': 'โน้ตใด',
+  'Notes outside a rule': 'โน้ตที่ไม่มีกฎ',
+  'Are published': 'ถูกเผยแพร่',
+  'Stay private': 'ยังเป็นส่วนตัว',
+  'Follows the rule': 'ตามกฎ',
+  Published: 'เผยแพร่แล้ว',
+  Private: 'ส่วนตัว',
+  '{count} pages': '{count} หน้า',
+  '{count} new': 'ใหม่ {count}',
+  '{count} gone': 'เอาออก {count}',
+  'and more': 'และอื่นๆ',
+  'How it appears': 'การแสดงผล',
+  Description: 'คำอธิบาย',
+  'What this site is': 'เว็บนี้เกี่ยวกับอะไร',
+  'Tab icon': 'ไอคอนแท็บ',
+  Password: 'รหัสผ่าน',
+  'Set a new one': 'ตั้งใหม่',
+  'Ask for a password': 'ขอรหัสผ่าน',
+  'No password': 'ไม่มีรหัสผ่าน',
+  'Remove the password': 'เอารหัสผ่านออก',
+  'Scan this with your authenticator app, then type its code.':
+    'สแกนสิ่งนี้ด้วยแอปยืนยันตัวตนแล้วพิมพ์รหัสของมัน',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'รูปถ่าย',
+  Dictate: 'พูดตามคำบอก',
+  'Add to {name}': 'เพิ่มไปที่ {name}',
+  // Web tabs
+  Reload: 'โหลดใหม่',
+  'Clip this page': 'เก็บหน้านี้',
+  'Clip the link': 'เก็บลิงก์',
+  'Allow the camera': 'อนุญาตกล้อง',
+  'Allow the clipboard': 'อนุญาตคลิปบอร์ด',
+  'Open in the browser': 'เปิดในเบราว์เซอร์',
+  'Copy the address': 'คัดลอกที่อยู่',
+  'Show it here': 'แสดงที่นี่',
+  Website: 'เว็บไซต์',
+  'Open a website': 'เปิดเว็บไซต์',
+  // Recording, meetings and what a model wrote
+  Record: 'บันทึกเสียง',
+  Recording: 'การบันทึก',
+  'Stop recording': 'หยุดบันทึก',
+  'Meeting notes': 'บันทึกการประชุม',
+  Meeting: 'การประชุม',
+  'Stop the meeting': 'จบการประชุม',
+  Transcribe: 'ถอดเสียง',
+  Transcript: 'บทถอดเสียง',
+  'Transcript ({language})': 'บทถอดเสียง ({language})',
+  'Written by {model}': '{model} เขียน',
+  'Saving the recording': 'กำลังบันทึกไฟล์เสียง',
+  'Turning the recording into words': 'กำลังเปลี่ยนเสียงเป็นข้อความ',
+  'Open a space to record into.': 'เปิดสเปซเพื่อบันทึกลงไป',
+  'Sign in to take meeting notes.': 'เข้าสู่ระบบเพื่อจดบันทึกการประชุม',
+  'Sign in to turn a recording into words.': 'เข้าสู่ระบบเพื่อเปลี่ยนเสียงเป็นข้อความ',
+  'That microphone could not be opened.': 'เปิดไมโครโฟนนั้นไม่ได้',
+  'That recording could not be saved.': 'บันทึกไฟล์เสียงนั้นไม่ได้',
+  'That recording could not be turned into words.': 'เปลี่ยนเสียงนั้นเป็นข้อความไม่ได้',
+  'That recording is not in this space.': 'ไฟล์เสียงนั้นไม่อยู่ในสเปซนี้',
+  'That recording is too long to turn into words in one go.':
+    'ไฟล์เสียงนั้นยาวเกินกว่าจะเปลี่ยนเป็นข้อความในครั้งเดียว',
+  'That is as much as one recording may hold.': 'หนึ่งไฟล์เสียงรับได้เท่านี้',
+  'Nothing could be heard in that recording.': 'ในไฟล์เสียงนั้นไม่ได้ยินอะไร',
+  'A piece of the transcript is being tried again.': 'กำลังลองบทถอดเสียงบางส่วนอีกครั้ง',
+  'The transcript is behind and losing pieces.': 'บทถอดเสียงตามไม่ทันและขาดบางส่วน',
+  '{count} pieces of this meeting were lost.': 'การประชุมนี้ขาดไป {count} ส่วน',
+  'Add an AI provider in settings to summarise.': 'เพิ่มผู้ให้บริการ AI ในการตั้งค่าเพื่อสรุป',
+  'The summary could not be written.': 'เขียนบทสรุปไม่ได้',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ส่งเมลไม่ได้ - ลองใหม่',
   'start again - that took too long': 'เริ่มใหม่ - ใช้เวลานานเกินไป',

@@ -7,6 +7,12 @@ export const pa: Dictionary = {
   'Open file': 'ਫ਼ਾਈਲ ਖੋਲ੍ਹੋ',
   'New note inside': 'ਅੰਦਰ ਨਵੀਂ ਨੋਟ',
   'New canvas': 'ਨਵਾਂ ਕੈਨਵਸ',
+  'New page note': 'ਨਵੀਂ ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'Add a page': 'ਸਫ਼ਾ ਜੋੜੋ',
+  'Add a page after this': 'ਇਸ ਤੋਂ ਬਾਅਦ ਸਫ਼ਾ ਜੋੜੋ',
+  'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',
+  'Page {number}': 'ਸਫ਼ਾ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',
   'Note or picture': 'ਨੋਟ ਜਾਂ ਤਸਵੀਰ',
@@ -34,7 +40,8 @@ export const pa: Dictionary = {
   'Create a space': 'ਥਾਂ ਬਣਾਓ',
   'Delete space': 'ਥਾਂ ਮਿਟਾਓ',
   'Delete {name}?': '{name} ਮਿਟਾਉਣਾ ਹੈ?',
-  'Every note in this space is deleted from your computer.': 'ਇਸ ਥਾਂ ਦੀ ਹਰ ਨੋਟ ਤੁਹਾਡੇ ਕੰਪਿਊਟਰ ਤੋਂ ਮਿਟ ਜਾਂਦੀ ਹੈ।',
+  'Every note in this space is deleted from your computer.':
+    'ਇਸ ਥਾਂ ਦੀ ਹਰ ਨੋਟ ਤੁਹਾਡੇ ਕੰਪਿਊਟਰ ਤੋਂ ਮਿਟ ਜਾਂਦੀ ਹੈ।',
   'The notes inside it go too.': 'ਇਸ ਦੇ ਅੰਦਰ ਦੀਆਂ ਨੋਟਾਂ ਵੀ ਜਾਂਦੀਆਂ ਹਨ।',
   Journal: 'ਰੋਜ਼ਨਾਮਚਾ',
   Create: 'ਬਣਾਓ',
@@ -206,14 +213,18 @@ export const pa: Dictionary = {
   'Image not found': 'ਤਸਵੀਰ ਨਹੀਂ ਮਿਲੀ',
   'Delete {count} items': { one: '{count} ਚੀਜ਼ ਮਿਟਾਓ', other: '{count} ਚੀਜ਼ਾਂ ਮਿਟਾਓ' },
   'Recently deleted': 'ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'ਮਿਟਾਈਆਂ ਨੋਟਾਂ ਤੇ ਥਾਂਵਾਂ ਇੱਥੇ ੧੪ ਦਿਨ ਰਹਿੰਦੀਆਂ ਹਨ, ਫਿਰ ਸਦਾ ਲਈ ਚਲੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'ਮਿਟਾਈਆਂ ਨੋਟਾਂ ਤੇ ਥਾਂਵਾਂ ਇੱਥੇ ੧੪ ਦਿਨ ਰਹਿੰਦੀਆਂ ਹਨ, ਫਿਰ ਸਦਾ ਲਈ ਚਲੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।',
   'Nothing here.': 'ਇੱਥੇ ਕੁਝ ਨਹੀਂ।',
   Empty: 'ਖ਼ਾਲੀ ਕਰੋ',
   Spaces: 'ਥਾਂਵਾਂ',
   Notes: 'ਨੋਟਾਂ',
   'Delete now': 'ਹੁਣੇ ਮਿਟਾਓ',
   'deleted {when}': '{when} ਮਿਟਾਇਆ',
-  'gone in {count} days': { one: '{count} ਦਿਨ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ', other: '{count} ਦਿਨਾਂ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ' },
+  'gone in {count} days': {
+    one: '{count} ਦਿਨ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ',
+    other: '{count} ਦਿਨਾਂ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ',
+  },
   'on this device': 'ਇਸ ਡਿਵਾਈਸ ਉੱਤੇ',
   '{count} notes': { one: '{count} ਨੋਟ', other: '{count} ਨੋਟਾਂ' },
   'Empty Recently deleted?': 'ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਖ਼ਾਲੀ ਕਰਨੇ ਹਨ?',
@@ -257,7 +268,8 @@ export const pa: Dictionary = {
   'Previous slide': 'ਪਿਛਲੀ ਸਲਾਈਡ',
   'Read-only': 'ਸਿਰਫ਼ ਪੜ੍ਹਨ',
   'No preview': 'ਝਲਕ ਨਹੀਂ',
-  'Shown as plain text, so typing stays instant in a note this long': 'ਸਾਦੇ ਲਿਖਤ ਵਜੋਂ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ, ਤਾਂ ਜੋ ਇੰਨੀ ਲੰਮੀ ਨੋਟ ਵਿੱਚ ਟਾਈਪ ਕਰਨਾ ਤੁਰੰਤ ਰਹੇ',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'ਸਾਦੇ ਲਿਖਤ ਵਜੋਂ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ, ਤਾਂ ਜੋ ਇੰਨੀ ਲੰਮੀ ਨੋਟ ਵਿੱਚ ਟਾਈਪ ਕਰਨਾ ਤੁਰੰਤ ਰਹੇ',
   'Leave read-only': 'ਸਿਰਫ਼ ਪੜ੍ਹਨ ਤੋਂ ਬਾਹਰ',
   Next: 'ਅਗਲਾ',
   Previous: 'ਪਿਛਲਾ',
@@ -353,16 +365,19 @@ export const pa: Dictionary = {
   'OpenAI key': 'OpenAI ਕੁੰਜੀ',
   Model: 'ਮਾਡਲ',
   Reasoning: 'ਤਰਕ',
-  'Kept encrypted on your account, and never shown again.': 'ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਗੁਪਤ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ, ਤੇ ਮੁੜ ਨਹੀਂ ਦਿਖਾਇਆ ਜਾਂਦਾ।',
+  'Kept encrypted on your account, and never shown again.':
+    'ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਗੁਪਤ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ, ਤੇ ਮੁੜ ਨਹੀਂ ਦਿਖਾਇਆ ਜਾਂਦਾ।',
   'set, ends in …{tail}': 'ਲੱਗਾ ਹੈ, …{tail} ਉੱਤੇ ਮੁੱਕਦਾ ਹੈ',
   'Saving the key': 'ਕੁੰਜੀ ਸਾਂਭ ਰਿਹਾ ਹੈ',
   'this server cannot keep a key yet': 'ਇਹ ਸਰਵਰ ਹਾਲੇ ਕੁੰਜੀ ਨਹੀਂ ਰੱਖ ਸਕਦਾ',
   'that does not look like a key': 'ਉਹ ਕੁੰਜੀ ਨਹੀਂ ਜਾਪਦੀ',
   'that key could not be saved': 'ਉਹ ਕੁੰਜੀ ਸਾਂਭੀ ਨਹੀਂ ਜਾ ਸਕੀ',
   'Sign in to ask a question.': 'ਸਵਾਲ ਪੁੱਛਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
-  'Asking OpenAI which models this key can use': 'OpenAI ਤੋਂ ਪੁੱਛ ਰਿਹਾ ਹੈ ਕਿ ਇਹ ਕੁੰਜੀ ਕਿਹੜੇ ਮਾਡਲ ਵਰਤ ਸਕਦੀ ਹੈ',
+  'Asking OpenAI which models this key can use':
+    'OpenAI ਤੋਂ ਪੁੱਛ ਰਿਹਾ ਹੈ ਕਿ ਇਹ ਕੁੰਜੀ ਕਿਹੜੇ ਮਾਡਲ ਵਰਤ ਸਕਦੀ ਹੈ',
   'Could not reach OpenAI': 'OpenAI ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ',
-  'That key cannot use any of the models Nib asks for.': 'ਉਹ ਕੁੰਜੀ Nib ਦੇ ਮੰਗੇ ਕਿਸੇ ਵੀ ਮਾਡਲ ਨੂੰ ਨਹੀਂ ਵਰਤ ਸਕਦੀ।',
+  'That key cannot use any of the models Nib asks for.':
+    'ਉਹ ਕੁੰਜੀ Nib ਦੇ ਮੰਗੇ ਕਿਸੇ ਵੀ ਮਾਡਲ ਨੂੰ ਨਹੀਂ ਵਰਤ ਸਕਦੀ।',
   'No reasoning': 'ਤਰਕ ਨਹੀਂ',
   Minimal: 'ਬਹੁਤ ਥੋੜ੍ਹਾ',
   Low: 'ਥੋੜ੍ਹਾ',
@@ -403,7 +418,10 @@ export const pa: Dictionary = {
   'Add a word': 'ਸ਼ਬਦ ਜੋੜੋ',
   'Add {word} to the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਵਿੱਚ ਜੋੜੋ',
   'Remove {word} from the dictionary': '{word} ਸ਼ਬਦਕੋਸ਼ ਤੋਂ ਹਟਾਓ',
-  '{count} things in this theme were left out.': { one: 'ਇਸ ਥੀਮ ਦੀ {count} ਚੀਜ਼ ਛੱਡ ਦਿੱਤੀ ਗਈ।', other: 'ਇਸ ਥੀਮ ਦੀਆਂ {count} ਚੀਜ਼ਾਂ ਛੱਡ ਦਿੱਤੀਆਂ ਗਈਆਂ।' },
+  '{count} things in this theme were left out.': {
+    one: 'ਇਸ ਥੀਮ ਦੀ {count} ਚੀਜ਼ ਛੱਡ ਦਿੱਤੀ ਗਈ।',
+    other: 'ਇਸ ਥੀਮ ਦੀਆਂ {count} ਚੀਜ਼ਾਂ ਛੱਡ ਦਿੱਤੀਆਂ ਗਈਆਂ।',
+  },
   'A note': 'ਇੱਕ ਨੋਟ',
   'Words with {bold} and a {link}.': '{bold} ਤੇ ਇੱਕ {link} ਵਾਲੇ ਸ਼ਬਦ।',
   bold: 'ਮੋਟਾ',
@@ -448,11 +466,14 @@ export const pa: Dictionary = {
   'Line numbers': 'ਲਾਈਨ ਅੰਕ',
   Syntax: 'ਵਾਕ-ਰਚਨਾ',
   'Strict CommonMark': 'ਸਖ਼ਤ CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'ਸਿਰਫ਼ ਆਮ markdown ਨਿਯਮ, ਸਾਰਨੀ, ਕੰਮ ਸੂਚੀ ਜਾਂ ਪਦ-ਟਿੱਪਣੀ ਨਹੀਂ।',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'ਸਿਰਫ਼ ਆਮ markdown ਨਿਯਮ, ਸਾਰਨੀ, ਕੰਮ ਸੂਚੀ ਜਾਂ ਪਦ-ਟਿੱਪਣੀ ਨਹੀਂ।',
   'Smart punctuation': 'ਸਿਆਣੇ ਵਿਸਰਾਮ ਚਿੰਨ੍ਹ',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'ਤੁਸੀਂ ਟਾਈਪ ਕਰਦੇ ਹੋ ਤਾਂ ਸਿੱਧੇ ਚਿੰਨ੍ਹ ਤੇ ਡੈਸ਼ ਨੂੰ ਛਪਾਈ ਵਾਲੇ ਰੂਪ ਵਿੱਚ ਬਦਲਦਾ ਹੈ।',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'ਤੁਸੀਂ ਟਾਈਪ ਕਰਦੇ ਹੋ ਤਾਂ ਸਿੱਧੇ ਚਿੰਨ੍ਹ ਤੇ ਡੈਸ਼ ਨੂੰ ਛਪਾਈ ਵਾਲੇ ਰੂਪ ਵਿੱਚ ਬਦਲਦਾ ਹੈ।',
   'Puts 1., 1.1, 1.2 in front of headings.': 'ਸਿਰਲੇਖਾਂ ਅੱਗੇ ੧., ੧.੧, ੧.੨ ਲਾਉਂਦਾ ਹੈ।',
-  'Numbers display equations so you can refer to them.': 'ਦਿਖਾਏ ਸਮੀਕਰਨਾਂ ਨੂੰ ਅੰਕ ਦਿੰਦਾ ਹੈ ਤਾਂ ਜੋ ਉਨ੍ਹਾਂ ਦਾ ਹਵਾਲਾ ਦਿੱਤਾ ਜਾ ਸਕੇ।',
+  'Numbers display equations so you can refer to them.':
+    'ਦਿਖਾਏ ਸਮੀਕਰਨਾਂ ਨੂੰ ਅੰਕ ਦਿੰਦਾ ਹੈ ਤਾਂ ਜੋ ਉਨ੍ਹਾਂ ਦਾ ਹਵਾਲਾ ਦਿੱਤਾ ਜਾ ਸਕੇ।',
   Ligatures: 'ਜੁੜੇ ਅੱਖਰ',
   Off: 'ਬੰਦ',
   'Code only': 'ਸਿਰਫ਼ ਕੋਡ',
@@ -515,13 +536,17 @@ export const pa: Dictionary = {
   'Send a new code': 'ਨਵਾਂ ਕੋਡ ਭੇਜੋ',
   'Code sent to': 'ਕੋਡ ਇਸ ਨੂੰ ਭੇਜਿਆ',
   'You already have notes on this computer.': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਪਹਿਲਾਂ ਹਨ।',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'ਰੱਖੋ ਤਾਂ ਉਹ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਜੁੜ ਜਾਂਦੀਆਂ ਹਨ। ਮਿਟਾਓ ਤਾਂ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਜੋ ਹੈ ਉਹ ਰਹਿੰਦਾ ਹੈ - ਇਹ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'ਰੱਖੋ ਤਾਂ ਉਹ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਜੁੜ ਜਾਂਦੀਆਂ ਹਨ। ਮਿਟਾਓ ਤਾਂ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਜੋ ਹੈ ਉਹ ਰਹਿੰਦਾ ਹੈ - ਇਹ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।',
   'Keep them': 'ਰੱਖੋ',
   'Erase them': 'ਮਿਟਾਓ',
   'Digit {number}': 'ਅੰਕ {number}',
   'Resend in {seconds}s': '{seconds} ਸਕਿੰਟ ਵਿੱਚ ਮੁੜ ਭੇਜੋ',
   'Last synced {time}.': 'ਆਖ਼ਰੀ ਸਮਕਾਲ {time}।',
-  '{count} spaces sync to your account.': { one: '{count} ਥਾਂ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਸਮਕਾਲ ਹੁੰਦੀ ਹੈ।', other: '{count} ਥਾਂਵਾਂ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਸਮਕਾਲ ਹੁੰਦੀਆਂ ਹਨ।' },
+  '{count} spaces sync to your account.': {
+    one: '{count} ਥਾਂ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਸਮਕਾਲ ਹੁੰਦੀ ਹੈ।',
+    other: '{count} ਥਾਂਵਾਂ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਸਮਕਾਲ ਹੁੰਦੀਆਂ ਹਨ।',
+  },
   Update: 'ਸੁਧਾਰੋ',
   'Live at': 'ਇਸ ਉੱਤੇ ਲਾਈਵ',
   // Publishing
@@ -531,7 +556,8 @@ export const pa: Dictionary = {
   'Only {name}': 'ਸਿਰਫ਼ {name}',
   'Publish this space as a blog': 'ਇਹ ਥਾਂ ਬਲਾਗ ਵਜੋਂ ਛਾਪੋ',
   'Everything in this space becomes public.': 'ਇਸ ਥਾਂ ਦਾ ਸਭ ਕੁਝ ਜਨਤਕ ਹੋ ਜਾਂਦਾ ਹੈ।',
-  'Every note, including drafts, is readable by anyone with the address.': 'ਹਰ ਨੋਟ, ਖਰੜਿਆਂ ਸਮੇਤ, ਪਤਾ ਰੱਖਣ ਵਾਲਾ ਕੋਈ ਵੀ ਪੜ੍ਹ ਸਕਦਾ ਹੈ।',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ਹਰ ਨੋਟ, ਖਰੜਿਆਂ ਸਮੇਤ, ਪਤਾ ਰੱਖਣ ਵਾਲਾ ਕੋਈ ਵੀ ਪੜ੍ਹ ਸਕਦਾ ਹੈ।',
   Address: 'ਪਤਾ',
   'Add these at your registrar, then verify.': 'ਇਹ ਆਪਣੇ ਰਜਿਸਟਰਾਰ ਕੋਲ ਜੋੜੋ, ਫਿਰ ਪੜਤਾਲ ਕਰੋ।',
   Verify: 'ਪੜਤਾਲ ਕਰੋ',
@@ -544,8 +570,10 @@ export const pa: Dictionary = {
   'checking…': 'ਜਾਂਚ ਰਿਹਾ ਹੈ…',
   // LLM
   'Connect an LLM to your notes': 'ਆਪਣੀਆਂ ਨੋਟਾਂ ਨਾਲ LLM ਜੋੜੋ',
-  'Sign in first - the connector reaches the notes in your account.': 'ਪਹਿਲਾਂ ਸਾਈਨ ਇਨ ਕਰੋ - ਜੋੜਨ ਵਾਲਾ ਤੁਹਾਡੇ ਖਾਤੇ ਦੀਆਂ ਨੋਟਾਂ ਤੱਕ ਪਹੁੰਚਦਾ ਹੈ।',
-  'Let it write to my notes, not only read them': 'ਇਸ ਨੂੰ ਮੇਰੀਆਂ ਨੋਟਾਂ ਵਿੱਚ ਲਿਖਣ ਦਿਓ, ਸਿਰਫ਼ ਪੜ੍ਹਨ ਨਹੀਂ',
+  'Sign in first - the connector reaches the notes in your account.':
+    'ਪਹਿਲਾਂ ਸਾਈਨ ਇਨ ਕਰੋ - ਜੋੜਨ ਵਾਲਾ ਤੁਹਾਡੇ ਖਾਤੇ ਦੀਆਂ ਨੋਟਾਂ ਤੱਕ ਪਹੁੰਚਦਾ ਹੈ।',
+  'Let it write to my notes, not only read them':
+    'ਇਸ ਨੂੰ ਮੇਰੀਆਂ ਨੋਟਾਂ ਵਿੱਚ ਲਿਖਣ ਦਿਓ, ਸਿਰਫ਼ ਪੜ੍ਹਨ ਨਹੀਂ',
   'Create a token': 'ਟੋਕਨ ਬਣਾਓ',
   'Replace the token': 'ਟੋਕਨ ਬਦਲੋ',
   'Last used {time}.': 'ਆਖ਼ਰੀ ਵਰਤੋਂ {time}।',
@@ -560,27 +588,38 @@ export const pa: Dictionary = {
   'Reads your notes.': 'ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਪੜ੍ਹਦਾ ਹੈ।',
   'Reads and writes your notes.': 'ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਪੜ੍ਹਦਾ ਤੇ ਲਿਖਦਾ ਹੈ।',
   Other: 'ਹੋਰ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI ਸਹਾਇਕ ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਪੜ੍ਹ ਸਕਦਾ ਹੈ - ਤੇ ਜੇ ਤੁਸੀਂ ਮੰਨੋ ਤਾਂ ਬਦਲ ਵੀ ਸਕਦਾ ਹੈ। ਉਹ ਤੁਹਾਡੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰਦਾ ਹੈ; ਚਿਪਕਾਉਣ ਲਈ ਕੁਝ ਨਹੀਂ।',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude ਵਿੱਚ Settings → Connectors ਖੋਲ੍ਹੋ ਤੇ Add custom connector ਦਬਾਓ।',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI ਸਹਾਇਕ ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਪੜ੍ਹ ਸਕਦਾ ਹੈ - ਤੇ ਜੇ ਤੁਸੀਂ ਮੰਨੋ ਤਾਂ ਬਦਲ ਵੀ ਸਕਦਾ ਹੈ। ਉਹ ਤੁਹਾਡੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰਦਾ ਹੈ; ਚਿਪਕਾਉਣ ਲਈ ਕੁਝ ਨਹੀਂ।',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude ਵਿੱਚ Settings → Connectors ਖੋਲ੍ਹੋ ਤੇ Add custom connector ਦਬਾਓ।',
   'Open Claude’s connectors': 'Claude ਦੇ connectors ਖੋਲ੍ਹੋ',
   'Fill in the two fields and click Add.': 'ਦੋਵੇਂ ਖ਼ਾਨੇ ਭਰੋ ਤੇ Add ਦਬਾਓ।',
-  'Click Connect and sign in with your Nib email.': 'Connect ਦਬਾਓ ਤੇ ਆਪਣੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Click Connect and sign in with your Nib email.':
+    'Connect ਦਬਾਓ ਤੇ ਆਪਣੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Using Claude Code instead?': 'Claude Code ਵਰਤ ਰਹੇ ਹੋ?',
   Command: 'ਹੁਕਮ',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'ਇਸ ਨੂੰ ਟਰਮੀਨਲ ਵਿੱਚ ਚਲਾਓ, ਫਿਰ ਸਾਈਨ ਇਨ ਲਈ Claude Code ਵਿੱਚ /mcp ਲਿਖੋ।',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'ਇਸ ਨੂੰ ਟਰਮੀਨਲ ਵਿੱਚ ਚਲਾਓ, ਫਿਰ ਸਾਈਨ ਇਨ ਲਈ Claude Code ਵਿੱਚ /mcp ਲਿਖੋ।',
   'Fill in the form and click Create.': 'ਫ਼ਾਰਮ ਭਰੋ ਤੇ Create ਦਬਾਓ।',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT ਵਿੱਚ Settings → Plugins ਖੋਲ੍ਹੋ ਤੇ ਜਮ੍ਹਾਂ ਦਾ ਬਟਨ ਦਬਾਓ।',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT ਵਿੱਚ Settings → Plugins ਖੋਲ੍ਹੋ ਤੇ ਜਮ੍ਹਾਂ ਦਾ ਬਟਨ ਦਬਾਓ।',
   'Open ChatGPT’s plugins': 'ChatGPT ਦੇ plugins ਖੋਲ੍ਹੋ',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins ਭਾਗ ਜਾਂ ਜਮ੍ਹਾਂ ਦਾ ਬਟਨ ਨਹੀਂ? ਪਹਿਲਾਂ Settings → Security and login ਵਿੱਚ Developer mode ਚਾਲੂ ਕਰੋ।',
-  'Sign in with your Nib email when ChatGPT asks.': 'ਜਦੋਂ ChatGPT ਪੁੱਛੇ ਤਾਂ ਆਪਣੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins ਭਾਗ ਜਾਂ ਜਮ੍ਹਾਂ ਦਾ ਬਟਨ ਨਹੀਂ? ਪਹਿਲਾਂ Settings → Security and login ਵਿੱਚ Developer mode ਚਾਲੂ ਕਰੋ।',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ਜਦੋਂ ChatGPT ਪੁੱਛੇ ਤਾਂ ਆਪਣੀ Nib ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'To use it in a chat, type @ and pick Nib.': 'ਗੱਲਬਾਤ ਵਿੱਚ ਵਰਤਣ ਲਈ @ ਲਿਖੋ ਤੇ Nib ਚੁਣੋ।',
   'Server URL': 'ਸਰਵਰ URL',
   Authentication: 'ਪਛਾਣ ਪੜਤਾਲ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'ਅੱਗੇ ਦੀਆਂ OAuth ਸੈਟਿੰਗਾਂ ਉਵੇਂ ਹੀ ਛੱਡੋ ਤੇ “I understand and want to continue” ਉੱਤੇ ਨਿਸ਼ਾਨ ਲਾਓ।',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth ਨਾਲ Streamable HTTP ਵਰਤਦਾ ਕੋਈ ਵੀ MCP ਕਲਾਇੰਟ। ਉਸ ਨੂੰ URL ਦਿਓ: ਉਹ ਆਪ ਦਰਜ ਹੋ ਜਾਂਦਾ ਹੈ ਤੇ Nib ਦਾ ਸਾਈਨ ਇਨ ਸਫ਼ਾ ਖੋਲ੍ਹਦਾ ਹੈ।',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'ਅੱਗੇ ਦੀਆਂ OAuth ਸੈਟਿੰਗਾਂ ਉਵੇਂ ਹੀ ਛੱਡੋ ਤੇ “I understand and want to continue” ਉੱਤੇ ਨਿਸ਼ਾਨ ਲਾਓ।',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth ਨਾਲ Streamable HTTP ਵਰਤਦਾ ਕੋਈ ਵੀ MCP ਕਲਾਇੰਟ। ਉਸ ਨੂੰ URL ਦਿਓ: ਉਹ ਆਪ ਦਰਜ ਹੋ ਜਾਂਦਾ ਹੈ ਤੇ Nib ਦਾ ਸਾਈਨ ਇਨ ਸਫ਼ਾ ਖੋਲ੍ਹਦਾ ਹੈ।',
   'Show config': 'ਸੰਰਚਨਾ ਦਿਖਾਓ',
-  'For a client that takes a JSON block instead of a URL.': 'ਉਸ ਕਲਾਇੰਟ ਲਈ ਜੋ URL ਦੀ ਥਾਂ JSON ਬਲਾਕ ਲੈਂਦਾ ਹੈ।',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'ਜੋ ਕਲਾਇੰਟ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਦਾ ਉਸ ਨੂੰ ਟੋਕਨ ਦਿੱਤਾ ਜਾ ਸਕਦਾ ਹੈ। ਉਹ ਇੱਕੋ ਵਾਰ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ।',
+  'For a client that takes a JSON block instead of a URL.':
+    'ਉਸ ਕਲਾਇੰਟ ਲਈ ਜੋ URL ਦੀ ਥਾਂ JSON ਬਲਾਕ ਲੈਂਦਾ ਹੈ।',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'ਜੋ ਕਲਾਇੰਟ ਸਾਈਨ ਇਨ ਨਹੀਂ ਕਰ ਸਕਦਾ ਉਸ ਨੂੰ ਟੋਕਨ ਦਿੱਤਾ ਜਾ ਸਕਦਾ ਹੈ। ਉਹ ਇੱਕੋ ਵਾਰ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ।',
   // Export
   'Plain text': 'ਸਾਦੀ ਲਿਖਤ',
   'Markdown with the pictures': 'ਤਸਵੀਰਾਂ ਨਾਲ markdown',
@@ -604,8 +643,10 @@ export const pa: Dictionary = {
   'Version history': 'ਰੂਪਾਂ ਦਾ ਇਤਿਹਾਸ',
   'Copy link to this note': 'ਇਸ ਨੋਟ ਦੀ ਕੜੀ ਨਕਲ ਕਰੋ',
   'that link could not be followed': 'ਉਸ ਕੜੀ ਦੇ ਪਿੱਛੇ ਨਹੀਂ ਜਾ ਸਕੇ',
-  'Save this note first; there is nothing to compare against yet.': 'ਪਹਿਲਾਂ ਇਹ ਨੋਟ ਸਾਂਭੋ; ਹਾਲੇ ਤੁਲਨਾ ਕਰਨ ਲਈ ਕੁਝ ਨਹੀਂ।',
-  'No earlier versions yet. One is kept each time you save.': 'ਹਾਲੇ ਪਹਿਲੇ ਰੂਪ ਨਹੀਂ। ਜਦੋਂ ਤੁਸੀਂ ਸਾਂਭਦੇ ਹੋ ਇੱਕ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
+  'Save this note first; there is nothing to compare against yet.':
+    'ਪਹਿਲਾਂ ਇਹ ਨੋਟ ਸਾਂਭੋ; ਹਾਲੇ ਤੁਲਨਾ ਕਰਨ ਲਈ ਕੁਝ ਨਹੀਂ।',
+  'No earlier versions yet. One is kept each time you save.':
+    'ਹਾਲੇ ਪਹਿਲੇ ਰੂਪ ਨਹੀਂ। ਜਦੋਂ ਤੁਸੀਂ ਸਾਂਭਦੇ ਹੋ ਇੱਕ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
   'Restore this version': 'ਇਹ ਰੂਪ ਮੁੜ ਲਿਆਓ',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ਉੱਥੇ ਪਹਿਲਾਂ ਹੀ ਨੋਟ ਹੈ',
@@ -631,7 +672,8 @@ export const pa: Dictionary = {
   'too many tries - ask for a new code': 'ਬਹੁਤ ਕੋਸ਼ਿਸ਼ਾਂ - ਨਵਾਂ ਕੋਡ ਮੰਗੋ',
   'too many messages from here - try again later': 'ਇੱਥੋਂ ਬਹੁਤ ਸੁਨੇਹੇ - ਬਾਅਦ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'too much mail today - try again tomorrow': 'ਅੱਜ ਬਹੁਤ ਡਾਕ - ਕੱਲ੍ਹ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
-  'that many people are already waiting to be let in': 'ਇੰਨੇ ਲੋਕ ਪਹਿਲਾਂ ਹੀ ਅੰਦਰ ਆਉਣ ਦੀ ਉਡੀਕ ਵਿੱਚ ਹਨ',
+  'that many people are already waiting to be let in':
+    'ਇੰਨੇ ਲੋਕ ਪਹਿਲਾਂ ਹੀ ਅੰਦਰ ਆਉਣ ਦੀ ਉਡੀਕ ਵਿੱਚ ਹਨ',
   'use 2–32 letters, numbers or hyphens': '੨–੩੨ ਅੱਖਰ, ਅੰਕ ਜਾਂ ਡੈਸ਼ ਵਰਤੋ',
   'sync failed': 'ਸਮਕਾਲ ਨਾਕਾਮ',
   'could not publish': 'ਛਾਪਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
@@ -666,7 +708,8 @@ export const pa: Dictionary = {
   'use a domain of your own': 'ਆਪਣਾ ਡੋਮੇਨ ਵਰਤੋ',
   'the domain no longer points here': 'ਡੋਮੇਨ ਹੁਣ ਇੱਥੇ ਨਹੀਂ ਇਸ਼ਾਰਾ ਕਰਦਾ',
   'Cloudflare has blocked this domain': 'Cloudflare ਨੇ ਇਹ ਡੋਮੇਨ ਰੋਕ ਦਿੱਤਾ ਹੈ',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ਡੋਮੇਨ ਦੀ ਜੜ੍ਹ ਉੱਤੇ, ਜੇ ਤੁਹਾਡਾ ਪ੍ਰਦਾਤਾ ਉੱਥੇ CNAME ਨਹੀਂ ਮੰਨਦਾ ਤਾਂ ALIAS ਜਾਂ ANAME ਰਿਕਾਰਡ, ਜਾਂ CNAME flattening ਵਰਤੋ।',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ਡੋਮੇਨ ਦੀ ਜੜ੍ਹ ਉੱਤੇ, ਜੇ ਤੁਹਾਡਾ ਪ੍ਰਦਾਤਾ ਉੱਥੇ CNAME ਨਹੀਂ ਮੰਨਦਾ ਤਾਂ ALIAS ਜਾਂ ANAME ਰਿਕਾਰਡ, ਜਾਂ CNAME flattening ਵਰਤੋ।',
   // Shortcuts
   Shortcuts: 'ਛੋਟੇ ਰਾਹ',
   'Search shortcuts': 'ਛੋਟੇ ਰਾਹ ਲੱਭੋ',
@@ -677,7 +720,8 @@ export const pa: Dictionary = {
   'Reset all shortcuts': 'ਸਾਰੇ ਛੋਟੇ ਰਾਹ ਮੁੜ ਲਾਓ',
   'Take it over': 'ਇਹ ਲੈ ਲਵੋ',
   '{key} already runs {name}.': '{key} ਪਹਿਲਾਂ ਹੀ {name} ਚਲਾਉਂਦੀ ਹੈ।',
-  'Esc stops recording, Backspace takes the key away.': 'Esc ਰਿਕਾਰਡ ਰੋਕਦੀ ਹੈ, Backspace ਕੁੰਜੀ ਹਟਾਉਂਦੀ ਹੈ।',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc ਰਿਕਾਰਡ ਰੋਕਦੀ ਹੈ, Backspace ਕੁੰਜੀ ਹਟਾਉਂਦੀ ਹੈ।',
   Tables: 'ਸਾਰਨੀਆਂ',
   Pictures: 'ਤਸਵੀਰਾਂ',
   'Fixed keys': 'ਪੱਕੀਆਂ ਕੁੰਜੀਆਂ',
@@ -713,7 +757,8 @@ export const pa: Dictionary = {
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
   'What is new': 'ਨਵਾਂ ਕੀ ਹੈ',
   'Report an issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ਡਿਸਕ ਉੱਤੇ ਬਦਲ ਗਈ। ਜੋ ਸੋਧਕ ਵਿੱਚ ਹੈ ਉਹ ਤੁਹਾਡਾ ਹੈ।',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ਡਿਸਕ ਉੱਤੇ ਬਦਲ ਗਈ। ਜੋ ਸੋਧਕ ਵਿੱਚ ਹੈ ਉਹ ਤੁਹਾਡਾ ਹੈ।',
   'Move the line up': 'ਲਾਈਨ ਉੱਪਰ ਭੇਜੋ',
   'Move the line down': 'ਲਾਈਨ ਹੇਠਾਂ ਭੇਜੋ',
   'Copy the line up': 'ਲਾਈਨ ਉੱਪਰ ਨਕਲ ਕਰੋ',
@@ -748,26 +793,33 @@ export const pa: Dictionary = {
   Escape: 'Escape',
   Quit: 'ਬਾਹਰ ਨਿਕਲੋ',
   'The clipboard belongs to the system.': 'ਕਲਿੱਪਬੋਰਡ ਸਿਸਟਮ ਦਾ ਹੈ।',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'ਤੀਰ ਕੁੰਜੀਆਂ, Home, End, Page up ਤੇ Page down ਲਿਖਤ ਦੀਆਂ ਹਨ।',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'ਤੀਰ ਕੁੰਜੀਆਂ, Home, End, Page up ਤੇ Page down ਲਿਖਤ ਦੀਆਂ ਹਨ।',
   'Backspace and Delete belong to the text.': 'Backspace ਤੇ Delete ਲਿਖਤ ਦੀਆਂ ਹਨ।',
-  'Enter closes a code block and carries a list on.': 'Enter ਕੋਡ ਬਲਾਕ ਬੰਦ ਕਰਦੀ ਹੈ ਤੇ ਸੂਚੀ ਅੱਗੇ ਚਲਾਉਂਦੀ ਹੈ।',
-  'Tab moves on through the app as well as indenting.': 'Tab ਅੰਦਰ ਕਰਨ ਤੋਂ ਇਲਾਵਾ ਐਪ ਵਿੱਚ ਅੱਗੇ ਵੀ ਜਾਂਦੀ ਹੈ।',
+  'Enter closes a code block and carries a list on.':
+    'Enter ਕੋਡ ਬਲਾਕ ਬੰਦ ਕਰਦੀ ਹੈ ਤੇ ਸੂਚੀ ਅੱਗੇ ਚਲਾਉਂਦੀ ਹੈ।',
+  'Tab moves on through the app as well as indenting.':
+    'Tab ਅੰਦਰ ਕਰਨ ਤੋਂ ਇਲਾਵਾ ਐਪ ਵਿੱਚ ਅੱਗੇ ਵੀ ਜਾਂਦੀ ਹੈ।',
   'Escape closes whatever is open.': 'Escape ਜੋ ਖੁੱਲ੍ਹਾ ਹੋਵੇ ਬੰਦ ਕਰਦੀ ਹੈ।',
-  'Your system takes this key before the app sees it.': 'ਐਪ ਵੇਖਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਡਾ ਸਿਸਟਮ ਇਹ ਕੁੰਜੀ ਲੈ ਲੈਂਦਾ ਹੈ।',
-  'Your browser takes this key before the app sees it.': 'ਐਪ ਵੇਖਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਡਾ ਬ੍ਰਾਊਜ਼ਰ ਇਹ ਕੁੰਜੀ ਲੈ ਲੈਂਦਾ ਹੈ।',
+  'Your system takes this key before the app sees it.':
+    'ਐਪ ਵੇਖਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਡਾ ਸਿਸਟਮ ਇਹ ਕੁੰਜੀ ਲੈ ਲੈਂਦਾ ਹੈ।',
+  'Your browser takes this key before the app sees it.':
+    'ਐਪ ਵੇਖਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਡਾ ਬ੍ਰਾਊਜ਼ਰ ਇਹ ਕੁੰਜੀ ਲੈ ਲੈਂਦਾ ਹੈ।',
   'That is not a key combination.': 'ਉਹ ਕੁੰਜੀਆਂ ਦਾ ਜੋੜ ਨਹੀਂ।',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt ਜਾਂ Cmd ਵੀ ਦਬਾ ਕੇ ਰੱਖੋ।',
   'File list': 'ਫ਼ਾਈਲ ਸੂਚੀ',
   'Select every file': 'ਹਰ ਫ਼ਾਈਲ ਚੁਣੋ',
   'Clear the selection': 'ਚੋਣ ਹਟਾਓ',
   'Delete the selected files': 'ਚੁਣੀਆਂ ਫ਼ਾਈਲਾਂ ਮਿਟਾਓ',
-  'The file could not be written, so it goes to the print dialog': 'ਫ਼ਾਈਲ ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ, ਇਸ ਲਈ ਛਾਪ ਸੰਵਾਦ ਵਿੱਚ ਜਾਂਦੀ ਹੈ',
+  'The file could not be written, so it goes to the print dialog':
+    'ਫ਼ਾਈਲ ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ, ਇਸ ਲਈ ਛਾਪ ਸੰਵਾਦ ਵਿੱਚ ਜਾਂਦੀ ਹੈ',
   'Next file': 'ਅਗਲੀ ਫ਼ਾਈਲ',
   'Previous file': 'ਪਿਛਲੀ ਫ਼ਾਈਲ',
   'Show what it holds': 'ਅੰਦਰ ਜੋ ਹੈ ਦਿਖਾਓ',
   'Hide what it holds': 'ਅੰਦਰ ਜੋ ਹੈ ਲੁਕਾਓ',
   'Moving through a list': 'ਸੂਚੀ ਵਿੱਚ ਚੱਲਣਾ',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'ਤੀਰ ਕੁੰਜੀਆਂ, Enter ਤੇ Esc ਜੋ ਖੁੱਲ੍ਹਾ ਹੋਵੇ ਉਸ ਵਿੱਚ ਚੱਲਦੀਆਂ ਹਨ; ਉਹ ਛੋਟੇ ਰਾਹ ਨਹੀਂ।',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'ਤੀਰ ਕੁੰਜੀਆਂ, Enter ਤੇ Esc ਜੋ ਖੁੱਲ੍ਹਾ ਹੋਵੇ ਉਸ ਵਿੱਚ ਚੱਲਦੀਆਂ ਹਨ; ਉਹ ਛੋਟੇ ਰਾਹ ਨਹੀਂ।',
   'Split right': 'ਸੱਜੇ ਵੰਡੋ',
   'Split down': 'ਹੇਠਾਂ ਵੰਡੋ',
   'Other pane': 'ਦੂਜਾ ਖ਼ਾਨਾ',
@@ -789,7 +841,8 @@ export const pa: Dictionary = {
   'Follow the link': 'ਕੜੀ ਦੇ ਪਿੱਛੇ ਜਾਓ',
   'Replace your own keys?': 'ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਬਦਲਣੀਆਂ ਹਨ?',
   Replace: 'ਬਦਲੋ',
-  'The keys you changed go back to what this keyboard says.': 'ਤੁਸੀਂ ਬਦਲੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਕੀਬੋਰਡ ਮੁਤਾਬਕ ਵਾਪਸ ਹੋ ਜਾਂਦੀਆਂ ਹਨ।',
+  'The keys you changed go back to what this keyboard says.':
+    'ਤੁਸੀਂ ਬਦਲੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਕੀਬੋਰਡ ਮੁਤਾਬਕ ਵਾਪਸ ਹੋ ਜਾਂਦੀਆਂ ਹਨ।',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +964,8 @@ export const pa: Dictionary = {
   Leave: 'ਛੱਡੋ',
   'Leave space': 'ਥਾਂ ਛੱਡੋ',
   'Leave {name}?': '{name} ਛੱਡਣੀ ਹੈ?',
-  'It stays with everybody else. Its notes go from your computer.': 'ਬਾਕੀ ਸਭ ਕੋਲ ਰਹਿੰਦੀ ਹੈ। ਇਸ ਦੀਆਂ ਨੋਟਾਂ ਤੁਹਾਡੇ ਕੰਪਿਊਟਰ ਤੋਂ ਜਾਂਦੀਆਂ ਹਨ।',
+  'It stays with everybody else. Its notes go from your computer.':
+    'ਬਾਕੀ ਸਭ ਕੋਲ ਰਹਿੰਦੀ ਹੈ। ਇਸ ਦੀਆਂ ਨੋਟਾਂ ਤੁਹਾਡੇ ਕੰਪਿਊਟਰ ਤੋਂ ਜਾਂਦੀਆਂ ਹਨ।',
   '{who} shared {space} with you': '{who} ਨੇ {space} ਤੁਹਾਡੇ ਨਾਲ ਸਾਂਝੀ ਕੀਤੀ',
   'Shared with you': 'ਤੁਹਾਡੇ ਨਾਲ ਸਾਂਝਾ',
   'That link does not open anything': 'ਉਹ ਕੜੀ ਕੁਝ ਨਹੀਂ ਖੋਲ੍ਹਦੀ',
@@ -928,7 +982,8 @@ export const pa: Dictionary = {
   'Release channel': 'ਜਾਰੀ ਰਾਹ',
   Stable: 'ਪੱਕਾ',
   Unstable: 'ਕੱਚਾ',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'ਪੱਕਾ ਸਰਕਾਰੀ ਜਾਰੀਆਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ main ਵਿੱਚ ਹਰ ਧੱਕੇ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'ਪੱਕਾ ਸਰਕਾਰੀ ਜਾਰੀਆਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ main ਵਿੱਚ ਹਰ ਧੱਕੇ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',
@@ -936,17 +991,27 @@ export const pa: Dictionary = {
   'In this note': 'ਇਸ ਨੋਟ ਵਿੱਚ',
   'In the whole space': 'ਪੂਰੀ ਥਾਂ ਵਿੱਚ',
   'Nothing here needs converting.': 'ਇੱਥੇ ਕੁਝ ਬਦਲਣ ਦੀ ਲੋੜ ਨਹੀਂ।',
-  'Rewrite {count} things?': { one: '{count} ਥਾਂ ਮੁੜ ਲਿਖਣੀ ਹੈ?', other: '{count} ਥਾਂਵਾਂ ਮੁੜ ਲਿਖਣੀਆਂ ਹਨ?' },
+  'Rewrite {count} things?': {
+    one: '{count} ਥਾਂ ਮੁੜ ਲਿਖਣੀ ਹੈ?',
+    other: '{count} ਥਾਂਵਾਂ ਮੁੜ ਲਿਖਣੀਆਂ ਹਨ?',
+  },
   'In {count} notes.': { one: '{count} ਨੋਟ ਵਿੱਚ।', other: '{count} ਨੋਟਾਂ ਵਿੱਚ।' },
   Rewrite: 'ਮੁੜ ਲਿਖੋ',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ਹਿੱਸੇ ਗੁਪਤ ਹਨ, ਤੇ Evernote ਬਿਨਾਂ ਕੋਈ ਉਨ੍ਹਾਂ ਨੂੰ ਨਹੀਂ ਪੜ੍ਹ ਸਕਦਾ',
-  '{count} notes had a reminder, which the export does not carry': '{count} ਨੋਟਾਂ ਵਿੱਚ ਯਾਦ ਸੀ, ਜੋ ਬਾਹਰ ਭੇਜਣ ਨਾਲ ਨਹੀਂ ਜਾਂਦਾ',
-  '{count} notes were in the bin and stay there': '{count} ਨੋਟਾਂ ਕੂੜੇਦਾਨ ਵਿੱਚ ਸਨ ਤੇ ਉੱਥੇ ਰਹਿੰਦੀਆਂ ਹਨ',
-  '{count} archived notes are in a folder called Archive': '{count} ਸਾਂਭੀਆਂ ਨੋਟਾਂ Archive ਨਾਂ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹਨ',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ਹਿੱਸੇ ਗੁਪਤ ਹਨ, ਤੇ Evernote ਬਿਨਾਂ ਕੋਈ ਉਨ੍ਹਾਂ ਨੂੰ ਨਹੀਂ ਪੜ੍ਹ ਸਕਦਾ',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} ਨੋਟਾਂ ਵਿੱਚ ਯਾਦ ਸੀ, ਜੋ ਬਾਹਰ ਭੇਜਣ ਨਾਲ ਨਹੀਂ ਜਾਂਦਾ',
+  '{count} notes were in the bin and stay there':
+    '{count} ਨੋਟਾਂ ਕੂੜੇਦਾਨ ਵਿੱਚ ਸਨ ਤੇ ਉੱਥੇ ਰਹਿੰਦੀਆਂ ਹਨ',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ਸਾਂਭੀਆਂ ਨੋਟਾਂ Archive ਨਾਂ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹਨ',
   'The colours a note had are not kept': 'ਨੋਟ ਦੇ ਰੰਗ ਨਹੀਂ ਰੱਖੇ ਜਾਂਦੇ',
-  '{count} block references were written out as the words they pointed at': '{count} ਬਲਾਕ ਹਵਾਲੇ ਉਨ੍ਹਾਂ ਸ਼ਬਦਾਂ ਵਜੋਂ ਲਿਖੇ ਗਏ ਜਿਨ੍ਹਾਂ ਵੱਲ ਉਹ ਇਸ਼ਾਰਾ ਕਰਦੇ ਸਨ',
-  '{count} saved views are left out, and every row is in the table': '{count} ਸਾਂਭੇ ਦ੍ਰਿਸ਼ ਛੱਡ ਦਿੱਤੇ ਗਏ, ਤੇ ਹਰ ਕਤਾਰ ਸਾਰਨੀ ਵਿੱਚ ਹੈ',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} ਸਫ਼ੇ HTML ਵਜੋਂ ਆਏ, ਇਸ ਲਈ ਸ਼ਬਦ ਰਹਿੰਦੇ ਹਨ ਤੇ ਦਿੱਖ ਨਹੀਂ',
+  '{count} block references were written out as the words they pointed at':
+    '{count} ਬਲਾਕ ਹਵਾਲੇ ਉਨ੍ਹਾਂ ਸ਼ਬਦਾਂ ਵਜੋਂ ਲਿਖੇ ਗਏ ਜਿਨ੍ਹਾਂ ਵੱਲ ਉਹ ਇਸ਼ਾਰਾ ਕਰਦੇ ਸਨ',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} ਸਾਂਭੇ ਦ੍ਰਿਸ਼ ਛੱਡ ਦਿੱਤੇ ਗਏ, ਤੇ ਹਰ ਕਤਾਰ ਸਾਰਨੀ ਵਿੱਚ ਹੈ',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} ਸਫ਼ੇ HTML ਵਜੋਂ ਆਏ, ਇਸ ਲਈ ਸ਼ਬਦ ਰਹਿੰਦੇ ਹਨ ਤੇ ਦਿੱਖ ਨਹੀਂ',
   'There are no rows in this file.': 'ਇਸ ਫ਼ਾਈਲ ਵਿੱਚ ਕਤਾਰਾਂ ਨਹੀਂ।',
   'Nothing in there can be read as notes.': 'ਉਸ ਵਿੱਚ ਕੁਝ ਨੋਟਾਂ ਵਜੋਂ ਨਹੀਂ ਪੜ੍ਹਿਆ ਜਾ ਸਕਦਾ।',
   'That export could not be read.': 'ਉਹ ਬਾਹਰ ਭੇਜੀ ਸਮੱਗਰੀ ਨਹੀਂ ਪੜ੍ਹੀ ਜਾ ਸਕੀ।',
@@ -957,20 +1022,48 @@ export const pa: Dictionary = {
   'This space': 'ਇਹ ਥਾਂ',
   'Drop an export here': 'ਬਾਹਰ ਭੇਜੀ ਸਮੱਗਰੀ ਇੱਥੇ ਸੁੱਟੋ',
   'A zip, a folder, or a file another app wrote': 'ਇੱਕ zip, ਫੋਲਡਰ, ਜਾਂ ਹੋਰ ਐਪ ਦੀ ਲਿਖੀ ਫ਼ਾਈਲ',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes ਤੇ Apple Journal ਆਪਣੀਆਂ ਨੋਟਾਂ ਉੱਥੇ ਰੱਖਦੇ ਹਨ ਜਿੱਥੇ ਸਿਰਫ਼ ਉਹ ਖੋਲ੍ਹ ਸਕਦੇ ਹਨ। ਪਹਿਲਾਂ ਬਾਹਰ ਭੇਜੋ, ਫਿਰ ਉਹ ਅੰਦਰ ਲਿਆਓ।',
-  'Pandoc reads this one, from the file on your disk.': 'ਇਹ pandoc ਤੁਹਾਡੀ ਡਿਸਕ ਦੀ ਫ਼ਾਈਲ ਤੋਂ ਪੜ੍ਹਦਾ ਹੈ।',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ਤਸਵੀਰਾਂ HEIC ਵਿੱਚ ਆਈਆਂ, ਜੋ ਸਿਰਫ਼ Apple ਦਿਖਾਉਂਦਾ ਹੈ',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} ਮਨੋਭਾਵ ਤੇ ਸਰਗਰਮੀ ਕਾਰਡ ਚਿੱਤਰ ਹਨ, ਇਸ ਲਈ ਸਿਰਫ਼ ਉਨ੍ਹਾਂ ਦੇ ਸ਼ਬਦ ਆਉਂਦੇ ਹਨ',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Notes ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} ਨੋਟਾਂ ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਵਿੱਚ ਹਨ ਤੇ ਉੱਥੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} ਚਿੱਤਰ ਤੇ ਸਕੈਨ ਕੀਤੇ ਸਫ਼ੇ ਉਹ ਤਸਵੀਰਾਂ ਹਨ ਜੋ Notes ਆਪ ਬਣਾਉਂਦਾ ਹੈ',
+  '{count} tables inside notes do not come over': 'ਨੋਟਾਂ ਅੰਦਰ {count} ਸਾਰਨੀਆਂ ਨਹੀਂ ਆਉਂਦੀਆਂ',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} ਨਾਲ ਲੱਗੀਆਂ ਚੀਜ਼ਾਂ ਇਸ Mac ਉੱਤੇ ਨਹੀਂ, iCloud ਵਿੱਚ ਹਨ',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ਉਹ ਨੋਟਾਂ Full Disk Access ਪਿੱਛੇ ਰੱਖਦਾ ਹੈ।',
+  'There are no notes in Apple Notes on this Mac.': 'ਇਸ Mac ਉੱਤੇ Apple Notes ਵਿੱਚ ਕੋਈ ਨੋਟ ਨਹੀਂ।',
+  'Those notes could not be read.': 'ਉਹ ਨੋਟਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  'Read them from this Mac': 'ਇਸ Mac ਤੋਂ ਪੜ੍ਹੋ',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access ਵਿੱਚ nibeditor ਚਾਲੂ ਕਰੋ, ਫਿਰ ਮੁੜ ਪੁੱਛੋ।',
+  'Open the setting': 'ਸੈਟਿੰਗ ਖੋਲ੍ਹੋ',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal ਆਪ ਬਾਹਰ ਭੇਜਦਾ ਹੈ: Journal, ਸੈਟਿੰਗਾਂ, ਬਾਹਰ ਭੇਜੋ। Apple Notes ਵਿੱਚ ਬਾਹਰ ਭੇਜਣਾ ਨਹੀਂ, ਇਸ ਲਈ ਜਿਸ Mac ਉੱਤੇ ਉਹ ਹਨ ਉਸ ਤੋਂ ਦੂਰ, ਇੱਥੇ ਸੁੱਟਣ ਵਾਲੀ ਚੀਜ਼ ਉਹ ਫੋਲਡਰ ਹੈ ਜੋ ਕਿਸੇ ਬਾਹਰ ਭੇਜਣ ਵਾਲੇ ਨੇ ਲਿਖਿਆ।',
+  'Pandoc reads this one, from the file on your disk.':
+    'ਇਹ pandoc ਤੁਹਾਡੀ ਡਿਸਕ ਦੀ ਫ਼ਾਈਲ ਤੋਂ ਪੜ੍ਹਦਾ ਹੈ।',
   'Read it with pandoc': 'pandoc ਨਾਲ ਪੜ੍ਹੋ',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'ਇਹ ਸਿਰਫ਼ pandoc ਪੜ੍ਹਦਾ ਹੈ, ਤੇ ਉਹ ਇਸ ਮਸ਼ੀਨ ਉੱਤੇ ਨਹੀਂ ਲੱਗਾ।',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'ਇਹ ਸਿਰਫ਼ pandoc ਪੜ੍ਹਦਾ ਹੈ, ਤੇ ਉਹ ਇਸ ਮਸ਼ੀਨ ਉੱਤੇ ਨਹੀਂ ਲੱਗਾ।',
   Rows: 'ਕਤਾਰਾਂ',
   'As a table': 'ਸਾਰਨੀ ਵਜੋਂ',
   'One note per row': 'ਹਰ ਕਤਾਰ ਲਈ ਇੱਕ ਨੋਟ',
   Into: 'ਇਸ ਵਿੱਚ',
   'Worth knowing': 'ਜਾਣਨ ਯੋਗ',
   '{count} notes arrived.': { one: '{count} ਨੋਟ ਆਈ।', other: '{count} ਨੋਟਾਂ ਆਈਆਂ।' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} ਨਾਂ ਲਿਆ ਜਾ ਚੁੱਕਾ ਸੀ, ਇਸ ਲਈ ਉਹ ਫ਼ਾਈਲ ਹਟ ਗਈ।', other: '{count} ਨਾਂ ਲਏ ਜਾ ਚੁੱਕੇ ਸਨ, ਇਸ ਲਈ ਉਹ ਫ਼ਾਈਲਾਂ ਹਟ ਗਈਆਂ।' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} ਨਾਂ ਲਿਆ ਜਾ ਚੁੱਕਾ ਸੀ, ਇਸ ਲਈ ਉਹ ਫ਼ਾਈਲ ਹਟ ਗਈ।',
+    other: '{count} ਨਾਂ ਲਏ ਜਾ ਚੁੱਕੇ ਸਨ, ਇਸ ਲਈ ਉਹ ਫ਼ਾਈਲਾਂ ਹਟ ਗਈਆਂ।',
+  },
   'A table': 'ਇੱਕ ਸਾਰਨੀ',
   'Markdown files': 'markdown ਫ਼ਾਈਲਾਂ',
   'A document': 'ਇੱਕ ਦਸਤਾਵੇਜ਼',
+  'A PDF, as pages to write on': 'ਇੱਕ PDF, ਲਿਖਣ ਵਾਲੇ ਸਫ਼ਿਆਂ ਵਜੋਂ',
   'Undo the import': 'ਅੰਦਰ ਲਿਆਉਣਾ ਵਾਪਸ ਲਵੋ',
   'Choose an export': 'ਬਾਹਰ ਭੇਜੀ ਸਮੱਗਰੀ ਚੁਣੋ',
   Under: 'ਹੇਠ',
@@ -982,13 +1075,15 @@ export const pa: Dictionary = {
   'Keep both copies': 'ਦੋਵੇਂ ਨਕਲਾਂ ਰੱਖੋ',
   'Let the newest win': 'ਸਭ ਤੋਂ ਨਵੀਂ ਜਿੱਤੇ',
   'Ask me each time': 'ਹਰ ਵਾਰ ਮੈਨੂੰ ਪੁੱਛੋ',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ਕੁਝ ਨਹੀਂ ਸੁੱਟਿਆ ਜਾਂਦਾ: ਜੋ ਨਹੀਂ ਜਿੱਤਦਾ ਉਹ ਰੂਪ ਵਜੋਂ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ਕੁਝ ਨਹੀਂ ਸੁੱਟਿਆ ਜਾਂਦਾ: ਜੋ ਨਹੀਂ ਜਿੱਤਦਾ ਉਹ ਰੂਪ ਵਜੋਂ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
   'Waiting for you': 'ਤੁਹਾਡੀ ਉਡੀਕ',
   'Keep mine': 'ਮੇਰੀ ਰੱਖੋ',
   'Take theirs': 'ਉਨ੍ਹਾਂ ਦੀ ਲਵੋ',
   'Keep both': 'ਦੋਵੇਂ ਰੱਖੋ',
   'What synced': 'ਕੀ ਸਮਕਾਲ ਹੋਇਆ',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ਹਾਲੇ ਕੁਝ ਨਹੀਂ। ਜੋ ਗੇੜਾ ਕੁਝ ਨਹੀਂ ਹਿਲਾਉਂਦਾ ਉਹ ਨਹੀਂ ਲਿਖਿਆ ਜਾਂਦਾ।',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ਹਾਲੇ ਕੁਝ ਨਹੀਂ। ਜੋ ਗੇੜਾ ਕੁਝ ਨਹੀਂ ਹਿਲਾਉਂਦਾ ਉਹ ਨਹੀਂ ਲਿਖਿਆ ਜਾਂਦਾ।',
   'Clear the list': 'ਸੂਚੀ ਖ਼ਾਲੀ ਕਰੋ',
   '{count} down': '{count} ਹੇਠਾਂ',
   '{count} up': '{count} ਉੱਪਰ',
@@ -998,19 +1093,25 @@ export const pa: Dictionary = {
   'This space, as it was': 'ਇਹ ਥਾਂ, ਜਿਵੇਂ ਸੀ',
   '{count} days ago': { one: '{count} ਦਿਨ ਪਹਿਲਾਂ', other: '{count} ਦਿਨ ਪਹਿਲਾਂ' },
   'What would change?': 'ਕੀ ਬਦਲੇਗਾ?',
-  '{count} notes would go back to what they said then.': { one: '{count} ਨੋਟ ਉਸ ਵੇਲੇ ਦੀ ਹਾਲਤ ਵਿੱਚ ਵਾਪਸ ਜਾਵੇਗੀ।', other: '{count} ਨੋਟਾਂ ਉਸ ਵੇਲੇ ਦੀ ਹਾਲਤ ਵਿੱਚ ਵਾਪਸ ਜਾਣਗੀਆਂ।' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} ਨੋਟ ਉਸ ਵੇਲੇ ਦੀ ਹਾਲਤ ਵਿੱਚ ਵਾਪਸ ਜਾਵੇਗੀ।',
+    other: '{count} ਨੋਟਾਂ ਉਸ ਵੇਲੇ ਦੀ ਹਾਲਤ ਵਿੱਚ ਵਾਪਸ ਜਾਣਗੀਆਂ।',
+  },
   'Nothing has changed since then.': 'ਉਸ ਵੇਲੇ ਤੋਂ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ।',
   '{count} notes went back.': { one: '{count} ਨੋਟ ਵਾਪਸ ਗਈ।', other: '{count} ਨੋਟਾਂ ਵਾਪਸ ਗਈਆਂ।' },
-  'The account keeps a month of versions of every note that syncs.': 'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਮਹੀਨੇ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
+  'The account keeps a month of versions of every note that syncs.':
+    'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਮਹੀਨੇ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
   'That did not work.': 'ਉਹ ਨਹੀਂ ਚੱਲਿਆ।',
   'Signing in': 'ਸਾਈਨ ਇਨ',
   'Ask for a code from an app': 'ਐਪ ਤੋਂ ਕੋਡ ਮੰਗੋ',
   'Turn on': 'ਚਾਲੂ ਕਰੋ',
   'Turn off': 'ਬੰਦ ਕਰੋ',
-  'Put this into your authenticator app, then type its code.': 'ਇਹ ਆਪਣੀ ਪਛਾਣ ਐਪ ਵਿੱਚ ਪਾਓ, ਫਿਰ ਉਸ ਦਾ ਕੋਡ ਲਿਖੋ।',
+  'Put this into your authenticator app, then type its code.':
+    'ਇਹ ਆਪਣੀ ਪਛਾਣ ਐਪ ਵਿੱਚ ਪਾਓ, ਫਿਰ ਉਸ ਦਾ ਕੋਡ ਲਿਖੋ।',
   Secret: 'ਗੁਪਤ',
   'Code from the app': 'ਐਪ ਦਾ ਕੋਡ',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'ਇਹ ਸੁਰੱਖਿਅਤ ਥਾਂ ਰੱਖੋ। ਹਰ ਇੱਕ ਇੱਕੋ ਵਾਰ ਚੱਲਦਾ ਹੈ, ਤੇ ਮੁੜ ਨਹੀਂ ਦਿਖਾਏ ਜਾਂਦੇ।',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'ਇਹ ਸੁਰੱਖਿਅਤ ਥਾਂ ਰੱਖੋ। ਹਰ ਇੱਕ ਇੱਕੋ ਵਾਰ ਚੱਲਦਾ ਹੈ, ਤੇ ਮੁੜ ਨਹੀਂ ਦਿਖਾਏ ਜਾਂਦੇ।',
   'Recovery codes': 'ਮੁੜ ਪ੍ਰਾਪਤੀ ਕੋਡ',
   'Recovery code': 'ਮੁੜ ਪ੍ਰਾਪਤੀ ਕੋਡ',
   'Recovery codes left': 'ਬਾਕੀ ਮੁੜ ਪ੍ਰਾਪਤੀ ਕੋਡ',
@@ -1032,7 +1133,8 @@ export const pa: Dictionary = {
   Pages: 'ਸਫ਼ੇ',
   'Page {number} of {count}': 'ਸਫ਼ਾ {number}/{count}',
   'What is selected': 'ਜੋ ਚੁਣਿਆ ਹੈ',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ਕੈਨਵਸ: {cards} ਕਾਰਡ, {links} ਕੜੀਆਂ, {drawings} ਚਿੱਤਰ',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ਕੈਨਵਸ: {cards} ਕਾਰਡ, {links} ਕੜੀਆਂ, {drawings} ਚਿੱਤਰ',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ਪ੍ਰਦਾਤਾ',
@@ -1046,8 +1148,10 @@ export const pa: Dictionary = {
   'Asking…': 'ਪੁੱਛ ਰਿਹਾ ਹੈ…',
   'No providers yet.': 'ਹਾਲੇ ਪ੍ਰਦਾਤਾ ਨਹੀਂ।',
   'Add {name}': '{name} ਜੋੜੋ',
-  'Keys stay in the secure store on this device.': 'ਕੁੰਜੀਆਂ ਇਸ ਡਿਵਾਈਸ ਦੇ ਸੁਰੱਖਿਅਤ ਭੰਡਾਰ ਵਿੱਚ ਰਹਿੰਦੀਆਂ ਹਨ।',
-  'This browser holds the keys in its own storage.': 'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
+  'Keys stay in the secure store on this device.':
+    'ਕੁੰਜੀਆਂ ਇਸ ਡਿਵਾਈਸ ਦੇ ਸੁਰੱਖਿਅਤ ਭੰਡਾਰ ਵਿੱਚ ਰਹਿੰਦੀਆਂ ਹਨ।',
+  'This browser holds the keys in its own storage.':
+    'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
   'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',
   'That provider is not set up yet.': 'ਉਹ ਪ੍ਰਦਾਤਾ ਹਾਲੇ ਨਹੀਂ ਲੱਗਾ।',
@@ -1069,13 +1173,86 @@ export const pa: Dictionary = {
   'AI block': 'AI ਬਲਾਕ',
   'Highlight colour': 'ਉਭਾਰ ਦਾ ਰੰਗ',
   'A single newline breaks the line': 'ਇੱਕੋ ਨਵੀਂ ਲਾਈਨ ਲਾਈਨ ਤੋੜ ਦਿੰਦੀ ਹੈ',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ਬੰਦ ਆਮ markdown ਹੈ: ਇੱਕ ਪੈਰੇ ਦੀਆਂ ਦੋ ਲਾਈਨਾਂ ਇੱਕ ਪੜ੍ਹੀਆਂ ਜਾਂਦੀਆਂ ਹਨ; Obsidian ਇਸ ਨੂੰ ਸਖ਼ਤ ਲਾਈਨ ਤੋੜ ਕਹਿੰਦਾ ਹੈ।',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ਬੰਦ ਆਮ markdown ਹੈ: ਇੱਕ ਪੈਰੇ ਦੀਆਂ ਦੋ ਲਾਈਨਾਂ ਇੱਕ ਪੜ੍ਹੀਆਂ ਜਾਂਦੀਆਂ ਹਨ; Obsidian ਇਸ ਨੂੰ ਸਖ਼ਤ ਲਾਈਨ ਤੋੜ ਕਹਿੰਦਾ ਹੈ।',
   'New links': 'ਨਵੀਆਂ ਕੜੀਆਂ',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'ਵਿਕੀਕੜੀ ਨੋਟ ਦਾ ਨਾਂ ਲੈਂਦੀ ਹੈ, ਇਸ ਲਈ ਨਾਂ ਬਦਲਣ ਉੱਤੇ ਵੀ ਕੜੀ ਬਚੀ ਰਹਿੰਦੀ ਹੈ; ਦੋਵੇਂ ਰੂਪ ਪੜ੍ਹੇ ਜਾਂਦੇ ਹਨ।',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'ਵਿਕੀਕੜੀ ਨੋਟ ਦਾ ਨਾਂ ਲੈਂਦੀ ਹੈ, ਇਸ ਲਈ ਨਾਂ ਬਦਲਣ ਉੱਤੇ ਵੀ ਕੜੀ ਬਚੀ ਰਹਿੰਦੀ ਹੈ; ਦੋਵੇਂ ਰੂਪ ਪੜ੍ਹੇ ਜਾਂਦੇ ਹਨ।',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown, ਸਭ ਤੋਂ ਛੋਟਾ ਨਾਂ',
   'Markdown, relative path': 'markdown, ਸਾਪੇਖ ਰਾਹ',
   'Markdown, path in the space': 'markdown, ਥਾਂ ਵਿੱਚ ਰਾਹ',
+  // Publishing part one.
+  'The folders you choose become public.': 'ਚੁਣੇ ਫੋਲਡਰ ਜਨਤਕ ਹੋ ਜਾਂਦੇ ਹਨ।',
+  'Anyone with the address can read what is published, drafts included.':
+    'ਪਤਾ ਰੱਖਣ ਵਾਲਾ ਕੋਈ ਵੀ ਛਪਿਆ ਸਭ ਪੜ੍ਹ ਸਕਦਾ ਹੈ, ਖਰੜੇ ਵੀ।',
+  'Which notes': 'ਕਿਹੜੀਆਂ ਨੋਟਾਂ',
+  'Notes outside a rule': 'ਨਿਯਮ ਤੋਂ ਬਾਹਰ ਦੀਆਂ ਨੋਟਾਂ',
+  'Are published': 'ਛਪਦੀਆਂ ਹਨ',
+  'Stay private': 'ਨਿੱਜੀ ਰਹਿੰਦੀਆਂ ਹਨ',
+  'Follows the rule': 'ਨਿਯਮ ਮੰਨਦਾ ਹੈ',
+  Published: 'ਛਪੀ',
+  Private: 'ਨਿੱਜੀ',
+  '{count} pages': '{count} ਸਫ਼ੇ',
+  '{count} new': '{count} ਨਵੇਂ',
+  '{count} gone': '{count} ਹਟਾਏ',
+  'and more': 'ਤੇ ਹੋਰ',
+  'How it appears': 'ਕਿਵੇਂ ਦਿਸਦਾ ਹੈ',
+  Description: 'ਵੇਰਵਾ',
+  'What this site is': 'ਇਹ ਸਾਈਟ ਕਾਹਦੇ ਬਾਰੇ ਹੈ',
+  'Tab icon': 'ਟੈਬ ਆਈਕਨ',
+  Password: 'ਪਾਸਵਰਡ',
+  'Set a new one': 'ਨਵਾਂ ਲਾਓ',
+  'Ask for a password': 'ਪਾਸਵਰਡ ਮੰਗੋ',
+  'No password': 'ਪਾਸਵਰਡ ਨਹੀਂ',
+  'Remove the password': 'ਪਾਸਵਰਡ ਹਟਾਓ',
+  'Scan this with your authenticator app, then type its code.':
+    'ਇਸ ਨੂੰ ਆਪਣੀ ਪਛਾਣ ਐਪ ਨਾਲ ਸਕੈਨ ਕਰੋ, ਫਿਰ ਇਸ ਦਾ ਕੋਡ ਲਿਖੋ।',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ਫ਼ੋਟੋ',
+  Dictate: 'ਬੋਲ ਕੇ ਲਿਖਵਾਓ',
+  'Add to {name}': '{name} ਵਿੱਚ ਜੋੜੋ',
+  // Web tabs
+  Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
+  'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
+  'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
+  'Allow the camera': 'ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
+  'Allow the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
+  'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
+  'Copy the address': 'ਪਤਾ ਨਕਲ ਕਰੋ',
+  'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
+  Website: 'ਵੈੱਬਸਾਈਟ',
+  'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
+  // Recording, meetings and what a model wrote
+  Record: 'ਰਿਕਾਰਡ ਕਰੋ',
+  Recording: 'ਰਿਕਾਰਡਿੰਗ',
+  'Stop recording': 'ਰਿਕਾਰਡਿੰਗ ਰੋਕੋ',
+  'Meeting notes': 'ਮੀਟਿੰਗ ਦੀਆਂ ਨੋਟਾਂ',
+  Meeting: 'ਮੀਟਿੰਗ',
+  'Stop the meeting': 'ਮੀਟਿੰਗ ਮੁਕਾਓ',
+  Transcribe: 'ਲਿਖਤ ਵਿੱਚ ਬਦਲੋ',
+  Transcript: 'ਲਿਖਤੀ ਰੂਪ',
+  'Transcript ({language})': 'ਲਿਖਤੀ ਰੂਪ ({language})',
+  'Written by {model}': '{model} ਨੇ ਲਿਖਿਆ',
+  'Saving the recording': 'ਰਿਕਾਰਡਿੰਗ ਸਾਂਭ ਰਿਹਾ ਹੈ',
+  'Turning the recording into words': 'ਰਿਕਾਰਡਿੰਗ ਨੂੰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲ ਰਿਹਾ ਹੈ',
+  'Open a space to record into.': 'ਰਿਕਾਰਡ ਕਰਨ ਲਈ ਇੱਕ ਥਾਂ ਖੋਲ੍ਹੋ।',
+  'Sign in to take meeting notes.': 'ਮੀਟਿੰਗ ਦੀਆਂ ਨੋਟਾਂ ਲੈਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Sign in to turn a recording into words.': 'ਰਿਕਾਰਡਿੰਗ ਨੂੰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'That microphone could not be opened.': 'ਉਹ ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਖੁੱਲ੍ਹ ਨਹੀਂ ਸਕਿਆ।',
+  'That recording could not be saved.': 'ਉਹ ਰਿਕਾਰਡਿੰਗ ਸਾਂਭੀ ਨਹੀਂ ਜਾ ਸਕੀ।',
+  'That recording could not be turned into words.': 'ਉਹ ਰਿਕਾਰਡਿੰਗ ਸ਼ਬਦਾਂ ਵਿੱਚ ਨਹੀਂ ਬਦਲੀ ਜਾ ਸਕੀ।',
+  'That recording is not in this space.': 'ਉਹ ਰਿਕਾਰਡਿੰਗ ਇਸ ਥਾਂ ਵਿੱਚ ਨਹੀਂ।',
+  'That recording is too long to turn into words in one go.':
+    'ਉਹ ਰਿਕਾਰਡਿੰਗ ਇੱਕੋ ਵਾਰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਬਹੁਤ ਲੰਮੀ ਹੈ।',
+  'That is as much as one recording may hold.': 'ਇੱਕ ਰਿਕਾਰਡਿੰਗ ਵਿੱਚ ਇੰਨਾ ਹੀ ਸਮਾਉਂਦਾ ਹੈ।',
+  'Nothing could be heard in that recording.': 'ਉਸ ਰਿਕਾਰਡਿੰਗ ਵਿੱਚ ਕੁਝ ਸੁਣਿਆ ਨਹੀਂ ਗਿਆ।',
+  'A piece of the transcript is being tried again.':
+    'ਲਿਖਤੀ ਰੂਪ ਦਾ ਇੱਕ ਹਿੱਸਾ ਮੁੜ ਅਜ਼ਮਾਇਆ ਜਾ ਰਿਹਾ ਹੈ।',
+  'The transcript is behind and losing pieces.': 'ਲਿਖਤੀ ਰੂਪ ਪਿੱਛੇ ਹੈ ਤੇ ਹਿੱਸੇ ਗੁਆ ਰਿਹਾ ਹੈ।',
+  '{count} pieces of this meeting were lost.': 'ਇਸ ਮੀਟਿੰਗ ਦੇ {count} ਹਿੱਸੇ ਗੁਆਚ ਗਏ।',
+  'Add an AI provider in settings to summarise.': 'ਸਾਰ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ।',
+  'The summary could not be written.': 'ਸਾਰ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ਡਾਕ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ - ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'start again - that took too long': 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ - ਉਸ ਵਿੱਚ ਬਹੁਤ ਸਮਾਂ ਲੱਗਾ',
@@ -1090,7 +1267,8 @@ export const pa: Dictionary = {
   'that is more bookmarks than a space holds': 'ਥਾਂ ਜਿੰਨੀਆਂ ਨਿਸ਼ਾਨੀਆਂ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
   'that is more paths than a space leaves out': 'ਥਾਂ ਜਿੰਨੇ ਰਾਹ ਛੱਡਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
   'that is more files than a space keeps': 'ਥਾਂ ਜਿੰਨੀਆਂ ਫ਼ਾਈਲਾਂ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
-  'that is more than a space keeps about its graph': 'ਥਾਂ ਆਪਣੇ ਗ੍ਰਾਫ਼ ਬਾਰੇ ਜਿੰਨਾ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹੈ',
+  'that is more than a space keeps about its graph':
+    'ਥਾਂ ਆਪਣੇ ਗ੍ਰਾਫ਼ ਬਾਰੇ ਜਿੰਨਾ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹੈ',
   'that is more folder icons than a space holds': 'ਥਾਂ ਜਿੰਨੇ ਫੋਲਡਰ ਆਈਕਨ ਰੱਖਦੀ ਹੈ ਉਸ ਤੋਂ ਵੱਧ ਹਨ',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ਉਸ ਪਤੇ ਉੱਤੇ ਕੋਈ ਨਹੀਂ',

@@ -7,6 +7,12 @@ export const gu: Dictionary = {
   'Open file': 'ફાઇલ ખોલો',
   'New note inside': 'અંદર નવી નોંધ',
   'New canvas': 'નવું કેનવાસ',
+  'New page note': 'નવી પાનાંવાળી નોંધ',
+  'Add a page': 'પાનું ઉમેરો',
+  'Add a page after this': 'આ પછી પાનું ઉમેરો',
+  'Delete this page': 'આ પાનું કાઢો',
+  'Page {number}': 'પાનું {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',
   'Note or picture': 'નોંધ કે ચિત્ર',
@@ -34,7 +40,8 @@ export const gu: Dictionary = {
   'Create a space': 'જગ્યા બનાવો',
   'Delete space': 'જગ્યા કાઢી નાખો',
   'Delete {name}?': '{name} કાઢી નાખવું?',
-  'Every note in this space is deleted from your computer.': 'આ જગ્યાની દરેક નોંધ તમારા કમ્પ્યુટરમાંથી કાઢી નખાય છે.',
+  'Every note in this space is deleted from your computer.':
+    'આ જગ્યાની દરેક નોંધ તમારા કમ્પ્યુટરમાંથી કાઢી નખાય છે.',
   'The notes inside it go too.': 'તેની અંદરની નોંધો પણ જાય છે.',
   Journal: 'રોજનીશી',
   Create: 'બનાવો',
@@ -206,7 +213,8 @@ export const gu: Dictionary = {
   'Image not found': 'ચિત્ર મળ્યું નથી',
   'Delete {count} items': { one: '{count} વસ્તુ કાઢો', other: '{count} વસ્તુ કાઢો' },
   'Recently deleted': 'હાલમાં કાઢેલું',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'કાઢેલી નોંધો અને જગ્યાઓ અહીં ૧૪ દિવસ રહે છે, પછી કાયમ માટે જાય છે.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'કાઢેલી નોંધો અને જગ્યાઓ અહીં ૧૪ દિવસ રહે છે, પછી કાયમ માટે જાય છે.',
   'Nothing here.': 'અહીં કંઈ નથી.',
   Empty: 'ખાલી કરો',
   Spaces: 'જગ્યાઓ',
@@ -257,7 +265,8 @@ export const gu: Dictionary = {
   'Previous slide': 'પાછળની સ્લાઇડ',
   'Read-only': 'ફક્ત વાંચન',
   'No preview': 'પૂર્વદર્શન નથી',
-  'Shown as plain text, so typing stays instant in a note this long': 'સાદા લખાણ તરીકે બતાવાય છે, જેથી આટલી લાંબી નોંધમાં ટાઇપ કરવું તરત રહે',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'સાદા લખાણ તરીકે બતાવાય છે, જેથી આટલી લાંબી નોંધમાં ટાઇપ કરવું તરત રહે',
   'Leave read-only': 'ફક્ત વાંચનમાંથી બહાર',
   Next: 'આગળ',
   Previous: 'પાછળ',
@@ -353,16 +362,19 @@ export const gu: Dictionary = {
   'OpenAI key': 'OpenAI કી',
   Model: 'મોડેલ',
   Reasoning: 'તર્ક',
-  'Kept encrypted on your account, and never shown again.': 'તમારા ખાતામાં એન્ક્રિપ્ટ કરીને રખાય છે, અને ફરી બતાવાતું નથી.',
+  'Kept encrypted on your account, and never shown again.':
+    'તમારા ખાતામાં એન્ક્રિપ્ટ કરીને રખાય છે, અને ફરી બતાવાતું નથી.',
   'set, ends in …{tail}': 'ગોઠવેલું, …{tail} પર પૂરું',
   'Saving the key': 'કી સાચવી રહ્યું છે',
   'this server cannot keep a key yet': 'આ સર્વર હજી કી રાખી શકતું નથી',
   'that does not look like a key': 'એ કી જેવું લાગતું નથી',
   'that key could not be saved': 'એ કી સાચવી શકાઈ નહીં',
   'Sign in to ask a question.': 'પ્રશ્ન પૂછવા સાઇન ઇન કરો.',
-  'Asking OpenAI which models this key can use': 'OpenAIને પૂછી રહ્યું છે કે આ કી કયાં મોડેલ વાપરી શકે',
+  'Asking OpenAI which models this key can use':
+    'OpenAIને પૂછી રહ્યું છે કે આ કી કયાં મોડેલ વાપરી શકે',
   'Could not reach OpenAI': 'OpenAI સુધી પહોંચી શકાયું નહીં',
-  'That key cannot use any of the models Nib asks for.': 'Nib માંગે છે તેમાંથી કોઈ મોડેલ એ કી વાપરી શકતી નથી.',
+  'That key cannot use any of the models Nib asks for.':
+    'Nib માંગે છે તેમાંથી કોઈ મોડેલ એ કી વાપરી શકતી નથી.',
   'No reasoning': 'તર્ક નહીં',
   Minimal: 'ન્યૂનતમ',
   Low: 'નીચું',
@@ -403,7 +415,10 @@ export const gu: Dictionary = {
   'Add a word': 'શબ્દ ઉમેરો',
   'Add {word} to the dictionary': '{word} શબ્દકોશમાં ઉમેરો',
   'Remove {word} from the dictionary': '{word} શબ્દકોશમાંથી કાઢો',
-  '{count} things in this theme were left out.': { one: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.', other: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.' },
+  '{count} things in this theme were left out.': {
+    one: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.',
+    other: 'આ થીમની {count} વસ્તુ છોડી દેવાઈ.',
+  },
   'A note': 'એક નોંધ',
   'Words with {bold} and a {link}.': '{bold} અને એક {link} સાથે શબ્દો.',
   bold: 'જાડું',
@@ -448,11 +463,14 @@ export const gu: Dictionary = {
   'Line numbers': 'લીટી ક્રમાંક',
   Syntax: 'વાક્યરચના',
   'Strict CommonMark': 'કડક CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'ફક્ત પ્રમાણભૂત markdown નિયમ, કોષ્ટક, કાર્યયાદી કે તળટીપ નહીં.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'ફક્ત પ્રમાણભૂત markdown નિયમ, કોષ્ટક, કાર્યયાદી કે તળટીપ નહીં.',
   'Smart punctuation': 'હોશિયાર વિરામચિહ્ન',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'તમે ટાઇપ કરો ત્યારે સીધા અવતરણ અને લીટીને છાપકામનાં રૂપમાં બદલે છે.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'તમે ટાઇપ કરો ત્યારે સીધા અવતરણ અને લીટીને છાપકામનાં રૂપમાં બદલે છે.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'મથાળાં આગળ ૧., ૧.૧, ૧.૨ મૂકે છે.',
-  'Numbers display equations so you can refer to them.': 'દર્શાવેલા સમીકરણને ક્રમાંક આપે છે જેથી તેમનો ઉલ્લેખ થઈ શકે.',
+  'Numbers display equations so you can refer to them.':
+    'દર્શાવેલા સમીકરણને ક્રમાંક આપે છે જેથી તેમનો ઉલ્લેખ થઈ શકે.',
   Ligatures: 'સંયુક્ત અક્ષર',
   Off: 'બંધ',
   'Code only': 'ફક્ત કોડ',
@@ -515,13 +533,17 @@ export const gu: Dictionary = {
   'Send a new code': 'નવો કોડ મોકલો',
   'Code sent to': 'કોડ આને મોકલ્યો',
   'You already have notes on this computer.': 'આ કમ્પ્યુટર પર તમારી પાસે નોંધો છે.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'રાખો તો તે તમારા ખાતામાં જોડાય. ભૂંસો તો ફક્ત તમારા ખાતામાં જે છે તે રહે - આ પાછું લઈ શકાતું નથી.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'રાખો તો તે તમારા ખાતામાં જોડાય. ભૂંસો તો ફક્ત તમારા ખાતામાં જે છે તે રહે - આ પાછું લઈ શકાતું નથી.',
   'Keep them': 'રાખો',
   'Erase them': 'ભૂંસો',
   'Digit {number}': 'અંક {number}',
   'Resend in {seconds}s': '{seconds} સેકન્ડમાં ફરી મોકલો',
   'Last synced {time}.': 'છેલ્લો સમન્વય {time}.',
-  '{count} spaces sync to your account.': { one: '{count} જગ્યા તમારા ખાતા સાથે સમન્વય થાય છે.', other: '{count} જગ્યા તમારા ખાતા સાથે સમન્વય થાય છે.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} જગ્યા તમારા ખાતા સાથે સમન્વય થાય છે.',
+    other: '{count} જગ્યા તમારા ખાતા સાથે સમન્વય થાય છે.',
+  },
   Update: 'સુધારો',
   'Live at': 'આ પર જીવંત',
   // Publishing
@@ -531,7 +553,8 @@ export const gu: Dictionary = {
   'Only {name}': 'ફક્ત {name}',
   'Publish this space as a blog': 'આ જગ્યાને બ્લૉગ તરીકે પ્રકાશિત કરો',
   'Everything in this space becomes public.': 'આ જગ્યાનું બધું જાહેર થાય છે.',
-  'Every note, including drafts, is readable by anyone with the address.': 'સરનામું હોય તે કોઈ પણ દરેક નોંધ, ખરડા સહિત, વાંચી શકે છે.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'સરનામું હોય તે કોઈ પણ દરેક નોંધ, ખરડા સહિત, વાંચી શકે છે.',
   Address: 'સરનામું',
   'Add these at your registrar, then verify.': 'આ તમારા રજિસ્ટ્રાર પર ઉમેરો, પછી ખાતરી કરો.',
   Verify: 'ખાતરી કરો',
@@ -544,7 +567,8 @@ export const gu: Dictionary = {
   'checking…': 'તપાસે છે…',
   // LLM
   'Connect an LLM to your notes': 'તમારી નોંધો સાથે LLM જોડો',
-  'Sign in first - the connector reaches the notes in your account.': 'પહેલાં સાઇન ઇન કરો - જોડનાર તમારા ખાતાની નોંધો સુધી પહોંચે છે.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'પહેલાં સાઇન ઇન કરો - જોડનાર તમારા ખાતાની નોંધો સુધી પહોંચે છે.',
   'Let it write to my notes, not only read them': 'તેને મારી નોંધોમાં લખવા દો, ફક્ત વાંચવા નહીં',
   'Create a token': 'ટોકન બનાવો',
   'Replace the token': 'ટોકન બદલો',
@@ -560,27 +584,38 @@ export const gu: Dictionary = {
   'Reads your notes.': 'તમારી નોંધો વાંચે છે.',
   'Reads and writes your notes.': 'તમારી નોંધો વાંચે અને લખે છે.',
   Other: 'બીજું',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI સહાયક તમારી નોંધો વાંચી શકે છે - અને પરવાનગી આપો તો બદલી પણ શકે. તે તમારા Nib ઈમેલથી સાઇન ઇન કરે છે; ચીપકાવવાનું કંઈ નથી.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claudeમાં Settings → Connectors ખોલો અને Add custom connector ક્લિક કરો.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI સહાયક તમારી નોંધો વાંચી શકે છે - અને પરવાનગી આપો તો બદલી પણ શકે. તે તમારા Nib ઈમેલથી સાઇન ઇન કરે છે; ચીપકાવવાનું કંઈ નથી.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claudeમાં Settings → Connectors ખોલો અને Add custom connector ક્લિક કરો.',
   'Open Claude’s connectors': 'Claudeના connectors ખોલો',
   'Fill in the two fields and click Add.': 'બે ખાનાં ભરો અને Add ક્લિક કરો.',
-  'Click Connect and sign in with your Nib email.': 'Connect ક્લિક કરો અને તમારા Nib ઈમેલથી સાઇન ઇન કરો.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect ક્લિક કરો અને તમારા Nib ઈમેલથી સાઇન ઇન કરો.',
   'Using Claude Code instead?': 'Claude Code વાપરો છો?',
   Command: 'આદેશ',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'તેને ટર્મિનલમાં ચલાવો, પછી સાઇન ઇન કરવા Claude Codeમાં /mcp લખો.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'તેને ટર્મિનલમાં ચલાવો, પછી સાઇન ઇન કરવા Claude Codeમાં /mcp લખો.',
   'Fill in the form and click Create.': 'ફોર્મ ભરો અને Create ક્લિક કરો.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPTમાં Settings → Plugins ખોલો અને વત્તાનું બટન ક્લિક કરો.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPTમાં Settings → Plugins ખોલો અને વત્તાનું બટન ક્લિક કરો.',
   'Open ChatGPT’s plugins': 'ChatGPTના plugins ખોલો',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins વિભાગ કે વત્તાનું બટન નથી? પહેલાં Settings → Security and loginમાં Developer mode ચાલુ કરો.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT પૂછે ત્યારે તમારા Nib ઈમેલથી સાઇન ઇન કરો.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins વિભાગ કે વત્તાનું બટન નથી? પહેલાં Settings → Security and loginમાં Developer mode ચાલુ કરો.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT પૂછે ત્યારે તમારા Nib ઈમેલથી સાઇન ઇન કરો.',
   'To use it in a chat, type @ and pick Nib.': 'વાતચીતમાં વાપરવા @ લખો અને Nib પસંદ કરો.',
   'Server URL': 'સર્વર URL',
   Authentication: 'પ્રમાણીકરણ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'આગળની OAuth ગોઠવણ એમ જ રહેવા દો અને “I understand and want to continue” પર નિશાની કરો.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth સાથે Streamable HTTP વાપરતું કોઈ પણ MCP ક્લાયન્ટ. તેને URL આપો: તે પોતે નોંધણી કરે છે અને Nibનું સાઇન ઇન પાનું ખોલે છે.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'આગળની OAuth ગોઠવણ એમ જ રહેવા દો અને “I understand and want to continue” પર નિશાની કરો.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth સાથે Streamable HTTP વાપરતું કોઈ પણ MCP ક્લાયન્ટ. તેને URL આપો: તે પોતે નોંધણી કરે છે અને Nibનું સાઇન ઇન પાનું ખોલે છે.',
   'Show config': 'રચના બતાવો',
-  'For a client that takes a JSON block instead of a URL.': 'URLને બદલે JSON બ્લૉક લેતા ક્લાયન્ટ માટે.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'સાઇન ઇન ન કરી શકે તેવા ક્લાયન્ટને ટોકન આપી શકાય. તે એક જ વાર બતાવાય છે.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URLને બદલે JSON બ્લૉક લેતા ક્લાયન્ટ માટે.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'સાઇન ઇન ન કરી શકે તેવા ક્લાયન્ટને ટોકન આપી શકાય. તે એક જ વાર બતાવાય છે.',
   // Export
   'Plain text': 'સાદું લખાણ',
   'Markdown with the pictures': 'ચિત્રો સાથે markdown',
@@ -604,8 +639,10 @@ export const gu: Dictionary = {
   'Version history': 'આવૃત્તિ ઇતિહાસ',
   'Copy link to this note': 'આ નોંધની કડી નકલ કરો',
   'that link could not be followed': 'એ કડી અનુસરાઈ નહીં',
-  'Save this note first; there is nothing to compare against yet.': 'પહેલાં આ નોંધ સાચવો; હજી સરખાવવા કંઈ નથી.',
-  'No earlier versions yet. One is kept each time you save.': 'હજી પહેલાંની આવૃત્તિ નથી. તમે સાચવો ત્યારે એક રખાય છે.',
+  'Save this note first; there is nothing to compare against yet.':
+    'પહેલાં આ નોંધ સાચવો; હજી સરખાવવા કંઈ નથી.',
+  'No earlier versions yet. One is kept each time you save.':
+    'હજી પહેલાંની આવૃત્તિ નથી. તમે સાચવો ત્યારે એક રખાય છે.',
   'Restore this version': 'આ આવૃત્તિ પાછી લાવો',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ત્યાં પહેલેથી નોંધ છે',
@@ -666,7 +703,8 @@ export const gu: Dictionary = {
   'use a domain of your own': 'તમારું પોતાનું ડોમેન વાપરો',
   'the domain no longer points here': 'ડોમેન હવે અહીં તાકતું નથી',
   'Cloudflare has blocked this domain': 'Cloudflareએ આ ડોમેન રોક્યું છે',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ડોમેનના મૂળમાં, જો તમારો પ્રદાતા ત્યાં CNAME માન્ય ન રાખે તો ALIAS કે ANAME રેકોર્ડ, કે CNAME flattening વાપરો.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ડોમેનના મૂળમાં, જો તમારો પ્રદાતા ત્યાં CNAME માન્ય ન રાખે તો ALIAS કે ANAME રેકોર્ડ, કે CNAME flattening વાપરો.',
   // Shortcuts
   Shortcuts: 'ટૂંકાં માર્ગ',
   'Search shortcuts': 'ટૂંકાં માર્ગ શોધો',
@@ -677,7 +715,8 @@ export const gu: Dictionary = {
   'Reset all shortcuts': 'બધાં ટૂંકાં માર્ગ પાછાં કરો',
   'Take it over': 'લઈ લો',
   '{key} already runs {name}.': '{key} પહેલેથી {name} ચલાવે છે.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc નોંધવું રોકે છે, Backspace કી કાઢે છે.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc નોંધવું રોકે છે, Backspace કી કાઢે છે.',
   Tables: 'કોષ્ટકો',
   Pictures: 'ચિત્રો',
   'Fixed keys': 'નિયત કીઓ',
@@ -713,7 +752,8 @@ export const gu: Dictionary = {
   'Always on top': 'હંમેશાં ઉપર',
   'What is new': 'નવું શું છે',
   'Report an issue': 'સમસ્યા જણાવો',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ડિસ્ક પર બદલાયું. સંપાદકમાં જે છે તે તમારું છે.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ડિસ્ક પર બદલાયું. સંપાદકમાં જે છે તે તમારું છે.',
   'Move the line up': 'લીટી ઉપર ખસેડો',
   'Move the line down': 'લીટી નીચે ખસેડો',
   'Copy the line up': 'લીટી ઉપર નકલ કરો',
@@ -748,26 +788,32 @@ export const gu: Dictionary = {
   Escape: 'Escape',
   Quit: 'બહાર નીકળો',
   'The clipboard belongs to the system.': 'ક્લિપબોર્ડ સિસ્ટમનું છે.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'તીર કીઓ, Home, End, Page up અને Page down લખાણનાં છે.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'તીર કીઓ, Home, End, Page up અને Page down લખાણનાં છે.',
   'Backspace and Delete belong to the text.': 'Backspace અને Delete લખાણનાં છે.',
-  'Enter closes a code block and carries a list on.': 'Enter કોડ બ્લૉક બંધ કરે છે અને યાદી આગળ ચલાવે છે.',
+  'Enter closes a code block and carries a list on.':
+    'Enter કોડ બ્લૉક બંધ કરે છે અને યાદી આગળ ચલાવે છે.',
   'Tab moves on through the app as well as indenting.': 'Tab અંદર લેવા ઉપરાંત એપમાં આગળ પણ ખસે છે.',
   'Escape closes whatever is open.': 'Escape જે ખુલ્લું હોય તે બંધ કરે છે.',
-  'Your system takes this key before the app sees it.': 'એપ જુએ તે પહેલાં તમારી સિસ્ટમ આ કી લઈ લે છે.',
-  'Your browser takes this key before the app sees it.': 'એપ જુએ તે પહેલાં તમારું બ્રાઉઝર આ કી લઈ લે છે.',
+  'Your system takes this key before the app sees it.':
+    'એપ જુએ તે પહેલાં તમારી સિસ્ટમ આ કી લઈ લે છે.',
+  'Your browser takes this key before the app sees it.':
+    'એપ જુએ તે પહેલાં તમારું બ્રાઉઝર આ કી લઈ લે છે.',
   'That is not a key combination.': 'એ કીનું જોડાણ નથી.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt કે Cmd પણ દબાવી રાખો.',
   'File list': 'ફાઇલ યાદી',
   'Select every file': 'દરેક ફાઇલ પસંદ કરો',
   'Clear the selection': 'પસંદગી કાઢો',
   'Delete the selected files': 'પસંદ કરેલી ફાઇલો કાઢો',
-  'The file could not be written, so it goes to the print dialog': 'ફાઇલ લખાઈ નહીં, તેથી છાપ સંવાદમાં જાય છે',
+  'The file could not be written, so it goes to the print dialog':
+    'ફાઇલ લખાઈ નહીં, તેથી છાપ સંવાદમાં જાય છે',
   'Next file': 'આગળની ફાઇલ',
   'Previous file': 'પાછળની ફાઇલ',
   'Show what it holds': 'અંદર જે છે તે બતાવો',
   'Hide what it holds': 'અંદર જે છે તે છુપાવો',
   'Moving through a list': 'યાદીમાં ફરવું',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'તીર કીઓ, Enter અને Esc જે ખુલ્લું હોય તેમાં ચાલે છે; તે ટૂંકાં માર્ગ નથી.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'તીર કીઓ, Enter અને Esc જે ખુલ્લું હોય તેમાં ચાલે છે; તે ટૂંકાં માર્ગ નથી.',
   'Split right': 'જમણે વિભાજો',
   'Split down': 'નીચે વિભાજો',
   'Other pane': 'બીજું ખાનું',
@@ -789,7 +835,8 @@ export const gu: Dictionary = {
   'Follow the link': 'કડી અનુસરો',
   'Replace your own keys?': 'તમારી પોતાની કીઓ બદલવી?',
   Replace: 'બદલો',
-  'The keys you changed go back to what this keyboard says.': 'તમે બદલેલી કીઓ આ કીબોર્ડ કહે છે તેમ પાછી જાય છે.',
+  'The keys you changed go back to what this keyboard says.':
+    'તમે બદલેલી કીઓ આ કીબોર્ડ કહે છે તેમ પાછી જાય છે.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +958,8 @@ export const gu: Dictionary = {
   Leave: 'છોડો',
   'Leave space': 'જગ્યા છોડો',
   'Leave {name}?': '{name} છોડવું?',
-  'It stays with everybody else. Its notes go from your computer.': 'બીજા બધા પાસે રહે છે. તેની નોંધો તમારા કમ્પ્યુટરમાંથી જાય છે.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'બીજા બધા પાસે રહે છે. તેની નોંધો તમારા કમ્પ્યુટરમાંથી જાય છે.',
   '{who} shared {space} with you': '{who}એ {space} તમારી સાથે વહેંચ્યું',
   'Shared with you': 'તમારી સાથે વહેંચેલું',
   'That link does not open anything': 'એ કડી કંઈ ખોલતી નથી',
@@ -928,7 +976,8 @@ export const gu: Dictionary = {
   'Release channel': 'પ્રકાશન માર્ગ',
   Stable: 'સ્થિર',
   Unstable: 'અસ્થિર',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'સ્થિર અધિકૃત પ્રકાશન અનુસરે છે, અસ્થિર mainમાં દરેક ધકેલ અનુસરે છે અને તૂટી શકે.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'સ્થિર અધિકૃત પ્રકાશન અનુસરે છે, અસ્થિર mainમાં દરેક ધકેલ અનુસરે છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',
@@ -939,14 +988,20 @@ export const gu: Dictionary = {
   'Rewrite {count} things?': { one: '{count} જગ્યા ફરી લખવી?', other: '{count} જગ્યા ફરી લખવી?' },
   'In {count} notes.': { one: '{count} નોંધમાં.', other: '{count} નોંધમાં.' },
   Rewrite: 'ફરી લખો',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ભાગ એન્ક્રિપ્ટ થયેલા છે, અને Evernote વિના તે કોઈ વાંચી શકતું નથી',
-  '{count} notes had a reminder, which the export does not carry': '{count} નોંધમાં યાદ હતું, જે નિકાસ લઈ જતો નથી',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ભાગ એન્ક્રિપ્ટ થયેલા છે, અને Evernote વિના તે કોઈ વાંચી શકતું નથી',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} નોંધમાં યાદ હતું, જે નિકાસ લઈ જતો નથી',
   '{count} notes were in the bin and stay there': '{count} નોંધ કચરાપેટીમાં હતી અને ત્યાં રહે છે',
-  '{count} archived notes are in a folder called Archive': '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',
+  '{count} archived notes are in a folder called Archive':
+    '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',
   'The colours a note had are not kept': 'નોંધ પાસે જે રંગ હતા તે રખાતા નથી',
-  '{count} block references were written out as the words they pointed at': '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
-  '{count} saved views are left out, and every row is in the table': '{count} સાચવેલા દેખાવ છોડી દેવાયા, અને દરેક હાર કોષ્ટકમાં છે',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} પાનાં HTML તરીકે આવ્યાં, તેથી શબ્દો રખાય છે અને દેખાવ નહીં',
+  '{count} block references were written out as the words they pointed at':
+    '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} સાચવેલા દેખાવ છોડી દેવાયા, અને દરેક હાર કોષ્ટકમાં છે',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} પાનાં HTML તરીકે આવ્યાં, તેથી શબ્દો રખાય છે અને દેખાવ નહીં',
   'There are no rows in this file.': 'આ ફાઇલમાં હાર નથી.',
   'Nothing in there can be read as notes.': 'તેમાંનું કંઈ નોંધ તરીકે વાંચી શકાતું નથી.',
   'That export could not be read.': 'એ નિકાસ વાંચી શકાયો નહીં.',
@@ -957,20 +1012,48 @@ export const gu: Dictionary = {
   'This space': 'આ જગ્યા',
   'Drop an export here': 'નિકાસ અહીં મૂકો',
   'A zip, a folder, or a file another app wrote': 'એક zip, ફોલ્ડર, કે બીજી એપે લખેલી ફાઇલ',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes અને Apple Journal તેમની નોંધો એવી જગ્યાએ રાખે છે જ્યાં ફક્ત તે જ ખોલી શકે. પહેલાં નિકાસ કરો, પછી તે આયાત કરો.',
-  'Pandoc reads this one, from the file on your disk.': 'આ pandoc તમારી ડિસ્કની ફાઇલમાંથી વાંચે છે.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ચિત્રો HEIC તરીકે આવ્યાં, જે ફક્ત Apple બતાવે છે',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} મનોભાવ અને પ્રવૃત્તિ કાર્ડ ચિત્રો છે, તેથી ફક્ત તેમના શબ્દો આવે છે',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Notes ખોલી શકે',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} નોંધ હાલમાં કાઢેલામાં છે અને ત્યાં જ રહે છે',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} ચિત્રો અને સ્કેન કરેલાં પાનાં એ ચિત્રો છે જે Notes પોતે દોરે છે',
+  '{count} tables inside notes do not come over': 'નોંધ અંદરનાં {count} કોષ્ટક આવતાં નથી',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} જોડાણ આ Mac પર નહીં, iCloud માં છે',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS એ નોંધોને Full Disk Access પાછળ રાખે છે.',
+  'There are no notes in Apple Notes on this Mac.': 'આ Mac પર Apple Notes માં કોઈ નોંધ નથી.',
+  'Those notes could not be read.': 'એ નોંધો વાંચી શકાઈ નહીં.',
+  'Read them from this Mac': 'આ Mac પરથી વાંચો',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access માં nibeditor ચાલુ કરો, પછી ફરી પૂછો.',
+  'Open the setting': 'ગોઠવણ ખોલો',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal પોતે નિકાસ કરે છે: Journal, ગોઠવણ, નિકાસ. Apple Notes માં નિકાસ નથી, તેથી જે Mac પર તે છે તેનાથી દૂર, અહીં મૂકવાની વસ્તુ કોઈ નિકાસકે લખેલું ફોલ્ડર છે.',
+  'Pandoc reads this one, from the file on your disk.':
+    'આ pandoc તમારી ડિસ્કની ફાઇલમાંથી વાંચે છે.',
   'Read it with pandoc': 'pandocથી વાંચો',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'આ ફક્ત pandoc વાંચે છે, અને તે આ મશીન પર સ્થાપેલું નથી.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'આ ફક્ત pandoc વાંચે છે, અને તે આ મશીન પર સ્થાપેલું નથી.',
   Rows: 'હારો',
   'As a table': 'કોષ્ટક તરીકે',
   'One note per row': 'દરેક હાર માટે એક નોંધ',
   Into: 'આમાં',
   'Worth knowing': 'જાણવા જેવું',
   '{count} notes arrived.': { one: '{count} નોંધ આવી.', other: '{count} નોંધ આવી.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} નામ વપરાયેલું હતું, તેથી એ ફાઇલ ખસી ગઈ.', other: '{count} નામ વપરાયેલાં હતાં, તેથી એ ફાઇલો ખસી ગઈ.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} નામ વપરાયેલું હતું, તેથી એ ફાઇલ ખસી ગઈ.',
+    other: '{count} નામ વપરાયેલાં હતાં, તેથી એ ફાઇલો ખસી ગઈ.',
+  },
   'A table': 'એક કોષ્ટક',
   'Markdown files': 'markdown ફાઇલો',
   'A document': 'એક દસ્તાવેજ',
+  'A PDF, as pages to write on': 'એક PDF, લખવાનાં પાનાં તરીકે',
   'Undo the import': 'આયાત પાછી લો',
   'Choose an export': 'નિકાસ પસંદ કરો',
   Under: 'નીચે',
@@ -982,13 +1065,15 @@ export const gu: Dictionary = {
   'Keep both copies': 'બંને નકલ રાખો',
   'Let the newest win': 'સૌથી નવું જીતે',
   'Ask me each time': 'દર વખતે મને પૂછો',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'કંઈ ફેંકાતું નથી: જે જીતતું નથી તે આવૃત્તિ તરીકે રખાય છે.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'કંઈ ફેંકાતું નથી: જે જીતતું નથી તે આવૃત્તિ તરીકે રખાય છે.',
   'Waiting for you': 'તમારી વાટ',
   'Keep mine': 'મારું રાખો',
   'Take theirs': 'તેમનું લો',
   'Keep both': 'બંને રાખો',
   'What synced': 'શું સમન્વય થયું',
-  'Nothing yet. A pass that moves nothing is not written down.': 'હજી કંઈ નહીં. જે ફેરો કંઈ ખસેડતો નથી તે નોંધાતો નથી.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'હજી કંઈ નહીં. જે ફેરો કંઈ ખસેડતો નથી તે નોંધાતો નથી.',
   'Clear the list': 'યાદી ખાલી કરો',
   '{count} down': '{count} નીચે',
   '{count} up': '{count} ઉપર',
@@ -998,19 +1083,25 @@ export const gu: Dictionary = {
   'This space, as it was': 'આ જગ્યા, જેવી હતી',
   '{count} days ago': { one: '{count} દિવસ પહેલાં', other: '{count} દિવસ પહેલાં' },
   'What would change?': 'શું બદલાશે?',
-  '{count} notes would go back to what they said then.': { one: '{count} નોંધ ત્યારે જે હતી તેમાં પાછી જશે.', other: '{count} નોંધ ત્યારે જે હતી તેમાં પાછી જશે.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} નોંધ ત્યારે જે હતી તેમાં પાછી જશે.',
+    other: '{count} નોંધ ત્યારે જે હતી તેમાં પાછી જશે.',
+  },
   'Nothing has changed since then.': 'ત્યારથી કંઈ બદલાયું નથી.',
   '{count} notes went back.': { one: '{count} નોંધ પાછી ગઈ.', other: '{count} નોંધ પાછી ગઈ.' },
-  'The account keeps a month of versions of every note that syncs.': 'ખાતું સમન્વય થતી દરેક નોંધની એક મહિનાની આવૃત્તિ રાખે છે.',
+  'The account keeps a month of versions of every note that syncs.':
+    'ખાતું સમન્વય થતી દરેક નોંધની એક મહિનાની આવૃત્તિ રાખે છે.',
   'That did not work.': 'એ ચાલ્યું નહીં.',
   'Signing in': 'સાઇન ઇન',
   'Ask for a code from an app': 'એપ પાસેથી કોડ માંગો',
   'Turn on': 'ચાલુ કરો',
   'Turn off': 'બંધ કરો',
-  'Put this into your authenticator app, then type its code.': 'આ તમારી પ્રમાણક એપમાં મૂકો, પછી તેનો કોડ લખો.',
+  'Put this into your authenticator app, then type its code.':
+    'આ તમારી પ્રમાણક એપમાં મૂકો, પછી તેનો કોડ લખો.',
   Secret: 'ગુપ્ત',
   'Code from the app': 'એપનો કોડ',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'આ સલામત જગ્યાએ રાખો. દરેક એક વાર ચાલે છે, અને ફરી બતાવાતા નથી.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'આ સલામત જગ્યાએ રાખો. દરેક એક વાર ચાલે છે, અને ફરી બતાવાતા નથી.',
   'Recovery codes': 'પુનઃપ્રાપ્તિ કોડ',
   'Recovery code': 'પુનઃપ્રાપ્તિ કોડ',
   'Recovery codes left': 'બાકી પુનઃપ્રાપ્તિ કોડ',
@@ -1032,7 +1123,8 @@ export const gu: Dictionary = {
   Pages: 'પાનાં',
   'Page {number} of {count}': 'પાનું {number}/{count}',
   'What is selected': 'જે પસંદ કરેલું છે',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'કેનવાસ: {cards} કાર્ડ, {links} કડી, {drawings} ચિત્ર',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'કેનવાસ: {cards} કાર્ડ, {links} કડી, {drawings} ચિત્ર',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'પ્રદાતા',
@@ -1069,13 +1161,85 @@ export const gu: Dictionary = {
   'AI block': 'AI બ્લૉક',
   'Highlight colour': 'ઉજાગર રંગ',
   'A single newline breaks the line': 'એક નવી લીટી જ લીટી તોડે છે',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'બંધ એ પ્રમાણભૂત markdown છે: એક ફકરાની બે લીટી એક તરીકે વંચાય છે; Obsidian તેને કડક લીટી વિભાજન કહે છે.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'બંધ એ પ્રમાણભૂત markdown છે: એક ફકરાની બે લીટી એક તરીકે વંચાય છે; Obsidian તેને કડક લીટી વિભાજન કહે છે.',
   'New links': 'નવી કડીઓ',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'વિકિકડી નોંધનું નામ લે છે, તેથી નામ બદલાય તો પણ કડી ટકે છે; બંને રીત વંચાય છે.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'વિકિકડી નોંધનું નામ લે છે, તેથી નામ બદલાય તો પણ કડી ટકે છે; બંને રીત વંચાય છે.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown, સૌથી ટૂંકું નામ',
   'Markdown, relative path': 'markdown, સાપેક્ષ પથ',
   'Markdown, path in the space': 'markdown, જગ્યામાં પથ',
+  // Publishing part one.
+  'The folders you choose become public.': 'પસંદ કરેલાં ફોલ્ડર જાહેર થાય છે.',
+  'Anyone with the address can read what is published, drafts included.':
+    'સરનામું હોય તે કોઈ પણ પ્રકાશિત બધું વાંચી શકે, ખરડા પણ.',
+  'Which notes': 'કઈ નોંધ',
+  'Notes outside a rule': 'નિયમ બહારની નોંધ',
+  'Are published': 'પ્રકાશિત થાય છે',
+  'Stay private': 'ખાનગી રહે છે',
+  'Follows the rule': 'નિયમ પાળે છે',
+  Published: 'પ્રકાશિત',
+  Private: 'ખાનગી',
+  '{count} pages': '{count} પાનાં',
+  '{count} new': '{count} નવાં',
+  '{count} gone': '{count} કાઢ્યાં',
+  'and more': 'અને વધુ',
+  'How it appears': 'કેવું દેખાય',
+  Description: 'વર્ણન',
+  'What this site is': 'આ સાઇટ શાની છે',
+  'Tab icon': 'ટૅબ આઇકન',
+  Password: 'પાસવર્ડ',
+  'Set a new one': 'નવો ગોઠવો',
+  'Ask for a password': 'પાસવર્ડ માગો',
+  'No password': 'પાસવર્ડ નહીં',
+  'Remove the password': 'પાસવર્ડ કાઢો',
+  'Scan this with your authenticator app, then type its code.':
+    'આને તમારી પ્રમાણક ઍપથી સ્કૅન કરો, પછી તેનો કોડ લખો.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ફોટો',
+  Dictate: 'બોલીને લખાવો',
+  'Add to {name}': '{name} માં ઉમેરો',
+  // Web tabs
+  Reload: 'ફરી લાવો',
+  'Clip this page': 'આ પાનું સાચવો',
+  'Clip the link': 'કડી સાચવો',
+  'Allow the camera': 'કૅમેરાને મંજૂરી આપો',
+  'Allow the clipboard': 'ક્લિપબોર્ડને મંજૂરી આપો',
+  'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
+  'Copy the address': 'સરનામું નકલ કરો',
+  'Show it here': 'અહીં બતાવો',
+  Website: 'વેબસાઇટ',
+  'Open a website': 'વેબસાઇટ ખોલો',
+  // Recording, meetings and what a model wrote
+  Record: 'રેકૉર્ડ કરો',
+  Recording: 'રેકૉર્ડિંગ',
+  'Stop recording': 'રેકૉર્ડિંગ રોકો',
+  'Meeting notes': 'બેઠકની નોંધ',
+  Meeting: 'બેઠક',
+  'Stop the meeting': 'બેઠક પૂરી કરો',
+  Transcribe: 'લખાણમાં ફેરવો',
+  Transcript: 'પ્રતિલેખ',
+  'Transcript ({language})': 'પ્રતિલેખ ({language})',
+  'Written by {model}': '{model} એ લખ્યું',
+  'Saving the recording': 'રેકૉર્ડિંગ સાચવે છે',
+  'Turning the recording into words': 'રેકૉર્ડિંગને શબ્દોમાં ફેરવે છે',
+  'Open a space to record into.': 'રેકૉર્ડ કરવા માટે એક જગ્યા ખોલો.',
+  'Sign in to take meeting notes.': 'બેઠકની નોંધ લેવા સાઇન ઇન કરો.',
+  'Sign in to turn a recording into words.': 'રેકૉર્ડિંગ શબ્દોમાં ફેરવવા સાઇન ઇન કરો.',
+  'That microphone could not be opened.': 'એ માઇક્રોફોન ખોલી શકાયો નહીં.',
+  'That recording could not be saved.': 'એ રેકૉર્ડિંગ સાચવી શકાયું નહીં.',
+  'That recording could not be turned into words.': 'એ રેકૉર્ડિંગ શબ્દોમાં ફેરવી શકાયું નહીં.',
+  'That recording is not in this space.': 'એ રેકૉર્ડિંગ આ જગ્યામાં નથી.',
+  'That recording is too long to turn into words in one go.':
+    'એ રેકૉર્ડિંગ એક જ વારમાં શબ્દોમાં ફેરવવા બહુ લાંબું છે.',
+  'That is as much as one recording may hold.': 'એક રેકૉર્ડિંગમાં આટલું જ સમાય.',
+  'Nothing could be heard in that recording.': 'એ રેકૉર્ડિંગમાં કંઈ સંભળાયું નહીં.',
+  'A piece of the transcript is being tried again.': 'પ્રતિલેખનો એક ભાગ ફરી પ્રયત્ન થાય છે.',
+  'The transcript is behind and losing pieces.': 'પ્રતિલેખ પાછળ છે અને ભાગ ગુમાવે છે.',
+  '{count} pieces of this meeting were lost.': 'આ બેઠકના {count} ભાગ ખોવાયા.',
+  'Add an AI provider in settings to summarise.': 'સારાંશ માટે ગોઠવણમાં AI પ્રદાતા ઉમેરો.',
+  'The summary could not be written.': 'સારાંશ લખી શકાયો નહીં.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ટપાલ મોકલી શકાઈ નહીં - ફરી પ્રયત્ન કરો',
   'start again - that took too long': 'ફરી શરૂ કરો - એમાં બહુ વાર લાગી',
@@ -1090,7 +1254,8 @@ export const gu: Dictionary = {
   'that is more bookmarks than a space holds': 'જગ્યા જેટલા બુકમાર્ક રાખે તેથી એ વધુ છે',
   'that is more paths than a space leaves out': 'જગ્યા જેટલા પથ છોડે તેથી એ વધુ છે',
   'that is more files than a space keeps': 'જગ્યા જેટલી ફાઇલ રાખે તેથી એ વધુ છે',
-  'that is more than a space keeps about its graph': 'જગ્યા પોતાના ગ્રાફ વિશે જેટલું રાખે તેથી એ વધુ છે',
+  'that is more than a space keeps about its graph':
+    'જગ્યા પોતાના ગ્રાફ વિશે જેટલું રાખે તેથી એ વધુ છે',
   'that is more folder icons than a space holds': 'જગ્યા જેટલાં ફોલ્ડર આઇકન રાખે તેથી એ વધુ છે',
   // Sharing a space, and being let into one.
   'nobody by that address': 'એ સરનામે કોઈ નથી',

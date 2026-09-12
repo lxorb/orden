@@ -7,6 +7,12 @@ export const ps: Dictionary = {
   'Open file': 'دوتنه پرانيستل',
   'New note inside': 'په دې کې نوې يادښت',
   'New canvas': 'نوی تخته',
+  'New page note': 'نوې د مخونو يادښت',
+  'Add a page': 'مخ ورزياتول',
+  'Add a page after this': 'له دې وروسته مخ ورزياتول',
+  'Delete this page': 'دا مخ ړنګول',
+  'Page {number}': 'مخ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'تخته',
   Card: 'کارت',
   'Note or picture': 'يادښت يا انځور',
@@ -34,7 +40,8 @@ export const ps: Dictionary = {
   'Create a space': 'ځای جوړول',
   'Delete space': 'ځای ړنګول',
   'Delete {name}?': '{name} ړنګ شي؟',
-  'Every note in this space is deleted from your computer.': 'په دې ځای کې هره يادښت ستاسو له کمپيوټر ړنګېږي.',
+  'Every note in this space is deleted from your computer.':
+    'په دې ځای کې هره يادښت ستاسو له کمپيوټر ړنګېږي.',
   'The notes inside it go too.': 'د دې دننه يادښتونه هم ځي.',
   Journal: 'ورځپانګه',
   Create: 'جوړول',
@@ -206,7 +213,8 @@ export const ps: Dictionary = {
   'Image not found': 'انځور ونه موندل شو',
   'Delete {count} items': { one: '{count} توکی ړنګول', other: '{count} توکي ړنګول' },
   'Recently deleted': 'نوی ړنګ شوي',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'ړنګ شوي يادښتونه او ځايونه دلته ۱۴ ورځې انتظار کوي، بيا د هميشه لپاره ځي.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'ړنګ شوي يادښتونه او ځايونه دلته ۱۴ ورځې انتظار کوي، بيا د هميشه لپاره ځي.',
   'Nothing here.': 'دلته هيڅ نشته.',
   Empty: 'تشول',
   Spaces: 'ځايونه',
@@ -257,7 +265,8 @@ export const ps: Dictionary = {
   'Previous slide': 'پخوانې سلايډ',
   'Read-only': 'يوازې لوستل',
   'No preview': 'وړاندليد نشته',
-  'Shown as plain text, so typing stays instant in a note this long': 'لکه ساده متن ښودل کېږي تر څو په دې اوږده يادښت کې ليکل سمدستي پاتې شي',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'لکه ساده متن ښودل کېږي تر څو په دې اوږده يادښت کې ليکل سمدستي پاتې شي',
   'Leave read-only': 'له يوازې لوستلو وتل',
   Next: 'راتلونکی',
   Previous: 'پخوانی',
@@ -353,16 +362,19 @@ export const ps: Dictionary = {
   'OpenAI key': 'د OpenAI کيلي',
   Model: 'ماډل',
   Reasoning: 'استدلال',
-  'Kept encrypted on your account, and never shown again.': 'ستاسو په حساب کې رمز شوی ساتل کېږي او بيا نه ښودل کېږي.',
+  'Kept encrypted on your account, and never shown again.':
+    'ستاسو په حساب کې رمز شوی ساتل کېږي او بيا نه ښودل کېږي.',
   'set, ends in …{tail}': 'ټاکل شوی، په …{tail} پای',
   'Saving the key': 'کيلي خوندول',
   'this server cannot keep a key yet': 'دا سرور تر اوسه کيلي نه شي ساتلی',
   'that does not look like a key': 'هغه کيلي نه ښکاري',
   'that key could not be saved': 'هغه کيلي ونه خوندل شوه',
   'Sign in to ask a question.': 'د پوښتنې لپاره ننوځئ.',
-  'Asking OpenAI which models this key can use': 'له OpenAI پوښتنه چې دا کيلي کوم ماډلونه کارولی شي',
+  'Asking OpenAI which models this key can use':
+    'له OpenAI پوښتنه چې دا کيلي کوم ماډلونه کارولی شي',
   'Could not reach OpenAI': 'OpenAI ته ونه رسېدل',
-  'That key cannot use any of the models Nib asks for.': 'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې Nib غواړي.',
+  'That key cannot use any of the models Nib asks for.':
+    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې Nib غواړي.',
   'No reasoning': 'استدلال نشته',
   Minimal: 'ډېر لږ',
   Low: 'ټيټ',
@@ -403,7 +415,10 @@ export const ps: Dictionary = {
   'Add a word': 'کلمه ورزياتول',
   'Add {word} to the dictionary': '{word} قاموس ته ورزياتول',
   'Remove {word} from the dictionary': '{word} له قاموس ليرې کول',
-  '{count} things in this theme were left out.': { one: 'په دې بڼه کې {count} شی پرېښودل شو.', other: 'په دې بڼه کې {count} شيان پرېښودل شول.' },
+  '{count} things in this theme were left out.': {
+    one: 'په دې بڼه کې {count} شی پرېښودل شو.',
+    other: 'په دې بڼه کې {count} شيان پرېښودل شول.',
+  },
   'A note': 'يوه يادښت',
   'Words with {bold} and a {link}.': 'کلمې له {bold} او يوې {link} سره.',
   bold: 'ډبل',
@@ -448,11 +463,14 @@ export const ps: Dictionary = {
   'Line numbers': 'د کرښو شمېرې',
   Syntax: 'ترکيب',
   'Strict CommonMark': 'سخت CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'يوازې معياري د markdown قواعد، جدول، د کار لړ يا پښلیک نه.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'يوازې معياري د markdown قواعد، جدول، د کار لړ يا پښلیک نه.',
   'Smart punctuation': 'هوښيار ټکي',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'سيده کوټې او کرښې د ليکلو پر مهال چاپي بڼې ته اړوي.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'سيده کوټې او کرښې د ليکلو پر مهال چاپي بڼې ته اړوي.',
   'Puts 1., 1.1, 1.2 in front of headings.': '۱.، ۱.۱، ۱.۲ د سرليکونو پر مخ کېږدي.',
-  'Numbers display equations so you can refer to them.': 'ښکاره معادلو ته شمېره ورکوي تر څو ورته اشاره وشي.',
+  'Numbers display equations so you can refer to them.':
+    'ښکاره معادلو ته شمېره ورکوي تر څو ورته اشاره وشي.',
   Ligatures: 'د تورو تړنې',
   Off: 'بند',
   'Code only': 'يوازې کوډ',
@@ -515,13 +533,17 @@ export const ps: Dictionary = {
   'Send a new code': 'نوې کوډ لېږل',
   'Code sent to': 'کوډ ولېږل شو',
   'You already have notes on this computer.': 'تاسو دمخه پر دې کمپيوټر يادښتونه لرئ.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'وساتئ يې او ستاسو حساب سره يوځای شي. ورک کړئ يې او يوازې هغه پاتې شي چې ستاسو حساب لري - دا بېرته نه شي کېدی.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'وساتئ يې او ستاسو حساب سره يوځای شي. ورک کړئ يې او يوازې هغه پاتې شي چې ستاسو حساب لري - دا بېرته نه شي کېدی.',
   'Keep them': 'وساتئ',
   'Erase them': 'ورک کړئ',
   'Digit {number}': 'ګڼه {number}',
   'Resend in {seconds}s': 'په {seconds} ثانيو کې بيا لېږل',
   'Last synced {time}.': 'وروستې همغږي {time}.',
-  '{count} spaces sync to your account.': { one: '{count} ځای ستاسو حساب سره همغږي کېږي.', other: '{count} ځايونه ستاسو حساب سره همغږي کېږي.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} ځای ستاسو حساب سره همغږي کېږي.',
+    other: '{count} ځايونه ستاسو حساب سره همغږي کېږي.',
+  },
   Update: 'نوی کول',
   'Live at': 'ژوندی پر',
   // Publishing
@@ -531,7 +553,8 @@ export const ps: Dictionary = {
   'Only {name}': 'يوازې {name}',
   'Publish this space as a blog': 'دا ځای لکه بلاګ خپرول',
   'Everything in this space becomes public.': 'په دې ځای کې هر څه عام شي.',
-  'Every note, including drafts, is readable by anyone with the address.': 'هره يادښت، د مسودو په شمول، هر هغه چا لوستلی شي چې پته ولري.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'هره يادښت، د مسودو په شمول، هر هغه چا لوستلی شي چې پته ولري.',
   Address: 'پته',
   'Add these at your registrar, then verify.': 'دا خپل ثبت کوونکي کې ورزيات کړئ، بيا تاييد کړئ.',
   Verify: 'تاييد',
@@ -544,7 +567,8 @@ export const ps: Dictionary = {
   'checking…': 'کتل…',
   // LLM
   'Connect an LLM to your notes': 'يو LLM خپلو يادښتونو سره نښلول',
-  'Sign in first - the connector reaches the notes in your account.': 'لومړی ننوځئ - نښلونکی ستاسو په حساب کې يادښتونو ته رسي.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'لومړی ننوځئ - نښلونکی ستاسو په حساب کې يادښتونو ته رسي.',
   'Let it write to my notes, not only read them': 'پرېږده چې زما يادښتونو کې وليکي، نه يوازې ولولي',
   'Create a token': 'نښه جوړول',
   'Replace the token': 'نښه بدلول',
@@ -560,27 +584,38 @@ export const ps: Dictionary = {
   'Reads your notes.': 'ستاسو يادښتونه لولي.',
   'Reads and writes your notes.': 'ستاسو يادښتونه لولي او ليکي.',
   Other: 'بل',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د Nib برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'په Claude کې Settings → Connectors پرانيځئ او Add custom connector کليک کړئ.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د Nib برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'په Claude کې Settings → Connectors پرانيځئ او Add custom connector کليک کړئ.',
   'Open Claude’s connectors': 'د Claude نښلونکي پرانيستل',
   'Fill in the two fields and click Add.': 'دواړه ځايونه ډک کړئ او Add کليک کړئ.',
-  'Click Connect and sign in with your Nib email.': 'Connect کليک کړئ او د Nib برېښناليک سره ننوځئ.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect کليک کړئ او د Nib برېښناليک سره ننوځئ.',
   'Using Claude Code instead?': 'Claude Code کاروئ؟',
   Command: 'کړنه',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'په ترمينل کې يې وچلوئ، بيا د ننوتلو لپاره په Claude Code کې /mcp وليکئ.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'په ترمينل کې يې وچلوئ، بيا د ننوتلو لپاره په Claude Code کې /mcp وليکئ.',
   'Fill in the form and click Create.': 'فورمه ډکه کړئ او Create کليک کړئ.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'په ChatGPT کې Settings → Plugins پرانيځئ او د زياتون تڼۍ کليک کړئ.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'په ChatGPT کې Settings → Plugins پرانيځئ او د زياتون تڼۍ کليک کړئ.',
   'Open ChatGPT’s plugins': 'د ChatGPT پلګينونه پرانيستل',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'د Plugins برخه يا د زياتون تڼۍ نشته؟ لومړی Developer mode په Settings → Security and login کې ولاړ کړئ.',
-  'Sign in with your Nib email when ChatGPT asks.': 'کله چې ChatGPT پوښتنه وکړي، د Nib برېښناليک سره ننوځئ.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'د Plugins برخه يا د زياتون تڼۍ نشته؟ لومړی Developer mode په Settings → Security and login کې ولاړ کړئ.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'کله چې ChatGPT پوښتنه وکړي، د Nib برېښناليک سره ننوځئ.',
   'To use it in a chat, type @ and pick Nib.': 'په خبرو کې د کارولو لپاره @ وليکئ او Nib وټاکئ.',
   'Server URL': 'د سرور پته',
   Authentication: 'اعتبار پېژندنه',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'پرمختللې د OAuth امستنې همداسې پرېږدئ او “I understand and want to continue” ونښئ.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د Nib د ننوتلو مخ پرانيځي.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'پرمختللې د OAuth امستنې همداسې پرېږدئ او “I understand and want to continue” ونښئ.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د Nib د ننوتلو مخ پرانيځي.',
   'Show config': 'سازونه ښودل',
-  'For a client that takes a JSON block instead of a URL.': 'د هغه پيرودونکي لپاره چې د پتې پر ځای د JSON بلاک اخلي.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'هغه پيرودونکي ته چې نه شي ننوتلی، نښه ورکول کېدی شي. يوازې يو ځل ښودل کېږي.',
+  'For a client that takes a JSON block instead of a URL.':
+    'د هغه پيرودونکي لپاره چې د پتې پر ځای د JSON بلاک اخلي.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'هغه پيرودونکي ته چې نه شي ننوتلی، نښه ورکول کېدی شي. يوازې يو ځل ښودل کېږي.',
   // Export
   'Plain text': 'ساده متن',
   'Markdown with the pictures': 'markdown له انځورونو سره',
@@ -604,8 +639,10 @@ export const ps: Dictionary = {
   'Version history': 'د بڼو تاريخ',
   'Copy link to this note': 'د دې يادښت تړنه لمېسل',
   'that link could not be followed': 'هغه تړنه ونه تعقيبېده',
-  'Save this note first; there is nothing to compare against yet.': 'لومړی دا يادښت وخوندوئ؛ تر اوسه د پرتلې لپاره هيڅ نشته.',
-  'No earlier versions yet. One is kept each time you save.': 'تر اوسه پخوانې بڼه نشته. هر ځل چې خوندوئ يوه ساتل کېږي.',
+  'Save this note first; there is nothing to compare against yet.':
+    'لومړی دا يادښت وخوندوئ؛ تر اوسه د پرتلې لپاره هيڅ نشته.',
+  'No earlier versions yet. One is kept each time you save.':
+    'تر اوسه پخوانې بڼه نشته. هر ځل چې خوندوئ يوه ساتل کېږي.',
   'Restore this version': 'دا بڼه بېرته راوستل',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'هلته دمخه يوه يادښت ده',
@@ -666,7 +703,8 @@ export const ps: Dictionary = {
   'use a domain of your own': 'خپل ډومېن وکاروئ',
   'the domain no longer points here': 'ډومېن نور دلته نه اشاره کوي',
   'Cloudflare has blocked this domain': 'Cloudflare دا ډومېن بند کړی',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'د ډومېن په جرړه کې، که ستاسو برابرونکی هلته CNAME نه پرېږدي، د ALIAS يا ANAME ريکارډ، يا CNAME flattening وکاروئ.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'د ډومېن په جرړه کې، که ستاسو برابرونکی هلته CNAME نه پرېږدي، د ALIAS يا ANAME ريکارډ، يا CNAME flattening وکاروئ.',
   // Shortcuts
   Shortcuts: 'لنډ لارې',
   'Search shortcuts': 'لنډ لارې لټول',
@@ -713,7 +751,8 @@ export const ps: Dictionary = {
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
   'Report an issue': 'ستونزه راپور کول',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} پر ديسک بدله شوه. هغه چې په سمونګر کې دی ستاسو دی.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} پر ديسک بدله شوه. هغه چې په سمونګر کې دی ستاسو دی.',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',
   'Copy the line up': 'کرښه پورته لمېسل',
@@ -748,26 +787,32 @@ export const ps: Dictionary = {
   Escape: 'Escape',
   Quit: 'وتل',
   'The clipboard belongs to the system.': 'د لمېسې تخته د غونډال ده.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'د غشو کيليانې، Home، End، Page up او Page down د متن دي.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'د غشو کيليانې، Home، End، Page up او Page down د متن دي.',
   'Backspace and Delete belong to the text.': 'Backspace او Delete د متن دي.',
   'Enter closes a code block and carries a list on.': 'Enter کوډ بلاک بندوي او لړ پر مخ بيايي.',
-  'Tab moves on through the app as well as indenting.': 'Tab له دننه کولو سربېره په کاريال کې هم خوځي.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab له دننه کولو سربېره په کاريال کې هم خوځي.',
   'Escape closes whatever is open.': 'Escape هر څه چې پرانيستې وي بندوي.',
-  'Your system takes this key before the app sees it.': 'ستاسو غونډال دا کيلي د کاريال له ليدو مخکې اخلي.',
-  'Your browser takes this key before the app sees it.': 'ستاسو کوټګر دا کيلي د کاريال له ليدو مخکې اخلي.',
+  'Your system takes this key before the app sees it.':
+    'ستاسو غونډال دا کيلي د کاريال له ليدو مخکې اخلي.',
+  'Your browser takes this key before the app sees it.':
+    'ستاسو کوټګر دا کيلي د کاريال له ليدو مخکې اخلي.',
   'That is not a key combination.': 'هغه د کيليانو ترکيب نه دی.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl، Alt يا Cmd هم ونيسئ.',
   'File list': 'د دوتنو لړ',
   'Select every file': 'هره دوتنه ټاکل',
   'Clear the selection': 'ټاکنه پاکول',
   'Delete the selected files': 'ټاکل شوې دوتنې ړنګول',
-  'The file could not be written, so it goes to the print dialog': 'دوتنه ونه ليکل شوه، نو د چاپ کړکۍ ته ځي',
+  'The file could not be written, so it goes to the print dialog':
+    'دوتنه ونه ليکل شوه، نو د چاپ کړکۍ ته ځي',
   'Next file': 'راتلونکې دوتنه',
   'Previous file': 'پخوانې دوتنه',
   'Show what it holds': 'منځپانګه ښودل',
   'Hide what it holds': 'منځپانګه پټول',
   'Moving through a list': 'په لړ کې خوځېدل',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'د غشو کيليانې، Enter او Esc هر څه چې پرانيستې وي کار کوي؛ لنډ لارې نه دي.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'د غشو کيليانې، Enter او Esc هر څه چې پرانيستې وي کار کوي؛ لنډ لارې نه دي.',
   'Split right': 'ښي ته بېلول',
   'Split down': 'ښکته بېلول',
   'Other pane': 'بله تخته',
@@ -789,7 +834,8 @@ export const ps: Dictionary = {
   'Follow the link': 'تړنه تعقيبول',
   'Replace your own keys?': 'ستاسو خپلې کيليانې بدل شي؟',
   Replace: 'بدلول',
-  'The keys you changed go back to what this keyboard says.': 'هغه کيليانې چې بدلې کړې دې کيليتختې ته بېرته ځي.',
+  'The keys you changed go back to what this keyboard says.':
+    'هغه کيليانې چې بدلې کړې دې کيليتختې ته بېرته ځي.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +957,8 @@ export const ps: Dictionary = {
   Leave: 'وتل',
   'Leave space': 'له ځای وتل',
   'Leave {name}?': 'له {name} ووځئ؟',
-  'It stays with everybody else. Its notes go from your computer.': 'د نورو لپاره پاتې کېږي. د دې يادښتونه ستاسو له کمپيوټر ځي.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'د نورو لپاره پاتې کېږي. د دې يادښتونه ستاسو له کمپيوټر ځي.',
   '{who} shared {space} with you': '{who} {space} تاسو سره شريک کړ',
   'Shared with you': 'تاسو سره شريک شوی',
   'That link does not open anything': 'هغه تړنه هيڅ نه پرانيځي',
@@ -928,7 +975,8 @@ export const ps: Dictionary = {
   'Release channel': 'د خپرونې کانال',
   Stable: 'ټينګ',
   Unstable: 'نا ټينګ',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',
@@ -936,17 +984,27 @@ export const ps: Dictionary = {
   'In this note': 'په دې يادښت کې',
   'In the whole space': 'په ټول ځای کې',
   'Nothing here needs converting.': 'دلته هيڅ د بدلون اړتيا نه لري.',
-  'Rewrite {count} things?': { one: '{count} شی بيا وليکل شي؟', other: '{count} شيان بيا وليکل شي؟' },
+  'Rewrite {count} things?': {
+    one: '{count} شی بيا وليکل شي؟',
+    other: '{count} شيان بيا وليکل شي؟',
+  },
   'In {count} notes.': { one: 'په {count} يادښت کې.', other: 'په {count} يادښتونو کې.' },
   Rewrite: 'بيا ليکل',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} برخې رمز شوې دي او بې له Evernote هيڅ يې نه شي لوستلی',
-  '{count} notes had a reminder, which the export does not carry': '{count} يادښتونه يادونه لرله چې صادره يې نه وړي',
-  '{count} notes were in the bin and stay there': '{count} يادښتونه په ټوکرۍ کې وو او هلته پاتې کېږي',
-  '{count} archived notes are in a folder called Archive': '{count} ارشيف شوي يادښتونه په Archive نومي دوتنپوښ کې دي',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} برخې رمز شوې دي او بې له Evernote هيڅ يې نه شي لوستلی',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} يادښتونه يادونه لرله چې صادره يې نه وړي',
+  '{count} notes were in the bin and stay there':
+    '{count} يادښتونه په ټوکرۍ کې وو او هلته پاتې کېږي',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ارشيف شوي يادښتونه په Archive نومي دوتنپوښ کې دي',
   'The colours a note had are not kept': 'هغه رنګونه چې يادښت لرله نه ساتل کېږي',
-  '{count} block references were written out as the words they pointed at': '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
-  '{count} saved views are left out, and every row is in the table': '{count} خوندي شوې ليدلورې پرېښودل شوې، او هره کرښه په جدول کې ده',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} مخونه لکه HTML راغلل، نو کلمې يې ساتل کېږي او بڼه يې نه',
+  '{count} block references were written out as the words they pointed at':
+    '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} خوندي شوې ليدلورې پرېښودل شوې، او هره کرښه په جدول کې ده',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} مخونه لکه HTML راغلل، نو کلمې يې ساتل کېږي او بڼه يې نه',
   'There are no rows in this file.': 'په دې دوتنه کې کرښې نشته.',
   'Nothing in there can be read as notes.': 'په هغه کې هيڅ لکه يادښت نه لوستل کېږي.',
   'That export could not be read.': 'هغه صادره ونه لوستل شوه.',
@@ -956,21 +1014,50 @@ export const ps: Dictionary = {
   '{count} files': { one: '{count} دوتنه', other: '{count} دوتنې' },
   'This space': 'دا ځای',
   'Drop an export here': 'يوه صادره دلته وغورځوئ',
-  'A zip, a folder, or a file another app wrote': 'يو zip، يو دوتنپوښ، يا هغه دوتنه چې بل کاريال ليکلې',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes او Apple Journal خپل يادښتونه هلته ساتي چې يوازې پخپله يې پرانيځي. لومړی يې صادر کړئ، بيا هغه وارد کړئ.',
-  'Pandoc reads this one, from the file on your disk.': 'دا يوه pandoc ستاسو پر ديسک له دوتنې لولي.',
+  'A zip, a folder, or a file another app wrote':
+    'يو zip، يو دوتنپوښ، يا هغه دوتنه چې بل کاريال ليکلې',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} انځورونه د HEIC په بڼه راغلل چې يوازې Apple يې ښيي',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} د حالت او فعاليت کارتونه انځورونه دي، نو يوازې کلمې يې راځي',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} يادښتونه د پټنوم تر شا دي چې يوازې Notes يې پرانيځي',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} يادښتونه په نوی ړنګ شوي کې دي او هلته پاتې کېږي',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} انځورونه او سکن شوي مخونه هغه انځورونه دي چې Notes پخپله کښي',
+  '{count} tables inside notes do not come over': 'په يادښتونو کې {count} جدولونه نه راځي',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} ملګړي په iCloud کې دي نه پر دې Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS هغه يادښتونه د Full Disk Access تر شا ساتي.',
+  'There are no notes in Apple Notes on this Mac.': 'پر دې Mac په Apple Notes کې يادښت نشته.',
+  'Those notes could not be read.': 'هغه يادښتونه ونه لوستل شول.',
+  'Read them from this Mac': 'له دې Mac ولولئ',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditor په Full Disk Access کې ولاړ کړئ، بيا هڅه وکړئ.',
+  'Open the setting': 'امستنه پرانيستل',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal پخپله صادروي: Journal، امستنې، صادرول. Apple Notes صادرول نه لري، نو له هغه Mac لرې چې پرې دي، دلته هغه دوتنپوښ غورځول کېږي چې يو صادرونکي ليکلی.',
+  'Pandoc reads this one, from the file on your disk.':
+    'دا يوه pandoc ستاسو پر ديسک له دوتنې لولي.',
   'Read it with pandoc': 'له pandoc سره لوستل',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'دا يوه يوازې pandoc لولي، او پر دې ماشين نه لګول شوی.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'دا يوه يوازې pandoc لولي، او پر دې ماشين نه لګول شوی.',
   Rows: 'کرښې',
   'As a table': 'لکه جدول',
   'One note per row': 'هره کرښه يوه يادښت',
   Into: 'دې ته',
   'Worth knowing': 'د پوهېدو وړ',
   '{count} notes arrived.': { one: '{count} يادښت راغله.', other: '{count} يادښتونه راغلل.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} نوم نيول شوی و، نو هغه دوتنه ګوښه شوه.', other: '{count} نومونه نيول شوي وو، نو هغه دوتنې ګوښه شوې.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} نوم نيول شوی و، نو هغه دوتنه ګوښه شوه.',
+    other: '{count} نومونه نيول شوي وو، نو هغه دوتنې ګوښه شوې.',
+  },
   'A table': 'يو جدول',
   'Markdown files': 'د markdown دوتنې',
   'A document': 'يو سند',
+  'A PDF, as pages to write on': 'يو PDF، د ليکلو د مخونو په بڼه',
   'Undo the import': 'واردات بېرته کول',
   'Choose an export': 'يوه صادره وټاکئ',
   Under: 'لاندې',
@@ -982,13 +1069,15 @@ export const ps: Dictionary = {
   'Keep both copies': 'دواړه لمېسې ساتل',
   'Let the newest win': 'تر ټولو نوی وګټي',
   'Ask me each time': 'هر ځل ما وپوښتئ',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'هيڅ نه غورځول کېږي: هغه چې ونه ګټي لکه بڼه ساتل کېږي.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'هيڅ نه غورځول کېږي: هغه چې ونه ګټي لکه بڼه ساتل کېږي.',
   'Waiting for you': 'ستاسو انتظار',
   'Keep mine': 'زما ساتل',
   'Take theirs': 'د هغوی اخيستل',
   'Keep both': 'دواړه ساتل',
   'What synced': 'څه همغږي شول',
-  'Nothing yet. A pass that moves nothing is not written down.': 'تر اوسه هيڅ. هغه ګذر چې هيڅ نه خوځوي نه ليکل کېږي.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'تر اوسه هيڅ. هغه ګذر چې هيڅ نه خوځوي نه ليکل کېږي.',
   'Clear the list': 'لړ پاکول',
   '{count} down': '{count} ښکته',
   '{count} up': '{count} پورته',
@@ -998,19 +1087,28 @@ export const ps: Dictionary = {
   'This space, as it was': 'دا ځای، لکه چې و',
   '{count} days ago': { one: '{count} ورځ مخکې', other: '{count} ورځې مخکې' },
   'What would change?': 'څه به بدل شي؟',
-  '{count} notes would go back to what they said then.': { one: '{count} يادښت به هغه وخت حالت ته بېرته شي.', other: '{count} يادښتونه به هغه وخت حالت ته بېرته شي.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} يادښت به هغه وخت حالت ته بېرته شي.',
+    other: '{count} يادښتونه به هغه وخت حالت ته بېرته شي.',
+  },
   'Nothing has changed since then.': 'له هغه وخت راهيسې هيڅ نه بدل شوی.',
-  '{count} notes went back.': { one: '{count} يادښت بېرته شوه.', other: '{count} يادښتونه بېرته شول.' },
-  'The account keeps a month of versions of every note that syncs.': 'حساب د هرې همغږې يادښت يوه مياشت بڼې ساتي.',
+  '{count} notes went back.': {
+    one: '{count} يادښت بېرته شوه.',
+    other: '{count} يادښتونه بېرته شول.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'حساب د هرې همغږې يادښت يوه مياشت بڼې ساتي.',
   'That did not work.': 'هغه کار ونه کړ.',
   'Signing in': 'ننوتل',
   'Ask for a code from an app': 'له کاريال کوډ غوښتل',
   'Turn on': 'ولاړول',
   'Turn off': 'بندول',
-  'Put this into your authenticator app, then type its code.': 'دا په خپل د تصديق کاريال کې کېږدئ، بيا يې کوډ وليکئ.',
+  'Put this into your authenticator app, then type its code.':
+    'دا په خپل د تصديق کاريال کې کېږدئ، بيا يې کوډ وليکئ.',
   Secret: 'راز',
   'Code from the app': 'له کاريال کوډ',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'دا په خوندي ځای کې وساتئ. هر يو يو ځل کار کوي او بيا نه ښودل کېږي.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'دا په خوندي ځای کې وساتئ. هر يو يو ځل کار کوي او بيا نه ښودل کېږي.',
   'Recovery codes': 'د بيا ترلاسه کولو کوډونه',
   'Recovery code': 'د بيا ترلاسه کولو کوډ',
   'Recovery codes left': 'پاتې د بيا ترلاسه کولو کوډونه',
@@ -1032,7 +1130,8 @@ export const ps: Dictionary = {
   Pages: 'مخونه',
   'Page {number} of {count}': 'مخ {number} له {count}',
   'What is selected': 'هغه چې ټاکل شوی',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'تخته: {cards} کارته، {links} تړنې، {drawings} کښلې',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'تخته: {cards} کارته، {links} تړنې، {drawings} کښلې',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'مصنوعي ځيرکتيا',
   Providers: 'برابرونکي',
@@ -1046,7 +1145,8 @@ export const ps: Dictionary = {
   'Asking…': 'پوښتنه کېږي…',
   'No providers yet.': 'تر اوسه برابرونکي نشته.',
   'Add {name}': '{name} ورزياتول',
-  'Keys stay in the secure store on this device.': 'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
+  'Keys stay in the secure store on this device.':
+    'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
   'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
@@ -1054,7 +1154,8 @@ export const ps: Dictionary = {
   'Could not reach {url}': '{url} ته ونه رسېدل',
   'That key was refused.': 'هغه کيلي رد شوه.',
   'The provider answered {status}.': 'برابرونکي {status} ځواب ورکړ.',
-  'Add an AI provider in Settings first.': 'لومړی په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
+  'Add an AI provider in Settings first.':
+    'لومړی په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
   'The model did not answer.': 'ماډل ځواب ونه ورکړ.',
   'Rewrite…': 'بيا ليکل…',
   Shorter: 'لنډ',
@@ -1069,13 +1170,86 @@ export const ps: Dictionary = {
   'AI block': 'د مصنوعي ځيرکتيا بلاک',
   'Highlight colour': 'د ځلاند رنګ',
   'A single newline breaks the line': 'يوه نوې کرښه کرښه ماتوي',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'بند همدا معياري markdown دی: د يو پراګراف دوې کرښې يوه لوستل کېږي؛ Obsidian يې سخت د کرښې بېلون بولي.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'بند همدا معياري markdown دی: د يو پراګراف دوې کرښې يوه لوستل کېږي؛ Obsidian يې سخت د کرښې بېلون بولي.',
   'New links': 'نوې تړنې',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'ويکي تړنې د يادښت نوم اخلي، نو تړنه د نوم بدلون ژوندې پاتې کېږي؛ دواړه بڼې لوستل کېږي.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'ويکي تړنې د يادښت نوم اخلي، نو تړنه د نوم بدلون ژوندې پاتې کېږي؛ دواړه بڼې لوستل کېږي.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown، تر ټولو لنډ نوم',
   'Markdown, relative path': 'markdown، نسبي لار',
   'Markdown, path in the space': 'markdown، په ځای کې لار',
+  // Publishing part one.
+  'The folders you choose become public.': 'هغه دوتنپوښونه چې ټاکئ عام شي.',
+  'Anyone with the address can read what is published, drafts included.':
+    'هر څوک چې پته ولري خپره شوې، مسودې هم، لوستلی شي.',
+  'Which notes': 'کوم يادښتونه',
+  'Notes outside a rule': 'بې قاعده يادښتونه',
+  'Are published': 'خپرېږي',
+  'Stay private': 'خپل پاتې کېږي',
+  'Follows the rule': 'قاعده تعقيبوي',
+  Published: 'خپره شوې',
+  Private: 'خپل',
+  '{count} pages': '{count} مخونه',
+  '{count} new': '{count} نوي',
+  '{count} gone': '{count} ليرې شوي',
+  'and more': 'او نور',
+  'How it appears': 'څنګه ښکاري',
+  Description: 'تفصيل',
+  'What this site is': 'دا ټاټوبی د څه په اړه دی',
+  'Tab icon': 'د ټوټې نښه',
+  Password: 'پټنوم',
+  'Set a new one': 'نوی ټاکل',
+  'Ask for a password': 'پټنوم غوښتل',
+  'No password': 'پټنوم نشته',
+  'Remove the password': 'پټنوم ليرې کول',
+  'Scan this with your authenticator app, then type its code.':
+    'دا د خپل تصديق کاريال سره سکن کړئ، بيا يې کوډ وليکئ.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'عکس',
+  Dictate: 'ويل',
+  'Add to {name}': '{name} ته ورزياتول',
+  // Web tabs
+  Reload: 'بېرته راوړل',
+  'Clip this page': 'دا مخ خوندول',
+  'Clip the link': 'تړنه خوندول',
+  'Allow the camera': 'کامرې ته اجازه',
+  'Allow the clipboard': 'د لمېسې تختې ته اجازه',
+  'Open in the browser': 'په کوټګر کې پرانيستل',
+  'Copy the address': 'پته لمېسل',
+  'Show it here': 'دلته ښودل',
+  Website: 'ټاټوبی',
+  'Open a website': 'ټاټوبی پرانيستل',
+  // Recording, meetings and what a model wrote
+  Record: 'ثبتول',
+  Recording: 'ثبت',
+  'Stop recording': 'ثبت درول',
+  'Meeting notes': 'د غونډې يادښتونه',
+  Meeting: 'غونډه',
+  'Stop the meeting': 'غونډه پای ته رسول',
+  Transcribe: 'متن ته اړول',
+  Transcript: 'متن',
+  'Transcript ({language})': 'متن ({language})',
+  'Written by {model}': '{model} ليکلی',
+  'Saving the recording': 'ثبت خوندول',
+  'Turning the recording into words': 'ثبت کلمو ته اړول',
+  'Open a space to record into.': 'د ثبت لپاره ځای پرانيځئ.',
+  'Sign in to take meeting notes.': 'د غونډې يادښت لپاره ننوځئ.',
+  'Sign in to turn a recording into words.': 'ثبت کلمو ته اړولو لپاره ننوځئ.',
+  'That microphone could not be opened.': 'هغه مايکروفون ونه پرانيستل شو.',
+  'That recording could not be saved.': 'هغه ثبت ونه خوندل شو.',
+  'That recording could not be turned into words.': 'هغه ثبت کلمو ته ونه اړول شو.',
+  'That recording is not in this space.': 'هغه ثبت په دې ځای کې نشته.',
+  'That recording is too long to turn into words in one go.':
+    'هغه ثبت د يو ځل کلمو ته اړولو لپاره ډېر اوږد دی.',
+  'That is as much as one recording may hold.': 'يو ثبت همدې کچې نيسي.',
+  'Nothing could be heard in that recording.': 'په هغه ثبت کې هيڅ ونه اورېدل شو.',
+  'A piece of the transcript is being tried again.': 'د متن يوه ټوټه بيا هڅه کېږي.',
+  'The transcript is behind and losing pieces.': 'متن وروسته پاتې دی او ټوټې بايلي.',
+  '{count} pieces of this meeting were lost.': 'د دې غونډې {count} ټوټې ورکې شوې.',
+  'Add an AI provider in settings to summarise.':
+    'د لنډيز لپاره په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
+  'The summary could not be written.': 'لنډيز ونه ليکل شو.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ليک ونه لېږل شو - بيا هڅه وکړئ',
   'start again - that took too long': 'بيا پيل کړئ - هغه ډېر وخت ونيو',
@@ -1090,7 +1264,8 @@ export const ps: Dictionary = {
   'that is more bookmarks than a space holds': 'هغه له هغو نښانو ډېرې دي چې يو ځای ساتي',
   'that is more paths than a space leaves out': 'هغه له هغو لارو ډېرې دي چې يو ځای پرېږدي',
   'that is more files than a space keeps': 'هغه له هغو دوتنو ډېرې دي چې يو ځای ساتي',
-  'that is more than a space keeps about its graph': 'هغه له هغه ډېر دی چې يو ځای د خپل ګراف په اړه ساتي',
+  'that is more than a space keeps about its graph':
+    'هغه له هغه ډېر دی چې يو ځای د خپل ګراف په اړه ساتي',
   'that is more folder icons than a space holds': 'هغه له هغو د دوتنپوښ نښو ډېرې دي چې يو ځای ساتي',
   // Sharing a space, and being let into one.
   'nobody by that address': 'په هغه پته هيڅوک نشته',

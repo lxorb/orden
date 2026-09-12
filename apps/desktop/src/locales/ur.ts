@@ -7,6 +7,12 @@ export const ur: Dictionary = {
   'Open file': 'فائل کھولیں',
   'New note inside': 'اندر نیا نوٹ',
   'New canvas': 'نیا کینوس',
+  'New page note': 'نیا صفحات والا نوٹ',
+  'Add a page': 'صفحہ شامل کریں',
+  'Add a page after this': 'اس کے بعد صفحہ شامل کریں',
+  'Delete this page': 'یہ صفحہ حذف کریں',
+  'Page {number}': 'صفحہ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'کینوس',
   Card: 'کارڈ',
   'Note or picture': 'نوٹ یا تصویر',
@@ -34,7 +40,8 @@ export const ur: Dictionary = {
   'Create a space': 'اسپیس بنائیں',
   'Delete space': 'اسپیس حذف کریں',
   'Delete {name}?': '{name} حذف کریں؟',
-  'Every note in this space is deleted from your computer.': 'اس اسپیس کا ہر نوٹ آپ کے کمپیوٹر سے حذف ہو جاتا ہے۔',
+  'Every note in this space is deleted from your computer.':
+    'اس اسپیس کا ہر نوٹ آپ کے کمپیوٹر سے حذف ہو جاتا ہے۔',
   'The notes inside it go too.': 'اس کے اندر کے نوٹس بھی چلے جاتے ہیں۔',
   Journal: 'روزنامچہ',
   Create: 'بنائیں',
@@ -206,7 +213,8 @@ export const ur: Dictionary = {
   'Image not found': 'تصویر نہیں ملی',
   'Delete {count} items': { one: '{count} جزو حذف کریں', other: '{count} اجزا حذف کریں' },
   'Recently deleted': 'حال میں حذف شدہ',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'حذف شدہ نوٹس اور اسپیسز یہاں 14 دن رہتے ہیں، پھر ہمیشہ کے لیے چلے جاتے ہیں۔',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'حذف شدہ نوٹس اور اسپیسز یہاں 14 دن رہتے ہیں، پھر ہمیشہ کے لیے چلے جاتے ہیں۔',
   'Nothing here.': 'یہاں کچھ نہیں۔',
   Empty: 'خالی کریں',
   Spaces: 'اسپیسز',
@@ -257,7 +265,8 @@ export const ur: Dictionary = {
   'Previous slide': 'پچھلی سلائیڈ',
   'Read-only': 'صرف پڑھنے کے لیے',
   'No preview': 'کوئی پیش منظر نہیں',
-  'Shown as plain text, so typing stays instant in a note this long': 'سادہ متن کے طور پر دکھایا گیا ہے تاکہ اتنے طویل نوٹ میں لکھنا فوری رہے',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'سادہ متن کے طور پر دکھایا گیا ہے تاکہ اتنے طویل نوٹ میں لکھنا فوری رہے',
   'Leave read-only': 'صرف پڑھنے سے نکلیں',
   Next: 'اگلا',
   Previous: 'پچھلا',
@@ -353,16 +362,19 @@ export const ur: Dictionary = {
   'OpenAI key': 'OpenAI کلید',
   Model: 'ماڈل',
   Reasoning: 'استدلال',
-  'Kept encrypted on your account, and never shown again.': 'آپ کے اکاؤنٹ میں مخفی رکھی جاتی ہے، اور دوبارہ نہیں دکھائی جاتی۔',
+  'Kept encrypted on your account, and never shown again.':
+    'آپ کے اکاؤنٹ میں مخفی رکھی جاتی ہے، اور دوبارہ نہیں دکھائی جاتی۔',
   'set, ends in …{tail}': 'مقرر ہے، اختتام …{tail}',
   'Saving the key': 'کلید محفوظ ہو رہی ہے',
   'this server cannot keep a key yet': 'یہ سرور ابھی کلید نہیں رکھ سکتا',
   'that does not look like a key': 'یہ کلید نہیں لگتی',
   'that key could not be saved': 'یہ کلید محفوظ نہیں ہو سکی',
   'Sign in to ask a question.': 'سوال پوچھنے کے لیے سائن ان کریں۔',
-  'Asking OpenAI which models this key can use': 'OpenAI سے پوچھ رہے ہیں کہ یہ کلید کون سے ماڈل استعمال کر سکتی ہے',
+  'Asking OpenAI which models this key can use':
+    'OpenAI سے پوچھ رہے ہیں کہ یہ کلید کون سے ماڈل استعمال کر سکتی ہے',
   'Could not reach OpenAI': 'OpenAI تک نہیں پہنچ سکے',
-  'That key cannot use any of the models Nib asks for.': 'یہ کلید Nib کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
+  'That key cannot use any of the models Nib asks for.':
+    'یہ کلید Nib کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
   'No reasoning': 'استدلال نہیں',
   Minimal: 'معمولی',
   Low: 'کم',
@@ -403,7 +415,10 @@ export const ur: Dictionary = {
   'Add a word': 'لفظ شامل کریں',
   'Add {word} to the dictionary': '{word} کو لغت میں شامل کریں',
   'Remove {word} from the dictionary': '{word} کو لغت سے ہٹائیں',
-  '{count} things in this theme were left out.': { one: 'اس تھیم کی {count} چیز چھوڑ دی گئی۔', other: 'اس تھیم کی {count} چیزیں چھوڑ دی گئیں۔' },
+  '{count} things in this theme were left out.': {
+    one: 'اس تھیم کی {count} چیز چھوڑ دی گئی۔',
+    other: 'اس تھیم کی {count} چیزیں چھوڑ دی گئیں۔',
+  },
   'A note': 'ایک نوٹ',
   'Words with {bold} and a {link}.': '{bold} اور {link} کے ساتھ الفاظ۔',
   bold: 'جلی',
@@ -448,11 +463,14 @@ export const ur: Dictionary = {
   'Line numbers': 'سطر نمبر',
   Syntax: 'ساخت',
   'Strict CommonMark': 'سخت CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'صرف معیاری Markdown قواعد، کوئی جدول، کام کی فہرست یا حاشیہ نہیں۔',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'صرف معیاری Markdown قواعد، کوئی جدول، کام کی فہرست یا حاشیہ نہیں۔',
   'Smart punctuation': 'ذہین رموزِ اوقاف',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'لکھتے ہوئے سیدھے واوین اور ڈیش کو طباعتی شکل دیتا ہے۔',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'لکھتے ہوئے سیدھے واوین اور ڈیش کو طباعتی شکل دیتا ہے۔',
   'Puts 1., 1.1, 1.2 in front of headings.': 'سرخیوں سے پہلے 1.، 1.1، 1.2 لگاتا ہے۔',
-  'Numbers display equations so you can refer to them.': 'نمایاں مساوات پر نمبر لگاتا ہے تاکہ حوالہ دیا جا سکے۔',
+  'Numbers display equations so you can refer to them.':
+    'نمایاں مساوات پر نمبر لگاتا ہے تاکہ حوالہ دیا جا سکے۔',
   Ligatures: 'لگیچر',
   Off: 'آف',
   'Code only': 'صرف کوڈ میں',
@@ -515,13 +533,17 @@ export const ur: Dictionary = {
   'Send a new code': 'نیا کوڈ بھیجیں',
   'Code sent to': 'کوڈ بھیجا گیا',
   'You already have notes on this computer.': 'اس کمپیوٹر پر آپ کے نوٹس پہلے سے موجود ہیں۔',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'رکھیں تو وہ آپ کے اکاؤنٹ میں شامل ہو جائیں گے۔ مٹا دیں تو صرف وہی رہے گا جو اکاؤنٹ میں پہلے سے ہے - یہ واپس نہیں ہو سکتا۔',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'رکھیں تو وہ آپ کے اکاؤنٹ میں شامل ہو جائیں گے۔ مٹا دیں تو صرف وہی رہے گا جو اکاؤنٹ میں پہلے سے ہے - یہ واپس نہیں ہو سکتا۔',
   'Keep them': 'رکھیں',
   'Erase them': 'مٹا دیں',
   'Digit {number}': 'ہندسہ {number}',
   'Resend in {seconds}s': '{seconds} سیکنڈ بعد دوبارہ',
   'Last synced {time}.': 'آخری سنک {time}۔',
-  '{count} spaces sync to your account.': { one: '{count} اسپیس آپ کے اکاؤنٹ سے سنک ہوتا ہے۔', other: '{count} اسپیسز آپ کے اکاؤنٹ سے سنک ہوتے ہیں۔' },
+  '{count} spaces sync to your account.': {
+    one: '{count} اسپیس آپ کے اکاؤنٹ سے سنک ہوتا ہے۔',
+    other: '{count} اسپیسز آپ کے اکاؤنٹ سے سنک ہوتے ہیں۔',
+  },
   Update: 'اپ ڈیٹ',
   'Live at': 'یہاں شائع',
   // Publishing
@@ -531,7 +553,8 @@ export const ur: Dictionary = {
   'Only {name}': 'صرف {name}',
   'Publish this space as a blog': 'یہ اسپیس بلاگ کے طور پر شائع کریں',
   'Everything in this space becomes public.': 'اس اسپیس کا سب کچھ عوامی ہو جاتا ہے۔',
-  'Every note, including drafts, is readable by anyone with the address.': 'ہر نوٹ، مسودوں سمیت، پتہ رکھنے والا ہر شخص پڑھ سکتا ہے۔',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ہر نوٹ، مسودوں سمیت، پتہ رکھنے والا ہر شخص پڑھ سکتا ہے۔',
   Address: 'پتہ',
   'Add these at your registrar, then verify.': 'یہ اپنے رجسٹرار میں شامل کریں، پھر جانچیں۔',
   Verify: 'جانچیں',
@@ -544,7 +567,8 @@ export const ur: Dictionary = {
   'checking…': 'جانچ ہو رہی ہے…',
   // LLM
   'Connect an LLM to your notes': 'اپنے نوٹس سے LLM جوڑیں',
-  'Sign in first - the connector reaches the notes in your account.': 'پہلے سائن ان کریں - کنیکٹر آپ کے اکاؤنٹ کے نوٹس تک پہنچتا ہے۔',
+  'Sign in first - the connector reaches the notes in your account.':
+    'پہلے سائن ان کریں - کنیکٹر آپ کے اکاؤنٹ کے نوٹس تک پہنچتا ہے۔',
   'Let it write to my notes, not only read them': 'اسے میرے نوٹس میں لکھنے دیں، صرف پڑھنے نہیں',
   'Create a token': 'ٹوکن بنائیں',
   'Replace the token': 'ٹوکن بدلیں',
@@ -560,27 +584,38 @@ export const ur: Dictionary = {
   'Reads your notes.': 'آپ کے نوٹس پڑھتا ہے۔',
   'Reads and writes your notes.': 'آپ کے نوٹس پڑھتا اور لکھتا ہے۔',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے Nib ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude میں ترتیبات → Connectors کھولیں اور Add custom connector پر کلک کریں۔',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے Nib ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude میں ترتیبات → Connectors کھولیں اور Add custom connector پر کلک کریں۔',
   'Open Claude’s connectors': 'Claude کے کنیکٹر کھولیں',
   'Fill in the two fields and click Add.': 'دونوں خانے بھریں اور Add پر کلک کریں۔',
-  'Click Connect and sign in with your Nib email.': 'Connect پر کلک کریں اور Nib ای میل سے سائن ان کریں۔',
+  'Click Connect and sign in with your Nib email.':
+    'Connect پر کلک کریں اور Nib ای میل سے سائن ان کریں۔',
   'Using Claude Code instead?': 'اس کی جگہ Claude Code استعمال کر رہے ہیں؟',
   Command: 'کمانڈ',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'اسے ٹرمینل میں چلائیں، پھر سائن ان کے لیے Claude Code میں /mcp لکھیں۔',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'اسے ٹرمینل میں چلائیں، پھر سائن ان کے لیے Claude Code میں /mcp لکھیں۔',
   'Fill in the form and click Create.': 'فارم بھریں اور Create پر کلک کریں۔',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT میں ترتیبات → Plugins کھولیں اور جمع کے بٹن پر کلک کریں۔',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT میں ترتیبات → Plugins کھولیں اور جمع کے بٹن پر کلک کریں۔',
   'Open ChatGPT’s plugins': 'ChatGPT کے پلگ اِن کھولیں',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins کا حصہ یا جمع کا بٹن نہیں؟ پہلے ترتیبات → Security and login میں Developer mode آن کریں۔',
-  'Sign in with your Nib email when ChatGPT asks.': 'جب ChatGPT پوچھے تو Nib ای میل سے سائن ان کریں۔',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins کا حصہ یا جمع کا بٹن نہیں؟ پہلے ترتیبات → Security and login میں Developer mode آن کریں۔',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'جب ChatGPT پوچھے تو Nib ای میل سے سائن ان کریں۔',
   'To use it in a chat, type @ and pick Nib.': 'چیٹ میں استعمال کے لیے @ لکھیں اور Nib چنیں۔',
   'Server URL': 'سرور URL',
   Authentication: 'تصدیقِ شناخت',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'اعلیٰ OAuth ترتیبات ویسی ہی رہنے دیں اور “I understand and want to continue” پر نشان لگائیں۔',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر Nib کا سائن ان صفحہ کھولتا ہے۔',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'اعلیٰ OAuth ترتیبات ویسی ہی رہنے دیں اور “I understand and want to continue” پر نشان لگائیں۔',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر Nib کا سائن ان صفحہ کھولتا ہے۔',
   'Show config': 'کنفیگ دکھائیں',
-  'For a client that takes a JSON block instead of a URL.': 'اس کلائنٹ کے لیے جو URL کی جگہ JSON بلاک لیتا ہے۔',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'جو کلائنٹ سائن ان نہیں کر سکتا اسے ٹوکن دیا جا سکتا ہے۔ وہ صرف ایک بار دکھایا جاتا ہے۔',
+  'For a client that takes a JSON block instead of a URL.':
+    'اس کلائنٹ کے لیے جو URL کی جگہ JSON بلاک لیتا ہے۔',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'جو کلائنٹ سائن ان نہیں کر سکتا اسے ٹوکن دیا جا سکتا ہے۔ وہ صرف ایک بار دکھایا جاتا ہے۔',
   // Export
   'Plain text': 'سادہ متن',
   'Markdown with the pictures': 'تصاویر کے ساتھ Markdown',
@@ -604,8 +639,10 @@ export const ur: Dictionary = {
   'Version history': 'ورژن کی تاریخ',
   'Copy link to this note': 'اس نوٹ کا لنک نقل کریں',
   'that link could not be followed': 'اس لنک پر نہیں جا سکے',
-  'Save this note first; there is nothing to compare against yet.': 'پہلے یہ نوٹ محفوظ کریں؛ ابھی موازنے کے لیے کچھ نہیں۔',
-  'No earlier versions yet. One is kept each time you save.': 'ابھی پہلے کا کوئی ورژن نہیں۔ ہر بار محفوظ کرنے پر ایک رکھا جاتا ہے۔',
+  'Save this note first; there is nothing to compare against yet.':
+    'پہلے یہ نوٹ محفوظ کریں؛ ابھی موازنے کے لیے کچھ نہیں۔',
+  'No earlier versions yet. One is kept each time you save.':
+    'ابھی پہلے کا کوئی ورژن نہیں۔ ہر بار محفوظ کرنے پر ایک رکھا جاتا ہے۔',
   'Restore this version': 'یہ ورژن بحال کریں',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'وہاں پہلے سے ایک نوٹ ہے',
@@ -666,7 +703,8 @@ export const ur: Dictionary = {
   'use a domain of your own': 'اپنا ڈومین استعمال کریں',
   'the domain no longer points here': 'ڈومین اب یہاں اشارہ نہیں کرتا',
   'Cloudflare has blocked this domain': 'Cloudflare نے یہ ڈومین بلاک کر دیا',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ڈومین کی جڑ پر ALIAS یا ANAME ریکارڈ، یا CNAME flattening استعمال کریں، اگر آپ کا فراہم کنندہ وہاں CNAME کی اجازت نہ دے۔',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ڈومین کی جڑ پر ALIAS یا ANAME ریکارڈ، یا CNAME flattening استعمال کریں، اگر آپ کا فراہم کنندہ وہاں CNAME کی اجازت نہ دے۔',
   // Shortcuts
   Shortcuts: 'شارٹ کٹس',
   'Search shortcuts': 'شارٹ کٹ تلاش کریں',
@@ -677,7 +715,8 @@ export const ur: Dictionary = {
   'Reset all shortcuts': 'تمام شارٹ کٹ ری سیٹ کریں',
   'Take it over': 'یہیں استعمال کریں',
   '{key} already runs {name}.': '{key} پہلے ہی {name} چلاتا ہے۔',
-  'Esc stops recording, Backspace takes the key away.': 'Esc ریکارڈنگ روکتا ہے، Backspace کلید ہٹا دیتا ہے۔',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc ریکارڈنگ روکتا ہے، Backspace کلید ہٹا دیتا ہے۔',
   Tables: 'جدولیں',
   Pictures: 'تصاویر',
   'Fixed keys': 'مقرر کلیدیں',
@@ -713,7 +752,8 @@ export const ur: Dictionary = {
   'Always on top': 'ہمیشہ اوپر',
   'What is new': 'کیا نیا ہے',
   'Report an issue': 'مسئلہ رپورٹ کریں',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ڈسک پر بدل گیا۔ ایڈیٹر میں جو ہے وہ آپ کا ہے۔',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ڈسک پر بدل گیا۔ ایڈیٹر میں جو ہے وہ آپ کا ہے۔',
   'Move the line up': 'سطر اوپر لے جائیں',
   'Move the line down': 'سطر نیچے لے جائیں',
   'Copy the line up': 'سطر اوپر نقل کریں',
@@ -748,26 +788,33 @@ export const ur: Dictionary = {
   Escape: 'Esc',
   Quit: 'باہر نکلیں',
   'The clipboard belongs to the system.': 'کلپ بورڈ سسٹم کا ہے۔',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'تیر کی کلیدیں، Home، End، Page up اور Page down متن کی ہیں۔',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'تیر کی کلیدیں، Home، End، Page up اور Page down متن کی ہیں۔',
   'Backspace and Delete belong to the text.': 'Backspace اور Delete متن کی ہیں۔',
-  'Enter closes a code block and carries a list on.': 'Enter کوڈ بلاک بند کرتا ہے اور فہرست جاری رکھتا ہے۔',
-  'Tab moves on through the app as well as indenting.': 'Tab اندر کرنے کے ساتھ ایپ میں آگے بھی بڑھاتا ہے۔',
+  'Enter closes a code block and carries a list on.':
+    'Enter کوڈ بلاک بند کرتا ہے اور فہرست جاری رکھتا ہے۔',
+  'Tab moves on through the app as well as indenting.':
+    'Tab اندر کرنے کے ساتھ ایپ میں آگے بھی بڑھاتا ہے۔',
   'Escape closes whatever is open.': 'Esc جو کھلا ہو اسے بند کرتا ہے۔',
-  'Your system takes this key before the app sees it.': 'آپ کا سسٹم یہ کلید ایپ سے پہلے لے لیتا ہے۔',
-  'Your browser takes this key before the app sees it.': 'آپ کا براؤزر یہ کلید ایپ سے پہلے لے لیتا ہے۔',
+  'Your system takes this key before the app sees it.':
+    'آپ کا سسٹم یہ کلید ایپ سے پہلے لے لیتا ہے۔',
+  'Your browser takes this key before the app sees it.':
+    'آپ کا براؤزر یہ کلید ایپ سے پہلے لے لیتا ہے۔',
   'That is not a key combination.': 'یہ کلیدوں کا مجموعہ نہیں ہے۔',
   'Hold Ctrl, Alt or Cmd as well.': 'ساتھ Ctrl، Alt یا Cmd بھی دبائیں۔',
   'File list': 'فائل فہرست',
   'Select every file': 'ہر فائل منتخب کریں',
   'Clear the selection': 'انتخاب صاف کریں',
   'Delete the selected files': 'منتخب فائلیں حذف کریں',
-  'The file could not be written, so it goes to the print dialog': 'فائل نہیں لکھی جا سکی، سو پرنٹ ڈائیلاگ کھلتا ہے',
+  'The file could not be written, so it goes to the print dialog':
+    'فائل نہیں لکھی جا سکی، سو پرنٹ ڈائیلاگ کھلتا ہے',
   'Next file': 'اگلی فائل',
   'Previous file': 'پچھلی فائل',
   'Show what it holds': 'اندر کا سامان دکھائیں',
   'Hide what it holds': 'اندر کا سامان چھپائیں',
   'Moving through a list': 'فہرست میں چلنا',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'تیر کی کلیدیں، Enter اور Esc جو بھی کھلا ہو کام کرتی ہیں؛ یہ شارٹ کٹ نہیں۔',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'تیر کی کلیدیں، Enter اور Esc جو بھی کھلا ہو کام کرتی ہیں؛ یہ شارٹ کٹ نہیں۔',
   'Split right': 'دائیں تقسیم',
   'Split down': 'نیچے تقسیم',
   'Other pane': 'دوسرا پین',
@@ -789,7 +836,8 @@ export const ur: Dictionary = {
   'Follow the link': 'لنک پر جائیں',
   'Replace your own keys?': 'اپنی کلیدیں بدلیں؟',
   Replace: 'بدلیں',
-  'The keys you changed go back to what this keyboard says.': 'جو کلیدیں آپ نے بدلیں وہ اس کی بورڈ کے مطابق واپس ہو جاتی ہیں۔',
+  'The keys you changed go back to what this keyboard says.':
+    'جو کلیدیں آپ نے بدلیں وہ اس کی بورڈ کے مطابق واپس ہو جاتی ہیں۔',
   NORMAL: 'عام',
   INSERT: 'اندراج',
   VISUAL: 'انتخاب',
@@ -911,7 +959,8 @@ export const ur: Dictionary = {
   Leave: 'چھوڑیں',
   'Leave space': 'اسپیس چھوڑیں',
   'Leave {name}?': '{name} چھوڑیں؟',
-  'It stays with everybody else. Its notes go from your computer.': 'یہ باقی سب کے پاس رہتا ہے۔ اس کے نوٹس آپ کے کمپیوٹر سے چلے جاتے ہیں۔',
+  'It stays with everybody else. Its notes go from your computer.':
+    'یہ باقی سب کے پاس رہتا ہے۔ اس کے نوٹس آپ کے کمپیوٹر سے چلے جاتے ہیں۔',
   '{who} shared {space} with you': '{who} نے {space} آپ کے ساتھ شیئر کیا',
   'Shared with you': 'آپ کے ساتھ شیئر',
   'That link does not open anything': 'یہ لنک کچھ نہیں کھولتا',
@@ -928,7 +977,8 @@ export const ur: Dictionary = {
   'Release channel': 'ریلیز چینل',
   Stable: 'مستحکم',
   Unstable: 'غیر مستحکم',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'مستحکم سرکاری ریلیز کے ساتھ چلتا ہے، غیر مستحکم main پر ہر پش کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'مستحکم سرکاری ریلیز کے ساتھ چلتا ہے، غیر مستحکم main پر ہر پش کے ساتھ اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',
@@ -936,17 +986,26 @@ export const ur: Dictionary = {
   'In this note': 'اس نوٹ میں',
   'In the whole space': 'پورے اسپیس میں',
   'Nothing here needs converting.': 'یہاں کسی کو تبدیلی کی ضرورت نہیں۔',
-  'Rewrite {count} things?': { one: '{count} چیز دوبارہ لکھیں؟', other: '{count} چیزیں دوبارہ لکھیں؟' },
+  'Rewrite {count} things?': {
+    one: '{count} چیز دوبارہ لکھیں؟',
+    other: '{count} چیزیں دوبارہ لکھیں؟',
+  },
   'In {count} notes.': { one: '{count} نوٹ میں۔', other: '{count} نوٹس میں۔' },
   Rewrite: 'دوبارہ لکھیں',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} اقتباسات مخفی ہیں، اور Evernote کے بغیر کوئی انہیں نہیں پڑھ سکتا',
-  '{count} notes had a reminder, which the export does not carry': '{count} نوٹس میں یاد دہانی تھی، جو ایکسپورٹ ساتھ نہیں لاتا',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} اقتباسات مخفی ہیں، اور Evernote کے بغیر کوئی انہیں نہیں پڑھ سکتا',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} نوٹس میں یاد دہانی تھی، جو ایکسپورٹ ساتھ نہیں لاتا',
   '{count} notes were in the bin and stay there': '{count} نوٹس ردی میں تھے اور وہیں رہیں گے',
-  '{count} archived notes are in a folder called Archive': '{count} محفوظ شدہ نوٹس Archive نامی فولڈر میں ہیں',
+  '{count} archived notes are in a folder called Archive':
+    '{count} محفوظ شدہ نوٹس Archive نامی فولڈر میں ہیں',
   'The colours a note had are not kept': 'نوٹ کے رنگ محفوظ نہیں رہتے',
-  '{count} block references were written out as the words they pointed at': '{count} بلاک حوالے ان الفاظ کے طور پر لکھے گئے جن کی طرف وہ اشارہ کرتے تھے',
-  '{count} saved views are left out, and every row is in the table': '{count} محفوظ مناظر چھوڑ دیے گئے، اور ہر قطار جدول میں ہے',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} صفحے HTML میں آئے، سو ان کے الفاظ رہے اور شکل نہیں',
+  '{count} block references were written out as the words they pointed at':
+    '{count} بلاک حوالے ان الفاظ کے طور پر لکھے گئے جن کی طرف وہ اشارہ کرتے تھے',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} محفوظ مناظر چھوڑ دیے گئے، اور ہر قطار جدول میں ہے',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} صفحے HTML میں آئے، سو ان کے الفاظ رہے اور شکل نہیں',
   'There are no rows in this file.': 'اس فائل میں کوئی قطار نہیں۔',
   'Nothing in there can be read as notes.': 'اس میں کچھ بھی نوٹس کے طور پر نہیں پڑھا جا سکتا۔',
   'That export could not be read.': 'یہ ایکسپورٹ پڑھا نہیں جا سکا۔',
@@ -957,20 +1016,47 @@ export const ur: Dictionary = {
   'This space': 'یہ اسپیس',
   'Drop an export here': 'ایکسپورٹ یہاں چھوڑیں',
   'A zip, a folder, or a file another app wrote': 'zip، فولڈر، یا کسی دوسری ایپ کی لکھی فائل',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes اور Apple Journal اپنے نوٹس وہاں رکھتے ہیں جہاں صرف وہی کھول سکتے ہیں۔ پہلے انہیں ایکسپورٹ کریں، پھر وہ امپورٹ کریں۔',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} تصاویر HEIC میں آئیں، جو صرف Apple دکھاتا ہے',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} موڈ اور سرگرمی کارڈ خاکے ہیں، اس لیے صرف ان کے الفاظ آتے ہیں',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Notes کھول سکتا ہے',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} نوٹس حال میں حذف شدہ میں ہیں اور وہیں رہتے ہیں',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} خاکے اور اسکین صفحات وہ تصاویر ہیں جو Notes خود بناتا ہے',
+  '{count} tables inside notes do not come over': 'نوٹس کے اندر {count} جدول نہیں آتے',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} منسلکات اس Mac کی بجائے iCloud میں ہیں',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ان نوٹس کو Full Disk Access کے پیچھے رکھتا ہے۔',
+  'There are no notes in Apple Notes on this Mac.': 'اس Mac پر Apple Notes میں کوئی نوٹ نہیں۔',
+  'Those notes could not be read.': 'وہ نوٹس پڑھے نہیں جا سکے۔',
+  'Read them from this Mac': 'اس Mac سے پڑھیں',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access میں nibeditor آن کریں، پھر دوبارہ کوشش کریں۔',
+  'Open the setting': 'ترتیب کھولیں',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal خود برآمد کرتا ہے: Journal، ترتیبات، برآمد۔ Apple Notes میں برآمد نہیں، لہٰذا جس Mac پر وہ ہیں اس سے دور، یہاں چھوڑنے کی چیز وہ فولڈر ہے جو کسی برآمد کار نے لکھا۔',
   'Pandoc reads this one, from the file on your disk.': 'یہ pandoc پڑھتا ہے، آپ کی ڈسک کی فائل سے۔',
   'Read it with pandoc': 'pandoc سے پڑھیں',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'یہ صرف pandoc پڑھتا ہے، اور وہ اس مشین پر انسٹال نہیں۔',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'یہ صرف pandoc پڑھتا ہے، اور وہ اس مشین پر انسٹال نہیں۔',
   Rows: 'قطاریں',
   'As a table': 'جدول کے طور پر',
   'One note per row': 'ہر قطار کا ایک نوٹ',
   Into: 'میں',
   'Worth knowing': 'جاننے کی باتیں',
   '{count} notes arrived.': { one: '{count} نوٹ آ گیا۔', other: '{count} نوٹس آ گئے۔' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} نام پہلے سے تھا، سو وہ فائل ہٹ گئی۔', other: '{count} نام پہلے سے تھے، سو وہ فائلیں ہٹ گئیں۔' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} نام پہلے سے تھا، سو وہ فائل ہٹ گئی۔',
+    other: '{count} نام پہلے سے تھے، سو وہ فائلیں ہٹ گئیں۔',
+  },
   'A table': 'ایک جدول',
   'Markdown files': 'Markdown فائلیں',
   'A document': 'ایک دستاویز',
+  'A PDF, as pages to write on': 'ایک PDF، لکھنے کے صفحات کے طور پر',
   'Undo the import': 'امپورٹ واپس لیں',
   'Choose an export': 'ایکسپورٹ منتخب کریں',
   Under: 'کے نیچے',
@@ -982,13 +1068,15 @@ export const ur: Dictionary = {
   'Keep both copies': 'دونوں نقلیں رکھیں',
   'Let the newest win': 'نیا ترین جیتے',
   'Ask me each time': 'ہر بار مجھ سے پوچھیں',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'کچھ بھی پھینکا نہیں جاتا: جو نہ جیتے وہ ورژن کے طور پر رکھا جاتا ہے۔',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'کچھ بھی پھینکا نہیں جاتا: جو نہ جیتے وہ ورژن کے طور پر رکھا جاتا ہے۔',
   'Waiting for you': 'آپ کا انتظار',
   'Keep mine': 'میری رکھیں',
   'Take theirs': 'ان کی لیں',
   'Keep both': 'دونوں رکھیں',
   'What synced': 'کیا سنک ہوا',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ابھی کچھ نہیں۔ جو دور کچھ نہ ہلائے وہ لکھا نہیں جاتا۔',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ابھی کچھ نہیں۔ جو دور کچھ نہ ہلائے وہ لکھا نہیں جاتا۔',
   'Clear the list': 'فہرست صاف کریں',
   '{count} down': '{count} آئے',
   '{count} up': '{count} گئے',
@@ -998,19 +1086,28 @@ export const ur: Dictionary = {
   'This space, as it was': 'یہ اسپیس، جیسا تھا',
   '{count} days ago': { one: '{count} دن پہلے', other: '{count} دن پہلے' },
   'What would change?': 'کیا بدلے گا؟',
-  '{count} notes would go back to what they said then.': { one: '{count} نوٹ اس وقت کی حالت پر چلا جائے گا۔', other: '{count} نوٹس اس وقت کی حالت پر چلے جائیں گے۔' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} نوٹ اس وقت کی حالت پر چلا جائے گا۔',
+    other: '{count} نوٹس اس وقت کی حالت پر چلے جائیں گے۔',
+  },
   'Nothing has changed since then.': 'تب سے کچھ نہیں بدلا۔',
-  '{count} notes went back.': { one: '{count} نوٹ واپس چلا گیا۔', other: '{count} نوٹس واپس چلے گئے۔' },
-  'The account keeps a month of versions of every note that syncs.': 'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک ماہ کے ورژن رکھتا ہے۔',
+  '{count} notes went back.': {
+    one: '{count} نوٹ واپس چلا گیا۔',
+    other: '{count} نوٹس واپس چلے گئے۔',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک ماہ کے ورژن رکھتا ہے۔',
   'That did not work.': 'یہ کام نہیں کر سکا۔',
   'Signing in': 'سائن ان ہو رہا ہے',
   'Ask for a code from an app': 'ایپ سے کوڈ منگوائیں',
   'Turn on': 'آن کریں',
   'Turn off': 'آف کریں',
-  'Put this into your authenticator app, then type its code.': 'یہ اپنی تصدیقی ایپ میں ڈالیں، پھر اس کا کوڈ لکھیں۔',
+  'Put this into your authenticator app, then type its code.':
+    'یہ اپنی تصدیقی ایپ میں ڈالیں، پھر اس کا کوڈ لکھیں۔',
   Secret: 'راز',
   'Code from the app': 'ایپ کا کوڈ',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'انہیں کسی محفوظ جگہ رکھیں۔ ہر ایک ایک بار چلتا ہے، اور یہ دوبارہ نہیں دکھائے جاتے۔',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'انہیں کسی محفوظ جگہ رکھیں۔ ہر ایک ایک بار چلتا ہے، اور یہ دوبارہ نہیں دکھائے جاتے۔',
   'Recovery codes': 'بازیابی کوڈز',
   'Recovery code': 'بازیابی کوڈ',
   'Recovery codes left': 'باقی بازیابی کوڈز',
@@ -1032,7 +1129,8 @@ export const ur: Dictionary = {
   Pages: 'صفحات',
   'Page {number} of {count}': 'صفحہ {number} از {count}',
   'What is selected': 'منتخب شدہ',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'کینوس: {cards} کارڈ، {links} لنک، {drawings} خاکے',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'کینوس: {cards} کارڈ، {links} لنک، {drawings} خاکے',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'فراہم کنندگان',
@@ -1069,13 +1167,86 @@ export const ur: Dictionary = {
   'AI block': 'AI بلاک',
   'Highlight colour': 'نمایاں رنگ',
   'A single newline breaks the line': 'ایک نئی سطر ہی سطر توڑ دیتی ہے',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'بند معیاری markdown ہے: ایک پیراگراف کی دو سطریں ایک پڑھی جاتی ہیں، Obsidian اسے سخت سطر وقفے کہتا ہے۔',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'بند معیاری markdown ہے: ایک پیراگراف کی دو سطریں ایک پڑھی جاتی ہیں، Obsidian اسے سخت سطر وقفے کہتا ہے۔',
   'New links': 'نئے لنک',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'ویکی لنک نوٹ کا نام لیتے ہیں، اس لیے نام بدلنے پر بھی لنک قائم رہتا ہے، اور دونوں طرزیں پڑھی جاتی ہیں۔',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'ویکی لنک نوٹ کا نام لیتے ہیں، اس لیے نام بدلنے پر بھی لنک قائم رہتا ہے، اور دونوں طرزیں پڑھی جاتی ہیں۔',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown، مختصر ترین نام',
   'Markdown, relative path': 'Markdown، نسبتی راستہ',
   'Markdown, path in the space': 'Markdown، اسپیس میں راستہ',
+  // Publishing part one.
+  'The folders you choose become public.': 'منتخب فولڈر عوامی ہو جاتے ہیں۔',
+  'Anyone with the address can read what is published, drafts included.':
+    'جس کے پاس پتہ ہو وہ شائع شدہ سب کچھ پڑھ سکتا ہے، مسودے بھی۔',
+  'Which notes': 'کون سے نوٹس',
+  'Notes outside a rule': 'قاعدے سے باہر نوٹس',
+  'Are published': 'شائع ہوتے ہیں',
+  'Stay private': 'نجی رہتے ہیں',
+  'Follows the rule': 'قاعدے کے مطابق',
+  Published: 'شائع شدہ',
+  Private: 'نجی',
+  '{count} pages': '{count} صفحات',
+  '{count} new': '{count} نئے',
+  '{count} gone': '{count} ہٹائے',
+  'and more': 'اور مزید',
+  'How it appears': 'کیسے دکھتا ہے',
+  Description: 'تفصیل',
+  'What this site is': 'یہ سائٹ کس بارے میں ہے',
+  'Tab icon': 'ٹیب آئیکن',
+  Password: 'پاس ورڈ',
+  'Set a new one': 'نیا مقرر کریں',
+  'Ask for a password': 'پاس ورڈ مانگیں',
+  'No password': 'پاس ورڈ نہیں',
+  'Remove the password': 'پاس ورڈ ہٹائیں',
+  'Scan this with your authenticator app, then type its code.':
+    'اسے اپنی توثیق ایپ سے اسکین کریں، پھر اس کا کوڈ لکھیں۔',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'تصویر',
+  Dictate: 'بول کر لکھوائیں',
+  'Add to {name}': '{name} میں شامل کریں',
+  // Web tabs
+  Reload: 'دوبارہ لوڈ کریں',
+  'Clip this page': 'یہ صفحہ محفوظ کریں',
+  'Clip the link': 'لنک محفوظ کریں',
+  'Allow the camera': 'کیمرے کی اجازت دیں',
+  'Allow the clipboard': 'کلپ بورڈ کی اجازت دیں',
+  'Open in the browser': 'براؤزر میں کھولیں',
+  'Copy the address': 'پتہ نقل کریں',
+  'Show it here': 'یہاں دکھائیں',
+  Website: 'ویب سائٹ',
+  'Open a website': 'ویب سائٹ کھولیں',
+  // Recording, meetings and what a model wrote
+  Record: 'ریکارڈ کریں',
+  Recording: 'ریکارڈنگ',
+  'Stop recording': 'ریکارڈنگ روکیں',
+  'Meeting notes': 'اجلاس کے نوٹس',
+  Meeting: 'اجلاس',
+  'Stop the meeting': 'اجلاس ختم کریں',
+  Transcribe: 'متن میں بدلیں',
+  Transcript: 'متن',
+  'Transcript ({language})': 'متن ({language})',
+  'Written by {model}': '{model} نے لکھا',
+  'Saving the recording': 'ریکارڈنگ محفوظ کی جا رہی ہے',
+  'Turning the recording into words': 'ریکارڈنگ کو الفاظ میں بدلا جا رہا ہے',
+  'Open a space to record into.': 'ریکارڈ کرنے کے لیے ایک اسپیس کھولیں۔',
+  'Sign in to take meeting notes.': 'اجلاس کے نوٹس لینے کے لیے سائن ان کریں۔',
+  'Sign in to turn a recording into words.': 'ریکارڈنگ کو الفاظ میں بدلنے کے لیے سائن ان کریں۔',
+  'That microphone could not be opened.': 'وہ مائیکروفون کھولا نہ جا سکا۔',
+  'That recording could not be saved.': 'وہ ریکارڈنگ محفوظ نہ ہو سکی۔',
+  'That recording could not be turned into words.': 'وہ ریکارڈنگ الفاظ میں نہ بدلی جا سکی۔',
+  'That recording is not in this space.': 'وہ ریکارڈنگ اس اسپیس میں نہیں۔',
+  'That recording is too long to turn into words in one go.':
+    'وہ ریکارڈنگ ایک ہی بار میں الفاظ میں بدلنے کے لیے بہت طویل ہے۔',
+  'That is as much as one recording may hold.': 'ایک ریکارڈنگ میں اتنا ہی سما سکتا ہے۔',
+  'Nothing could be heard in that recording.': 'اس ریکارڈنگ میں کچھ سنا نہ گیا۔',
+  'A piece of the transcript is being tried again.': 'متن کا ایک حصہ دوبارہ آزمایا جا رہا ہے۔',
+  'The transcript is behind and losing pieces.': 'متن پیچھے ہے اور حصے کھو رہا ہے۔',
+  '{count} pieces of this meeting were lost.': 'اس اجلاس کے {count} حصے ضائع ہو گئے۔',
+  'Add an AI provider in settings to summarise.':
+    'خلاصہ کرنے کے لیے ترتیبات میں AI فراہم کنندہ شامل کریں۔',
+  'The summary could not be written.': 'خلاصہ لکھا نہ جا سکا۔',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'میل نہیں بھیجی جا سکی - دوبارہ کوشش کریں',
   'start again - that took too long': 'دوبارہ شروع کریں - بہت دیر لگ گئی',

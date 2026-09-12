@@ -7,6 +7,12 @@ export const tr: Dictionary = {
   'Open file': 'Dosya aç',
   'New note inside': 'İçine yeni not',
   'New canvas': 'Yeni tuval',
+  'New page note': 'Yeni sayfalı not',
+  'Add a page': 'Sayfa ekle',
+  'Add a page after this': 'Bundan sonra sayfa ekle',
+  'Delete this page': 'Bu sayfayı sil',
+  'Page {number}': 'Sayfa {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Tuval',
   Card: 'Kart',
   'Note or picture': 'Not veya resim',
@@ -34,7 +40,8 @@ export const tr: Dictionary = {
   'Create a space': 'Alan oluştur',
   'Delete space': 'Alanı sil',
   'Delete {name}?': '{name} silinsin mi?',
-  'Every note in this space is deleted from your computer.': 'Bu alandaki her not bilgisayarınızdan silinir.',
+  'Every note in this space is deleted from your computer.':
+    'Bu alandaki her not bilgisayarınızdan silinir.',
   'The notes inside it go too.': 'İçindeki notlar da gider.',
   Journal: 'Günlük',
   Create: 'Oluştur',
@@ -206,7 +213,8 @@ export const tr: Dictionary = {
   'Image not found': 'Resim bulunamadı',
   'Delete {count} items': { one: '{count} öğeyi sil', other: '{count} öğeyi sil' },
   'Recently deleted': 'Son silinenler',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Silinen notlar ve alanlar burada 14 gün bekler, sonra kalıcı olarak gider.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Silinen notlar ve alanlar burada 14 gün bekler, sonra kalıcı olarak gider.',
   'Nothing here.': 'Burada bir şey yok.',
   Empty: 'Boşalt',
   Spaces: 'Alanlar',
@@ -257,7 +265,8 @@ export const tr: Dictionary = {
   'Previous slide': 'Önceki slayt',
   'Read-only': 'Salt okunur',
   'No preview': 'Ön izleme yok',
-  'Shown as plain text, so typing stays instant in a note this long': 'Düz metin olarak gösterilir, böylece bu uzunlukta bir notta yazmak anında kalır',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Düz metin olarak gösterilir, böylece bu uzunlukta bir notta yazmak anında kalır',
   'Leave read-only': 'Salt okunurdan çık',
   Next: 'Sonraki',
   Previous: 'Önceki',
@@ -353,16 +362,19 @@ export const tr: Dictionary = {
   'OpenAI key': 'OpenAI anahtarı',
   Model: 'Model',
   Reasoning: 'Akıl yürütme',
-  'Kept encrypted on your account, and never shown again.': 'Hesabınızda şifreli tutulur ve bir daha gösterilmez.',
+  'Kept encrypted on your account, and never shown again.':
+    'Hesabınızda şifreli tutulur ve bir daha gösterilmez.',
   'set, ends in …{tail}': 'ayarlı, …{tail} ile bitiyor',
   'Saving the key': 'Anahtar kaydediliyor',
   'this server cannot keep a key yet': 'bu sunucu henüz anahtar tutamıyor',
   'that does not look like a key': 'bu bir anahtara benzemiyor',
   'that key could not be saved': 'bu anahtar kaydedilemedi',
   'Sign in to ask a question.': 'Soru sormak için oturum açın.',
-  'Asking OpenAI which models this key can use': 'Bu anahtarın hangi modelleri kullanabileceği OpenAI’ye soruluyor',
+  'Asking OpenAI which models this key can use':
+    'Bu anahtarın hangi modelleri kullanabileceği OpenAI’ye soruluyor',
   'Could not reach OpenAI': 'OpenAI’ye ulaşılamadı',
-  'That key cannot use any of the models Nib asks for.': 'Bu anahtar Nib’in istediği modellerin hiçbirini kullanamıyor.',
+  'That key cannot use any of the models Nib asks for.':
+    'Bu anahtar Nib’in istediği modellerin hiçbirini kullanamıyor.',
   'No reasoning': 'Akıl yürütme yok',
   Minimal: 'En az',
   Low: 'Düşük',
@@ -403,7 +415,10 @@ export const tr: Dictionary = {
   'Add a word': 'Sözcük ekle',
   'Add {word} to the dictionary': '{word} sözlüğe eklensin',
   'Remove {word} from the dictionary': '{word} sözlükten kaldırılsın',
-  '{count} things in this theme were left out.': { one: 'Bu temada {count} şey dışarıda kaldı.', other: 'Bu temada {count} şey dışarıda kaldı.' },
+  '{count} things in this theme were left out.': {
+    one: 'Bu temada {count} şey dışarıda kaldı.',
+    other: 'Bu temada {count} şey dışarıda kaldı.',
+  },
   'A note': 'Bir not',
   'Words with {bold} and a {link}.': '{bold} ve bir {link} içeren sözcükler.',
   bold: 'kalın',
@@ -448,11 +463,14 @@ export const tr: Dictionary = {
   'Line numbers': 'Satır numaraları',
   Syntax: 'Sözdizimi',
   'Strict CommonMark': 'Katı CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Yalnızca standart markdown kuralları; tablo, görev listesi ve dipnot yok.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Yalnızca standart markdown kuralları; tablo, görev listesi ve dipnot yok.',
   'Smart punctuation': 'Akıllı noktalama',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Yazarken düz tırnak ve çizgileri tipografik olanlara çevirir.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Yazarken düz tırnak ve çizgileri tipografik olanlara çevirir.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Başlıkların önüne 1., 1.1, 1.2 koyar.',
-  'Numbers display equations so you can refer to them.': 'Gösterim denklemlerini numaralandırır, böylece onlara gönderme yapabilirsiniz.',
+  'Numbers display equations so you can refer to them.':
+    'Gösterim denklemlerini numaralandırır, böylece onlara gönderme yapabilirsiniz.',
   Ligatures: 'Bitişik harfler',
   Off: 'Kapalı',
   'Code only': 'Yalnızca kod',
@@ -515,13 +533,17 @@ export const tr: Dictionary = {
   'Send a new code': 'Yeni kod gönder',
   'Code sent to': 'Kod şuraya gönderildi',
   'You already have notes on this computer.': 'Bu bilgisayarda zaten notlarınız var.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Tutarsanız hesabınıza katılır. Silerseniz yalnızca hesabınızda olan kalır - bu geri alınamaz.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Tutarsanız hesabınıza katılır. Silerseniz yalnızca hesabınızda olan kalır - bu geri alınamaz.',
   'Keep them': 'Tut',
   'Erase them': 'Sil',
   'Digit {number}': '{number}. hane',
   'Resend in {seconds}s': '{seconds} sn sonra yeniden gönder',
   'Last synced {time}.': 'Son eşitleme {time}.',
-  '{count} spaces sync to your account.': { one: '{count} alan hesabınızla eşitlenir.', other: '{count} alan hesabınızla eşitlenir.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} alan hesabınızla eşitlenir.',
+    other: '{count} alan hesabınızla eşitlenir.',
+  },
   Update: 'Güncelle',
   'Live at': 'Yayında',
   // Publishing
@@ -531,7 +553,8 @@ export const tr: Dictionary = {
   'Only {name}': 'Yalnızca {name}',
   'Publish this space as a blog': 'Bu alanı blog olarak yayımla',
   'Everything in this space becomes public.': 'Bu alandaki her şey herkese açık olur.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Taslaklar dahil her not, adresi bilen herkes tarafından okunabilir.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Taslaklar dahil her not, adresi bilen herkes tarafından okunabilir.',
   Address: 'Adres',
   'Add these at your registrar, then verify.': 'Bunları kayıt kuruluşunuza ekleyip doğrulayın.',
   Verify: 'Doğrula',
@@ -544,8 +567,10 @@ export const tr: Dictionary = {
   'checking…': 'denetleniyor…',
   // LLM
   'Connect an LLM to your notes': 'Notlarınıza bir LLM bağlayın',
-  'Sign in first - the connector reaches the notes in your account.': 'Önce oturum açın - bağlayıcı hesabınızdaki notlara erişir.',
-  'Let it write to my notes, not only read them': 'Notlarımı yalnızca okumakla kalmayıp yazmasına izin ver',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Önce oturum açın - bağlayıcı hesabınızdaki notlara erişir.',
+  'Let it write to my notes, not only read them':
+    'Notlarımı yalnızca okumakla kalmayıp yazmasına izin ver',
   'Create a token': 'Belirteç oluştur',
   'Replace the token': 'Belirteci değiştir',
   'Last used {time}.': 'Son kullanım {time}.',
@@ -560,27 +585,38 @@ export const tr: Dictionary = {
   'Reads your notes.': 'Notlarınızı okur.',
   'Reads and writes your notes.': 'Notlarınızı okur ve yazar.',
   Other: 'Diğer',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. Nib e-postanızla oturum açar; yapıştırılacak bir şey yok.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude’da Settings → Connectors açın ve Add custom connector’a tıklayın.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. Nib e-postanızla oturum açar; yapıştırılacak bir şey yok.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude’da Settings → Connectors açın ve Add custom connector’a tıklayın.',
   'Open Claude’s connectors': 'Claude’un bağlayıcılarını aç',
   'Fill in the two fields and click Add.': 'İki alanı doldurup Add’e tıklayın.',
-  'Click Connect and sign in with your Nib email.': 'Connect’e tıklayıp Nib e-postanızla oturum açın.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect’e tıklayıp Nib e-postanızla oturum açın.',
   'Using Claude Code instead?': 'Bunun yerine Claude Code mu kullanıyorsunuz?',
   Command: 'Komut',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Bir uçbirimde çalıştırın, sonra oturum açmak için Claude Code’da /mcp yazın.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Bir uçbirimde çalıştırın, sonra oturum açmak için Claude Code’da /mcp yazın.',
   'Fill in the form and click Create.': 'Formu doldurup Create’e tıklayın.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT’de Settings → Plugins açın ve artı düğmesine tıklayın.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT’de Settings → Plugins açın ve artı düğmesine tıklayın.',
   'Open ChatGPT’s plugins': 'ChatGPT’nin eklentilerini aç',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins bölümü veya artı düğmesi yok mu? Önce Settings → Security and login altında Developer mode’u açın.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT sorduğunda Nib e-postanızla oturum açın.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins bölümü veya artı düğmesi yok mu? Önce Settings → Security and login altında Developer mode’u açın.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT sorduğunda Nib e-postanızla oturum açın.',
   'To use it in a chat, type @ and pick Nib.': 'Bir sohbette kullanmak için @ yazıp Nib’i seçin.',
   'Server URL': 'Sunucu URL’si',
   Authentication: 'Kimlik doğrulama',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Gelişmiş OAuth ayarlarını olduğu gibi bırakıp “I understand and want to continue”ı işaretleyin.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve Nib’in oturum açma sayfasını açar.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Gelişmiş OAuth ayarlarını olduğu gibi bırakıp “I understand and want to continue”ı işaretleyin.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve Nib’in oturum açma sayfasını açar.',
   'Show config': 'Yapılandırmayı göster',
-  'For a client that takes a JSON block instead of a URL.': 'URL yerine bir JSON bloğu alan istemciler için.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Oturum açamayan bir istemciye bunun yerine bir belirteç verilebilir. Yalnızca bir kez gösterilir.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL yerine bir JSON bloğu alan istemciler için.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Oturum açamayan bir istemciye bunun yerine bir belirteç verilebilir. Yalnızca bir kez gösterilir.',
   // Export
   'Plain text': 'Düz metin',
   'Markdown with the pictures': 'Resimlerle markdown',
@@ -604,8 +640,10 @@ export const tr: Dictionary = {
   'Version history': 'Sürüm geçmişi',
   'Copy link to this note': 'Bu notun bağlantısını kopyala',
   'that link could not be followed': 'bu bağlantı izlenemedi',
-  'Save this note first; there is nothing to compare against yet.': 'Önce bu notu kaydedin; karşılaştırılacak bir şey yok.',
-  'No earlier versions yet. One is kept each time you save.': 'Henüz eski sürüm yok. Her kaydettiğinizde bir tane tutulur.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Önce bu notu kaydedin; karşılaştırılacak bir şey yok.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Henüz eski sürüm yok. Her kaydettiğinizde bir tane tutulur.',
   'Restore this version': 'Bu sürümü geri yükle',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'orada zaten bir not var',
@@ -666,7 +704,8 @@ export const tr: Dictionary = {
   'use a domain of your own': 'kendinize ait bir alan adı kullanın',
   'the domain no longer points here': 'alan adı artık buraya işaret etmiyor',
   'Cloudflare has blocked this domain': 'Cloudflare bu alan adını engelledi',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Bir alan adının kökünde, sağlayıcınız orada CNAME’e izin vermiyorsa ALIAS veya ANAME kaydı ya da CNAME düzleştirme kullanın.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Bir alan adının kökünde, sağlayıcınız orada CNAME’e izin vermiyorsa ALIAS veya ANAME kaydı ya da CNAME düzleştirme kullanın.',
   // Shortcuts
   Shortcuts: 'Kısayollar',
   'Search shortcuts': 'Kısayollarda ara',
@@ -677,7 +716,8 @@ export const tr: Dictionary = {
   'Reset all shortcuts': 'Tüm kısayolları sıfırla',
   'Take it over': 'Devral',
   '{key} already runs {name}.': '{key} zaten {name} çalıştırıyor.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc kaydı durdurur, Backspace tuşu kaldırır.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc kaydı durdurur, Backspace tuşu kaldırır.',
   Tables: 'Tablolar',
   Pictures: 'Resimler',
   'Fixed keys': 'Sabit tuşlar',
@@ -713,7 +753,8 @@ export const tr: Dictionary = {
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
   'Report an issue': 'Sorun bildir',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} diskte değişti. Düzenleyicideki sizin olandır.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} diskte değişti. Düzenleyicideki sizin olandır.',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',
   'Copy the line up': 'Satırı yukarı kopyala',
@@ -748,26 +789,33 @@ export const tr: Dictionary = {
   Escape: 'Escape',
   Quit: 'Çık',
   'The clipboard belongs to the system.': 'Pano sisteme aittir.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Ok tuşları, Home, End, Page up ve Page down metne aittir.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Ok tuşları, Home, End, Page up ve Page down metne aittir.',
   'Backspace and Delete belong to the text.': 'Backspace ve Delete metne aittir.',
-  'Enter closes a code block and carries a list on.': 'Enter bir kod bloğunu kapatır ve listeyi sürdürür.',
-  'Tab moves on through the app as well as indenting.': 'Tab girinti eklemenin yanı sıra uygulamada ilerler.',
+  'Enter closes a code block and carries a list on.':
+    'Enter bir kod bloğunu kapatır ve listeyi sürdürür.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab girinti eklemenin yanı sıra uygulamada ilerler.',
   'Escape closes whatever is open.': 'Escape açık olan her şeyi kapatır.',
-  'Your system takes this key before the app sees it.': 'Sisteminiz bu tuşu uygulama görmeden alır.',
-  'Your browser takes this key before the app sees it.': 'Tarayıcınız bu tuşu uygulama görmeden alır.',
+  'Your system takes this key before the app sees it.':
+    'Sisteminiz bu tuşu uygulama görmeden alır.',
+  'Your browser takes this key before the app sees it.':
+    'Tarayıcınız bu tuşu uygulama görmeden alır.',
   'That is not a key combination.': 'Bu bir tuş birleşimi değil.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ayrıca Ctrl, Alt veya Cmd tuşunu basılı tutun.',
   'File list': 'Dosya listesi',
   'Select every file': 'Her dosyayı seç',
   'Clear the selection': 'Seçimi temizle',
   'Delete the selected files': 'Seçili dosyaları sil',
-  'The file could not be written, so it goes to the print dialog': 'Dosya yazılamadı, bu yüzden yazdırma penceresine gidiyor',
+  'The file could not be written, so it goes to the print dialog':
+    'Dosya yazılamadı, bu yüzden yazdırma penceresine gidiyor',
   'Next file': 'Sonraki dosya',
   'Previous file': 'Önceki dosya',
   'Show what it holds': 'İçindekileri göster',
   'Hide what it holds': 'İçindekileri gizle',
   'Moving through a list': 'Bir listede ilerleme',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Ok tuşları, Enter ve Esc ne açık olursa olsun çalışır; kısayol değildirler.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Ok tuşları, Enter ve Esc ne açık olursa olsun çalışır; kısayol değildirler.',
   'Split right': 'Sağa böl',
   'Split down': 'Aşağıya böl',
   'Other pane': 'Diğer bölme',
@@ -789,7 +837,8 @@ export const tr: Dictionary = {
   'Follow the link': 'Bağlantıyı izle',
   'Replace your own keys?': 'Kendi tuşlarınız değiştirilsin mi?',
   Replace: 'Değiştir',
-  'The keys you changed go back to what this keyboard says.': 'Değiştirdiğiniz tuşlar bu klavyenin söylediğine döner.',
+  'The keys you changed go back to what this keyboard says.':
+    'Değiştirdiğiniz tuşlar bu klavyenin söylediğine döner.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +960,8 @@ export const tr: Dictionary = {
   Leave: 'Ayrıl',
   'Leave space': 'Alandan ayrıl',
   'Leave {name}?': '{name} alanından ayrılınsın mı?',
-  'It stays with everybody else. Its notes go from your computer.': 'Diğer herkeste kalır. Notları bilgisayarınızdan gider.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Diğer herkeste kalır. Notları bilgisayarınızdan gider.',
   '{who} shared {space} with you': '{who}, {space} alanını sizinle paylaştı',
   'Shared with you': 'Sizinle paylaşıldı',
   'That link does not open anything': 'Bu bağlantı bir şey açmıyor',
@@ -928,7 +978,8 @@ export const tr: Dictionary = {
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
   Unstable: 'Kararsız',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
@@ -936,41 +987,79 @@ export const tr: Dictionary = {
   'In this note': 'Bu notta',
   'In the whole space': 'Tüm alanda',
   'Nothing here needs converting.': 'Burada dönüştürülecek bir şey yok.',
-  'Rewrite {count} things?': { one: '{count} yer yeniden yazılsın mı?', other: '{count} yer yeniden yazılsın mı?' },
+  'Rewrite {count} things?': {
+    one: '{count} yer yeniden yazılsın mı?',
+    other: '{count} yer yeniden yazılsın mı?',
+  },
   'In {count} notes.': { one: '{count} notta.', other: '{count} notta.' },
   Rewrite: 'Yeniden yaz',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} bölüm şifreli ve Evernote olmadan hiçbir şey okuyamaz',
-  '{count} notes had a reminder, which the export does not carry': '{count} notta anımsatıcı vardı, dışa aktarma onu taşımıyor',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} bölüm şifreli ve Evernote olmadan hiçbir şey okuyamaz',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} notta anımsatıcı vardı, dışa aktarma onu taşımıyor',
   '{count} notes were in the bin and stay there': '{count} not çöp kutusundaydı ve orada kalıyor',
-  '{count} archived notes are in a folder called Archive': '{count} arşivlenmiş not Archive adlı bir klasörde',
+  '{count} archived notes are in a folder called Archive':
+    '{count} arşivlenmiş not Archive adlı bir klasörde',
   'The colours a note had are not kept': 'Bir notun renkleri korunmaz',
-  '{count} block references were written out as the words they pointed at': '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
-  '{count} saved views are left out, and every row is in the table': '{count} kayıtlı görünüm dışarıda kaldı ve her satır tabloda',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} sayfa HTML olarak geldi, sözcükleri korunur, görünümleri korunmaz',
+  '{count} block references were written out as the words they pointed at':
+    '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} kayıtlı görünüm dışarıda kaldı ve her satır tabloda',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} sayfa HTML olarak geldi, sözcükleri korunur, görünümleri korunmaz',
   'There are no rows in this file.': 'Bu dosyada satır yok.',
   'Nothing in there can be read as notes.': 'Oradaki hiçbir şey not olarak okunamaz.',
   'That export could not be read.': 'Bu dışa aktarma okunamadı.',
-  'That export is too big to read in one go.': 'Bu dışa aktarma bir kerede okunamayacak kadar büyük.',
+  'That export is too big to read in one go.':
+    'Bu dışa aktarma bir kerede okunamayacak kadar büyük.',
   'Import into': 'Şuraya aktar',
   'That import could not be written.': 'Bu içe aktarma yazılamadı.',
   '{count} files': { one: '{count} dosya', other: '{count} dosya' },
   'This space': 'Bu alan',
   'Drop an export here': 'Bir dışa aktarmayı buraya bırakın',
-  'A zip, a folder, or a file another app wrote': 'Bir zip, bir klasör veya başka bir uygulamanın yazdığı dosya',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes ve Apple Journal notlarını yalnızca kendilerinin açabileceği yerde tutar. Önce onları dışa aktarın, sonra onu içe aktarın.',
+  'A zip, a folder, or a file another app wrote':
+    'Bir zip, bir klasör veya başka bir uygulamanın yazdığı dosya',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} resim, yalnızca Apple’ın gösterdiği HEIC olarak geldi',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} ruh hâli ve etkinlik kartı çizimdir, bu yüzden yalnızca sözcükleri geçer',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} not, yalnızca Notlar’ın açabildiği bir parolanın ardındadır',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} not Son Silinenler’dedir ve orada kalır',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} çizim ve taranmış sayfa, Notlar’ın kendi çizdiği resimlerdir',
+  '{count} tables inside notes do not come over': 'Notların içindeki {count} tablo geçmez',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} ek, bu Mac’te değil iCloud’dadır',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS bu notları Tüm Disk Erişimi’nin ardında tutar.',
+  'There are no notes in Apple Notes on this Mac.': 'Bu Mac’te Apple Notlar’da not yok.',
+  'Those notes could not be read.': 'Bu notlar okunamadı.',
+  'Read them from this Mac': 'Bu Mac’ten oku',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditor’ü Tüm Disk Erişimi’nde açıp yeniden deneyin.',
+  'Open the setting': 'Ayarı aç',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Günlük kendini dışa aktarır: Günlük, Ayarlar, Dışa Aktar. Apple Notlar’da dışa aktarma yoktur; bu yüzden notların bulunduğu Mac’ten uzaktayken buraya bırakılacak olan, bir dışa aktarıcının yazdığı klasördür.',
   'Pandoc reads this one, from the file on your disk.': 'Bunu pandoc okur, diskinizdeki dosyadan.',
   'Read it with pandoc': 'Pandoc ile oku',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Bunu yalnızca pandoc okur ve bu makinede kurulu değil.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Bunu yalnızca pandoc okur ve bu makinede kurulu değil.',
   Rows: 'Satırlar',
   'As a table': 'Tablo olarak',
   'One note per row': 'Satır başına bir not',
   Into: 'Şuraya',
   'Worth knowing': 'Bilinmesi gereken',
   '{count} notes arrived.': { one: '{count} not geldi.', other: '{count} not geldi.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} ad kullanılıyordu, o dosya kenara çekildi.', other: '{count} ad kullanılıyordu, o dosyalar kenara çekildi.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} ad kullanılıyordu, o dosya kenara çekildi.',
+    other: '{count} ad kullanılıyordu, o dosyalar kenara çekildi.',
+  },
   'A table': 'Bir tablo',
   'Markdown files': 'Markdown dosyaları',
   'A document': 'Bir belge',
+  'A PDF, as pages to write on': 'Üzerine yazılacak sayfalar olarak bir PDF',
   'Undo the import': 'İçe aktarmayı geri al',
   'Choose an export': 'Bir dışa aktarma seçin',
   Under: 'Altında',
@@ -982,13 +1071,15 @@ export const tr: Dictionary = {
   'Keep both copies': 'İki kopyayı da tut',
   'Let the newest win': 'En yeni kazansın',
   'Ask me each time': 'Her seferinde bana sor',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Hiçbir şey atılmaz: kazanmayan bir sürüm olarak tutulur.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Hiçbir şey atılmaz: kazanmayan bir sürüm olarak tutulur.',
   'Waiting for you': 'Sizi bekliyor',
   'Keep mine': 'Benimkini tut',
   'Take theirs': 'Onlarınkini al',
   'Keep both': 'İkisini de tut',
   'What synced': 'Ne eşitlendi',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Henüz bir şey yok. Hiçbir şey taşımayan bir geçiş yazılmaz.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Henüz bir şey yok. Hiçbir şey taşımayan bir geçiş yazılmaz.',
   'Clear the list': 'Listeyi temizle',
   '{count} down': '{count} indi',
   '{count} up': '{count} çıktı',
@@ -998,19 +1089,25 @@ export const tr: Dictionary = {
   'This space, as it was': 'Bu alan, eskiden olduğu gibi',
   '{count} days ago': { one: '{count} gün önce', other: '{count} gün önce' },
   'What would change?': 'Ne değişirdi?',
-  '{count} notes would go back to what they said then.': { one: '{count} not o zamanki hâline dönerdi.', other: '{count} not o zamanki hâline dönerdi.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} not o zamanki hâline dönerdi.',
+    other: '{count} not o zamanki hâline dönerdi.',
+  },
   'Nothing has changed since then.': 'O zamandan beri bir şey değişmedi.',
   '{count} notes went back.': { one: '{count} not geri döndü.', other: '{count} not geri döndü.' },
-  'The account keeps a month of versions of every note that syncs.': 'Hesap, eşitlenen her notun bir aylık sürümlerini tutar.',
+  'The account keeps a month of versions of every note that syncs.':
+    'Hesap, eşitlenen her notun bir aylık sürümlerini tutar.',
   'That did not work.': 'Bu işe yaramadı.',
   'Signing in': 'Oturum açma',
   'Ask for a code from an app': 'Bir uygulamadan kod iste',
   'Turn on': 'Aç',
   'Turn off': 'Kapat',
-  'Put this into your authenticator app, then type its code.': 'Bunu kimlik doğrulayıcı uygulamanıza girin, sonra kodunu yazın.',
+  'Put this into your authenticator app, then type its code.':
+    'Bunu kimlik doğrulayıcı uygulamanıza girin, sonra kodunu yazın.',
   Secret: 'Gizli anahtar',
   'Code from the app': 'Uygulamadan gelen kod',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Bunları güvenli bir yerde tutun. Her biri bir kez çalışır ve bir daha gösterilmez.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Bunları güvenli bir yerde tutun. Her biri bir kez çalışır ve bir daha gösterilmez.',
   'Recovery codes': 'Kurtarma kodları',
   'Recovery code': 'Kurtarma kodu',
   'Recovery codes left': 'Kalan kurtarma kodu',
@@ -1032,7 +1129,8 @@ export const tr: Dictionary = {
   Pages: 'Sayfalar',
   'Page {number} of {count}': 'Sayfa {number}/{count}',
   'What is selected': 'Seçili olan',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Tuval: {cards} kart, {links} bağlantı, {drawings} çizim',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Tuval: {cards} kart, {links} bağlantı, {drawings} çizim',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'YZ',
   Providers: 'Sağlayıcılar',
@@ -1047,7 +1145,8 @@ export const tr: Dictionary = {
   'No providers yet.': 'Henüz sağlayıcı yok.',
   'Add {name}': '{name} ekle',
   'Keys stay in the secure store on this device.': 'Anahtarlar bu aygıtın güvenli deposunda kalır.',
-  'This browser holds the keys in its own storage.': 'Bu tarayıcı anahtarları kendi deposunda tutar.',
+  'This browser holds the keys in its own storage.':
+    'Bu tarayıcı anahtarları kendi deposunda tutar.',
   'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
   'That provider is not set up yet.': 'Bu sağlayıcı henüz kurulmadı.',
@@ -1069,13 +1168,86 @@ export const tr: Dictionary = {
   'AI block': 'YZ bloğu',
   'Highlight colour': 'Vurgu rengi',
   'A single newline breaks the line': 'Tek bir satır sonu satırı böler',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Kapalı standart markdown’dır: bir paragrafın iki satırı tek satır okunur; Obsidian buna katı satır sonları der.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Kapalı standart markdown’dır: bir paragrafın iki satırı tek satır okunur; Obsidian buna katı satır sonları der.',
   'New links': 'Yeni bağlantılar',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink notun adını verir, bu yüzden bağlantı adlandırmaya dayanır; iki yazım da okunur.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink notun adını verir, bu yüzden bağlantı adlandırmaya dayanır; iki yazım da okunur.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, en kısa ad',
   'Markdown, relative path': 'Markdown, göreli yol',
   'Markdown, path in the space': 'Markdown, alandaki yol',
+  // Publishing part one.
+  'The folders you choose become public.': 'Seçtiğiniz klasörler herkese açık olur.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Adresi bilen herkes, taslaklar dahil yayımlananı okuyabilir.',
+  'Which notes': 'Hangi notlar',
+  'Notes outside a rule': 'Kural dışındaki notlar',
+  'Are published': 'Yayımlanır',
+  'Stay private': 'Özel kalır',
+  'Follows the rule': 'Kuralı izler',
+  Published: 'Yayımlandı',
+  Private: 'Özel',
+  '{count} pages': '{count} sayfa',
+  '{count} new': '{count} yeni',
+  '{count} gone': '{count} kaldırıldı',
+  'and more': 've dahası',
+  'How it appears': 'Nasıl göründüğü',
+  Description: 'Açıklama',
+  'What this site is': 'Bu sitenin konusu',
+  'Tab icon': 'Sekme simgesi',
+  Password: 'Parola',
+  'Set a new one': 'Yenisini belirle',
+  'Ask for a password': 'Parola iste',
+  'No password': 'Parola yok',
+  'Remove the password': 'Parolayı kaldır',
+  'Scan this with your authenticator app, then type its code.':
+    'Bunu kimlik doğrulayıcı uygulamanızla tarayıp verdiği kodu yazın.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Fotoğraf',
+  Dictate: 'Dikte et',
+  'Add to {name}': '{name} içine ekle',
+  // Web tabs
+  Reload: 'Yeniden yükle',
+  'Clip this page': 'Bu sayfayı sakla',
+  'Clip the link': 'Bağlantıyı sakla',
+  'Allow the camera': 'Kameraya izin ver',
+  'Allow the clipboard': 'Panoya izin ver',
+  'Open in the browser': 'Tarayıcıda aç',
+  'Copy the address': 'Adresi kopyala',
+  'Show it here': 'Burada göster',
+  Website: 'Web sitesi',
+  'Open a website': 'Web sitesi aç',
+  // Recording, meetings and what a model wrote
+  Record: 'Kaydet',
+  Recording: 'Kayıt',
+  'Stop recording': 'Kaydı durdur',
+  'Meeting notes': 'Toplantı notları',
+  Meeting: 'Toplantı',
+  'Stop the meeting': 'Toplantıyı bitir',
+  Transcribe: 'Yazıya çevir',
+  Transcript: 'Döküm',
+  'Transcript ({language})': 'Döküm ({language})',
+  'Written by {model}': '{model} yazdı',
+  'Saving the recording': 'Kayıt saklanıyor',
+  'Turning the recording into words': 'Kayıt sözcüklere çevriliyor',
+  'Open a space to record into.': 'Kayıt yapılacak bir alan açın.',
+  'Sign in to take meeting notes.': 'Toplantı notu almak için oturum açın.',
+  'Sign in to turn a recording into words.': 'Bir kaydı sözcüklere çevirmek için oturum açın.',
+  'That microphone could not be opened.': 'Bu mikrofon açılamadı.',
+  'That recording could not be saved.': 'Bu kayıt saklanamadı.',
+  'That recording could not be turned into words.': 'Bu kayıt sözcüklere çevrilemedi.',
+  'That recording is not in this space.': 'Bu kayıt bu alanda değil.',
+  'That recording is too long to turn into words in one go.':
+    'Bu kayıt, bir kerede sözcüklere çevrilemeyecek kadar uzun.',
+  'That is as much as one recording may hold.': 'Bir kayıt en çok bu kadar tutar.',
+  'Nothing could be heard in that recording.': 'Bu kayıtta hiçbir şey duyulmadı.',
+  'A piece of the transcript is being tried again.': 'Dökümün bir parçası yeniden deneniyor.',
+  'The transcript is behind and losing pieces.': 'Döküm geride kalıyor ve parça kaybediyor.',
+  '{count} pieces of this meeting were lost.': 'Bu toplantının {count} parçası kayboldu.',
+  'Add an AI provider in settings to summarise.':
+    'Özetlemek için ayarlarda bir YZ sağlayıcısı ekleyin.',
+  'The summary could not be written.': 'Özet yazılamadı.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'posta gönderilemedi - yine deneyin',
   'start again - that took too long': 'yeniden başlayın - bu çok uzun sürdü',
@@ -1088,10 +1260,13 @@ export const tr: Dictionary = {
   'that file is too big': 'bu dosya çok büyük',
   'that is more settings than an account holds': 'bu, bir hesabın tutabileceğinden çok ayar',
   'that is more bookmarks than a space holds': 'bu, bir alanın tutabileceğinden çok yer imi',
-  'that is more paths than a space leaves out': 'bu, bir alanın dışarıda bırakabileceğinden çok yol',
+  'that is more paths than a space leaves out':
+    'bu, bir alanın dışarıda bırakabileceğinden çok yol',
   'that is more files than a space keeps': 'bu, bir alanın tutabileceğinden çok dosya',
-  'that is more than a space keeps about its graph': 'bu, bir alanın çizgesi hakkında tuttuğundan çok',
-  'that is more folder icons than a space holds': 'bu, bir alanın tutabileceğinden çok klasör simgesi',
+  'that is more than a space keeps about its graph':
+    'bu, bir alanın çizgesi hakkında tuttuğundan çok',
+  'that is more folder icons than a space holds':
+    'bu, bir alanın tutabileceğinden çok klasör simgesi',
   // Sharing a space, and being let into one.
   'nobody by that address': 'bu adreste kimse yok',
   'nobody by that name': 'bu adda kimse yok',

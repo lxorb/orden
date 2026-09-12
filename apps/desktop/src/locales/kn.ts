@@ -7,6 +7,12 @@ export const kn: Dictionary = {
   'Open file': 'ಫೈಲ್ ತೆರೆಯಿರಿ',
   'New note inside': 'ಇದರೊಳಗೆ ಹೊಸ ಟಿಪ್ಪಣಿ',
   'New canvas': 'ಹೊಸ ಕ್ಯಾನ್ವಾಸ್',
+  'New page note': 'ಹೊಸ ಪುಟ ಟಿಪ್ಪಣಿ',
+  'Add a page': 'ಪುಟ ಸೇರಿಸು',
+  'Add a page after this': 'ಇದರ ನಂತರ ಪುಟ ಸೇರಿಸು',
+  'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',
+  'Page {number}': 'ಪುಟ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',
   'Note or picture': 'ಟಿಪ್ಪಣಿ ಅಥವಾ ಚಿತ್ರ',
@@ -34,7 +40,8 @@ export const kn: Dictionary = {
   'Create a space': 'ಸ್ಪೇಸ್ ರಚಿಸಿ',
   'Delete space': 'ಸ್ಪೇಸ್ ಅಳಿಸಿ',
   'Delete {name}?': '{name} ಅಳಿಸಬೇಕೆ?',
-  'Every note in this space is deleted from your computer.': 'ಈ ಸ್ಪೇಸ್‌ನ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಿಂದ ಅಳಿಸಲಾಗುತ್ತದೆ.',
+  'Every note in this space is deleted from your computer.':
+    'ಈ ಸ್ಪೇಸ್‌ನ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯೂ ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಿಂದ ಅಳಿಸಲಾಗುತ್ತದೆ.',
   'The notes inside it go too.': 'ಅದರೊಳಗಿನ ಟಿಪ್ಪಣಿಗಳೂ ಹೋಗುತ್ತವೆ.',
   Journal: 'ದಿನಚರಿ',
   Create: 'ರಚಿಸಿ',
@@ -206,14 +213,18 @@ export const kn: Dictionary = {
   'Image not found': 'ಚಿತ್ರ ಸಿಗಲಿಲ್ಲ',
   'Delete {count} items': { one: '{count} ಅಂಶ ಅಳಿಸಿ', other: '{count} ಅಂಶಗಳನ್ನು ಅಳಿಸಿ' },
   'Recently deleted': 'ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವು',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'ಅಳಿಸಿದ ಟಿಪ್ಪಣಿ ಮತ್ತು ಸ್ಪೇಸ್‌ಗಳು 14 ದಿನ ಇಲ್ಲಿ ಇರುತ್ತವೆ, ನಂತರ ಶಾಶ್ವತವಾಗಿ ಹೋಗುತ್ತವೆ.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'ಅಳಿಸಿದ ಟಿಪ್ಪಣಿ ಮತ್ತು ಸ್ಪೇಸ್‌ಗಳು 14 ದಿನ ಇಲ್ಲಿ ಇರುತ್ತವೆ, ನಂತರ ಶಾಶ್ವತವಾಗಿ ಹೋಗುತ್ತವೆ.',
   'Nothing here.': 'ಇಲ್ಲಿ ಏನೂ ಇಲ್ಲ.',
   Empty: 'ಖಾಲಿ ಮಾಡಿ',
   Spaces: 'ಸ್ಪೇಸ್‌ಗಳು',
   Notes: 'ಟಿಪ್ಪಣಿಗಳು',
   'Delete now': 'ಈಗಲೇ ಅಳಿಸಿ',
   'deleted {when}': '{when} ಅಳಿಸಲಾಗಿದೆ',
-  'gone in {count} days': { one: '{count} ದಿನದಲ್ಲಿ ಹೋಗುತ್ತದೆ', other: '{count} ದಿನಗಳಲ್ಲಿ ಹೋಗುತ್ತದೆ' },
+  'gone in {count} days': {
+    one: '{count} ದಿನದಲ್ಲಿ ಹೋಗುತ್ತದೆ',
+    other: '{count} ದಿನಗಳಲ್ಲಿ ಹೋಗುತ್ತದೆ',
+  },
   'on this device': 'ಈ ಸಾಧನದಲ್ಲಿ',
   '{count} notes': { one: '{count} ಟಿಪ್ಪಣಿ', other: '{count} ಟಿಪ್ಪಣಿಗಳು' },
   'Empty Recently deleted?': 'ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವನ್ನು ಖಾಲಿ ಮಾಡಬೇಕೆ?',
@@ -257,7 +268,8 @@ export const kn: Dictionary = {
   'Previous slide': 'ಹಿಂದಿನ ಸ್ಲೈಡ್',
   'Read-only': 'ಓದಲು ಮಾತ್ರ',
   'No preview': 'ಪೂರ್ವವೀಕ್ಷಣೆ ಇಲ್ಲ',
-  'Shown as plain text, so typing stays instant in a note this long': 'ಇಷ್ಟು ದೊಡ್ಡ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಟೈಪಿಂಗ್ ವೇಗವಾಗಿರಲು ಸಾದಾ ಪಠ್ಯವಾಗಿ ತೋರಿಸಲಾಗಿದೆ',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'ಇಷ್ಟು ದೊಡ್ಡ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಟೈಪಿಂಗ್ ವೇಗವಾಗಿರಲು ಸಾದಾ ಪಠ್ಯವಾಗಿ ತೋರಿಸಲಾಗಿದೆ',
   'Leave read-only': 'ಓದಲು ಮಾತ್ರ ಮೋಡ್ ಬಿಡಿ',
   Next: 'ಮುಂದಿನದು',
   Previous: 'ಹಿಂದಿನದು',
@@ -353,14 +365,16 @@ export const kn: Dictionary = {
   'OpenAI key': 'OpenAI ಕೀ',
   Model: 'ಮಾದರಿ',
   Reasoning: 'ತರ್ಕ',
-  'Kept encrypted on your account, and never shown again.': 'ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿ ಇಡಲಾಗುತ್ತದೆ, ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.',
+  'Kept encrypted on your account, and never shown again.':
+    'ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿ ಇಡಲಾಗುತ್ತದೆ, ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.',
   'set, ends in …{tail}': 'ಹೊಂದಿಸಲಾಗಿದೆ, …{tail}ನಲ್ಲಿ ಕೊನೆಗೊಳ್ಳುತ್ತದೆ',
   'Saving the key': 'ಕೀ ಉಳಿಸುತ್ತಿದೆ',
   'this server cannot keep a key yet': 'ಈ ಸರ್ವರ್ ಇನ್ನೂ ಕೀ ಇಡಲಾರದು',
   'that does not look like a key': 'ಅದು ಕೀಯಂತೆ ಕಾಣುತ್ತಿಲ್ಲ',
   'that key could not be saved': 'ಆ ಕೀ ಉಳಿಸಲಾಗಲಿಲ್ಲ',
   'Sign in to ask a question.': 'ಪ್ರಶ್ನೆ ಕೇಳಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
-  'Asking OpenAI which models this key can use': 'ಈ ಕೀ ಯಾವ ಮಾದರಿಗಳನ್ನು ಬಳಸಬಹುದೆಂದು OpenAI ಅನ್ನು ಕೇಳುತ್ತಿದೆ',
+  'Asking OpenAI which models this key can use':
+    'ಈ ಕೀ ಯಾವ ಮಾದರಿಗಳನ್ನು ಬಳಸಬಹುದೆಂದು OpenAI ಅನ್ನು ಕೇಳುತ್ತಿದೆ',
   'Could not reach OpenAI': 'OpenAI ತಲುಪಲಾಗಲಿಲ್ಲ',
   'That key cannot use any of the models Nib asks for.': 'Nib ಕೇಳುವ ಯಾವ ಮಾದರಿಯನ್ನೂ ಆ ಕೀ ಬಳಸಲಾರದು.',
   'No reasoning': 'ತರ್ಕ ಇಲ್ಲ',
@@ -403,7 +417,10 @@ export const kn: Dictionary = {
   'Add a word': 'ಪದ ಸೇರಿಸಿ',
   'Add {word} to the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿಗೆ ಸೇರಿಸಿ',
   'Remove {word} from the dictionary': '{word} ಅನ್ನು ನಿಘಂಟಿನಿಂದ ತೆಗೆಯಿರಿ',
-  '{count} things in this theme were left out.': { one: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶ ಬಿಡಲಾಗಿದೆ.', other: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶಗಳನ್ನು ಬಿಡಲಾಗಿದೆ.' },
+  '{count} things in this theme were left out.': {
+    one: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶ ಬಿಡಲಾಗಿದೆ.',
+    other: 'ಈ ಥೀಮ್‌ನಲ್ಲಿ {count} ಅಂಶಗಳನ್ನು ಬಿಡಲಾಗಿದೆ.',
+  },
   'A note': 'ಒಂದು ಟಿಪ್ಪಣಿ',
   'Words with {bold} and a {link}.': '{bold} ಮತ್ತು ಒಂದು {link} ಇರುವ ಪದಗಳು.',
   bold: 'ದಪ್ಪ',
@@ -448,11 +465,14 @@ export const kn: Dictionary = {
   'Line numbers': 'ಸಾಲಿನ ಸಂಖ್ಯೆಗಳು',
   Syntax: 'ಸಿಂಟ್ಯಾಕ್ಸ್',
   'Strict CommonMark': 'ಕಟ್ಟುನಿಟ್ಟಾದ CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'ಪ್ರಮಾಣಿತ Markdown ನಿಯಮಗಳು ಮಾತ್ರ; ಕೋಷ್ಟಕ, ಕಾರ್ಯಪಟ್ಟಿ, ಅಡಿಟಿಪ್ಪಣಿ ಇಲ್ಲ.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'ಪ್ರಮಾಣಿತ Markdown ನಿಯಮಗಳು ಮಾತ್ರ; ಕೋಷ್ಟಕ, ಕಾರ್ಯಪಟ್ಟಿ, ಅಡಿಟಿಪ್ಪಣಿ ಇಲ್ಲ.',
   'Smart punctuation': 'ಸ್ಮಾರ್ಟ್ ವಿರಾಮ ಚಿಹ್ನೆ',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'ಟೈಪ್ ಮಾಡುವಾಗಲೇ ನೇರ ಉದ್ಧರಣ ಮತ್ತು ಡ್ಯಾಶ್‌ಗಳನ್ನು ಮುದ್ರಣ ರೂಪಕ್ಕೆ ಬದಲಿಸುತ್ತದೆ.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'ಟೈಪ್ ಮಾಡುವಾಗಲೇ ನೇರ ಉದ್ಧರಣ ಮತ್ತು ಡ್ಯಾಶ್‌ಗಳನ್ನು ಮುದ್ರಣ ರೂಪಕ್ಕೆ ಬದಲಿಸುತ್ತದೆ.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'ಶೀರ್ಷಿಕೆಗಳ ಮುಂದೆ 1., 1.1, 1.2 ಸೇರಿಸುತ್ತದೆ.',
-  'Numbers display equations so you can refer to them.': 'ಉಲ್ಲೇಖಿಸಲು ಡಿಸ್‌ಪ್ಲೇ ಸಮೀಕರಣಗಳಿಗೆ ಸಂಖ್ಯೆ ಕೊಡುತ್ತದೆ.',
+  'Numbers display equations so you can refer to them.':
+    'ಉಲ್ಲೇಖಿಸಲು ಡಿಸ್‌ಪ್ಲೇ ಸಮೀಕರಣಗಳಿಗೆ ಸಂಖ್ಯೆ ಕೊಡುತ್ತದೆ.',
   Ligatures: 'ಲಿಗೇಚರ್‌ಗಳು',
   Off: 'ಆಫ್',
   'Code only': 'ಕೋಡ್‌ನಲ್ಲಿ ಮಾತ್ರ',
@@ -515,13 +535,17 @@ export const kn: Dictionary = {
   'Send a new code': 'ಹೊಸ ಕೋಡ್ ಕಳುಹಿಸಿ',
   'Code sent to': 'ಕೋಡ್ ಕಳುಹಿಸಿದ ವಿಳಾಸ',
   'You already have notes on this computer.': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಈಗಾಗಲೇ ಇವೆ.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'ಇಟ್ಟುಕೊಂಡರೆ ಅವು ನಿಮ್ಮ ಖಾತೆಗೆ ಸೇರುತ್ತವೆ. ಅಳಿಸಿದರೆ ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಈಗಾಗಲೇ ಇರುವುದು ಮಾತ್ರ ಉಳಿಯುತ್ತದೆ - ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲಾಗದು.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'ಇಟ್ಟುಕೊಂಡರೆ ಅವು ನಿಮ್ಮ ಖಾತೆಗೆ ಸೇರುತ್ತವೆ. ಅಳಿಸಿದರೆ ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಈಗಾಗಲೇ ಇರುವುದು ಮಾತ್ರ ಉಳಿಯುತ್ತದೆ - ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲಾಗದು.',
   'Keep them': 'ಇಟ್ಟುಕೊಳ್ಳಿ',
   'Erase them': 'ಅಳಿಸಿಹಾಕಿ',
   'Digit {number}': 'ಅಂಕಿ {number}',
   'Resend in {seconds}s': '{seconds} ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಕಳುಹಿಸಿ',
   'Last synced {time}.': 'ಕೊನೆಯ ಸಿಂಕ್ {time}.',
-  '{count} spaces sync to your account.': { one: '{count} ಸ್ಪೇಸ್ ನಿಮ್ಮ ಖಾತೆಗೆ ಸಿಂಕ್ ಆಗುತ್ತದೆ.', other: '{count} ಸ್ಪೇಸ್‌ಗಳು ನಿಮ್ಮ ಖಾತೆಗೆ ಸಿಂಕ್ ಆಗುತ್ತವೆ.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} ಸ್ಪೇಸ್ ನಿಮ್ಮ ಖಾತೆಗೆ ಸಿಂಕ್ ಆಗುತ್ತದೆ.',
+    other: '{count} ಸ್ಪೇಸ್‌ಗಳು ನಿಮ್ಮ ಖಾತೆಗೆ ಸಿಂಕ್ ಆಗುತ್ತವೆ.',
+  },
   Update: 'ಅಪ್‌ಡೇಟ್',
   'Live at': 'ಲೈವ್ ವಿಳಾಸ',
   // Publishing
@@ -531,9 +555,11 @@ export const kn: Dictionary = {
   'Only {name}': '{name} ಮಾತ್ರ',
   'Publish this space as a blog': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಬ್ಲಾಗ್ ಆಗಿ ಪ್ರಕಟಿಸಿ',
   'Everything in this space becomes public.': 'ಈ ಸ್ಪೇಸ್‌ನಲ್ಲಿರುವ ಎಲ್ಲವೂ ಸಾರ್ವಜನಿಕವಾಗುತ್ತದೆ.',
-  'Every note, including drafts, is readable by anyone with the address.': 'ಕರಡುಗಳೂ ಸೇರಿ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯನ್ನು ವಿಳಾಸ ಇರುವ ಯಾರೂ ಓದಬಹುದು.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ಕರಡುಗಳೂ ಸೇರಿ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯನ್ನು ವಿಳಾಸ ಇರುವ ಯಾರೂ ಓದಬಹುದು.',
   Address: 'ವಿಳಾಸ',
-  'Add these at your registrar, then verify.': 'ಇವನ್ನು ನಿಮ್ಮ ರಿಜಿಸ್ಟ್ರಾರ್‌ನಲ್ಲಿ ಸೇರಿಸಿ, ನಂತರ ಪರಿಶೀಲಿಸಿ.',
+  'Add these at your registrar, then verify.':
+    'ಇವನ್ನು ನಿಮ್ಮ ರಿಜಿಸ್ಟ್ರಾರ್‌ನಲ್ಲಿ ಸೇರಿಸಿ, ನಂತರ ಪರಿಶೀಲಿಸಿ.',
   Verify: 'ಪರಿಶೀಲಿಸಿ',
   'that record is not answering yet': 'ಆ ದಾಖಲೆ ಇನ್ನೂ ಉತ್ತರಿಸುತ್ತಿಲ್ಲ',
   'Stop publishing': 'ಪ್ರಕಟಣೆ ನಿಲ್ಲಿಸಿ',
@@ -544,8 +570,10 @@ export const kn: Dictionary = {
   'checking…': 'ಪರಿಶೀಲಿಸುತ್ತಿದೆ…',
   // LLM
   'Connect an LLM to your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಿಗೆ LLM ಸಂಪರ್ಕಿಸಿ',
-  'Sign in first - the connector reaches the notes in your account.': 'ಮೊದಲು ಸೈನ್ ಇನ್ ಮಾಡಿ - ಕನೆಕ್ಟರ್ ನಿಮ್ಮ ಖಾತೆಯ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಲುಪುತ್ತದೆ.',
-  'Let it write to my notes, not only read them': 'ನನ್ನ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದುವುದಷ್ಟೇ ಅಲ್ಲ, ಬರೆಯಲೂ ಅನುಮತಿಸಿ',
+  'Sign in first - the connector reaches the notes in your account.':
+    'ಮೊದಲು ಸೈನ್ ಇನ್ ಮಾಡಿ - ಕನೆಕ್ಟರ್ ನಿಮ್ಮ ಖಾತೆಯ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಲುಪುತ್ತದೆ.',
+  'Let it write to my notes, not only read them':
+    'ನನ್ನ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದುವುದಷ್ಟೇ ಅಲ್ಲ, ಬರೆಯಲೂ ಅನುಮತಿಸಿ',
   'Create a token': 'ಟೋಕನ್ ರಚಿಸಿ',
   'Replace the token': 'ಟೋಕನ್ ಬದಲಿಸಿ',
   'Last used {time}.': 'ಕೊನೆಯ ಬಳಕೆ {time}.',
@@ -560,27 +588,38 @@ export const kn: Dictionary = {
   'Reads your notes.': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದುತ್ತದೆ.',
   'Reads and writes your notes.': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದುತ್ತದೆ, ಬರೆಯುತ್ತದೆ.',
   Other: 'ಇತರ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI ಸಹಾಯಕ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದಬಹುದು - ಅನುಮತಿಸಿದರೆ ಬದಲಿಸಲೂಬಹುದು. ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಆಗುತ್ತದೆ; ಅಂಟಿಸಲು ಏನೂ ಇಲ್ಲ.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claudeನಲ್ಲಿ Settings → Connectors ತೆರೆದು Add custom connector ಕ್ಲಿಕ್ ಮಾಡಿ.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI ಸಹಾಯಕ ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದಬಹುದು - ಅನುಮತಿಸಿದರೆ ಬದಲಿಸಲೂಬಹುದು. ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಆಗುತ್ತದೆ; ಅಂಟಿಸಲು ಏನೂ ಇಲ್ಲ.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claudeನಲ್ಲಿ Settings → Connectors ತೆರೆದು Add custom connector ಕ್ಲಿಕ್ ಮಾಡಿ.',
   'Open Claude’s connectors': 'Claude ಕನೆಕ್ಟರ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ',
   'Fill in the two fields and click Add.': 'ಎರಡು ಕ್ಷೇತ್ರಗಳನ್ನು ತುಂಬಿ Add ಕ್ಲಿಕ್ ಮಾಡಿ.',
-  'Click Connect and sign in with your Nib email.': 'Connect ಕ್ಲಿಕ್ ಮಾಡಿ ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect ಕ್ಲಿಕ್ ಮಾಡಿ ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Using Claude Code instead?': 'Claude Code ಬಳಸುತ್ತಿದ್ದೀರಾ?',
   Command: 'ಕಮಾಂಡ್',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'ಟರ್ಮಿನಲ್‌ನಲ್ಲಿ ಇದನ್ನು ರನ್ ಮಾಡಿ, ಸೈನ್ ಇನ್ ಆಗಲು Claude Codeನಲ್ಲಿ /mcp ಟೈಪ್ ಮಾಡಿ.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'ಟರ್ಮಿನಲ್‌ನಲ್ಲಿ ಇದನ್ನು ರನ್ ಮಾಡಿ, ಸೈನ್ ಇನ್ ಆಗಲು Claude Codeನಲ್ಲಿ /mcp ಟೈಪ್ ಮಾಡಿ.',
   'Fill in the form and click Create.': 'ಫಾರ್ಮ್ ತುಂಬಿ Create ಕ್ಲಿಕ್ ಮಾಡಿ.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPTಯಲ್ಲಿ Settings → Plugins ತೆರೆದು ಪ್ಲಸ್ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPTಯಲ್ಲಿ Settings → Plugins ತೆರೆದು ಪ್ಲಸ್ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ.',
   'Open ChatGPT’s plugins': 'ChatGPT ಪ್ಲಗಿನ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins ವಿಭಾಗ ಅಥವಾ ಪ್ಲಸ್ ಬಟನ್ ಇಲ್ಲವೇ? ಮೊದಲು Settings → Security and loginನಲ್ಲಿ Developer mode ಆನ್ ಮಾಡಿ.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT ಕೇಳಿದಾಗ ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins ವಿಭಾಗ ಅಥವಾ ಪ್ಲಸ್ ಬಟನ್ ಇಲ್ಲವೇ? ಮೊದಲು Settings → Security and loginನಲ್ಲಿ Developer mode ಆನ್ ಮಾಡಿ.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT ಕೇಳಿದಾಗ ನಿಮ್ಮ Nib ಇಮೇಲ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'To use it in a chat, type @ and pick Nib.': 'ಚಾಟ್‌ನಲ್ಲಿ ಬಳಸಲು @ ಟೈಪ್ ಮಾಡಿ Nib ಆಯ್ಕೆಮಾಡಿ.',
   'Server URL': 'ಸರ್ವರ್ URL',
   Authentication: 'ದೃಢೀಕರಣ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'ಸುಧಾರಿತ OAuth ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹಾಗೇ ಬಿಟ್ಟು “I understand and want to continue” ಟಿಕ್ ಮಾಡಿ.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth ಜೊತೆ Streamable HTTP ಮಾತನಾಡುವ ಯಾವುದೇ MCP ಕ್ಲೈಂಟ್. URL ಕೊಟ್ಟರೆ ಅದು ತಾನೇ ನೋಂದಾಯಿಸಿ Nib ಸೈನ್ ಇನ್ ಪುಟ ತೆರೆಯುತ್ತದೆ.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'ಸುಧಾರಿತ OAuth ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹಾಗೇ ಬಿಟ್ಟು “I understand and want to continue” ಟಿಕ್ ಮಾಡಿ.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth ಜೊತೆ Streamable HTTP ಮಾತನಾಡುವ ಯಾವುದೇ MCP ಕ್ಲೈಂಟ್. URL ಕೊಟ್ಟರೆ ಅದು ತಾನೇ ನೋಂದಾಯಿಸಿ Nib ಸೈನ್ ಇನ್ ಪುಟ ತೆರೆಯುತ್ತದೆ.',
   'Show config': 'ಕಾನ್ಫಿಗ್ ತೋರಿಸಿ',
-  'For a client that takes a JSON block instead of a URL.': 'URL ಬದಲಿಗೆ JSON ಬ್ಲಾಕ್ ತೆಗೆದುಕೊಳ್ಳುವ ಕ್ಲೈಂಟ್‌ಗಾಗಿ.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'ಸೈನ್ ಇನ್ ಆಗಲಾಗದ ಕ್ಲೈಂಟ್‌ಗೆ ಟೋಕನ್ ಕೊಡಬಹುದು. ಅದು ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL ಬದಲಿಗೆ JSON ಬ್ಲಾಕ್ ತೆಗೆದುಕೊಳ್ಳುವ ಕ್ಲೈಂಟ್‌ಗಾಗಿ.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'ಸೈನ್ ಇನ್ ಆಗಲಾಗದ ಕ್ಲೈಂಟ್‌ಗೆ ಟೋಕನ್ ಕೊಡಬಹುದು. ಅದು ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.',
   // Export
   'Plain text': 'ಸಾದಾ ಪಠ್ಯ',
   'Markdown with the pictures': 'ಚಿತ್ರಗಳೊಂದಿಗೆ Markdown',
@@ -604,8 +643,10 @@ export const kn: Dictionary = {
   'Version history': 'ಆವೃತ್ತಿ ಇತಿಹಾಸ',
   'Copy link to this note': 'ಈ ಟಿಪ್ಪಣಿಯ ಲಿಂಕ್ ನಕಲಿಸಿ',
   'that link could not be followed': 'ಆ ಲಿಂಕ್ ಅನುಸರಿಸಲಾಗಲಿಲ್ಲ',
-  'Save this note first; there is nothing to compare against yet.': 'ಮೊದಲು ಈ ಟಿಪ್ಪಣಿ ಉಳಿಸಿ; ಹೋಲಿಸಲು ಇನ್ನೂ ಏನೂ ಇಲ್ಲ.',
-  'No earlier versions yet. One is kept each time you save.': 'ಇನ್ನೂ ಹಿಂದಿನ ಆವೃತ್ತಿಗಳಿಲ್ಲ. ಉಳಿಸಿದಾಗಲೆಲ್ಲ ಒಂದನ್ನು ಇಡಲಾಗುತ್ತದೆ.',
+  'Save this note first; there is nothing to compare against yet.':
+    'ಮೊದಲು ಈ ಟಿಪ್ಪಣಿ ಉಳಿಸಿ; ಹೋಲಿಸಲು ಇನ್ನೂ ಏನೂ ಇಲ್ಲ.',
+  'No earlier versions yet. One is kept each time you save.':
+    'ಇನ್ನೂ ಹಿಂದಿನ ಆವೃತ್ತಿಗಳಿಲ್ಲ. ಉಳಿಸಿದಾಗಲೆಲ್ಲ ಒಂದನ್ನು ಇಡಲಾಗುತ್ತದೆ.',
   'Restore this version': 'ಈ ಆವೃತ್ತಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ಅಲ್ಲಿ ಈಗಾಗಲೇ ಒಂದು ಟಿಪ್ಪಣಿ ಇದೆ',
@@ -631,7 +672,8 @@ export const kn: Dictionary = {
   'too many tries - ask for a new code': 'ತುಂಬಾ ಪ್ರಯತ್ನಗಳು - ಹೊಸ ಕೋಡ್ ಕೇಳಿ',
   'too many messages from here - try again later': 'ಇಲ್ಲಿಂದ ತುಂಬಾ ಸಂದೇಶಗಳು - ನಂತರ ಪ್ರಯತ್ನಿಸಿ',
   'too much mail today - try again tomorrow': 'ಇಂದು ತುಂಬಾ ಮೇಲ್ - ನಾಳೆ ಪ್ರಯತ್ನಿಸಿ',
-  'that many people are already waiting to be let in': 'ಒಳಗೆ ಬರಲು ಕಾಯುತ್ತಿರುವವರು ಈಗಾಗಲೇ ಅಷ್ಟಿದ್ದಾರೆ',
+  'that many people are already waiting to be let in':
+    'ಒಳಗೆ ಬರಲು ಕಾಯುತ್ತಿರುವವರು ಈಗಾಗಲೇ ಅಷ್ಟಿದ್ದಾರೆ',
   'use 2–32 letters, numbers or hyphens': '2–32 ಅಕ್ಷರ, ಅಂಕಿ ಅಥವಾ ಹೈಫನ್ ಬಳಸಿ',
   'sync failed': 'ಸಿಂಕ್ ವಿಫಲವಾಯಿತು',
   'could not publish': 'ಪ್ರಕಟಿಸಲಾಗಲಿಲ್ಲ',
@@ -666,7 +708,8 @@ export const kn: Dictionary = {
   'use a domain of your own': 'ನಿಮ್ಮ ಸ್ವಂತ ಡೊಮೇನ್ ಬಳಸಿ',
   'the domain no longer points here': 'ಆ ಡೊಮೇನ್ ಇನ್ನು ಇಲ್ಲಿಗೆ ತೋರಿಸುವುದಿಲ್ಲ',
   'Cloudflare has blocked this domain': 'ಈ ಡೊಮೇನ್ ಅನ್ನು Cloudflare ನಿರ್ಬಂಧಿಸಿದೆ',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ಡೊಮೇನ್ ಮೂಲದಲ್ಲಿ ನಿಮ್ಮ ಪೂರೈಕೆದಾರರು CNAME ಅನುಮತಿಸದಿದ್ದರೆ, ALIAS ಅಥವಾ ANAME ದಾಖಲೆ, ಅಥವಾ CNAME flattening ಬಳಸಿ.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ಡೊಮೇನ್ ಮೂಲದಲ್ಲಿ ನಿಮ್ಮ ಪೂರೈಕೆದಾರರು CNAME ಅನುಮತಿಸದಿದ್ದರೆ, ALIAS ಅಥವಾ ANAME ದಾಖಲೆ, ಅಥವಾ CNAME flattening ಬಳಸಿ.',
   // Shortcuts
   Shortcuts: 'ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು',
   'Search shortcuts': 'ಶಾರ್ಟ್‌ಕಟ್ ಹುಡುಕಿ',
@@ -677,7 +720,8 @@ export const kn: Dictionary = {
   'Reset all shortcuts': 'ಎಲ್ಲ ಶಾರ್ಟ್‌ಕಟ್ ಮರುಹೊಂದಿಸಿ',
   'Take it over': 'ಇದಕ್ಕೆ ನಿಯೋಜಿಸಿ',
   '{key} already runs {name}.': '{key} ಈಗಾಗಲೇ {name} ಚಲಾಯಿಸುತ್ತದೆ.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸುತ್ತದೆ, Backspace ಕೀ ತೆಗೆಯುತ್ತದೆ.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸುತ್ತದೆ, Backspace ಕೀ ತೆಗೆಯುತ್ತದೆ.',
   Tables: 'ಕೋಷ್ಟಕಗಳು',
   Pictures: 'ಚಿತ್ರಗಳು',
   'Fixed keys': 'ನಿಗದಿತ ಕೀಗಳು',
@@ -713,7 +757,8 @@ export const kn: Dictionary = {
   'Always on top': 'ಯಾವಾಗಲೂ ಮೇಲೆ',
   'What is new': 'ಹೊಸದೇನು',
   'Report an issue': 'ಸಮಸ್ಯೆ ತಿಳಿಸಿ',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ಡಿಸ್ಕ್‌ನಲ್ಲಿ ಬದಲಾಗಿದೆ. ಎಡಿಟರ್‌ನಲ್ಲಿರುವುದು ನಿಮ್ಮದು.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ಡಿಸ್ಕ್‌ನಲ್ಲಿ ಬದಲಾಗಿದೆ. ಎಡಿಟರ್‌ನಲ್ಲಿರುವುದು ನಿಮ್ಮದು.',
   'Move the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the line down': 'ಸಾಲನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
   'Copy the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ನಕಲಿಸಿ',
@@ -748,26 +793,33 @@ export const kn: Dictionary = {
   Escape: 'Escape',
   Quit: 'ಅಪ್ಲಿಕೇಶನ್ ಮುಚ್ಚಿ',
   'The clipboard belongs to the system.': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಸಿಸ್ಟಂಗೆ ಸೇರಿದೆ.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'ಬಾಣ ಕೀಗಳು, Home, End, Page up, Page down ಪಠ್ಯಕ್ಕೆ ಸೇರಿವೆ.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'ಬಾಣ ಕೀಗಳು, Home, End, Page up, Page down ಪಠ್ಯಕ್ಕೆ ಸೇರಿವೆ.',
   'Backspace and Delete belong to the text.': 'Backspace ಮತ್ತು Delete ಪಠ್ಯಕ್ಕೆ ಸೇರಿವೆ.',
-  'Enter closes a code block and carries a list on.': 'Enter ಕೋಡ್ ಬ್ಲಾಕ್ ಮುಚ್ಚುತ್ತದೆ, ಪಟ್ಟಿಯನ್ನು ಮುಂದುವರಿಸುತ್ತದೆ.',
-  'Tab moves on through the app as well as indenting.': 'Tab ಒಳತಳ್ಳುವುದರ ಜೊತೆಗೆ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಮುಂದೆ ಸಾಗುತ್ತದೆ.',
+  'Enter closes a code block and carries a list on.':
+    'Enter ಕೋಡ್ ಬ್ಲಾಕ್ ಮುಚ್ಚುತ್ತದೆ, ಪಟ್ಟಿಯನ್ನು ಮುಂದುವರಿಸುತ್ತದೆ.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab ಒಳತಳ್ಳುವುದರ ಜೊತೆಗೆ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಮುಂದೆ ಸಾಗುತ್ತದೆ.',
   'Escape closes whatever is open.': 'Escape ತೆರೆದಿರುವುದನ್ನು ಮುಚ್ಚುತ್ತದೆ.',
-  'Your system takes this key before the app sees it.': 'ಅಪ್ಲಿಕೇಶನ್ ನೋಡುವ ಮೊದಲೇ ಈ ಕೀಯನ್ನು ನಿಮ್ಮ ಸಿಸ್ಟಂ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.',
-  'Your browser takes this key before the app sees it.': 'ಅಪ್ಲಿಕೇಶನ್ ನೋಡುವ ಮೊದಲೇ ಈ ಕೀಯನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.',
+  'Your system takes this key before the app sees it.':
+    'ಅಪ್ಲಿಕೇಶನ್ ನೋಡುವ ಮೊದಲೇ ಈ ಕೀಯನ್ನು ನಿಮ್ಮ ಸಿಸ್ಟಂ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.',
+  'Your browser takes this key before the app sees it.':
+    'ಅಪ್ಲಿಕೇಶನ್ ನೋಡುವ ಮೊದಲೇ ಈ ಕೀಯನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.',
   'That is not a key combination.': 'ಅದು ಕೀ ಸಂಯೋಜನೆ ಅಲ್ಲ.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt ಅಥವಾ Cmd ಅನ್ನೂ ಒತ್ತಿ ಹಿಡಿಯಿರಿ.',
   'File list': 'ಫೈಲ್ ಪಟ್ಟಿ',
   'Select every file': 'ಎಲ್ಲ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ',
   'Clear the selection': 'ಆಯ್ಕೆ ತೆರವುಗೊಳಿಸಿ',
   'Delete the selected files': 'ಆಯ್ದ ಫೈಲ್‌ಗಳನ್ನು ಅಳಿಸಿ',
-  'The file could not be written, so it goes to the print dialog': 'ಫೈಲ್ ಬರೆಯಲಾಗಲಿಲ್ಲ, ಹಾಗಾಗಿ ಮುದ್ರಣ ಸಂವಾದಕ್ಕೆ ಹೋಗುತ್ತದೆ',
+  'The file could not be written, so it goes to the print dialog':
+    'ಫೈಲ್ ಬರೆಯಲಾಗಲಿಲ್ಲ, ಹಾಗಾಗಿ ಮುದ್ರಣ ಸಂವಾದಕ್ಕೆ ಹೋಗುತ್ತದೆ',
   'Next file': 'ಮುಂದಿನ ಫೈಲ್',
   'Previous file': 'ಹಿಂದಿನ ಫೈಲ್',
   'Show what it holds': 'ಒಳಗಿರುವುದನ್ನು ತೋರಿಸಿ',
   'Hide what it holds': 'ಒಳಗಿರುವುದನ್ನು ಮರೆಮಾಡಿ',
   'Moving through a list': 'ಪಟ್ಟಿಯಲ್ಲಿ ಚಲಿಸುವುದು',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'ಬಾಣ ಕೀಗಳು, Enter, Esc ಏನು ತೆರೆದಿದ್ದರೂ ಕೆಲಸ ಮಾಡುತ್ತವೆ; ಅವು ಶಾರ್ಟ್‌ಕಟ್‌ಗಳಲ್ಲ.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'ಬಾಣ ಕೀಗಳು, Enter, Esc ಏನು ತೆರೆದಿದ್ದರೂ ಕೆಲಸ ಮಾಡುತ್ತವೆ; ಅವು ಶಾರ್ಟ್‌ಕಟ್‌ಗಳಲ್ಲ.',
   'Split right': 'ಬಲಕ್ಕೆ ವಿಭಜಿಸಿ',
   'Split down': 'ಕೆಳಕ್ಕೆ ವಿಭಜಿಸಿ',
   'Other pane': 'ಇನ್ನೊಂದು ಪೇನ್',
@@ -789,7 +841,8 @@ export const kn: Dictionary = {
   'Follow the link': 'ಲಿಂಕ್ ಅನುಸರಿಸಿ',
   'Replace your own keys?': 'ನಿಮ್ಮ ಸ್ವಂತ ಕೀಗಳನ್ನು ಬದಲಿಸಬೇಕೆ?',
   Replace: 'ಬದಲಿಸಿ',
-  'The keys you changed go back to what this keyboard says.': 'ನೀವು ಬದಲಿಸಿದ ಕೀಗಳು ಈ ಕೀಬೋರ್ಡ್ ಹೇಳುವುದಕ್ಕೆ ಮರಳುತ್ತವೆ.',
+  'The keys you changed go back to what this keyboard says.':
+    'ನೀವು ಬದಲಿಸಿದ ಕೀಗಳು ಈ ಕೀಬೋರ್ಡ್ ಹೇಳುವುದಕ್ಕೆ ಮರಳುತ್ತವೆ.',
   NORMAL: 'ಸಾಮಾನ್ಯ',
   INSERT: 'ಸೇರಿಸುವಿಕೆ',
   VISUAL: 'ದೃಶ್ಯ',
@@ -911,7 +964,8 @@ export const kn: Dictionary = {
   Leave: 'ಬಿಡಿ',
   'Leave space': 'ಸ್ಪೇಸ್ ಬಿಡಿ',
   'Leave {name}?': '{name} ಬಿಡಬೇಕೆ?',
-  'It stays with everybody else. Its notes go from your computer.': 'ಉಳಿದವರೆಲ್ಲರ ಬಳಿ ಅದು ಇರುತ್ತದೆ. ಅದರ ಟಿಪ್ಪಣಿಗಳು ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಿಂದ ಹೋಗುತ್ತವೆ.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'ಉಳಿದವರೆಲ್ಲರ ಬಳಿ ಅದು ಇರುತ್ತದೆ. ಅದರ ಟಿಪ್ಪಣಿಗಳು ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ನಿಂದ ಹೋಗುತ್ತವೆ.',
   '{who} shared {space} with you': '{who} ನಿಮ್ಮೊಂದಿಗೆ {space} ಹಂಚಿದ್ದಾರೆ',
   'Shared with you': 'ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಲಾಗಿದೆ',
   'That link does not open anything': 'ಆ ಲಿಂಕ್ ಏನನ್ನೂ ತೆರೆಯುವುದಿಲ್ಲ',
@@ -928,7 +982,8 @@ export const kn: Dictionary = {
   'Release channel': 'ಬಿಡುಗಡೆ ಚಾನೆಲ್',
   Stable: 'ಸ್ಥಿರ',
   Unstable: 'ಅಸ್ಥಿರ',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'ಸ್ಥಿರ ಅಧಿಕೃತ ಬಿಡುಗಡೆಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ mainಗೆ ಪ್ರತಿ ಪುಶ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'ಸ್ಥಿರ ಅಧಿಕೃತ ಬಿಡುಗಡೆಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ mainಗೆ ಪ್ರತಿ ಪುಶ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',
@@ -936,17 +991,27 @@ export const kn: Dictionary = {
   'In this note': 'ಈ ಟಿಪ್ಪಣಿಯಲ್ಲಿ',
   'In the whole space': 'ಇಡೀ ಸ್ಪೇಸ್‌ನಲ್ಲಿ',
   'Nothing here needs converting.': 'ಇಲ್ಲಿ ಪರಿವರ್ತಿಸಬೇಕಾದ್ದು ಏನೂ ಇಲ್ಲ.',
-  'Rewrite {count} things?': { one: '{count} ಅಂಶ ಮರುಬರೆಯಬೇಕೆ?', other: '{count} ಅಂಶಗಳನ್ನು ಮರುಬರೆಯಬೇಕೆ?' },
+  'Rewrite {count} things?': {
+    one: '{count} ಅಂಶ ಮರುಬರೆಯಬೇಕೆ?',
+    other: '{count} ಅಂಶಗಳನ್ನು ಮರುಬರೆಯಬೇಕೆ?',
+  },
   'In {count} notes.': { one: '{count} ಟಿಪ್ಪಣಿಯಲ್ಲಿ.', other: '{count} ಟಿಪ್ಪಣಿಗಳಲ್ಲಿ.' },
   Rewrite: 'ಮರುಬರೆಯಿರಿ',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ಭಾಗಗಳು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಆಗಿವೆ, Evernote ಇಲ್ಲದೆ ಅವನ್ನು ಯಾವುದೂ ಓದಲಾಗದು',
-  '{count} notes had a reminder, which the export does not carry': '{count} ಟಿಪ್ಪಣಿಗಳಿಗೆ ಜ್ಞಾಪನೆ ಇತ್ತು, ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಅದನ್ನು ತರುವುದಿಲ್ಲ',
-  '{count} notes were in the bin and stay there': '{count} ಟಿಪ್ಪಣಿಗಳು ಕಸದಬುಟ್ಟಿಯಲ್ಲಿದ್ದವು, ಅಲ್ಲೇ ಇರುತ್ತವೆ',
-  '{count} archived notes are in a folder called Archive': '{count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು Archive ಫೋಲ್ಡರ್‌ನಲ್ಲಿವೆ',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ಭಾಗಗಳು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಆಗಿವೆ, Evernote ಇಲ್ಲದೆ ಅವನ್ನು ಯಾವುದೂ ಓದಲಾಗದು',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} ಟಿಪ್ಪಣಿಗಳಿಗೆ ಜ್ಞಾಪನೆ ಇತ್ತು, ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಅದನ್ನು ತರುವುದಿಲ್ಲ',
+  '{count} notes were in the bin and stay there':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಕಸದಬುಟ್ಟಿಯಲ್ಲಿದ್ದವು, ಅಲ್ಲೇ ಇರುತ್ತವೆ',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು Archive ಫೋಲ್ಡರ್‌ನಲ್ಲಿವೆ',
   'The colours a note had are not kept': 'ಟಿಪ್ಪಣಿಗೆ ಇದ್ದ ಬಣ್ಣಗಳನ್ನು ಇಡಲಾಗುವುದಿಲ್ಲ',
-  '{count} block references were written out as the words they pointed at': '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
-  '{count} saved views are left out, and every row is in the table': '{count} ಉಳಿಸಿದ ವೀಕ್ಷಣೆಗಳನ್ನು ಬಿಡಲಾಗಿದೆ, ಎಲ್ಲ ಸಾಲುಗಳು ಕೋಷ್ಟಕದಲ್ಲಿವೆ',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} ಪುಟಗಳು HTML ಆಗಿ ಬಂದವು, ಹಾಗಾಗಿ ಪದಗಳನ್ನು ಇಡಲಾಗಿದೆ, ರೂಪವನ್ನು ಇಲ್ಲ',
+  '{count} block references were written out as the words they pointed at':
+    '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} ಉಳಿಸಿದ ವೀಕ್ಷಣೆಗಳನ್ನು ಬಿಡಲಾಗಿದೆ, ಎಲ್ಲ ಸಾಲುಗಳು ಕೋಷ್ಟಕದಲ್ಲಿವೆ',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} ಪುಟಗಳು HTML ಆಗಿ ಬಂದವು, ಹಾಗಾಗಿ ಪದಗಳನ್ನು ಇಡಲಾಗಿದೆ, ರೂಪವನ್ನು ಇಲ್ಲ',
   'There are no rows in this file.': 'ಈ ಫೈಲ್‌ನಲ್ಲಿ ಸಾಲುಗಳಿಲ್ಲ.',
   'Nothing in there can be read as notes.': 'ಅದರಲ್ಲಿ ಯಾವುದನ್ನೂ ಟಿಪ್ಪಣಿಯಾಗಿ ಓದಲಾಗದು.',
   'That export could not be read.': 'ಆ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಓದಲಾಗಲಿಲ್ಲ.',
@@ -956,21 +1021,50 @@ export const kn: Dictionary = {
   '{count} files': { one: '{count} ಫೈಲ್', other: '{count} ಫೈಲ್‌ಗಳು' },
   'This space': 'ಈ ಸ್ಪೇಸ್',
   'Drop an export here': 'ಒಂದು ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಇಲ್ಲಿ ಬಿಡಿ',
-  'A zip, a folder, or a file another app wrote': 'ಒಂದು zip, ಫೋಲ್ಡರ್, ಅಥವಾ ಬೇರೆ ಅಪ್ಲಿಕೇಶನ್ ಬರೆದ ಫೈಲ್',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes ಮತ್ತು Apple Journal ತಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಾವೇ ತೆರೆಯಬಹುದಾದ ಸ್ಥಳದಲ್ಲಿ ಇಡುತ್ತವೆ. ಮೊದಲು ಅವನ್ನು ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ, ನಂತರ ಅದನ್ನು ಇಂಪೋರ್ಟ್ ಮಾಡಿ.',
-  'Pandoc reads this one, from the file on your disk.': 'ನಿಮ್ಮ ಡಿಸ್ಕ್‌ನಲ್ಲಿರುವ ಫೈಲ್‌ನಿಂದ pandoc ಇದನ್ನು ಓದುತ್ತದೆ.',
+  'A zip, a folder, or a file another app wrote':
+    'ಒಂದು zip, ಫೋಲ್ಡರ್, ಅಥವಾ ಬೇರೆ ಅಪ್ಲಿಕೇಶನ್ ಬರೆದ ಫೈಲ್',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ಚಿತ್ರಗಳು HEIC ಆಗಿ ಬಂದವು, ಅದನ್ನು Apple ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} ಮನಃಸ್ಥಿತಿ ಮತ್ತು ಚಟುವಟಿಕೆ ಕಾರ್ಡುಗಳು ಚಿತ್ರಗಳು, ಹಾಗಾಗಿ ಅವುಗಳ ಪದಗಳಷ್ಟೇ ಬರುತ್ತವೆ',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Notes ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಲ್ಲಿವೆ, ಅಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} ಚಿತ್ರಗಳು ಮತ್ತು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಪುಟಗಳು Notes ತಾನೇ ಬಿಡಿಸುವ ಚಿತ್ರಗಳು',
+  '{count} tables inside notes do not come over': 'ಟಿಪ್ಪಣಿಗಳ ಒಳಗಿನ {count} ಕೋಷ್ಟಕಗಳು ಬರುವುದಿಲ್ಲ',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} ಲಗತ್ತುಗಳು ಈ Mac ನಲ್ಲಿ ಅಲ್ಲ, iCloud ನಲ್ಲಿವೆ',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ಆ ಟಿಪ್ಪಣಿಗಳನ್ನು Full Disk Access ಹಿಂದೆ ಇಡುತ್ತದೆ.',
+  'There are no notes in Apple Notes on this Mac.': 'ಈ Mac ನಲ್ಲಿ Apple Notes ನಲ್ಲಿ ಟಿಪ್ಪಣಿಗಳಿಲ್ಲ.',
+  'Those notes could not be read.': 'ಆ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  'Read them from this Mac': 'ಈ Mac ನಿಂದ ಓದು',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access ನಲ್ಲಿ nibeditor ಆನ್ ಮಾಡಿ, ಮತ್ತೆ ಕೇಳು.',
+  'Open the setting': 'ಸೆಟ್ಟಿಂಗ್ ತೆರೆ',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal ತಾನೇ ರಫ್ತು ಮಾಡುತ್ತದೆ: Journal, ಸೆಟ್ಟಿಂಗ್‌ಗಳು, ರಫ್ತು. Apple Notes ಗೆ ರಫ್ತು ಇಲ್ಲ, ಹಾಗಾಗಿ ಅದು ಇರುವ Mac ನಿಂದ ದೂರ, ಇಲ್ಲಿ ಹಾಕಬೇಕಾದದ್ದು ಯಾವುದೋ ರಫ್ತುಗಾರ ಬರೆದ ಫೋಲ್ಡರ್.',
+  'Pandoc reads this one, from the file on your disk.':
+    'ನಿಮ್ಮ ಡಿಸ್ಕ್‌ನಲ್ಲಿರುವ ಫೈಲ್‌ನಿಂದ pandoc ಇದನ್ನು ಓದುತ್ತದೆ.',
   'Read it with pandoc': 'pandocನಿಂದ ಓದಿ',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'ಇದನ್ನು pandoc ಮಾತ್ರ ಓದುತ್ತದೆ, ಅದು ಈ ಯಂತ್ರದಲ್ಲಿ ಸ್ಥಾಪಿಸಿಲ್ಲ.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'ಇದನ್ನು pandoc ಮಾತ್ರ ಓದುತ್ತದೆ, ಅದು ಈ ಯಂತ್ರದಲ್ಲಿ ಸ್ಥಾಪಿಸಿಲ್ಲ.',
   Rows: 'ಸಾಲುಗಳು',
   'As a table': 'ಕೋಷ್ಟಕವಾಗಿ',
   'One note per row': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಟಿಪ್ಪಣಿ',
   Into: 'ಇದರೊಳಗೆ',
   'Worth knowing': 'ತಿಳಿಯಬೇಕಾದ್ದು',
   '{count} notes arrived.': { one: '{count} ಟಿಪ್ಪಣಿ ಬಂತು.', other: '{count} ಟಿಪ್ಪಣಿಗಳು ಬಂದವು.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} ಹೆಸರು ಈಗಾಗಲೇ ಇತ್ತು, ಹಾಗಾಗಿ ಆ ಫೈಲ್ ಪಕ್ಕಕ್ಕೆ ಸರಿಯಿತು.', other: '{count} ಹೆಸರುಗಳು ಈಗಾಗಲೇ ಇದ್ದವು, ಹಾಗಾಗಿ ಆ ಫೈಲ್‌ಗಳು ಪಕ್ಕಕ್ಕೆ ಸರಿದವು.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} ಹೆಸರು ಈಗಾಗಲೇ ಇತ್ತು, ಹಾಗಾಗಿ ಆ ಫೈಲ್ ಪಕ್ಕಕ್ಕೆ ಸರಿಯಿತು.',
+    other: '{count} ಹೆಸರುಗಳು ಈಗಾಗಲೇ ಇದ್ದವು, ಹಾಗಾಗಿ ಆ ಫೈಲ್‌ಗಳು ಪಕ್ಕಕ್ಕೆ ಸರಿದವು.',
+  },
   'A table': 'ಒಂದು ಕೋಷ್ಟಕ',
   'Markdown files': 'Markdown ಫೈಲ್‌ಗಳು',
   'A document': 'ಒಂದು ದಾಖಲೆ',
+  'A PDF, as pages to write on': 'ಒಂದು PDF, ಬರೆಯುವ ಪುಟಗಳಾಗಿ',
   'Undo the import': 'ಇಂಪೋರ್ಟ್ ರದ್ದುಗೊಳಿಸಿ',
   'Choose an export': 'ಒಂದು ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಆಯ್ಕೆಮಾಡಿ',
   Under: 'ಇದರ ಕೆಳಗೆ',
@@ -982,13 +1076,15 @@ export const kn: Dictionary = {
   'Keep both copies': 'ಎರಡೂ ನಕಲುಗಳನ್ನು ಇಡಿ',
   'Let the newest win': 'ಹೊಸದು ಗೆಲ್ಲಲಿ',
   'Ask me each time': 'ಪ್ರತಿ ಬಾರಿ ನನ್ನನ್ನು ಕೇಳಿ',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ಏನೂ ಎಸೆಯುವುದಿಲ್ಲ: ಗೆಲ್ಲದಿರುವುದನ್ನು ಆವೃತ್ತಿಯಾಗಿ ಇಡಲಾಗುತ್ತದೆ.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ಏನೂ ಎಸೆಯುವುದಿಲ್ಲ: ಗೆಲ್ಲದಿರುವುದನ್ನು ಆವೃತ್ತಿಯಾಗಿ ಇಡಲಾಗುತ್ತದೆ.',
   'Waiting for you': 'ನಿಮಗಾಗಿ ಕಾಯುತ್ತಿದೆ',
   'Keep mine': 'ನನ್ನದನ್ನು ಇಡಿ',
   'Take theirs': 'ಅವರದನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ',
   'Keep both': 'ಎರಡನ್ನೂ ಇಡಿ',
   'What synced': 'ಸಿಂಕ್ ಆದವು',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ಇನ್ನೂ ಏನೂ ಇಲ್ಲ. ಏನನ್ನೂ ಸರಿಸದ ಸಿಂಕ್ ದಾಖಲಾಗುವುದಿಲ್ಲ.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ಇನ್ನೂ ಏನೂ ಇಲ್ಲ. ಏನನ್ನೂ ಸರಿಸದ ಸಿಂಕ್ ದಾಖಲಾಗುವುದಿಲ್ಲ.',
   'Clear the list': 'ಪಟ್ಟಿ ತೆರವುಗೊಳಿಸಿ',
   '{count} down': '{count} ಇಳಿದವು',
   '{count} up': '{count} ಏರಿದವು',
@@ -998,19 +1094,28 @@ export const kn: Dictionary = {
   'This space, as it was': 'ಈ ಸ್ಪೇಸ್, ಹಿಂದೆ ಇದ್ದಂತೆ',
   '{count} days ago': { one: '{count} ದಿನದ ಹಿಂದೆ', other: '{count} ದಿನಗಳ ಹಿಂದೆ' },
   'What would change?': 'ಏನು ಬದಲಾಗುತ್ತದೆ?',
-  '{count} notes would go back to what they said then.': { one: '{count} ಟಿಪ್ಪಣಿ ಆಗ ಇದ್ದಂತೆ ಮರಳುತ್ತದೆ.', other: '{count} ಟಿಪ್ಪಣಿಗಳು ಆಗ ಇದ್ದಂತೆ ಮರಳುತ್ತವೆ.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} ಟಿಪ್ಪಣಿ ಆಗ ಇದ್ದಂತೆ ಮರಳುತ್ತದೆ.',
+    other: '{count} ಟಿಪ್ಪಣಿಗಳು ಆಗ ಇದ್ದಂತೆ ಮರಳುತ್ತವೆ.',
+  },
   'Nothing has changed since then.': 'ಅಂದಿನಿಂದ ಏನೂ ಬದಲಾಗಿಲ್ಲ.',
-  '{count} notes went back.': { one: '{count} ಟಿಪ್ಪಣಿ ಮರಳಿತು.', other: '{count} ಟಿಪ್ಪಣಿಗಳು ಮರಳಿದವು.' },
-  'The account keeps a month of versions of every note that syncs.': 'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ತಿಂಗಳ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
+  '{count} notes went back.': {
+    one: '{count} ಟಿಪ್ಪಣಿ ಮರಳಿತು.',
+    other: '{count} ಟಿಪ್ಪಣಿಗಳು ಮರಳಿದವು.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ತಿಂಗಳ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
   'That did not work.': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ.',
   'Signing in': 'ಸೈನ್ ಇನ್ ಆಗುತ್ತಿದೆ',
   'Ask for a code from an app': 'ಅಪ್ಲಿಕೇಶನ್‌ನಿಂದ ಕೋಡ್ ಕೇಳಿ',
   'Turn on': 'ಆನ್ ಮಾಡಿ',
   'Turn off': 'ಆಫ್ ಮಾಡಿ',
-  'Put this into your authenticator app, then type its code.': 'ಇದನ್ನು ನಿಮ್ಮ ಅಥೆಂಟಿಕೇಟರ್ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಹಾಕಿ, ನಂತರ ಅದರ ಕೋಡ್ ಟೈಪ್ ಮಾಡಿ.',
+  'Put this into your authenticator app, then type its code.':
+    'ಇದನ್ನು ನಿಮ್ಮ ಅಥೆಂಟಿಕೇಟರ್ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಹಾಕಿ, ನಂತರ ಅದರ ಕೋಡ್ ಟೈಪ್ ಮಾಡಿ.',
   Secret: 'ರಹಸ್ಯ',
   'Code from the app': 'ಅಪ್ಲಿಕೇಶನ್‌ನ ಕೋಡ್',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'ಇವನ್ನು ಸುರಕ್ಷಿತ ಸ್ಥಳದಲ್ಲಿ ಇಡಿ. ಪ್ರತಿಯೊಂದೂ ಒಮ್ಮೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'ಇವನ್ನು ಸುರಕ್ಷಿತ ಸ್ಥಳದಲ್ಲಿ ಇಡಿ. ಪ್ರತಿಯೊಂದೂ ಒಮ್ಮೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.',
   'Recovery codes': 'ಮರುಪಡೆಯುವ ಕೋಡ್‌ಗಳು',
   'Recovery code': 'ಮರುಪಡೆಯುವ ಕೋಡ್',
   'Recovery codes left': 'ಉಳಿದ ಮರುಪಡೆಯುವ ಕೋಡ್‌ಗಳು',
@@ -1032,7 +1137,8 @@ export const kn: Dictionary = {
   Pages: 'ಪುಟಗಳು',
   'Page {number} of {count}': '{count}ರಲ್ಲಿ {number} ಪುಟ',
   'What is selected': 'ಆಯ್ಕೆಯಾದದ್ದು',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ಕ್ಯಾನ್ವಾಸ್: {cards} ಕಾರ್ಡ್‌ಗಳು, {links} ಲಿಂಕ್‌ಗಳು, {drawings} ರೇಖಾಚಿತ್ರಗಳು',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ಕ್ಯಾನ್ವಾಸ್: {cards} ಕಾರ್ಡ್‌ಗಳು, {links} ಲಿಂಕ್‌ಗಳು, {drawings} ರೇಖಾಚಿತ್ರಗಳು',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ಪೂರೈಕೆದಾರರು',
@@ -1047,7 +1153,8 @@ export const kn: Dictionary = {
   'No providers yet.': 'ಇನ್ನೂ ಪೂರೈಕೆದಾರರಿಲ್ಲ.',
   'Add {name}': '{name} ಸೇರಿಸಿ',
   'Keys stay in the secure store on this device.': 'ಕೀಗಳು ಈ ಸಾಧನದ ಸುರಕ್ಷಿತ ಸಂಗ್ರಹದಲ್ಲಿ ಇರುತ್ತವೆ.',
-  'This browser holds the keys in its own storage.': 'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
+  'This browser holds the keys in its own storage.':
+    'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
   'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   'That provider is not set up yet.': 'ಆ ಪೂರೈಕೆದಾರ ಇನ್ನೂ ಹೊಂದಿಸಿಲ್ಲ.',
@@ -1069,13 +1176,88 @@ export const kn: Dictionary = {
   'AI block': 'AI ಬ್ಲಾಕ್',
   'Highlight colour': 'ಹೈಲೈಟ್ ಬಣ್ಣ',
   'A single newline breaks the line': 'ಒಂದೇ ಹೊಸ ಸಾಲು ಸಾಲನ್ನು ಮುರಿಯುತ್ತದೆ',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ಆಫ್ ಎಂದರೆ ಪ್ರಮಾಣಿತ Markdown: ಒಂದೇ ಪ್ಯಾರಾದ ಎರಡು ಸಾಲುಗಳು ಒಂದಾಗಿ ಓದಲಾಗುತ್ತವೆ; Obsidian ಇದನ್ನು strict line breaks ಎನ್ನುತ್ತದೆ.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ಆಫ್ ಎಂದರೆ ಪ್ರಮಾಣಿತ Markdown: ಒಂದೇ ಪ್ಯಾರಾದ ಎರಡು ಸಾಲುಗಳು ಒಂದಾಗಿ ಓದಲಾಗುತ್ತವೆ; Obsidian ಇದನ್ನು strict line breaks ಎನ್ನುತ್ತದೆ.',
   'New links': 'ಹೊಸ ಲಿಂಕ್‌ಗಳು',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilinks ಟಿಪ್ಪಣಿಯನ್ನು ಹೆಸರಿನಿಂದ ಸೂಚಿಸುತ್ತವೆ, ಹಾಗಾಗಿ ಹೆಸರು ಬದಲಾದರೂ ಲಿಂಕ್ ಉಳಿಯುತ್ತದೆ; ಎರಡೂ ರೂಪಗಳನ್ನು ಓದಲಾಗುತ್ತದೆ.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilinks ಟಿಪ್ಪಣಿಯನ್ನು ಹೆಸರಿನಿಂದ ಸೂಚಿಸುತ್ತವೆ, ಹಾಗಾಗಿ ಹೆಸರು ಬದಲಾದರೂ ಲಿಂಕ್ ಉಳಿಯುತ್ತದೆ; ಎರಡೂ ರೂಪಗಳನ್ನು ಓದಲಾಗುತ್ತದೆ.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, ಅತಿ ಚಿಕ್ಕ ಹೆಸರು',
   'Markdown, relative path': 'Markdown, ಸಂಬಂಧಿತ ಪಾತ್',
   'Markdown, path in the space': 'Markdown, ಸ್ಪೇಸ್‌ನ ಪಾತ್',
+  // Publishing part one.
+  'The folders you choose become public.': 'ನೀನು ಆಯ್ದ ಫೋಲ್ಡರ್‌ಗಳು ಸಾರ್ವಜನಿಕವಾಗುತ್ತವೆ.',
+  'Anyone with the address can read what is published, drafts included.':
+    'ವಿಳಾಸ ಇರುವ ಯಾರಾದರೂ ಪ್ರಕಟವಾದದ್ದನ್ನು ಓದಬಹುದು, ಕರಡುಗಳನ್ನೂ.',
+  'Which notes': 'ಯಾವ ಟಿಪ್ಪಣಿಗಳು',
+  'Notes outside a rule': 'ನಿಯಮದ ಹೊರಗಿನ ಟಿಪ್ಪಣಿಗಳು',
+  'Are published': 'ಪ್ರಕಟವಾಗುತ್ತವೆ',
+  'Stay private': 'ಖಾಸಗಿಯಾಗಿ ಉಳಿಯುತ್ತವೆ',
+  'Follows the rule': 'ನಿಯಮ ಪಾಲಿಸುತ್ತದೆ',
+  Published: 'ಪ್ರಕಟಿತ',
+  Private: 'ಖಾಸಗಿ',
+  '{count} pages': '{count} ಪುಟಗಳು',
+  '{count} new': '{count} ಹೊಸತು',
+  '{count} gone': '{count} ತೆಗೆದವು',
+  'and more': 'ಮತ್ತು ಇನ್ನೂ',
+  'How it appears': 'ಹೇಗೆ ಕಾಣುತ್ತದೆ',
+  Description: 'ವಿವರಣೆ',
+  'What this site is': 'ಈ ತಾಣ ಯಾವುದರ ಬಗ್ಗೆ',
+  'Tab icon': 'ಟ್ಯಾಬ್ ಚಿಹ್ನೆ',
+  Password: 'ಪಾಸ್‌ವರ್ಡ್',
+  'Set a new one': 'ಹೊಸದನ್ನು ಇಡು',
+  'Ask for a password': 'ಪಾಸ್‌ವರ್ಡ್ ಕೇಳು',
+  'No password': 'ಪಾಸ್‌ವರ್ಡ್ ಇಲ್ಲ',
+  'Remove the password': 'ಪಾಸ್‌ವರ್ಡ್ ತೆಗೆ',
+  'Scan this with your authenticator app, then type its code.':
+    'ಇದನ್ನು ನಿನ್ನ ದೃಢೀಕರಣ ಆ್ಯಪ್‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಆಮೇಲೆ ಅದರ ಕೋಡ್ ಬರೆ.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ಚಿತ್ರ',
+  Dictate: 'ಹೇಳಿ ಬರೆಸು',
+  'Add to {name}': '{name} ಗೆ ಸೇರಿಸು',
+  // Web tabs
+  Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
+  'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
+  'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
+  'Allow the camera': 'ಕ್ಯಾಮೆರಾಕ್ಕೆ ಅನುಮತಿ ಕೊಡು',
+  'Allow the clipboard': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ಅನುಮತಿ ಕೊಡು',
+  'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
+  'Copy the address': 'ವಿಳಾಸ ನಕಲಿಸು',
+  'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
+  Website: 'ಜಾಲತಾಣ',
+  'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
+  // Recording, meetings and what a model wrote
+  Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
+  Recording: 'ಧ್ವನಿಮುದ್ರಣ',
+  'Stop recording': 'ಧ್ವನಿಮುದ್ರಣ ನಿಲ್ಲಿಸು',
+  'Meeting notes': 'ಸಭೆಯ ಟಿಪ್ಪಣಿಗಳು',
+  Meeting: 'ಸಭೆ',
+  'Stop the meeting': 'ಸಭೆ ಮುಗಿಸು',
+  Transcribe: 'ಬರವಣಿಗೆಗೆ ಇಳಿಸು',
+  Transcript: 'ಲಿಪ್ಯಂತರ',
+  'Transcript ({language})': 'ಲಿಪ್ಯಂತರ ({language})',
+  'Written by {model}': '{model} ಬರೆದದ್ದು',
+  'Saving the recording': 'ಧ್ವನಿಮುದ್ರಣ ಉಳಿಸುತ್ತಿದೆ',
+  'Turning the recording into words': 'ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡುತ್ತಿದೆ',
+  'Open a space to record into.': 'ಧ್ವನಿಮುದ್ರಿಸಲು ಒಂದು ಸ್ಪೇಸ್ ತೆರೆ.',
+  'Sign in to take meeting notes.': 'ಸಭೆಯ ಟಿಪ್ಪಣಿ ತೆಗೆದುಕೊಳ್ಳಲು ಸೈನ್ ಇನ್ ಆಗು.',
+  'Sign in to turn a recording into words.': 'ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡಲು ಸೈನ್ ಇನ್ ಆಗು.',
+  'That microphone could not be opened.': 'ಆ ಮೈಕ್ರೊಫೋನ್ ತೆರೆಯಲಾಗಲಿಲ್ಲ.',
+  'That recording could not be saved.': 'ಆ ಧ್ವನಿಮುದ್ರಣ ಉಳಿಸಲಾಗಲಿಲ್ಲ.',
+  'That recording could not be turned into words.': 'ಆ ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡಲಾಗಲಿಲ್ಲ.',
+  'That recording is not in this space.': 'ಆ ಧ್ವನಿಮುದ್ರಣ ಈ ಸ್ಪೇಸ್‌ನಲ್ಲಿ ಇಲ್ಲ.',
+  'That recording is too long to turn into words in one go.':
+    'ಒಂದೇ ಸಲಕ್ಕೆ ಪದಗಳಾಗಿ ಮಾಡಲು ಆ ಧ್ವನಿಮುದ್ರಣ ತುಂಬಾ ಉದ್ದ.',
+  'That is as much as one recording may hold.': 'ಒಂದು ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಇಷ್ಟೇ ಹಿಡಿಯುತ್ತದೆ.',
+  'Nothing could be heard in that recording.': 'ಆ ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಏನೂ ಕೇಳಿಸಲಿಲ್ಲ.',
+  'A piece of the transcript is being tried again.':
+    'ಲಿಪ್ಯಂತರದ ಒಂದು ತುಣುಕನ್ನು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲಾಗುತ್ತಿದೆ.',
+  'The transcript is behind and losing pieces.':
+    'ಲಿಪ್ಯಂತರ ಹಿಂದೆ ಉಳಿದು ತುಣುಕುಗಳನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಿದೆ.',
+  '{count} pieces of this meeting were lost.': 'ಈ ಸಭೆಯ {count} ತುಣುಕುಗಳು ಕಳೆದುಹೋದವು.',
+  'Add an AI provider in settings to summarise.':
+    'ಸಾರ ಬರೆಯಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಒಂದು AI ಪೂರೈಕೆದಾರನನ್ನು ಸೇರಿಸು.',
+  'The summary could not be written.': 'ಸಾರ ಬರೆಯಲಾಗಲಿಲ್ಲ.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ಮೇಲ್ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'start again - that took too long': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ - ಅದು ತುಂಬಾ ಸಮಯ ತೆಗೆದುಕೊಂಡಿತು',
@@ -1090,8 +1272,10 @@ export const kn: Dictionary = {
   'that is more bookmarks than a space holds': 'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
   'that is more paths than a space leaves out': 'ಒಂದು ಸ್ಪೇಸ್ ಹೊರಗಿಡುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಪಾತ್‌ಗಳು',
   'that is more files than a space keeps': 'ಒಂದು ಸ್ಪೇಸ್ ಇಡುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಫೈಲ್‌ಗಳು',
-  'that is more than a space keeps about its graph': 'ಒಂದು ಸ್ಪೇಸ್ ತನ್ನ ಗ್ರಾಫ್ ಬಗ್ಗೆ ಇಡುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
-  'that is more folder icons than a space holds': 'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಫೋಲ್ಡರ್ ಐಕಾನ್‌ಗಳು',
+  'that is more than a space keeps about its graph':
+    'ಒಂದು ಸ್ಪೇಸ್ ತನ್ನ ಗ್ರಾಫ್ ಬಗ್ಗೆ ಇಡುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
+  'that is more folder icons than a space holds':
+    'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಫೋಲ್ಡರ್ ಐಕಾನ್‌ಗಳು',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ಆ ವಿಳಾಸದಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',
   'nobody by that name': 'ಆ ಹೆಸರಿನಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',
@@ -1100,7 +1284,8 @@ export const kn: Dictionary = {
   'that link is busy, try again in a minute': 'ಆ ಲಿಂಕ್ ಕಾರ್ಯನಿರತವಾಗಿದೆ, ಒಂದು ನಿಮಿಷದಲ್ಲಿ ಪ್ರಯತ್ನಿಸಿ',
   // Versions, the bin, and a room two people write in.
   'no such version': 'ಅಂತಹ ಆವೃತ್ತಿ ಇಲ್ಲ',
-  'this note was shared with you, not its folder': 'ಈ ಟಿಪ್ಪಣಿ ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಲಾಗಿದೆ, ಅದರ ಫೋಲ್ಡರ್ ಅಲ್ಲ',
+  'this note was shared with you, not its folder':
+    'ಈ ಟಿಪ್ಪಣಿ ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಲಾಗಿದೆ, ಅದರ ಫೋಲ್ಡರ್ ಅಲ್ಲ',
   'nothing to restore': 'ಮರುಸ್ಥಾಪಿಸಲು ಏನೂ ಇಲ್ಲ',
   'restore its space first': 'ಮೊದಲು ಅದರ ಸ್ಪೇಸ್ ಮರುಸ್ಥಾಪಿಸಿ',
   'nothing to delete': 'ಅಳಿಸಲು ಏನೂ ಇಲ್ಲ',

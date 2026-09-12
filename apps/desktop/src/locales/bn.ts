@@ -7,6 +7,12 @@ export const bn: Dictionary = {
   'Open file': 'ফাইল খুলুন',
   'New note inside': 'ভিতরে নতুন নোট',
   'New canvas': 'নতুন ক্যানভাস',
+  'New page note': 'নতুন পাতার নোট',
+  'Add a page': 'পাতা যোগ করুন',
+  'Add a page after this': 'এর পরে পাতা যোগ করুন',
+  'Delete this page': 'এই পাতা মুছুন',
+  'Page {number}': 'পাতা {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ক্যানভাস',
   Card: 'কার্ড',
   'Note or picture': 'নোট বা ছবি',
@@ -34,7 +40,8 @@ export const bn: Dictionary = {
   'Create a space': 'স্পেস তৈরি',
   'Delete space': 'স্পেস মুছুন',
   'Delete {name}?': '{name} মুছবেন?',
-  'Every note in this space is deleted from your computer.': 'এই স্পেসের সব নোট আপনার কম্পিউটার থেকে মুছে যাবে।',
+  'Every note in this space is deleted from your computer.':
+    'এই স্পেসের সব নোট আপনার কম্পিউটার থেকে মুছে যাবে।',
   'The notes inside it go too.': 'ভিতরের নোটগুলোও মুছে যাবে।',
   Journal: 'জার্নাল',
   Create: 'তৈরি',
@@ -206,7 +213,8 @@ export const bn: Dictionary = {
   'Image not found': 'ছবি পাওয়া যায়নি',
   'Delete {count} items': { one: '{count}টি আইটেম মুছুন', other: '{count}টি আইটেম মুছুন' },
   'Recently deleted': 'সম্প্রতি মুছে ফেলা',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'মুছে ফেলা নোট ও স্পেস এখানে 14 দিন থাকে, তারপর চিরতরে চলে যায়।',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'মুছে ফেলা নোট ও স্পেস এখানে 14 দিন থাকে, তারপর চিরতরে চলে যায়।',
   'Nothing here.': 'এখানে কিছু নেই।',
   Empty: 'খালি করুন',
   Spaces: 'স্পেস',
@@ -257,7 +265,8 @@ export const bn: Dictionary = {
   'Previous slide': 'আগের স্লাইড',
   'Read-only': 'শুধু পড়া',
   'No preview': 'প্রিভিউ নেই',
-  'Shown as plain text, so typing stays instant in a note this long': 'সাধারণ লেখা হিসেবে দেখানো হচ্ছে, যাতে এত লম্বা নোটেও টাইপ করা সঙ্গে সঙ্গে হয়',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'সাধারণ লেখা হিসেবে দেখানো হচ্ছে, যাতে এত লম্বা নোটেও টাইপ করা সঙ্গে সঙ্গে হয়',
   'Leave read-only': 'শুধু পড়া বন্ধ',
   Next: 'পরের',
   Previous: 'আগের',
@@ -353,16 +362,19 @@ export const bn: Dictionary = {
   'OpenAI key': 'OpenAI কী',
   Model: 'মডেল',
   Reasoning: 'রিজনিং',
-  'Kept encrypted on your account, and never shown again.': 'আপনার অ্যাকাউন্টে এনক্রিপ্ট করে রাখা হয়, আর কখনো দেখানো হয় না।',
+  'Kept encrypted on your account, and never shown again.':
+    'আপনার অ্যাকাউন্টে এনক্রিপ্ট করে রাখা হয়, আর কখনো দেখানো হয় না।',
   'set, ends in …{tail}': 'সেট করা, শেষ …{tail}',
   'Saving the key': 'কী সেভ হচ্ছে',
   'this server cannot keep a key yet': 'এই সার্ভার এখনো কী রাখতে পারে না',
   'that does not look like a key': 'এটা কী-এর মতো নয়',
   'that key could not be saved': 'কী সেভ করা গেল না',
   'Sign in to ask a question.': 'প্রশ্ন করতে সাইন ইন করুন।',
-  'Asking OpenAI which models this key can use': 'এই কী কোন মডেল ব্যবহার করতে পারে, OpenAI-কে জিজ্ঞাসা করা হচ্ছে',
+  'Asking OpenAI which models this key can use':
+    'এই কী কোন মডেল ব্যবহার করতে পারে, OpenAI-কে জিজ্ঞাসা করা হচ্ছে',
   'Could not reach OpenAI': 'OpenAI-তে পৌঁছানো গেল না',
-  'That key cannot use any of the models Nib asks for.': 'Nib যে মডেলগুলো চায়, এই কী তার কোনোটিই ব্যবহার করতে পারে না।',
+  'That key cannot use any of the models Nib asks for.':
+    'Nib যে মডেলগুলো চায়, এই কী তার কোনোটিই ব্যবহার করতে পারে না।',
   'No reasoning': 'রিজনিং নেই',
   Minimal: 'সামান্য',
   Low: 'কম',
@@ -403,7 +415,10 @@ export const bn: Dictionary = {
   'Add a word': 'শব্দ যোগ',
   'Add {word} to the dictionary': 'অভিধানে {word} যোগ',
   'Remove {word} from the dictionary': 'অভিধান থেকে {word} সরান',
-  '{count} things in this theme were left out.': { one: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।', other: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।' },
+  '{count} things in this theme were left out.': {
+    one: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।',
+    other: '{count}টি জিনিস এই থিম থেকে বাদ পড়েছে।',
+  },
   'A note': 'একটি নোট',
   'Words with {bold} and a {link}.': '{bold} আর একটি {link} সহ শব্দ।',
   bold: 'বোল্ড',
@@ -448,11 +463,14 @@ export const bn: Dictionary = {
   'Line numbers': 'লাইন নম্বর',
   Syntax: 'সিনট্যাক্স',
   'Strict CommonMark': 'কঠোর CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'শুধু আদর্শ Markdown নিয়ম, টেবিল, টাস্ক তালিকা বা ফুটনোট নয়।',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'শুধু আদর্শ Markdown নিয়ম, টেবিল, টাস্ক তালিকা বা ফুটনোট নয়।',
   'Smart punctuation': 'স্মার্ট যতিচিহ্ন',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'লেখার সময় সোজা উদ্ধৃতি ও ড্যাশকে ছাপার চিহ্নে বদলে দেয়।',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'লেখার সময় সোজা উদ্ধৃতি ও ড্যাশকে ছাপার চিহ্নে বদলে দেয়।',
   'Puts 1., 1.1, 1.2 in front of headings.': 'হেডিংয়ের আগে 1., 1.1, 1.2 বসায়।',
-  'Numbers display equations so you can refer to them.': 'ডিসপ্লে সমীকরণে নম্বর দেয়, যাতে সেগুলো উল্লেখ করা যায়।',
+  'Numbers display equations so you can refer to them.':
+    'ডিসপ্লে সমীকরণে নম্বর দেয়, যাতে সেগুলো উল্লেখ করা যায়।',
   Ligatures: 'লিগেচার',
   Off: 'বন্ধ',
   'Code only': 'শুধু কোডে',
@@ -515,13 +533,17 @@ export const bn: Dictionary = {
   'Send a new code': 'নতুন কোড পাঠান',
   'Code sent to': 'কোড পাঠানো হয়েছে',
   'You already have notes on this computer.': 'এই কম্পিউটারে আপনার নোট আগেই আছে।',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'রাখলে সেগুলো আপনার অ্যাকাউন্টে যোগ হবে। মুছে ফেললে শুধু অ্যাকাউন্টে যা আছে তাই থাকবে - এটি আর ফেরানো যাবে না।',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'রাখলে সেগুলো আপনার অ্যাকাউন্টে যোগ হবে। মুছে ফেললে শুধু অ্যাকাউন্টে যা আছে তাই থাকবে - এটি আর ফেরানো যাবে না।',
   'Keep them': 'রাখুন',
   'Erase them': 'মুছে ফেলুন',
   'Digit {number}': 'সংখ্যা {number}',
   'Resend in {seconds}s': '{seconds}s পরে আবার পাঠান',
   'Last synced {time}.': 'শেষ সিংক {time}।',
-  '{count} spaces sync to your account.': { one: '{count}টি স্পেস আপনার অ্যাকাউন্টে সিংক হয়।', other: '{count}টি স্পেস আপনার অ্যাকাউন্টে সিংক হয়।' },
+  '{count} spaces sync to your account.': {
+    one: '{count}টি স্পেস আপনার অ্যাকাউন্টে সিংক হয়।',
+    other: '{count}টি স্পেস আপনার অ্যাকাউন্টে সিংক হয়।',
+  },
   Update: 'আপডেট',
   'Live at': 'লাইভ আছে',
   // Publishing
@@ -531,7 +553,8 @@ export const bn: Dictionary = {
   'Only {name}': 'শুধু {name}',
   'Publish this space as a blog': 'এই স্পেস ব্লগ হিসেবে প্রকাশ',
   'Everything in this space becomes public.': 'এই স্পেসের সবকিছু সর্বজনীন হয়ে যাবে।',
-  'Every note, including drafts, is readable by anyone with the address.': 'ঠিকানা জানা যে কেউ প্রতিটি নোট, খসড়াসহ, পড়তে পারবে।',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ঠিকানা জানা যে কেউ প্রতিটি নোট, খসড়াসহ, পড়তে পারবে।',
   Address: 'ঠিকানা',
   'Add these at your registrar, then verify.': 'এগুলো আপনার রেজিস্ট্রারে যোগ করে যাচাই করুন।',
   Verify: 'যাচাই',
@@ -544,7 +567,8 @@ export const bn: Dictionary = {
   'checking…': 'দেখা হচ্ছে…',
   // LLM
   'Connect an LLM to your notes': 'আপনার নোটে LLM যোগ করুন',
-  'Sign in first - the connector reaches the notes in your account.': 'আগে সাইন ইন করুন - কানেক্টর আপনার অ্যাকাউন্টের নোটে পৌঁছায়।',
+  'Sign in first - the connector reaches the notes in your account.':
+    'আগে সাইন ইন করুন - কানেক্টর আপনার অ্যাকাউন্টের নোটে পৌঁছায়।',
   'Let it write to my notes, not only read them': 'শুধু পড়া নয়, আমার নোটে লিখতেও দিন',
   'Create a token': 'টোকেন তৈরি',
   'Replace the token': 'টোকেন রিপ্লেস',
@@ -560,27 +584,38 @@ export const bn: Dictionary = {
   'Reads your notes.': 'আপনার নোট পড়ে।',
   'Reads and writes your notes.': 'আপনার নোট পড়ে ও লেখে।',
   Other: 'অন্য',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'একটি AI সহকারী আপনার নোট পড়তে পারে - আর অনুমতি দিলে বদলাতেও পারে। এটি আপনার Nib ইমেইল দিয়ে সাইন ইন করে; পেস্ট করার কিছু নেই।',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude-এ Settings → Connectors খুলে Add custom connector-এ ক্লিক করুন।',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'একটি AI সহকারী আপনার নোট পড়তে পারে - আর অনুমতি দিলে বদলাতেও পারে। এটি আপনার Nib ইমেইল দিয়ে সাইন ইন করে; পেস্ট করার কিছু নেই।',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude-এ Settings → Connectors খুলে Add custom connector-এ ক্লিক করুন।',
   'Open Claude’s connectors': 'Claude-এর কানেক্টর খুলুন',
   'Fill in the two fields and click Add.': 'দুটি ঘর পূরণ করে Add-এ ক্লিক করুন।',
-  'Click Connect and sign in with your Nib email.': 'Connect-এ ক্লিক করে আপনার Nib ইমেইল দিয়ে সাইন ইন করুন।',
+  'Click Connect and sign in with your Nib email.':
+    'Connect-এ ক্লিক করে আপনার Nib ইমেইল দিয়ে সাইন ইন করুন।',
   'Using Claude Code instead?': 'বদলে Claude Code ব্যবহার করছেন?',
   Command: 'কমান্ড',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'টার্মিনালে এটি চালান, তারপর সাইন ইন করতে Claude Code-এ /mcp লিখুন।',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'টার্মিনালে এটি চালান, তারপর সাইন ইন করতে Claude Code-এ /mcp লিখুন।',
   'Fill in the form and click Create.': 'ফর্ম পূরণ করে Create-এ ক্লিক করুন।',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT-এ Settings → Plugins খুলে প্লাস বোতামে ক্লিক করুন।',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT-এ Settings → Plugins খুলে প্লাস বোতামে ক্লিক করুন।',
   'Open ChatGPT’s plugins': 'ChatGPT-এর প্লাগিন খুলুন',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins অংশ বা প্লাস বোতাম নেই? আগে Settings → Security and login-এ গিয়ে Developer mode চালু করুন।',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT চাইলে আপনার Nib ইমেইল দিয়ে সাইন ইন করুন।',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins অংশ বা প্লাস বোতাম নেই? আগে Settings → Security and login-এ গিয়ে Developer mode চালু করুন।',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT চাইলে আপনার Nib ইমেইল দিয়ে সাইন ইন করুন।',
   'To use it in a chat, type @ and pick Nib.': 'চ্যাটে ব্যবহার করতে @ লিখে Nib বাছুন।',
   'Server URL': 'সার্ভার URL',
   Authentication: 'প্রমাণীকরণ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'উন্নত OAuth সেটিংস যেমন আছে তেমন রেখে “I understand and want to continue” টিক করুন।',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth সহ Streamable HTTP বোঝে এমন যেকোনো MCP ক্লায়েন্ট। URL দিন: এটি নিজেই নিবন্ধন করে Nib-এর সাইন ইন পাতা খোলে।',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'উন্নত OAuth সেটিংস যেমন আছে তেমন রেখে “I understand and want to continue” টিক করুন।',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth সহ Streamable HTTP বোঝে এমন যেকোনো MCP ক্লায়েন্ট। URL দিন: এটি নিজেই নিবন্ধন করে Nib-এর সাইন ইন পাতা খোলে।',
   'Show config': 'কনফিগ দেখান',
-  'For a client that takes a JSON block instead of a URL.': 'যে ক্লায়েন্ট URL-এর বদলে JSON ব্লক নেয়, তার জন্য।',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'যে ক্লায়েন্ট সাইন ইন করতে পারে না, তাকে বদলে টোকেন দেওয়া যায়। এটি একবারই দেখানো হয়।',
+  'For a client that takes a JSON block instead of a URL.':
+    'যে ক্লায়েন্ট URL-এর বদলে JSON ব্লক নেয়, তার জন্য।',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'যে ক্লায়েন্ট সাইন ইন করতে পারে না, তাকে বদলে টোকেন দেওয়া যায়। এটি একবারই দেখানো হয়।',
   // Export
   'Plain text': 'সাধারণ টেক্সট',
   'Markdown with the pictures': 'ছবিসহ Markdown',
@@ -604,8 +639,10 @@ export const bn: Dictionary = {
   'Version history': 'ভার্সন ইতিহাস',
   'Copy link to this note': 'এই নোটের লিঙ্ক কপি করুন',
   'that link could not be followed': 'ওই লিঙ্কে যাওয়া গেল না',
-  'Save this note first; there is nothing to compare against yet.': 'আগে এই নোট সেভ করুন; এখনো তুলনা করার কিছু নেই।',
-  'No earlier versions yet. One is kept each time you save.': 'এখনো আগের কোনো ভার্সন নেই। প্রতিবার সেভ করলে একটি রাখা হয়।',
+  'Save this note first; there is nothing to compare against yet.':
+    'আগে এই নোট সেভ করুন; এখনো তুলনা করার কিছু নেই।',
+  'No earlier versions yet. One is kept each time you save.':
+    'এখনো আগের কোনো ভার্সন নেই। প্রতিবার সেভ করলে একটি রাখা হয়।',
   'Restore this version': 'এই ভার্সন ফেরান',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ওখানে আগেই একটি নোট আছে',
@@ -666,7 +703,8 @@ export const bn: Dictionary = {
   'use a domain of your own': 'নিজের একটি ডোমেইন ব্যবহার করুন',
   'the domain no longer points here': 'ডোমেইন আর এখানে দেখায় না',
   'Cloudflare has blocked this domain': 'Cloudflare এই ডোমেইন আটকে দিয়েছে',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ডোমেইনের মূলে আপনার প্রোভাইডার CNAME না দিলে ALIAS বা ANAME রেকর্ড, কিংবা CNAME ফ্ল্যাটেনিং ব্যবহার করুন।',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ডোমেইনের মূলে আপনার প্রোভাইডার CNAME না দিলে ALIAS বা ANAME রেকর্ড, কিংবা CNAME ফ্ল্যাটেনিং ব্যবহার করুন।',
   // Shortcuts
   Shortcuts: 'শর্টকাট',
   'Search shortcuts': 'শর্টকাট খোঁজ',
@@ -677,7 +715,8 @@ export const bn: Dictionary = {
   'Reset all shortcuts': 'সব শর্টকাট রিসেট',
   'Take it over': 'দখল নিন',
   '{key} already runs {name}.': '{key} আগেই {name} চালায়।',
-  'Esc stops recording, Backspace takes the key away.': 'Esc রেকর্ডিং থামায়, Backspace কী সরিয়ে দেয়।',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc রেকর্ডিং থামায়, Backspace কী সরিয়ে দেয়।',
   Tables: 'টেবিল',
   Pictures: 'ছবি',
   'Fixed keys': 'নির্দিষ্ট কী',
@@ -713,7 +752,8 @@ export const bn: Dictionary = {
   'Always on top': 'সবসময় উপরে',
   'What is new': 'কী নতুন',
   'Report an issue': 'সমস্যা জানান',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ডিস্কে বদলেছে। এডিটরে যা আছে সেটি আপনার।',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ডিস্কে বদলেছে। এডিটরে যা আছে সেটি আপনার।',
   'Move the line up': 'লাইন উপরে সরান',
   'Move the line down': 'লাইন নিচে সরান',
   'Copy the line up': 'লাইন উপরে কপি',
@@ -748,26 +788,32 @@ export const bn: Dictionary = {
   Escape: 'Esc',
   Quit: 'প্রস্থান',
   'The clipboard belongs to the system.': 'ক্লিপবোর্ড সিস্টেমের।',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'তীর কী, Home, End, Page up ও Page down টেক্সটের।',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'তীর কী, Home, End, Page up ও Page down টেক্সটের।',
   'Backspace and Delete belong to the text.': 'Backspace ও Delete টেক্সটের।',
-  'Enter closes a code block and carries a list on.': 'Enter কোড ব্লক বন্ধ করে ও তালিকা চালিয়ে নেয়।',
+  'Enter closes a code block and carries a list on.':
+    'Enter কোড ব্লক বন্ধ করে ও তালিকা চালিয়ে নেয়।',
   'Tab moves on through the app as well as indenting.': 'Tab ইনডেন্ট করে, অ্যাপেও এগিয়ে নেয়।',
   'Escape closes whatever is open.': 'Esc যা খোলা আছে বন্ধ করে।',
-  'Your system takes this key before the app sees it.': 'অ্যাপ দেখার আগেই আপনার সিস্টেম এই কী নিয়ে নেয়।',
-  'Your browser takes this key before the app sees it.': 'অ্যাপ দেখার আগেই আপনার ব্রাউজার এই কী নিয়ে নেয়।',
+  'Your system takes this key before the app sees it.':
+    'অ্যাপ দেখার আগেই আপনার সিস্টেম এই কী নিয়ে নেয়।',
+  'Your browser takes this key before the app sees it.':
+    'অ্যাপ দেখার আগেই আপনার ব্রাউজার এই কী নিয়ে নেয়।',
   'That is not a key combination.': 'এটি কী-এর সমন্বয় নয়।',
   'Hold Ctrl, Alt or Cmd as well.': 'সঙ্গে Ctrl, Alt বা Cmd চেপে ধরুন।',
   'File list': 'ফাইলের তালিকা',
   'Select every file': 'সব ফাইল নির্বাচন',
   'Clear the selection': 'নির্বাচন মুছুন',
   'Delete the selected files': 'নির্বাচিত ফাইল মুছুন',
-  'The file could not be written, so it goes to the print dialog': 'ফাইলটি লেখা গেল না, তাই প্রিন্ট ডায়ালগে যাচ্ছে',
+  'The file could not be written, so it goes to the print dialog':
+    'ফাইলটি লেখা গেল না, তাই প্রিন্ট ডায়ালগে যাচ্ছে',
   'Next file': 'পরের ফাইল',
   'Previous file': 'আগের ফাইল',
   'Show what it holds': 'ভিতরে যা আছে দেখান',
   'Hide what it holds': 'ভিতরে যা আছে লুকান',
   'Moving through a list': 'তালিকায় চলাচল',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'তীর কী, Enter ও Esc যা খোলা আছে তাতেই কাজ করে; এগুলো শর্টকাট নয়।',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'তীর কী, Enter ও Esc যা খোলা আছে তাতেই কাজ করে; এগুলো শর্টকাট নয়।',
   'Split right': 'ডানে ভাগ',
   'Split down': 'নিচে ভাগ',
   'Other pane': 'অন্য প্যান',
@@ -789,7 +835,8 @@ export const bn: Dictionary = {
   'Follow the link': 'লিংকে যান',
   'Replace your own keys?': 'আপনার নিজের কী রিপ্লেস করবেন?',
   Replace: 'রিপ্লেস',
-  'The keys you changed go back to what this keyboard says.': 'আপনি যে কী বদলেছেন, সেগুলো এই কীবোর্ড যা বলে তাতেই ফিরে যাবে।',
+  'The keys you changed go back to what this keyboard says.':
+    'আপনি যে কী বদলেছেন, সেগুলো এই কীবোর্ড যা বলে তাতেই ফিরে যাবে।',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +958,8 @@ export const bn: Dictionary = {
   Leave: 'ছাড়ুন',
   'Leave space': 'স্পেস ছাড়ুন',
   'Leave {name}?': '{name} ছাড়বেন?',
-  'It stays with everybody else. Its notes go from your computer.': 'বাকি সবার কাছে এটি থাকবে। এর নোট আপনার কম্পিউটার থেকে চলে যাবে।',
+  'It stays with everybody else. Its notes go from your computer.':
+    'বাকি সবার কাছে এটি থাকবে। এর নোট আপনার কম্পিউটার থেকে চলে যাবে।',
   '{who} shared {space} with you': '{who} আপনার সঙ্গে {space} শেয়ার করেছেন',
   'Shared with you': 'আপনার সঙ্গে শেয়ার করা',
   'That link does not open anything': 'এই লিংক কিছু খোলে না',
@@ -928,7 +976,8 @@ export const bn: Dictionary = {
   'Release channel': 'রিলিজ চ্যানেল',
   Stable: 'স্টেবল',
   Unstable: 'আনস্টেবল',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'স্টেবল অফিসিয়াল রিলিজ অনুসরণ করে, আনস্টেবল main-এ প্রতিটি পুশ, আর ভেঙে যেতে পারে।',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'স্টেবল অফিসিয়াল রিলিজ অনুসরণ করে, আনস্টেবল main-এ প্রতিটি পুশ, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',
@@ -936,17 +985,26 @@ export const bn: Dictionary = {
   'In this note': 'এই নোটে',
   'In the whole space': 'পুরো স্পেসে',
   'Nothing here needs converting.': 'এখানে বদলানোর কিছু নেই।',
-  'Rewrite {count} things?': { one: '{count}টি জিনিস আবার লিখবেন?', other: '{count}টি জিনিস আবার লিখবেন?' },
+  'Rewrite {count} things?': {
+    one: '{count}টি জিনিস আবার লিখবেন?',
+    other: '{count}টি জিনিস আবার লিখবেন?',
+  },
   'In {count} notes.': { one: '{count}টি নোটে।', other: '{count}টি নোটে।' },
   Rewrite: 'আবার লিখুন',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count}টি অংশ এনক্রিপ্ট করা, Evernote ছাড়া কিছুই সেগুলো পড়তে পারে না',
-  '{count} notes had a reminder, which the export does not carry': '{count}টি নোটে রিমাইন্ডার ছিল, যা এক্সপোর্ট বহন করে না',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count}টি অংশ এনক্রিপ্ট করা, Evernote ছাড়া কিছুই সেগুলো পড়তে পারে না',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count}টি নোটে রিমাইন্ডার ছিল, যা এক্সপোর্ট বহন করে না',
   '{count} notes were in the bin and stay there': '{count}টি নোট বিনে ছিল, সেখানেই থাকবে',
-  '{count} archived notes are in a folder called Archive': '{count}টি আর্কাইভ করা নোট Archive নামের ফোল্ডারে আছে',
+  '{count} archived notes are in a folder called Archive':
+    '{count}টি আর্কাইভ করা নোট Archive নামের ফোল্ডারে আছে',
   'The colours a note had are not kept': 'নোটের রং রাখা হয় না',
-  '{count} block references were written out as the words they pointed at': '{count}টি ব্লক রেফারেন্স যে শব্দ দেখাত, সেই শব্দ হিসেবেই লেখা হয়েছে',
-  '{count} saved views are left out, and every row is in the table': '{count}টি সেভ করা ভিউ বাদ পড়েছে, টেবিলে প্রতিটি সারি আছে',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count}টি পাতা HTML হিসেবে এসেছে, তাই তাদের শব্দ রাখা হয়েছে, চেহারা নয়',
+  '{count} block references were written out as the words they pointed at':
+    '{count}টি ব্লক রেফারেন্স যে শব্দ দেখাত, সেই শব্দ হিসেবেই লেখা হয়েছে',
+  '{count} saved views are left out, and every row is in the table':
+    '{count}টি সেভ করা ভিউ বাদ পড়েছে, টেবিলে প্রতিটি সারি আছে',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count}টি পাতা HTML হিসেবে এসেছে, তাই তাদের শব্দ রাখা হয়েছে, চেহারা নয়',
   'There are no rows in this file.': 'এই ফাইলে কোনো সারি নেই।',
   'Nothing in there can be read as notes.': 'ওখানে নোট হিসেবে পড়ার কিছু নেই।',
   'That export could not be read.': 'এই এক্সপোর্ট পড়া গেল না।',
@@ -957,20 +1015,47 @@ export const bn: Dictionary = {
   'This space': 'এই স্পেস',
   'Drop an export here': 'এখানে একটি এক্সপোর্ট ছাড়ুন',
   'A zip, a folder, or a file another app wrote': 'একটি zip, ফোল্ডার, বা অন্য অ্যাপের লেখা ফাইল',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes ও Apple Journal তাদের নোট এমন জায়গায় রাখে যা শুধু তারাই খুলতে পারে। আগে সেগুলো এক্সপোর্ট করুন, তারপর তা ইমপোর্ট করুন।',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count}টি ছবি HEIC হিসেবে এসেছে, যা কেবল Apple দেখায়',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count}টি মন ও কাজের কার্ড আঁকা, তাই কেবল তাদের লেখা আসে',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Notes খুলতে পারে',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count}টি নোট সাম্প্রতিক মুছে ফেলায় আছে এবং সেখানেই থাকে',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count}টি আঁকা ও স্ক্যান করা পাতা Notes নিজেই আঁকা ছবি',
+  '{count} tables inside notes do not come over': 'নোটের ভিতরে {count}টি টেবিল আসে না',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count}টি সংযুক্তি এই Mac-এ নয়, iCloud-এ আছে',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ওই নোটগুলো Full Disk Access-এর পিছনে রাখে।',
+  'There are no notes in Apple Notes on this Mac.': 'এই Mac-এ Apple Notes-এ কোনো নোট নেই।',
+  'Those notes could not be read.': 'ওই নোটগুলো পড়া গেল না।',
+  'Read them from this Mac': 'এই Mac থেকে পড়ুন',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access-এ nibeditor চালু করুন, তারপর আবার চেষ্টা করুন।',
+  'Open the setting': 'সেটিং খুলুন',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal নিজেই রপ্তানি করে: Journal, সেটিংস, রপ্তানি। Apple Notes-এ রপ্তানি নেই, তাই যে Mac-এ তা আছে তার থেকে দূরে, এখানে ফেলার জিনিস হলো কোনো রপ্তানিকারকের লেখা ফোল্ডার।',
   'Pandoc reads this one, from the file on your disk.': 'এটি Pandoc পড়ে, আপনার ডিস্কের ফাইল থেকে।',
   'Read it with pandoc': 'pandoc দিয়ে পড়ুন',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'এটি শুধু pandoc পড়ে, আর এই মেশিনে সেটি ইনস্টল করা নেই।',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'এটি শুধু pandoc পড়ে, আর এই মেশিনে সেটি ইনস্টল করা নেই।',
   Rows: 'সারি',
   'As a table': 'টেবিল হিসেবে',
   'One note per row': 'প্রতি সারিতে একটি নোট',
   Into: 'কোথায়',
   'Worth knowing': 'জেনে রাখা ভালো',
   '{count} notes arrived.': { one: '{count}টি নোট এসেছে।', other: '{count}টি নোট এসেছে।' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count}টি নাম আগেই নেওয়া ছিল, তাই সেই ফাইল সরে গেছে।', other: '{count}টি নাম আগেই নেওয়া ছিল, তাই সেই ফাইলগুলো সরে গেছে।' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count}টি নাম আগেই নেওয়া ছিল, তাই সেই ফাইল সরে গেছে।',
+    other: '{count}টি নাম আগেই নেওয়া ছিল, তাই সেই ফাইলগুলো সরে গেছে।',
+  },
   'A table': 'একটি টেবিল',
   'Markdown files': 'Markdown ফাইল',
   'A document': 'একটি ডকুমেন্ট',
+  'A PDF, as pages to write on': 'একটি PDF, লেখার পাতা হিসেবে',
   'Undo the import': 'ইমপোর্ট আনডু',
   'Choose an export': 'একটি এক্সপোর্ট বাছুন',
   Under: 'এর নিচে',
@@ -982,13 +1067,15 @@ export const bn: Dictionary = {
   'Keep both copies': 'দুটি কপিই রাখুন',
   'Let the newest win': 'নতুনটিই থাকুক',
   'Ask me each time': 'প্রতিবার জিজ্ঞাসা করুন',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'কিছুই ফেলে দেওয়া হয় না: যা টেকে না, তা ভার্সন হিসেবে রাখা হয়।',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'কিছুই ফেলে দেওয়া হয় না: যা টেকে না, তা ভার্সন হিসেবে রাখা হয়।',
   'Waiting for you': 'আপনার অপেক্ষায়',
   'Keep mine': 'আমারটি রাখুন',
   'Take theirs': 'তাদেরটি নিন',
   'Keep both': 'দুটিই রাখুন',
   'What synced': 'কী সিংক হয়েছে',
-  'Nothing yet. A pass that moves nothing is not written down.': 'এখনো কিছু নেই। যে পাসে কিছু সরে না, তা লেখা হয় না।',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'এখনো কিছু নেই। যে পাসে কিছু সরে না, তা লেখা হয় না।',
   'Clear the list': 'তালিকা মুছুন',
   '{count} down': '{count} নামল',
   '{count} up': '{count} উঠল',
@@ -998,19 +1085,28 @@ export const bn: Dictionary = {
   'This space, as it was': 'এই স্পেস, যেমন ছিল',
   '{count} days ago': { one: '{count} দিন আগে', other: '{count} দিন আগে' },
   'What would change?': 'কী বদলাবে?',
-  '{count} notes would go back to what they said then.': { one: '{count}টি নোট তখন যা ছিল তাতেই ফিরে যাবে।', other: '{count}টি নোট তখন যা ছিল তাতেই ফিরে যাবে।' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count}টি নোট তখন যা ছিল তাতেই ফিরে যাবে।',
+    other: '{count}টি নোট তখন যা ছিল তাতেই ফিরে যাবে।',
+  },
   'Nothing has changed since then.': 'তখন থেকে কিছু বদলায়নি।',
-  '{count} notes went back.': { one: '{count}টি নোট ফিরে গেছে।', other: '{count}টি নোট ফিরে গেছে।' },
-  'The account keeps a month of versions of every note that syncs.': 'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক মাসের ভার্সন রাখে।',
+  '{count} notes went back.': {
+    one: '{count}টি নোট ফিরে গেছে।',
+    other: '{count}টি নোট ফিরে গেছে।',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক মাসের ভার্সন রাখে।',
   'That did not work.': 'এটি কাজ করল না।',
   'Signing in': 'সাইন ইন হচ্ছে',
   'Ask for a code from an app': 'অ্যাপ থেকে কোড চান',
   'Turn on': 'চালু করুন',
   'Turn off': 'বন্ধ করুন',
-  'Put this into your authenticator app, then type its code.': 'এটি আপনার অথেন্টিকেটর অ্যাপে দিন, তারপর তার কোড লিখুন।',
+  'Put this into your authenticator app, then type its code.':
+    'এটি আপনার অথেন্টিকেটর অ্যাপে দিন, তারপর তার কোড লিখুন।',
   Secret: 'গোপন কী',
   'Code from the app': 'অ্যাপের কোড',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'এগুলো নিরাপদ জায়গায় রাখুন। প্রতিটি একবার কাজ করে, আর দেখানো হয় না।',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'এগুলো নিরাপদ জায়গায় রাখুন। প্রতিটি একবার কাজ করে, আর দেখানো হয় না।',
   'Recovery codes': 'রিকভারি কোড',
   'Recovery code': 'রিকভারি কোড',
   'Recovery codes left': 'বাকি রিকভারি কোড',
@@ -1032,7 +1128,8 @@ export const bn: Dictionary = {
   Pages: 'পাতা',
   'Page {number} of {count}': 'পাতা {number}/{count}',
   'What is selected': 'যা নির্বাচিত',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ক্যানভাস: {cards} কার্ড, {links} লিঙ্ক, {drawings} আঁকা',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ক্যানভাস: {cards} কার্ড, {links} লিঙ্ক, {drawings} আঁকা',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'প্রদানকারী',
@@ -1069,13 +1166,86 @@ export const bn: Dictionary = {
   'AI block': 'AI ব্লক',
   'Highlight colour': 'হাইলাইটের রং',
   'A single newline breaks the line': 'একটি নতুন লাইনই লাইন ভাঙে',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'বন্ধ মানে আদর্শ markdown: এক অনুচ্ছেদের দুই লাইন এক হিসেবে পড়া হয়; Obsidian একে কঠোর লাইন বিরতি বলে।',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'বন্ধ মানে আদর্শ markdown: এক অনুচ্ছেদের দুই লাইন এক হিসেবে পড়া হয়; Obsidian একে কঠোর লাইন বিরতি বলে।',
   'New links': 'নতুন লিঙ্ক',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'উইকিলিঙ্ক নোটের নাম ধরে, তাই নাম বদলালেও লিঙ্ক টেকে; দুই ধরনই পড়া হয়।',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'উইকিলিঙ্ক নোটের নাম ধরে, তাই নাম বদলালেও লিঙ্ক টেকে; দুই ধরনই পড়া হয়।',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, সবচেয়ে ছোট নাম',
   'Markdown, relative path': 'Markdown, আপেক্ষিক পথ',
   'Markdown, path in the space': 'Markdown, স্পেসে পথ',
+  // Publishing part one.
+  'The folders you choose become public.': 'বেছে নেওয়া ফোল্ডার সর্বজনীন হয়।',
+  'Anyone with the address can read what is published, drafts included.':
+    'ঠিকানা জানা যে কেউ প্রকাশিত সব পড়তে পারে, খসড়াও।',
+  'Which notes': 'কোন নোট',
+  'Notes outside a rule': 'নিয়মের বাইরের নোট',
+  'Are published': 'প্রকাশিত হয়',
+  'Stay private': 'ব্যক্তিগত থাকে',
+  'Follows the rule': 'নিয়ম মানে',
+  Published: 'প্রকাশিত',
+  Private: 'ব্যক্তিগত',
+  '{count} pages': '{count}টি পাতা',
+  '{count} new': '{count}টি নতুন',
+  '{count} gone': '{count}টি সরানো',
+  'and more': 'এবং আরও',
+  'How it appears': 'কেমন দেখায়',
+  Description: 'বিবরণ',
+  'What this site is': 'এই সাইট কী নিয়ে',
+  'Tab icon': 'ট্যাব আইকন',
+  Password: 'পাসওয়ার্ড',
+  'Set a new one': 'নতুন দিন',
+  'Ask for a password': 'পাসওয়ার্ড চান',
+  'No password': 'পাসওয়ার্ড নেই',
+  'Remove the password': 'পাসওয়ার্ড সরান',
+  'Scan this with your authenticator app, then type its code.':
+    'এটি আপনার অথেনটিকেটর অ্যাপে স্ক্যান করুন, তারপর তার কোড লিখুন।',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ছবি',
+  Dictate: 'বলে লেখান',
+  'Add to {name}': '{name}-এ যোগ করুন',
+  // Web tabs
+  Reload: 'আবার লোড করুন',
+  'Clip this page': 'এই পাতা রাখুন',
+  'Clip the link': 'লিঙ্ক রাখুন',
+  'Allow the camera': 'ক্যামেরার অনুমতি দিন',
+  'Allow the clipboard': 'ক্লিপবোর্ডের অনুমতি দিন',
+  'Open in the browser': 'ব্রাউজারে খুলুন',
+  'Copy the address': 'ঠিকানা কপি করুন',
+  'Show it here': 'এখানে দেখান',
+  Website: 'ওয়েবসাইট',
+  'Open a website': 'ওয়েবসাইট খুলুন',
+  // Recording, meetings and what a model wrote
+  Record: 'রেকর্ড করুন',
+  Recording: 'রেকর্ডিং',
+  'Stop recording': 'রেকর্ডিং থামান',
+  'Meeting notes': 'সভার নোট',
+  Meeting: 'সভা',
+  'Stop the meeting': 'সভা শেষ করুন',
+  Transcribe: 'লেখায় রূপ দিন',
+  Transcript: 'প্রতিলিপি',
+  'Transcript ({language})': 'প্রতিলিপি ({language})',
+  'Written by {model}': '{model} লিখেছে',
+  'Saving the recording': 'রেকর্ডিং রাখা হচ্ছে',
+  'Turning the recording into words': 'রেকর্ডিং কথায় বদলানো হচ্ছে',
+  'Open a space to record into.': 'রেকর্ড করার জন্য একটি স্পেস খুলুন।',
+  'Sign in to take meeting notes.': 'সভার নোট নিতে সাইন ইন করুন।',
+  'Sign in to turn a recording into words.': 'রেকর্ডিং কথায় বদলাতে সাইন ইন করুন।',
+  'That microphone could not be opened.': 'ওই মাইক্রোফোন খোলা গেল না।',
+  'That recording could not be saved.': 'ওই রেকর্ডিং রাখা গেল না।',
+  'That recording could not be turned into words.': 'ওই রেকর্ডিং কথায় বদলানো গেল না।',
+  'That recording is not in this space.': 'ওই রেকর্ডিং এই স্পেসে নেই।',
+  'That recording is too long to turn into words in one go.':
+    'ওই রেকর্ডিং একবারে কথায় বদলানোর জন্য বেশি লম্বা।',
+  'That is as much as one recording may hold.': 'একটি রেকর্ডিংয়ে এতটুকুই ধরে।',
+  'Nothing could be heard in that recording.': 'ওই রেকর্ডিংয়ে কিছু শোনা গেল না।',
+  'A piece of the transcript is being tried again.': 'প্রতিলিপির একটি অংশ আবার চেষ্টা করা হচ্ছে।',
+  'The transcript is behind and losing pieces.': 'প্রতিলিপি পিছিয়ে আছে ও অংশ হারাচ্ছে।',
+  '{count} pieces of this meeting were lost.': 'এই সভার {count}টি অংশ হারিয়ে গেছে।',
+  'Add an AI provider in settings to summarise.':
+    'সারসংক্ষেপের জন্য সেটিংসে একটি AI প্রদানকারী যোগ করুন।',
+  'The summary could not be written.': 'সারসংক্ষেপ লেখা গেল না।',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'মেইল পাঠানো গেল না - আবার চেষ্টা করুন',
   'start again - that took too long': 'আবার শুরু করুন - অনেক সময় লেগেছে',
@@ -1100,7 +1270,8 @@ export const bn: Dictionary = {
   'that link is busy, try again in a minute': 'লিংকটি ব্যস্ত, এক মিনিট পরে চেষ্টা করুন',
   // Versions, the bin, and a room two people write in.
   'no such version': 'এমন ভার্সন নেই',
-  'this note was shared with you, not its folder': 'এই নোট আপনার সঙ্গে শেয়ার করা হয়েছে, এর ফোল্ডার নয়',
+  'this note was shared with you, not its folder':
+    'এই নোট আপনার সঙ্গে শেয়ার করা হয়েছে, এর ফোল্ডার নয়',
   'nothing to restore': 'ফেরানোর কিছু নেই',
   'restore its space first': 'আগে এর স্পেস ফেরান',
   'nothing to delete': 'মোছার কিছু নেই',

@@ -7,6 +7,12 @@ export const ta: Dictionary = {
   'Open file': 'கோப்பைத் திற',
   'New note inside': 'இதனுள் புதிய குறிப்பு',
   'New canvas': 'புதிய கேன்வாஸ்',
+  'New page note': 'புதிய பக்கக் குறிப்பு',
+  'Add a page': 'பக்கம் சேர்',
+  'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
+  'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
+  'Page {number}': 'பக்கம் {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
   'Note or picture': 'குறிப்பு அல்லது படம்',
@@ -34,7 +40,8 @@ export const ta: Dictionary = {
   'Create a space': 'இடத்தை உருவாக்கு',
   'Delete space': 'இடத்தை நீக்கு',
   'Delete {name}?': '{name} நீக்கவா?',
-  'Every note in this space is deleted from your computer.': 'இந்த இடத்தின் ஒவ்வொரு குறிப்பும் உங்கள் கணினியிலிருந்து நீக்கப்படும்.',
+  'Every note in this space is deleted from your computer.':
+    'இந்த இடத்தின் ஒவ்வொரு குறிப்பும் உங்கள் கணினியிலிருந்து நீக்கப்படும்.',
   'The notes inside it go too.': 'அதனுள் உள்ள குறிப்புகளும் போய்விடும்.',
   Journal: 'நாட்குறிப்பு',
   Create: 'உருவாக்கு',
@@ -206,7 +213,8 @@ export const ta: Dictionary = {
   'Image not found': 'படம் கிடைக்கவில்லை',
   'Delete {count} items': { one: '{count} உருப்படியை நீக்கு', other: '{count} உருப்படிகளை நீக்கு' },
   'Recently deleted': 'சமீபத்தில் நீக்கியவை',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'நீக்கிய குறிப்புகளும் இடங்களும் 14 நாட்கள் இங்கே இருக்கும், பிறகு நிரந்தரமாக மறைந்துவிடும்.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'நீக்கிய குறிப்புகளும் இடங்களும் 14 நாட்கள் இங்கே இருக்கும், பிறகு நிரந்தரமாக மறைந்துவிடும்.',
   'Nothing here.': 'இங்கே ஒன்றுமில்லை.',
   Empty: 'காலிசெய்',
   Spaces: 'இடங்கள்',
@@ -257,7 +265,8 @@ export const ta: Dictionary = {
   'Previous slide': 'முந்தைய படவில்லை',
   'Read-only': 'படிக்க மட்டும்',
   'No preview': 'முன்தோற்றம் இல்லை',
-  'Shown as plain text, so typing stays instant in a note this long': 'இவ்வளவு நீண்ட குறிப்பில் தட்டச்சு விரைவாக இருக்க, வெற்று உரையாகக் காட்டப்படுகிறது',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'இவ்வளவு நீண்ட குறிப்பில் தட்டச்சு விரைவாக இருக்க, வெற்று உரையாகக் காட்டப்படுகிறது',
   'Leave read-only': 'படிக்க மட்டும் நிலையை விடு',
   Next: 'அடுத்து',
   Previous: 'முந்தையது',
@@ -353,16 +362,18 @@ export const ta: Dictionary = {
   'OpenAI key': 'OpenAI சாவி',
   Model: 'மாடல்',
   Reasoning: 'பகுத்தறிதல்',
-  'Kept encrypted on your account, and never shown again.': 'உங்கள் கணக்கில் மறையாக்கம் செய்து வைக்கப்படும், மீண்டும் காட்டப்படாது.',
+  'Kept encrypted on your account, and never shown again.':
+    'உங்கள் கணக்கில் மறையாக்கம் செய்து வைக்கப்படும், மீண்டும் காட்டப்படாது.',
   'set, ends in …{tail}': 'அமைக்கப்பட்டது, …{tail} இல் முடிகிறது',
   'Saving the key': 'சாவியைச் சேமிக்கிறது',
   'this server cannot keep a key yet': 'இந்தச் சேவையகம் இன்னும் சாவியை வைக்க முடியாது',
   'that does not look like a key': 'அது சாவியாகத் தெரியவில்லை',
   'that key could not be saved': 'அந்தச் சாவியைச் சேமிக்க முடியவில்லை',
   'Sign in to ask a question.': 'கேள்வி கேட்க உள்நுழையவும்.',
-  'Asking OpenAI which models this key can use': 'இந்தச் சாவி எந்த மாடல்களைப் பயன்படுத்தலாம் என OpenAI ஐக் கேட்கிறது',
+  'Asking OpenAI which models this key can use': 'இந்தச் சாவியின் மாடல்களை OpenAI இல் கேட்கிறது',
   'Could not reach OpenAI': 'OpenAI ஐ அணுக முடியவில்லை',
-  'That key cannot use any of the models Nib asks for.': 'Nib கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
+  'That key cannot use any of the models Nib asks for.':
+    'Nib கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
   'No reasoning': 'பகுத்தறிதல் இல்லை',
   Minimal: 'மிகக் குறைவு',
   Low: 'குறைவு',
@@ -403,7 +414,10 @@ export const ta: Dictionary = {
   'Add a word': 'சொல்லைச் சேர்',
   'Add {word} to the dictionary': '{word} ஐ அகராதியில் சேர்',
   'Remove {word} from the dictionary': '{word} ஐ அகராதியிலிருந்து அகற்று',
-  '{count} things in this theme were left out.': { one: 'இந்தத் தீமில் {count} விஷயம் விடப்பட்டது.', other: 'இந்தத் தீமில் {count} விஷயங்கள் விடப்பட்டன.' },
+  '{count} things in this theme were left out.': {
+    one: 'இந்தத் தீமில் {count} விஷயம் விடப்பட்டது.',
+    other: 'இந்தத் தீமில் {count} விஷயங்கள் விடப்பட்டன.',
+  },
   'A note': 'ஒரு குறிப்பு',
   'Words with {bold} and a {link}.': '{bold} மற்றும் ஒரு {link} உள்ள சொற்கள்.',
   bold: 'தடிமன்',
@@ -448,11 +462,14 @@ export const ta: Dictionary = {
   'Line numbers': 'வரி எண்கள்',
   Syntax: 'தொடரியல்',
   'Strict CommonMark': 'கண்டிப்பான CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'நிலையான Markdown விதிகள் மட்டும்; அட்டவணைகள், பணிப் பட்டியல்கள், அடிக்குறிப்புகள் இல்லை.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'நிலையான Markdown விதிகள் மட்டும்; அட்டவணைகள், பணிப் பட்டியல்கள், அடிக்குறிப்புகள் இல்லை.',
   'Smart punctuation': 'நுண் நிறுத்தற்குறிகள்',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'தட்டச்சு செய்யும்போதே நேரான மேற்கோள்களையும் கோடுகளையும் அச்சு வடிவமாக மாற்றும்.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'தட்டச்சு செய்யும்போதே நேரான மேற்கோள்களையும் கோடுகளையும் அச்சு வடிவமாக மாற்றும்.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'தலைப்புகளுக்கு முன் 1., 1.1, 1.2 சேர்க்கும்.',
-  'Numbers display equations so you can refer to them.': 'குறிப்பிடும் வகையில் காட்சிச் சமன்பாடுகளுக்கு எண் இடும்.',
+  'Numbers display equations so you can refer to them.':
+    'குறிப்பிடும் வகையில் காட்சிச் சமன்பாடுகளுக்கு எண் இடும்.',
   Ligatures: 'இணையெழுத்துகள்',
   Off: 'ஆஃப்',
   'Code only': 'குறியீட்டில் மட்டும்',
@@ -498,7 +515,8 @@ export const ta: Dictionary = {
   'Check for updates': 'புதுப்பிப்புகளைச் சரிபார்',
   Language: 'மொழி',
   'Match the system': 'கணினியின்படி',
-  'Machine-translated. Corrections welcome.': 'இயந்திர மொழிபெயர்ப்பு. திருத்தங்கள் வரவேற்கப்படுகின்றன.',
+  'Machine-translated. Corrections welcome.':
+    'இயந்திர மொழிபெயர்ப்பு. திருத்தங்கள் வரவேற்கப்படுகின்றன.',
   'Match the app': 'செயலியின்படி',
   // Settings
   Settings: 'அமைப்புகள்',
@@ -515,13 +533,17 @@ export const ta: Dictionary = {
   'Send a new code': 'புதிய குறியீட்டை அனுப்பு',
   'Code sent to': 'குறியீடு அனுப்பப்பட்டது',
   'You already have notes on this computer.': 'இந்தக் கணினியில் ஏற்கெனவே உங்கள் குறிப்புகள் உள்ளன.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'வைத்திருந்தால் அவை உங்கள் கணக்கில் சேரும். அழித்தால் உங்கள் கணக்கில் ஏற்கெனவே உள்ளவை மட்டும் இருக்கும் - இதைத் திரும்பப் பெற முடியாது.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'வைத்திருந்தால் அவை உங்கள் கணக்கில் சேரும். அழித்தால் உங்கள் கணக்கில் ஏற்கெனவே உள்ளவை மட்டும் இருக்கும் - இதைத் திரும்பப் பெற முடியாது.',
   'Keep them': 'வைத்திரு',
   'Erase them': 'அழி',
   'Digit {number}': 'இலக்கம் {number}',
   'Resend in {seconds}s': '{seconds} வினாடியில் மீண்டும் அனுப்பு',
   'Last synced {time}.': 'கடைசியாக {time} ஒத்திசைக்கப்பட்டது.',
-  '{count} spaces sync to your account.': { one: '{count} இடம் உங்கள் கணக்குடன் ஒத்திசைகிறது.', other: '{count} இடங்கள் உங்கள் கணக்குடன் ஒத்திசைகின்றன.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} இடம் உங்கள் கணக்குடன் ஒத்திசைகிறது.',
+    other: '{count} இடங்கள் உங்கள் கணக்குடன் ஒத்திசைகின்றன.',
+  },
   Update: 'புதுப்பி',
   'Live at': 'நேரலையில்',
   // Publishing
@@ -531,9 +553,11 @@ export const ta: Dictionary = {
   'Only {name}': '{name} மட்டும்',
   'Publish this space as a blog': 'இந்த இடத்தை வலைப்பதிவாக வெளியிடு',
   'Everything in this space becomes public.': 'இந்த இடத்தில் உள்ள அனைத்தும் பொதுவாகிவிடும்.',
-  'Every note, including drafts, is readable by anyone with the address.': 'வரைவுகள் உட்பட ஒவ்வொரு குறிப்பையும் முகவரி உள்ள எவரும் படிக்க முடியும்.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'வரைவுகள் உட்பட ஒவ்வொரு குறிப்பையும் முகவரி உள்ள எவரும் படிக்க முடியும்.',
   Address: 'முகவரி',
-  'Add these at your registrar, then verify.': 'இவற்றை உங்கள் பதிவாளரில் சேர்த்து, பின் சரிபார்க்கவும்.',
+  'Add these at your registrar, then verify.':
+    'இவற்றை உங்கள் பதிவாளரில் சேர்த்து, பின் சரிபார்க்கவும்.',
   Verify: 'சரிபார்',
   'that record is not answering yet': 'அந்தப் பதிவு இன்னும் பதிலளிக்கவில்லை',
   'Stop publishing': 'வெளியிடுவதை நிறுத்து',
@@ -544,8 +568,10 @@ export const ta: Dictionary = {
   'checking…': 'சரிபார்க்கிறது…',
   // LLM
   'Connect an LLM to your notes': 'உங்கள் குறிப்புகளுடன் LLM ஐ இணை',
-  'Sign in first - the connector reaches the notes in your account.': 'முதலில் உள்நுழையவும் - இணைப்பி உங்கள் கணக்கில் உள்ள குறிப்புகளை அணுகும்.',
-  'Let it write to my notes, not only read them': 'என் குறிப்புகளைப் படிப்பது மட்டுமின்றி எழுதவும் அனுமதி',
+  'Sign in first - the connector reaches the notes in your account.':
+    'முதலில் உள்நுழையவும் - இணைப்பி உங்கள் கணக்கில் உள்ள குறிப்புகளை அணுகும்.',
+  'Let it write to my notes, not only read them':
+    'என் குறிப்புகளைப் படிப்பது மட்டுமின்றி எழுதவும் அனுமதி',
   'Create a token': 'டோக்கனை உருவாக்கு',
   'Replace the token': 'டோக்கனை மாற்று',
   'Last used {time}.': 'கடைசியாக {time} பயன்படுத்தப்பட்டது.',
@@ -560,27 +586,39 @@ export const ta: Dictionary = {
   'Reads your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும்.',
   'Reads and writes your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும், எழுதும்.',
   Other: 'மற்றவை',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் Nib மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude இல் Settings → Connectors திறந்து Add custom connector என்பதைக் கிளிக் செய்யவும்.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் Nib மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude இல் Settings → Connectors திறந்து Add custom connector என்பதைக் கிளிக் செய்யவும்.',
   'Open Claude’s connectors': 'Claude இன் இணைப்பிகளைத் திற',
   'Fill in the two fields and click Add.': 'இரு புலங்களையும் நிரப்பி Add கிளிக் செய்யவும்.',
-  'Click Connect and sign in with your Nib email.': 'Connect கிளிக் செய்து உங்கள் Nib மின்னஞ்சலால் உள்நுழையவும்.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect கிளிக் செய்து உங்கள் Nib மின்னஞ்சலால் உள்நுழையவும்.',
   'Using Claude Code instead?': 'Claude Code பயன்படுத்துகிறீர்களா?',
   Command: 'கட்டளை',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'முனையத்தில் இதை இயக்கி, உள்நுழைய Claude Code இல் /mcp என தட்டச்சு செய்யவும்.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'முனையத்தில் இதை இயக்கி, உள்நுழைய Claude Code இல் /mcp என தட்டச்சு செய்யவும்.',
   'Fill in the form and click Create.': 'படிவத்தை நிரப்பி Create கிளிக் செய்யவும்.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT இல் Settings → Plugins திறந்து கூட்டல் பொத்தானைக் கிளிக் செய்யவும்.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT இல் Settings → Plugins திறந்து கூட்டல் பொத்தானைக் கிளிக் செய்யவும்.',
   'Open ChatGPT’s plugins': 'ChatGPT இன் செருகுநிரல்களைத் திற',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins பிரிவு அல்லது கூட்டல் பொத்தான் இல்லையா? முதலில் Settings → Security and login இல் Developer mode ஆன் செய்யவும்.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT கேட்கும்போது உங்கள் Nib மின்னஞ்சலால் உள்நுழையவும்.',
-  'To use it in a chat, type @ and pick Nib.': 'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து Nib ஐத் தேர்ந்தெடுக்கவும்.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins பிரிவு அல்லது கூட்டல் பொத்தான் இல்லையா? முதலில் Settings → Security and login இல் Developer mode ஆன் செய்யவும்.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT கேட்கும்போது உங்கள் Nib மின்னஞ்சலால் உள்நுழையவும்.',
+  'To use it in a chat, type @ and pick Nib.':
+    'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து Nib ஐத் தேர்ந்தெடுக்கவும்.',
   'Server URL': 'சேவையக URL',
   Authentication: 'அங்கீகாரம்',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'மேம்பட்ட OAuth அமைப்புகளை அப்படியே விட்டு “I understand and want to continue” என்பதைத் தேர்ந்தெடுக்கவும்.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து Nib இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'மேம்பட்ட OAuth அமைப்புகளை அப்படியே விட்டு “I understand and want to continue” என்பதைத் தேர்ந்தெடுக்கவும்.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து Nib இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
   'Show config': 'கட்டமைப்பைக் காட்டு',
-  'For a client that takes a JSON block instead of a URL.': 'URL க்குப் பதிலாக JSON தொகுதியை ஏற்கும் கிளையண்டுக்கு.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'உள்நுழைய முடியாத கிளையண்டுக்கு டோக்கன் தரலாம். அது ஒரே ஒரு முறை மட்டும் காட்டப்படும்.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL க்குப் பதிலாக JSON தொகுதியை ஏற்கும் கிளையண்டுக்கு.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'உள்நுழைய முடியாத கிளையண்டுக்கு டோக்கன் தரலாம். அது ஒரே ஒரு முறை மட்டும் காட்டப்படும்.',
   // Export
   'Plain text': 'வெற்று உரை',
   'Markdown with the pictures': 'படங்களுடன் Markdown',
@@ -604,8 +642,10 @@ export const ta: Dictionary = {
   'Version history': 'பதிப்பு வரலாறு',
   'Copy link to this note': 'இந்தக் குறிப்பின் இணைப்பை நகலெடு',
   'that link could not be followed': 'அந்த இணைப்பைப் பின்தொடர முடியவில்லை',
-  'Save this note first; there is nothing to compare against yet.': 'முதலில் இந்தக் குறிப்பைச் சேமிக்கவும்; ஒப்பிட இன்னும் எதுவும் இல்லை.',
-  'No earlier versions yet. One is kept each time you save.': 'இன்னும் பழைய பதிப்புகள் இல்லை. சேமிக்கும் ஒவ்வொரு முறையும் ஒன்று வைக்கப்படும்.',
+  'Save this note first; there is nothing to compare against yet.':
+    'முதலில் இந்தக் குறிப்பைச் சேமிக்கவும்; ஒப்பிட இன்னும் எதுவும் இல்லை.',
+  'No earlier versions yet. One is kept each time you save.':
+    'இன்னும் பழைய பதிப்புகள் இல்லை. சேமிக்கும் ஒவ்வொரு முறையும் ஒன்று வைக்கப்படும்.',
   'Restore this version': 'இந்தப் பதிப்பை மீட்டெடு',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'அங்கே ஏற்கெனவே ஒரு குறிப்பு உள்ளது',
@@ -618,10 +658,12 @@ export const ta: Dictionary = {
   'you can only read this space': 'இந்த இடத்தை நீங்கள் படிக்க மட்டுமே முடியும்',
   'only the owner can do that': 'உரிமையாளர் மட்டுமே அதைச் செய்ய முடியும்',
   'this space is already yours': 'இந்த இடம் ஏற்கெனவே உங்களுடையது',
-  'that is as many people as one space holds': 'ஒரு இடத்தில் இருக்கக்கூடிய அளவு பேர் ஏற்கெனவே உள்ளனர்',
+  'that is as many people as one space holds':
+    'ஒரு இடத்தில் இருக்கக்கூடிய அளவு பேர் ஏற்கெனவே உள்ளனர்',
   'that invitation was sent to another address': 'அந்த அழைப்பு வேறு முகவரிக்கு அனுப்பப்பட்டது',
   'that link has expired': 'அந்த இணைப்பின் காலம் முடிந்தது',
-  'that code has expired - ask for a new one': 'அந்தக் குறியீட்டின் காலம் முடிந்தது - புதியது கேட்கவும்',
+  'that code has expired - ask for a new one':
+    'அந்தக் குறியீட்டின் காலம் முடிந்தது - புதியது கேட்கவும்',
   'that code is not right': 'அந்தக் குறியீடு சரியில்லை',
   'that does not look like a domain': 'அது டொமைனாகத் தெரியவில்லை',
   'that name is taken': 'அந்தப் பெயர் ஏற்கெனவே உள்ளது',
@@ -629,10 +671,13 @@ export const ta: Dictionary = {
   'that path is not usable': 'அந்தப் பாதை பயன்படுத்த முடியாதது',
   'this note changed elsewhere': 'இந்தக் குறிப்பு வேறு இடத்தில் மாறியது',
   'too many tries - ask for a new code': 'மிக அதிக முயற்சிகள் - புதிய குறியீடு கேட்கவும்',
-  'too many messages from here - try again later': 'இங்கிருந்து மிக அதிக செய்திகள் - பிறகு முயற்சிக்கவும்',
+  'too many messages from here - try again later':
+    'இங்கிருந்து மிக அதிக செய்திகள் - பிறகு முயற்சிக்கவும்',
   'too much mail today - try again tomorrow': 'இன்று மிக அதிக அஞ்சல் - நாளை முயற்சிக்கவும்',
-  'that many people are already waiting to be let in': 'அனுமதிக்கக் காத்திருப்பவர்கள் ஏற்கெனவே அந்த அளவு உள்ளனர்',
-  'use 2–32 letters, numbers or hyphens': '2–32 எழுத்துகள், எண்கள் அல்லது இணைப்புக்கோடுகளைப் பயன்படுத்தவும்',
+  'that many people are already waiting to be let in':
+    'அனுமதிக்கக் காத்திருப்பவர்கள் ஏற்கெனவே அந்த அளவு உள்ளனர்',
+  'use 2–32 letters, numbers or hyphens':
+    '2–32 எழுத்துகள், எண்கள் அல்லது இணைப்புக்கோடுகளைப் பயன்படுத்தவும்',
   'sync failed': 'ஒத்திசைவு தோல்வி',
   'could not publish': 'வெளியிட முடியவில்லை',
   'could not create a token': 'டோக்கனை உருவாக்க முடியவில்லை',
@@ -661,12 +706,14 @@ export const ta: Dictionary = {
   'Waiting for the record to show up.': 'பதிவு தோன்றக் காத்திருக்கிறது.',
   'Certificate issued.': 'சான்றிதழ் வழங்கப்பட்டது.',
   'Cloudflare could not set this domain up.': 'இந்த டொமைனை Cloudflare அமைக்க முடியவில்லை.',
-  'This server does not hand out certificates yet.': 'இந்தச் சேவையகம் இன்னும் சான்றிதழ்களை வழங்குவதில்லை.',
+  'This server does not hand out certificates yet.':
+    'இந்தச் சேவையகம் இன்னும் சான்றிதழ்களை வழங்குவதில்லை.',
   'that domain is taken': 'அந்த டொமைன் ஏற்கெனவே உள்ளது',
   'use a domain of your own': 'உங்கள் சொந்த டொமைனைப் பயன்படுத்தவும்',
   'the domain no longer points here': 'அந்த டொமைன் இனி இங்கே சுட்டவில்லை',
   'Cloudflare has blocked this domain': 'இந்த டொமைனை Cloudflare தடுத்துள்ளது',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'டொமைனின் வேரில் உங்கள் வழங்குநர் CNAME ஐ அனுமதிக்கவில்லை எனில், ALIAS அல்லது ANAME பதிவை, அல்லது CNAME flattening ஐப் பயன்படுத்தவும்.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'டொமைனின் வேரில் உங்கள் வழங்குநர் CNAME ஐ அனுமதிக்கவில்லை எனில், ALIAS அல்லது ANAME பதிவை, அல்லது CNAME flattening ஐப் பயன்படுத்தவும்.',
   // Shortcuts
   Shortcuts: 'குறுக்குவழிகள்',
   'Search shortcuts': 'குறுக்குவழிகளைத் தேடு',
@@ -677,7 +724,8 @@ export const ta: Dictionary = {
   'Reset all shortcuts': 'எல்லா குறுக்குவழிகளையும் மீட்டமை',
   'Take it over': 'இதற்கு ஒதுக்கு',
   '{key} already runs {name}.': '{key} ஏற்கெனவே {name} இயக்குகிறது.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc பதிவை நிறுத்தும், Backspace விசையை நீக்கும்.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc பதிவை நிறுத்தும், Backspace விசையை நீக்கும்.',
   Tables: 'அட்டவணைகள்',
   Pictures: 'படங்கள்',
   'Fixed keys': 'நிலையான விசைகள்',
@@ -713,7 +761,8 @@ export const ta: Dictionary = {
   'Always on top': 'எப்போதும் மேலே',
   'What is new': 'புதியது என்ன',
   'Report an issue': 'சிக்கலைத் தெரிவி',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} வட்டில் மாறியது. எடிட்டரில் உள்ளது உங்களுடையது.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} வட்டில் மாறியது. எடிட்டரில் உள்ளது உங்களுடையது.',
   'Move the line up': 'வரியை மேலே நகர்த்து',
   'Move the line down': 'வரியை கீழே நகர்த்து',
   'Copy the line up': 'வரியை மேலே நகலெடு',
@@ -748,26 +797,33 @@ export const ta: Dictionary = {
   Escape: 'Escape',
   Quit: 'செயலியை மூடு',
   'The clipboard belongs to the system.': 'கிளிப்போர்டு கணினியுடையது.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'அம்பு விசைகள், Home, End, Page up, Page down உரைக்குச் சொந்தம்.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'அம்பு விசைகள், Home, End, Page up, Page down உரைக்குச் சொந்தம்.',
   'Backspace and Delete belong to the text.': 'Backspace மற்றும் Delete உரைக்குச் சொந்தம்.',
-  'Enter closes a code block and carries a list on.': 'Enter குறியீட்டுத் தொகுதியை முடிக்கும், பட்டியலைத் தொடரும்.',
-  'Tab moves on through the app as well as indenting.': 'Tab உள்தள்ளுவதோடு செயலியில் முன்னேறவும் செய்யும்.',
+  'Enter closes a code block and carries a list on.':
+    'Enter குறியீட்டுத் தொகுதியை முடிக்கும், பட்டியலைத் தொடரும்.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab உள்தள்ளுவதோடு செயலியில் முன்னேறவும் செய்யும்.',
   'Escape closes whatever is open.': 'Escape திறந்திருப்பதை மூடும்.',
-  'Your system takes this key before the app sees it.': 'செயலி பார்ப்பதற்கு முன்பே உங்கள் கணினி இந்த விசையை எடுத்துக்கொள்கிறது.',
-  'Your browser takes this key before the app sees it.': 'செயலி பார்ப்பதற்கு முன்பே உங்கள் உலாவி இந்த விசையை எடுத்துக்கொள்கிறது.',
+  'Your system takes this key before the app sees it.':
+    'செயலி பார்ப்பதற்கு முன்பே உங்கள் கணினி இந்த விசையை எடுத்துக்கொள்கிறது.',
+  'Your browser takes this key before the app sees it.':
+    'செயலி பார்ப்பதற்கு முன்பே உங்கள் உலாவி இந்த விசையை எடுத்துக்கொள்கிறது.',
   'That is not a key combination.': 'அது விசைச் சேர்க்கை இல்லை.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt அல்லது Cmd ஐயும் அழுத்திப் பிடிக்கவும்.',
   'File list': 'கோப்புப் பட்டியல்',
   'Select every file': 'எல்லாக் கோப்புகளையும் தேர்ந்தெடு',
   'Clear the selection': 'தேர்வை நீக்கு',
   'Delete the selected files': 'தேர்ந்த கோப்புகளை நீக்கு',
-  'The file could not be written, so it goes to the print dialog': 'கோப்பை எழுத முடியவில்லை, எனவே அச்சுப் பெட்டிக்குச் செல்கிறது',
+  'The file could not be written, so it goes to the print dialog':
+    'கோப்பை எழுத முடியவில்லை, எனவே அச்சுப் பெட்டிக்குச் செல்கிறது',
   'Next file': 'அடுத்த கோப்பு',
   'Previous file': 'முந்தைய கோப்பு',
   'Show what it holds': 'உள்ளதைக் காட்டு',
   'Hide what it holds': 'உள்ளதை மறை',
   'Moving through a list': 'பட்டியலில் நகர்தல்',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'அம்பு விசைகள், Enter, Esc எது திறந்திருந்தாலும் வேலை செய்யும்; அவை குறுக்குவழிகள் அல்ல.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'அம்பு விசைகள், Enter, Esc எது திறந்திருந்தாலும் வேலை செய்யும்; அவை குறுக்குவழிகள் அல்ல.',
   'Split right': 'வலப்புறம் பிரி',
   'Split down': 'கீழ்ப்புறம் பிரி',
   'Other pane': 'மற்ற பலகம்',
@@ -789,7 +845,8 @@ export const ta: Dictionary = {
   'Follow the link': 'இணைப்பைப் பின்தொடர்',
   'Replace your own keys?': 'உங்கள் சொந்த விசைகளை மாற்றவா?',
   Replace: 'மாற்று',
-  'The keys you changed go back to what this keyboard says.': 'நீங்கள் மாற்றிய விசைகள் இந்த விசைப்பலகை சொல்வதற்குத் திரும்பும்.',
+  'The keys you changed go back to what this keyboard says.':
+    'நீங்கள் மாற்றிய விசைகள் இந்த விசைப்பலகை சொல்வதற்குத் திரும்பும்.',
   NORMAL: 'சாதாரணம்',
   INSERT: 'செருகல்',
   VISUAL: 'காட்சி',
@@ -911,7 +968,8 @@ export const ta: Dictionary = {
   Leave: 'விலகு',
   'Leave space': 'இடத்திலிருந்து விலகு',
   'Leave {name}?': '{name} இலிருந்து விலகவா?',
-  'It stays with everybody else. Its notes go from your computer.': 'மற்ற அனைவரிடமும் அது இருக்கும். அதன் குறிப்புகள் உங்கள் கணினியிலிருந்து போய்விடும்.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'மற்ற அனைவரிடமும் அது இருக்கும். அதன் குறிப்புகள் உங்கள் கணினியிலிருந்து போய்விடும்.',
   '{who} shared {space} with you': '{who} உங்களுடன் {space} பகிர்ந்தார்',
   'Shared with you': 'உங்களுடன் பகிரப்பட்டது',
   'That link does not open anything': 'அந்த இணைப்பு எதையும் திறக்காது',
@@ -928,7 +986,8 @@ export const ta: Dictionary = {
   'Release channel': 'வெளியீட்டு சேனல்',
   Stable: 'நிலையானது',
   Unstable: 'நிலையற்றது',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'நிலையானது அதிகாரப்பூர்வ வெளியீடுகளைப் பின்தொடரும்; நிலையற்றது main இல் ஒவ்வொரு புஷ்ஷையும் பின்தொடரும், உடையவும் கூடும்.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'நிலையானது அதிகாரப்பூர்வ வெளியீடுகளைப் பின்தொடரும்; நிலையற்றது main இல் ஒவ்வொரு புஷ்ஷையும் பின்தொடரும், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',
@@ -936,17 +995,27 @@ export const ta: Dictionary = {
   'In this note': 'இந்தக் குறிப்பில்',
   'In the whole space': 'முழு இடத்திலும்',
   'Nothing here needs converting.': 'இங்கே மாற்ற வேண்டியது எதுவும் இல்லை.',
-  'Rewrite {count} things?': { one: '{count} விஷயத்தை மாற்றி எழுதவா?', other: '{count} விஷயங்களை மாற்றி எழுதவா?' },
+  'Rewrite {count} things?': {
+    one: '{count} விஷயத்தை மாற்றி எழுதவா?',
+    other: '{count} விஷயங்களை மாற்றி எழுதவா?',
+  },
   'In {count} notes.': { one: '{count} குறிப்பில்.', other: '{count} குறிப்புகளில்.' },
   Rewrite: 'மாற்றி எழுது',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} பகுதிகள் மறையாக்கம் செய்யப்பட்டுள்ளன, Evernote இல்லாமல் எதுவும் அவற்றைப் படிக்க முடியாது',
-  '{count} notes had a reminder, which the export does not carry': '{count} குறிப்புகளில் நினைவூட்டல் இருந்தது, ஏற்றுமதி அதைக் கொண்டுவராது',
-  '{count} notes were in the bin and stay there': '{count} குறிப்புகள் குப்பையில் இருந்தன, அங்கேயே இருக்கும்',
-  '{count} archived notes are in a folder called Archive': '{count} காப்பகக் குறிப்புகள் Archive எனும் கோப்புறையில் உள்ளன',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} பகுதிகள் மறையாக்கம் செய்யப்பட்டுள்ளன, Evernote இல்லாமல் எதுவும் அவற்றைப் படிக்க முடியாது',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} குறிப்புகளில் நினைவூட்டல் இருந்தது, ஏற்றுமதி அதைக் கொண்டுவராது',
+  '{count} notes were in the bin and stay there':
+    '{count} குறிப்புகள் குப்பையில் இருந்தன, அங்கேயே இருக்கும்',
+  '{count} archived notes are in a folder called Archive':
+    '{count} காப்பகக் குறிப்புகள் Archive எனும் கோப்புறையில் உள்ளன',
   'The colours a note had are not kept': 'குறிப்புக்கு இருந்த நிறங்கள் வைக்கப்படவில்லை',
-  '{count} block references were written out as the words they pointed at': '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
-  '{count} saved views are left out, and every row is in the table': '{count} சேமித்த காட்சிகள் விடப்பட்டன, எல்லா வரிசைகளும் அட்டவணையில் உள்ளன',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} பக்கங்கள் HTML ஆக வந்தன, எனவே சொற்கள் வைக்கப்பட்டன, தோற்றம் இல்லை',
+  '{count} block references were written out as the words they pointed at':
+    '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} சேமித்த காட்சிகள் விடப்பட்டன, எல்லா வரிசைகளும் அட்டவணையில் உள்ளன',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} பக்கங்கள் HTML ஆக வந்தன, எனவே சொற்கள் வைக்கப்பட்டன, தோற்றம் இல்லை',
   'There are no rows in this file.': 'இந்தக் கோப்பில் வரிசைகள் இல்லை.',
   'Nothing in there can be read as notes.': 'அதில் உள்ள எதையும் குறிப்புகளாகப் படிக்க முடியாது.',
   'That export could not be read.': 'அந்த ஏற்றுமதியைப் படிக்க முடியவில்லை.',
@@ -956,21 +1025,55 @@ export const ta: Dictionary = {
   '{count} files': { one: '{count} கோப்பு', other: '{count} கோப்புகள்' },
   'This space': 'இந்த இடம்',
   'Drop an export here': 'ஏற்றுமதியை இங்கே இடவும்',
-  'A zip, a folder, or a file another app wrote': 'ஒரு zip, கோப்புறை, அல்லது வேறு செயலி எழுதிய கோப்பு',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes மற்றும் Apple Journal தங்கள் குறிப்புகளை தாங்களே திறக்கும் இடத்தில் வைக்கின்றன. முதலில் அவற்றை ஏற்றுமதி செய்து, பின் அதை இறக்குமதி செய்யவும்.',
-  'Pandoc reads this one, from the file on your disk.': 'உங்கள் வட்டில் உள்ள கோப்பிலிருந்து pandoc இதைப் படிக்கும்.',
+  'A zip, a folder, or a file another app wrote':
+    'ஒரு zip, கோப்புறை, அல்லது வேறு செயலி எழுதிய கோப்பு',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} படங்கள் HEIC ஆக வந்தன, அதை Apple மட்டுமே காட்டும்',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} மனநிலை மற்றும் செயல் அட்டைகள் வரைபடங்கள், எனவே அவற்றின் சொற்கள் மட்டுமே வரும்',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Notes மட்டுமே திறக்கும்',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} குறிப்புகள் சமீபத்தில் நீக்கியவற்றில் உள்ளன, அங்கேயே இருக்கும்',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} வரைபடங்களும் வருடிய பக்கங்களும் Notes தானே வரையும் படங்கள்',
+  '{count} tables inside notes do not come over':
+    'குறிப்புகளுக்குள் உள்ள {count} அட்டவணைகள் வரவில்லை',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} இணைப்புகள் இந்த Mac இல் இல்லாமல் iCloud இல் உள்ளன',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS அந்தக் குறிப்புகளை Full Disk Access க்குப் பின் வைக்கிறது.',
+  'There are no notes in Apple Notes on this Mac.':
+    'இந்த Mac இல் Apple Notes இல் குறிப்புகள் இல்லை.',
+  'Those notes could not be read.': 'அந்தக் குறிப்புகளைப் படிக்க முடியவில்லை.',
+  'Read them from this Mac': 'இந்த Mac இல் இருந்து படி',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access இல் nibeditor ஐ இயக்கி, மீண்டும் கேள்.',
+  'Open the setting': 'அமைப்பைத் திற',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal தானே ஏற்றுமதி செய்யும்: Journal, அமைப்புகள், ஏற்றுமதி. Apple Notes இல் ஏற்றுமதி இல்லை, எனவே அது உள்ள Mac இல் இல்லாதபோது, இங்கே இடுவது ஒரு ஏற்றுமதிக் கருவி எழுதிய கோப்புறை.',
+  'Pandoc reads this one, from the file on your disk.':
+    'உங்கள் வட்டில் உள்ள கோப்பிலிருந்து pandoc இதைப் படிக்கும்.',
   'Read it with pandoc': 'pandoc மூலம் படி',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'இதை pandoc மட்டுமே படிக்கும், அது இந்தக் கணினியில் நிறுவப்படவில்லை.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'இதை pandoc மட்டுமே படிக்கும், அது இந்தக் கணினியில் நிறுவப்படவில்லை.',
   Rows: 'வரிசைகள்',
   'As a table': 'அட்டவணையாக',
   'One note per row': 'வரிசைக்கு ஒரு குறிப்பு',
   Into: 'இதனுள்',
   'Worth knowing': 'தெரிந்துகொள்ள வேண்டியது',
-  '{count} notes arrived.': { one: '{count} குறிப்பு வந்தது.', other: '{count} குறிப்புகள் வந்தன.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} பெயர் ஏற்கெனவே இருந்தது, எனவே அந்தக் கோப்பு விலகியது.', other: '{count} பெயர்கள் ஏற்கெனவே இருந்தன, எனவே அந்தக் கோப்புகள் விலகின.' },
+  '{count} notes arrived.': {
+    one: '{count} குறிப்பு வந்தது.',
+    other: '{count} குறிப்புகள் வந்தன.',
+  },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} பெயர் ஏற்கெனவே இருந்தது, எனவே அந்தக் கோப்பு விலகியது.',
+    other: '{count} பெயர்கள் ஏற்கெனவே இருந்தன, எனவே அந்தக் கோப்புகள் விலகின.',
+  },
   'A table': 'ஒரு அட்டவணை',
   'Markdown files': 'Markdown கோப்புகள்',
   'A document': 'ஒரு ஆவணம்',
+  'A PDF, as pages to write on': 'ஒரு PDF, எழுதும் பக்கங்களாக',
   'Undo the import': 'இறக்குமதியைச் செயல்தவிர்',
   'Choose an export': 'ஏற்றுமதியைத் தேர்ந்தெடு',
   Under: 'இதன் கீழ்',
@@ -982,13 +1085,15 @@ export const ta: Dictionary = {
   'Keep both copies': 'இரு நகல்களையும் வை',
   'Let the newest win': 'புதியது வெல்லட்டும்',
   'Ask me each time': 'ஒவ்வொரு முறையும் கேள்',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'எதுவும் வீணாகாது: வெல்லாதது ஒரு பதிப்பாக வைக்கப்படும்.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'எதுவும் வீணாகாது: வெல்லாதது ஒரு பதிப்பாக வைக்கப்படும்.',
   'Waiting for you': 'உங்களுக்காகக் காத்திருக்கிறது',
   'Keep mine': 'என்னுடையதை வை',
   'Take theirs': 'அவர்களுடையதை எடு',
   'Keep both': 'இரண்டையும் வை',
   'What synced': 'ஒத்திசைந்தவை',
-  'Nothing yet. A pass that moves nothing is not written down.': 'இன்னும் எதுவும் இல்லை. எதையும் நகர்த்தாத ஒத்திசைவு பதிவாகாது.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'இன்னும் எதுவும் இல்லை. எதையும் நகர்த்தாத ஒத்திசைவு பதிவாகாது.',
   'Clear the list': 'பட்டியலை அழி',
   '{count} down': '{count} இறக்கம்',
   '{count} up': '{count} ஏற்றம்',
@@ -998,19 +1103,28 @@ export const ta: Dictionary = {
   'This space, as it was': 'இந்த இடம், இருந்தது போல',
   '{count} days ago': { one: '{count} நாளுக்கு முன்', other: '{count} நாட்களுக்கு முன்' },
   'What would change?': 'என்ன மாறும்?',
-  '{count} notes would go back to what they said then.': { one: '{count} குறிப்பு அப்போது சொன்னதற்குத் திரும்பும்.', other: '{count} குறிப்புகள் அப்போது சொன்னதற்குத் திரும்பும்.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} குறிப்பு அப்போது சொன்னதற்குத் திரும்பும்.',
+    other: '{count} குறிப்புகள் அப்போது சொன்னதற்குத் திரும்பும்.',
+  },
   'Nothing has changed since then.': 'அதன்பின் எதுவும் மாறவில்லை.',
-  '{count} notes went back.': { one: '{count} குறிப்பு திரும்பியது.', other: '{count} குறிப்புகள் திரும்பின.' },
-  'The account keeps a month of versions of every note that syncs.': 'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு மாத பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
+  '{count} notes went back.': {
+    one: '{count} குறிப்பு திரும்பியது.',
+    other: '{count} குறிப்புகள் திரும்பின.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு மாத பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
   'That did not work.': 'அது வேலை செய்யவில்லை.',
   'Signing in': 'உள்நுழைகிறது',
   'Ask for a code from an app': 'செயலியிலிருந்து ஒரு குறியீடு கேள்',
   'Turn on': 'ஆன் செய்',
   'Turn off': 'ஆஃப் செய்',
-  'Put this into your authenticator app, then type its code.': 'இதை உங்கள் அங்கீகார செயலியில் இட்டு, அதன் குறியீட்டை உள்ளிடவும்.',
+  'Put this into your authenticator app, then type its code.':
+    'இதை உங்கள் அங்கீகார செயலியில் இட்டு, அதன் குறியீட்டை உள்ளிடவும்.',
   Secret: 'ரகசியம்',
   'Code from the app': 'செயலியின் குறியீடு',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'இவற்றைப் பாதுகாப்பான இடத்தில் வைக்கவும். ஒவ்வொன்றும் ஒரு முறை வேலை செய்யும், மீண்டும் காட்டப்படாது.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'இவற்றைப் பாதுகாப்பான இடத்தில் வைக்கவும். ஒவ்வொன்றும் ஒரு முறை வேலை செய்யும், மீண்டும் காட்டப்படாது.',
   'Recovery codes': 'மீட்பு குறியீடுகள்',
   'Recovery code': 'மீட்பு குறியீடு',
   'Recovery codes left': 'மீதமுள்ள மீட்பு குறியீடுகள்',
@@ -1032,7 +1146,8 @@ export const ta: Dictionary = {
   Pages: 'பக்கங்கள்',
   'Page {number} of {count}': '{count} இல் {number} பக்கம்',
   'What is selected': 'தேர்ந்தது என்ன',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'கேன்வாஸ்: {cards} அட்டைகள், {links} இணைப்புகள், {drawings} ஓவியங்கள்',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'கேன்வாஸ்: {cards} அட்டைகள், {links} இணைப்புகள், {drawings} ஓவியங்கள்',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'வழங்குநர்கள்',
@@ -1046,8 +1161,10 @@ export const ta: Dictionary = {
   'Asking…': 'கேட்கிறது…',
   'No providers yet.': 'இன்னும் வழங்குநர்கள் இல்லை.',
   'Add {name}': '{name} சேர்',
-  'Keys stay in the secure store on this device.': 'சாவிகள் இந்தச் சாதனத்தின் பாதுகாப்பான சேமிப்பில் இருக்கும்.',
-  'This browser holds the keys in its own storage.': 'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
+  'Keys stay in the secure store on this device.':
+    'சாவிகள் இந்தச் சாதனத்தின் பாதுகாப்பான சேமிப்பில் இருக்கும்.',
+  'This browser holds the keys in its own storage.':
+    'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
   'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',
   'That provider is not set up yet.': 'அந்த வழங்குநர் இன்னும் அமைக்கப்படவில்லை.',
@@ -1069,13 +1186,86 @@ export const ta: Dictionary = {
   'AI block': 'AI தொகுதி',
   'Highlight colour': 'ஹைலைட் நிறம்',
   'A single newline breaks the line': 'ஒரு புதிய வரி வரியை முறிக்கும்',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ஆஃப் என்பது நிலையான Markdown: ஒரு பத்தியின் இரு வரிகள் ஒன்றாகப் படிக்கப்படும்; Obsidian இதை strict line breaks என்கிறது.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ஆஃப் என்பது நிலையான Markdown: ஒரு பத்தியின் இரு வரிகள் ஒன்றாகப் படிக்கப்படும்; Obsidian இதை strict line breaks என்கிறது.',
   'New links': 'புதிய இணைப்புகள்',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilinks குறிப்பைப் பெயரால் சுட்டும், எனவே மறுபெயரிட்டாலும் இணைப்பு நிலைக்கும்; இரு வடிவங்களும் படிக்கப்படும்.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilinks குறிப்பைப் பெயரால் சுட்டும், எனவே மறுபெயரிட்டாலும் இணைப்பு நிலைக்கும்; இரு வடிவங்களும் படிக்கப்படும்.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, மிகக் குறுகிய பெயர்',
   'Markdown, relative path': 'Markdown, தொடர்புப் பாதை',
   'Markdown, path in the space': 'Markdown, இடத்தில் உள்ள பாதை',
+  // Publishing part one.
+  'The folders you choose become public.': 'நீ தேர்வு செய்யும் கோப்புறைகள் பொதுவாகும்.',
+  'Anyone with the address can read what is published, drafts included.':
+    'முகவரி உள்ள எவரும் வெளியிடப்பட்டதைப் படிக்கலாம், வரைவுகளையும்.',
+  'Which notes': 'எந்தக் குறிப்புகள்',
+  'Notes outside a rule': 'விதிக்கு வெளியே உள்ள குறிப்புகள்',
+  'Are published': 'வெளியிடப்படும்',
+  'Stay private': 'தனிப்பட்டதாய் இருக்கும்',
+  'Follows the rule': 'விதியைப் பின்பற்றும்',
+  Published: 'வெளியிடப்பட்டது',
+  Private: 'தனிப்பட்டது',
+  '{count} pages': '{count} பக்கங்கள்',
+  '{count} new': '{count} புதியது',
+  '{count} gone': '{count} நீக்கியது',
+  'and more': 'மேலும்',
+  'How it appears': 'எப்படித் தோன்றும்',
+  Description: 'விவரம்',
+  'What this site is': 'இந்தத் தளம் எதைப் பற்றியது',
+  'Tab icon': 'தாவல் சின்னம்',
+  Password: 'கடவுச்சொல்',
+  'Set a new one': 'புதியதை அமை',
+  'Ask for a password': 'கடவுச்சொல் கேள்',
+  'No password': 'கடவுச்சொல் இல்லை',
+  'Remove the password': 'கடவுச்சொல்லை நீக்கு',
+  'Scan this with your authenticator app, then type its code.':
+    'இதை உன் அங்கீகரிப்புச் செயலியில் வருடி, பின் அதன் குறியீட்டை உள்ளிடு.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'புகைப்படம்',
+  Dictate: 'சொல்லி எழுது',
+  'Add to {name}': '{name} இல் சேர்',
+  // Web tabs
+  Reload: 'மீண்டும் ஏற்று',
+  'Clip this page': 'இந்தப் பக்கத்தை எடு',
+  'Clip the link': 'இணைப்பை எடு',
+  'Allow the camera': 'கேமராவை அனுமதி',
+  'Allow the clipboard': 'பிடிப்புப் பலகையை அனுமதி',
+  'Open in the browser': 'உலாவியில் திற',
+  'Copy the address': 'முகவரியை நகலெடு',
+  'Show it here': 'இங்கே காட்டு',
+  Website: 'இணையதளம்',
+  'Open a website': 'இணையதளத்தைத் திற',
+  // Recording, meetings and what a model wrote
+  Record: 'பதிவு செய்',
+  Recording: 'பதிவு',
+  'Stop recording': 'பதிவை நிறுத்து',
+  'Meeting notes': 'கூட்டக் குறிப்புகள்',
+  Meeting: 'கூட்டம்',
+  'Stop the meeting': 'கூட்டத்தை முடி',
+  Transcribe: 'எழுத்தாக்கு',
+  Transcript: 'எழுத்துவடிவம்',
+  'Transcript ({language})': 'எழுத்துவடிவம் ({language})',
+  'Written by {model}': '{model} எழுதியது',
+  'Saving the recording': 'பதிவைச் சேமிக்கிறது',
+  'Turning the recording into words': 'பதிவைச் சொற்களாக மாற்றுகிறது',
+  'Open a space to record into.': 'பதிவு செய்ய ஒரு வெளியைத் திற.',
+  'Sign in to take meeting notes.': 'கூட்டக் குறிப்புகள் எடுக்க உள்நுழை.',
+  'Sign in to turn a recording into words.': 'பதிவைச் சொற்களாக மாற்ற உள்நுழை.',
+  'That microphone could not be opened.': 'அந்த ஒலிவாங்கியைத் திறக்க முடியவில்லை.',
+  'That recording could not be saved.': 'அந்தப் பதிவைச் சேமிக்க முடியவில்லை.',
+  'That recording could not be turned into words.': 'அந்தப் பதிவைச் சொற்களாக மாற்ற முடியவில்லை.',
+  'That recording is not in this space.': 'அந்தப் பதிவு இந்த வெளியில் இல்லை.',
+  'That recording is too long to turn into words in one go.':
+    'ஒரே முறையில் சொற்களாக மாற்ற அந்தப் பதிவு மிக நீளம்.',
+  'That is as much as one recording may hold.': 'ஒரு பதிவில் இதுவே அதிகபட்சம்.',
+  'Nothing could be heard in that recording.': 'அந்தப் பதிவில் எதுவும் கேட்கவில்லை.',
+  'A piece of the transcript is being tried again.':
+    'எழுத்துவடிவத்தின் ஒரு பகுதி மீண்டும் முயற்சிக்கப்படுகிறது.',
+  'The transcript is behind and losing pieces.': 'எழுத்துவடிவம் பின் தங்கி பகுதிகளை இழக்கிறது.',
+  '{count} pieces of this meeting were lost.': 'இந்தக் கூட்டத்தின் {count} பகுதிகள் இழந்தன.',
+  'Add an AI provider in settings to summarise.': 'சுருக்க அமைப்புகளில் ஒரு AI வழங்குநரைச் சேர்.',
+  'The summary could not be written.': 'சுருக்கத்தை எழுத முடியவில்லை.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'அஞ்சலை அனுப்ப முடியவில்லை - மீண்டும் முயற்சிக்கவும்',
   'start again - that took too long': 'மீண்டும் தொடங்கவும் - அது மிக நேரம் எடுத்தது',
@@ -1091,16 +1281,19 @@ export const ta: Dictionary = {
   'that is more paths than a space leaves out': 'ஒரு இடம் விடுவதைவிட அதிக பாதைகள்',
   'that is more files than a space keeps': 'ஒரு இடம் வைக்கும் அளவைவிட அதிக கோப்புகள்',
   'that is more than a space keeps about its graph': 'ஒரு இடம் தன் வரைபடம் பற்றி வைப்பதைவிட அதிகம்',
-  'that is more folder icons than a space holds': 'ஒரு இடம் வைக்கும் அளவைவிட அதிக கோப்புறைச் சின்னங்கள்',
+  'that is more folder icons than a space holds':
+    'ஒரு இடம் வைக்கும் அளவைவிட அதிக கோப்புறைச் சின்னங்கள்',
   // Sharing a space, and being let into one.
   'nobody by that address': 'அந்த முகவரியில் யாரும் இல்லை',
   'nobody by that name': 'அந்தப் பெயரில் யாரும் இல்லை',
   'nobody is waiting by that name': 'அந்தப் பெயரில் யாரும் காத்திருக்கவில்லை',
   'this space is yours': 'இந்த இடம் உங்களுடையது',
-  'that link is busy, try again in a minute': 'அந்த இணைப்பு பணியில் உள்ளது, ஒரு நிமிடத்தில் முயற்சிக்கவும்',
+  'that link is busy, try again in a minute':
+    'அந்த இணைப்பு பணியில் உள்ளது, ஒரு நிமிடத்தில் முயற்சிக்கவும்',
   // Versions, the bin, and a room two people write in.
   'no such version': 'அப்படி ஒரு பதிப்பு இல்லை',
-  'this note was shared with you, not its folder': 'இந்தக் குறிப்பு உங்களுடன் பகிரப்பட்டது, அதன் கோப்புறை இல்லை',
+  'this note was shared with you, not its folder':
+    'இந்தக் குறிப்பு உங்களுடன் பகிரப்பட்டது, அதன் கோப்புறை இல்லை',
   'nothing to restore': 'மீட்டெடுக்க எதுவும் இல்லை',
   'restore its space first': 'முதலில் அதன் இடத்தை மீட்டெடுக்கவும்',
   'nothing to delete': 'நீக்க எதுவும் இல்லை',

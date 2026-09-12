@@ -148,6 +148,17 @@ const columns = (text: string): number =>
  *  be a little wider than the font's average and still land on one line. */
 const PANEL_COLUMNS = 48
 
+/** How wide a translation of a glasses string may be.
+ *
+ *  A line, for almost all of them. Two of them are sentences the app says while it
+ *  waits on OpenAI, and English itself does not fit a line: the shell wraps those
+ *  onto a second of the body's eight rows rather than cutting them, so the rule
+ *  there is proportion rather than a line - half again the English, which is the
+ *  room a language that spells things out needs and a sentence answering a label
+ *  does not have. */
+const roomFor = (english: string): number =>
+  Math.max(PANEL_COLUMNS, Math.ceil(columns(english) * 1.5))
+
 /** What `Intl` says this language's count forms are. */
 const categoriesOf = (id: string): string[] =>
   new Intl.PluralRules(id).resolvedOptions().pluralCategories.slice().sort()
@@ -372,8 +383,10 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
         const value = catalogue[english]
         if (value === undefined) return []
 
+        const most = roomFor(english)
+
         return forms(value)
-          .filter((written) => columns(written) > PANEL_COLUMNS)
+          .filter((written) => columns(written) > most)
           .map((written) => `${columns(written)} columns: ${JSON.stringify(written)}`)
       })
       .sort()
@@ -489,7 +502,11 @@ describe('a count', () => {
 
   test('fills in what else it is given', () => {
     expect(
-      i18n.plural(2, { one: '{name}: {count} note', other: '{name}: {count} notes' }, { name: 'A' }),
+      i18n.plural(
+        2,
+        { one: '{name}: {count} note', other: '{name}: {count} notes' },
+        { name: 'A' },
+      ),
     ).toBe('A: 2 notes')
   })
 

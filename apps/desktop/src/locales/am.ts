@@ -7,6 +7,12 @@ export const am: Dictionary = {
   'Open file': 'ፋይል ክፈት',
   'New note inside': 'ውስጡ አዲስ ማስታወሻ',
   'New canvas': 'አዲስ ሸራ',
+  'New page note': 'አዲስ የገጾች ማስታወሻ',
+  'Add a page': 'ገጽ ጨምር',
+  'Add a page after this': 'ከዚህ በኋላ ገጽ ጨምር',
+  'Delete this page': 'ይህን ገጽ አጥፋ',
+  'Page {number}': 'ገጽ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ሸራ',
   Card: 'ካርድ',
   'Note or picture': 'ማስታወሻ ወይም ምስል',
@@ -34,7 +40,8 @@ export const am: Dictionary = {
   'Create a space': 'ቦታ ፍጠር',
   'Delete space': 'ቦታ አጥፋ',
   'Delete {name}?': '{name} ይጥፋ?',
-  'Every note in this space is deleted from your computer.': 'በዚህ ቦታ ያለ እያንዳንዱ ማስታወሻ ከኮምፒውተርህ ይጠፋል።',
+  'Every note in this space is deleted from your computer.':
+    'በዚህ ቦታ ያለ እያንዳንዱ ማስታወሻ ከኮምፒውተርህ ይጠፋል።',
   'The notes inside it go too.': 'ውስጡ ያሉት ማስታወሻዎችም ይሄዳሉ።',
   Journal: 'ማስታወሻ ደብተር',
   Create: 'ፍጠር',
@@ -206,7 +213,8 @@ export const am: Dictionary = {
   'Image not found': 'ምስል አልተገኘም',
   'Delete {count} items': { one: '{count} ንጥል አጥፋ', other: '{count} ንጥሎች አጥፋ' },
   'Recently deleted': 'በቅርቡ የጠፋ',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'የጠፉ ማስታወሻዎችና ቦታዎች እዚህ ፲፬ ቀን ይጠብቃሉ፣ ከዚያ ለዘላለም ይሄዳሉ።',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'የጠፉ ማስታወሻዎችና ቦታዎች እዚህ ፲፬ ቀን ይጠብቃሉ፣ ከዚያ ለዘላለም ይሄዳሉ።',
   'Nothing here.': 'እዚህ ምንም የለም።',
   Empty: 'አራግፍ',
   Spaces: 'ቦታዎች',
@@ -257,7 +265,8 @@ export const am: Dictionary = {
   'Previous slide': 'ቀዳሚ ስላይድ',
   'Read-only': 'ንባብ ብቻ',
   'No preview': 'ቅድመ እይታ የለም',
-  'Shown as plain text, so typing stays instant in a note this long': 'እንደ ተራ ጽሑፍ ይታያል፣ ስለዚህ በዚህን ያህል ረጅም ማስታወሻ መጻፍ ፈጣን ይሆናል',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'እንደ ተራ ጽሑፍ ይታያል፣ ስለዚህ በዚህን ያህል ረጅም ማስታወሻ መጻፍ ፈጣን ይሆናል',
   'Leave read-only': 'ከንባብ ብቻ ውጣ',
   Next: 'ቀጣይ',
   Previous: 'ቀዳሚ',
@@ -362,7 +371,8 @@ export const am: Dictionary = {
   'Sign in to ask a question.': 'ጥያቄ ለመጠየቅ ግባ።',
   'Asking OpenAI which models this key can use': 'ይህ ቁልፍ የትኞቹን ሞዴሎች መጠቀም እንደሚችል OpenAIን በመጠየቅ ላይ',
   'Could not reach OpenAI': 'OpenAI ላይ መድረስ አልተቻለም',
-  'That key cannot use any of the models Nib asks for.': 'ያ ቁልፍ Nib የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
+  'That key cannot use any of the models Nib asks for.':
+    'ያ ቁልፍ Nib የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
   'No reasoning': 'አመክንዮ የለም',
   Minimal: 'አነስተኛ',
   Low: 'ዝቅተኛ',
@@ -403,7 +413,10 @@ export const am: Dictionary = {
   'Add a word': 'ቃል ጨምር',
   'Add {word} to the dictionary': '{word} ወደ መዝገበ ቃላት ጨምር',
   'Remove {word} from the dictionary': '{word} ከመዝገበ ቃላት አስወግድ',
-  '{count} things in this theme were left out.': { one: 'በዚህ ገጽታ {count} ነገር ተትቷል።', other: 'በዚህ ገጽታ {count} ነገሮች ተትተዋል።' },
+  '{count} things in this theme were left out.': {
+    one: 'በዚህ ገጽታ {count} ነገር ተትቷል።',
+    other: 'በዚህ ገጽታ {count} ነገሮች ተትተዋል።',
+  },
   'A note': 'አንድ ማስታወሻ',
   'Words with {bold} and a {link}.': '{bold} እና {link} ያለባቸው ቃላት።',
   bold: 'ደማቅ',
@@ -448,9 +461,11 @@ export const am: Dictionary = {
   'Line numbers': 'የመስመር ቁጥሮች',
   Syntax: 'አገባብ',
   'Strict CommonMark': 'ጥብቅ CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'መደበኛ የmarkdown ደንቦች ብቻ፣ ሰንጠረዝ፣ የሥራ ዝርዝር ወይም የግርጌ ማስታወሻ የለም።',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'መደበኛ የmarkdown ደንቦች ብቻ፣ ሰንጠረዝ፣ የሥራ ዝርዝር ወይም የግርጌ ማስታወሻ የለም።',
   'Smart punctuation': 'ብልህ ሥርዓተ ነጥብ',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'ስትጽፍ ቀጥ ያሉ ጥቅስ ምልክቶችና ሰረዞች ወደ ኅትመት ቅርጽ ይቀይራል።',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'ስትጽፍ ቀጥ ያሉ ጥቅስ ምልክቶችና ሰረዞች ወደ ኅትመት ቅርጽ ይቀይራል።',
   'Puts 1., 1.1, 1.2 in front of headings.': 'ከአርዕስቶች ፊት ፩.፣ ፩.፩፣ ፩.፪ ያደርጋል።',
   'Numbers display equations so you can refer to them.': 'ለሚታዩ ቀመሮች ቁጥር ይሰጣል፣ ስለዚህ ልትጠቅሳቸው ትችላለህ።',
   Ligatures: 'የተጣመሩ ፊደላት',
@@ -515,13 +530,17 @@ export const am: Dictionary = {
   'Send a new code': 'አዲስ ኮድ ላክ',
   'Code sent to': 'ኮድ የተላከለት',
   'You already have notes on this computer.': 'በዚህ ኮምፒውተር ላይ አስቀድሞ ማስታወሻዎች አሉህ።',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'አስቀምጣቸው ከመዝገብህ ጋር ይጣመራሉ። አጥፋቸው መዝገብህ አስቀድሞ የያዘው ብቻ ይቀራል - ይህ መመለስ አይቻልም።',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'አስቀምጣቸው ከመዝገብህ ጋር ይጣመራሉ። አጥፋቸው መዝገብህ አስቀድሞ የያዘው ብቻ ይቀራል - ይህ መመለስ አይቻልም።',
   'Keep them': 'አስቀምጣቸው',
   'Erase them': 'አጥፋቸው',
   'Digit {number}': 'አሃዝ {number}',
   'Resend in {seconds}s': 'በ{seconds} ሰከንድ እንደገና ላክ',
   'Last synced {time}.': 'የመጨረሻ ማመሳሰል {time}።',
-  '{count} spaces sync to your account.': { one: '{count} ቦታ ከመዝገብህ ጋር ይመሳሰላል።', other: '{count} ቦታዎች ከመዝገብህ ጋር ይመሳሰላሉ።' },
+  '{count} spaces sync to your account.': {
+    one: '{count} ቦታ ከመዝገብህ ጋር ይመሳሰላል።',
+    other: '{count} ቦታዎች ከመዝገብህ ጋር ይመሳሰላሉ።',
+  },
   Update: 'አሻሽል',
   'Live at': 'በአየር ላይ',
   // Publishing
@@ -531,7 +550,8 @@ export const am: Dictionary = {
   'Only {name}': '{name} ብቻ',
   'Publish this space as a blog': 'ይህን ቦታ እንደ ብሎግ አሳትም',
   'Everything in this space becomes public.': 'በዚህ ቦታ ያለው ሁሉ ለሕዝብ ይሆናል።',
-  'Every note, including drafts, is readable by anyone with the address.': 'እያንዳንዱ ማስታወሻ፣ ንድፎችን ጨምሮ፣ አድራሻውን ያለው ሁሉ ማንበብ ይችላል።',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'እያንዳንዱ ማስታወሻ፣ ንድፎችን ጨምሮ፣ አድራሻውን ያለው ሁሉ ማንበብ ይችላል።',
   Address: 'አድራሻ',
   'Add these at your registrar, then verify.': 'እነዚህን በመዝጋቢህ ላይ ጨምር፣ ከዚያ አረጋግጥ።',
   Verify: 'አረጋግጥ',
@@ -544,7 +564,8 @@ export const am: Dictionary = {
   'checking…': 'በማረጋገጥ ላይ…',
   // LLM
   'Connect an LLM to your notes': 'LLM ከማስታወሻዎችህ አገናኝ',
-  'Sign in first - the connector reaches the notes in your account.': 'መጀመሪያ ግባ - አገናኙ በመዝገብህ ያሉትን ማስታወሻዎች ይደርሳል።',
+  'Sign in first - the connector reaches the notes in your account.':
+    'መጀመሪያ ግባ - አገናኙ በመዝገብህ ያሉትን ማስታወሻዎች ይደርሳል።',
   'Let it write to my notes, not only read them': 'በማስታወሻዎቼ ላይ እንዲጽፍ ፍቀድ፣ ማንበብ ብቻ አይደለም',
   'Create a token': 'መለያ ፍጠር',
   'Replace the token': 'መለያ ተካ',
@@ -560,27 +581,35 @@ export const am: Dictionary = {
   'Reads your notes.': 'ማስታወሻዎችህን ያነባል።',
   'Reads and writes your notes.': 'ማስታወሻዎችህን ያነባል እና ይጽፋል።',
   Other: 'ሌላ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በNib ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'በClaude ውስጥ Settings → Connectors ክፈት እና Add custom connector ጫን።',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በNib ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'በClaude ውስጥ Settings → Connectors ክፈት እና Add custom connector ጫን።',
   'Open Claude’s connectors': 'የClaude አገናኞች ክፈት',
   'Fill in the two fields and click Add.': 'ሁለቱን ሳጥኖች ሙላ እና Add ጫን።',
   'Click Connect and sign in with your Nib email.': 'Connect ጫን እና በNib ኢሜይልህ ግባ።',
   'Using Claude Code instead?': 'Claude Code ትጠቀማለህ?',
   Command: 'ትዕዛዝ',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'በተርሚናል አሂደው፣ ከዚያ ለመግባት በClaude Code ውስጥ /mcp ጻፍ።',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'በተርሚናል አሂደው፣ ከዚያ ለመግባት በClaude Code ውስጥ /mcp ጻፍ።',
   'Fill in the form and click Create.': 'ቅጹን ሙላ እና Create ጫን።',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'በChatGPT ውስጥ Settings → Plugins ክፈት እና የመደመር ቁልፍ ጫን።',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'በChatGPT ውስጥ Settings → Plugins ክፈት እና የመደመር ቁልፍ ጫን።',
   'Open ChatGPT’s plugins': 'የChatGPT ተሰኪዎች ክፈት',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'የPlugins ክፍል ወይም የመደመር ቁልፍ የለም? መጀመሪያ በSettings → Security and login ውስጥ Developer mode አብራ።',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'የPlugins ክፍል ወይም የመደመር ቁልፍ የለም? መጀመሪያ በSettings → Security and login ውስጥ Developer mode አብራ።',
   'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በNib ኢሜይልህ ግባ።',
   'To use it in a chat, type @ and pick Nib.': 'በውይይት ለመጠቀም @ ጻፍ እና Nib ምረጥ።',
   'Server URL': 'የአገልጋይ አድራሻ',
   Authentication: 'ማረጋገጫ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'የላቁ የOAuth ማስተካከያዎች እንዳሉ ተው እና “I understand and want to continue” ላይ ምልክት አድርግ።',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የNib መግቢያ ገጽ ይከፍታል።',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'የላቁ የOAuth ማስተካከያዎች እንዳሉ ተው እና “I understand and want to continue” ላይ ምልክት አድርግ።',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የNib መግቢያ ገጽ ይከፍታል።',
   'Show config': 'ውቅር አሳይ',
   'For a client that takes a JSON block instead of a URL.': 'በአድራሻ ምትክ የJSON ብሎክ ለሚቀበል ደንበኛ።',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'መግባት የማይችል ደንበኛ በምትኩ መለያ ሊሰጠው ይችላል። አንድ ጊዜ ብቻ ይታያል።',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'መግባት የማይችል ደንበኛ በምትኩ መለያ ሊሰጠው ይችላል። አንድ ጊዜ ብቻ ይታያል።',
   // Export
   'Plain text': 'ተራ ጽሑፍ',
   'Markdown with the pictures': 'markdown ከምስሎች ጋር',
@@ -604,8 +633,10 @@ export const am: Dictionary = {
   'Version history': 'የቅጂ ታሪክ',
   'Copy link to this note': 'የዚህ ማስታወሻ አገናኝ አባዛ',
   'that link could not be followed': 'ያን አገናኝ መከተል አልተቻለም',
-  'Save this note first; there is nothing to compare against yet.': 'መጀመሪያ ይህን ማስታወሻ አስቀምጥ፤ እስካሁን የሚነጻጸር ምንም የለም።',
-  'No earlier versions yet. One is kept each time you save.': 'እስካሁን ቀደምት ቅጂ የለም። በምታስቀምጥበት ጊዜ አንድ ይቀመጣል።',
+  'Save this note first; there is nothing to compare against yet.':
+    'መጀመሪያ ይህን ማስታወሻ አስቀምጥ፤ እስካሁን የሚነጻጸር ምንም የለም።',
+  'No earlier versions yet. One is kept each time you save.':
+    'እስካሁን ቀደምት ቅጂ የለም። በምታስቀምጥበት ጊዜ አንድ ይቀመጣል።',
   'Restore this version': 'ይህን ቅጂ መልስ',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'እዚያ አስቀድሞ ማስታወሻ አለ',
@@ -666,7 +697,8 @@ export const am: Dictionary = {
   'use a domain of your own': 'የራስህን ጎራ ተጠቀም',
   'the domain no longer points here': 'ጎራው ከዚህ በኋላ እዚህ አያመለክትም',
   'Cloudflare has blocked this domain': 'Cloudflare ይህን ጎራ አግዷል',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'በጎራ ሥር ላይ፣ አቅራቢህ እዚያ CNAME ካልፈቀደ የALIAS ወይም ANAME መዝገብ፣ ወይም CNAME flattening ተጠቀም።',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'በጎራ ሥር ላይ፣ አቅራቢህ እዚያ CNAME ካልፈቀደ የALIAS ወይም ANAME መዝገብ፣ ወይም CNAME flattening ተጠቀም።',
   // Shortcuts
   Shortcuts: 'አቋራጮች',
   'Search shortcuts': 'አቋራጭ ፈልግ',
@@ -713,7 +745,8 @@ export const am: Dictionary = {
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
   'Report an issue': 'ችግር አሳውቅ',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} በዲስክ ላይ ተቀይሯል። በአዘጋጁ ውስጥ ያለው የእርስዎ ነው።',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} በዲስክ ላይ ተቀይሯል። በአዘጋጁ ውስጥ ያለው የእርስዎ ነው።',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',
   'Copy the line up': 'መስመሩን ወደ ላይ አባዛ',
@@ -748,10 +781,12 @@ export const am: Dictionary = {
   Escape: 'Escape',
   Quit: 'ውጣ',
   'The clipboard belongs to the system.': 'ቅንጥብ ሰሌዳው የሥርዓቱ ነው።',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'የቀስት ቁልፎች፣ Home፣ End፣ Page up እና Page down የጽሑፉ ናቸው።',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'የቀስት ቁልፎች፣ Home፣ End፣ Page up እና Page down የጽሑፉ ናቸው።',
   'Backspace and Delete belong to the text.': 'Backspace እና Delete የጽሑፉ ናቸው።',
   'Enter closes a code block and carries a list on.': 'Enter የኮድ ብሎክ ይዘጋል እና ዝርዝሩን ይቀጥላል።',
-  'Tab moves on through the app as well as indenting.': 'Tab ወደ ውስጥ ከማስገባት በተጨማሪ በመተግበሪያው ውስጥ ይንቀሳቀሳል።',
+  'Tab moves on through the app as well as indenting.':
+    'Tab ወደ ውስጥ ከማስገባት በተጨማሪ በመተግበሪያው ውስጥ ይንቀሳቀሳል።',
   'Escape closes whatever is open.': 'Escape የተከፈተውን ሁሉ ይዘጋል።',
   'Your system takes this key before the app sees it.': 'መተግበሪያው ከማየቱ በፊት ሥርዓትህ ይህን ቁልፍ ይወስዳል።',
   'Your browser takes this key before the app sees it.': 'መተግበሪያው ከማየቱ በፊት አሳሽህ ይህን ቁልፍ ይወስዳል።',
@@ -761,13 +796,15 @@ export const am: Dictionary = {
   'Select every file': 'እያንዳንዱን ፋይል ምረጥ',
   'Clear the selection': 'ምርጫውን አጥፋ',
   'Delete the selected files': 'የተመረጡትን ፋይሎች አጥፋ',
-  'The file could not be written, so it goes to the print dialog': 'ፋይሉ መጻፍ አልቻለም፣ ስለዚህ ወደ የማተም መገናኛ ይሄዳል',
+  'The file could not be written, so it goes to the print dialog':
+    'ፋይሉ መጻፍ አልቻለም፣ ስለዚህ ወደ የማተም መገናኛ ይሄዳል',
   'Next file': 'ቀጣይ ፋይል',
   'Previous file': 'ቀዳሚ ፋይል',
   'Show what it holds': 'የያዘውን አሳይ',
   'Hide what it holds': 'የያዘውን ደብቅ',
   'Moving through a list': 'በዝርዝር ውስጥ መንቀሳቀስ',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'የቀስት ቁልፎች፣ Enter እና Esc የተከፈተው ሁሉ ላይ ይሠራሉ፤ አቋራጮች አይደሉም።',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'የቀስት ቁልፎች፣ Enter እና Esc የተከፈተው ሁሉ ላይ ይሠራሉ፤ አቋራጮች አይደሉም።',
   'Split right': 'ወደ ቀኝ ክፈል',
   'Split down': 'ወደ ታች ክፈል',
   'Other pane': 'ሌላው ሰሌዳ',
@@ -789,7 +826,8 @@ export const am: Dictionary = {
   'Follow the link': 'አገናኙን ተከተል',
   'Replace your own keys?': 'የራስህ ቁልፎች ይተኩ?',
   Replace: 'ተካ',
-  'The keys you changed go back to what this keyboard says.': 'የቀየርካቸው ቁልፎች ይህ የቁልፍ ሰሌዳ እንደሚለው ይመለሳሉ።',
+  'The keys you changed go back to what this keyboard says.':
+    'የቀየርካቸው ቁልፎች ይህ የቁልፍ ሰሌዳ እንደሚለው ይመለሳሉ።',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +949,8 @@ export const am: Dictionary = {
   Leave: 'ውጣ',
   'Leave space': 'ከቦታው ውጣ',
   'Leave {name}?': 'ከ{name} ይውጣ?',
-  'It stays with everybody else. Its notes go from your computer.': 'ለሌሎች ሁሉ ይቀራል። ማስታወሻዎቹ ከኮምፒውተርህ ይሄዳሉ።',
+  'It stays with everybody else. Its notes go from your computer.':
+    'ለሌሎች ሁሉ ይቀራል። ማስታወሻዎቹ ከኮምፒውተርህ ይሄዳሉ።',
   '{who} shared {space} with you': '{who} {space}ን ከእርስዎ ጋር አጋራ',
   'Shared with you': 'ከእርስዎ ጋር ተጋርቷል',
   'That link does not open anything': 'ያ አገናኝ ምንም አይከፍትም',
@@ -928,7 +967,8 @@ export const am: Dictionary = {
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
   Unstable: 'ያልተረጋጋ',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',
@@ -939,14 +979,20 @@ export const am: Dictionary = {
   'Rewrite {count} things?': { one: '{count} ቦታ እንደገና ይጻፍ?', other: '{count} ቦታዎች እንደገና ይጻፉ?' },
   'In {count} notes.': { one: 'በ{count} ማስታወሻ።', other: 'በ{count} ማስታወሻዎች።' },
   Rewrite: 'እንደገና ጻፍ',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ክፍሎች ተመስጥረዋል፣ እና ያለ Evernote ምንም ሊያነባቸው አይችልም',
-  '{count} notes had a reminder, which the export does not carry': '{count} ማስታወሻዎች አስታዋሽ ነበራቸው፣ ልኬቱ ግን አይወስደውም',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ክፍሎች ተመስጥረዋል፣ እና ያለ Evernote ምንም ሊያነባቸው አይችልም',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} ማስታወሻዎች አስታዋሽ ነበራቸው፣ ልኬቱ ግን አይወስደውም',
   '{count} notes were in the bin and stay there': '{count} ማስታወሻዎች በቆሻሻ ውስጥ ነበሩና እዚያ ይቀራሉ',
-  '{count} archived notes are in a folder called Archive': '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',
+  '{count} archived notes are in a folder called Archive':
+    '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',
   'The colours a note had are not kept': 'ማስታወሻው የነበሩት ቀለሞች አይቀመጡም',
-  '{count} block references were written out as the words they pointed at': '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
-  '{count} saved views are left out, and every row is in the table': '{count} የተቀመጡ እይታዎች ተትተዋል፣ እና እያንዳንዱ ረድፍ በሰንጠረዡ ውስጥ ነው',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} ገጾች እንደ HTML መጡ፣ ስለዚህ ቃላቶቻቸው ይቀመጣሉ መልካቸው ግን አይቀመጥም',
+  '{count} block references were written out as the words they pointed at':
+    '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} የተቀመጡ እይታዎች ተትተዋል፣ እና እያንዳንዱ ረድፍ በሰንጠረዡ ውስጥ ነው',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} ገጾች እንደ HTML መጡ፣ ስለዚህ ቃላቶቻቸው ይቀመጣሉ መልካቸው ግን አይቀመጥም',
   'There are no rows in this file.': 'በዚህ ፋይል ውስጥ ረድፍ የለም።',
   'Nothing in there can be read as notes.': 'ውስጡ ያለው ምንም እንደ ማስታወሻ አይነበብም።',
   'That export could not be read.': 'ያ ልኬት መነበብ አልቻለም።',
@@ -957,20 +1003,47 @@ export const am: Dictionary = {
   'This space': 'ይህ ቦታ',
   'Drop an export here': 'ልኬት እዚህ ጣል',
   'A zip, a folder, or a file another app wrote': 'zip፣ ፎልደር፣ ወይም ሌላ መተግበሪያ የጻፈው ፋይል',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes እና Apple Journal ማስታወሻዎቻቸውን እነሱ ብቻ በሚከፍቱበት ቦታ ያስቀምጣሉ። መጀመሪያ ላካቸው፣ ከዚያ ያንን አምጣ።',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ምስሎች Apple ብቻ የሚያሳየው HEIC ሆነው መጡ',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} የስሜትና የእንቅስቃሴ ካርዶች ሥዕሎች ናቸው፣ ስለዚህ ቃላቶቻቸው ብቻ ይሻገራሉ',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} ማስታወሻዎች Notes ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} ማስታወሻዎች በቅርቡ የጠፋ ውስጥ ናቸውና እዚያ ይቀራሉ',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} ሥዕሎችና የተቃኙ ገጾች Notes ራሱ የሚሥላቸው ምስሎች ናቸው',
+  '{count} tables inside notes do not come over': 'በማስታወሻዎች ውስጥ ያሉ {count} ሰንጠረዞች አይሻገሩም',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} አባሪዎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS እነዚያን ማስታወሻዎች ከFull Disk Access ጀርባ ያስቀምጣል።',
+  'There are no notes in Apple Notes on this Mac.': 'በዚህ Mac ላይ በApple Notes ውስጥ ማስታወሻ የለም።',
+  'Those notes could not be read.': 'እነዚያ ማስታወሻዎች መነበብ አልቻሉም።',
+  'Read them from this Mac': 'ከዚህ Mac አንብባቸው',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'nibeditorን በFull Disk Access ውስጥ አብራ፣ ከዚያ በድጋሚ ጠይቅ።',
+  'Open the setting': 'ማስተካከያውን ክፈት',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal ራሱን ይልካል፦ Journal፣ ማስተካከያ፣ መላክ። Apple Notes መላክ የለውም፣ ስለዚህ ካለበት Mac ርቆ የሚጣለው ላኪ የጻፈው ፎልደር ነው።',
   'Pandoc reads this one, from the file on your disk.': 'ይህን pandoc ከዲስክህ ፋይል ያነባል።',
   'Read it with pandoc': 'በpandoc አንብበው',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'ይህን pandoc ብቻ ያነባል፣ እና በዚህ ማሽን ላይ አልተጫነም።',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'ይህን pandoc ብቻ ያነባል፣ እና በዚህ ማሽን ላይ አልተጫነም።',
   Rows: 'ረድፎች',
   'As a table': 'እንደ ሰንጠረዥ',
   'One note per row': 'በየረድፉ አንድ ማስታወሻ',
   Into: 'ወደ',
   'Worth knowing': 'ማወቅ የሚገባ',
   '{count} notes arrived.': { one: '{count} ማስታወሻ ደረሰ።', other: '{count} ማስታወሻዎች ደረሱ።' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} ስም ተይዞ ነበር፣ ስለዚህ ያ ፋይል ራሱን አገለለ።', other: '{count} ስሞች ተይዘው ነበር፣ ስለዚህ እነዚያ ፋይሎች ራሳቸውን አገለሉ።' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} ስም ተይዞ ነበር፣ ስለዚህ ያ ፋይል ራሱን አገለለ።',
+    other: '{count} ስሞች ተይዘው ነበር፣ ስለዚህ እነዚያ ፋይሎች ራሳቸውን አገለሉ።',
+  },
   'A table': 'ሰንጠረዥ',
   'Markdown files': 'የmarkdown ፋይሎች',
   'A document': 'ሰነድ',
+  'A PDF, as pages to write on': 'PDF፣ ላይ የሚጻፍባቸው ገጾች ሆኖ',
   'Undo the import': 'ማምጣቱን መልስ',
   'Choose an export': 'ልኬት ምረጥ',
   Under: 'ከሥር',
@@ -982,13 +1055,15 @@ export const am: Dictionary = {
   'Keep both copies': 'ሁለቱንም ቅጂ ያዝ',
   'Let the newest win': 'አዲሱ ያሸንፍ',
   'Ask me each time': 'በየጊዜው ጠይቀኝ',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ምንም አይጣልም፦ ያላሸነፈው እንደ ቅጂ ይቀመጣል።',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ምንም አይጣልም፦ ያላሸነፈው እንደ ቅጂ ይቀመጣል።',
   'Waiting for you': 'እርስዎን በመጠበቅ ላይ',
   'Keep mine': 'የኔን ያዝ',
   'Take theirs': 'የነሱን ውሰድ',
   'Keep both': 'ሁለቱንም ያዝ',
   'What synced': 'የተመሳሰለው',
-  'Nothing yet. A pass that moves nothing is not written down.': 'እስካሁን ምንም የለም። ምንም የማያንቀሳቅስ ዙር አይመዘገብም።',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'እስካሁን ምንም የለም። ምንም የማያንቀሳቅስ ዙር አይመዘገብም።',
   'Clear the list': 'ዝርዝሩን አጥፋ',
   '{count} down': '{count} ወደ ታች',
   '{count} up': '{count} ወደ ላይ',
@@ -998,19 +1073,25 @@ export const am: Dictionary = {
   'This space, as it was': 'ይህ ቦታ፣ እንደነበረው',
   '{count} days ago': { one: 'ከ{count} ቀን በፊት', other: 'ከ{count} ቀናት በፊት' },
   'What would change?': 'ምን ይቀየራል?',
-  '{count} notes would go back to what they said then.': { one: '{count} ማስታወሻ ወደ ያኔው ይዘቱ ይመለሳል።', other: '{count} ማስታወሻዎች ወደ ያኔው ይዘታቸው ይመለሳሉ።' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} ማስታወሻ ወደ ያኔው ይዘቱ ይመለሳል።',
+    other: '{count} ማስታወሻዎች ወደ ያኔው ይዘታቸው ይመለሳሉ።',
+  },
   'Nothing has changed since then.': 'ከዚያ ወዲህ ምንም አልተቀየረም።',
   '{count} notes went back.': { one: '{count} ማስታወሻ ተመለሰ።', other: '{count} ማስታወሻዎች ተመለሱ።' },
-  'The account keeps a month of versions of every note that syncs.': 'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ወር ቅጂ ይይዛል።',
+  'The account keeps a month of versions of every note that syncs.':
+    'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ወር ቅጂ ይይዛል።',
   'That did not work.': 'ያ አልሠራም።',
   'Signing in': 'መግቢያ',
   'Ask for a code from an app': 'ከመተግበሪያ ኮድ ጠይቅ',
   'Turn on': 'አብራ',
   'Turn off': 'አጥፋ',
-  'Put this into your authenticator app, then type its code.': 'ይህን በማረጋገጫ መተግበሪያህ ውስጥ አስገባ፣ ከዚያ ኮዱን ጻፍ።',
+  'Put this into your authenticator app, then type its code.':
+    'ይህን በማረጋገጫ መተግበሪያህ ውስጥ አስገባ፣ ከዚያ ኮዱን ጻፍ።',
   Secret: 'ምስጢር',
   'Code from the app': 'ከመተግበሪያው ኮድ',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'እነዚህን በአስተማማኝ ቦታ አስቀምጥ። እያንዳንዱ አንድ ጊዜ ይሠራል፣ እና ዳግም አይታዩም።',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'እነዚህን በአስተማማኝ ቦታ አስቀምጥ። እያንዳንዱ አንድ ጊዜ ይሠራል፣ እና ዳግም አይታዩም።',
   'Recovery codes': 'የመልሶ ማግኛ ኮዶች',
   'Recovery code': 'የመልሶ ማግኛ ኮድ',
   'Recovery codes left': 'የቀሩ የመልሶ ማግኛ ኮዶች',
@@ -1032,7 +1113,8 @@ export const am: Dictionary = {
   Pages: 'ገጾች',
   'Page {number} of {count}': 'ገጽ {number}/{count}',
   'What is selected': 'የተመረጠው',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ሸራ፦ {cards} ካርድ፣ {links} አገናኝ፣ {drawings} ሥዕል',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ሸራ፦ {cards} ካርድ፣ {links} አገናኝ፣ {drawings} ሥዕል',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'አቅራቢዎች',
@@ -1069,13 +1151,85 @@ export const am: Dictionary = {
   'AI block': 'የAI ብሎክ',
   'Highlight colour': 'የማጉላት ቀለም',
   'A single newline breaks the line': 'አንድ አዲስ መስመር መስመሩን ይሰብራል',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ጠፍቷል መደበኛ markdown ነው፦ የአንድ አንቀጽ ሁለት መስመር እንደ አንድ ይነበባል፤ Obsidian ጥብቅ የመስመር መቋረጥ ይለዋል።',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ጠፍቷል መደበኛ markdown ነው፦ የአንድ አንቀጽ ሁለት መስመር እንደ አንድ ይነበባል፤ Obsidian ጥብቅ የመስመር መቋረጥ ይለዋል።',
   'New links': 'አዲስ አገናኞች',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'የዊኪ አገናኝ የማስታወሻውን ስም ይጠራል፣ ስለዚህ ስሙ ሲቀየር አገናኙ ይቆያል፤ ሁለቱም አጻጻፎች ይነበባሉ።',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'የዊኪ አገናኝ የማስታወሻውን ስም ይጠራል፣ ስለዚህ ስሙ ሲቀየር አገናኙ ይቆያል፤ ሁለቱም አጻጻፎች ይነበባሉ።',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'markdown፣ አጭሩ ስም',
   'Markdown, relative path': 'markdown፣ አንጻራዊ መንገድ',
   'Markdown, path in the space': 'markdown፣ በቦታው ውስጥ መንገድ',
+  // Publishing part one.
+  'The folders you choose become public.': 'የመረጥካቸው ፎልደሮች ለሕዝብ ይሆናሉ።',
+  'Anyone with the address can read what is published, drafts included.':
+    'አድራሻውን ያለው ሁሉ የታተመውን፣ ንድፎችንም ጨምሮ ማንበብ ይችላል።',
+  'Which notes': 'የትኞቹ ማስታወሻዎች',
+  'Notes outside a rule': 'ደንብ የሌላቸው ማስታወሻዎች',
+  'Are published': 'ይታተማሉ',
+  'Stay private': 'የግል ይቀራሉ',
+  'Follows the rule': 'ደንቡን ይከተላል',
+  Published: 'ታትሟል',
+  Private: 'የግል',
+  '{count} pages': '{count} ገጾች',
+  '{count} new': '{count} አዲስ',
+  '{count} gone': '{count} ተነሱ',
+  'and more': 'እና ተጨማሪ',
+  'How it appears': 'እንዴት እንደሚታይ',
+  Description: 'መግለጫ',
+  'What this site is': 'ይህ ጣቢያ ስለ ምን ነው',
+  'Tab icon': 'የትር ምልክት',
+  Password: 'የይለፍ ቃል',
+  'Set a new one': 'አዲስ አዘጋጅ',
+  'Ask for a password': 'የይለፍ ቃል ጠይቅ',
+  'No password': 'የይለፍ ቃል የለም',
+  'Remove the password': 'የይለፍ ቃሉን አስወግድ',
+  'Scan this with your authenticator app, then type its code.':
+    'ይህን በማረጋገጫ መተግበሪያህ ቃኝ፣ ከዚያ ኮዱን ጻፍ።',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ፎቶ',
+  Dictate: 'ተናገር',
+  'Add to {name}': 'ወደ {name} ጨምር',
+  // Web tabs
+  Reload: 'እንደገና ጫን',
+  'Clip this page': 'ይህን ገጽ አስቀምጥ',
+  'Clip the link': 'አገናኙን አስቀምጥ',
+  'Allow the camera': 'ካሜራውን ፍቀድ',
+  'Allow the clipboard': 'ቅንጥብ ሰሌዳውን ፍቀድ',
+  'Open in the browser': 'በአሳሽ ክፈት',
+  'Copy the address': 'አድራሻውን አባዛ',
+  'Show it here': 'እዚህ አሳይ',
+  Website: 'ድረ ገጽ',
+  'Open a website': 'ድረ ገጽ ክፈት',
+  // Recording, meetings and what a model wrote
+  Record: 'ቅረጽ',
+  Recording: 'ቀረጻ',
+  'Stop recording': 'ቀረጻውን አቁም',
+  'Meeting notes': 'የስብሰባ ማስታወሻ',
+  Meeting: 'ስብሰባ',
+  'Stop the meeting': 'ስብሰባውን አብቃ',
+  Transcribe: 'ወደ ጽሑፍ ለውጥ',
+  Transcript: 'ግልባጭ',
+  'Transcript ({language})': 'ግልባጭ ({language})',
+  'Written by {model}': '{model} ጽፎታል',
+  'Saving the recording': 'ቀረጻውን በማስቀመጥ ላይ',
+  'Turning the recording into words': 'ቀረጻውን ወደ ቃላት በመለወጥ ላይ',
+  'Open a space to record into.': 'የሚቀረጽበት ቦታ ክፈት።',
+  'Sign in to take meeting notes.': 'የስብሰባ ማስታወሻ ለመያዝ ግባ።',
+  'Sign in to turn a recording into words.': 'ቀረጻን ወደ ቃላት ለመለወጥ ግባ።',
+  'That microphone could not be opened.': 'ያ ማይክሮፎን መከፈት አልቻለም።',
+  'That recording could not be saved.': 'ያ ቀረጻ መቀመጥ አልቻለም።',
+  'That recording could not be turned into words.': 'ያ ቀረጻ ወደ ቃላት መለወጥ አልቻለም።',
+  'That recording is not in this space.': 'ያ ቀረጻ በዚህ ቦታ ውስጥ አይደለም።',
+  'That recording is too long to turn into words in one go.':
+    'ያ ቀረጻ በአንድ ጊዜ ወደ ቃላት ለመለወጥ በጣም ረጅም ነው።',
+  'That is as much as one recording may hold.': 'አንድ ቀረጻ የሚይዘው ያን ያህል ነው።',
+  'Nothing could be heard in that recording.': 'በዚያ ቀረጻ ውስጥ ምንም አልተሰማም።',
+  'A piece of the transcript is being tried again.': 'የግልባጩ አንድ ክፍል በድጋሚ ይሞከራል።',
+  'The transcript is behind and losing pieces.': 'ግልባጩ ወደኋላ ቀርቶ ክፍሎችን ያጣል።',
+  '{count} pieces of this meeting were lost.': 'የዚህ ስብሰባ {count} ክፍሎች ጠፍተዋል።',
+  'Add an AI provider in settings to summarise.': 'ለማጠቃለል በማስተካከያ የAI አቅራቢ ጨምር።',
+  'The summary could not be written.': 'ማጠቃለያው መጻፍ አልቻለም።',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ደብዳቤ መላክ አልተቻለም - እንደገና ሞክር',
   'start again - that took too long': 'እንደገና ጀምር - ያ በጣም ረዘመ',

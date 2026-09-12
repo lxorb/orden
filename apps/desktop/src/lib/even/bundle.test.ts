@@ -237,16 +237,23 @@ describe('the bundle a package is made of', () => {
 
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
-    // 6.8 MB as this is written, measured on 2026-09-12, and about 3 MB packed. The
-    // ceiling is close to it on purpose: this number went from 11.8 MB to 6.0 by
-    // leaving libraries out, and a megabyte back is a library that crept in again.
-    // Speed is the selling point, and on a phone the download is part of it.
+    // 8.6 MB as this is written, measured on 2026-09-12. The ceiling is close to it
+    // on purpose: this number went from 11.8 MB to 6.0 by leaving libraries out, and
+    // a megabyte back is a library that crept in again. Speed is the selling point,
+    // and on a phone the download is part of it.
     //
-    // The biggest single file in it is not the app: it is node-emoji's table, 1.1 MB,
-    // which `insteadOf` in packages/glasses/src/firmware.ts uses to write an emoji
-    // the firmware cannot draw as its own `:name:` rather than as a box. That is a
-    // feature with a price, and it is the first thing to weigh if this ever has to
-    // come down.
-    expect(bytes).toBeLessThan(8 * 1024 * 1024)
+    // Two things in it are not the app, and they are the two to weigh if this ever
+    // has to come down:
+    //
+    //  - 2.5 MB of language catalogues, one chunk each of the 39 in src/locales. A
+    //    reader loads one of them, but the package is fetched whole, so all 39 are
+    //    paid for. The plugin could ship only the ones the firmware can draw: its
+    //    font covers Latin, Cyrillic, Greek and CJK, so the Devanagari, Arabic,
+    //    Tamil, Thai, Burmese and Ethiopic catalogues are a panel of boxes today and
+    //    English would read better. See docs/conventions.md.
+    //  - node-emoji's table, 1.1 MB, which `insteadOf` in
+    //    packages/glasses/src/firmware.ts uses to write an emoji the firmware cannot
+    //    draw as its own `:name:` rather than as a box.
+    expect(bytes).toBeLessThan(10 * 1024 * 1024)
   })
 })

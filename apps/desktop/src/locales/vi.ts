@@ -7,6 +7,12 @@ export const vi: Dictionary = {
   'Open file': 'Mở tệp',
   'New note inside': 'Ghi chú mới bên trong',
   'New canvas': 'Canvas mới',
+  'New page note': 'Ghi chú nhiều trang mới',
+  'Add a page': 'Thêm một trang',
+  'Add a page after this': 'Thêm một trang sau trang này',
+  'Delete this page': 'Xoá trang này',
+  'Page {number}': 'Trang {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Canvas',
   Card: 'Thẻ',
   'Note or picture': 'Ghi chú hoặc ảnh',
@@ -34,7 +40,8 @@ export const vi: Dictionary = {
   'Create a space': 'Tạo không gian',
   'Delete space': 'Xoá không gian',
   'Delete {name}?': 'Xoá {name}?',
-  'Every note in this space is deleted from your computer.': 'Mọi ghi chú trong không gian này bị xoá khỏi máy của bạn.',
+  'Every note in this space is deleted from your computer.':
+    'Mọi ghi chú trong không gian này bị xoá khỏi máy của bạn.',
   'The notes inside it go too.': 'Các ghi chú bên trong cũng mất.',
   Journal: 'Nhật ký',
   Create: 'Tạo',
@@ -206,7 +213,8 @@ export const vi: Dictionary = {
   'Image not found': 'Không thấy ảnh',
   'Delete {count} items': 'Xoá {count} mục',
   'Recently deleted': 'Vừa xoá',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Ghi chú và không gian đã xoá chờ ở đây 14 ngày, rồi mất hẳn.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Ghi chú và không gian đã xoá chờ ở đây 14 ngày, rồi mất hẳn.',
   'Nothing here.': 'Không có gì.',
   Empty: 'Dọn sạch',
   Spaces: 'Không gian',
@@ -257,7 +265,8 @@ export const vi: Dictionary = {
   'Previous slide': 'Slide trước',
   'Read-only': 'Chỉ đọc',
   'No preview': 'Không xem trước',
-  'Shown as plain text, so typing stays instant in a note this long': 'Hiển thị dưới dạng văn bản thuần để việc nhập vẫn tức thì trong ghi chú dài như vậy',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Hiển thị dưới dạng văn bản thuần để việc nhập vẫn tức thì trong ghi chú dài như vậy',
   'Leave read-only': 'Thoát chỉ đọc',
   Next: 'Sau',
   Previous: 'Trước',
@@ -353,7 +362,8 @@ export const vi: Dictionary = {
   'OpenAI key': 'Khoá OpenAI',
   Model: 'Mô hình',
   Reasoning: 'Suy luận',
-  'Kept encrypted on your account, and never shown again.': 'Được mã hoá trong tài khoản của bạn, và không hiện lại.',
+  'Kept encrypted on your account, and never shown again.':
+    'Được mã hoá trong tài khoản của bạn, và không hiện lại.',
   'set, ends in …{tail}': 'đã đặt, kết thúc …{tail}',
   'Saving the key': 'Đang lưu khoá',
   'this server cannot keep a key yet': 'máy chủ này chưa giữ được khoá',
@@ -362,7 +372,8 @@ export const vi: Dictionary = {
   'Sign in to ask a question.': 'Đăng nhập để đặt câu hỏi.',
   'Asking OpenAI which models this key can use': 'Đang hỏi OpenAI khoá này dùng được mô hình nào',
   'Could not reach OpenAI': 'Không kết nối được OpenAI',
-  'That key cannot use any of the models Nib asks for.': 'Khoá này không dùng được mô hình nào Nib cần.',
+  'That key cannot use any of the models Nib asks for.':
+    'Khoá này không dùng được mô hình nào Nib cần.',
   'No reasoning': 'Không suy luận',
   Minimal: 'Tối thiểu',
   Low: 'Thấp',
@@ -448,11 +459,14 @@ export const vi: Dictionary = {
   'Line numbers': 'Số dòng',
   Syntax: 'Cú pháp',
   'Strict CommonMark': 'CommonMark chuẩn',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Chỉ các quy tắc Markdown chuẩn, không bảng, danh sách việc hay chú thích.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Chỉ các quy tắc Markdown chuẩn, không bảng, danh sách việc hay chú thích.',
   'Smart punctuation': 'Dấu câu thông minh',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Đổi dấu nháy thẳng và gạch nối thành dạng nhà in khi bạn gõ.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Đổi dấu nháy thẳng và gạch nối thành dạng nhà in khi bạn gõ.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Đặt 1., 1.1, 1.2 trước các tiêu đề.',
-  'Numbers display equations so you can refer to them.': 'Đánh số phương trình khối để bạn dẫn lại được.',
+  'Numbers display equations so you can refer to them.':
+    'Đánh số phương trình khối để bạn dẫn lại được.',
   Ligatures: 'Ghép chữ',
   Off: 'Tắt',
   'Code only': 'Chỉ trong mã',
@@ -515,7 +529,8 @@ export const vi: Dictionary = {
   'Send a new code': 'Gửi mã mới',
   'Code sent to': 'Mã đã gửi tới',
   'You already have notes on this computer.': 'Bạn đã có ghi chú trên máy này.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Giữ lại thì chúng nhập vào tài khoản của bạn. Xoá đi thì chỉ còn những gì tài khoản đã có - không thể hoàn tác.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Giữ lại thì chúng nhập vào tài khoản của bạn. Xoá đi thì chỉ còn những gì tài khoản đã có - không thể hoàn tác.',
   'Keep them': 'Giữ lại',
   'Erase them': 'Xoá đi',
   'Digit {number}': 'Chữ số {number}',
@@ -531,9 +546,11 @@ export const vi: Dictionary = {
   'Only {name}': 'Chỉ {name}',
   'Publish this space as a blog': 'Xuất bản không gian này thành blog',
   'Everything in this space becomes public.': 'Mọi thứ trong không gian này thành công khai.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Mọi ghi chú, kể cả bản nháp, ai có địa chỉ đều đọc được.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Mọi ghi chú, kể cả bản nháp, ai có địa chỉ đều đọc được.',
   Address: 'Địa chỉ',
-  'Add these at your registrar, then verify.': 'Thêm các mục này ở nhà cung cấp tên miền, rồi xác minh.',
+  'Add these at your registrar, then verify.':
+    'Thêm các mục này ở nhà cung cấp tên miền, rồi xác minh.',
   Verify: 'Xác minh',
   'that record is not answering yet': 'bản ghi đó chưa trả lời',
   'Stop publishing': 'Ngừng xuất bản',
@@ -544,7 +561,8 @@ export const vi: Dictionary = {
   'checking…': 'đang kiểm tra…',
   // LLM
   'Connect an LLM to your notes': 'Kết nối một LLM với ghi chú của bạn',
-  'Sign in first - the connector reaches the notes in your account.': 'Đăng nhập trước - bộ kết nối truy cập ghi chú trong tài khoản của bạn.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Đăng nhập trước - bộ kết nối truy cập ghi chú trong tài khoản của bạn.',
   'Let it write to my notes, not only read them': 'Cho phép ghi vào ghi chú, không chỉ đọc',
   'Create a token': 'Tạo token',
   'Replace the token': 'Thay token',
@@ -560,27 +578,37 @@ export const vi: Dictionary = {
   'Reads your notes.': 'Đọc ghi chú của bạn.',
   'Reads and writes your notes.': 'Đọc và ghi ghi chú của bạn.',
   Other: 'Khác',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email Nib của bạn; không cần dán gì.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Trong Claude, mở Settings → Connectors rồi bấm Add custom connector.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email Nib của bạn; không cần dán gì.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Trong Claude, mở Settings → Connectors rồi bấm Add custom connector.',
   'Open Claude’s connectors': 'Mở Connectors của Claude',
   'Fill in the two fields and click Add.': 'Điền hai ô rồi bấm Add.',
-  'Click Connect and sign in with your Nib email.': 'Bấm Connect rồi đăng nhập bằng email Nib của bạn.',
+  'Click Connect and sign in with your Nib email.':
+    'Bấm Connect rồi đăng nhập bằng email Nib của bạn.',
   'Using Claude Code instead?': 'Dùng Claude Code thay vì thế?',
   Command: 'Lệnh',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Chạy trong terminal, rồi gõ /mcp trong Claude Code để đăng nhập.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Chạy trong terminal, rồi gõ /mcp trong Claude Code để đăng nhập.',
   'Fill in the form and click Create.': 'Điền biểu mẫu rồi bấm Create.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'Trong ChatGPT, mở Settings → Plugins rồi bấm nút dấu cộng.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Trong ChatGPT, mở Settings → Plugins rồi bấm nút dấu cộng.',
   'Open ChatGPT’s plugins': 'Mở Plugins của ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Không thấy mục Plugins hay nút dấu cộng? Bật Developer mode trước, ở Settings → Security and login.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Không thấy mục Plugins hay nút dấu cộng? Bật Developer mode trước, ở Settings → Security and login.',
   'Sign in with your Nib email when ChatGPT asks.': 'Đăng nhập bằng email Nib khi ChatGPT hỏi.',
   'To use it in a chat, type @ and pick Nib.': 'Để dùng trong một đoạn chat, gõ @ rồi chọn Nib.',
   'Server URL': 'URL máy chủ',
   Authentication: 'Xác thực',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Để nguyên các cài đặt OAuth nâng cao và tích “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Để nguyên các cài đặt OAuth nâng cao và tích “I understand and want to continue”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của Nib.',
   'Show config': 'Hiện cấu hình',
-  'For a client that takes a JSON block instead of a URL.': 'Cho ứng dụng nhận một khối JSON thay vì URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Ứng dụng không đăng nhập được thì đưa token. Token chỉ hiện một lần.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Cho ứng dụng nhận một khối JSON thay vì URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Ứng dụng không đăng nhập được thì đưa token. Token chỉ hiện một lần.',
   // Export
   'Plain text': 'Văn bản thuần',
   'Markdown with the pictures': 'Markdown kèm ảnh',
@@ -604,8 +632,10 @@ export const vi: Dictionary = {
   'Version history': 'Lịch sử phiên bản',
   'Copy link to this note': 'Sao chép liên kết đến ghi chú này',
   'that link could not be followed': 'không thể mở liên kết đó',
-  'Save this note first; there is nothing to compare against yet.': 'Lưu ghi chú này trước; chưa có gì để so.',
-  'No earlier versions yet. One is kept each time you save.': 'Chưa có phiên bản cũ. Mỗi lần lưu giữ lại một bản.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Lưu ghi chú này trước; chưa có gì để so.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Chưa có phiên bản cũ. Mỗi lần lưu giữ lại một bản.',
   'Restore this version': 'Phục hồi phiên bản này',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'đã có ghi chú ở đó',
@@ -631,7 +661,8 @@ export const vi: Dictionary = {
   'too many tries - ask for a new code': 'thử quá nhiều - xin mã mới',
   'too many messages from here - try again later': 'quá nhiều tin từ đây - thử lại sau',
   'too much mail today - try again tomorrow': 'quá nhiều thư hôm nay - thử lại mai',
-  'that many people are already waiting to be let in': 'đã có nhiều người đến thế đang chờ được vào',
+  'that many people are already waiting to be let in':
+    'đã có nhiều người đến thế đang chờ được vào',
   'use 2–32 letters, numbers or hyphens': 'dùng 2–32 chữ, số hoặc dấu gạch nối',
   'sync failed': 'đồng bộ thất bại',
   'could not publish': 'không xuất bản được',
@@ -666,7 +697,8 @@ export const vi: Dictionary = {
   'use a domain of your own': 'dùng tên miền của riêng bạn',
   'the domain no longer points here': 'tên miền không còn trỏ về đây',
   'Cloudflare has blocked this domain': 'Cloudflare đã chặn tên miền này',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Ở gốc tên miền, dùng bản ghi ALIAS hoặc ANAME, hoặc CNAME flattening, nếu nhà cung cấp không cho dùng CNAME ở đó.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Ở gốc tên miền, dùng bản ghi ALIAS hoặc ANAME, hoặc CNAME flattening, nếu nhà cung cấp không cho dùng CNAME ở đó.',
   // Shortcuts
   Shortcuts: 'Phím tắt',
   'Search shortcuts': 'Tìm phím tắt',
@@ -713,7 +745,8 @@ export const vi: Dictionary = {
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
   'Report an issue': 'Báo lỗi',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} đã đổi trên đĩa. Những gì trong trình soạn thảo là của bạn.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} đã đổi trên đĩa. Những gì trong trình soạn thảo là của bạn.',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',
   'Copy the line up': 'Sao dòng lên trên',
@@ -748,26 +781,32 @@ export const vi: Dictionary = {
   Escape: 'Esc',
   Quit: 'Thoát',
   'The clipboard belongs to the system.': 'Khay nhớ tạm thuộc về hệ thống.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Các phím mũi tên, Home, End, Page up và Page down thuộc về văn bản.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Các phím mũi tên, Home, End, Page up và Page down thuộc về văn bản.',
   'Backspace and Delete belong to the text.': 'Backspace và Delete thuộc về văn bản.',
   'Enter closes a code block and carries a list on.': 'Enter đóng khối mã và tiếp tục danh sách.',
-  'Tab moves on through the app as well as indenting.': 'Tab vừa thụt vào vừa chuyển tiếp trong ứng dụng.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab vừa thụt vào vừa chuyển tiếp trong ứng dụng.',
   'Escape closes whatever is open.': 'Esc đóng thứ đang mở.',
-  'Your system takes this key before the app sees it.': 'Hệ thống lấy phím này trước khi ứng dụng thấy.',
-  'Your browser takes this key before the app sees it.': 'Trình duyệt lấy phím này trước khi ứng dụng thấy.',
+  'Your system takes this key before the app sees it.':
+    'Hệ thống lấy phím này trước khi ứng dụng thấy.',
+  'Your browser takes this key before the app sees it.':
+    'Trình duyệt lấy phím này trước khi ứng dụng thấy.',
   'That is not a key combination.': 'Đó không phải tổ hợp phím.',
   'Hold Ctrl, Alt or Cmd as well.': 'Giữ thêm Ctrl, Alt hoặc Cmd.',
   'File list': 'Danh sách tệp',
   'Select every file': 'Chọn mọi tệp',
   'Clear the selection': 'Bỏ chọn',
   'Delete the selected files': 'Xoá các tệp đã chọn',
-  'The file could not be written, so it goes to the print dialog': 'Không ghi được tệp, nên chuyển sang hộp thoại in',
+  'The file could not be written, so it goes to the print dialog':
+    'Không ghi được tệp, nên chuyển sang hộp thoại in',
   'Next file': 'Tệp sau',
   'Previous file': 'Tệp trước',
   'Show what it holds': 'Hiện những gì bên trong',
   'Hide what it holds': 'Ẩn những gì bên trong',
   'Moving through a list': 'Di chuyển trong danh sách',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Các phím mũi tên, Enter và Esc luôn hoạt động với thứ đang mở; chúng không phải phím tắt.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Các phím mũi tên, Enter và Esc luôn hoạt động với thứ đang mở; chúng không phải phím tắt.',
   'Split right': 'Chia sang phải',
   'Split down': 'Chia xuống dưới',
   'Other pane': 'Ngăn khác',
@@ -789,7 +828,8 @@ export const vi: Dictionary = {
   'Follow the link': 'Mở liên kết',
   'Replace your own keys?': 'Thay phím bạn đã đặt?',
   Replace: 'Thay thế',
-  'The keys you changed go back to what this keyboard says.': 'Các phím bạn đã đổi trở về theo bộ phím này.',
+  'The keys you changed go back to what this keyboard says.':
+    'Các phím bạn đã đổi trở về theo bộ phím này.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +951,8 @@ export const vi: Dictionary = {
   Leave: 'Rời',
   'Leave space': 'Rời không gian',
   'Leave {name}?': 'Rời {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Không gian vẫn còn với mọi người khác. Ghi chú của nó rời khỏi máy bạn.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Không gian vẫn còn với mọi người khác. Ghi chú của nó rời khỏi máy bạn.',
   '{who} shared {space} with you': '{who} đã chia sẻ {space} với bạn',
   'Shared with you': 'Được chia sẻ với bạn',
   'That link does not open anything': 'Liên kết đó không mở được gì',
@@ -928,7 +969,8 @@ export const vi: Dictionary = {
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
   Unstable: 'Không ổn định',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',
@@ -939,14 +981,20 @@ export const vi: Dictionary = {
   'Rewrite {count} things?': 'Viết lại {count} thứ?',
   'In {count} notes.': 'Trong {count} ghi chú.',
   Rewrite: 'Viết lại',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} đoạn được mã hoá, không gì đọc được mà không có Evernote',
-  '{count} notes had a reminder, which the export does not carry': '{count} ghi chú có lời nhắc, bản xuất không mang theo',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} đoạn được mã hoá, không gì đọc được mà không có Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} ghi chú có lời nhắc, bản xuất không mang theo',
   '{count} notes were in the bin and stay there': '{count} ghi chú ở trong thùng rác và vẫn ở đó',
-  '{count} archived notes are in a folder called Archive': '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',
   'The colours a note had are not kept': 'Màu mà ghi chú từng có không được giữ',
-  '{count} block references were written out as the words they pointed at': '{count} tham chiếu khối được viết ra thành chữ mà chúng trỏ tới',
-  '{count} saved views are left out, and every row is in the table': '{count} khung xem đã lưu bị bỏ, và mọi hàng đều nằm trong bảng',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} trang đến dạng HTML, nên giữ chữ mà không giữ hình thức',
+  '{count} block references were written out as the words they pointed at':
+    '{count} tham chiếu khối được viết ra thành chữ mà chúng trỏ tới',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} khung xem đã lưu bị bỏ, và mọi hàng đều nằm trong bảng',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} trang đến dạng HTML, nên giữ chữ mà không giữ hình thức',
   'There are no rows in this file.': 'Tệp này không có hàng nào.',
   'Nothing in there can be read as notes.': 'Không có gì trong đó đọc được thành ghi chú.',
   'That export could not be read.': 'Không đọc được bản xuất đó.',
@@ -956,21 +1004,49 @@ export const vi: Dictionary = {
   '{count} files': '{count} tệp',
   'This space': 'Không gian này',
   'Drop an export here': 'Thả một bản xuất vào đây',
-  'A zip, a folder, or a file another app wrote': 'Một tệp zip, một thư mục, hay một tệp ứng dụng khác ghi',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes và Apple Journal giữ ghi chú ở nơi chỉ chúng mở được. Hãy xuất ra trước, rồi nhập bản đó.',
-  'Pandoc reads this one, from the file on your disk.': 'Pandoc đọc được tệp này, từ tệp trên đĩa của bạn.',
+  'A zip, a folder, or a file another app wrote':
+    'Một tệp zip, một thư mục, hay một tệp ứng dụng khác ghi',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ảnh ở dạng HEIC, chỉ Apple hiển thị được',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} thẻ tâm trạng và hoạt động là hình vẽ, nên chỉ chữ được chuyển sang',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} ghi chú nằm sau mật khẩu mà chỉ Notes mở được',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} ghi chú nằm trong Đã xoá gần đây và vẫn ở đó',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} hình vẽ và trang quét là ảnh do Notes tự vẽ',
+  '{count} tables inside notes do not come over': '{count} bảng trong ghi chú không chuyển sang',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} tệp kèm nằm trên iCloud chứ không phải trên Mac này',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS giữ các ghi chú đó sau Quyền truy cập toàn bộ ổ đĩa.',
+  'There are no notes in Apple Notes on this Mac.':
+    'Trên Mac này Apple Notes không có ghi chú nào.',
+  'Those notes could not be read.': 'Không đọc được các ghi chú đó.',
+  'Read them from this Mac': 'Đọc từ Mac này',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Bật nibeditor trong Quyền truy cập toàn bộ ổ đĩa rồi thử lại.',
+  'Open the setting': 'Mở cài đặt',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal tự xuất: Journal, Cài đặt, Xuất. Apple Notes không có chức năng xuất, nên ở ngoài chiếc Mac chứa nó, thứ cần kéo vào đây là thư mục do một trình xuất ghi ra.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc đọc được tệp này, từ tệp trên đĩa của bạn.',
   'Read it with pandoc': 'Đọc bằng pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Chỉ pandoc đọc được tệp này, và máy này chưa cài.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Chỉ pandoc đọc được tệp này, và máy này chưa cài.',
   Rows: 'Hàng',
   'As a table': 'Thành một bảng',
   'One note per row': 'Mỗi hàng một ghi chú',
   Into: 'Vào',
   'Worth knowing': 'Nên biết',
   '{count} notes arrived.': '{count} ghi chú đã vào.',
-  '{count} names were taken, so those files stepped aside.': '{count} tên đã có, nên các tệp đó nhường chỗ.',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} tên đã có, nên các tệp đó nhường chỗ.',
   'A table': 'Một bảng',
   'Markdown files': 'Tệp Markdown',
   'A document': 'Một tài liệu',
+  'A PDF, as pages to write on': 'Một PDF, như các trang để viết lên',
   'Undo the import': 'Hoàn tác lần nhập',
   'Choose an export': 'Chọn một bản xuất',
   Under: 'Dưới',
@@ -982,13 +1058,15 @@ export const vi: Dictionary = {
   'Keep both copies': 'Giữ cả hai bản',
   'Let the newest win': 'Bản mới nhất thắng',
   'Ask me each time': 'Hỏi tôi mỗi lần',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Không có gì bị bỏ đi: bản không thắng được giữ thành một phiên bản.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Không có gì bị bỏ đi: bản không thắng được giữ thành một phiên bản.',
   'Waiting for you': 'Đang chờ bạn',
   'Keep mine': 'Giữ bản của tôi',
   'Take theirs': 'Lấy bản của họ',
   'Keep both': 'Giữ cả hai',
   'What synced': 'Đã đồng bộ gì',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Chưa có gì. Lượt nào không chuyển gì thì không ghi lại.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Chưa có gì. Lượt nào không chuyển gì thì không ghi lại.',
   'Clear the list': 'Xoá danh sách',
   '{count} down': 'xuống {count}',
   '{count} up': 'lên {count}',
@@ -998,19 +1076,23 @@ export const vi: Dictionary = {
   'This space, as it was': 'Không gian này, như nó từng là',
   '{count} days ago': '{count} ngày trước',
   'What would change?': 'Những gì sẽ đổi?',
-  '{count} notes would go back to what they said then.': '{count} ghi chú sẽ trở về nội dung lúc đó.',
+  '{count} notes would go back to what they said then.':
+    '{count} ghi chú sẽ trở về nội dung lúc đó.',
   'Nothing has changed since then.': 'Không có gì đổi từ lúc đó.',
   '{count} notes went back.': '{count} ghi chú đã trở về.',
-  'The account keeps a month of versions of every note that syncs.': 'Tài khoản giữ một tháng phiên bản của mọi ghi chú có đồng bộ.',
+  'The account keeps a month of versions of every note that syncs.':
+    'Tài khoản giữ một tháng phiên bản của mọi ghi chú có đồng bộ.',
   'That did not work.': 'Không thành công.',
   'Signing in': 'Đang đăng nhập',
   'Ask for a code from an app': 'Xin mã từ một ứng dụng',
   'Turn on': 'Bật',
   'Turn off': 'Tắt',
-  'Put this into your authenticator app, then type its code.': 'Đưa cái này vào ứng dụng xác thực, rồi gõ mã của nó.',
+  'Put this into your authenticator app, then type its code.':
+    'Đưa cái này vào ứng dụng xác thực, rồi gõ mã của nó.',
   Secret: 'Khoá bí mật',
   'Code from the app': 'Mã từ ứng dụng',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Giữ ở nơi an toàn. Mỗi mã dùng một lần, và không hiện lại.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Giữ ở nơi an toàn. Mỗi mã dùng một lần, và không hiện lại.',
   'Recovery codes': 'Mã phục hồi',
   'Recovery code': 'Mã phục hồi',
   'Recovery codes left': 'Mã phục hồi còn lại',
@@ -1032,7 +1114,8 @@ export const vi: Dictionary = {
   Pages: 'Trang',
   'Page {number} of {count}': 'Trang {number}/{count}',
   'What is selected': 'Phần đã chọn',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Canvas: {cards} thẻ, {links} liên kết, {drawings} hình vẽ',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Canvas: {cards} thẻ, {links} liên kết, {drawings} hình vẽ',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Nhà cung cấp',
@@ -1046,8 +1129,10 @@ export const vi: Dictionary = {
   'Asking…': 'Đang hỏi…',
   'No providers yet.': 'Chưa có nhà cung cấp nào.',
   'Add {name}': 'Thêm {name}',
-  'Keys stay in the secure store on this device.': 'Khoá được giữ trong kho bảo mật của thiết bị này.',
-  'This browser holds the keys in its own storage.': 'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'Keys stay in the secure store on this device.':
+    'Khoá được giữ trong kho bảo mật của thiết bị này.',
+  'This browser holds the keys in its own storage.':
+    'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
   'That provider is not set up yet.': 'Nhà cung cấp đó chưa được thiết lập.',
@@ -1069,13 +1154,86 @@ export const vi: Dictionary = {
   'AI block': 'Khối AI',
   'Highlight colour': 'Màu đánh dấu',
   'A single newline breaks the line': 'Một lần xuống dòng là ngắt dòng',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Tắt là markdown chuẩn: hai dòng của một đoạn đọc thành một; Obsidian gọi đó là ngắt dòng nghiêm ngặt.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Tắt là markdown chuẩn: hai dòng của một đoạn đọc thành một; Obsidian gọi đó là ngắt dòng nghiêm ngặt.',
   'New links': 'Liên kết mới',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink gọi tên ghi chú, nên liên kết vẫn đúng sau khi đổi tên; cả hai cách viết đều đọc được.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink gọi tên ghi chú, nên liên kết vẫn đúng sau khi đổi tên; cả hai cách viết đều đọc được.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, tên ngắn nhất',
   'Markdown, relative path': 'Markdown, đường dẫn tương đối',
   'Markdown, path in the space': 'Markdown, đường dẫn trong không gian',
+  // Publishing part one.
+  'The folders you choose become public.': 'Các thư mục bạn chọn trở thành công khai.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Ai có địa chỉ đều đọc được những gì đã xuất bản, kể cả bản nháp.',
+  'Which notes': 'Ghi chú nào',
+  'Notes outside a rule': 'Ghi chú không theo quy tắc',
+  'Are published': 'Được xuất bản',
+  'Stay private': 'Vẫn riêng tư',
+  'Follows the rule': 'Theo quy tắc',
+  Published: 'Đã xuất bản',
+  Private: 'Riêng tư',
+  '{count} pages': '{count} trang',
+  '{count} new': '{count} mới',
+  '{count} gone': '{count} đã bỏ',
+  'and more': 'và nữa',
+  'How it appears': 'Cách hiển thị',
+  Description: 'Mô tả',
+  'What this site is': 'Trang này về gì',
+  'Tab icon': 'Biểu tượng thẻ',
+  Password: 'Mật khẩu',
+  'Set a new one': 'Đặt mật khẩu mới',
+  'Ask for a password': 'Yêu cầu mật khẩu',
+  'No password': 'Không mật khẩu',
+  'Remove the password': 'Bỏ mật khẩu',
+  'Scan this with your authenticator app, then type its code.':
+    'Quét mã này bằng ứng dụng xác thực rồi nhập mã của nó.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Ảnh',
+  Dictate: 'Đọc chính tả',
+  'Add to {name}': 'Thêm vào {name}',
+  // Web tabs
+  Reload: 'Tải lại',
+  'Clip this page': 'Lưu trang này',
+  'Clip the link': 'Lưu liên kết',
+  'Allow the camera': 'Cho phép camera',
+  'Allow the clipboard': 'Cho phép bảng tạm',
+  'Open in the browser': 'Mở trong trình duyệt',
+  'Copy the address': 'Sao chép địa chỉ',
+  'Show it here': 'Hiện ở đây',
+  Website: 'Trang web',
+  'Open a website': 'Mở một trang web',
+  // Recording, meetings and what a model wrote
+  Record: 'Ghi âm',
+  Recording: 'Bản ghi',
+  'Stop recording': 'Dừng ghi âm',
+  'Meeting notes': 'Ghi chú cuộc họp',
+  Meeting: 'Cuộc họp',
+  'Stop the meeting': 'Kết thúc cuộc họp',
+  Transcribe: 'Gỡ băng',
+  Transcript: 'Bản gỡ băng',
+  'Transcript ({language})': 'Bản gỡ băng ({language})',
+  'Written by {model}': '{model} viết',
+  'Saving the recording': 'Đang lưu bản ghi',
+  'Turning the recording into words': 'Đang chuyển bản ghi thành chữ',
+  'Open a space to record into.': 'Hãy mở một không gian để ghi vào.',
+  'Sign in to take meeting notes.': 'Hãy đăng nhập để ghi chú cuộc họp.',
+  'Sign in to turn a recording into words.': 'Hãy đăng nhập để chuyển bản ghi thành chữ.',
+  'That microphone could not be opened.': 'Không mở được micrô đó.',
+  'That recording could not be saved.': 'Không lưu được bản ghi đó.',
+  'That recording could not be turned into words.': 'Không chuyển được bản ghi đó thành chữ.',
+  'That recording is not in this space.': 'Bản ghi đó không ở trong không gian này.',
+  'That recording is too long to turn into words in one go.':
+    'Bản ghi đó quá dài để chuyển thành chữ một lần.',
+  'That is as much as one recording may hold.': 'Một bản ghi chỉ chứa được đến vậy.',
+  'Nothing could be heard in that recording.': 'Không nghe thấy gì trong bản ghi đó.',
+  'A piece of the transcript is being tried again.': 'Một đoạn bản gỡ băng đang được thử lại.',
+  'The transcript is behind and losing pieces.': 'Bản gỡ băng đang chậm lại và mất đoạn.',
+  '{count} pieces of this meeting were lost.': 'Mất {count} đoạn của cuộc họp này.',
+  'Add an AI provider in settings to summarise.':
+    'Hãy thêm nhà cung cấp AI trong cài đặt để tóm tắt.',
+  'The summary could not be written.': 'Không viết được bản tóm tắt.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'không gửi được thư - thử lại',
   'start again - that took too long': 'bắt đầu lại - việc đó quá lâu',
@@ -1090,8 +1248,10 @@ export const vi: Dictionary = {
   'that is more bookmarks than a space holds': 'nhiều dấu trang hơn một không gian chứa được',
   'that is more paths than a space leaves out': 'nhiều đường dẫn hơn một không gian loại ra được',
   'that is more files than a space keeps': 'nhiều tệp hơn một không gian giữ được',
-  'that is more than a space keeps about its graph': 'nhiều hơn mức một không gian giữ về sơ đồ của nó',
-  'that is more folder icons than a space holds': 'nhiều biểu tượng thư mục hơn một không gian chứa được',
+  'that is more than a space keeps about its graph':
+    'nhiều hơn mức một không gian giữ về sơ đồ của nó',
+  'that is more folder icons than a space holds':
+    'nhiều biểu tượng thư mục hơn một không gian chứa được',
   // Sharing a space, and being let into one.
   'nobody by that address': 'không có ai ở địa chỉ đó',
   'nobody by that name': 'không có ai tên đó',
@@ -1100,7 +1260,8 @@ export const vi: Dictionary = {
   'that link is busy, try again in a minute': 'liên kết đó đang bận, thử lại sau một phút',
   // Versions, the bin, and a room two people write in.
   'no such version': 'không có phiên bản đó',
-  'this note was shared with you, not its folder': 'ghi chú này được chia sẻ với bạn, không phải thư mục của nó',
+  'this note was shared with you, not its folder':
+    'ghi chú này được chia sẻ với bạn, không phải thư mục của nó',
   'nothing to restore': 'không có gì để phục hồi',
   'restore its space first': 'phục hồi không gian của nó trước',
   'nothing to delete': 'không có gì để xoá',

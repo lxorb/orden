@@ -7,6 +7,12 @@ export const zhHans: Dictionary = {
   'Open file': '打开文件',
   'New note inside': '在其中新建笔记',
   'New canvas': '新建画布',
+  'New page note': '新建分页笔记',
+  'Add a page': '添加一页',
+  'Add a page after this': '在此页后添加一页',
+  'Delete this page': '删除此页',
+  'Page {number}': '第 {number} 页',
+  '{at} / {count}': '{at} / {count}',
   Canvas: '画布',
   Card: '卡片',
   'Note or picture': '笔记或图片',
@@ -34,7 +40,8 @@ export const zhHans: Dictionary = {
   'Create a space': '创建空间',
   'Delete space': '删除空间',
   'Delete {name}?': '删除{name}？',
-  'Every note in this space is deleted from your computer.': '此空间中的每篇笔记都会从这台电脑上删除。',
+  'Every note in this space is deleted from your computer.':
+    '此空间中的每篇笔记都会从这台电脑上删除。',
   'The notes inside it go too.': '其中的笔记也会一并删除。',
   Journal: '日记',
   Create: '创建',
@@ -206,7 +213,8 @@ export const zhHans: Dictionary = {
   'Image not found': '找不到图片',
   'Delete {count} items': '删除{count}项',
   'Recently deleted': '最近删除',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': '删除的笔记和空间在此保留14天，之后彻底清除。',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    '删除的笔记和空间在此保留14天，之后彻底清除。',
   'Nothing here.': '这里没有内容。',
   Empty: '清空',
   Spaces: '空间',
@@ -257,7 +265,8 @@ export const zhHans: Dictionary = {
   'Previous slide': '上一张幻灯片',
   'Read-only': '只读',
   'No preview': '无预览',
-  'Shown as plain text, so typing stays instant in a note this long': '以纯文本显示，这样在这么长的笔记中输入依然流畅',
+  'Shown as plain text, so typing stays instant in a note this long':
+    '以纯文本显示，这样在这么长的笔记中输入依然流畅',
   'Leave read-only': '退出只读',
   Next: '下一个',
   Previous: '上一个',
@@ -448,9 +457,11 @@ export const zhHans: Dictionary = {
   'Line numbers': '行号',
   Syntax: '语法',
   'Strict CommonMark': '严格CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': '仅使用标准Markdown规则，没有表格、任务列表和脚注。',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    '仅使用标准Markdown规则，没有表格、任务列表和脚注。',
   'Smart punctuation': '智能标点',
-  'Turns straight quotes and dashes into typographic ones as you type.': '输入时把直引号和连字符转换为印刷体符号。',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    '输入时把直引号和连字符转换为印刷体符号。',
   'Puts 1., 1.1, 1.2 in front of headings.': '在标题前加上1.、1.1、1.2。',
   'Numbers display equations so you can refer to them.': '为独立公式编号，便于引用。',
   Ligatures: '连字',
@@ -515,7 +526,8 @@ export const zhHans: Dictionary = {
   'Send a new code': '重新发送验证码',
   'Code sent to': '验证码已发送至',
   'You already have notes on this computer.': '这台电脑上已经有笔记了。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': '保留它们，它们会并入你的账户。清除它们，则只留下账户中已有的内容，此操作无法撤销。',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    '保留它们，它们会并入你的账户。清除它们，则只留下账户中已有的内容，此操作无法撤销。',
   'Keep them': '保留',
   'Erase them': '清除',
   'Digit {number}': '第{number}位',
@@ -531,7 +543,8 @@ export const zhHans: Dictionary = {
   'Only {name}': '仅{name}',
   'Publish this space as a blog': '将此空间发布为博客',
   'Everything in this space becomes public.': '此空间中的所有内容都将公开。',
-  'Every note, including drafts, is readable by anyone with the address.': '任何知道该地址的人都能阅读每篇笔记，包括草稿。',
+  'Every note, including drafts, is readable by anyone with the address.':
+    '任何知道该地址的人都能阅读每篇笔记，包括草稿。',
   Address: '地址',
   'Add these at your registrar, then verify.': '在域名服务商处添加这些记录，然后验证。',
   Verify: '验证',
@@ -544,7 +557,8 @@ export const zhHans: Dictionary = {
   'checking…': '检查中…',
   // LLM
   'Connect an LLM to your notes': '将LLM连接到你的笔记',
-  'Sign in first - the connector reaches the notes in your account.': '请先登录，连接器读取的是你账户中的笔记。',
+  'Sign in first - the connector reaches the notes in your account.':
+    '请先登录，连接器读取的是你账户中的笔记。',
   'Let it write to my notes, not only read them': '允许它写入我的笔记，而不只是读取',
   'Create a token': '创建令牌',
   'Replace the token': '更换令牌',
@@ -560,27 +574,35 @@ export const zhHans: Dictionary = {
   'Reads your notes.': '读取你的笔记。',
   'Reads and writes your notes.': '读取并写入你的笔记。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的Nib邮箱登录，无需粘贴任何内容。',
-  'In Claude, open Settings → Connectors and click Add custom connector.': '在Claude中打开“设置→连接器”，点击“添加自定义连接器”。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的Nib邮箱登录，无需粘贴任何内容。',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    '在Claude中打开“设置→连接器”，点击“添加自定义连接器”。',
   'Open Claude’s connectors': '打开Claude的连接器',
   'Fill in the two fields and click Add.': '填写这两个字段，然后点击“添加”。',
   'Click Connect and sign in with your Nib email.': '点击“连接”，用你的Nib邮箱登录。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': '在终端中运行它，然后在Claude Code中输入/mcp登录。',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    '在终端中运行它，然后在Claude Code中输入/mcp登录。',
   'Fill in the form and click Create.': '填写表单，然后点击“创建”。',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': '在ChatGPT中打开“设置→插件”，点击加号按钮。',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    '在ChatGPT中打开“设置→插件”，点击加号按钮。',
   'Open ChatGPT’s plugins': '打开ChatGPT的插件',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': '没有“插件”一节或加号按钮？请先在“设置→安全与登录”中开启开发者模式。',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    '没有“插件”一节或加号按钮？请先在“设置→安全与登录”中开启开发者模式。',
   'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT询问时，用你的Nib邮箱登录。',
   'To use it in a chat, type @ and pick Nib.': '在对话中输入@并选择Nib即可使用。',
   'Server URL': '服务器URL',
   Authentication: '身份验证',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': '高级OAuth设置保持不变，并勾选“我了解并希望继续”。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开Nib的登录页面。',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    '高级OAuth设置保持不变，并勾选“我了解并希望继续”。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开Nib的登录页面。',
   'Show config': '显示配置',
   'For a client that takes a JSON block instead of a URL.': '适用于接受JSON配置而非URL的客户端。',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': '无法登录的客户端可以改用令牌。令牌只显示一次。',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    '无法登录的客户端可以改用令牌。令牌只显示一次。',
   // Export
   'Plain text': '纯文本',
   'Markdown with the pictures': '带图片的Markdown',
@@ -604,8 +626,10 @@ export const zhHans: Dictionary = {
   'Version history': '版本历史',
   'Copy link to this note': '复制此笔记的链接',
   'that link could not be followed': '无法打开该链接',
-  'Save this note first; there is nothing to compare against yet.': '请先保存此笔记，目前还没有可比较的内容。',
-  'No earlier versions yet. One is kept each time you save.': '还没有更早的版本。每次保存都会保留一个。',
+  'Save this note first; there is nothing to compare against yet.':
+    '请先保存此笔记，目前还没有可比较的内容。',
+  'No earlier versions yet. One is kept each time you save.':
+    '还没有更早的版本。每次保存都会保留一个。',
   'Restore this version': '恢复此版本',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': '那里已经有一篇笔记',
@@ -666,7 +690,8 @@ export const zhHans: Dictionary = {
   'use a domain of your own': '请使用你自己的域名',
   'the domain no longer points here': '该域名已不再指向这里',
   'Cloudflare has blocked this domain': 'Cloudflare已封禁此域名',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': '如果服务商不允许在域名根部使用CNAME，请改用ALIAS或ANAME记录，或CNAME展平。',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    '如果服务商不允许在域名根部使用CNAME，请改用ALIAS或ANAME记录，或CNAME展平。',
   // Shortcuts
   Shortcuts: '快捷键',
   'Search shortcuts': '搜索快捷键',
@@ -713,7 +738,8 @@ export const zhHans: Dictionary = {
   'Always on top': '始终置顶',
   'What is new': '更新内容',
   'Report an issue': '报告问题',
-  '{name} changed on the disk. What is in the editor is yours.': '{name}在磁盘上已更改。编辑器中的内容仍是你的。',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name}在磁盘上已更改。编辑器中的内容仍是你的。',
   'Move the line up': '上移此行',
   'Move the line down': '下移此行',
   'Copy the line up': '向上复制此行',
@@ -748,7 +774,8 @@ export const zhHans: Dictionary = {
   Escape: 'Esc',
   Quit: '退出',
   'The clipboard belongs to the system.': '剪贴板由系统掌管。',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': '方向键、Home、End、Page up和Page down属于文本。',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    '方向键、Home、End、Page up和Page down属于文本。',
   'Backspace and Delete belong to the text.': 'Backspace和Delete属于文本。',
   'Enter closes a code block and carries a list on.': 'Enter结束代码块，并延续列表。',
   'Tab moves on through the app as well as indenting.': 'Tab既缩进，也在应用中向前移动。',
@@ -767,7 +794,8 @@ export const zhHans: Dictionary = {
   'Show what it holds': '展开内容',
   'Hide what it holds': '收起内容',
   'Moving through a list': '在列表中移动',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': '方向键、Enter和Esc在任何打开的界面中都有效，它们不是快捷键。',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    '方向键、Enter和Esc在任何打开的界面中都有效，它们不是快捷键。',
   'Split right': '向右拆分',
   'Split down': '向下拆分',
   'Other pane': '另一窗格',
@@ -789,7 +817,8 @@ export const zhHans: Dictionary = {
   'Follow the link': '打开链接',
   'Replace your own keys?': '替换你改过的按键？',
   Replace: '替换',
-  'The keys you changed go back to what this keyboard says.': '你改过的按键会恢复为此键位方案的设定。',
+  'The keys you changed go back to what this keyboard says.':
+    '你改过的按键会恢复为此键位方案的设定。',
   NORMAL: '普通',
   INSERT: '插入',
   VISUAL: '可视',
@@ -911,7 +940,8 @@ export const zhHans: Dictionary = {
   Leave: '退出',
   'Leave space': '退出空间',
   'Leave {name}?': '退出{name}？',
-  'It stays with everybody else. Its notes go from your computer.': '它对其他人保持不变。其中的笔记会从你的电脑上移除。',
+  'It stays with everybody else. Its notes go from your computer.':
+    '它对其他人保持不变。其中的笔记会从你的电脑上移除。',
   '{who} shared {space} with you': '{who}与你共享了{space}',
   'Shared with you': '与你共享',
   'That link does not open anything': '该链接打不开任何内容',
@@ -928,7 +958,8 @@ export const zhHans: Dictionary = {
   'Release channel': '发布通道',
   Stable: '稳定版',
   Unstable: '开发版',
-  'Stable follows the official releases, Unstable every push to main and can break.': '稳定版跟随正式发布，开发版跟随main的每次推送，可能出问题。',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    '稳定版跟随正式发布，开发版跟随main的每次推送，可能出问题。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '导入',
@@ -939,14 +970,20 @@ export const zhHans: Dictionary = {
   'Rewrite {count} things?': '重写{count}处？',
   'In {count} notes.': '涉及{count}篇笔记。',
   Rewrite: '重写',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '有{count}段内容已加密，离开Evernote无法读取',
-  '{count} notes had a reminder, which the export does not carry': '{count}篇笔记设有提醒，导出文件不包含提醒',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '有{count}段内容已加密，离开Evernote无法读取',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count}篇笔记设有提醒，导出文件不包含提醒',
   '{count} notes were in the bin and stay there': '{count}篇笔记在回收站中，仍留在那里',
-  '{count} archived notes are in a folder called Archive': '{count}篇已归档笔记放在名为Archive的文件夹中',
+  '{count} archived notes are in a folder called Archive':
+    '{count}篇已归档笔记放在名为Archive的文件夹中',
   'The colours a note had are not kept': '笔记原有的颜色不会保留',
-  '{count} block references were written out as the words they pointed at': '{count}处块引用已写成其指向的文字',
-  '{count} saved views are left out, and every row is in the table': '{count}个保存的视图被忽略，所有行都在表格中',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count}个页面以HTML形式导入，保留文字但不保留外观',
+  '{count} block references were written out as the words they pointed at':
+    '{count}处块引用已写成其指向的文字',
+  '{count} saved views are left out, and every row is in the table':
+    '{count}个保存的视图被忽略，所有行都在表格中',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count}个页面以HTML形式导入，保留文字但不保留外观',
   'There are no rows in this file.': '此文件中没有行。',
   'Nothing in there can be read as notes.': '其中没有可读作笔记的内容。',
   'That export could not be read.': '无法读取该导出文件。',
@@ -957,20 +994,45 @@ export const zhHans: Dictionary = {
   'This space': '此空间',
   'Drop an export here': '把导出文件拖到这里',
   'A zip, a folder, or a file another app wrote': '一个zip、一个文件夹，或其他应用写出的文件',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple备忘录和Apple日志把笔记放在只有它们能打开的地方。请先在那里导出，再导入过来。',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} 张图片为 HEIC 格式，只有苹果能显示',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} 张心情与活动卡片是图画，因此只有文字转入',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} 条笔记加了密码，只有「备忘录」能打开',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} 条笔记在「最近删除」中，仍留在那里',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} 幅图画与扫描页是「备忘录」自行绘制的图片',
+  '{count} tables inside notes do not come over': '笔记内的 {count} 个表格不会转入',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} 个附件在 iCloud 上，而不在这台 Mac 上',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS 将这些笔记放在「完全磁盘访问权限」之后。',
+  'There are no notes in Apple Notes on this Mac.': '这台 Mac 上的「备忘录」中没有笔记。',
+  'Those notes could not be read.': '无法读取这些笔记。',
+  'Read them from this Mac': '从这台 Mac 读取',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    '在「完全磁盘访问权限」中打开 nibeditor，然后再试一次。',
+  'Open the setting': '打开设置',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    '「日记」可自行导出：日记、设置、导出。「备忘录」没有导出，因此在笔记所在的 Mac 之外，要拖入的是导出工具写出的文件夹。',
   'Pandoc reads this one, from the file on your disk.': '这种格式由pandoc直接从磁盘上的文件读取。',
   'Read it with pandoc': '用pandoc读取',
-  'Only pandoc reads this one, and it is not installed on this machine.': '这种格式只有pandoc能读取，而此设备未安装pandoc。',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    '这种格式只有pandoc能读取，而此设备未安装pandoc。',
   Rows: '行',
   'As a table': '作为表格',
   'One note per row': '每行一篇笔记',
   Into: '目标',
   'Worth knowing': '值得注意',
   '{count} notes arrived.': '已导入{count}篇笔记。',
-  '{count} names were taken, so those files stepped aside.': '有{count}个名称已被占用，这些文件已改名避让。',
+  '{count} names were taken, so those files stepped aside.':
+    '有{count}个名称已被占用，这些文件已改名避让。',
   'A table': '一个表格',
   'Markdown files': 'Markdown文件',
   'A document': '一个文档',
+  'A PDF, as pages to write on': '一份 PDF，作为可书写的页面',
   'Undo the import': '撤销导入',
   'Choose an export': '选择导出文件',
   Under: '位于',
@@ -982,13 +1044,15 @@ export const zhHans: Dictionary = {
   'Keep both copies': '保留两份',
   'Let the newest win': '以最新的为准',
   'Ask me each time': '每次都询问我',
-  'Nothing is ever thrown away: what does not win is kept as a version.': '不会丢弃任何内容：未采用的那份会保留为版本。',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    '不会丢弃任何内容：未采用的那份会保留为版本。',
   'Waiting for you': '等待你处理',
   'Keep mine': '保留我的',
   'Take theirs': '采用对方的',
   'Keep both': '两者都留',
   'What synced': '同步记录',
-  'Nothing yet. A pass that moves nothing is not written down.': '暂无记录。没有变动的同步不会记录。',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    '暂无记录。没有变动的同步不会记录。',
   'Clear the list': '清空列表',
   '{count} down': '下载{count}',
   '{count} up': '上传{count}',
@@ -1001,16 +1065,19 @@ export const zhHans: Dictionary = {
   '{count} notes would go back to what they said then.': '{count}篇笔记会回到当时的内容。',
   'Nothing has changed since then.': '自那时起没有任何变化。',
   '{count} notes went back.': '{count}篇笔记已回退。',
-  'The account keeps a month of versions of every note that syncs.': '账户会为每篇同步的笔记保留一个月的版本。',
+  'The account keeps a month of versions of every note that syncs.':
+    '账户会为每篇同步的笔记保留一个月的版本。',
   'That did not work.': '操作没有成功。',
   'Signing in': '登录',
   'Ask for a code from an app': '要求应用提供验证码',
   'Turn on': '开启',
   'Turn off': '关闭',
-  'Put this into your authenticator app, then type its code.': '把它添加到你的身份验证器应用，然后输入其验证码。',
+  'Put this into your authenticator app, then type its code.':
+    '把它添加到你的身份验证器应用，然后输入其验证码。',
   Secret: '密钥',
   'Code from the app': '应用中的验证码',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': '请妥善保存。每个只能用一次，且不会再次显示。',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    '请妥善保存。每个只能用一次，且不会再次显示。',
   'Recovery codes': '恢复码',
   'Recovery code': '恢复码',
   'Recovery codes left': '剩余恢复码',
@@ -1032,7 +1099,8 @@ export const zhHans: Dictionary = {
   Pages: '页',
   'Page {number} of {count}': '第{number}页，共{count}页',
   'What is selected': '所选内容',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': '画布：{cards}张卡片、{links}条连线、{drawings}处绘制',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    '画布：{cards}张卡片、{links}条连线、{drawings}处绘制',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '服务商',
@@ -1069,13 +1137,84 @@ export const zhHans: Dictionary = {
   'AI block': 'AI块',
   'Highlight colour': '高亮颜色',
   'A single newline breaks the line': '单个换行符即断行',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': '关闭即标准Markdown：同一段中的两行读作一行；Obsidian称之为严格换行。',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    '关闭即标准Markdown：同一段中的两行读作一行；Obsidian称之为严格换行。',
   'New links': '新建链接',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink按名称指向笔记，重命名后链接依然有效；两种写法都能读取。',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink按名称指向笔记，重命名后链接依然有效；两种写法都能读取。',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown，最短名称',
   'Markdown, relative path': 'Markdown，相对路径',
   'Markdown, path in the space': 'Markdown，空间内路径',
+  // Publishing part one.
+  'The folders you choose become public.': '所选文件夹将公开。',
+  'Anyone with the address can read what is published, drafts included.':
+    '知道地址的任何人都能读到已发布的内容，包括草稿。',
+  'Which notes': '哪些笔记',
+  'Notes outside a rule': '不在规则内的笔记',
+  'Are published': '会发布',
+  'Stay private': '保持私密',
+  'Follows the rule': '遵循规则',
+  Published: '已发布',
+  Private: '私密',
+  '{count} pages': '{count} 页',
+  '{count} new': '新增 {count}',
+  '{count} gone': '撤下 {count}',
+  'and more': '还有更多',
+  'How it appears': '呈现方式',
+  Description: '描述',
+  'What this site is': '本站简介',
+  'Tab icon': '标签页图标',
+  Password: '密码',
+  'Set a new one': '设置新密码',
+  'Ask for a password': '要求密码',
+  'No password': '无密码',
+  'Remove the password': '移除密码',
+  'Scan this with your authenticator app, then type its code.':
+    '用验证器应用扫描此码，然后输入它给出的验证码。',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: '照片',
+  Dictate: '语音输入',
+  'Add to {name}': '添加到 {name}',
+  // Web tabs
+  Reload: '重新加载',
+  'Clip this page': '保存此页',
+  'Clip the link': '保存链接',
+  'Allow the camera': '允许使用相机',
+  'Allow the clipboard': '允许使用剪贴板',
+  'Open in the browser': '在浏览器中打开',
+  'Copy the address': '复制地址',
+  'Show it here': '在此显示',
+  Website: '网站',
+  'Open a website': '打开网站',
+  // Recording, meetings and what a model wrote
+  Record: '录音',
+  Recording: '录音',
+  'Stop recording': '停止录音',
+  'Meeting notes': '会议笔记',
+  Meeting: '会议',
+  'Stop the meeting': '结束会议',
+  Transcribe: '转成文字',
+  Transcript: '文字记录',
+  'Transcript ({language})': '文字记录（{language}）',
+  'Written by {model}': '由 {model} 撰写',
+  'Saving the recording': '正在保存录音',
+  'Turning the recording into words': '正在把录音转成文字',
+  'Open a space to record into.': '打开一个空间以录入。',
+  'Sign in to take meeting notes.': '登录后可记会议笔记。',
+  'Sign in to turn a recording into words.': '登录后可把录音转成文字。',
+  'That microphone could not be opened.': '无法打开该麦克风。',
+  'That recording could not be saved.': '无法保存该录音。',
+  'That recording could not be turned into words.': '无法把该录音转成文字。',
+  'That recording is not in this space.': '该录音不在此空间内。',
+  'That recording is too long to turn into words in one go.': '该录音太长，无法一次转成文字。',
+  'That is as much as one recording may hold.': '一段录音最多就这么多。',
+  'Nothing could be heard in that recording.': '该录音中听不到任何声音。',
+  'A piece of the transcript is being tried again.': '正在重试文字记录的一段。',
+  'The transcript is behind and losing pieces.': '文字记录落后并在丢失片段。',
+  '{count} pieces of this meeting were lost.': '本次会议丢失了 {count} 个片段。',
+  'Add an AI provider in settings to summarise.': '在设置中添加 AI 服务商以生成摘要。',
+  'The summary could not be written.': '无法写出摘要。',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '邮件发送失败，请重试',
   'start again - that took too long': '耗时过长，请重新开始',

@@ -7,6 +7,12 @@ export const fil: Dictionary = {
   'Open file': 'Buksan ang file',
   'New note inside': 'Bagong tala sa loob',
   'New canvas': 'Bagong canvas',
+  'New page note': 'Bagong talang may pahina',
+  'Add a page': 'Magdagdag ng pahina',
+  'Add a page after this': 'Magdagdag ng pahina pagkatapos nito',
+  'Delete this page': 'Tanggalin ang pahinang ito',
+  'Page {number}': 'Pahina {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Canvas',
   Card: 'Card',
   'Note or picture': 'Tala o larawan',
@@ -34,7 +40,8 @@ export const fil: Dictionary = {
   'Create a space': 'Gumawa ng espasyo',
   'Delete space': 'Tanggalin ang espasyo',
   'Delete {name}?': 'Tanggalin ang {name}?',
-  'Every note in this space is deleted from your computer.': 'Bawat tala sa espasyong ito ay tinatanggal sa computer mo.',
+  'Every note in this space is deleted from your computer.':
+    'Bawat tala sa espasyong ito ay tinatanggal sa computer mo.',
   'The notes inside it go too.': 'Kasama ring mawawala ang mga tala sa loob.',
   Journal: 'Talaarawan',
   Create: 'Gumawa',
@@ -204,9 +211,13 @@ export const fil: Dictionary = {
   'Delete image': 'Tanggalin ang imahe',
   'Reset size': 'Ibalik ang laki',
   'Image not found': 'Hindi nahanap ang imahe',
-  'Delete {count} items': { one: 'Tanggalin ang {count} item', other: 'Tanggalin ang {count} item' },
+  'Delete {count} items': {
+    one: 'Tanggalin ang {count} item',
+    other: 'Tanggalin ang {count} item',
+  },
   'Recently deleted': 'Kanina lang tinanggal',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Ang tinanggal na tala at espasyo ay naghihintay dito ng 14 araw, pagkatapos ay tuluyan nang mawawala.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Ang tinanggal na tala at espasyo ay naghihintay dito ng 14 araw, pagkatapos ay tuluyan nang mawawala.',
   'Nothing here.': 'Wala rito.',
   Empty: 'Walisin',
   Spaces: 'Mga espasyo',
@@ -257,7 +268,8 @@ export const fil: Dictionary = {
   'Previous slide': 'Nakaraang slide',
   'Read-only': 'Basahin lang',
   'No preview': 'Walang preview',
-  'Shown as plain text, so typing stays instant in a note this long': 'Ipinapakita bilang simpleng teksto para manatiling agad ang pag-type sa talang ganito kahaba',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Ipinapakita bilang simpleng teksto para manatiling agad ang pag-type sa talang ganito kahaba',
   'Leave read-only': 'Lumabas sa basahin lang',
   Next: 'Susunod',
   Previous: 'Nakaraan',
@@ -318,7 +330,7 @@ export const fil: Dictionary = {
   Scrolling: 'Pag-scroll',
   'Every line break': 'Bawat hati ng linya',
   'One break between blocks': 'Isang linya sa pagitan ng block',
-  'As little as possible': 'Kaunti hangga\'t maaari',
+  'As little as possible': "Kaunti hangga't maaari",
   'Nib turns the pages': 'Ang Nib ang lumilipat ng pahina',
   'The glasses scroll': 'Ang salamin ang nag-scroll',
   'Code fences': 'Bakod ng code',
@@ -353,23 +365,26 @@ export const fil: Dictionary = {
   'OpenAI key': 'OpenAI key',
   Model: 'Modelo',
   Reasoning: 'Pangangatwiran',
-  'Kept encrypted on your account, and never shown again.': 'Itinatago nang naka-encrypt sa account mo at hindi na muling ipapakita.',
+  'Kept encrypted on your account, and never shown again.':
+    'Itinatago nang naka-encrypt sa account mo at hindi na muling ipapakita.',
   'set, ends in …{tail}': 'nakatakda, nagtatapos sa …{tail}',
   'Saving the key': 'Sinasave ang key',
   'this server cannot keep a key yet': 'hindi pa makakatago ng key ang server na ito',
   'that does not look like a key': 'hindi iyon mukhang key',
   'that key could not be saved': 'hindi na-save ang key na iyon',
   'Sign in to ask a question.': 'Mag-sign in para magtanong.',
-  'Asking OpenAI which models this key can use': 'Tinatanong ang OpenAI kung anong modelo ang magagamit ng key na ito',
+  'Asking OpenAI which models this key can use':
+    'Tinatanong sa OpenAI ang mga modelo ng key na ito',
   'Could not reach OpenAI': 'Hindi maabot ang OpenAI',
-  'That key cannot use any of the models Nib asks for.': 'Wala sa mga modelong hinahanap ng Nib ang magagamit ng key na iyon.',
+  'That key cannot use any of the models Nib asks for.':
+    'Wala sa mga modelong hinahanap ng Nib ang magagamit ng key na iyon.',
   'No reasoning': 'Walang pangangatwiran',
   Minimal: 'Kaunti',
   Low: 'Mababa',
   Medium: 'Katamtaman',
   High: 'Mataas',
   'Very high': 'Napakataas',
-  'The most it can': 'Hangga\'t kaya',
+  'The most it can': "Hangga't kaya",
   'Switch space': 'Palitan ang espasyo',
   'Change note': 'Palitan ang tala',
   'Voice on': 'Tinig bukas',
@@ -403,7 +418,10 @@ export const fil: Dictionary = {
   'Add a word': 'Magdagdag ng salita',
   'Add {word} to the dictionary': 'Idagdag ang {word} sa diksyunaryo',
   'Remove {word} from the dictionary': 'Alisin ang {word} sa diksyunaryo',
-  '{count} things in this theme were left out.': { one: '{count} bagay sa temang ito ang hindi naisama.', other: '{count} bagay sa temang ito ang hindi naisama.' },
+  '{count} things in this theme were left out.': {
+    one: '{count} bagay sa temang ito ang hindi naisama.',
+    other: '{count} bagay sa temang ito ang hindi naisama.',
+  },
   'A note': 'Isang tala',
   'Words with {bold} and a {link}.': 'Mga salitang may {bold} at isang {link}.',
   bold: 'bold',
@@ -448,11 +466,14 @@ export const fil: Dictionary = {
   'Line numbers': 'Bilang ng linya',
   Syntax: 'Sintaks',
   'Strict CommonMark': 'Mahigpit na CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Ang batayang tuntunin lang ng markdown, walang talahanayan, listahan ng gawain o talababa.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Ang batayang tuntunin lang ng markdown, walang talahanayan, listahan ng gawain o talababa.',
   'Smart punctuation': 'Matalinong bantas',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Ginagawang tipograpiko ang tuwid na panipi at gitling habang nagta-type ka.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Ginagawang tipograpiko ang tuwid na panipi at gitling habang nagta-type ka.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Naglalagay ng 1., 1.1, 1.2 sa harap ng heading.',
-  'Numbers display equations so you can refer to them.': 'Binibilang ang mga ekwasyon para may matukoy ka.',
+  'Numbers display equations so you can refer to them.':
+    'Binibilang ang mga ekwasyon para may matukoy ka.',
   Ligatures: 'Ligature',
   Off: 'Sara',
   'Code only': 'Code lang',
@@ -515,13 +536,17 @@ export const fil: Dictionary = {
   'Send a new code': 'Magpadala ng bagong code',
   'Code sent to': 'Ipinadala ang code sa',
   'You already have notes on this computer.': 'May tala ka na sa computer na ito.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Itago at sasama sila sa account mo. Burahin at ang nasa account mo na lang ang mananatili - hindi ito maibabalik.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Itago at sasama sila sa account mo. Burahin at ang nasa account mo na lang ang mananatili - hindi ito maibabalik.',
   'Keep them': 'Itago',
   'Erase them': 'Burahin',
   'Digit {number}': 'Digit {number}',
   'Resend in {seconds}s': 'Ipadala muli sa {seconds}s',
   'Last synced {time}.': 'Huling sync {time}.',
-  '{count} spaces sync to your account.': { one: '{count} espasyo ang nagsi-sync sa account mo.', other: '{count} espasyo ang nagsi-sync sa account mo.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} espasyo ang nagsi-sync sa account mo.',
+    other: '{count} espasyo ang nagsi-sync sa account mo.',
+  },
   Update: 'I-update',
   'Live at': 'Nasa',
   // Publishing
@@ -531,9 +556,11 @@ export const fil: Dictionary = {
   'Only {name}': '{name} lang',
   'Publish this space as a blog': 'Ilathala ang espasyong ito bilang blog',
   'Everything in this space becomes public.': 'Lahat sa espasyong ito ay mapupunta sa publiko.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Bawat tala, kasama ang draft, ay mababasa ng sinumang may address.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Bawat tala, kasama ang draft, ay mababasa ng sinumang may address.',
   Address: 'Address',
-  'Add these at your registrar, then verify.': 'Idagdag ito sa registrar mo, pagkatapos ay i-verify.',
+  'Add these at your registrar, then verify.':
+    'Idagdag ito sa registrar mo, pagkatapos ay i-verify.',
   Verify: 'I-verify',
   'that record is not answering yet': 'hindi pa sumasagot ang record na iyon',
   'Stop publishing': 'Itigil ang paglathala',
@@ -544,8 +571,10 @@ export const fil: Dictionary = {
   'checking…': 'sinusuri…',
   // LLM
   'Connect an LLM to your notes': 'Ikonekta ang LLM sa mga tala mo',
-  'Sign in first - the connector reaches the notes in your account.': 'Mag-sign in muna - inaabot ng connector ang mga tala sa account mo.',
-  'Let it write to my notes, not only read them': 'Payagan itong magsulat sa mga tala ko, hindi lang magbasa',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Mag-sign in muna - inaabot ng connector ang mga tala sa account mo.',
+  'Let it write to my notes, not only read them':
+    'Payagan itong magsulat sa mga tala ko, hindi lang magbasa',
   'Create a token': 'Gumawa ng token',
   'Replace the token': 'Palitan ang token',
   'Last used {time}.': 'Huling gamit {time}.',
@@ -560,27 +589,39 @@ export const fil: Dictionary = {
   'Reads your notes.': 'Binabasa ang mga tala mo.',
   'Reads and writes your notes.': 'Binabasa at sinusulatan ang mga tala mo.',
   Other: 'Iba',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa Nib email mo; wala kang ipapaste.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Sa Claude, buksan ang Settings → Connectors at i-click ang Add custom connector.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa Nib email mo; wala kang ipapaste.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Sa Claude, buksan ang Settings → Connectors at i-click ang Add custom connector.',
   'Open Claude’s connectors': 'Buksan ang connectors ng Claude',
   'Fill in the two fields and click Add.': 'Punan ang dalawang kahon at i-click ang Add.',
-  'Click Connect and sign in with your Nib email.': 'I-click ang Connect at mag-sign in sa Nib email mo.',
+  'Click Connect and sign in with your Nib email.':
+    'I-click ang Connect at mag-sign in sa Nib email mo.',
   'Using Claude Code instead?': 'Claude Code ang gamit mo?',
   Command: 'Utos',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Patakbuhin sa terminal, pagkatapos i-type ang /mcp sa Claude Code para mag-sign in.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Patakbuhin sa terminal, pagkatapos i-type ang /mcp sa Claude Code para mag-sign in.',
   'Fill in the form and click Create.': 'Punan ang porma at i-click ang Create.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'Sa ChatGPT, buksan ang Settings → Plugins at i-click ang plus.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Sa ChatGPT, buksan ang Settings → Plugins at i-click ang plus.',
   'Open ChatGPT’s plugins': 'Buksan ang plugins ng ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Walang Plugins o walang plus? Buksan muna ang Developer mode sa Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Mag-sign in sa Nib email mo kapag nagtanong ang ChatGPT.',
-  'To use it in a chat, type @ and pick Nib.': 'Para gamitin sa chat, i-type ang @ at piliin ang Nib.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Walang Plugins o walang plus? Buksan muna ang Developer mode sa Settings → Security and login.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Mag-sign in sa Nib email mo kapag nagtanong ang ChatGPT.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Para gamitin sa chat, i-type ang @ at piliin ang Nib.',
   'Server URL': 'URL ng server',
   Authentication: 'Pagpapatunay',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Huwag galawin ang advanced OAuth settings at tsekan ang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Huwag galawin ang advanced OAuth settings at tsekan ang “I understand and want to continue”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng Nib.',
   'Show config': 'Ipakita ang config',
-  'For a client that takes a JSON block instead of a URL.': 'Para sa client na tumatanggap ng JSON block kaysa URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Ang client na hindi makapag-sign in ay maaaring bigyan ng token. Isang beses lang itong ipapakita.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Para sa client na tumatanggap ng JSON block kaysa URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Ang client na hindi makapag-sign in ay maaaring bigyan ng token. Isang beses lang itong ipapakita.',
   // Export
   'Plain text': 'Simpleng teksto',
   'Markdown with the pictures': 'Markdown kasama ang larawan',
@@ -604,8 +645,10 @@ export const fil: Dictionary = {
   'Version history': 'Kasaysayan ng bersyon',
   'Copy link to this note': 'Kopyahin ang link ng talang ito',
   'that link could not be followed': 'hindi masundan ang link na iyon',
-  'Save this note first; there is nothing to compare against yet.': 'I-save muna ang talang ito; wala pang maihahambing.',
-  'No earlier versions yet. One is kept each time you save.': 'Wala pang naunang bersyon. May itinatago tuwing nag-save ka.',
+  'Save this note first; there is nothing to compare against yet.':
+    'I-save muna ang talang ito; wala pang maihahambing.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Wala pang naunang bersyon. May itinatago tuwing nag-save ka.',
   'Restore this version': 'Ibalik ang bersyong ito',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'may tala na roon',
@@ -618,7 +661,8 @@ export const fil: Dictionary = {
   'you can only read this space': 'mababasa mo lang ang espasyong ito',
   'only the owner can do that': 'ang may-ari lang ang makakagawa niyan',
   'this space is already yours': 'sa iyo na ang espasyong ito',
-  'that is as many people as one space holds': 'iyan na ang dami ng taong kayang tanggapin ng isang espasyo',
+  'that is as many people as one space holds':
+    'iyan na ang dami ng taong kayang tanggapin ng isang espasyo',
   'that invitation was sent to another address': 'ipinadala sa ibang address ang imbitasyong iyon',
   'that link has expired': 'lumipas na ang link na iyon',
   'that code has expired - ask for a new one': 'lumipas na ang code - humiling ng bago',
@@ -629,9 +673,11 @@ export const fil: Dictionary = {
   'that path is not usable': 'hindi magagamit ang path na iyon',
   'this note changed elsewhere': 'nagbago ang talang ito sa ibang lugar',
   'too many tries - ask for a new code': 'sobrang dami nang subok - humiling ng bagong code',
-  'too many messages from here - try again later': 'sobrang dami nang mensahe mula rito - subukan mamaya',
+  'too many messages from here - try again later':
+    'sobrang dami nang mensahe mula rito - subukan mamaya',
   'too much mail today - try again tomorrow': 'sobrang dami nang mail ngayon - subukan bukas',
-  'that many people are already waiting to be let in': 'iyan na ang dami ng naghihintay na papasukin',
+  'that many people are already waiting to be let in':
+    'iyan na ang dami ng naghihintay na papasukin',
   'use 2–32 letters, numbers or hyphens': 'gumamit ng 2–32 titik, numero o gitling',
   'sync failed': 'nabigo ang sync',
   'could not publish': 'hindi mailathala',
@@ -661,12 +707,14 @@ export const fil: Dictionary = {
   'Waiting for the record to show up.': 'Hinihintay lumabas ang record.',
   'Certificate issued.': 'Naibigay ang sertipiko.',
   'Cloudflare could not set this domain up.': 'Hindi na-set up ng Cloudflare ang domain na ito.',
-  'This server does not hand out certificates yet.': 'Hindi pa nagbibigay ng sertipiko ang server na ito.',
+  'This server does not hand out certificates yet.':
+    'Hindi pa nagbibigay ng sertipiko ang server na ito.',
   'that domain is taken': 'gamit na ang domain na iyon',
   'use a domain of your own': 'gumamit ng sariling domain',
   'the domain no longer points here': 'hindi na tumutukoy dito ang domain',
   'Cloudflare has blocked this domain': 'Hinarangan ng Cloudflare ang domain na ito',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Sa ugat ng domain, gumamit ng ALIAS o ANAME record, o CNAME flattening, kung hindi pinapayagan ng provider mo ang CNAME doon.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Sa ugat ng domain, gumamit ng ALIAS o ANAME record, o CNAME flattening, kung hindi pinapayagan ng provider mo ang CNAME doon.',
   // Shortcuts
   Shortcuts: 'Mga shortcut',
   'Search shortcuts': 'Maghanap ng shortcut',
@@ -677,7 +725,8 @@ export const fil: Dictionary = {
   'Reset all shortcuts': 'Ibalik lahat ng shortcut',
   'Take it over': 'Kunin',
   '{key} already runs {name}.': 'Pinapatakbo na ng {key} ang {name}.',
-  'Esc stops recording, Backspace takes the key away.': 'Itinitigil ng Esc ang pagtala, inaalis ng Backspace ang key.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Itinitigil ng Esc ang pagtala, inaalis ng Backspace ang key.',
   Tables: 'Mga talahanayan',
   Pictures: 'Mga larawan',
   'Fixed keys': 'Nakatakdang key',
@@ -713,7 +762,8 @@ export const fil: Dictionary = {
   'Always on top': 'Laging nasa itaas',
   'What is new': 'Ano ang bago',
   'Report an issue': 'Mag-ulat ng problema',
-  '{name} changed on the disk. What is in the editor is yours.': 'Nagbago ang {name} sa disk. Sa iyo ang nasa editor.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    'Nagbago ang {name} sa disk. Sa iyo ang nasa editor.',
   'Move the line up': 'Iakyat ang linya',
   'Move the line down': 'Ibaba ang linya',
   'Copy the line up': 'Kopyahin ang linya pataas',
@@ -748,26 +798,33 @@ export const fil: Dictionary = {
   Escape: 'Escape',
   Quit: 'Umalis',
   'The clipboard belongs to the system.': 'Sa sistema ang clipboard.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Sa teksto ang arrow keys, Home, End, Page up at Page down.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Sa teksto ang arrow keys, Home, End, Page up at Page down.',
   'Backspace and Delete belong to the text.': 'Sa teksto ang Backspace at Delete.',
-  'Enter closes a code block and carries a list on.': 'Isinasara ng Enter ang code block at ipinagpapatuloy ang listahan.',
-  'Tab moves on through the app as well as indenting.': 'Gumagalaw ang Tab sa app bukod sa pag-urong.',
+  'Enter closes a code block and carries a list on.':
+    'Isinasara ng Enter ang code block at ipinagpapatuloy ang listahan.',
+  'Tab moves on through the app as well as indenting.':
+    'Gumagalaw ang Tab sa app bukod sa pag-urong.',
   'Escape closes whatever is open.': 'Isinasara ng Escape ang anumang nakabukas.',
-  'Your system takes this key before the app sees it.': 'Kinukuha ng sistema mo ang key na ito bago pa makita ng app.',
-  'Your browser takes this key before the app sees it.': 'Kinukuha ng browser mo ang key na ito bago pa makita ng app.',
+  'Your system takes this key before the app sees it.':
+    'Kinukuha ng sistema mo ang key na ito bago pa makita ng app.',
+  'Your browser takes this key before the app sees it.':
+    'Kinukuha ng browser mo ang key na ito bago pa makita ng app.',
   'That is not a key combination.': 'Hindi iyon kombinasyon ng key.',
   'Hold Ctrl, Alt or Cmd as well.': 'Pindutin din ang Ctrl, Alt o Cmd.',
   'File list': 'Listahan ng file',
   'Select every file': 'Piliin lahat ng file',
   'Clear the selection': 'Alisin ang pinili',
   'Delete the selected files': 'Tanggalin ang piniling file',
-  'The file could not be written, so it goes to the print dialog': 'Hindi naisulat ang file, kaya napunta sa print dialog',
+  'The file could not be written, so it goes to the print dialog':
+    'Hindi naisulat ang file, kaya napunta sa print dialog',
   'Next file': 'Susunod na file',
   'Previous file': 'Nakaraang file',
   'Show what it holds': 'Ipakita ang nilalaman',
   'Hide what it holds': 'Itago ang nilalaman',
   'Moving through a list': 'Paggalaw sa listahan',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Gumagana ang arrow keys, Enter at Esc anuman ang nakabukas; hindi sila shortcut.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Gumagana ang arrow keys, Enter at Esc anuman ang nakabukas; hindi sila shortcut.',
   'Split right': 'Hatiin pakanan',
   'Split down': 'Hatiin pababa',
   'Other pane': 'Kabilang pane',
@@ -789,7 +846,8 @@ export const fil: Dictionary = {
   'Follow the link': 'Sundan ang link',
   'Replace your own keys?': 'Palitan ang sariling key mo?',
   Replace: 'Palitan',
-  'The keys you changed go back to what this keyboard says.': 'Babalik sa sinasabi ng keyboard na ito ang mga key na binago mo.',
+  'The keys you changed go back to what this keyboard says.':
+    'Babalik sa sinasabi ng keyboard na ito ang mga key na binago mo.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +969,8 @@ export const fil: Dictionary = {
   Leave: 'Umalis',
   'Leave space': 'Umalis sa espasyo',
   'Leave {name}?': 'Umalis sa {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Mananatili ito sa iba. Mawawala ang mga tala nito sa computer mo.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Mananatili ito sa iba. Mawawala ang mga tala nito sa computer mo.',
   '{who} shared {space} with you': 'Ibinahagi ni {who} ang {space} sa iyo',
   'Shared with you': 'Ibinahagi sa iyo',
   'That link does not open anything': 'Walang binubuksan ang link na iyon',
@@ -928,7 +987,8 @@ export const fil: Dictionary = {
   'Release channel': 'Channel ng release',
   Stable: 'Matatag',
   Unstable: 'Hindi matatag',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Sinusundan ng Matatag ang opisyal na release, ang Hindi matatag ay bawat push sa main at puwedeng masira.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Sinusundan ng Matatag ang opisyal na release, ang Hindi matatag ay bawat push sa main at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',
@@ -936,41 +996,85 @@ export const fil: Dictionary = {
   'In this note': 'Sa talang ito',
   'In the whole space': 'Sa buong espasyo',
   'Nothing here needs converting.': 'Walang kailangang baguhin dito.',
-  'Rewrite {count} things?': { one: 'Isulat muli ang {count} bahagi?', other: 'Isulat muli ang {count} bahagi?' },
+  'Rewrite {count} things?': {
+    one: 'Isulat muli ang {count} bahagi?',
+    other: 'Isulat muli ang {count} bahagi?',
+  },
   'In {count} notes.': { one: 'Sa {count} tala.', other: 'Sa {count} tala.' },
   Rewrite: 'Isulat muli',
-  '{count} passages are encrypted, and nothing can read them without Evernote': 'Naka-encrypt ang {count} bahagi at walang makakabasa nito nang wala ang Evernote',
-  '{count} notes had a reminder, which the export does not carry': 'May paalala ang {count} tala, na hindi kasama sa export',
-  '{count} notes were in the bin and stay there': 'Nasa basurahan ang {count} tala at mananatili roon',
-  '{count} archived notes are in a folder called Archive': 'Nasa folder na Archive ang {count} naka-archive na tala',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    'Naka-encrypt ang {count} bahagi at walang makakabasa nito nang wala ang Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    'May paalala ang {count} tala, na hindi kasama sa export',
+  '{count} notes were in the bin and stay there':
+    'Nasa basurahan ang {count} tala at mananatili roon',
+  '{count} archived notes are in a folder called Archive':
+    'Nasa folder na Archive ang {count} naka-archive na tala',
   'The colours a note had are not kept': 'Hindi itinatago ang kulay na nasa tala',
-  '{count} block references were written out as the words they pointed at': 'Isinulat ang {count} block reference bilang mga salitang tinutukoy nito',
-  '{count} saved views are left out, and every row is in the table': 'Hindi isinama ang {count} naka-save na view, at nasa talahanayan ang bawat hanay',
-  '{count} pages came as HTML, so their words are kept and their look is not': 'Dumating bilang HTML ang {count} pahina, kaya nanatili ang salita at hindi ang anyo',
+  '{count} block references were written out as the words they pointed at':
+    'Isinulat ang {count} block reference bilang mga salitang tinutukoy nito',
+  '{count} saved views are left out, and every row is in the table':
+    'Hindi isinama ang {count} naka-save na view, at nasa talahanayan ang bawat hanay',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    'Dumating bilang HTML ang {count} pahina, kaya nanatili ang salita at hindi ang anyo',
   'There are no rows in this file.': 'Walang hanay sa file na ito.',
   'Nothing in there can be read as notes.': 'Walang mababasa roon bilang tala.',
   'That export could not be read.': 'Hindi mabasa ang export na iyon.',
-  'That export is too big to read in one go.': 'Masyadong malaki ang export na iyon para mabasa nang sabay-sabay.',
+  'That export is too big to read in one go.':
+    'Masyadong malaki ang export na iyon para mabasa nang sabay-sabay.',
   'Import into': 'I-import sa',
   'That import could not be written.': 'Hindi naisulat ang import na iyon.',
   '{count} files': { one: '{count} file', other: '{count} file' },
   'This space': 'Espasyong ito',
   'Drop an export here': 'Ihulog ang export dito',
-  'A zip, a folder, or a file another app wrote': 'Isang zip, folder, o file na isinulat ng ibang app',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Itinatago ng Apple Notes at Apple Journal ang mga tala kung saan sila lang ang makakabukas. I-export muna, pagkatapos i-import iyon.',
-  'Pandoc reads this one, from the file on your disk.': 'Binabasa ito ng pandoc, mula sa file sa disk mo.',
+  'A zip, a folder, or a file another app wrote':
+    'Isang zip, folder, o file na isinulat ng ibang app',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} larawan ang dumating bilang HEIC, na Apple lang ang nagpapakita',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} card ng damdamin at gawain ay mga guhit, kaya salita lang ang pumapasok',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} tala ang nasa likod ng password na Notes lang ang makakabukas',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} tala ang nasa Kanina lang tinanggal, at doon mananatili',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} guhit at na-scan na pahina ay mga larawang iginuhit mismo ng Notes',
+  '{count} tables inside notes do not come over':
+    '{count} talahanayan sa loob ng tala ang hindi pumapasok',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} kalakip ang nasa iCloud at hindi sa Mac na ito',
+  'macOS keeps those notes behind Full Disk Access.':
+    'Itinatago ng macOS ang mga talang iyon sa likod ng Full Disk Access.',
+  'There are no notes in Apple Notes on this Mac.': 'Walang tala sa Apple Notes sa Mac na ito.',
+  'Those notes could not be read.': 'Hindi nabasa ang mga talang iyon.',
+  'Read them from this Mac': 'Basahin mula sa Mac na ito',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Buksan ang nibeditor sa Full Disk Access, pagkatapos subukan muli.',
+  'Open the setting': 'Buksan ang setting',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Nag-e-export ang Apple Journal mismo: Journal, Settings, Export. Walang export ang Apple Notes, kaya kapag wala ka sa Mac na naglalaman nito, ang ihuhulog ay folder na isinulat ng isang exporter.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Binabasa ito ng pandoc, mula sa file sa disk mo.',
   'Read it with pandoc': 'Basahin gamit ang pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Pandoc lang ang nakakabasa nito, at hindi ito naka-install sa makinang ito.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Pandoc lang ang nakakabasa nito, at hindi ito naka-install sa makinang ito.',
   Rows: 'Mga hanay',
   'As a table': 'Bilang talahanayan',
   'One note per row': 'Isang tala kada hanay',
   Into: 'Sa',
   'Worth knowing': 'Dapat malaman',
-  '{count} notes arrived.': { one: 'Dumating ang {count} tala.', other: 'Dumating ang {count} tala.' },
-  '{count} names were taken, so those files stepped aside.': { one: 'Gamit na ang {count} pangalan, kaya umusog ang file na iyon.', other: 'Gamit na ang {count} pangalan, kaya umusog ang mga file na iyon.' },
+  '{count} notes arrived.': {
+    one: 'Dumating ang {count} tala.',
+    other: 'Dumating ang {count} tala.',
+  },
+  '{count} names were taken, so those files stepped aside.': {
+    one: 'Gamit na ang {count} pangalan, kaya umusog ang file na iyon.',
+    other: 'Gamit na ang {count} pangalan, kaya umusog ang mga file na iyon.',
+  },
   'A table': 'Isang talahanayan',
   'Markdown files': 'Mga markdown file',
   'A document': 'Isang dokumento',
+  'A PDF, as pages to write on': 'Isang PDF, bilang mga pahinang masusulatan',
   'Undo the import': 'Ibalik ang import',
   'Choose an export': 'Pumili ng export',
   Under: 'Sa ilalim ng',
@@ -982,13 +1086,15 @@ export const fil: Dictionary = {
   'Keep both copies': 'Itago ang dalawang kopya',
   'Let the newest win': 'Hayaang manaig ang pinakabago',
   'Ask me each time': 'Tanungin ako sa tuwina',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Walang itinatapon: ang hindi nanaig ay itinatago bilang bersyon.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Walang itinatapon: ang hindi nanaig ay itinatago bilang bersyon.',
   'Waiting for you': 'Hinihintay ka',
   'Keep mine': 'Itago ang akin',
   'Take theirs': 'Kunin ang kanila',
   'Keep both': 'Itago ang dalawa',
   'What synced': 'Ano ang nag-sync',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Wala pa. Hindi itinatala ang pasadang walang inilipat.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Wala pa. Hindi itinatala ang pasadang walang inilipat.',
   'Clear the list': 'Alisin ang listahan',
   '{count} down': '{count} pababa',
   '{count} up': '{count} pataas',
@@ -998,19 +1104,28 @@ export const fil: Dictionary = {
   'This space, as it was': 'Ang espasyong ito, gaya noon',
   '{count} days ago': { one: '{count} araw ang nakaraan', other: '{count} araw ang nakaraan' },
   'What would change?': 'Ano ang magbabago?',
-  '{count} notes would go back to what they said then.': { one: 'Babalik sa sinabi noon ang {count} tala.', other: 'Babalik sa sinabi noon ang {count} tala.' },
+  '{count} notes would go back to what they said then.': {
+    one: 'Babalik sa sinabi noon ang {count} tala.',
+    other: 'Babalik sa sinabi noon ang {count} tala.',
+  },
   'Nothing has changed since then.': 'Walang nagbago mula noon.',
-  '{count} notes went back.': { one: 'Bumalik ang {count} tala.', other: 'Bumalik ang {count} tala.' },
-  'The account keeps a month of versions of every note that syncs.': 'Itinatago ng account ang isang buwang bersyon ng bawat talang nagsi-sync.',
+  '{count} notes went back.': {
+    one: 'Bumalik ang {count} tala.',
+    other: 'Bumalik ang {count} tala.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'Itinatago ng account ang isang buwang bersyon ng bawat talang nagsi-sync.',
   'That did not work.': 'Hindi umubra.',
   'Signing in': 'Pag-sign in',
   'Ask for a code from an app': 'Humiling ng code mula sa app',
   'Turn on': 'Buksan',
   'Turn off': 'Isara',
-  'Put this into your authenticator app, then type its code.': 'Ilagay ito sa authenticator app mo, pagkatapos i-type ang code nito.',
+  'Put this into your authenticator app, then type its code.':
+    'Ilagay ito sa authenticator app mo, pagkatapos i-type ang code nito.',
   Secret: 'Lihim',
   'Code from the app': 'Code mula sa app',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Itago ito sa ligtas na lugar. Isang beses lang gumagana ang bawat isa at hindi na ipapakita.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Itago ito sa ligtas na lugar. Isang beses lang gumagana ang bawat isa at hindi na ipapakita.',
   'Recovery codes': 'Mga recovery code',
   'Recovery code': 'Recovery code',
   'Recovery codes left': 'Natitirang recovery code',
@@ -1018,7 +1133,8 @@ export const fil: Dictionary = {
   'Use a recovery code': 'Gumamit ng recovery code',
   'Now the code from your authenticator app': 'Ngayon ang code mula sa authenticator app mo',
   'That code is not right.': 'Hindi tama ang code na iyon.',
-  'This service cannot keep a second factor.': 'Hindi makakatago ng ikalawang factor ang serbisyong ito.',
+  'This service cannot keep a second factor.':
+    'Hindi makakatago ng ikalawang factor ang serbisyong ito.',
   'Signed in on': 'Naka-sign in sa',
   'A device': 'Isang device',
   'this one': 'ito',
@@ -1032,7 +1148,8 @@ export const fil: Dictionary = {
   Pages: 'Mga pahina',
   'Page {number} of {count}': 'Pahina {number} ng {count}',
   'What is selected': 'Ang pinili',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Canvas: {cards} card, {links} link, {drawings} guhit',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Canvas: {cards} card, {links} link, {drawings} guhit',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Mga provider',
@@ -1046,8 +1163,10 @@ export const fil: Dictionary = {
   'Asking…': 'Nagtatanong…',
   'No providers yet.': 'Wala pang provider.',
   'Add {name}': 'Idagdag ang {name}',
-  'Keys stay in the secure store on this device.': 'Nananatili ang key sa ligtas na imbakan ng device na ito.',
-  'This browser holds the keys in its own storage.': 'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
+  'Keys stay in the secure store on this device.':
+    'Nananatili ang key sa ligtas na imbakan ng device na ito.',
+  'This browser holds the keys in its own storage.':
+    'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
   'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',
   'That provider is not set up yet.': 'Hindi pa naka-set up ang provider na iyon.',
@@ -1069,38 +1188,121 @@ export const fil: Dictionary = {
   'AI block': 'AI block',
   'Highlight colour': 'Kulay ng tampok',
   'A single newline breaks the line': 'Isang bagong linya lang ay humahati ng linya',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Ang Sara ay batayang markdown: ang dalawang linya ng isang talata ay nababasa bilang isa; tinatawag itong strict line breaks ng Obsidian.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Ang Sara ay batayang markdown: ang dalawang linya ng isang talata ay nababasa bilang isa; tinatawag itong strict line breaks ng Obsidian.',
   'New links': 'Bagong link',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Pinapangalanan ng wikilink ang tala, kaya nananatili ang link kapag napalitan ang pangalan; nababasa ang dalawang paraan.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Pinapangalanan ng wikilink ang tala, kaya nananatili ang link kapag napalitan ang pangalan; nababasa ang dalawang paraan.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, pinakaikling pangalan',
   'Markdown, relative path': 'Markdown, relatibong path',
   'Markdown, path in the space': 'Markdown, path sa espasyo',
+  // Publishing part one.
+  'The folders you choose become public.': 'Ang piniling folder ay mapupunta sa publiko.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Sinumang may address ay makakabasa ng nailathala, kasama ang draft.',
+  'Which notes': 'Aling tala',
+  'Notes outside a rule': 'Talang walang tuntunin',
+  'Are published': 'Nailalathala',
+  'Stay private': 'Nananatiling pribado',
+  'Follows the rule': 'Sumusunod sa tuntunin',
+  Published: 'Nailathala',
+  Private: 'Pribado',
+  '{count} pages': '{count} pahina',
+  '{count} new': '{count} bago',
+  '{count} gone': '{count} inalis',
+  'and more': 'at iba pa',
+  'How it appears': 'Kung paano lumalabas',
+  Description: 'Paglalarawan',
+  'What this site is': 'Tungkol saan ang site na ito',
+  'Tab icon': 'Icon ng tab',
+  Password: 'Password',
+  'Set a new one': 'Magtakda ng bago',
+  'Ask for a password': 'Humingi ng password',
+  'No password': 'Walang password',
+  'Remove the password': 'Alisin ang password',
+  'Scan this with your authenticator app, then type its code.':
+    'I-scan ito sa authenticator app mo, pagkatapos i-type ang code nito.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Litrato',
+  Dictate: 'Idikta',
+  'Add to {name}': 'Idagdag sa {name}',
+  // Web tabs
+  Reload: 'I-reload',
+  'Clip this page': 'I-clip ang pahinang ito',
+  'Clip the link': 'I-clip ang link',
+  'Allow the camera': 'Payagan ang kamera',
+  'Allow the clipboard': 'Payagan ang clipboard',
+  'Open in the browser': 'Buksan sa browser',
+  'Copy the address': 'Kopyahin ang address',
+  'Show it here': 'Ipakita dito',
+  Website: 'Website',
+  'Open a website': 'Buksan ang website',
+  // Recording, meetings and what a model wrote
+  Record: 'Mag-record',
+  Recording: 'Recording',
+  'Stop recording': 'Itigil ang pag-record',
+  'Meeting notes': 'Tala ng pulong',
+  Meeting: 'Pulong',
+  'Stop the meeting': 'Tapusin ang pulong',
+  Transcribe: 'I-transcribe',
+  Transcript: 'Transcript',
+  'Transcript ({language})': 'Transcript ({language})',
+  'Written by {model}': 'Isinulat ni {model}',
+  'Saving the recording': 'Sinasave ang recording',
+  'Turning the recording into words': 'Ginagawang salita ang recording',
+  'Open a space to record into.': 'Magbukas ng espasyong mare-record-an.',
+  'Sign in to take meeting notes.': 'Mag-sign in para magtala ng pulong.',
+  'Sign in to turn a recording into words.': 'Mag-sign in para gawing salita ang recording.',
+  'That microphone could not be opened.': 'Hindi mabuksan ang mikropono na iyon.',
+  'That recording could not be saved.': 'Hindi na-save ang recording na iyon.',
+  'That recording could not be turned into words.': 'Hindi nagawang salita ang recording na iyon.',
+  'That recording is not in this space.': 'Wala sa espasyong ito ang recording na iyon.',
+  'That recording is too long to turn into words in one go.':
+    'Masyadong mahaba ang recording na iyon para gawing salita nang minsanan.',
+  'That is as much as one recording may hold.': 'Iyon na ang kasya sa isang recording.',
+  'Nothing could be heard in that recording.': 'Walang naririnig sa recording na iyon.',
+  'A piece of the transcript is being tried again.':
+    'May bahagi ng transcript na sinusubukan muli.',
+  'The transcript is behind and losing pieces.':
+    'Nahuhuli ang transcript at may nawawalang bahagi.',
+  '{count} pieces of this meeting were lost.': '{count} bahagi ng pulong na ito ang nawala.',
+  'Add an AI provider in settings to summarise.':
+    'Magdagdag ng AI provider sa mga setting para maglagom.',
+  'The summary could not be written.': 'Hindi naisulat ang lagom.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'hindi maipadala ang mail - subukan muli',
   'start again - that took too long': 'magsimula muli - masyadong tumagal',
   'sign in to do that': 'mag-sign in para gawin iyon',
   'that is not something a token can do': 'hindi kayang gawin iyon ng token',
   'something went wrong here - try again': 'may nagkamali dito - subukan muli',
-  'this service cannot keep a secret safely': 'hindi maitatago nang ligtas ng serbisyong ito ang lihim',
+  'this service cannot keep a secret safely':
+    'hindi maitatago nang ligtas ng serbisyong ito ang lihim',
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'imahe at PDF lang',
   'that file is too big': 'masyadong malaki ang file na iyon',
-  'that is more settings than an account holds': 'mas marami iyon sa setting na kayang hawakan ng isang account',
-  'that is more bookmarks than a space holds': 'mas marami iyon sa bookmark na kayang hawakan ng isang espasyo',
-  'that is more paths than a space leaves out': 'mas marami iyon sa path na kayang iwanan ng isang espasyo',
+  'that is more settings than an account holds':
+    'mas marami iyon sa setting na kayang hawakan ng isang account',
+  'that is more bookmarks than a space holds':
+    'mas marami iyon sa bookmark na kayang hawakan ng isang espasyo',
+  'that is more paths than a space leaves out':
+    'mas marami iyon sa path na kayang iwanan ng isang espasyo',
   'that is more files than a space keeps': 'mas marami iyon sa file na itinatago ng isang espasyo',
-  'that is more than a space keeps about its graph': 'mas marami iyon sa itinatago ng isang espasyo tungkol sa graph nito',
-  'that is more folder icons than a space holds': 'mas marami iyon sa folder icon na kayang hawakan ng isang espasyo',
+  'that is more than a space keeps about its graph':
+    'mas marami iyon sa itinatago ng isang espasyo tungkol sa graph nito',
+  'that is more folder icons than a space holds':
+    'mas marami iyon sa folder icon na kayang hawakan ng isang espasyo',
   // Sharing a space, and being let into one.
   'nobody by that address': 'walang tao sa address na iyon',
   'nobody by that name': 'walang tao sa pangalang iyon',
   'nobody is waiting by that name': 'walang naghihintay sa pangalang iyon',
   'this space is yours': 'sa iyo ang espasyong ito',
-  'that link is busy, try again in a minute': 'abala ang link na iyon, subukan muli sa isang minuto',
+  'that link is busy, try again in a minute':
+    'abala ang link na iyon, subukan muli sa isang minuto',
   // Versions, the bin, and a room two people write in.
   'no such version': 'walang ganoong bersyon',
-  'this note was shared with you, not its folder': 'ang talang ito ang ibinahagi sa iyo, hindi ang folder nito',
+  'this note was shared with you, not its folder':
+    'ang talang ito ang ibinahagi sa iyo, hindi ang folder nito',
   'nothing to restore': 'walang ibabalik',
   'restore its space first': 'ibalik muna ang espasyo nito',
   'nothing to delete': 'walang tatanggalin',

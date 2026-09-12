@@ -7,6 +7,12 @@ export const sw: Dictionary = {
   'Open file': 'Fungua faili',
   'New note inside': 'Dokezo jipya ndani',
   'New canvas': 'Turubai jipya',
+  'New page note': 'Dokezo jipya la kurasa',
+  'Add a page': 'Ongeza ukurasa',
+  'Add a page after this': 'Ongeza ukurasa baada ya huu',
+  'Delete this page': 'Futa ukurasa huu',
+  'Page {number}': 'Ukurasa {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Turubai',
   Card: 'Kadi',
   'Note or picture': 'Dokezo au picha',
@@ -34,7 +40,8 @@ export const sw: Dictionary = {
   'Create a space': 'Unda nafasi',
   'Delete space': 'Futa nafasi',
   'Delete {name}?': 'Futa {name}?',
-  'Every note in this space is deleted from your computer.': 'Kila dokezo katika nafasi hii linafutwa kwenye kompyuta yako.',
+  'Every note in this space is deleted from your computer.':
+    'Kila dokezo katika nafasi hii linafutwa kwenye kompyuta yako.',
   'The notes inside it go too.': 'Madokezo yaliyomo yanaondoka pia.',
   Journal: 'Shajara',
   Create: 'Unda',
@@ -206,14 +213,18 @@ export const sw: Dictionary = {
   'Image not found': 'Picha haipatikani',
   'Delete {count} items': { one: 'Futa kipengee {count}', other: 'Futa vipengee {count}' },
   'Recently deleted': 'Vilivyofutwa hivi karibuni',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Madokezo na nafasi zilizofutwa husubiri hapa siku 14, kisha zinapotea kabisa.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Madokezo na nafasi zilizofutwa husubiri hapa siku 14, kisha zinapotea kabisa.',
   'Nothing here.': 'Hakuna kitu hapa.',
   Empty: 'Mwaga',
   Spaces: 'Nafasi',
   Notes: 'Madokezo',
   'Delete now': 'Futa sasa',
   'deleted {when}': 'imefutwa {when}',
-  'gone in {count} days': { one: 'inaondoka baada ya siku {count}', other: 'inaondoka baada ya siku {count}' },
+  'gone in {count} days': {
+    one: 'inaondoka baada ya siku {count}',
+    other: 'inaondoka baada ya siku {count}',
+  },
   'on this device': 'kwenye kifaa hiki',
   '{count} notes': { one: 'dokezo {count}', other: 'madokezo {count}' },
   'Empty Recently deleted?': 'Mwaga Vilivyofutwa hivi karibuni?',
@@ -257,7 +268,8 @@ export const sw: Dictionary = {
   'Previous slide': 'Slaidi iliyopita',
   'Read-only': 'Kusoma pekee',
   'No preview': 'Hakuna onyesho la awali',
-  'Shown as plain text, so typing stays instant in a note this long': 'Inaonyeshwa kama maandishi ya kawaida ili kuandika kuendelee kuwa papo hapo katika dokezo refu kama hili',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Inaonyeshwa kama maandishi ya kawaida ili kuandika kuendelee kuwa papo hapo katika dokezo refu kama hili',
   'Leave read-only': 'Toka kwenye kusoma pekee',
   Next: 'Ifuatayo',
   Previous: 'Iliyopita',
@@ -267,8 +279,8 @@ export const sw: Dictionary = {
   'Leave focus mode': 'Toka kwenye hali ya kuzama',
   'Typewriter mode': 'Hali ya taipureta',
   'Leave typewriter mode': 'Toka kwenye hali ya taipureta',
-  'Use curly quotes': 'Tumia alama za mnong\'ono zilizopinda',
-  'Use straight quotes': 'Tumia alama za mnong\'ono zilizonyooka',
+  'Use curly quotes': "Tumia alama za mnong'ono zilizopinda",
+  'Use straight quotes': "Tumia alama za mnong'ono zilizonyooka",
   'Number headings': 'Pa vichwa namba',
   'Stop numbering headings': 'Acha kupa vichwa namba',
   'Number equations': 'Pa milinganyo namba',
@@ -353,16 +365,19 @@ export const sw: Dictionary = {
   'OpenAI key': 'Kitufe cha OpenAI',
   Model: 'Modeli',
   Reasoning: 'Ufikirio',
-  'Kept encrypted on your account, and never shown again.': 'Huhifadhiwa kwa usiri kwenye akaunti yako, na haionyeshwi tena.',
+  'Kept encrypted on your account, and never shown again.':
+    'Huhifadhiwa kwa usiri kwenye akaunti yako, na haionyeshwi tena.',
   'set, ends in …{tail}': 'imewekwa, inaishia …{tail}',
   'Saving the key': 'Inahifadhi kitufe',
   'this server cannot keep a key yet': 'seva hii haiwezi kuhifadhi kitufe bado',
   'that does not look like a key': 'hicho hakionekani kama kitufe',
   'that key could not be saved': 'kitufe hicho hakikuweza kuhifadhiwa',
   'Sign in to ask a question.': 'Ingia ili kuuliza swali.',
-  'Asking OpenAI which models this key can use': 'Inauliza OpenAI modeli zipi kitufe hiki kinaweza kutumia',
+  'Asking OpenAI which models this key can use':
+    'Inauliza OpenAI modeli zipi kitufe hiki kinaweza kutumia',
   'Could not reach OpenAI': 'OpenAI haikufikiwa',
-  'That key cannot use any of the models Nib asks for.': 'Kitufe hicho haiwezi kutumia modeli yoyote ambayo Nib inaomba.',
+  'That key cannot use any of the models Nib asks for.':
+    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo Nib inaomba.',
   'No reasoning': 'Hakuna ufikirio',
   Minimal: 'Kidogo sana',
   Low: 'Chini',
@@ -403,7 +418,10 @@ export const sw: Dictionary = {
   'Add a word': 'Ongeza neno',
   'Add {word} to the dictionary': 'Ongeza {word} kwenye kamusi',
   'Remove {word} from the dictionary': 'Ondoa {word} kwenye kamusi',
-  '{count} things in this theme were left out.': { one: 'Kitu {count} katika mandhari hii kiliachwa.', other: 'Vitu {count} katika mandhari hii viliachwa.' },
+  '{count} things in this theme were left out.': {
+    one: 'Kitu {count} katika mandhari hii kiliachwa.',
+    other: 'Vitu {count} katika mandhari hii viliachwa.',
+  },
   'A note': 'Dokezo',
   'Words with {bold} and a {link}.': 'Maneno yenye {bold} na {link}.',
   bold: 'kolezo',
@@ -442,17 +460,20 @@ export const sw: Dictionary = {
   'Line spacing': 'Nafasi kati ya mistari',
   'Line width': 'Upana wa mstari',
   Writing: 'Kuandika',
-  'Close brackets and quotes': 'Funga mabano na alama za mnong\'ono',
+  'Close brackets and quotes': "Funga mabano na alama za mnong'ono",
   'Check spelling': 'Angalia herufi',
   Highlighting: 'Uangazio',
   'Line numbers': 'Namba za mistari',
   Syntax: 'Sintaksi',
   'Strict CommonMark': 'CommonMark kali',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Kanuni za msingi za markdown pekee, bila majedwali, orodha za kazi au tanbihi.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Kanuni za msingi za markdown pekee, bila majedwali, orodha za kazi au tanbihi.',
   'Smart punctuation': 'Uakifishaji werevu',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Hubadilisha alama zilizonyooka na vistari kuwa za uchapaji unapoandika.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Hubadilisha alama zilizonyooka na vistari kuwa za uchapaji unapoandika.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Huweka 1., 1.1, 1.2 mbele ya vichwa.',
-  'Numbers display equations so you can refer to them.': 'Hupa milinganyo ya maonyesho namba ili uweze kuitaja.',
+  'Numbers display equations so you can refer to them.':
+    'Hupa milinganyo ya maonyesho namba ili uweze kuitaja.',
   Ligatures: 'Viungo vya herufi',
   Off: 'Imezimwa',
   'Code only': 'Kodi pekee',
@@ -515,13 +536,17 @@ export const sw: Dictionary = {
   'Send a new code': 'Tuma kodi mpya',
   'Code sent to': 'Kodi imetumwa kwa',
   'You already have notes on this computer.': 'Una madokezo tayari kwenye kompyuta hii.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Yahifadhi na yataingia kwenye akaunti yako. Yafute na kile akaunti yako inacho pekee kitasalia - hili haliwezi kutendua.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Yahifadhi na yataingia kwenye akaunti yako. Yafute na kile akaunti yako inacho pekee kitasalia - hili haliwezi kutendua.',
   'Keep them': 'Yahifadhi',
   'Erase them': 'Yafute',
   'Digit {number}': 'Tarakimu {number}',
   'Resend in {seconds}s': 'Tuma tena baada ya {seconds}s',
   'Last synced {time}.': 'Usawazishaji wa mwisho {time}.',
-  '{count} spaces sync to your account.': { one: 'Nafasi {count} inasawazishwa na akaunti yako.', other: 'Nafasi {count} zinasawazishwa na akaunti yako.' },
+  '{count} spaces sync to your account.': {
+    one: 'Nafasi {count} inasawazishwa na akaunti yako.',
+    other: 'Nafasi {count} zinasawazishwa na akaunti yako.',
+  },
   Update: 'Sasisha',
   'Live at': 'Hewani kwenye',
   // Publishing
@@ -531,7 +556,8 @@ export const sw: Dictionary = {
   'Only {name}': '{name} pekee',
   'Publish this space as a blog': 'Chapisha nafasi hii kama blogu',
   'Everything in this space becomes public.': 'Kila kitu katika nafasi hii kinakuwa hadhara.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Kila dokezo, hata rasimu, linaweza kusomwa na mtu yeyote aliye na anwani.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Kila dokezo, hata rasimu, linaweza kusomwa na mtu yeyote aliye na anwani.',
   Address: 'Anwani',
   'Add these at your registrar, then verify.': 'Ongeza hivi kwa msajili wako, kisha thibitisha.',
   Verify: 'Thibitisha',
@@ -544,8 +570,10 @@ export const sw: Dictionary = {
   'checking…': 'inaangalia…',
   // LLM
   'Connect an LLM to your notes': 'Unganisha LLM na madokezo yako',
-  'Sign in first - the connector reaches the notes in your account.': 'Ingia kwanza - kiunganishi hufikia madokezo ya akaunti yako.',
-  'Let it write to my notes, not only read them': 'Iruhusu kuandika kwenye madokezo yangu, si kusoma pekee',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Ingia kwanza - kiunganishi hufikia madokezo ya akaunti yako.',
+  'Let it write to my notes, not only read them':
+    'Iruhusu kuandika kwenye madokezo yangu, si kusoma pekee',
   'Create a token': 'Unda tokeni',
   'Replace the token': 'Badilisha tokeni',
   'Last used {time}.': 'Ilitumika mwisho {time}.',
@@ -560,27 +588,38 @@ export const sw: Dictionary = {
   'Reads your notes.': 'Husoma madokezo yako.',
   'Reads and writes your notes.': 'Husoma na kuandika madokezo yako.',
   Other: 'Nyingine',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya Nib; hakuna kitu cha kubandika.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Katika Claude, fungua Settings → Connectors na bofya Add custom connector.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya Nib; hakuna kitu cha kubandika.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Katika Claude, fungua Settings → Connectors na bofya Add custom connector.',
   'Open Claude’s connectors': 'Fungua viunganishi vya Claude',
   'Fill in the two fields and click Add.': 'Jaza sehemu mbili na bofya Add.',
-  'Click Connect and sign in with your Nib email.': 'Bofya Connect na uingie kwa barua pepe yako ya Nib.',
+  'Click Connect and sign in with your Nib email.':
+    'Bofya Connect na uingie kwa barua pepe yako ya Nib.',
   'Using Claude Code instead?': 'Unatumia Claude Code?',
   Command: 'Amri',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Iendeshe kwenye terminal, kisha andika /mcp katika Claude Code ili kuingia.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Iendeshe kwenye terminal, kisha andika /mcp katika Claude Code ili kuingia.',
   'Fill in the form and click Create.': 'Jaza fomu na bofya Create.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'Katika ChatGPT, fungua Settings → Plugins na bofya kitufe cha kuongeza.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Katika ChatGPT, fungua Settings → Plugins na bofya kitufe cha kuongeza.',
   'Open ChatGPT’s plugins': 'Fungua programu-jalizi za ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Hakuna sehemu ya Plugins au kitufe cha kuongeza? Washa Developer mode kwanza, chini ya Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Ingia kwa barua pepe yako ya Nib ChatGPT ikiuliza.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Hakuna sehemu ya Plugins au kitufe cha kuongeza? Washa Developer mode kwanza, chini ya Settings → Security and login.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Ingia kwa barua pepe yako ya Nib ChatGPT ikiuliza.',
   'To use it in a chat, type @ and pick Nib.': 'Kuitumia kwenye gumzo, andika @ na chagua Nib.',
   'Server URL': 'URL ya seva',
   Authentication: 'Uthibitishaji',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Acha mipangilio ya juu ya OAuth kama ilivyo na tia alama “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Acha mipangilio ya juu ya OAuth kama ilivyo na tia alama “I understand and want to continue”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa Nib.',
   'Show config': 'Onyesha usanidi',
-  'For a client that takes a JSON block instead of a URL.': 'Kwa mteja anayechukua kizuizi cha JSON badala ya URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'Mteja ambaye hawezi kuingia anaweza kupewa tokeni. Inaonyeshwa mara moja pekee.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Kwa mteja anayechukua kizuizi cha JSON badala ya URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Mteja ambaye hawezi kuingia anaweza kupewa tokeni. Inaonyeshwa mara moja pekee.',
   // Export
   'Plain text': 'Maandishi ya kawaida',
   'Markdown with the pictures': 'Markdown pamoja na picha',
@@ -604,8 +643,10 @@ export const sw: Dictionary = {
   'Version history': 'Historia ya matoleo',
   'Copy link to this note': 'Nakili kiungo cha dokezo hili',
   'that link could not be followed': 'kiungo hicho hakikufuatwa',
-  'Save this note first; there is nothing to compare against yet.': 'Hifadhi dokezo hili kwanza; hakuna kitu cha kulinganisha bado.',
-  'No earlier versions yet. One is kept each time you save.': 'Hakuna matoleo ya awali bado. Moja huhifadhiwa kila unapohifadhi.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Hifadhi dokezo hili kwanza; hakuna kitu cha kulinganisha bado.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Hakuna matoleo ya awali bado. Moja huhifadhiwa kila unapohifadhi.',
   'Restore this version': 'Rejesha toleo hili',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'dokezo lipo hapo tayari',
@@ -618,7 +659,8 @@ export const sw: Dictionary = {
   'you can only read this space': 'unaweza kusoma nafasi hii pekee',
   'only the owner can do that': 'mmiliki pekee anaweza kufanya hivyo',
   'this space is already yours': 'nafasi hii ni yako tayari',
-  'that is as many people as one space holds': 'hiyo ni idadi ya watu ambao nafasi moja inaweza kuwa nao',
+  'that is as many people as one space holds':
+    'hiyo ni idadi ya watu ambao nafasi moja inaweza kuwa nao',
   'that invitation was sent to another address': 'mwaliko huo ulitumwa kwa anwani nyingine',
   'that link has expired': 'kiungo hicho kimepitwa na wakati',
   'that code has expired - ask for a new one': 'kodi hiyo imepitwa - omba nyingine',
@@ -629,9 +671,11 @@ export const sw: Dictionary = {
   'that path is not usable': 'njia hiyo haitumiki',
   'this note changed elsewhere': 'dokezo hili limebadilika mahali pengine',
   'too many tries - ask for a new code': 'majaribio mengi mno - omba kodi mpya',
-  'too many messages from here - try again later': 'jumbe nyingi mno kutoka hapa - jaribu tena baadaye',
+  'too many messages from here - try again later':
+    'jumbe nyingi mno kutoka hapa - jaribu tena baadaye',
   'too much mail today - try again tomorrow': 'barua nyingi mno leo - jaribu tena kesho',
-  'that many people are already waiting to be let in': 'watu wengi hivyo wanasubiri kuruhusiwa tayari',
+  'that many people are already waiting to be let in':
+    'watu wengi hivyo wanasubiri kuruhusiwa tayari',
   'use 2–32 letters, numbers or hyphens': 'tumia herufi, namba au vistari 2–32',
   'sync failed': 'usawazishaji umeshindikana',
   'could not publish': 'haikuchapishwa',
@@ -666,7 +710,8 @@ export const sw: Dictionary = {
   'use a domain of your own': 'tumia kikoa chako',
   'the domain no longer points here': 'kikoa hakielekei hapa tena',
   'Cloudflare has blocked this domain': 'Cloudflare imezuia kikoa hiki',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'Kwenye mzizi wa kikoa, tumia rekodi ya ALIAS au ANAME, au CNAME flattening, kama mtoa huduma wako hakubali CNAME hapo.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'Kwenye mzizi wa kikoa, tumia rekodi ya ALIAS au ANAME, au CNAME flattening, kama mtoa huduma wako hakubali CNAME hapo.',
   // Shortcuts
   Shortcuts: 'Njia za mkato',
   'Search shortcuts': 'Tafuta njia za mkato',
@@ -677,7 +722,8 @@ export const sw: Dictionary = {
   'Reset all shortcuts': 'Rejesha njia zote za mkato',
   'Take it over': 'Ichukue',
   '{key} already runs {name}.': '{key} inaendesha {name} tayari.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc husimamisha kurekodi, Backspace huondoa kitufe.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc husimamisha kurekodi, Backspace huondoa kitufe.',
   Tables: 'Majedwali',
   Pictures: 'Picha',
   'Fixed keys': 'Vitufe visivyobadilika',
@@ -713,7 +759,8 @@ export const sw: Dictionary = {
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
   'Report an issue': 'Ripoti tatizo',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} imebadilika kwenye diski. Kilicho kwenye kihariri ni chako.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} imebadilika kwenye diski. Kilicho kwenye kihariri ni chako.',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',
   'Copy the line up': 'Nakili mstari juu',
@@ -748,26 +795,33 @@ export const sw: Dictionary = {
   Escape: 'Escape',
   Quit: 'Ondoka',
   'The clipboard belongs to the system.': 'Ubao wa kunakili ni wa mfumo.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Vitufe vya mishale, Home, End, Page up na Page down ni vya maandishi.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Vitufe vya mishale, Home, End, Page up na Page down ni vya maandishi.',
   'Backspace and Delete belong to the text.': 'Backspace na Delete ni vya maandishi.',
-  'Enter closes a code block and carries a list on.': 'Enter hufunga kizuizi cha kodi na kuendeleza orodha.',
-  'Tab moves on through the app as well as indenting.': 'Tab husogea katika programu na pia huingiza ndani.',
+  'Enter closes a code block and carries a list on.':
+    'Enter hufunga kizuizi cha kodi na kuendeleza orodha.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab husogea katika programu na pia huingiza ndani.',
   'Escape closes whatever is open.': 'Escape hufunga chochote kilichofunguliwa.',
-  'Your system takes this key before the app sees it.': 'Mfumo wako huchukua kitufe hiki kabla programu ikione.',
-  'Your browser takes this key before the app sees it.': 'Kivinjari chako huchukua kitufe hiki kabla programu ikione.',
+  'Your system takes this key before the app sees it.':
+    'Mfumo wako huchukua kitufe hiki kabla programu ikione.',
+  'Your browser takes this key before the app sees it.':
+    'Kivinjari chako huchukua kitufe hiki kabla programu ikione.',
   'That is not a key combination.': 'Hiyo si mchanganyiko wa vitufe.',
   'Hold Ctrl, Alt or Cmd as well.': 'Shikilia Ctrl, Alt au Cmd pia.',
   'File list': 'Orodha ya faili',
   'Select every file': 'Teua kila faili',
   'Clear the selection': 'Ondoa uteuzi',
   'Delete the selected files': 'Futa faili zilizoteuliwa',
-  'The file could not be written, so it goes to the print dialog': 'Faili haikuandikwa, kwa hivyo inaelekea kwenye kidirisha cha kuchapisha',
+  'The file could not be written, so it goes to the print dialog':
+    'Faili haikuandikwa, kwa hivyo inaelekea kwenye kidirisha cha kuchapisha',
   'Next file': 'Faili ifuatayo',
   'Previous file': 'Faili iliyopita',
   'Show what it holds': 'Onyesha yaliyomo',
   'Hide what it holds': 'Ficha yaliyomo',
   'Moving through a list': 'Kusogea kwenye orodha',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Vitufe vya mishale, Enter na Esc hufanya kazi chochote kilichofunguliwa; si njia za mkato.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Vitufe vya mishale, Enter na Esc hufanya kazi chochote kilichofunguliwa; si njia za mkato.',
   'Split right': 'Gawa kulia',
   'Split down': 'Gawa chini',
   'Other pane': 'Paneli nyingine',
@@ -789,7 +843,8 @@ export const sw: Dictionary = {
   'Follow the link': 'Fuata kiungo',
   'Replace your own keys?': 'Badilisha vitufe vyako?',
   Replace: 'Badilisha',
-  'The keys you changed go back to what this keyboard says.': 'Vitufe ulivyobadilisha vinarejea kwa kile kibodi hii inasema.',
+  'The keys you changed go back to what this keyboard says.':
+    'Vitufe ulivyobadilisha vinarejea kwa kile kibodi hii inasema.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +966,8 @@ export const sw: Dictionary = {
   Leave: 'Ondoka',
   'Leave space': 'Ondoka kwenye nafasi',
   'Leave {name}?': 'Ondoka kwenye {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Inasalia kwa wengine wote. Madokezo yake yanaondoka kwenye kompyuta yako.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Inasalia kwa wengine wote. Madokezo yake yanaondoka kwenye kompyuta yako.',
   '{who} shared {space} with you': '{who} alishiriki {space} nawe',
   'Shared with you': 'Imeshirikiwa nawe',
   'That link does not open anything': 'Kiungo hicho hakifungui kitu',
@@ -928,7 +984,8 @@ export const sw: Dictionary = {
   'Release channel': 'Njia ya matoleo',
   Stable: 'Imara',
   Unstable: 'Isiyo imara',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',
@@ -936,19 +993,30 @@ export const sw: Dictionary = {
   'In this note': 'Katika dokezo hili',
   'In the whole space': 'Katika nafasi yote',
   'Nothing here needs converting.': 'Hakuna kinachohitaji kubadilishwa hapa.',
-  'Rewrite {count} things?': { one: 'Andika upya kitu {count}?', other: 'Andika upya vitu {count}?' },
+  'Rewrite {count} things?': {
+    one: 'Andika upya kitu {count}?',
+    other: 'Andika upya vitu {count}?',
+  },
   'In {count} notes.': { one: 'Katika dokezo {count}.', other: 'Katika madokezo {count}.' },
   Rewrite: 'Andika upya',
-  '{count} passages are encrypted, and nothing can read them without Evernote': 'vifungu {count} vimesimbwa, na hakuna kinachoweza kuvisoma bila Evernote',
-  '{count} notes had a reminder, which the export does not carry': 'madokezo {count} yalikuwa na kikumbusho, ambacho utoaji hauchukui',
-  '{count} notes were in the bin and stay there': 'madokezo {count} yalikuwa kwenye pipa na yanasalia hapo',
-  '{count} archived notes are in a folder called Archive': 'madokezo {count} yaliyowekwa kumbukumbu yapo kwenye folda inayoitwa Archive',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    'vifungu {count} vimesimbwa, na hakuna kinachoweza kuvisoma bila Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    'madokezo {count} yalikuwa na kikumbusho, ambacho utoaji hauchukui',
+  '{count} notes were in the bin and stay there':
+    'madokezo {count} yalikuwa kwenye pipa na yanasalia hapo',
+  '{count} archived notes are in a folder called Archive':
+    'madokezo {count} yaliyowekwa kumbukumbu yapo kwenye folda inayoitwa Archive',
   'The colours a note had are not kept': 'Rangi ambazo dokezo lilikuwa nazo hazihifadhiwi',
-  '{count} block references were written out as the words they pointed at': 'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
-  '{count} saved views are left out, and every row is in the table': 'mionekano {count} iliyohifadhiwa imeachwa, na kila mstari upo kwenye jedwali',
-  '{count} pages came as HTML, so their words are kept and their look is not': 'kurasa {count} zilifika kama HTML, kwa hivyo maneno yao yanahifadhiwa na muonekano hapana',
+  '{count} block references were written out as the words they pointed at':
+    'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
+  '{count} saved views are left out, and every row is in the table':
+    'mionekano {count} iliyohifadhiwa imeachwa, na kila mstari upo kwenye jedwali',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    'kurasa {count} zilifika kama HTML, kwa hivyo maneno yao yanahifadhiwa na muonekano hapana',
   'There are no rows in this file.': 'Hakuna mistari katika faili hii.',
-  'Nothing in there can be read as notes.': 'Hakuna kilicho humo kinachoweza kusomwa kama madokezo.',
+  'Nothing in there can be read as notes.':
+    'Hakuna kilicho humo kinachoweza kusomwa kama madokezo.',
   'That export could not be read.': 'Utoaji huo haukusomwa.',
   'That export is too big to read in one go.': 'Utoaji huo ni mkubwa mno kusomwa kwa mara moja.',
   'Import into': 'Ingiza kwenye',
@@ -956,21 +1024,54 @@ export const sw: Dictionary = {
   '{count} files': { one: 'faili {count}', other: 'faili {count}' },
   'This space': 'Nafasi hii',
   'Drop an export here': 'Dondosha utoaji hapa',
-  'A zip, a folder, or a file another app wrote': 'Zip, folda, au faili ambayo programu nyingine iliandika',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes na Apple Journal huhifadhi madokezo yao pale ambapo wao pekee wanaweza kuyafungua. Yatoe kwanza, kisha uingize hayo.',
-  'Pandoc reads this one, from the file on your disk.': 'Pandoc husoma hii, kutoka faili iliyo kwenye diski yako.',
+  'A zip, a folder, or a file another app wrote':
+    'Zip, folda, au faili ambayo programu nyingine iliandika',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    'Picha {count} zilifika kama HEIC, ambayo Apple pekee huonyesha',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    'Kadi {count} za hisia na shughuli ni michoro, kwa hivyo maneno yao pekee huvuka',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    'Madokezo {count} yako nyuma ya nenosiri ambalo Notes pekee huweza kufungua',
+  '{count} notes are in Recently Deleted, and stay there':
+    'Madokezo {count} yako katika Vilivyofutwa hivi karibuni na yanasalia huko',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    'Michoro na kurasa zilizoskanwa {count} ni picha ambazo Notes huchora yenyewe',
+  '{count} tables inside notes do not come over': 'Majedwali {count} ndani ya madokezo hayavuki',
+  '{count} attachments are in iCloud rather than on this Mac':
+    'Viambatisho {count} viko kwenye iCloud badala ya kwenye Mac hii',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS huweka madokezo hayo nyuma ya Full Disk Access.',
+  'There are no notes in Apple Notes on this Mac.':
+    'Hakuna madokezo katika Apple Notes kwenye Mac hii.',
+  'Those notes could not be read.': 'Madokezo hayo hayakuweza kusomwa.',
+  'Read them from this Mac': 'Yasome kutoka Mac hii',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Washa nibeditor katika Full Disk Access, kisha jaribu tena.',
+  'Open the setting': 'Fungua mpangilio',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal hujitoa yenyewe: Journal, Mipangilio, Toa. Apple Notes haina utoaji, kwa hivyo mbali na Mac iliyo nayo, kinachoachwa hapa ni folda iliyoandikwa na kitoaji.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc husoma hii, kutoka faili iliyo kwenye diski yako.',
   'Read it with pandoc': 'Isome kwa pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Pandoc pekee husoma hii, na haijasakinishwa kwenye mashine hii.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Pandoc pekee husoma hii, na haijasakinishwa kwenye mashine hii.',
   Rows: 'Mistari',
   'As a table': 'Kama jedwali',
   'One note per row': 'Dokezo moja kwa mstari',
   Into: 'Kwenye',
   'Worth knowing': 'Yafaa kujua',
-  '{count} notes arrived.': { one: 'Dokezo {count} limefika.', other: 'Madokezo {count} yamefika.' },
-  '{count} names were taken, so those files stepped aside.': { one: 'Jina {count} lilikuwa limechukuliwa, kwa hivyo faili hiyo ilipisha.', other: 'Majina {count} yalikuwa yamechukuliwa, kwa hivyo faili hizo zilipisha.' },
+  '{count} notes arrived.': {
+    one: 'Dokezo {count} limefika.',
+    other: 'Madokezo {count} yamefika.',
+  },
+  '{count} names were taken, so those files stepped aside.': {
+    one: 'Jina {count} lilikuwa limechukuliwa, kwa hivyo faili hiyo ilipisha.',
+    other: 'Majina {count} yalikuwa yamechukuliwa, kwa hivyo faili hizo zilipisha.',
+  },
   'A table': 'Jedwali',
   'Markdown files': 'Faili za markdown',
   'A document': 'Hati',
+  'A PDF, as pages to write on': 'PDF, kama kurasa za kuandikia',
   'Undo the import': 'Tendua uingizaji',
   'Choose an export': 'Chagua utoaji',
   Under: 'Chini ya',
@@ -982,13 +1083,15 @@ export const sw: Dictionary = {
   'Keep both copies': 'Hifadhi nakala zote mbili',
   'Let the newest win': 'Acha jipya zaidi lishinde',
   'Ask me each time': 'Niulize kila mara',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Hakuna kinachotupwa: kile kisichoshinda huhifadhiwa kama toleo.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Hakuna kinachotupwa: kile kisichoshinda huhifadhiwa kama toleo.',
   'Waiting for you': 'Inakusubiri',
   'Keep mine': 'Hifadhi langu',
   'Take theirs': 'Chukua lao',
   'Keep both': 'Hifadhi yote mawili',
   'What synced': 'Kilichosawazishwa',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Hakuna bado. Mzunguko usiosogeza kitu hauandikwi.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Hakuna bado. Mzunguko usiosogeza kitu hauandikwi.',
   'Clear the list': 'Ondoa orodha',
   '{count} down': 'imeshuka {count}',
   '{count} up': 'imepanda {count}',
@@ -998,19 +1101,28 @@ export const sw: Dictionary = {
   'This space, as it was': 'Nafasi hii, kama ilivyokuwa',
   '{count} days ago': { one: 'siku {count} iliyopita', other: 'siku {count} zilizopita' },
   'What would change?': 'Nini kingebadilika?',
-  '{count} notes would go back to what they said then.': { one: 'Dokezo {count} lingerudi kwa kile lilisema wakati huo.', other: 'Madokezo {count} yangerudi kwa kile yaliyosema wakati huo.' },
+  '{count} notes would go back to what they said then.': {
+    one: 'Dokezo {count} lingerudi kwa kile lilisema wakati huo.',
+    other: 'Madokezo {count} yangerudi kwa kile yaliyosema wakati huo.',
+  },
   'Nothing has changed since then.': 'Hakuna kilichobadilika kutoka wakati huo.',
-  '{count} notes went back.': { one: 'Dokezo {count} lilirudi.', other: 'Madokezo {count} yalirudi.' },
-  'The account keeps a month of versions of every note that syncs.': 'Akaunti huhifadhi matoleo ya mwezi mmoja ya kila dokezo linalosawazishwa.',
+  '{count} notes went back.': {
+    one: 'Dokezo {count} lilirudi.',
+    other: 'Madokezo {count} yalirudi.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'Akaunti huhifadhi matoleo ya mwezi mmoja ya kila dokezo linalosawazishwa.',
   'That did not work.': 'Hiyo haikufanya kazi.',
   'Signing in': 'Kuingia',
   'Ask for a code from an app': 'Omba kodi kutoka programu',
   'Turn on': 'Washa',
   'Turn off': 'Zima',
-  'Put this into your authenticator app, then type its code.': 'Weka hii kwenye programu yako ya uthibitishaji, kisha andika kodi yake.',
+  'Put this into your authenticator app, then type its code.':
+    'Weka hii kwenye programu yako ya uthibitishaji, kisha andika kodi yake.',
   Secret: 'Siri',
   'Code from the app': 'Kodi kutoka programu',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Hifadhi hizi mahali salama. Kila moja hufanya kazi mara moja, na hazionyeshwi tena.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Hifadhi hizi mahali salama. Kila moja hufanya kazi mara moja, na hazionyeshwi tena.',
   'Recovery codes': 'Kodi za uokoaji',
   'Recovery code': 'Kodi ya uokoaji',
   'Recovery codes left': 'Kodi za uokoaji zilizosalia',
@@ -1032,7 +1144,8 @@ export const sw: Dictionary = {
   Pages: 'Kurasa',
   'Page {number} of {count}': 'Ukurasa {number} wa {count}',
   'What is selected': 'Kilichoteuliwa',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Turubai: kadi {cards}, viungo {links}, michoro {drawings}',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Turubai: kadi {cards}, viungo {links}, michoro {drawings}',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Watoa huduma',
@@ -1046,8 +1159,10 @@ export const sw: Dictionary = {
   'Asking…': 'Inauliza…',
   'No providers yet.': 'Hakuna watoa huduma bado.',
   'Add {name}': 'Ongeza {name}',
-  'Keys stay in the secure store on this device.': 'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
-  'This browser holds the keys in its own storage.': 'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'Keys stay in the secure store on this device.':
+    'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
+  'This browser holds the keys in its own storage.':
+    'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
   'That provider is not set up yet.': 'Mtoa huduma huyo hajasanidiwa bado.',
@@ -1069,13 +1184,87 @@ export const sw: Dictionary = {
   'AI block': 'Kizuizi cha AI',
   'Highlight colour': 'Rangi ya angazio',
   'A single newline breaks the line': 'Mstari mpya mmoja huvunja mstari',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Imezimwa ni markdown ya kawaida: mistari miwili ya aya moja husomwa kama mmoja; Obsidian huiita mikato kali ya mstari.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Imezimwa ni markdown ya kawaida: mistari miwili ya aya moja husomwa kama mmoja; Obsidian huiita mikato kali ya mstari.',
   'New links': 'Viungo vipya',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilink hutaja dokezo, kwa hivyo kiungo hudumu likibadilishwa jina; miundo yote miwili husomwa.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilink hutaja dokezo, kwa hivyo kiungo hudumu likibadilishwa jina; miundo yote miwili husomwa.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, jina fupi zaidi',
   'Markdown, relative path': 'Markdown, njia ya kiasi',
   'Markdown, path in the space': 'Markdown, njia katika nafasi',
+  // Publishing part one.
+  'The folders you choose become public.': 'Folda unazochagua zinakuwa za hadhara.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Mtu yeyote aliye na anwani anaweza kusoma kilichochapishwa, hata rasimu.',
+  'Which notes': 'Madokezo yapi',
+  'Notes outside a rule': 'Madokezo bila kanuni',
+  'Are published': 'Yanachapishwa',
+  'Stay private': 'Yanasalia ya faragha',
+  'Follows the rule': 'Hufuata kanuni',
+  Published: 'Imechapishwa',
+  Private: 'Ya faragha',
+  '{count} pages': 'Kurasa {count}',
+  '{count} new': '{count} mpya',
+  '{count} gone': '{count} zimeondolewa',
+  'and more': 'na zaidi',
+  'How it appears': 'Jinsi inavyoonekana',
+  Description: 'Maelezo',
+  'What this site is': 'Tovuti hii ni kuhusu nini',
+  'Tab icon': 'Aikoni ya kichupo',
+  Password: 'Nenosiri',
+  'Set a new one': 'Weka jipya',
+  'Ask for a password': 'Omba nenosiri',
+  'No password': 'Hakuna nenosiri',
+  'Remove the password': 'Ondoa nenosiri',
+  'Scan this with your authenticator app, then type its code.':
+    'Skani hii kwa programu yako ya uthibitishaji, kisha andika kodi yake.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Picha',
+  Dictate: 'Imba maneno',
+  'Add to {name}': 'Ongeza kwenye {name}',
+  // Web tabs
+  Reload: 'Pakia tena',
+  'Clip this page': 'Hifadhi ukurasa huu',
+  'Clip the link': 'Hifadhi kiungo',
+  'Allow the camera': 'Ruhusu kamera',
+  'Allow the clipboard': 'Ruhusu ubao wa kunakili',
+  'Open in the browser': 'Fungua kwenye kivinjari',
+  'Copy the address': 'Nakili anwani',
+  'Show it here': 'Ionyeshe hapa',
+  Website: 'Tovuti',
+  'Open a website': 'Fungua tovuti',
+  // Recording, meetings and what a model wrote
+  Record: 'Rekodi',
+  Recording: 'Rekodi',
+  'Stop recording': 'Simamisha kurekodi',
+  'Meeting notes': 'Madokezo ya mkutano',
+  Meeting: 'Mkutano',
+  'Stop the meeting': 'Maliza mkutano',
+  Transcribe: 'Nakili maneno',
+  Transcript: 'Nakala ya maneno',
+  'Transcript ({language})': 'Nakala ya maneno ({language})',
+  'Written by {model}': 'Imeandikwa na {model}',
+  'Saving the recording': 'Inahifadhi rekodi',
+  'Turning the recording into words': 'Inabadilisha rekodi kuwa maneno',
+  'Open a space to record into.': 'Fungua nafasi ya kurekodi ndani yake.',
+  'Sign in to take meeting notes.': 'Ingia ili kuandika madokezo ya mkutano.',
+  'Sign in to turn a recording into words.': 'Ingia ili kubadilisha rekodi kuwa maneno.',
+  'That microphone could not be opened.': 'Maikrofoni hiyo haikuweza kufunguliwa.',
+  'That recording could not be saved.': 'Rekodi hiyo haikuweza kuhifadhiwa.',
+  'That recording could not be turned into words.':
+    'Rekodi hiyo haikuweza kubadilishwa kuwa maneno.',
+  'That recording is not in this space.': 'Rekodi hiyo haiko katika nafasi hii.',
+  'That recording is too long to turn into words in one go.':
+    'Rekodi hiyo ni ndefu mno kuibadilisha kuwa maneno kwa mara moja.',
+  'That is as much as one recording may hold.': 'Hiyo ni kadiri rekodi moja inavyoweza kuwa.',
+  'Nothing could be heard in that recording.': 'Hakuna kilichosikika katika rekodi hiyo.',
+  'A piece of the transcript is being tried again.': 'Kipande cha nakala kinajaribiwa tena.',
+  'The transcript is behind and losing pieces.': 'Nakala imechelewa na inakosa vipande.',
+  '{count} pieces of this meeting were lost.': 'Vipande {count} vya mkutano huu vimepotea.',
+  'Add an AI provider in settings to summarise.':
+    'Ongeza mtoa huduma wa AI kwenye mipangilio ili kufupisha.',
+  'The summary could not be written.': 'Muhtasari haukuweza kuandikwa.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'barua haikutumwa - jaribu tena',
   'start again - that took too long': 'anza tena - hiyo ilichukua muda mrefu mno',
@@ -1086,18 +1275,25 @@ export const sw: Dictionary = {
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'picha na PDF pekee',
   'that file is too big': 'faili hiyo ni kubwa mno',
-  'that is more settings than an account holds': 'hiyo ni mipangilio mingi zaidi ya inayoshikwa na akaunti',
-  'that is more bookmarks than a space holds': 'hiyo ni alamisho nyingi zaidi ya zinazoshikwa na nafasi',
-  'that is more paths than a space leaves out': 'hiyo ni njia nyingi zaidi ya zinazoachwa na nafasi',
-  'that is more files than a space keeps': 'hiyo ni faili nyingi zaidi ya zinazohifadhiwa na nafasi',
-  'that is more than a space keeps about its graph': 'hiyo ni zaidi ya nafasi inahifadhi kuhusu grafu yake',
-  'that is more folder icons than a space holds': 'hiyo ni aikoni za folda nyingi zaidi ya zinazoshikwa na nafasi',
+  'that is more settings than an account holds':
+    'hiyo ni mipangilio mingi zaidi ya inayoshikwa na akaunti',
+  'that is more bookmarks than a space holds':
+    'hiyo ni alamisho nyingi zaidi ya zinazoshikwa na nafasi',
+  'that is more paths than a space leaves out':
+    'hiyo ni njia nyingi zaidi ya zinazoachwa na nafasi',
+  'that is more files than a space keeps':
+    'hiyo ni faili nyingi zaidi ya zinazohifadhiwa na nafasi',
+  'that is more than a space keeps about its graph':
+    'hiyo ni zaidi ya nafasi inahifadhi kuhusu grafu yake',
+  'that is more folder icons than a space holds':
+    'hiyo ni aikoni za folda nyingi zaidi ya zinazoshikwa na nafasi',
   // Sharing a space, and being let into one.
   'nobody by that address': 'hakuna mtu kwa anwani hiyo',
   'nobody by that name': 'hakuna mtu kwa jina hilo',
   'nobody is waiting by that name': 'hakuna anayesubiri kwa jina hilo',
   'this space is yours': 'nafasi hii ni yako',
-  'that link is busy, try again in a minute': 'kiungo hicho kina shughuli, jaribu tena baada ya dakika',
+  'that link is busy, try again in a minute':
+    'kiungo hicho kina shughuli, jaribu tena baada ya dakika',
   // Versions, the bin, and a room two people write in.
   'no such version': 'hakuna toleo hilo',
   'this note was shared with you, not its folder': 'dokezo hili lilishirikiwa nawe, si folda yake',
@@ -1111,7 +1307,8 @@ export const sw: Dictionary = {
   'that is not a theme': 'hiyo si mandhari',
   'no such theme': 'hakuna mandhari hiyo',
   'choose a model first': 'chagua modeli kwanza',
-  'set an OpenAI key in Nib’s settings first': 'weka kitufe cha OpenAI kwenye mipangilio ya Nib kwanza',
+  'set an OpenAI key in Nib’s settings first':
+    'weka kitufe cha OpenAI kwenye mipangilio ya Nib kwanza',
   'that is a lot of questions - try again later': 'hayo ni maswali mengi - jaribu tena baadaye',
   'that is too much audio': 'hiyo ni sauti nyingi mno',
   'that is more than a spoken command': 'hiyo ni zaidi ya amri inayosemwa',

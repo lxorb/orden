@@ -7,6 +7,12 @@ export const te: Dictionary = {
   'Open file': 'ఫైల్ తెరువు',
   'New note inside': 'ఇందులో కొత్త నోట్',
   'New canvas': 'కొత్త క్యాన్వాస్',
+  'New page note': 'కొత్త పేజీ నోట్',
+  'Add a page': 'పేజీ చేర్చు',
+  'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
+  'Delete this page': 'ఈ పేజీ తొలగించు',
+  'Page {number}': 'పేజీ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
   'Note or picture': 'నోట్ లేదా చిత్రం',
@@ -34,7 +40,8 @@ export const te: Dictionary = {
   'Create a space': 'స్పేస్ సృష్టించు',
   'Delete space': 'స్పేస్ తొలగించు',
   'Delete {name}?': '{name} తొలగించాలా?',
-  'Every note in this space is deleted from your computer.': 'ఈ స్పేస్‌లోని ప్రతి నోట్ మీ కంప్యూటర్ నుండి తొలగించబడుతుంది.',
+  'Every note in this space is deleted from your computer.':
+    'ఈ స్పేస్‌లోని ప్రతి నోట్ మీ కంప్యూటర్ నుండి తొలగించబడుతుంది.',
   'The notes inside it go too.': 'దానిలోని నోట్‌లు కూడా పోతాయి.',
   Journal: 'డైరీ',
   Create: 'సృష్టించు',
@@ -206,7 +213,8 @@ export const te: Dictionary = {
   'Image not found': 'చిత్రం దొరకలేదు',
   'Delete {count} items': { one: '{count} అంశం తొలగించు', other: '{count} అంశాలు తొలగించు' },
   'Recently deleted': 'ఇటీవల తొలగించినవి',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'తొలగించిన నోట్‌లు, స్పేస్‌లు 14 రోజులు ఇక్కడ ఉంటాయి, ఆ తర్వాత శాశ్వతంగా పోతాయి.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'తొలగించిన నోట్‌లు, స్పేస్‌లు 14 రోజులు ఇక్కడ ఉంటాయి, ఆ తర్వాత శాశ్వతంగా పోతాయి.',
   'Nothing here.': 'ఇక్కడ ఏమీ లేదు.',
   Empty: 'ఖాళీ చేయి',
   Spaces: 'స్పేస్‌లు',
@@ -257,7 +265,8 @@ export const te: Dictionary = {
   'Previous slide': 'మునుపటి స్లైడ్',
   'Read-only': 'చదవడానికే',
   'No preview': 'ప్రివ్యూ లేదు',
-  'Shown as plain text, so typing stays instant in a note this long': 'ఇంత పెద్ద నోట్‌లో టైపింగ్ వేగంగా ఉండేందుకు సాదా టెక్స్ట్‌గా చూపబడుతోంది',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'ఇంత పెద్ద నోట్‌లో టైపింగ్ వేగంగా ఉండేందుకు సాదా టెక్స్ట్‌గా చూపబడుతోంది',
   'Leave read-only': 'చదవడానికే మోడ్ వదిలివేయి',
   Next: 'తదుపరి',
   Previous: 'మునుపటి',
@@ -353,7 +362,8 @@ export const te: Dictionary = {
   'OpenAI key': 'OpenAI కీ',
   Model: 'మోడల్',
   Reasoning: 'తార్కికత',
-  'Kept encrypted on your account, and never shown again.': 'మీ ఖాతాలో ఎన్‌క్రిప్ట్ చేసి ఉంచబడుతుంది, మళ్లీ చూపబడదు.',
+  'Kept encrypted on your account, and never shown again.':
+    'మీ ఖాతాలో ఎన్‌క్రిప్ట్ చేసి ఉంచబడుతుంది, మళ్లీ చూపబడదు.',
   'set, ends in …{tail}': 'సెట్ చేయబడింది, …{tail}తో ముగుస్తుంది',
   'Saving the key': 'కీ సేవ్ అవుతోంది',
   'this server cannot keep a key yet': 'ఈ సర్వర్ ఇంకా కీని ఉంచలేదు',
@@ -403,7 +413,10 @@ export const te: Dictionary = {
   'Add a word': 'పదం జోడించు',
   'Add {word} to the dictionary': '{word}ను నిఘంటువులో జోడించు',
   'Remove {word} from the dictionary': '{word}ను నిఘంటువు నుండి తీసివేయి',
-  '{count} things in this theme were left out.': { one: 'ఈ థీమ్‌లో {count} అంశం వదిలివేయబడింది.', other: 'ఈ థీమ్‌లో {count} అంశాలు వదిలివేయబడ్డాయి.' },
+  '{count} things in this theme were left out.': {
+    one: 'ఈ థీమ్‌లో {count} అంశం వదిలివేయబడింది.',
+    other: 'ఈ థీమ్‌లో {count} అంశాలు వదిలివేయబడ్డాయి.',
+  },
   'A note': 'ఒక నోట్',
   'Words with {bold} and a {link}.': '{bold} మరియు ఒక {link} ఉన్న పదాలు.',
   bold: 'బోల్డ్',
@@ -448,11 +461,14 @@ export const te: Dictionary = {
   'Line numbers': 'పంక్తి నంబర్‌లు',
   Syntax: 'సింటాక్స్',
   'Strict CommonMark': 'కఠిన CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'ప్రామాణిక Markdown నియమాలు మాత్రమే; పట్టికలు, టాస్క్ జాబితాలు, ఫుట్‌నోట్‌లు లేవు.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'ప్రామాణిక Markdown నియమాలు మాత్రమే; పట్టికలు, టాస్క్ జాబితాలు, ఫుట్‌నోట్‌లు లేవు.',
   'Smart punctuation': 'స్మార్ట్ విరామ చిహ్నాలు',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'టైప్ చేస్తున్నప్పుడే నిటారు కోట్‌లు, డాష్‌లను ముద్రణ రూపంలోకి మారుస్తుంది.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'టైప్ చేస్తున్నప్పుడే నిటారు కోట్‌లు, డాష్‌లను ముద్రణ రూపంలోకి మారుస్తుంది.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'శీర్షికల ముందు 1., 1.1, 1.2 చేర్చుతుంది.',
-  'Numbers display equations so you can refer to them.': 'ప్రస్తావించేందుకు డిస్‌ప్లే సమీకరణాలకు నంబర్ ఇస్తుంది.',
+  'Numbers display equations so you can refer to them.':
+    'ప్రస్తావించేందుకు డిస్‌ప్లే సమీకరణాలకు నంబర్ ఇస్తుంది.',
   Ligatures: 'లిగేచర్‌లు',
   Off: 'ఆఫ్',
   'Code only': 'కోడ్‌లో మాత్రమే',
@@ -515,13 +531,17 @@ export const te: Dictionary = {
   'Send a new code': 'కొత్త కోడ్ పంపు',
   'Code sent to': 'కోడ్ పంపిన చిరునామా',
   'You already have notes on this computer.': 'ఈ కంప్యూటర్‌లో మీకు ఇప్పటికే నోట్‌లు ఉన్నాయి.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'ఉంచితే అవి మీ ఖాతాలో చేరతాయి. తుడిచేస్తే మీ ఖాతాలో ఇప్పటికే ఉన్నవి మాత్రమే మిగులుతాయి - ఇది తిరిగి పొందలేరు.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'ఉంచితే అవి మీ ఖాతాలో చేరతాయి. తుడిచేస్తే మీ ఖాతాలో ఇప్పటికే ఉన్నవి మాత్రమే మిగులుతాయి - ఇది తిరిగి పొందలేరు.',
   'Keep them': 'ఉంచు',
   'Erase them': 'తుడిచేయి',
   'Digit {number}': 'అంకె {number}',
   'Resend in {seconds}s': '{seconds} సెకన్లలో మళ్లీ పంపు',
   'Last synced {time}.': 'చివరి సింక్ {time}.',
-  '{count} spaces sync to your account.': { one: '{count} స్పేస్ మీ ఖాతాతో సింక్ అవుతుంది.', other: '{count} స్పేస్‌లు మీ ఖాతాతో సింక్ అవుతాయి.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} స్పేస్ మీ ఖాతాతో సింక్ అవుతుంది.',
+    other: '{count} స్పేస్‌లు మీ ఖాతాతో సింక్ అవుతాయి.',
+  },
   Update: 'అప్‌డేట్',
   'Live at': 'లైవ్ చిరునామా',
   // Publishing
@@ -531,9 +551,11 @@ export const te: Dictionary = {
   'Only {name}': '{name} మాత్రమే',
   'Publish this space as a blog': 'ఈ స్పేస్‌ను బ్లాగ్‌గా ప్రచురించు',
   'Everything in this space becomes public.': 'ఈ స్పేస్‌లోని అంతా బహిరంగం అవుతుంది.',
-  'Every note, including drafts, is readable by anyone with the address.': 'డ్రాఫ్ట్‌లతో సహా ప్రతి నోట్‌ను చిరునామా ఉన్న ఎవరైనా చదవగలరు.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'డ్రాఫ్ట్‌లతో సహా ప్రతి నోట్‌ను చిరునామా ఉన్న ఎవరైనా చదవగలరు.',
   Address: 'చిరునామా',
-  'Add these at your registrar, then verify.': 'ఇవి మీ రిజిస్ట్రార్‌లో జోడించి, తర్వాత ధృవీకరించండి.',
+  'Add these at your registrar, then verify.':
+    'ఇవి మీ రిజిస్ట్రార్‌లో జోడించి, తర్వాత ధృవీకరించండి.',
   Verify: 'ధృవీకరించు',
   'that record is not answering yet': 'ఆ రికార్డ్ ఇంకా బదులివ్వలేదు',
   'Stop publishing': 'ప్రచురణ ఆపు',
@@ -544,7 +566,8 @@ export const te: Dictionary = {
   'checking…': 'తనిఖీ చేస్తోంది…',
   // LLM
   'Connect an LLM to your notes': 'మీ నోట్‌లకు LLM కనెక్ట్ చేయి',
-  'Sign in first - the connector reaches the notes in your account.': 'ముందు సైన్ ఇన్ చేయండి - కనెక్టర్ మీ ఖాతాలోని నోట్‌లను చేరుకుంటుంది.',
+  'Sign in first - the connector reaches the notes in your account.':
+    'ముందు సైన్ ఇన్ చేయండి - కనెక్టర్ మీ ఖాతాలోని నోట్‌లను చేరుకుంటుంది.',
   'Let it write to my notes, not only read them': 'నా నోట్‌లను చదవడమే కాదు, రాయడానికీ అనుమతించు',
   'Create a token': 'టోకెన్ సృష్టించు',
   'Replace the token': 'టోకెన్ మార్చు',
@@ -560,27 +583,38 @@ export const te: Dictionary = {
   'Reads your notes.': 'మీ నోట్‌లను చదువుతుంది.',
   'Reads and writes your notes.': 'మీ నోట్‌లను చదువుతుంది, రాస్తుంది.',
   Other: 'ఇతరం',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claudeలో Settings → Connectors తెరిచి Add custom connector క్లిక్ చేయండి.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claudeలో Settings → Connectors తెరిచి Add custom connector క్లిక్ చేయండి.',
   'Open Claude’s connectors': 'Claude కనెక్టర్‌లు తెరువు',
   'Fill in the two fields and click Add.': 'రెండు ఫీల్డ్‌లు నింపి Add క్లిక్ చేయండి.',
-  'Click Connect and sign in with your Nib email.': 'Connect క్లిక్ చేసి మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect క్లిక్ చేసి మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
   'Using Claude Code instead?': 'Claude Code వాడుతున్నారా?',
   Command: 'కమాండ్',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'టెర్మినల్‌లో దీన్ని రన్ చేసి, సైన్ ఇన్ కోసం Claude Codeలో /mcp టైప్ చేయండి.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'టెర్మినల్‌లో దీన్ని రన్ చేసి, సైన్ ఇన్ కోసం Claude Codeలో /mcp టైప్ చేయండి.',
   'Fill in the form and click Create.': 'ఫారం నింపి Create క్లిక్ చేయండి.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPTలో Settings → Plugins తెరిచి ప్లస్ బటన్ క్లిక్ చేయండి.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPTలో Settings → Plugins తెరిచి ప్లస్ బటన్ క్లిక్ చేయండి.',
   'Open ChatGPT’s plugins': 'ChatGPT ప్లగిన్‌లు తెరువు',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins విభాగం లేదా ప్లస్ బటన్ లేదా? ముందు Settings → Security and loginలో Developer mode ఆన్ చేయండి.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT అడిగినప్పుడు మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins విభాగం లేదా ప్లస్ బటన్ లేదా? ముందు Settings → Security and loginలో Developer mode ఆన్ చేయండి.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT అడిగినప్పుడు మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
   'To use it in a chat, type @ and pick Nib.': 'చాట్‌లో వాడేందుకు @ టైప్ చేసి Nib ఎంచుకోండి.',
   'Server URL': 'సర్వర్ URL',
   Authentication: 'ప్రామాణీకరణ',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'అధునాతన OAuth సెట్టింగ్‌లను అలాగే ఉంచి “I understand and want to continue” టిక్ చేయండి.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని Nib సైన్ ఇన్ పేజీ తెరుస్తుంది.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'అధునాతన OAuth సెట్టింగ్‌లను అలాగే ఉంచి “I understand and want to continue” టిక్ చేయండి.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని Nib సైన్ ఇన్ పేజీ తెరుస్తుంది.',
   'Show config': 'కాన్ఫిగ్ చూపు',
-  'For a client that takes a JSON block instead of a URL.': 'URLకి బదులు JSON బ్లాక్ తీసుకునే క్లయింట్ కోసం.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'సైన్ ఇన్ చేయలేని క్లయింట్‌కు టోకెన్ ఇవ్వవచ్చు. అది ఒకసారే చూపబడుతుంది.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URLకి బదులు JSON బ్లాక్ తీసుకునే క్లయింట్ కోసం.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'సైన్ ఇన్ చేయలేని క్లయింట్‌కు టోకెన్ ఇవ్వవచ్చు. అది ఒకసారే చూపబడుతుంది.',
   // Export
   'Plain text': 'సాదా టెక్స్ట్',
   'Markdown with the pictures': 'చిత్రాలతో Markdown',
@@ -604,8 +638,10 @@ export const te: Dictionary = {
   'Version history': 'వెర్షన్ చరిత్ర',
   'Copy link to this note': 'ఈ నోట్ లింక్ కాపీ చేయి',
   'that link could not be followed': 'ఆ లింక్‌ను అనుసరించలేకపోయింది',
-  'Save this note first; there is nothing to compare against yet.': 'ముందు ఈ నోట్ సేవ్ చేయండి; పోల్చడానికి ఇంకా ఏమీ లేదు.',
-  'No earlier versions yet. One is kept each time you save.': 'ఇంకా పాత వెర్షన్‌లు లేవు. సేవ్ చేసిన ప్రతిసారి ఒకటి ఉంచబడుతుంది.',
+  'Save this note first; there is nothing to compare against yet.':
+    'ముందు ఈ నోట్ సేవ్ చేయండి; పోల్చడానికి ఇంకా ఏమీ లేదు.',
+  'No earlier versions yet. One is kept each time you save.':
+    'ఇంకా పాత వెర్షన్‌లు లేవు. సేవ్ చేసిన ప్రతిసారి ఒకటి ఉంచబడుతుంది.',
   'Restore this version': 'ఈ వెర్షన్ పునరుద్ధరించు',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'అక్కడ ఇప్పటికే ఒక నోట్ ఉంది',
@@ -629,9 +665,11 @@ export const te: Dictionary = {
   'that path is not usable': 'ఆ పాత్ వాడదగినది కాదు',
   'this note changed elsewhere': 'ఈ నోట్ వేరే చోట మారింది',
   'too many tries - ask for a new code': 'చాలా ప్రయత్నాలు - కొత్త కోడ్ అడగండి',
-  'too many messages from here - try again later': 'ఇక్కడి నుండి చాలా సందేశాలు - తర్వాత ప్రయత్నించండి',
+  'too many messages from here - try again later':
+    'ఇక్కడి నుండి చాలా సందేశాలు - తర్వాత ప్రయత్నించండి',
   'too much mail today - try again tomorrow': 'ఈ రోజు చాలా మెయిల్ - రేపు ప్రయత్నించండి',
-  'that many people are already waiting to be let in': 'లోపలికి రావాలని వేచి ఉన్నవారు ఇప్పటికే అంతమంది ఉన్నారు',
+  'that many people are already waiting to be let in':
+    'లోపలికి రావాలని వేచి ఉన్నవారు ఇప్పటికే అంతమంది ఉన్నారు',
   'use 2–32 letters, numbers or hyphens': '2–32 అక్షరాలు, అంకెలు లేదా హైఫన్‌లు వాడండి',
   'sync failed': 'సింక్ విఫలమైంది',
   'could not publish': 'ప్రచురించలేకపోయింది',
@@ -666,7 +704,8 @@ export const te: Dictionary = {
   'use a domain of your own': 'మీ సొంత డొమైన్ వాడండి',
   'the domain no longer points here': 'ఆ డొమైన్ ఇప్పుడు ఇక్కడికి చూపదు',
   'Cloudflare has blocked this domain': 'ఈ డొమైన్‌ను Cloudflare నిరోధించింది',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'డొమైన్ రూట్‌లో మీ ప్రొవైడర్ CNAME అనుమతించకపోతే, ALIAS లేదా ANAME రికార్డ్, లేదా CNAME flattening వాడండి.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'డొమైన్ రూట్‌లో మీ ప్రొవైడర్ CNAME అనుమతించకపోతే, ALIAS లేదా ANAME రికార్డ్, లేదా CNAME flattening వాడండి.',
   // Shortcuts
   Shortcuts: 'షార్ట్‌కట్‌లు',
   'Search shortcuts': 'షార్ట్‌కట్‌లు వెతుకు',
@@ -677,7 +716,8 @@ export const te: Dictionary = {
   'Reset all shortcuts': 'అన్ని షార్ట్‌కట్‌లు రీసెట్',
   'Take it over': 'దీనికి కేటాయించు',
   '{key} already runs {name}.': '{key} ఇప్పటికే {name} నడుపుతుంది.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc రికార్డింగ్ ఆపుతుంది, Backspace కీని తీసేస్తుంది.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc రికార్డింగ్ ఆపుతుంది, Backspace కీని తీసేస్తుంది.',
   Tables: 'పట్టికలు',
   Pictures: 'చిత్రాలు',
   'Fixed keys': 'స్థిర కీలు',
@@ -713,7 +753,8 @@ export const te: Dictionary = {
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
   'Report an issue': 'సమస్య తెలియజేయి',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} డిస్క్‌లో మారింది. ఎడిటర్‌లో ఉన్నది మీది.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} డిస్క్‌లో మారింది. ఎడిటర్‌లో ఉన్నది మీది.',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',
   'Copy the line up': 'పంక్తిని పైకి కాపీ చేయి',
@@ -748,26 +789,33 @@ export const te: Dictionary = {
   Escape: 'Escape',
   Quit: 'యాప్ మూసివేయి',
   'The clipboard belongs to the system.': 'క్లిప్‌బోర్డ్ సిస్టమ్‌కు చెందుతుంది.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'బాణం కీలు, Home, End, Page up, Page down టెక్స్ట్‌కు చెందుతాయి.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'బాణం కీలు, Home, End, Page up, Page down టెక్స్ట్‌కు చెందుతాయి.',
   'Backspace and Delete belong to the text.': 'Backspace, Delete టెక్స్ట్‌కు చెందుతాయి.',
-  'Enter closes a code block and carries a list on.': 'Enter కోడ్ బ్లాక్‌ను ముగిస్తుంది, జాబితాను కొనసాగిస్తుంది.',
-  'Tab moves on through the app as well as indenting.': 'Tab ఇండెంట్ చేస్తూ యాప్‌లో ముందుకూ కదులుతుంది.',
+  'Enter closes a code block and carries a list on.':
+    'Enter కోడ్ బ్లాక్‌ను ముగిస్తుంది, జాబితాను కొనసాగిస్తుంది.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab ఇండెంట్ చేస్తూ యాప్‌లో ముందుకూ కదులుతుంది.',
   'Escape closes whatever is open.': 'Escape తెరిచి ఉన్నదేదైనా మూసేస్తుంది.',
-  'Your system takes this key before the app sees it.': 'యాప్ చూసేముందే ఈ కీని మీ సిస్టమ్ తీసుకుంటుంది.',
-  'Your browser takes this key before the app sees it.': 'యాప్ చూసేముందే ఈ కీని మీ బ్రౌజర్ తీసుకుంటుంది.',
+  'Your system takes this key before the app sees it.':
+    'యాప్ చూసేముందే ఈ కీని మీ సిస్టమ్ తీసుకుంటుంది.',
+  'Your browser takes this key before the app sees it.':
+    'యాప్ చూసేముందే ఈ కీని మీ బ్రౌజర్ తీసుకుంటుంది.',
   'That is not a key combination.': 'అది కీ కలయిక కాదు.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt లేదా Cmd కూడా నొక్కి ఉంచండి.',
   'File list': 'ఫైల్ జాబితా',
   'Select every file': 'అన్ని ఫైల్‌లు ఎంచుకో',
   'Clear the selection': 'ఎంపిక తొలగించు',
   'Delete the selected files': 'ఎంచుకున్న ఫైల్‌లు తొలగించు',
-  'The file could not be written, so it goes to the print dialog': 'ఫైల్ రాయలేకపోయింది, అందుకే ప్రింట్ డైలాగ్‌కు వెళ్తుంది',
+  'The file could not be written, so it goes to the print dialog':
+    'ఫైల్ రాయలేకపోయింది, అందుకే ప్రింట్ డైలాగ్‌కు వెళ్తుంది',
   'Next file': 'తదుపరి ఫైల్',
   'Previous file': 'మునుపటి ఫైల్',
   'Show what it holds': 'లోపల ఉన్నది చూపు',
   'Hide what it holds': 'లోపల ఉన్నది దాచు',
   'Moving through a list': 'జాబితాలో కదలడం',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'బాణం కీలు, Enter, Esc ఏది తెరిచి ఉన్నా పని చేస్తాయి; అవి షార్ట్‌కట్‌లు కాదు.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'బాణం కీలు, Enter, Esc ఏది తెరిచి ఉన్నా పని చేస్తాయి; అవి షార్ట్‌కట్‌లు కాదు.',
   'Split right': 'కుడివైపు విభజించు',
   'Split down': 'కిందివైపు విభజించు',
   'Other pane': 'మరో పేన్',
@@ -789,7 +837,8 @@ export const te: Dictionary = {
   'Follow the link': 'లింక్‌ను అనుసరించు',
   'Replace your own keys?': 'మీ సొంత కీలను మార్చాలా?',
   Replace: 'మార్చు',
-  'The keys you changed go back to what this keyboard says.': 'మీరు మార్చిన కీలు ఈ కీబోర్డ్ చెప్పినదానికి తిరిగి వెళ్తాయి.',
+  'The keys you changed go back to what this keyboard says.':
+    'మీరు మార్చిన కీలు ఈ కీబోర్డ్ చెప్పినదానికి తిరిగి వెళ్తాయి.',
   NORMAL: 'సాధారణం',
   INSERT: 'చేర్పు',
   VISUAL: 'దృశ్య',
@@ -911,7 +960,8 @@ export const te: Dictionary = {
   Leave: 'వదిలివేయి',
   'Leave space': 'స్పేస్ వదిలివేయి',
   'Leave {name}?': '{name} వదిలివేయాలా?',
-  'It stays with everybody else. Its notes go from your computer.': 'ఇతరులందరి వద్ద అది ఉంటుంది. దాని నోట్‌లు మీ కంప్యూటర్ నుండి పోతాయి.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'ఇతరులందరి వద్ద అది ఉంటుంది. దాని నోట్‌లు మీ కంప్యూటర్ నుండి పోతాయి.',
   '{who} shared {space} with you': '{who} మీతో {space} షేర్ చేశారు',
   'Shared with you': 'మీతో షేర్ చేయబడింది',
   'That link does not open anything': 'ఆ లింక్ ఏమీ తెరవదు',
@@ -928,7 +978,8 @@ export const te: Dictionary = {
   'Release channel': 'రిలీజ్ ఛానెల్',
   Stable: 'స్థిరం',
   Unstable: 'అస్థిరం',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
@@ -936,17 +987,27 @@ export const te: Dictionary = {
   'In this note': 'ఈ నోట్‌లో',
   'In the whole space': 'మొత్తం స్పేస్‌లో',
   'Nothing here needs converting.': 'ఇక్కడ మార్చాల్సినది ఏమీ లేదు.',
-  'Rewrite {count} things?': { one: '{count} అంశం తిరగరాయాలా?', other: '{count} అంశాలు తిరగరాయాలా?' },
+  'Rewrite {count} things?': {
+    one: '{count} అంశం తిరగరాయాలా?',
+    other: '{count} అంశాలు తిరగరాయాలా?',
+  },
   'In {count} notes.': { one: '{count} నోట్‌లో.', other: '{count} నోట్‌లలో.' },
   Rewrite: 'తిరగరాయి',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} భాగాలు ఎన్‌క్రిప్ట్ అయ్యాయి, Evernote లేకుండా వాటిని ఏదీ చదవలేదు',
-  '{count} notes had a reminder, which the export does not carry': '{count} నోట్‌లకు రిమైండర్ ఉంది, ఎక్స్‌పోర్ట్ దాన్ని తీసుకురాదు',
-  '{count} notes were in the bin and stay there': '{count} నోట్‌లు చెత్తబుట్టలో ఉన్నాయి, అక్కడే ఉంటాయి',
-  '{count} archived notes are in a folder called Archive': '{count} ఆర్కైవ్ నోట్‌లు Archive ఫోల్డర్‌లో ఉన్నాయి',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} భాగాలు ఎన్‌క్రిప్ట్ అయ్యాయి, Evernote లేకుండా వాటిని ఏదీ చదవలేదు',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} నోట్‌లకు రిమైండర్ ఉంది, ఎక్స్‌పోర్ట్ దాన్ని తీసుకురాదు',
+  '{count} notes were in the bin and stay there':
+    '{count} నోట్‌లు చెత్తబుట్టలో ఉన్నాయి, అక్కడే ఉంటాయి',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ఆర్కైవ్ నోట్‌లు Archive ఫోల్డర్‌లో ఉన్నాయి',
   'The colours a note had are not kept': 'నోట్‌కు ఉన్న రంగులు ఉంచబడవు',
-  '{count} block references were written out as the words they pointed at': '{count} బ్లాక్ సూచనలు అవి చూపిన పదాలుగానే రాయబడ్డాయి',
-  '{count} saved views are left out, and every row is in the table': '{count} సేవ్ చేసిన వ్యూలు వదిలివేయబడ్డాయి, అన్ని వరుసలు పట్టికలో ఉన్నాయి',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} పేజీలు HTMLగా వచ్చాయి, అందుకే పదాలు ఉంచబడ్డాయి, రూపం ఉంచబడలేదు',
+  '{count} block references were written out as the words they pointed at':
+    '{count} బ్లాక్ సూచనలు అవి చూపిన పదాలుగానే రాయబడ్డాయి',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} సేవ్ చేసిన వ్యూలు వదిలివేయబడ్డాయి, అన్ని వరుసలు పట్టికలో ఉన్నాయి',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} పేజీలు HTMLగా వచ్చాయి, అందుకే పదాలు ఉంచబడ్డాయి, రూపం ఉంచబడలేదు',
   'There are no rows in this file.': 'ఈ ఫైల్‌లో వరుసలు లేవు.',
   'Nothing in there can be read as notes.': 'అందులోని ఏదీ నోట్‌లుగా చదవలేదు.',
   'That export could not be read.': 'ఆ ఎక్స్‌పోర్ట్ చదవలేకపోయింది.',
@@ -957,20 +1018,48 @@ export const te: Dictionary = {
   'This space': 'ఈ స్పేస్',
   'Drop an export here': 'ఒక ఎక్స్‌పోర్ట్ ఇక్కడ వదలండి',
   'A zip, a folder, or a file another app wrote': 'ఒక zip, ఫోల్డర్, లేదా మరో యాప్ రాసిన ఫైల్',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes, Apple Journal తమ నోట్‌లను తామే తెరవగలిగే చోట ఉంచుతాయి. ముందు వాటిని ఎక్స్‌పోర్ట్ చేసి, తర్వాత దాన్ని ఇంపోర్ట్ చేయండి.',
-  'Pandoc reads this one, from the file on your disk.': 'మీ డిస్క్‌లోని ఫైల్ నుండి pandoc దీన్ని చదువుతుంది.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} బొమ్మలు HEIC గా వచ్చాయి, దాన్ని Apple మాత్రమే చూపుతుంది',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} మనోభావ, కార్యకలాప కార్డులు గీతలు, కాబట్టి వాటి మాటలే వస్తాయి',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Notes మాత్రమే తెరుస్తుంది',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} నోట్లు ఇటీవల తొలగించినవిలో ఉన్నాయి, అక్కడే ఉంటాయి',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} గీతలు, స్కాన్ చేసిన పేజీలు Notes తానే గీసే బొమ్మలు',
+  '{count} tables inside notes do not come over': 'నోట్ల లోపలి {count} పట్టికలు రావు',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} జోడింపులు ఈ Mac లో కాక iCloud లో ఉన్నాయి',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ఆ నోట్లను Full Disk Access వెనుక ఉంచుతుంది.',
+  'There are no notes in Apple Notes on this Mac.': 'ఈ Mac లో Apple Notes లో నోట్లు లేవు.',
+  'Those notes could not be read.': 'ఆ నోట్లను చదవలేకపోయాం.',
+  'Read them from this Mac': 'ఈ Mac నుండి చదువు',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access లో nibeditor ఆన్ చేసి, మళ్ళీ అడుగు.',
+  'Open the setting': 'అమరిక తెరువు',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal తానే ఎగుమతి చేస్తుంది: Journal, అమరికలు, ఎగుమతి. Apple Notes కు ఎగుమతి లేదు, కాబట్టి అది ఉన్న Mac కు దూరంగా, ఇక్కడ వదలాల్సింది ఒక ఎగుమతిదారు రాసిన ఫోల్డర్.',
+  'Pandoc reads this one, from the file on your disk.':
+    'మీ డిస్క్‌లోని ఫైల్ నుండి pandoc దీన్ని చదువుతుంది.',
   'Read it with pandoc': 'pandocతో చదువు',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'దీన్ని pandoc మాత్రమే చదువుతుంది, అది ఈ కంప్యూటర్‌లో ఇన్‌స్టాల్ కాలేదు.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'దీన్ని pandoc మాత్రమే చదువుతుంది, అది ఈ కంప్యూటర్‌లో ఇన్‌స్టాల్ కాలేదు.',
   Rows: 'వరుసలు',
   'As a table': 'పట్టికగా',
   'One note per row': 'వరుసకు ఒక నోట్',
   Into: 'ఇందులోకి',
   'Worth knowing': 'తెలుసుకోవాల్సినది',
   '{count} notes arrived.': { one: '{count} నోట్ వచ్చింది.', other: '{count} నోట్‌లు వచ్చాయి.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} పేరు ఇప్పటికే ఉంది, అందుకే ఆ ఫైల్ పక్కకు జరిగింది.', other: '{count} పేర్లు ఇప్పటికే ఉన్నాయి, అందుకే ఆ ఫైల్‌లు పక్కకు జరిగాయి.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} పేరు ఇప్పటికే ఉంది, అందుకే ఆ ఫైల్ పక్కకు జరిగింది.',
+    other: '{count} పేర్లు ఇప్పటికే ఉన్నాయి, అందుకే ఆ ఫైల్‌లు పక్కకు జరిగాయి.',
+  },
   'A table': 'ఒక పట్టిక',
   'Markdown files': 'Markdown ఫైల్‌లు',
   'A document': 'ఒక పత్రం',
+  'A PDF, as pages to write on': 'ఒక PDF, రాసే పేజీలుగా',
   'Undo the import': 'ఇంపోర్ట్ చర్యరద్దు చేయి',
   'Choose an export': 'ఒక ఎక్స్‌పోర్ట్ ఎంచుకో',
   Under: 'దీని కింద',
@@ -982,13 +1071,15 @@ export const te: Dictionary = {
   'Keep both copies': 'రెండు నకలులూ ఉంచు',
   'Let the newest win': 'కొత్తది గెలవాలి',
   'Ask me each time': 'ప్రతిసారి నన్ను అడుగు',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ఏదీ పోదు: గెలవనిది ఒక వెర్షన్‌గా ఉంచబడుతుంది.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ఏదీ పోదు: గెలవనిది ఒక వెర్షన్‌గా ఉంచబడుతుంది.',
   'Waiting for you': 'మీ కోసం వేచి ఉంది',
   'Keep mine': 'నాది ఉంచు',
   'Take theirs': 'వారిది తీసుకో',
   'Keep both': 'రెండూ ఉంచు',
   'What synced': 'సింక్ అయినవి',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ఇంకా ఏమీ లేదు. ఏదీ కదపని సింక్ నమోదు కాదు.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ఇంకా ఏమీ లేదు. ఏదీ కదపని సింక్ నమోదు కాదు.',
   'Clear the list': 'జాబితా తొలగించు',
   '{count} down': '{count} దిగినవి',
   '{count} up': '{count} ఎక్కినవి',
@@ -998,19 +1089,28 @@ export const te: Dictionary = {
   'This space, as it was': 'ఈ స్పేస్, అప్పటిలా',
   '{count} days ago': { one: '{count} రోజు క్రితం', other: '{count} రోజుల క్రితం' },
   'What would change?': 'ఏమి మారుతుంది?',
-  '{count} notes would go back to what they said then.': { one: '{count} నోట్ అప్పటి మాటకు తిరిగి వెళ్తుంది.', other: '{count} నోట్‌లు అప్పటి మాటలకు తిరిగి వెళ్తాయి.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} నోట్ అప్పటి మాటకు తిరిగి వెళ్తుంది.',
+    other: '{count} నోట్‌లు అప్పటి మాటలకు తిరిగి వెళ్తాయి.',
+  },
   'Nothing has changed since then.': 'అప్పటి నుండి ఏమీ మారలేదు.',
-  '{count} notes went back.': { one: '{count} నోట్ తిరిగి వెళ్లింది.', other: '{count} నోట్‌లు తిరిగి వెళ్లాయి.' },
-  'The account keeps a month of versions of every note that syncs.': 'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక నెల ఉంచుతుంది.',
+  '{count} notes went back.': {
+    one: '{count} నోట్ తిరిగి వెళ్లింది.',
+    other: '{count} నోట్‌లు తిరిగి వెళ్లాయి.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక నెల ఉంచుతుంది.',
   'That did not work.': 'అది పని చేయలేదు.',
   'Signing in': 'సైన్ ఇన్ అవుతోంది',
   'Ask for a code from an app': 'యాప్ నుండి కోడ్ అడుగు',
   'Turn on': 'ఆన్ చేయి',
   'Turn off': 'ఆఫ్ చేయి',
-  'Put this into your authenticator app, then type its code.': 'దీన్ని మీ అథెంటికేటర్ యాప్‌లో పెట్టి, దాని కోడ్ టైప్ చేయండి.',
+  'Put this into your authenticator app, then type its code.':
+    'దీన్ని మీ అథెంటికేటర్ యాప్‌లో పెట్టి, దాని కోడ్ టైప్ చేయండి.',
   Secret: 'రహస్యం',
   'Code from the app': 'యాప్ కోడ్',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'ఇవి సురక్షిత చోట ఉంచండి. ఒక్కొక్కటి ఒకసారే పని చేస్తుంది, మళ్లీ చూపబడవు.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'ఇవి సురక్షిత చోట ఉంచండి. ఒక్కొక్కటి ఒకసారే పని చేస్తుంది, మళ్లీ చూపబడవు.',
   'Recovery codes': 'రికవరీ కోడ్‌లు',
   'Recovery code': 'రికవరీ కోడ్',
   'Recovery codes left': 'మిగిలిన రికవరీ కోడ్‌లు',
@@ -1032,7 +1132,8 @@ export const te: Dictionary = {
   Pages: 'పేజీలు',
   'Page {number} of {count}': '{count}లో {number} పేజీ',
   'What is selected': 'ఎంచుకున్నది ఏమిటి',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'క్యాన్వాస్: {cards} కార్డ్‌లు, {links} లింక్‌లు, {drawings} గీతలు',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'క్యాన్వాస్: {cards} కార్డ్‌లు, {links} లింక్‌లు, {drawings} గీతలు',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ప్రొవైడర్‌లు',
@@ -1069,13 +1170,85 @@ export const te: Dictionary = {
   'AI block': 'AI బ్లాక్',
   'Highlight colour': 'హైలైట్ రంగు',
   'A single newline breaks the line': 'ఒక కొత్త పంక్తి పంక్తిని విరుస్తుంది',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ఆఫ్ అంటే ప్రామాణిక Markdown: ఒక పేరాలోని రెండు పంక్తులు ఒకటిగా చదవబడతాయి; Obsidian దీన్ని strict line breaks అంటుంది.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ఆఫ్ అంటే ప్రామాణిక Markdown: ఒక పేరాలోని రెండు పంక్తులు ఒకటిగా చదవబడతాయి; Obsidian దీన్ని strict line breaks అంటుంది.',
   'New links': 'కొత్త లింక్‌లు',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilinks నోట్‌ను పేరుతో చూపుతాయి, అందుకే పేరు మారినా లింక్ నిలుస్తుంది; రెండు రూపాలూ చదవబడతాయి.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilinks నోట్‌ను పేరుతో చూపుతాయి, అందుకే పేరు మారినా లింక్ నిలుస్తుంది; రెండు రూపాలూ చదవబడతాయి.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, అతి చిన్న పేరు',
   'Markdown, relative path': 'Markdown, సంబంధిత పాత్',
   'Markdown, path in the space': 'Markdown, స్పేస్‌లోని పాత్',
+  // Publishing part one.
+  'The folders you choose become public.': 'నువ్వు ఎంచుకున్న ఫోల్డర్లు బహిరంగం అవుతాయి.',
+  'Anyone with the address can read what is published, drafts included.':
+    'చిరునామా ఉన్న ఎవరైనా ప్రచురించినది చదవగలరు, ముసాయిదాలూ.',
+  'Which notes': 'ఏ నోట్లు',
+  'Notes outside a rule': 'నియమం వెలుపలి నోట్లు',
+  'Are published': 'ప్రచురితం అవుతాయి',
+  'Stay private': 'అంతరంగికంగా ఉంటాయి',
+  'Follows the rule': 'నియమాన్ని పాటిస్తుంది',
+  Published: 'ప్రచురితం',
+  Private: 'అంతరంగికం',
+  '{count} pages': '{count} పేజీలు',
+  '{count} new': '{count} కొత్తవి',
+  '{count} gone': '{count} తీసేసినవి',
+  'and more': 'మరియు మరిన్ని',
+  'How it appears': 'ఎలా కనిపిస్తుంది',
+  Description: 'వివరణ',
+  'What this site is': 'ఈ సైట్ ఏమిటి',
+  'Tab icon': 'టాబ్ చిహ్నం',
+  Password: 'పాస్‌వర్డ్',
+  'Set a new one': 'కొత్తది పెట్టు',
+  'Ask for a password': 'పాస్‌వర్డ్ అడుగు',
+  'No password': 'పాస్‌వర్డ్ లేదు',
+  'Remove the password': 'పాస్‌వర్డ్ తీసేయి',
+  'Scan this with your authenticator app, then type its code.':
+    'దీన్ని నీ ప్రమాణీకరణ యాప్‌తో స్కాన్ చేసి, ఆ కోడ్ టైప్ చేయి.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ఫొటో',
+  Dictate: 'చెప్పి రాయించు',
+  'Add to {name}': '{name} కు చేర్చు',
+  // Web tabs
+  Reload: 'మళ్ళీ లోడ్ చేయి',
+  'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
+  'Clip the link': 'లింక్ ఒడిసిపట్టు',
+  'Allow the camera': 'కెమెరాకు అనుమతి ఇవ్వు',
+  'Allow the clipboard': 'క్లిప్‌బోర్డుకు అనుమతి ఇవ్వు',
+  'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
+  'Copy the address': 'చిరునామా కాపీ చేయి',
+  'Show it here': 'ఇక్కడ చూపు',
+  Website: 'వెబ్‌సైట్',
+  'Open a website': 'వెబ్‌సైట్ తెరువు',
+  // Recording, meetings and what a model wrote
+  Record: 'రికార్డు చేయి',
+  Recording: 'రికార్డింగ్',
+  'Stop recording': 'రికార్డింగ్ ఆపు',
+  'Meeting notes': 'సమావేశ నోట్లు',
+  Meeting: 'సమావేశం',
+  'Stop the meeting': 'సమావేశం ముగించు',
+  Transcribe: 'రాతలోకి మార్చు',
+  Transcript: 'ప్రతిలేఖనం',
+  'Transcript ({language})': 'ప్రతిలేఖనం ({language})',
+  'Written by {model}': '{model} రాసింది',
+  'Saving the recording': 'రికార్డింగ్ భద్రపరుస్తోంది',
+  'Turning the recording into words': 'రికార్డింగ్‌ను మాటలుగా మారుస్తోంది',
+  'Open a space to record into.': 'రికార్డు చేయడానికి ఒక స్పేస్ తెరువు.',
+  'Sign in to take meeting notes.': 'సమావేశ నోట్లు తీసుకోడానికి సైన్ ఇన్ అవ్వు.',
+  'Sign in to turn a recording into words.': 'రికార్డింగ్‌ను మాటలుగా మార్చడానికి సైన్ ఇన్ అవ్వు.',
+  'That microphone could not be opened.': 'ఆ మైక్రోఫోన్ తెరవలేకపోయాం.',
+  'That recording could not be saved.': 'ఆ రికార్డింగ్ భద్రపరచలేకపోయాం.',
+  'That recording could not be turned into words.': 'ఆ రికార్డింగ్‌ను మాటలుగా మార్చలేకపోయాం.',
+  'That recording is not in this space.': 'ఆ రికార్డింగ్ ఈ స్పేస్‌లో లేదు.',
+  'That recording is too long to turn into words in one go.':
+    'ఒకేసారి మాటలుగా మార్చడానికి ఆ రికార్డింగ్ మరీ పెద్దది.',
+  'That is as much as one recording may hold.': 'ఒక రికార్డింగ్‌లో ఇంతే పడుతుంది.',
+  'Nothing could be heard in that recording.': 'ఆ రికార్డింగ్‌లో ఏమీ వినిపించలేదు.',
+  'A piece of the transcript is being tried again.': 'ప్రతిలేఖనంలో ఒక భాగం మళ్ళీ ప్రయత్నిస్తోంది.',
+  'The transcript is behind and losing pieces.': 'ప్రతిలేఖనం వెనుకబడి భాగాలు కోల్పోతోంది.',
+  '{count} pieces of this meeting were lost.': 'ఈ సమావేశంలో {count} భాగాలు పోయాయి.',
+  'Add an AI provider in settings to summarise.': 'సారాంశం కోసం అమరికల్లో ఒక AI ప్రదాతను చేర్చు.',
+  'The summary could not be written.': 'సారాంశం రాయలేకపోయాం.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'మెయిల్ పంపలేకపోయింది - మళ్లీ ప్రయత్నించండి',
   'start again - that took too long': 'మళ్లీ మొదలుపెట్టండి - అది చాలా సమయం తీసుకుంది',
@@ -1090,7 +1263,8 @@ export const te: Dictionary = {
   'that is more bookmarks than a space holds': 'ఒక స్పేస్ ఉంచగలిగే బుక్‌మార్క్‌ల కంటే ఎక్కువ',
   'that is more paths than a space leaves out': 'ఒక స్పేస్ వదిలివేసే పాత్‌ల కంటే ఎక్కువ',
   'that is more files than a space keeps': 'ఒక స్పేస్ ఉంచే ఫైల్‌ల కంటే ఎక్కువ',
-  'that is more than a space keeps about its graph': 'ఒక స్పేస్ తన గ్రాఫ్ గురించి ఉంచేదానికంటే ఎక్కువ',
+  'that is more than a space keeps about its graph':
+    'ఒక స్పేస్ తన గ్రాఫ్ గురించి ఉంచేదానికంటే ఎక్కువ',
   'that is more folder icons than a space holds': 'ఒక స్పేస్ ఉంచే ఫోల్డర్ ఐకాన్‌ల కంటే ఎక్కువ',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ఆ చిరునామాలో ఎవరూ లేరు',

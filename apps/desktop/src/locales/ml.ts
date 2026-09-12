@@ -7,6 +7,12 @@ export const ml: Dictionary = {
   'Open file': 'ഫയൽ തുറക്കുക',
   'New note inside': 'ഇതിനുള്ളിൽ പുതിയ കുറിപ്പ്',
   'New canvas': 'പുതിയ ക്യാൻവാസ്',
+  'New page note': 'പുതിയ താൾ കുറിപ്പ്',
+  'Add a page': 'താൾ ചേർക്കുക',
+  'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
+  'Delete this page': 'ഈ താൾ മായ്ക്കുക',
+  'Page {number}': 'താൾ {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',
   'Note or picture': 'കുറിപ്പ് അല്ലെങ്കിൽ ചിത്രം',
@@ -34,7 +40,8 @@ export const ml: Dictionary = {
   'Create a space': 'സ്പേസ് സൃഷ്ടിക്കുക',
   'Delete space': 'സ്പേസ് ഇല്ലാതാക്കുക',
   'Delete {name}?': '{name} ഇല്ലാതാക്കണോ?',
-  'Every note in this space is deleted from your computer.': 'ഈ സ്പേസിലെ എല്ലാ കുറിപ്പുകളും നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ നിന്ന് ഇല്ലാതാകും.',
+  'Every note in this space is deleted from your computer.':
+    'ഈ സ്പേസിലെ എല്ലാ കുറിപ്പുകളും നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ നിന്ന് ഇല്ലാതാകും.',
   'The notes inside it go too.': 'അതിനുള്ളിലെ കുറിപ്പുകളും പോകും.',
   Journal: 'ഡയറി',
   Create: 'സൃഷ്ടിക്കുക',
@@ -204,9 +211,13 @@ export const ml: Dictionary = {
   'Delete image': 'ചിത്രം ഇല്ലാതാക്കുക',
   'Reset size': 'വലുപ്പം പുനഃക്രമീകരിക്കുക',
   'Image not found': 'ചിത്രം കണ്ടില്ല',
-  'Delete {count} items': { one: '{count} ഐറ്റം ഇല്ലാതാക്കുക', other: '{count} ഐറ്റങ്ങൾ ഇല്ലാതാക്കുക' },
+  'Delete {count} items': {
+    one: '{count} ഐറ്റം ഇല്ലാതാക്കുക',
+    other: '{count} ഐറ്റങ്ങൾ ഇല്ലാതാക്കുക',
+  },
   'Recently deleted': 'അടുത്തിടെ ഇല്ലാതാക്കിയവ',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'ഇല്ലാതാക്കിയ കുറിപ്പുകളും സ്പേസുകളും 14 ദിവസം ഇവിടെ കിടക്കും, പിന്നെ എന്നേക്കുമായി പോകും.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'ഇല്ലാതാക്കിയ കുറിപ്പുകളും സ്പേസുകളും 14 ദിവസം ഇവിടെ കിടക്കും, പിന്നെ എന്നേക്കുമായി പോകും.',
   'Nothing here.': 'ഇവിടെ ഒന്നുമില്ല.',
   Empty: 'കാലിയാക്കുക',
   Spaces: 'സ്പേസുകൾ',
@@ -257,7 +268,8 @@ export const ml: Dictionary = {
   'Previous slide': 'മുൻ സ്ലൈഡ്',
   'Read-only': 'വായിക്കാൻ മാത്രം',
   'No preview': 'പ്രിവ്യൂ ഇല്ല',
-  'Shown as plain text, so typing stays instant in a note this long': 'ഇത്ര വലിയ കുറിപ്പിൽ ടൈപ്പിംഗ് വേഗത്തിലാകാൻ പ്ലെയിൻ ടെക്സ്റ്റായി കാണിക്കുന്നു',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'ഇത്ര വലിയ കുറിപ്പിൽ ടൈപ്പിംഗ് വേഗത്തിലാകാൻ പ്ലെയിൻ ടെക്സ്റ്റായി കാണിക്കുന്നു',
   'Leave read-only': 'വായിക്കാൻ മാത്രം എന്ന നില വിടുക',
   Next: 'അടുത്തത്',
   Previous: 'മുൻപത്തേത്',
@@ -353,16 +365,19 @@ export const ml: Dictionary = {
   'OpenAI key': 'OpenAI കീ',
   Model: 'മോഡൽ',
   Reasoning: 'യുക്തിചിന്ത',
-  'Kept encrypted on your account, and never shown again.': 'നിങ്ങളുടെ അക്കൗണ്ടിൽ എൻക്രിപ്റ്റ് ചെയ്ത് സൂക്ഷിക്കും, വീണ്ടും കാണിക്കില്ല.',
+  'Kept encrypted on your account, and never shown again.':
+    'നിങ്ങളുടെ അക്കൗണ്ടിൽ എൻക്രിപ്റ്റ് ചെയ്ത് സൂക്ഷിക്കും, വീണ്ടും കാണിക്കില്ല.',
   'set, ends in …{tail}': 'സെറ്റ് ചെയ്തു, …{tail}ൽ അവസാനിക്കുന്നു',
   'Saving the key': 'കീ സേവ് ചെയ്യുന്നു',
   'this server cannot keep a key yet': 'ഈ സെർവറിന് ഇനിയും കീ സൂക്ഷിക്കാനാകില്ല',
   'that does not look like a key': 'അത് കീ പോലെ തോന്നുന്നില്ല',
   'that key could not be saved': 'ആ കീ സേവ് ചെയ്യാനായില്ല',
   'Sign in to ask a question.': 'ചോദ്യം ചോദിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
-  'Asking OpenAI which models this key can use': 'ഈ കീ ഏത് മോഡലുകൾ ഉപയോഗിക്കാമെന്ന് OpenAIയോട് ചോദിക്കുന്നു',
+  'Asking OpenAI which models this key can use':
+    'ഈ കീ ഏത് മോഡലുകൾ ഉപയോഗിക്കാമെന്ന് OpenAIയോട് ചോദിക്കുന്നു',
   'Could not reach OpenAI': 'OpenAIയിൽ എത്താനായില്ല',
-  'That key cannot use any of the models Nib asks for.': 'Nib ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
+  'That key cannot use any of the models Nib asks for.':
+    'Nib ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
   'No reasoning': 'യുക്തിചിന്ത ഇല്ല',
   Minimal: 'വളരെ കുറവ്',
   Low: 'കുറവ്',
@@ -403,7 +418,10 @@ export const ml: Dictionary = {
   'Add a word': 'ഒരു വാക്ക് ചേർക്കുക',
   'Add {word} to the dictionary': '{word} നിഘണ്ടുവിൽ ചേർക്കുക',
   'Remove {word} from the dictionary': '{word} നിഘണ്ടുവിൽ നിന്ന് നീക്കുക',
-  '{count} things in this theme were left out.': { one: 'ഈ തീമിലെ {count} കാര്യം ഒഴിവാക്കി.', other: 'ഈ തീമിലെ {count} കാര്യങ്ങൾ ഒഴിവാക്കി.' },
+  '{count} things in this theme were left out.': {
+    one: 'ഈ തീമിലെ {count} കാര്യം ഒഴിവാക്കി.',
+    other: 'ഈ തീമിലെ {count} കാര്യങ്ങൾ ഒഴിവാക്കി.',
+  },
   'A note': 'ഒരു കുറിപ്പ്',
   'Words with {bold} and a {link}.': '{bold}ഉം ഒരു {link}ഉം ഉള്ള വാക്കുകൾ.',
   bold: 'ബോൾഡ്',
@@ -448,11 +466,14 @@ export const ml: Dictionary = {
   'Line numbers': 'വരി നമ്പറുകൾ',
   Syntax: 'സിന്റാക്സ്',
   'Strict CommonMark': 'കർശന CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'സ്റ്റാൻഡേർഡ് Markdown നിയമങ്ങൾ മാത്രം; പട്ടികകൾ, ടാസ്ക് ലിസ്റ്റുകൾ, അടിക്കുറിപ്പുകൾ ഇല്ല.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'സ്റ്റാൻഡേർഡ് Markdown നിയമങ്ങൾ മാത്രം; പട്ടികകൾ, ടാസ്ക് ലിസ്റ്റുകൾ, അടിക്കുറിപ്പുകൾ ഇല്ല.',
   'Smart punctuation': 'സ്മാർട്ട് ചിഹ്നങ്ങൾ',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'ടൈപ്പ് ചെയ്യുമ്പോൾ തന്നെ നേരായ ഉദ്ധരണികളും ഡാഷുകളും അച്ചടിരൂപത്തിലാക്കും.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'ടൈപ്പ് ചെയ്യുമ്പോൾ തന്നെ നേരായ ഉദ്ധരണികളും ഡാഷുകളും അച്ചടിരൂപത്തിലാക്കും.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'തലക്കെട്ടുകൾക്ക് മുന്നിൽ 1., 1.1, 1.2 ചേർക്കും.',
-  'Numbers display equations so you can refer to them.': 'പരാമർശിക്കാൻ ഡിസ്പ്ലേ സമവാക്യങ്ങൾക്ക് നമ്പർ നൽകും.',
+  'Numbers display equations so you can refer to them.':
+    'പരാമർശിക്കാൻ ഡിസ്പ്ലേ സമവാക്യങ്ങൾക്ക് നമ്പർ നൽകും.',
   Ligatures: 'ലിഗേച്ചറുകൾ',
   Off: 'ഓഫ്',
   'Code only': 'കോഡിൽ മാത്രം',
@@ -514,14 +535,19 @@ export const ml: Dictionary = {
   Continue: 'തുടരുക',
   'Send a new code': 'പുതിയ കോഡ് അയയ്ക്കുക',
   'Code sent to': 'കോഡ് അയച്ച വിലാസം',
-  'You already have notes on this computer.': 'ഈ കമ്പ്യൂട്ടറിൽ നിങ്ങൾക്ക് ഇപ്പോൾ തന്നെ കുറിപ്പുകളുണ്ട്.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'സൂക്ഷിച്ചാൽ അവ നിങ്ങളുടെ അക്കൗണ്ടിൽ ചേരും. മായ്ച്ചാൽ അക്കൗണ്ടിൽ ഇപ്പോഴുള്ളത് മാത്രം ശേഷിക്കും - ഇത് പഴയപടിയാക്കാനാകില്ല.',
+  'You already have notes on this computer.':
+    'ഈ കമ്പ്യൂട്ടറിൽ നിങ്ങൾക്ക് ഇപ്പോൾ തന്നെ കുറിപ്പുകളുണ്ട്.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'സൂക്ഷിച്ചാൽ അവ നിങ്ങളുടെ അക്കൗണ്ടിൽ ചേരും. മായ്ച്ചാൽ അക്കൗണ്ടിൽ ഇപ്പോഴുള്ളത് മാത്രം ശേഷിക്കും - ഇത് പഴയപടിയാക്കാനാകില്ല.',
   'Keep them': 'സൂക്ഷിക്കുക',
   'Erase them': 'മായ്ക്കുക',
   'Digit {number}': 'അങ്കം {number}',
   'Resend in {seconds}s': '{seconds} സെക്കൻഡിൽ വീണ്ടും അയയ്ക്കുക',
   'Last synced {time}.': 'അവസാന സിങ്ക് {time}.',
-  '{count} spaces sync to your account.': { one: '{count} സ്പേസ് നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് സിങ്ക് ചെയ്യുന്നു.', other: '{count} സ്പേസുകൾ നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് സിങ്ക് ചെയ്യുന്നു.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} സ്പേസ് നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് സിങ്ക് ചെയ്യുന്നു.',
+    other: '{count} സ്പേസുകൾ നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് സിങ്ക് ചെയ്യുന്നു.',
+  },
   Update: 'അപ്ഡേറ്റ്',
   'Live at': 'ലൈവ് വിലാസം',
   // Publishing
@@ -531,9 +557,11 @@ export const ml: Dictionary = {
   'Only {name}': '{name} മാത്രം',
   'Publish this space as a blog': 'ഈ സ്പേസ് ബ്ലോഗായി പ്രസിദ്ധീകരിക്കുക',
   'Everything in this space becomes public.': 'ഈ സ്പേസിലുള്ളതെല്ലാം പൊതുവായി മാറും.',
-  'Every note, including drafts, is readable by anyone with the address.': 'ഡ്രാഫ്റ്റുകൾ ഉൾപ്പെടെ എല്ലാ കുറിപ്പും വിലാസമുള്ള ആർക്കും വായിക്കാം.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'ഡ്രാഫ്റ്റുകൾ ഉൾപ്പെടെ എല്ലാ കുറിപ്പും വിലാസമുള്ള ആർക്കും വായിക്കാം.',
   Address: 'വിലാസം',
-  'Add these at your registrar, then verify.': 'ഇവ നിങ്ങളുടെ രജിസ്ട്രാറിൽ ചേർത്ത് പിന്നെ പരിശോധിക്കുക.',
+  'Add these at your registrar, then verify.':
+    'ഇവ നിങ്ങളുടെ രജിസ്ട്രാറിൽ ചേർത്ത് പിന്നെ പരിശോധിക്കുക.',
   Verify: 'പരിശോധിക്കുക',
   'that record is not answering yet': 'ആ റെക്കോർഡ് ഇനിയും പ്രതികരിക്കുന്നില്ല',
   'Stop publishing': 'പ്രസിദ്ധീകരണം നിർത്തുക',
@@ -544,8 +572,10 @@ export const ml: Dictionary = {
   'checking…': 'പരിശോധിക്കുന്നു…',
   // LLM
   'Connect an LLM to your notes': 'നിങ്ങളുടെ കുറിപ്പുകളിലേക്ക് LLM ബന്ധിപ്പിക്കുക',
-  'Sign in first - the connector reaches the notes in your account.': 'ആദ്യം സൈൻ ഇൻ ചെയ്യുക - കണക്ടർ നിങ്ങളുടെ അക്കൗണ്ടിലെ കുറിപ്പുകളിൽ എത്തുന്നു.',
-  'Let it write to my notes, not only read them': 'എന്റെ കുറിപ്പുകൾ വായിക്കാൻ മാത്രമല്ല, എഴുതാനും അനുവദിക്കുക',
+  'Sign in first - the connector reaches the notes in your account.':
+    'ആദ്യം സൈൻ ഇൻ ചെയ്യുക - കണക്ടർ നിങ്ങളുടെ അക്കൗണ്ടിലെ കുറിപ്പുകളിൽ എത്തുന്നു.',
+  'Let it write to my notes, not only read them':
+    'എന്റെ കുറിപ്പുകൾ വായിക്കാൻ മാത്രമല്ല, എഴുതാനും അനുവദിക്കുക',
   'Create a token': 'ടോക്കൺ സൃഷ്ടിക്കുക',
   'Replace the token': 'ടോക്കൺ മാറ്റുക',
   'Last used {time}.': 'അവസാന ഉപയോഗം {time}.',
@@ -560,27 +590,39 @@ export const ml: Dictionary = {
   'Reads your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുന്നു.',
   'Reads and writes your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുകയും എഴുതുകയും ചെയ്യുന്നു.',
   Other: 'മറ്റുള്ളവ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claudeൽ Settings → Connectors തുറന്ന് Add custom connector ക്ലിക്ക് ചെയ്യുക.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claudeൽ Settings → Connectors തുറന്ന് Add custom connector ക്ലിക്ക് ചെയ്യുക.',
   'Open Claude’s connectors': 'Claude കണക്ടറുകൾ തുറക്കുക',
   'Fill in the two fields and click Add.': 'രണ്ട് ഫീൽഡുകൾ പൂരിപ്പിച്ച് Add ക്ലിക്ക് ചെയ്യുക.',
-  'Click Connect and sign in with your Nib email.': 'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'Click Connect and sign in with your Nib email.':
+    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
   'Using Claude Code instead?': 'Claude Code ഉപയോഗിക്കുന്നുണ്ടോ?',
   Command: 'കമാൻഡ്',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'ടെർമിനലിൽ ഇത് റൺ ചെയ്ത്, സൈൻ ഇൻ ചെയ്യാൻ Claude Codeൽ /mcp ടൈപ്പ് ചെയ്യുക.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'ടെർമിനലിൽ ഇത് റൺ ചെയ്ത്, സൈൻ ഇൻ ചെയ്യാൻ Claude Codeൽ /mcp ടൈപ്പ് ചെയ്യുക.',
   'Fill in the form and click Create.': 'ഫോം പൂരിപ്പിച്ച് Create ക്ലിക്ക് ചെയ്യുക.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPTയിൽ Settings → Plugins തുറന്ന് പ്ലസ് ബട്ടൺ ക്ലിക്ക് ചെയ്യുക.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPTയിൽ Settings → Plugins തുറന്ന് പ്ലസ് ബട്ടൺ ക്ലിക്ക് ചെയ്യുക.',
   'Open ChatGPT’s plugins': 'ChatGPT പ്ലഗിനുകൾ തുറക്കുക',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins വിഭാഗമോ പ്ലസ് ബട്ടണോ ഇല്ലേ? ആദ്യം Settings → Security and loginൽ Developer mode ഓൺ ചെയ്യുക.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
-  'To use it in a chat, type @ and pick Nib.': 'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് Nib തിരഞ്ഞെടുക്കുക.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins വിഭാഗമോ പ്ലസ് ബട്ടണോ ഇല്ലേ? ആദ്യം Settings → Security and loginൽ Developer mode ഓൺ ചെയ്യുക.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'To use it in a chat, type @ and pick Nib.':
+    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് Nib തിരഞ്ഞെടുക്കുക.',
   'Server URL': 'സെർവർ URL',
   Authentication: 'പ്രാമാണീകരണം',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'വിപുല OAuth സെറ്റിംഗ്സ് അതേപടി വിട്ട് “I understand and want to continue” ടിക്ക് ചെയ്യുക.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് Nibന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'വിപുല OAuth സെറ്റിംഗ്സ് അതേപടി വിട്ട് “I understand and want to continue” ടിക്ക് ചെയ്യുക.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് Nibന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
   'Show config': 'കോൺഫിഗ് കാണിക്കുക',
-  'For a client that takes a JSON block instead of a URL.': 'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'സൈൻ ഇൻ ചെയ്യാനാകാത്ത ക്ലയന്റിന് ടോക്കൺ നൽകാം. അത് ഒരിക്കൽ മാത്രം കാണിക്കും.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'സൈൻ ഇൻ ചെയ്യാനാകാത്ത ക്ലയന്റിന് ടോക്കൺ നൽകാം. അത് ഒരിക്കൽ മാത്രം കാണിക്കും.',
   // Export
   'Plain text': 'പ്ലെയിൻ ടെക്സ്റ്റ്',
   'Markdown with the pictures': 'ചിത്രങ്ങളോടെ Markdown',
@@ -604,8 +646,10 @@ export const ml: Dictionary = {
   'Version history': 'പതിപ്പ് ചരിത്രം',
   'Copy link to this note': 'ഈ കുറിപ്പിന്റെ ലിങ്ക് പകർത്തുക',
   'that link could not be followed': 'ആ ലിങ്ക് പിന്തുടരാനായില്ല',
-  'Save this note first; there is nothing to compare against yet.': 'ആദ്യം ഈ കുറിപ്പ് സേവ് ചെയ്യുക; താരതമ്യം ചെയ്യാൻ ഇനിയും ഒന്നുമില്ല.',
-  'No earlier versions yet. One is kept each time you save.': 'ഇനിയും പഴയ പതിപ്പുകളില്ല. സേവ് ചെയ്യുമ്പോഴെല്ലാം ഒന്ന് സൂക്ഷിക്കും.',
+  'Save this note first; there is nothing to compare against yet.':
+    'ആദ്യം ഈ കുറിപ്പ് സേവ് ചെയ്യുക; താരതമ്യം ചെയ്യാൻ ഇനിയും ഒന്നുമില്ല.',
+  'No earlier versions yet. One is kept each time you save.':
+    'ഇനിയും പഴയ പതിപ്പുകളില്ല. സേവ് ചെയ്യുമ്പോഴെല്ലാം ഒന്ന് സൂക്ഷിക്കും.',
   'Restore this version': 'ഈ പതിപ്പ് വീണ്ടെടുക്കുക',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'അവിടെ ഇപ്പോൾ തന്നെ ഒരു കുറിപ്പുണ്ട്',
@@ -629,9 +673,11 @@ export const ml: Dictionary = {
   'that path is not usable': 'ആ പാത്ത് ഉപയോഗിക്കാനാകില്ല',
   'this note changed elsewhere': 'ഈ കുറിപ്പ് മറ്റൊരിടത്ത് മാറി',
   'too many tries - ask for a new code': 'വളരെയധികം ശ്രമങ്ങൾ - പുതിയ കോഡ് ചോദിക്കുക',
-  'too many messages from here - try again later': 'ഇവിടെനിന്ന് വളരെയധികം സന്ദേശങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
+  'too many messages from here - try again later':
+    'ഇവിടെനിന്ന് വളരെയധികം സന്ദേശങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
   'too much mail today - try again tomorrow': 'ഇന്ന് വളരെയധികം മെയിൽ - നാളെ ശ്രമിക്കുക',
-  'that many people are already waiting to be let in': 'അകത്തു കടക്കാൻ കാത്തിരിക്കുന്നവർ ഇപ്പോൾ തന്നെ അത്രയുണ്ട്',
+  'that many people are already waiting to be let in':
+    'അകത്തു കടക്കാൻ കാത്തിരിക്കുന്നവർ ഇപ്പോൾ തന്നെ അത്രയുണ്ട്',
   'use 2–32 letters, numbers or hyphens': '2–32 അക്ഷരങ്ങൾ, അങ്കങ്ങൾ അല്ലെങ്കിൽ ഹൈഫനുകൾ ഉപയോഗിക്കുക',
   'sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   'could not publish': 'പ്രസിദ്ധീകരിക്കാനായില്ല',
@@ -661,12 +707,14 @@ export const ml: Dictionary = {
   'Waiting for the record to show up.': 'റെക്കോർഡ് വരാൻ കാത്തിരിക്കുന്നു.',
   'Certificate issued.': 'സർട്ടിഫിക്കറ്റ് നൽകി.',
   'Cloudflare could not set this domain up.': 'ഈ ഡൊമെയ്ൻ Cloudflareന് സജ്ജമാക്കാനായില്ല.',
-  'This server does not hand out certificates yet.': 'ഈ സെർവർ ഇനിയും സർട്ടിഫിക്കറ്റുകൾ നൽകുന്നില്ല.',
+  'This server does not hand out certificates yet.':
+    'ഈ സെർവർ ഇനിയും സർട്ടിഫിക്കറ്റുകൾ നൽകുന്നില്ല.',
   'that domain is taken': 'ആ ഡൊമെയ്ൻ നിലവിലുണ്ട്',
   'use a domain of your own': 'നിങ്ങളുടെ സ്വന്തം ഡൊമെയ്ൻ ഉപയോഗിക്കുക',
   'the domain no longer points here': 'ആ ഡൊമെയ്ൻ ഇനി ഇവിടേക്ക് ചൂണ്ടുന്നില്ല',
   'Cloudflare has blocked this domain': 'ഈ ഡൊമെയ്ൻ Cloudflare തടഞ്ഞു',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'ഡൊമെയ്നിന്റെ റൂട്ടിൽ നിങ്ങളുടെ പ്രൊവൈഡർ CNAME അനുവദിക്കുന്നില്ലെങ്കിൽ, ALIAS അല്ലെങ്കിൽ ANAME റെക്കോർഡ്, അല്ലെങ്കിൽ CNAME flattening ഉപയോഗിക്കുക.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ഡൊമെയ്നിന്റെ റൂട്ടിൽ നിങ്ങളുടെ പ്രൊവൈഡർ CNAME അനുവദിക്കുന്നില്ലെങ്കിൽ, ALIAS അല്ലെങ്കിൽ ANAME റെക്കോർഡ്, അല്ലെങ്കിൽ CNAME flattening ഉപയോഗിക്കുക.',
   // Shortcuts
   Shortcuts: 'കുറുക്കുവഴികൾ',
   'Search shortcuts': 'കുറുക്കുവഴികൾ തിരയുക',
@@ -677,7 +725,8 @@ export const ml: Dictionary = {
   'Reset all shortcuts': 'എല്ലാ കുറുക്കുവഴികളും പുനഃസജ്ജം',
   'Take it over': 'ഇതിന് നൽകുക',
   '{key} already runs {name}.': '{key} ഇപ്പോൾ തന്നെ {name} പ്രവർത്തിപ്പിക്കുന്നു.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc റെക്കോർഡിംഗ് നിർത്തും, Backspace കീ നീക്കും.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc റെക്കോർഡിംഗ് നിർത്തും, Backspace കീ നീക്കും.',
   Tables: 'പട്ടികകൾ',
   Pictures: 'ചിത്രങ്ങൾ',
   'Fixed keys': 'നിശ്ചിത കീകൾ',
@@ -713,7 +762,8 @@ export const ml: Dictionary = {
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} ഡിസ്കിൽ മാറി. എഡിറ്ററിലുള്ളത് നിങ്ങളുടേതാണ്.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} ഡിസ്കിൽ മാറി. എഡിറ്ററിലുള്ളത് നിങ്ങളുടേതാണ്.',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',
   'Copy the line up': 'വരി മുകളിലേക്ക് പകർത്തുക',
@@ -748,26 +798,33 @@ export const ml: Dictionary = {
   Escape: 'Escape',
   Quit: 'ആപ്പ് അടയ്ക്കുക',
   'The clipboard belongs to the system.': 'ക്ലിപ്പ്ബോർഡ് സിസ്റ്റത്തിന്റേതാണ്.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'ആരോ കീകൾ, Home, End, Page up, Page down ടെക്സ്റ്റിന്റേതാണ്.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'ആരോ കീകൾ, Home, End, Page up, Page down ടെക്സ്റ്റിന്റേതാണ്.',
   'Backspace and Delete belong to the text.': 'Backspace, Delete ടെക്സ്റ്റിന്റേതാണ്.',
-  'Enter closes a code block and carries a list on.': 'Enter കോഡ് ബ്ലോക്ക് അടയ്ക്കും, ലിസ്റ്റ് തുടരും.',
-  'Tab moves on through the app as well as indenting.': 'Tab ഇൻഡന്റ് ചെയ്യുന്നതിനൊപ്പം ആപ്പിൽ മുന്നോട്ടും നീങ്ങും.',
+  'Enter closes a code block and carries a list on.':
+    'Enter കോഡ് ബ്ലോക്ക് അടയ്ക്കും, ലിസ്റ്റ് തുടരും.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab ഇൻഡന്റ് ചെയ്യുന്നതിനൊപ്പം ആപ്പിൽ മുന്നോട്ടും നീങ്ങും.',
   'Escape closes whatever is open.': 'Escape തുറന്നിരിക്കുന്നതെന്തും അടയ്ക്കും.',
-  'Your system takes this key before the app sees it.': 'ആപ്പ് കാണുന്നതിന് മുൻപേ ഈ കീ നിങ്ങളുടെ സിസ്റ്റം എടുക്കുന്നു.',
-  'Your browser takes this key before the app sees it.': 'ആപ്പ് കാണുന്നതിന് മുൻപേ ഈ കീ നിങ്ങളുടെ ബ്രൗസർ എടുക്കുന്നു.',
+  'Your system takes this key before the app sees it.':
+    'ആപ്പ് കാണുന്നതിന് മുൻപേ ഈ കീ നിങ്ങളുടെ സിസ്റ്റം എടുക്കുന്നു.',
+  'Your browser takes this key before the app sees it.':
+    'ആപ്പ് കാണുന്നതിന് മുൻപേ ഈ കീ നിങ്ങളുടെ ബ്രൗസർ എടുക്കുന്നു.',
   'That is not a key combination.': 'അത് ഒരു കീ കൂട്ടല്ല.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt അല്ലെങ്കിൽ Cmd കൂടി അമർത്തിപ്പിടിക്കുക.',
   'File list': 'ഫയൽ ലിസ്റ്റ്',
   'Select every file': 'എല്ലാ ഫയലും തിരഞ്ഞെടുക്കുക',
   'Clear the selection': 'തിരഞ്ഞെടുപ്പ് മായ്ക്കുക',
   'Delete the selected files': 'തിരഞ്ഞെടുത്ത ഫയലുകൾ ഇല്ലാതാക്കുക',
-  'The file could not be written, so it goes to the print dialog': 'ഫയൽ എഴുതാനായില്ല, അതിനാൽ പ്രിന്റ് ഡയലോഗിലേക്ക് പോകുന്നു',
+  'The file could not be written, so it goes to the print dialog':
+    'ഫയൽ എഴുതാനായില്ല, അതിനാൽ പ്രിന്റ് ഡയലോഗിലേക്ക് പോകുന്നു',
   'Next file': 'അടുത്ത ഫയൽ',
   'Previous file': 'മുൻ ഫയൽ',
   'Show what it holds': 'ഉള്ളിലുള്ളത് കാണിക്കുക',
   'Hide what it holds': 'ഉള്ളിലുള്ളത് മറയ്ക്കുക',
   'Moving through a list': 'ലിസ്റ്റിൽ നീങ്ങൽ',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'ആരോ കീകൾ, Enter, Esc എന്ത് തുറന്നിരുന്നാലും പ്രവർത്തിക്കും; അവ കുറുക്കുവഴികളല്ല.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'ആരോ കീകൾ, Enter, Esc എന്ത് തുറന്നിരുന്നാലും പ്രവർത്തിക്കും; അവ കുറുക്കുവഴികളല്ല.',
   'Split right': 'വലത്തേക്ക് വിഭജിക്കുക',
   'Split down': 'താഴേക്ക് വിഭജിക്കുക',
   'Other pane': 'മറ്റേ പെയിൻ',
@@ -789,7 +846,8 @@ export const ml: Dictionary = {
   'Follow the link': 'ലിങ്ക് പിന്തുടരുക',
   'Replace your own keys?': 'നിങ്ങളുടെ സ്വന്തം കീകൾ മാറ്റണോ?',
   Replace: 'മാറ്റുക',
-  'The keys you changed go back to what this keyboard says.': 'നിങ്ങൾ മാറ്റിയ കീകൾ ഈ കീബോർഡ് പറയുന്നതിലേക്ക് മടങ്ങും.',
+  'The keys you changed go back to what this keyboard says.':
+    'നിങ്ങൾ മാറ്റിയ കീകൾ ഈ കീബോർഡ് പറയുന്നതിലേക്ക് മടങ്ങും.',
   NORMAL: 'സാധാരണം',
   INSERT: 'ചേർക്കൽ',
   VISUAL: 'ദൃശ്യം',
@@ -911,7 +969,8 @@ export const ml: Dictionary = {
   Leave: 'വിടുക',
   'Leave space': 'സ്പേസ് വിടുക',
   'Leave {name}?': '{name} വിടണോ?',
-  'It stays with everybody else. Its notes go from your computer.': 'മറ്റെല്ലാവരുടെയും അടുത്ത് അത് നിലനിൽക്കും. അതിന്റെ കുറിപ്പുകൾ നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ നിന്ന് പോകും.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'മറ്റെല്ലാവരുടെയും അടുത്ത് അത് നിലനിൽക്കും. അതിന്റെ കുറിപ്പുകൾ നിങ്ങളുടെ കമ്പ്യൂട്ടറിൽ നിന്ന് പോകും.',
   '{who} shared {space} with you': '{who} നിങ്ങളുമായി {space} പങ്കിട്ടു',
   'Shared with you': 'നിങ്ങളുമായി പങ്കിട്ടു',
   'That link does not open anything': 'ആ ലിങ്ക് ഒന്നും തുറക്കുന്നില്ല',
@@ -928,7 +987,8 @@ export const ml: Dictionary = {
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
   Unstable: 'അസ്ഥിരം',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
@@ -936,17 +996,27 @@ export const ml: Dictionary = {
   'In this note': 'ഈ കുറിപ്പിൽ',
   'In the whole space': 'മുഴുവൻ സ്പേസിലും',
   'Nothing here needs converting.': 'ഇവിടെ മാറ്റേണ്ടതൊന്നുമില്ല.',
-  'Rewrite {count} things?': { one: '{count} കാര്യം വീണ്ടും എഴുതണോ?', other: '{count} കാര്യങ്ങൾ വീണ്ടും എഴുതണോ?' },
+  'Rewrite {count} things?': {
+    one: '{count} കാര്യം വീണ്ടും എഴുതണോ?',
+    other: '{count} കാര്യങ്ങൾ വീണ്ടും എഴുതണോ?',
+  },
   'In {count} notes.': { one: '{count} കുറിപ്പിൽ.', other: '{count} കുറിപ്പുകളിൽ.' },
   Rewrite: 'വീണ്ടും എഴുതുക',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} ഭാഗങ്ങൾ എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു, Evernote ഇല്ലാതെ അവ വായിക്കാൻ ഒന്നിനുമാകില്ല',
-  '{count} notes had a reminder, which the export does not carry': '{count} കുറിപ്പുകൾക്ക് റിമൈൻഡർ ഉണ്ടായിരുന്നു, എക്സ്പോർട്ട് അത് കൊണ്ടുവരില്ല',
-  '{count} notes were in the bin and stay there': '{count} കുറിപ്പുകൾ ചവറ്റുകുട്ടയിലായിരുന്നു, അവിടെത്തന്നെ നിൽക്കും',
-  '{count} archived notes are in a folder called Archive': '{count} ആർക്കൈവ് കുറിപ്പുകൾ Archive ഫോൾഡറിലാണ്',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} ഭാഗങ്ങൾ എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു, Evernote ഇല്ലാതെ അവ വായിക്കാൻ ഒന്നിനുമാകില്ല',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} കുറിപ്പുകൾക്ക് റിമൈൻഡർ ഉണ്ടായിരുന്നു, എക്സ്പോർട്ട് അത് കൊണ്ടുവരില്ല',
+  '{count} notes were in the bin and stay there':
+    '{count} കുറിപ്പുകൾ ചവറ്റുകുട്ടയിലായിരുന്നു, അവിടെത്തന്നെ നിൽക്കും',
+  '{count} archived notes are in a folder called Archive':
+    '{count} ആർക്കൈവ് കുറിപ്പുകൾ Archive ഫോൾഡറിലാണ്',
   'The colours a note had are not kept': 'കുറിപ്പിനുണ്ടായിരുന്ന നിറങ്ങൾ സൂക്ഷിക്കില്ല',
-  '{count} block references were written out as the words they pointed at': '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
-  '{count} saved views are left out, and every row is in the table': '{count} സേവ് ചെയ്ത വ്യൂകൾ ഒഴിവാക്കി, എല്ലാ വരികളും പട്ടികയിലുണ്ട്',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} പേജുകൾ HTML ആയി വന്നു, അതിനാൽ വാക്കുകൾ സൂക്ഷിച്ചു, രൂപം സൂക്ഷിച്ചില്ല',
+  '{count} block references were written out as the words they pointed at':
+    '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} സേവ് ചെയ്ത വ്യൂകൾ ഒഴിവാക്കി, എല്ലാ വരികളും പട്ടികയിലുണ്ട്',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} പേജുകൾ HTML ആയി വന്നു, അതിനാൽ വാക്കുകൾ സൂക്ഷിച്ചു, രൂപം സൂക്ഷിച്ചില്ല',
   'There are no rows in this file.': 'ഈ ഫയലിൽ വരികളില്ല.',
   'Nothing in there can be read as notes.': 'അതിലുള്ളതൊന്നും കുറിപ്പുകളായി വായിക്കാനാകില്ല.',
   'That export could not be read.': 'ആ എക്സ്പോർട്ട് വായിക്കാനായില്ല.',
@@ -956,21 +1026,50 @@ export const ml: Dictionary = {
   '{count} files': { one: '{count} ഫയൽ', other: '{count} ഫയലുകൾ' },
   'This space': 'ഈ സ്പേസ്',
   'Drop an export here': 'ഒരു എക്സ്പോർട്ട് ഇവിടെ ഇടുക',
-  'A zip, a folder, or a file another app wrote': 'ഒരു zip, ഫോൾഡർ, അല്ലെങ്കിൽ മറ്റൊരു ആപ്പ് എഴുതിയ ഫയൽ',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notesഉം Apple Journalഉം അവരുടെ കുറിപ്പുകൾ അവർക്ക് മാത്രം തുറക്കാവുന്ന ഇടത്ത് സൂക്ഷിക്കുന്നു. ആദ്യം അവ എക്സ്പോർട്ട് ചെയ്ത്, പിന്നെ അത് ഇംപോർട്ട് ചെയ്യുക.',
-  'Pandoc reads this one, from the file on your disk.': 'നിങ്ങളുടെ ഡിസ്കിലെ ഫയലിൽ നിന്ന് pandoc ഇത് വായിക്കും.',
+  'A zip, a folder, or a file another app wrote':
+    'ഒരു zip, ഫോൾഡർ, അല്ലെങ്കിൽ മറ്റൊരു ആപ്പ് എഴുതിയ ഫയൽ',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} ചിത്രങ്ങൾ HEIC ആയി വന്നു, അത് Apple മാത്രം കാണിക്കും',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} മനോഭാവ, പ്രവൃത്തി കാർഡുകൾ വരകളാണ്, അതിനാൽ അവയുടെ വാക്കുകൾ മാത്രം വരും',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Notes മാത്രം തുറക്കും',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} കുറിപ്പുകൾ അടുത്തിടെ മായ്ച്ചവയിലാണ്, അവിടെത്തന്നെ നിൽക്കും',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} വരകളും സ്കാൻ ചെയ്ത താളുകളും Notes തന്നെ വരയ്ക്കുന്ന ചിത്രങ്ങളാണ്',
+  '{count} tables inside notes do not come over': 'കുറിപ്പുകൾക്കുള്ളിലെ {count} പട്ടികകൾ വരില്ല',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} അനുബന്ധങ്ങൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS ആ കുറിപ്പുകൾ Full Disk Access-നു പിന്നിൽ വയ്ക്കുന്നു.',
+  'There are no notes in Apple Notes on this Mac.': 'ഈ Mac-ൽ Apple Notes-ൽ കുറിപ്പുകളില്ല.',
+  'Those notes could not be read.': 'ആ കുറിപ്പുകൾ വായിക്കാനായില്ല.',
+  'Read them from this Mac': 'ഈ Mac-ൽ നിന്ന് വായിക്കുക',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Full Disk Access-ൽ nibeditor ഓൺ ചെയ്ത്, വീണ്ടും ചോദിക്കുക.',
+  'Open the setting': 'ക്രമീകരണം തുറക്കുക',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Journal സ്വയം കയറ്റുമതി ചെയ്യും: Journal, ക്രമീകരണങ്ങൾ, കയറ്റുമതി. Apple Notes-ന് കയറ്റുമതി ഇല്ല, അതിനാൽ അത് ഉള്ള Mac-ൽ നിന്ന് മാറി, ഇവിടെ ഇടേണ്ടത് ഏതെങ്കിലും കയറ്റുമതി ഉപകരണം എഴുതിയ ഫോൾഡർ ആണ്.',
+  'Pandoc reads this one, from the file on your disk.':
+    'നിങ്ങളുടെ ഡിസ്കിലെ ഫയലിൽ നിന്ന് pandoc ഇത് വായിക്കും.',
   'Read it with pandoc': 'pandoc കൊണ്ട് വായിക്കുക',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'ഇത് pandoc മാത്രം വായിക്കും, അത് ഈ കമ്പ്യൂട്ടറിൽ ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'ഇത് pandoc മാത്രം വായിക്കും, അത് ഈ കമ്പ്യൂട്ടറിൽ ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല.',
   Rows: 'വരികൾ',
   'As a table': 'പട്ടികയായി',
   'One note per row': 'ഓരോ വരിക്ക് ഒരു കുറിപ്പ്',
   Into: 'ഇതിലേക്ക്',
   'Worth knowing': 'അറിയേണ്ടത്',
   '{count} notes arrived.': { one: '{count} കുറിപ്പ് എത്തി.', other: '{count} കുറിപ്പുകൾ എത്തി.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} പേര് നിലവിലുണ്ടായിരുന്നു, അതിനാൽ ആ ഫയൽ മാറിനിന്നു.', other: '{count} പേരുകൾ നിലവിലുണ്ടായിരുന്നു, അതിനാൽ ആ ഫയലുകൾ മാറിനിന്നു.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} പേര് നിലവിലുണ്ടായിരുന്നു, അതിനാൽ ആ ഫയൽ മാറിനിന്നു.',
+    other: '{count} പേരുകൾ നിലവിലുണ്ടായിരുന്നു, അതിനാൽ ആ ഫയലുകൾ മാറിനിന്നു.',
+  },
   'A table': 'ഒരു പട്ടിക',
   'Markdown files': 'Markdown ഫയലുകൾ',
   'A document': 'ഒരു രേഖ',
+  'A PDF, as pages to write on': 'ഒരു PDF, എഴുതാനുള്ള താളുകളായി',
   'Undo the import': 'ഇംപോർട്ട് പഴയപടിയാക്കുക',
   'Choose an export': 'ഒരു എക്സ്പോർട്ട് തിരഞ്ഞെടുക്കുക',
   Under: 'ഇതിന് കീഴെ',
@@ -982,13 +1081,15 @@ export const ml: Dictionary = {
   'Keep both copies': 'രണ്ട് പകർപ്പും സൂക്ഷിക്കുക',
   'Let the newest win': 'പുതിയത് ജയിക്കട്ടെ',
   'Ask me each time': 'ഓരോ തവണയും എന്നോട് ചോദിക്കുക',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'ഒന്നും നഷ്ടമാകില്ല: ജയിക്കാത്തത് ഒരു പതിപ്പായി സൂക്ഷിക്കും.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'ഒന്നും നഷ്ടമാകില്ല: ജയിക്കാത്തത് ഒരു പതിപ്പായി സൂക്ഷിക്കും.',
   'Waiting for you': 'നിങ്ങളെ കാത്തിരിക്കുന്നു',
   'Keep mine': 'എന്റേത് സൂക്ഷിക്കുക',
   'Take theirs': 'അവരുടേത് എടുക്കുക',
   'Keep both': 'രണ്ടും സൂക്ഷിക്കുക',
   'What synced': 'സിങ്ക് ആയത്',
-  'Nothing yet. A pass that moves nothing is not written down.': 'ഇനിയും ഒന്നുമില്ല. ഒന്നും നീക്കാത്ത സിങ്ക് രേഖപ്പെടുത്തില്ല.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'ഇനിയും ഒന്നുമില്ല. ഒന്നും നീക്കാത്ത സിങ്ക് രേഖപ്പെടുത്തില്ല.',
   'Clear the list': 'ലിസ്റ്റ് മായ്ക്കുക',
   '{count} down': '{count} ഇറങ്ങി',
   '{count} up': '{count} കയറി',
@@ -998,19 +1099,28 @@ export const ml: Dictionary = {
   'This space, as it was': 'ഈ സ്പേസ്, അന്നത്തെപ്പോലെ',
   '{count} days ago': { one: '{count} ദിവസം മുൻപ്', other: '{count} ദിവസങ്ങൾ മുൻപ്' },
   'What would change?': 'എന്ത് മാറും?',
-  '{count} notes would go back to what they said then.': { one: '{count} കുറിപ്പ് അന്ന് പറഞ്ഞതിലേക്ക് മടങ്ങും.', other: '{count} കുറിപ്പുകൾ അന്ന് പറഞ്ഞതിലേക്ക് മടങ്ങും.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} കുറിപ്പ് അന്ന് പറഞ്ഞതിലേക്ക് മടങ്ങും.',
+    other: '{count} കുറിപ്പുകൾ അന്ന് പറഞ്ഞതിലേക്ക് മടങ്ങും.',
+  },
   'Nothing has changed since then.': 'അതിനുശേഷം ഒന്നും മാറിയിട്ടില്ല.',
-  '{count} notes went back.': { one: '{count} കുറിപ്പ് മടങ്ങി.', other: '{count} കുറിപ്പുകൾ മടങ്ങി.' },
-  'The account keeps a month of versions of every note that syncs.': 'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു മാസത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
+  '{count} notes went back.': {
+    one: '{count} കുറിപ്പ് മടങ്ങി.',
+    other: '{count} കുറിപ്പുകൾ മടങ്ങി.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു മാസത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
   'That did not work.': 'അത് പ്രവർത്തിച്ചില്ല.',
   'Signing in': 'സൈൻ ഇൻ ചെയ്യുന്നു',
   'Ask for a code from an app': 'ആപ്പിൽ നിന്ന് ഒരു കോഡ് ചോദിക്കുക',
   'Turn on': 'ഓൺ ചെയ്യുക',
   'Turn off': 'ഓഫ് ചെയ്യുക',
-  'Put this into your authenticator app, then type its code.': 'ഇത് നിങ്ങളുടെ ഓതന്റിക്കേറ്റർ ആപ്പിൽ ഇട്ട്, അതിന്റെ കോഡ് ടൈപ്പ് ചെയ്യുക.',
+  'Put this into your authenticator app, then type its code.':
+    'ഇത് നിങ്ങളുടെ ഓതന്റിക്കേറ്റർ ആപ്പിൽ ഇട്ട്, അതിന്റെ കോഡ് ടൈപ്പ് ചെയ്യുക.',
   Secret: 'രഹസ്യം',
   'Code from the app': 'ആപ്പിലെ കോഡ്',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'ഇവ സുരക്ഷിതമായ ഇടത്ത് സൂക്ഷിക്കുക. ഓരോന്നും ഒരിക്കൽ പ്രവർത്തിക്കും, വീണ്ടും കാണിക്കില്ല.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'ഇവ സുരക്ഷിതമായ ഇടത്ത് സൂക്ഷിക്കുക. ഓരോന്നും ഒരിക്കൽ പ്രവർത്തിക്കും, വീണ്ടും കാണിക്കില്ല.',
   'Recovery codes': 'വീണ്ടെടുപ്പ് കോഡുകൾ',
   'Recovery code': 'വീണ്ടെടുപ്പ് കോഡ്',
   'Recovery codes left': 'ശേഷിക്കുന്ന വീണ്ടെടുപ്പ് കോഡുകൾ',
@@ -1032,7 +1142,8 @@ export const ml: Dictionary = {
   Pages: 'പേജുകൾ',
   'Page {number} of {count}': '{count}ൽ {number} പേജ്',
   'What is selected': 'തിരഞ്ഞെടുത്തത്',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'ക്യാൻവാസ്: {cards} കാർഡുകൾ, {links} ലിങ്കുകൾ, {drawings} വരകൾ',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'ക്യാൻവാസ്: {cards} കാർഡുകൾ, {links} ലിങ്കുകൾ, {drawings} വരകൾ',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'പ്രൊവൈഡർമാർ',
@@ -1046,8 +1157,10 @@ export const ml: Dictionary = {
   'Asking…': 'ചോദിക്കുന്നു…',
   'No providers yet.': 'ഇനിയും പ്രൊവൈഡർമാരില്ല.',
   'Add {name}': '{name} ചേർക്കുക',
-  'Keys stay in the secure store on this device.': 'കീകൾ ഈ ഉപകരണത്തിലെ സുരക്ഷിത സ്റ്റോറിൽ ഇരിക്കും.',
-  'This browser holds the keys in its own storage.': 'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
+  'Keys stay in the secure store on this device.':
+    'കീകൾ ഈ ഉപകരണത്തിലെ സുരക്ഷിത സ്റ്റോറിൽ ഇരിക്കും.',
+  'This browser holds the keys in its own storage.':
+    'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
   'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
   'That provider is not set up yet.': 'ആ പ്രൊവൈഡർ ഇനിയും സജ്ജമല്ല.',
@@ -1069,13 +1182,87 @@ export const ml: Dictionary = {
   'AI block': 'AI ബ്ലോക്ക്',
   'Highlight colour': 'ഹൈലൈറ്റ് നിറം',
   'A single newline breaks the line': 'ഒരു പുതിയ വരി വരി മുറിക്കും',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'ഓഫ് എന്നത് സ്റ്റാൻഡേർഡ് Markdown: ഒരു ഖണ്ഡികയിലെ രണ്ട് വരികൾ ഒന്നായി വായിക്കും; Obsidian ഇതിനെ strict line breaks എന്ന് വിളിക്കുന്നു.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'ഓഫ് എന്നത് സ്റ്റാൻഡേർഡ് Markdown: ഒരു ഖണ്ഡികയിലെ രണ്ട് വരികൾ ഒന്നായി വായിക്കും; Obsidian ഇതിനെ strict line breaks എന്ന് വിളിക്കുന്നു.',
   'New links': 'പുതിയ ലിങ്കുകൾ',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Wikilinks കുറിപ്പിനെ പേരിൽ സൂചിപ്പിക്കുന്നു, അതിനാൽ പേര് മാറിയാലും ലിങ്ക് നിലനിൽക്കും; രണ്ട് രൂപവും വായിക്കും.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Wikilinks കുറിപ്പിനെ പേരിൽ സൂചിപ്പിക്കുന്നു, അതിനാൽ പേര് മാറിയാലും ലിങ്ക് നിലനിൽക്കും; രണ്ട് രൂപവും വായിക്കും.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, ഏറ്റവും ചെറിയ പേര്',
   'Markdown, relative path': 'Markdown, ആപേക്ഷിക പാത്ത്',
   'Markdown, path in the space': 'Markdown, സ്പേസിലെ പാത്ത്',
+  // Publishing part one.
+  'The folders you choose become public.': 'തിരഞ്ഞെടുക്കുന്ന ഫോൾഡറുകൾ പൊതുവാകും.',
+  'Anyone with the address can read what is published, drafts included.':
+    'വിലാസം ഉള്ള ആർക്കും പ്രസിദ്ധീകരിച്ചത് വായിക്കാം, കരടുകളും.',
+  'Which notes': 'ഏതു കുറിപ്പുകൾ',
+  'Notes outside a rule': 'നിയമത്തിനു പുറത്തുള്ള കുറിപ്പുകൾ',
+  'Are published': 'പ്രസിദ്ധീകരിക്കും',
+  'Stay private': 'സ്വകാര്യമായി നിൽക്കും',
+  'Follows the rule': 'നിയമം പാലിക്കുന്നു',
+  Published: 'പ്രസിദ്ധീകരിച്ചു',
+  Private: 'സ്വകാര്യം',
+  '{count} pages': '{count} താളുകൾ',
+  '{count} new': '{count} പുതിയത്',
+  '{count} gone': '{count} നീക്കി',
+  'and more': 'കൂടാതെ',
+  'How it appears': 'എങ്ങനെ കാണും',
+  Description: 'വിവരണം',
+  'What this site is': 'ഈ സൈറ്റ് എന്തിനെക്കുറിച്ച്',
+  'Tab icon': 'ടാബ് ചിഹ്നം',
+  Password: 'പാസ്‌വേഡ്',
+  'Set a new one': 'പുതിയത് നൽകുക',
+  'Ask for a password': 'പാസ്‌വേഡ് ചോദിക്കുക',
+  'No password': 'പാസ്‌വേഡ് ഇല്ല',
+  'Remove the password': 'പാസ്‌വേഡ് നീക്കുക',
+  'Scan this with your authenticator app, then type its code.':
+    'ഇത് നിങ്ങളുടെ ആധികാരികത ആപ്പിൽ സ്കാൻ ചെയ്ത്, അതിന്റെ കോഡ് എഴുതുക.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'ചിത്രം',
+  Dictate: 'പറഞ്ഞ് എഴുതിക്കുക',
+  'Add to {name}': '{name}-ൽ ചേർക്കുക',
+  // Web tabs
+  Reload: 'വീണ്ടും എടുക്കുക',
+  'Clip this page': 'ഈ താൾ എടുക്കുക',
+  'Clip the link': 'കണ്ണി എടുക്കുക',
+  'Allow the camera': 'ക്യാമറയ്ക്ക് അനുവാദം നൽകുക',
+  'Allow the clipboard': 'ക്ലിപ്പ്ബോർഡിന് അനുവാദം നൽകുക',
+  'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
+  'Copy the address': 'വിലാസം പകർത്തുക',
+  'Show it here': 'ഇവിടെ കാണിക്കുക',
+  Website: 'വെബ്‌സൈറ്റ്',
+  'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
+  // Recording, meetings and what a model wrote
+  Record: 'റെക്കോർഡ് ചെയ്യുക',
+  Recording: 'റെക്കോർഡിംഗ്',
+  'Stop recording': 'റെക്കോർഡിംഗ് നിർത്തുക',
+  'Meeting notes': 'യോഗക്കുറിപ്പുകൾ',
+  Meeting: 'യോഗം',
+  'Stop the meeting': 'യോഗം അവസാനിപ്പിക്കുക',
+  Transcribe: 'എഴുത്താക്കുക',
+  Transcript: 'എഴുത്തുരൂപം',
+  'Transcript ({language})': 'എഴുത്തുരൂപം ({language})',
+  'Written by {model}': '{model} എഴുതിയത്',
+  'Saving the recording': 'റെക്കോർഡിംഗ് സൂക്ഷിക്കുന്നു',
+  'Turning the recording into words': 'റെക്കോർഡിംഗ് വാക്കുകളാക്കുന്നു',
+  'Open a space to record into.': 'റെക്കോർഡ് ചെയ്യാൻ ഒരു സ്പേസ് തുറക്കുക.',
+  'Sign in to take meeting notes.': 'യോഗക്കുറിപ്പ് എടുക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
+  'Sign in to turn a recording into words.': 'റെക്കോർഡിംഗ് വാക്കുകളാക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
+  'That microphone could not be opened.': 'ആ മൈക്രോഫോൺ തുറക്കാനായില്ല.',
+  'That recording could not be saved.': 'ആ റെക്കോർഡിംഗ് സൂക്ഷിക്കാനായില്ല.',
+  'That recording could not be turned into words.': 'ആ റെക്കോർഡിംഗ് വാക്കുകളാക്കാനായില്ല.',
+  'That recording is not in this space.': 'ആ റെക്കോർഡിംഗ് ഈ സ്പേസിൽ ഇല്ല.',
+  'That recording is too long to turn into words in one go.':
+    'ഒറ്റയടിക്ക് വാക്കുകളാക്കാൻ ആ റെക്കോർഡിംഗ് വളരെ നീളമുള്ളതാണ്.',
+  'That is as much as one recording may hold.': 'ഒരു റെക്കോർഡിംഗിൽ ഇത്രയേ ഒതുങ്ങും.',
+  'Nothing could be heard in that recording.': 'ആ റെക്കോർഡിംഗിൽ ഒന്നും കേട്ടില്ല.',
+  'A piece of the transcript is being tried again.':
+    'എഴുത്തുരൂപത്തിന്റെ ഒരു ഭാഗം വീണ്ടും പരീക്ഷിക്കുന്നു.',
+  'The transcript is behind and losing pieces.': 'എഴുത്തുരൂപം പിന്നിലാണ്, ഭാഗങ്ങൾ നഷ്ടമാകുന്നു.',
+  '{count} pieces of this meeting were lost.': 'ഈ യോഗത്തിന്റെ {count} ഭാഗങ്ങൾ നഷ്ടമായി.',
+  'Add an AI provider in settings to summarise.':
+    'സാരാംശത്തിന് ക്രമീകരണങ്ങളിൽ ഒരു AI ദാതാവിനെ ചേർക്കുക.',
+  'The summary could not be written.': 'സാരാംശം എഴുതാനായില്ല.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'മെയിൽ അയയ്ക്കാനായില്ല - വീണ്ടും ശ്രമിക്കുക',
   'start again - that took too long': 'വീണ്ടും തുടങ്ങുക - അത് വളരെ സമയമെടുത്തു',
@@ -1090,17 +1277,20 @@ export const ml: Dictionary = {
   'that is more bookmarks than a space holds': 'ഒരു സ്പേസ് കൊള്ളുന്നതിലധികം ബുക്ക്‌മാർക്കുകൾ',
   'that is more paths than a space leaves out': 'ഒരു സ്പേസ് ഒഴിവാക്കുന്നതിലധികം പാത്തുകൾ',
   'that is more files than a space keeps': 'ഒരു സ്പേസ് സൂക്ഷിക്കുന്നതിലധികം ഫയലുകൾ',
-  'that is more than a space keeps about its graph': 'ഒരു സ്പേസ് അതിന്റെ ഗ്രാഫിനെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലധികം',
+  'that is more than a space keeps about its graph':
+    'ഒരു സ്പേസ് അതിന്റെ ഗ്രാഫിനെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലധികം',
   'that is more folder icons than a space holds': 'ഒരു സ്പേസ് കൊള്ളുന്നതിലധികം ഫോൾഡർ ഐക്കണുകൾ',
   // Sharing a space, and being let into one.
   'nobody by that address': 'ആ വിലാസത്തിൽ ആരുമില്ല',
   'nobody by that name': 'ആ പേരിൽ ആരുമില്ല',
   'nobody is waiting by that name': 'ആ പേരിൽ ആരും കാത്തിരിക്കുന്നില്ല',
   'this space is yours': 'ഈ സ്പേസ് നിങ്ങളുടേതാണ്',
-  'that link is busy, try again in a minute': 'ആ ലിങ്ക് തിരക്കിലാണ്, ഒരു മിനിറ്റിൽ വീണ്ടും ശ്രമിക്കുക',
+  'that link is busy, try again in a minute':
+    'ആ ലിങ്ക് തിരക്കിലാണ്, ഒരു മിനിറ്റിൽ വീണ്ടും ശ്രമിക്കുക',
   // Versions, the bin, and a room two people write in.
   'no such version': 'അങ്ങനെയൊരു പതിപ്പില്ല',
-  'this note was shared with you, not its folder': 'ഈ കുറിപ്പ് നിങ്ങളുമായി പങ്കിട്ടു, അതിന്റെ ഫോൾഡർ അല്ല',
+  'this note was shared with you, not its folder':
+    'ഈ കുറിപ്പ് നിങ്ങളുമായി പങ്കിട്ടു, അതിന്റെ ഫോൾഡർ അല്ല',
   'nothing to restore': 'വീണ്ടെടുക്കാൻ ഒന്നുമില്ല',
   'restore its space first': 'ആദ്യം അതിന്റെ സ്പേസ് വീണ്ടെടുക്കുക',
   'nothing to delete': 'ഇല്ലാതാക്കാൻ ഒന്നുമില്ല',

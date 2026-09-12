@@ -7,6 +7,12 @@ export const ko: Dictionary = {
   'Open file': '파일 열기',
   'New note inside': '안에 새 노트',
   'New canvas': '새 캔버스',
+  'New page note': '새 페이지 노트',
+  'Add a page': '페이지 추가',
+  'Add a page after this': '이 뒤에 페이지 추가',
+  'Delete this page': '이 페이지 삭제',
+  'Page {number}': '{number}쪽',
+  '{at} / {count}': '{at} / {count}',
   Canvas: '캔버스',
   Card: '카드',
   'Note or picture': '노트 또는 그림',
@@ -34,7 +40,8 @@ export const ko: Dictionary = {
   'Create a space': '공간 만들기',
   'Delete space': '공간 삭제',
   'Delete {name}?': '{name}을 삭제할까요？',
-  'Every note in this space is deleted from your computer.': '이 공간의 모든 노트가 컴퓨터에서 삭제됩니다.',
+  'Every note in this space is deleted from your computer.':
+    '이 공간의 모든 노트가 컴퓨터에서 삭제됩니다.',
   'The notes inside it go too.': '안에 있는 노트도 함께 사라집니다.',
   Journal: '일지',
   Create: '만들기',
@@ -206,7 +213,8 @@ export const ko: Dictionary = {
   'Image not found': '이미지를 찾을 수 없습니다',
   'Delete {count} items': '{count}개 항목 삭제',
   'Recently deleted': '최근 삭제',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': '삭제한 노트와 공간은 여기서 14일 기다린 뒤 완전히 사라집니다.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    '삭제한 노트와 공간은 여기서 14일 기다린 뒤 완전히 사라집니다.',
   'Nothing here.': '아무것도 없습니다.',
   Empty: '비우기',
   Spaces: '공간',
@@ -257,7 +265,8 @@ export const ko: Dictionary = {
   'Previous slide': '이전 슬라이드',
   'Read-only': '읽기 전용',
   'No preview': '미리보기 없음',
-  'Shown as plain text, so typing stays instant in a note this long': '이 정도로 긴 노트에서도 입력이 바로 되도록 일반 텍스트로 보여 줍니다',
+  'Shown as plain text, so typing stays instant in a note this long':
+    '이 정도로 긴 노트에서도 입력이 바로 되도록 일반 텍스트로 보여 줍니다',
   'Leave read-only': '읽기 전용 끝내기',
   Next: '다음',
   Previous: '이전',
@@ -353,7 +362,8 @@ export const ko: Dictionary = {
   'OpenAI key': 'OpenAI 키',
   Model: '모델',
   Reasoning: '추론',
-  'Kept encrypted on your account, and never shown again.': '계정에 암호화되어 보관되며 다시 표시되지 않습니다.',
+  'Kept encrypted on your account, and never shown again.':
+    '계정에 암호화되어 보관되며 다시 표시되지 않습니다.',
   'set, ends in …{tail}': '설정됨, …{tail}로 끝남',
   'Saving the key': '키 저장 중',
   'this server cannot keep a key yet': '이 서버는 아직 키를 보관할 수 없습니다',
@@ -362,7 +372,8 @@ export const ko: Dictionary = {
   'Sign in to ask a question.': '질문하려면 로그인하세요.',
   'Asking OpenAI which models this key can use': '이 키로 쓸 수 있는 모델을 OpenAI에 확인 중',
   'Could not reach OpenAI': 'OpenAI에 연결할 수 없습니다',
-  'That key cannot use any of the models Nib asks for.': '그 키로는 Nib이 요청하는 모델을 하나도 쓸 수 없습니다.',
+  'That key cannot use any of the models Nib asks for.':
+    '그 키로는 Nib이 요청하는 모델을 하나도 쓸 수 없습니다.',
   'No reasoning': '추론 없음',
   Minimal: '최소',
   Low: '낮음',
@@ -448,11 +459,14 @@ export const ko: Dictionary = {
   'Line numbers': '줄 번호',
   Syntax: '문법',
   'Strict CommonMark': '엄격한 CommonMark',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': '표준 마크다운 규칙만, 표와 작업 목록과 각주는 없습니다.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    '표준 마크다운 규칙만, 표와 작업 목록과 각주는 없습니다.',
   'Smart punctuation': '스마트 문장부호',
-  'Turns straight quotes and dashes into typographic ones as you type.': '입력하는 동안 직선 인용부호와 붙임표를 활자체로 바꿉니다.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    '입력하는 동안 직선 인용부호와 붙임표를 활자체로 바꿉니다.',
   'Puts 1., 1.1, 1.2 in front of headings.': '제목 앞에 1., 1.1, 1.2를 붙입니다.',
-  'Numbers display equations so you can refer to them.': '참조할 수 있도록 별행 수식에 번호를 매깁니다.',
+  'Numbers display equations so you can refer to them.':
+    '참조할 수 있도록 별행 수식에 번호를 매깁니다.',
   Ligatures: '합자',
   Off: '꺼짐',
   'Code only': '코드만',
@@ -515,7 +529,8 @@ export const ko: Dictionary = {
   'Send a new code': '새 코드 보내기',
   'Code sent to': '코드를 보낸 곳',
   'You already have notes on this computer.': '이 컴퓨터에 이미 노트가 있습니다.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': '남겨 두면 계정에 합쳐집니다. 지우면 계정에 이미 있는 것만 남습니다 - 되돌릴 수 없습니다.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    '남겨 두면 계정에 합쳐집니다. 지우면 계정에 이미 있는 것만 남습니다 - 되돌릴 수 없습니다.',
   'Keep them': '남겨 두기',
   'Erase them': '지우기',
   'Digit {number}': '{number}번째 자리',
@@ -531,7 +546,8 @@ export const ko: Dictionary = {
   'Only {name}': '{name}만',
   'Publish this space as a blog': '이 공간을 블로그로 게시',
   'Everything in this space becomes public.': '이 공간의 모든 것이 공개됩니다.',
-  'Every note, including drafts, is readable by anyone with the address.': '초안을 포함한 모든 노트를 주소를 아는 누구나 읽을 수 있습니다.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    '초안을 포함한 모든 노트를 주소를 아는 누구나 읽을 수 있습니다.',
   Address: '주소',
   'Add these at your registrar, then verify.': '등록 기관에 이것을 추가한 뒤 확인하세요.',
   Verify: '확인',
@@ -544,7 +560,8 @@ export const ko: Dictionary = {
   'checking…': '확인 중…',
   // LLM
   'Connect an LLM to your notes': '노트에 LLM 연결',
-  'Sign in first - the connector reaches the notes in your account.': '먼저 로그인하세요 - 커넥터는 계정의 노트에 접근합니다.',
+  'Sign in first - the connector reaches the notes in your account.':
+    '먼저 로그인하세요 - 커넥터는 계정의 노트에 접근합니다.',
   'Let it write to my notes, not only read them': '읽기만 아니라 노트에 쓰는 것도 허용',
   'Create a token': '토큰 만들기',
   'Replace the token': '토큰 교체',
@@ -560,27 +577,36 @@ export const ko: Dictionary = {
   'Reads your notes.': '노트를 읽습니다.',
   'Reads and writes your notes.': '노트를 읽고 씁니다.',
   Other: '기타',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. Nib 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'Claude에서 Settings → Connectors를 열고 Add custom connector를 누르세요.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. Nib 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude에서 Settings → Connectors를 열고 Add custom connector를 누르세요.',
   'Open Claude’s connectors': 'Claude의 커넥터 열기',
   'Fill in the two fields and click Add.': '두 칸을 채우고 Add를 누르세요.',
   'Click Connect and sign in with your Nib email.': 'Connect를 누르고 Nib 이메일로 로그인하세요.',
   'Using Claude Code instead?': 'Claude Code를 쓰시나요？',
   Command: '명령',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': '터미널에서 실행한 뒤 Claude Code에서 /mcp를 입력해 로그인하세요.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    '터미널에서 실행한 뒤 Claude Code에서 /mcp를 입력해 로그인하세요.',
   'Fill in the form and click Create.': '양식을 채우고 Create를 누르세요.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'ChatGPT에서 Settings → Plugins를 열고 더하기 버튼을 누르세요.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT에서 Settings → Plugins를 열고 더하기 버튼을 누르세요.',
   'Open ChatGPT’s plugins': 'ChatGPT의 플러그인 열기',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': 'Plugins 항목이나 더하기 버튼이 없나요. Settings → Security and login에서 Developer mode를 먼저 켜세요.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Plugins 항목이나 더하기 버튼이 없나요. Settings → Security and login에서 Developer mode를 먼저 켜세요.',
   'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT가 물으면 Nib 이메일로 로그인하세요.',
   'To use it in a chat, type @ and pick Nib.': '대화에서 쓰려면 @를 입력하고 Nib을 고르세요.',
   'Server URL': '서버 URL',
   Authentication: '인증',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': '고급 OAuth 설정은 그대로 두고 “I understand and want to continue”에 표시하세요.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 Nib 로그인 페이지를 엽니다.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    '고급 OAuth 설정은 그대로 두고 “I understand and want to continue”에 표시하세요.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 Nib 로그인 페이지를 엽니다.',
   'Show config': '설정 보기',
-  'For a client that takes a JSON block instead of a URL.': 'URL 대신 JSON 블록을 받는 클라이언트용.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': '로그인할 수 없는 클라이언트에는 토큰을 줄 수 있습니다. 한 번만 표시됩니다.',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL 대신 JSON 블록을 받는 클라이언트용.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    '로그인할 수 없는 클라이언트에는 토큰을 줄 수 있습니다. 한 번만 표시됩니다.',
   // Export
   'Plain text': '일반 텍스트',
   'Markdown with the pictures': '그림이 있는 마크다운',
@@ -604,8 +630,10 @@ export const ko: Dictionary = {
   'Version history': '버전 기록',
   'Copy link to this note': '이 노트의 링크 복사',
   'that link could not be followed': '그 링크를 따라갈 수 없었습니다',
-  'Save this note first; there is nothing to compare against yet.': '먼저 이 노트를 저장하세요. 아직 비교할 것이 없습니다.',
-  'No earlier versions yet. One is kept each time you save.': '아직 이전 버전이 없습니다. 저장할 때마다 하나가 보관됩니다.',
+  'Save this note first; there is nothing to compare against yet.':
+    '먼저 이 노트를 저장하세요. 아직 비교할 것이 없습니다.',
+  'No earlier versions yet. One is kept each time you save.':
+    '아직 이전 버전이 없습니다. 저장할 때마다 하나가 보관됩니다.',
   'Restore this version': '이 버전 복원',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': '거기에 이미 노트가 있습니다',
@@ -629,7 +657,8 @@ export const ko: Dictionary = {
   'that path is not usable': '그 경로는 쓸 수 없습니다',
   'this note changed elsewhere': '이 노트가 다른 곳에서 바뀌었습니다',
   'too many tries - ask for a new code': '시도가 너무 많습니다 - 새 코드를 받으세요',
-  'too many messages from here - try again later': '여기서 보낸 메시지가 너무 많습니다 - 나중에 다시 하세요',
+  'too many messages from here - try again later':
+    '여기서 보낸 메시지가 너무 많습니다 - 나중에 다시 하세요',
   'too much mail today - try again tomorrow': '오늘 메일이 너무 많습니다 - 내일 다시 하세요',
   'that many people are already waiting to be let in': '그만큼 이미 입장을 기다리고 있습니다',
   'use 2–32 letters, numbers or hyphens': '문자, 숫자 또는 하이픈 2–32자를 쓰세요',
@@ -666,7 +695,8 @@ export const ko: Dictionary = {
   'use a domain of your own': '자신의 도메인을 쓰세요',
   'the domain no longer points here': '그 도메인은 더 이상 여기를 가리키지 않습니다',
   'Cloudflare has blocked this domain': 'Cloudflare가 이 도메인을 차단했습니다',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': '도메인 루트에서 공급자가 CNAME을 허용하지 않으면 ALIAS나 ANAME 레코드, 또는 CNAME 평탄화를 쓰세요.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    '도메인 루트에서 공급자가 CNAME을 허용하지 않으면 ALIAS나 ANAME 레코드, 또는 CNAME 평탄화를 쓰세요.',
   // Shortcuts
   Shortcuts: '바로 가기',
   'Search shortcuts': '바로 가기 검색',
@@ -677,7 +707,8 @@ export const ko: Dictionary = {
   'Reset all shortcuts': '모든 바로 가기 초기화',
   'Take it over': '가져오기',
   '{key} already runs {name}.': '{key}는 이미 {name}을 실행합니다.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc는 기록을 멈추고 Backspace는 키를 지웁니다.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc는 기록을 멈추고 Backspace는 키를 지웁니다.',
   Tables: '표',
   Pictures: '그림',
   'Fixed keys': '고정 키',
@@ -713,7 +744,8 @@ export const ko: Dictionary = {
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
   'Report an issue': '문제 신고',
-  '{name} changed on the disk. What is in the editor is yours.': '{name}이 디스크에서 바뀌었습니다. 편집기에 있는 것이 내 것입니다.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name}이 디스크에서 바뀌었습니다. 편집기에 있는 것이 내 것입니다.',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',
   'Copy the line up': '줄을 위로 복사',
@@ -748,26 +780,31 @@ export const ko: Dictionary = {
   Escape: 'Escape',
   Quit: '종료',
   'The clipboard belongs to the system.': '클립보드는 시스템의 것입니다.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': '화살표 키와 Home, End, Page up, Page down은 텍스트의 것입니다.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    '화살표 키와 Home, End, Page up, Page down은 텍스트의 것입니다.',
   'Backspace and Delete belong to the text.': 'Backspace와 Delete는 텍스트의 것입니다.',
   'Enter closes a code block and carries a list on.': 'Enter는 코드 블록을 닫고 목록을 이어갑니다.',
-  'Tab moves on through the app as well as indenting.': 'Tab은 들여쓰기 외에 앱 안에서 이동도 합니다.',
+  'Tab moves on through the app as well as indenting.':
+    'Tab은 들여쓰기 외에 앱 안에서 이동도 합니다.',
   'Escape closes whatever is open.': 'Escape는 열려 있는 것을 닫습니다.',
   'Your system takes this key before the app sees it.': '시스템이 앱보다 먼저 이 키를 가져갑니다.',
-  'Your browser takes this key before the app sees it.': '브라우저가 앱보다 먼저 이 키를 가져갑니다.',
+  'Your browser takes this key before the app sees it.':
+    '브라우저가 앱보다 먼저 이 키를 가져갑니다.',
   'That is not a key combination.': '키 조합이 아닙니다.',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt 또는 Cmd도 함께 누르세요.',
   'File list': '파일 목록',
   'Select every file': '모든 파일 선택',
   'Clear the selection': '선택 해제',
   'Delete the selected files': '선택한 파일 삭제',
-  'The file could not be written, so it goes to the print dialog': '파일을 쓸 수 없어서 인쇄 대화상자로 넘어갑니다',
+  'The file could not be written, so it goes to the print dialog':
+    '파일을 쓸 수 없어서 인쇄 대화상자로 넘어갑니다',
   'Next file': '다음 파일',
   'Previous file': '이전 파일',
   'Show what it holds': '내용 보이기',
   'Hide what it holds': '내용 숨기기',
   'Moving through a list': '목록 안에서 이동',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': '화살표 키와 Enter, Esc는 무엇이 열려 있어도 동작하며 바로 가기가 아닙니다.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    '화살표 키와 Enter, Esc는 무엇이 열려 있어도 동작하며 바로 가기가 아닙니다.',
   'Split right': '오른쪽으로 분할',
   'Split down': '아래로 분할',
   'Other pane': '다른 창',
@@ -789,7 +826,8 @@ export const ko: Dictionary = {
   'Follow the link': '링크 따라가기',
   'Replace your own keys?': '내가 바꾼 키를 되돌릴까요？',
   Replace: '바꾸기',
-  'The keys you changed go back to what this keyboard says.': '바꾼 키가 이 키보드의 기본값으로 돌아갑니다.',
+  'The keys you changed go back to what this keyboard says.':
+    '바꾼 키가 이 키보드의 기본값으로 돌아갑니다.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
@@ -911,7 +949,8 @@ export const ko: Dictionary = {
   Leave: '나가기',
   'Leave space': '공간에서 나가기',
   'Leave {name}?': '{name}에서 나갈까요？',
-  'It stays with everybody else. Its notes go from your computer.': '다른 사람에게는 그대로 남습니다. 노트는 내 컴퓨터에서 사라집니다.',
+  'It stays with everybody else. Its notes go from your computer.':
+    '다른 사람에게는 그대로 남습니다. 노트는 내 컴퓨터에서 사라집니다.',
   '{who} shared {space} with you': '{who}가 {space}를 공유했습니다',
   'Shared with you': '나와 공유됨',
   'That link does not open anything': '그 링크는 아무것도 열지 않습니다',
@@ -928,7 +967,8 @@ export const ko: Dictionary = {
   'Release channel': '릴리스 채널',
   Stable: '안정',
   Unstable: '불안정',
-  'Stable follows the official releases, Unstable every push to main and can break.': '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',
@@ -939,14 +979,21 @@ export const ko: Dictionary = {
   'Rewrite {count} things?': '{count}곳을 고쳐 쓸까요？',
   'In {count} notes.': '{count}개 노트에서.',
   Rewrite: '고쳐 쓰기',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count}개 구절이 암호화되어 Evernote 없이는 읽을 수 없습니다',
-  '{count} notes had a reminder, which the export does not carry': '{count}개 노트에 알림이 있었지만 내보내기에는 담기지 않습니다',
-  '{count} notes were in the bin and stay there': '{count}개 노트가 휴지통에 있었고 그대로 남습니다',
-  '{count} archived notes are in a folder called Archive': '보관된 {count}개 노트가 Archive 폴더에 있습니다',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count}개 구절이 암호화되어 Evernote 없이는 읽을 수 없습니다',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count}개 노트에 알림이 있었지만 내보내기에는 담기지 않습니다',
+  '{count} notes were in the bin and stay there':
+    '{count}개 노트가 휴지통에 있었고 그대로 남습니다',
+  '{count} archived notes are in a folder called Archive':
+    '보관된 {count}개 노트가 Archive 폴더에 있습니다',
   'The colours a note had are not kept': '노트에 있던 색은 보관되지 않습니다',
-  '{count} block references were written out as the words they pointed at': '{count}개 블록 참조가 가리키던 글로 풀어 써졌습니다',
-  '{count} saved views are left out, and every row is in the table': '저장된 뷰 {count}개는 빠지고 모든 행이 표에 들어갑니다',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count}개 페이지가 HTML로 들어와 글은 남고 모양은 남지 않습니다',
+  '{count} block references were written out as the words they pointed at':
+    '{count}개 블록 참조가 가리키던 글로 풀어 써졌습니다',
+  '{count} saved views are left out, and every row is in the table':
+    '저장된 뷰 {count}개는 빠지고 모든 행이 표에 들어갑니다',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count}개 페이지가 HTML로 들어와 글은 남고 모양은 남지 않습니다',
   'There are no rows in this file.': '이 파일에는 행이 없습니다.',
   'Nothing in there can be read as notes.': '그 안에 노트로 읽을 수 있는 것이 없습니다.',
   'That export could not be read.': '그 내보내기를 읽을 수 없었습니다.',
@@ -957,20 +1004,46 @@ export const ko: Dictionary = {
   'This space': '이 공간',
   'Drop an export here': '여기에 내보내기를 놓으세요',
   'A zip, a folder, or a file another app wrote': 'zip이나 폴더, 또는 다른 앱이 쓴 파일',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes와 Apple Journal은 자기만 열 수 있는 곳에 노트를 둡니다. 먼저 내보낸 뒤 그것을 가져오세요.',
-  'Pandoc reads this one, from the file on your disk.': '이것은 pandoc이 디스크의 파일에서 읽습니다.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '이미지 {count}개가 Apple만 보여 주는 HEIC로 들어왔습니다',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '기분과 활동 카드 {count}개가 그림이라 글만 넘어옵니다',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '노트 {count}개가 메모만 열 수 있는 암호 뒤에 있습니다',
+  '{count} notes are in Recently Deleted, and stay there':
+    '노트 {count}개가 최근 삭제된 항목에 있고 그대로 남습니다',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '그림과 스캔한 페이지 {count}개는 메모가 직접 그리는 이미지입니다',
+  '{count} tables inside notes do not come over': '노트 안의 표 {count}개는 넘어오지 않습니다',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '첨부 {count}개가 이 Mac이 아니라 iCloud에 있습니다',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS는 그 노트를 전체 디스크 접근 권한 뒤에 둡니다.',
+  'There are no notes in Apple Notes on this Mac.': '이 Mac의 Apple 메모에 노트가 없습니다.',
+  'Those notes could not be read.': '그 노트를 읽을 수 없었습니다.',
+  'Read them from this Mac': '이 Mac에서 읽기',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    '전체 디스크 접근 권한에서 nibeditor를 켠 뒤 다시 시도하세요.',
+  'Open the setting': '설정 열기',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple 저널은 스스로 내보냅니다. 저널, 설정, 내보내기. Apple 메모에는 내보내기가 없으므로, 메모가 있는 Mac이 아닌 곳에서는 내보내기 도구가 쓴 폴더를 여기에 놓습니다.',
+  'Pandoc reads this one, from the file on your disk.':
+    '이것은 pandoc이 디스크의 파일에서 읽습니다.',
   'Read it with pandoc': 'pandoc으로 읽기',
-  'Only pandoc reads this one, and it is not installed on this machine.': '이것은 pandoc만 읽을 수 있고, 이 컴퓨터에는 설치되어 있지 않습니다.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    '이것은 pandoc만 읽을 수 있고, 이 컴퓨터에는 설치되어 있지 않습니다.',
   Rows: '행',
   'As a table': '표로',
   'One note per row': '행마다 노트 하나',
   Into: '넣을 곳',
   'Worth knowing': '알아 둘 점',
   '{count} notes arrived.': '노트 {count}개가 들어왔습니다.',
-  '{count} names were taken, so those files stepped aside.': '이름 {count}개가 이미 쓰이고 있어 그 파일은 이름을 비켰습니다.',
+  '{count} names were taken, so those files stepped aside.':
+    '이름 {count}개가 이미 쓰이고 있어 그 파일은 이름을 비켰습니다.',
   'A table': '표 하나',
   'Markdown files': '마크다운 파일',
   'A document': '문서 하나',
+  'A PDF, as pages to write on': 'PDF, 위에 쓸 페이지로',
   'Undo the import': '가져오기 취소',
   'Choose an export': '내보내기 파일 고르기',
   Under: '아래',
@@ -982,13 +1055,15 @@ export const ko: Dictionary = {
   'Keep both copies': '둘 다 보관',
   'Let the newest win': '가장 새것을 남기기',
   'Ask me each time': '그때마다 묻기',
-  'Nothing is ever thrown away: what does not win is kept as a version.': '버려지는 것은 없습니다. 남지 않은 쪽은 버전으로 보관됩니다.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    '버려지는 것은 없습니다. 남지 않은 쪽은 버전으로 보관됩니다.',
   'Waiting for you': '결정을 기다리는 중',
   'Keep mine': '내 것 남기기',
   'Take theirs': '상대 것 가져오기',
   'Keep both': '둘 다 남기기',
   'What synced': '동기화된 내용',
-  'Nothing yet. A pass that moves nothing is not written down.': '아직 없습니다. 아무것도 옮기지 않은 회차는 기록하지 않습니다.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    '아직 없습니다. 아무것도 옮기지 않은 회차는 기록하지 않습니다.',
   'Clear the list': '목록 지우기',
   '{count} down': '{count}개 내려옴',
   '{count} up': '{count}개 올라감',
@@ -998,19 +1073,23 @@ export const ko: Dictionary = {
   'This space, as it was': '이 공간의 예전 상태',
   '{count} days ago': '{count}일 전',
   'What would change?': '무엇이 바뀔까요？',
-  '{count} notes would go back to what they said then.': '노트 {count}개가 그때 내용으로 돌아갑니다.',
+  '{count} notes would go back to what they said then.':
+    '노트 {count}개가 그때 내용으로 돌아갑니다.',
   'Nothing has changed since then.': '그 뒤로 바뀐 것이 없습니다.',
   '{count} notes went back.': '노트 {count}개를 되돌렸습니다.',
-  'The account keeps a month of versions of every note that syncs.': '계정은 동기화되는 모든 노트의 한 달 분 버전을 보관합니다.',
+  'The account keeps a month of versions of every note that syncs.':
+    '계정은 동기화되는 모든 노트의 한 달 분 버전을 보관합니다.',
   'That did not work.': '되지 않았습니다.',
   'Signing in': '로그인',
   'Ask for a code from an app': '앱에서 코드 받기',
   'Turn on': '켜기',
   'Turn off': '끄기',
-  'Put this into your authenticator app, then type its code.': '이것을 인증 앱에 넣고 그 코드를 입력하세요.',
+  'Put this into your authenticator app, then type its code.':
+    '이것을 인증 앱에 넣고 그 코드를 입력하세요.',
   Secret: '비밀 키',
   'Code from the app': '앱의 코드',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': '안전한 곳에 보관하세요. 각각 한 번만 쓰이고 다시 표시되지 않습니다.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    '안전한 곳에 보관하세요. 각각 한 번만 쓰이고 다시 표시되지 않습니다.',
   'Recovery codes': '복구 코드',
   'Recovery code': '복구 코드',
   'Recovery codes left': '남은 복구 코드',
@@ -1032,7 +1111,8 @@ export const ko: Dictionary = {
   Pages: '페이지',
   'Page {number} of {count}': '{count}쪽 중 {number}쪽',
   'What is selected': '선택한 것',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': '캔버스: 카드 {cards}개, 링크 {links}개, 그림 {drawings}개',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    '캔버스: 카드 {cards}개, 링크 {links}개, 그림 {drawings}개',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '공급자',
@@ -1069,13 +1149,85 @@ export const ko: Dictionary = {
   'AI block': 'AI 블록',
   'Highlight colour': '형광펜 색',
   'A single newline breaks the line': '줄바꿈 한 번으로 줄이 나뉨',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': '꺼짐이 표준 마크다운입니다. 한 단락의 두 줄이 한 줄로 읽히며, Obsidian은 이를 엄격한 줄바꿈이라 부릅니다.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    '꺼짐이 표준 마크다운입니다. 한 단락의 두 줄이 한 줄로 읽히며, Obsidian은 이를 엄격한 줄바꿈이라 부릅니다.',
   'New links': '새 링크',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': '위키링크는 노트 이름을 쓰므로 이름이 바뀌어도 링크가 살아남습니다. 두 표기 모두 읽힙니다.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    '위키링크는 노트 이름을 쓰므로 이름이 바뀌어도 링크가 살아남습니다. 두 표기 모두 읽힙니다.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': '마크다운, 가장 짧은 이름',
   'Markdown, relative path': '마크다운, 상대 경로',
   'Markdown, path in the space': '마크다운, 공간 안의 경로',
+  // Publishing part one.
+  'The folders you choose become public.': '고른 폴더가 공개됩니다.',
+  'Anyone with the address can read what is published, drafts included.':
+    '주소를 아는 누구나 초안까지 포함해 게시된 것을 읽을 수 있습니다.',
+  'Which notes': '어떤 노트',
+  'Notes outside a rule': '규칙 밖의 노트',
+  'Are published': '게시됨',
+  'Stay private': '비공개 유지',
+  'Follows the rule': '규칙을 따름',
+  Published: '게시됨',
+  Private: '비공개',
+  '{count} pages': '{count}쪽',
+  '{count} new': '새로 {count}개',
+  '{count} gone': '내린 것 {count}개',
+  'and more': '그 외',
+  'How it appears': '보이는 방식',
+  Description: '설명',
+  'What this site is': '이 사이트 소개',
+  'Tab icon': '탭 아이콘',
+  Password: '암호',
+  'Set a new one': '새로 설정',
+  'Ask for a password': '암호 요구',
+  'No password': '암호 없음',
+  'Remove the password': '암호 제거',
+  'Scan this with your authenticator app, then type its code.':
+    '인증 앱으로 이것을 스캔한 뒤 그 코드를 입력하세요.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: '사진',
+  Dictate: '음성 입력',
+  'Add to {name}': '{name}에 추가',
+  // Web tabs
+  Reload: '다시 불러오기',
+  'Clip this page': '이 페이지 저장',
+  'Clip the link': '링크 저장',
+  'Allow the camera': '카메라 허용',
+  'Allow the clipboard': '클립보드 허용',
+  'Open in the browser': '브라우저에서 열기',
+  'Copy the address': '주소 복사',
+  'Show it here': '여기에 표시',
+  Website: '웹사이트',
+  'Open a website': '웹사이트 열기',
+  // Recording, meetings and what a model wrote
+  Record: '녹음',
+  Recording: '녹음',
+  'Stop recording': '녹음 정지',
+  'Meeting notes': '회의 노트',
+  Meeting: '회의',
+  'Stop the meeting': '회의 종료',
+  Transcribe: '글로 옮기기',
+  Transcript: '전사',
+  'Transcript ({language})': '전사 ({language})',
+  'Written by {model}': '{model} 작성',
+  'Saving the recording': '녹음 저장 중',
+  'Turning the recording into words': '녹음을 글로 옮기는 중',
+  'Open a space to record into.': '녹음할 공간을 여세요.',
+  'Sign in to take meeting notes.': '회의 노트를 쓰려면 로그인하세요.',
+  'Sign in to turn a recording into words.': '녹음을 글로 옮기려면 로그인하세요.',
+  'That microphone could not be opened.': '그 마이크를 열 수 없었습니다.',
+  'That recording could not be saved.': '그 녹음을 저장할 수 없었습니다.',
+  'That recording could not be turned into words.': '그 녹음을 글로 옮길 수 없었습니다.',
+  'That recording is not in this space.': '그 녹음은 이 공간에 없습니다.',
+  'That recording is too long to turn into words in one go.':
+    '그 녹음은 한 번에 글로 옮기기에 너무 깁니다.',
+  'That is as much as one recording may hold.': '한 녹음에 담을 수 있는 최대입니다.',
+  'Nothing could be heard in that recording.': '그 녹음에서 아무 소리도 들리지 않았습니다.',
+  'A piece of the transcript is being tried again.': '전사의 한 부분을 다시 시도하고 있습니다.',
+  'The transcript is behind and losing pieces.': '전사가 뒤처지며 부분을 놓치고 있습니다.',
+  '{count} pieces of this meeting were lost.': '이 회의에서 {count}부분이 사라졌습니다.',
+  'Add an AI provider in settings to summarise.': '요약하려면 설정에서 AI 공급자를 추가하세요.',
+  'The summary could not be written.': '요약을 쓸 수 없었습니다.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '메일을 보낼 수 없었습니다 - 다시 하세요',
   'start again - that took too long': '다시 시작하세요 - 너무 오래 걸렸습니다',
@@ -1090,7 +1242,8 @@ export const ko: Dictionary = {
   'that is more bookmarks than a space holds': '공간이 담을 수 있는 북마크보다 많습니다',
   'that is more paths than a space leaves out': '공간이 제외할 수 있는 경로보다 많습니다',
   'that is more files than a space keeps': '공간이 보관하는 파일보다 많습니다',
-  'that is more than a space keeps about its graph': '공간이 그래프에 대해 보관하는 것보다 많습니다',
+  'that is more than a space keeps about its graph':
+    '공간이 그래프에 대해 보관하는 것보다 많습니다',
   'that is more folder icons than a space holds': '공간이 담을 수 있는 폴더 아이콘보다 많습니다',
   // Sharing a space, and being let into one.
   'nobody by that address': '그 주소에는 아무도 없습니다',

@@ -7,6 +7,12 @@ export const es: Dictionary = {
   'Open file': 'Abrir archivo',
   'New note inside': 'Nueva nota dentro',
   'New canvas': 'Nuevo lienzo',
+  'New page note': 'Nueva nota de páginas',
+  'Add a page': 'Añadir una página',
+  'Add a page after this': 'Añadir una página después de esta',
+  'Delete this page': 'Eliminar esta página',
+  'Page {number}': 'Página {number}',
+  '{at} / {count}': '{at} / {count}',
   Canvas: 'Lienzo',
   Card: 'Tarjeta',
   'Note or picture': 'Nota o imagen',
@@ -34,7 +40,8 @@ export const es: Dictionary = {
   'Create a space': 'Crear un espacio',
   'Delete space': 'Eliminar espacio',
   'Delete {name}?': '¿Eliminar {name}?',
-  'Every note in this space is deleted from your computer.': 'Todas las notas de este espacio se eliminan de este equipo.',
+  'Every note in this space is deleted from your computer.':
+    'Todas las notas de este espacio se eliminan de este equipo.',
   'The notes inside it go too.': 'Las notas que contiene también se van.',
   Journal: 'Diario',
   Create: 'Crear',
@@ -204,16 +211,25 @@ export const es: Dictionary = {
   'Delete image': 'Eliminar la imagen',
   'Reset size': 'Restablecer el tamaño',
   'Image not found': 'Imagen no encontrada',
-  'Delete {count} items': { one: 'Eliminar {count} elemento', many: 'Eliminar {count} elementos', other: 'Eliminar {count} elementos' },
+  'Delete {count} items': {
+    one: 'Eliminar {count} elemento',
+    many: 'Eliminar {count} elementos',
+    other: 'Eliminar {count} elementos',
+  },
   'Recently deleted': 'Papelera',
-  'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Las notas y los espacios eliminados esperan aquí 14 días y luego desaparecen para siempre.',
+  'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
+    'Las notas y los espacios eliminados esperan aquí 14 días y luego desaparecen para siempre.',
   'Nothing here.': 'Nada aquí.',
   Empty: 'Vaciar',
   Spaces: 'Espacios',
   Notes: 'Notas',
   'Delete now': 'Eliminar ahora',
   'deleted {when}': 'eliminado {when}',
-  'gone in {count} days': { one: 'desaparece en {count} día', many: 'desaparece en {count} días', other: 'desaparece en {count} días' },
+  'gone in {count} days': {
+    one: 'desaparece en {count} día',
+    many: 'desaparece en {count} días',
+    other: 'desaparece en {count} días',
+  },
   'on this device': 'en este dispositivo',
   '{count} notes': { one: '{count} nota', many: '{count} notas', other: '{count} notas' },
   'Empty Recently deleted?': '¿Vaciar la papelera?',
@@ -257,7 +273,8 @@ export const es: Dictionary = {
   'Previous slide': 'Diapositiva anterior',
   'Read-only': 'Solo lectura',
   'No preview': 'Sin vista previa',
-  'Shown as plain text, so typing stays instant in a note this long': 'Se muestra como texto sin formato para que escribir siga siendo instantáneo en una nota tan larga',
+  'Shown as plain text, so typing stays instant in a note this long':
+    'Se muestra como texto sin formato para que escribir siga siendo instantáneo en una nota tan larga',
   'Leave read-only': 'Salir de solo lectura',
   Next: 'Siguiente',
   Previous: 'Anterior',
@@ -353,16 +370,19 @@ export const es: Dictionary = {
   'OpenAI key': 'Clave de OpenAI',
   Model: 'Modelo',
   Reasoning: 'Razonamiento',
-  'Kept encrypted on your account, and never shown again.': 'Se guarda cifrada en la cuenta y no se vuelve a mostrar.',
+  'Kept encrypted on your account, and never shown again.':
+    'Se guarda cifrada en la cuenta y no se vuelve a mostrar.',
   'set, ends in …{tail}': 'definida, acaba en …{tail}',
   'Saving the key': 'Guardando la clave',
   'this server cannot keep a key yet': 'este servidor aún no puede guardar una clave',
   'that does not look like a key': 'eso no parece una clave',
   'that key could not be saved': 'no se pudo guardar esa clave',
   'Sign in to ask a question.': 'Iniciar sesión para hacer una pregunta.',
-  'Asking OpenAI which models this key can use': 'Preguntando a OpenAI qué modelos admite esta clave',
+  'Asking OpenAI which models this key can use':
+    'Preguntando a OpenAI qué modelos admite esta clave',
   'Could not reach OpenAI': 'No se pudo conectar con OpenAI',
-  'That key cannot use any of the models Nib asks for.': 'Esa clave no puede usar ninguno de los modelos que Nib pide.',
+  'That key cannot use any of the models Nib asks for.':
+    'Esa clave no puede usar ninguno de los modelos que Nib pide.',
   'No reasoning': 'Sin razonamiento',
   Minimal: 'Mínimo',
   Low: 'Bajo',
@@ -403,7 +423,11 @@ export const es: Dictionary = {
   'Add a word': 'Añadir una palabra',
   'Add {word} to the dictionary': 'Añadir {word} al diccionario',
   'Remove {word} from the dictionary': 'Quitar {word} del diccionario',
-  '{count} things in this theme were left out.': { one: '{count} elemento de este tema se dejó fuera.', many: '{count} elementos de este tema se dejaron fuera.', other: '{count} elementos de este tema se dejaron fuera.' },
+  '{count} things in this theme were left out.': {
+    one: '{count} elemento de este tema se dejó fuera.',
+    many: '{count} elementos de este tema se dejaron fuera.',
+    other: '{count} elementos de este tema se dejaron fuera.',
+  },
   'A note': 'Una nota',
   'Words with {bold} and a {link}.': 'Palabras con {bold} y un {link}.',
   bold: 'negrita',
@@ -415,7 +439,8 @@ export const es: Dictionary = {
   'could not fetch that theme': 'no se pudo obtener ese tema',
   'could not install that theme': 'no se pudo instalar ese tema',
   'could not remove that theme': 'no se pudo quitar ese tema',
-  'that theme has nothing a theme may set': 'ese tema no define nada de lo que un tema puede definir',
+  'that theme has nothing a theme may set':
+    'ese tema no define nada de lo que un tema puede definir',
   General: 'General',
   Editor: 'Editor',
   Markdown: 'Markdown',
@@ -448,11 +473,14 @@ export const es: Dictionary = {
   'Line numbers': 'Números de línea',
   Syntax: 'Sintaxis',
   'Strict CommonMark': 'CommonMark estricto',
-  'Only the standard markdown rules, no tables, task lists or footnotes.': 'Solo las reglas estándar de markdown: sin tablas, listas de tareas ni notas al pie.',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Solo las reglas estándar de markdown: sin tablas, listas de tareas ni notas al pie.',
   'Smart punctuation': 'Puntuación tipográfica',
-  'Turns straight quotes and dashes into typographic ones as you type.': 'Convierte las comillas y los guiones rectos en tipográficos al escribir.',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Convierte las comillas y los guiones rectos en tipográficos al escribir.',
   'Puts 1., 1.1, 1.2 in front of headings.': 'Pone 1., 1.1, 1.2 delante de los títulos.',
-  'Numbers display equations so you can refer to them.': 'Numera las ecuaciones aparte para poder citarlas.',
+  'Numbers display equations so you can refer to them.':
+    'Numera las ecuaciones aparte para poder citarlas.',
   Ligatures: 'Ligaduras',
   Off: 'Desactivado',
   'Code only': 'Solo en el código',
@@ -498,7 +526,8 @@ export const es: Dictionary = {
   'Check for updates': 'Buscar actualizaciones',
   Language: 'Idioma',
   'Match the system': 'Como el sistema',
-  'Machine-translated. Corrections welcome.': 'Traducido automáticamente. Correcciones bienvenidas.',
+  'Machine-translated. Corrections welcome.':
+    'Traducido automáticamente. Correcciones bienvenidas.',
   'Match the app': 'Como la app',
   // Settings
   Settings: 'Ajustes',
@@ -515,13 +544,18 @@ export const es: Dictionary = {
   'Send a new code': 'Enviar un código nuevo',
   'Code sent to': 'Código enviado a',
   'You already have notes on this computer.': 'Ya hay notas en este equipo.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.': 'Si se conservan, pasan a la cuenta. Si se borran, solo queda lo que la cuenta ya tiene - esto no se puede deshacer.',
+  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
+    'Si se conservan, pasan a la cuenta. Si se borran, solo queda lo que la cuenta ya tiene - esto no se puede deshacer.',
   'Keep them': 'Conservarlas',
   'Erase them': 'Borrarlas',
   'Digit {number}': 'Dígito {number}',
   'Resend in {seconds}s': 'Reenviar en {seconds} s',
   'Last synced {time}.': 'Última sincronización: {time}.',
-  '{count} spaces sync to your account.': { one: '{count} espacio se sincroniza con la cuenta.', many: '{count} espacios se sincronizan con la cuenta.', other: '{count} espacios se sincronizan con la cuenta.' },
+  '{count} spaces sync to your account.': {
+    one: '{count} espacio se sincroniza con la cuenta.',
+    many: '{count} espacios se sincronizan con la cuenta.',
+    other: '{count} espacios se sincronizan con la cuenta.',
+  },
   Update: 'Actualizar',
   'Live at': 'En línea en',
   // Publishing
@@ -531,7 +565,8 @@ export const es: Dictionary = {
   'Only {name}': 'Solo {name}',
   'Publish this space as a blog': 'Publicar este espacio como blog',
   'Everything in this space becomes public.': 'Todo lo de este espacio pasa a ser público.',
-  'Every note, including drafts, is readable by anyone with the address.': 'Cualquiera con la dirección puede leer todas las notas, borradores incluidos.',
+  'Every note, including drafts, is readable by anyone with the address.':
+    'Cualquiera con la dirección puede leer todas las notas, borradores incluidos.',
   Address: 'Dirección',
   'Add these at your registrar, then verify.': 'Añadir esto en el registrador y luego verificar.',
   Verify: 'Verificar',
@@ -544,8 +579,10 @@ export const es: Dictionary = {
   'checking…': 'comprobando…',
   // LLM
   'Connect an LLM to your notes': 'Conectar un LLM a las notas',
-  'Sign in first - the connector reaches the notes in your account.': 'Iniciar sesión primero - el conector llega a las notas de la cuenta.',
-  'Let it write to my notes, not only read them': 'Permitir que escriba en mis notas, no solo que las lea',
+  'Sign in first - the connector reaches the notes in your account.':
+    'Iniciar sesión primero - el conector llega a las notas de la cuenta.',
+  'Let it write to my notes, not only read them':
+    'Permitir que escriba en mis notas, no solo que las lea',
   'Create a token': 'Crear un token',
   'Replace the token': 'Reemplazar el token',
   'Last used {time}.': 'Último uso: {time}.',
@@ -560,27 +597,38 @@ export const es: Dictionary = {
   'Reads your notes.': 'Lee las notas.',
   'Reads and writes your notes.': 'Lee y escribe las notas.',
   Other: 'Otro',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.': 'Un asistente de IA puede leer las notas - y cambiarlas, si se le permite. Inicia sesión con el correo de Nib; no hay nada que pegar.',
-  'In Claude, open Settings → Connectors and click Add custom connector.': 'En Claude, abrir Ajustes → Conectores y pulsar Añadir conector personalizado.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Un asistente de IA puede leer las notas - y cambiarlas, si se le permite. Inicia sesión con el correo de Nib; no hay nada que pegar.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'En Claude, abrir Ajustes → Conectores y pulsar Añadir conector personalizado.',
   'Open Claude’s connectors': 'Abrir los conectores de Claude',
   'Fill in the two fields and click Add.': 'Rellenar los dos campos y pulsar Añadir.',
-  'Click Connect and sign in with your Nib email.': 'Pulsar Conectar e iniciar sesión con el correo de Nib.',
+  'Click Connect and sign in with your Nib email.':
+    'Pulsar Conectar e iniciar sesión con el correo de Nib.',
   'Using Claude Code instead?': '¿Usar Claude Code en su lugar?',
   Command: 'Comando',
-  'Run it in a terminal, then type /mcp in Claude Code to sign in.': 'Ejecutarlo en un terminal y luego escribir /mcp en Claude Code para iniciar sesión.',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Ejecutarlo en un terminal y luego escribir /mcp en Claude Code para iniciar sesión.',
   'Fill in the form and click Create.': 'Rellenar el formulario y pulsar Crear.',
-  'In ChatGPT, open Settings → Plugins and click the plus button.': 'En ChatGPT, abrir Ajustes → Plugins y pulsar el botón más.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'En ChatGPT, abrir Ajustes → Plugins y pulsar el botón más.',
   'Open ChatGPT’s plugins': 'Abrir los plugins de ChatGPT',
-  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.': '¿No hay sección Plugins ni botón más? Activar primero el modo de desarrollador en Ajustes → Seguridad e inicio de sesión.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Iniciar sesión con el correo de Nib cuando ChatGPT lo pida.',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    '¿No hay sección Plugins ni botón más? Activar primero el modo de desarrollador en Ajustes → Seguridad e inicio de sesión.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Iniciar sesión con el correo de Nib cuando ChatGPT lo pida.',
   'To use it in a chat, type @ and pick Nib.': 'Para usarlo en un chat, escribir @ y elegir Nib.',
   'Server URL': 'URL del servidor',
   Authentication: 'Autenticación',
-  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.': 'Dejar los ajustes avanzados de OAuth como están y marcar “Entiendo y quiero continuar”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.': 'Cualquier cliente MCP que hable Streamable HTTP con OAuth. Con la URL basta: se registra solo y abre la página de inicio de sesión de Nib.',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Dejar los ajustes avanzados de OAuth como están y marcar “Entiendo y quiero continuar”.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Cualquier cliente MCP que hable Streamable HTTP con OAuth. Con la URL basta: se registra solo y abre la página de inicio de sesión de Nib.',
   'Show config': 'Ver la configuración',
-  'For a client that takes a JSON block instead of a URL.': 'Para un cliente que toma un bloque JSON en vez de una URL.',
-  'A client that cannot sign in can be given a token instead. It is shown only once.': 'A un cliente que no puede iniciar sesión se le puede dar un token. Solo se muestra una vez.',
+  'For a client that takes a JSON block instead of a URL.':
+    'Para un cliente que toma un bloque JSON en vez de una URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'A un cliente que no puede iniciar sesión se le puede dar un token. Solo se muestra una vez.',
   // Export
   'Plain text': 'Texto sin formato',
   'Markdown with the pictures': 'Markdown con las imágenes',
@@ -604,8 +652,10 @@ export const es: Dictionary = {
   'Version history': 'Historial de versiones',
   'Copy link to this note': 'Copiar enlace a esta nota',
   'that link could not be followed': 'no se pudo seguir ese enlace',
-  'Save this note first; there is nothing to compare against yet.': 'Guardar primero esta nota; todavía no hay nada con lo que comparar.',
-  'No earlier versions yet. One is kept each time you save.': 'Aún no hay versiones anteriores. Se guarda una cada vez que se guarda la nota.',
+  'Save this note first; there is nothing to compare against yet.':
+    'Guardar primero esta nota; todavía no hay nada con lo que comparar.',
+  'No earlier versions yet. One is kept each time you save.':
+    'Aún no hay versiones anteriores. Se guarda una cada vez que se guarda la nota.',
   'Restore this version': 'Restaurar esta versión',
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ya hay una nota ahí',
@@ -629,9 +679,11 @@ export const es: Dictionary = {
   'that path is not usable': 'esa ruta no se puede usar',
   'this note changed elsewhere': 'esta nota cambió en otro sitio',
   'too many tries - ask for a new code': 'demasiados intentos - pedir un código nuevo',
-  'too many messages from here - try again later': 'demasiados mensajes desde aquí - probar más tarde',
+  'too many messages from here - try again later':
+    'demasiados mensajes desde aquí - probar más tarde',
   'too much mail today - try again tomorrow': 'demasiado correo hoy - probar mañana',
-  'that many people are already waiting to be let in': 'ya hay esa cantidad de personas esperando entrar',
+  'that many people are already waiting to be let in':
+    'ya hay esa cantidad de personas esperando entrar',
   'use 2–32 letters, numbers or hyphens': 'usar 2–32 letras, números o guiones',
   'sync failed': 'la sincronización falló',
   'could not publish': 'no se pudo publicar',
@@ -666,7 +718,8 @@ export const es: Dictionary = {
   'use a domain of your own': 'usar un dominio propio',
   'the domain no longer points here': 'el dominio ya no apunta aquí',
   'Cloudflare has blocked this domain': 'Cloudflare ha bloqueado este dominio',
-  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.': 'En la raíz de un dominio, usar un registro ALIAS o ANAME, o el aplanamiento de CNAME, si el proveedor no admite un CNAME ahí.',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'En la raíz de un dominio, usar un registro ALIAS o ANAME, o el aplanamiento de CNAME, si el proveedor no admite un CNAME ahí.',
   // Shortcuts
   Shortcuts: 'Atajos',
   'Search shortcuts': 'Buscar atajos',
@@ -677,7 +730,8 @@ export const es: Dictionary = {
   'Reset all shortcuts': 'Restablecer todos los atajos',
   'Take it over': 'Asignarlo aquí',
   '{key} already runs {name}.': '{key} ya ejecuta {name}.',
-  'Esc stops recording, Backspace takes the key away.': 'Esc detiene la grabación, Retroceso quita la tecla.',
+  'Esc stops recording, Backspace takes the key away.':
+    'Esc detiene la grabación, Retroceso quita la tecla.',
   Tables: 'Tablas',
   Pictures: 'Imágenes',
   'Fixed keys': 'Teclas fijas',
@@ -713,7 +767,8 @@ export const es: Dictionary = {
   'Always on top': 'Siempre visible',
   'What is new': 'Novedades',
   'Report an issue': 'Informar de un problema',
-  '{name} changed on the disk. What is in the editor is yours.': '{name} cambió en el disco. Lo que hay en el editor es lo que cuenta.',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} cambió en el disco. Lo que hay en el editor es lo que cuenta.',
   'Move the line up': 'Subir la línea',
   'Move the line down': 'Bajar la línea',
   'Copy the line up': 'Copiar la línea arriba',
@@ -748,26 +803,32 @@ export const es: Dictionary = {
   Escape: 'Esc',
   Quit: 'Salir',
   'The clipboard belongs to the system.': 'El portapapeles es del sistema.',
-  'The arrow keys, Home, End, Page up and Page down belong to the text.': 'Las flechas, Inicio, Fin, Página arriba y Página abajo son del texto.',
+  'The arrow keys, Home, End, Page up and Page down belong to the text.':
+    'Las flechas, Inicio, Fin, Página arriba y Página abajo son del texto.',
   'Backspace and Delete belong to the text.': 'Retroceso y Supr son del texto.',
-  'Enter closes a code block and carries a list on.': 'Enter cierra un bloque de código y continúa una lista.',
+  'Enter closes a code block and carries a list on.':
+    'Enter cierra un bloque de código y continúa una lista.',
   'Tab moves on through the app as well as indenting.': 'Tab avanza por la app y también sangra.',
   'Escape closes whatever is open.': 'Esc cierra lo que esté abierto.',
-  'Your system takes this key before the app sees it.': 'El sistema toma esta tecla antes que la app.',
-  'Your browser takes this key before the app sees it.': 'El navegador toma esta tecla antes que la app.',
+  'Your system takes this key before the app sees it.':
+    'El sistema toma esta tecla antes que la app.',
+  'Your browser takes this key before the app sees it.':
+    'El navegador toma esta tecla antes que la app.',
   'That is not a key combination.': 'Eso no es una combinación de teclas.',
   'Hold Ctrl, Alt or Cmd as well.': 'Mantener también Ctrl, Alt o Cmd.',
   'File list': 'Lista de archivos',
   'Select every file': 'Seleccionar todos los archivos',
   'Clear the selection': 'Quitar la selección',
   'Delete the selected files': 'Eliminar los archivos seleccionados',
-  'The file could not be written, so it goes to the print dialog': 'No se pudo escribir el archivo, así que va al diálogo de impresión',
+  'The file could not be written, so it goes to the print dialog':
+    'No se pudo escribir el archivo, así que va al diálogo de impresión',
   'Next file': 'Archivo siguiente',
   'Previous file': 'Archivo anterior',
   'Show what it holds': 'Mostrar lo que contiene',
   'Hide what it holds': 'Ocultar lo que contiene',
   'Moving through a list': 'Moverse por una lista',
-  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.': 'Las flechas, Enter y Esc actúan sobre lo que esté abierto; no son atajos.',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Las flechas, Enter y Esc actúan sobre lo que esté abierto; no son atajos.',
   'Split right': 'Dividir a la derecha',
   'Split down': 'Dividir abajo',
   'Other pane': 'El otro panel',
@@ -789,7 +850,8 @@ export const es: Dictionary = {
   'Follow the link': 'Seguir el enlace',
   'Replace your own keys?': '¿Reemplazar las teclas propias?',
   Replace: 'Reemplazar',
-  'The keys you changed go back to what this keyboard says.': 'Las teclas cambiadas vuelven a lo que dice este teclado.',
+  'The keys you changed go back to what this keyboard says.':
+    'Las teclas cambiadas vuelven a lo que dice este teclado.',
   NORMAL: 'NORMAL',
   INSERT: 'INSERCIÓN',
   VISUAL: 'VISUAL',
@@ -911,7 +973,8 @@ export const es: Dictionary = {
   Leave: 'Salir',
   'Leave space': 'Salir del espacio',
   'Leave {name}?': '¿Salir de {name}?',
-  'It stays with everybody else. Its notes go from your computer.': 'Sigue estando para los demás. Sus notas se van de este equipo.',
+  'It stays with everybody else. Its notes go from your computer.':
+    'Sigue estando para los demás. Sus notas se van de este equipo.',
   '{who} shared {space} with you': '{who} compartió {space} contigo',
   'Shared with you': 'Compartido contigo',
   'That link does not open anything': 'Ese enlace no abre nada',
@@ -928,7 +991,8 @@ export const es: Dictionary = {
   'Release channel': 'Canal de versiones',
   Stable: 'Estable',
   Unstable: 'Inestable',
-  'Stable follows the official releases, Unstable every push to main and can break.': 'Estable sigue las versiones oficiales; Inestable, cada cambio en main, y puede fallar.',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Estable sigue las versiones oficiales; Inestable, cada cambio en main, y puede fallar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -936,41 +1000,90 @@ export const es: Dictionary = {
   'In this note': 'En esta nota',
   'In the whole space': 'En todo el espacio',
   'Nothing here needs converting.': 'Aquí no hay nada que convertir.',
-  'Rewrite {count} things?': { one: '¿Reescribir {count} elemento?', many: '¿Reescribir {count} elementos?', other: '¿Reescribir {count} elementos?' },
-  'In {count} notes.': { one: 'En {count} nota.', many: 'En {count} notas.', other: 'En {count} notas.' },
+  'Rewrite {count} things?': {
+    one: '¿Reescribir {count} elemento?',
+    many: '¿Reescribir {count} elementos?',
+    other: '¿Reescribir {count} elementos?',
+  },
+  'In {count} notes.': {
+    one: 'En {count} nota.',
+    many: 'En {count} notas.',
+    other: 'En {count} notas.',
+  },
   Rewrite: 'Reescribir',
-  '{count} passages are encrypted, and nothing can read them without Evernote': '{count} pasajes están cifrados y nada puede leerlos sin Evernote',
-  '{count} notes had a reminder, which the export does not carry': '{count} notas tenían un recordatorio, que la exportación no trae',
-  '{count} notes were in the bin and stay there': '{count} notas estaban en la papelera y ahí se quedan',
-  '{count} archived notes are in a folder called Archive': '{count} notas archivadas están en una carpeta llamada Archive',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} pasajes están cifrados y nada puede leerlos sin Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} notas tenían un recordatorio, que la exportación no trae',
+  '{count} notes were in the bin and stay there':
+    '{count} notas estaban en la papelera y ahí se quedan',
+  '{count} archived notes are in a folder called Archive':
+    '{count} notas archivadas están en una carpeta llamada Archive',
   'The colours a note had are not kept': 'Los colores que tenía una nota no se conservan',
-  '{count} block references were written out as the words they pointed at': '{count} referencias de bloque se escribieron como las palabras a las que apuntaban',
-  '{count} saved views are left out, and every row is in the table': '{count} vistas guardadas se dejan fuera, y la tabla tiene todas las filas',
-  '{count} pages came as HTML, so their words are kept and their look is not': '{count} páginas llegaron como HTML: se conservan sus palabras, no su aspecto',
+  '{count} block references were written out as the words they pointed at':
+    '{count} referencias de bloque se escribieron como las palabras a las que apuntaban',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} vistas guardadas se dejan fuera, y la tabla tiene todas las filas',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} páginas llegaron como HTML: se conservan sus palabras, no su aspecto',
   'There are no rows in this file.': 'Este archivo no tiene filas.',
   'Nothing in there can be read as notes.': 'Ahí dentro no hay nada que se lea como notas.',
   'That export could not be read.': 'No se pudo leer esa exportación.',
-  'That export is too big to read in one go.': 'Esa exportación es demasiado grande para leerla de una vez.',
+  'That export is too big to read in one go.':
+    'Esa exportación es demasiado grande para leerla de una vez.',
   'Import into': 'Importar en',
   'That import could not be written.': 'No se pudo escribir esa importación.',
   '{count} files': { one: '{count} archivo', many: '{count} archivos', other: '{count} archivos' },
   'This space': 'Este espacio',
   'Drop an export here': 'Soltar aquí una exportación',
   'A zip, a folder, or a file another app wrote': 'Un zip, una carpeta o un archivo de otra app',
-  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.': 'Apple Notes y Apple Journal guardan sus notas donde solo ellas pueden abrirlas. Hay que exportarlas primero y luego importar eso.',
-  'Pandoc reads this one, from the file on your disk.': 'Este lo lee Pandoc, desde el archivo del disco.',
+  '{count} pictures came as HEIC, which nothing but Apple shows':
+    '{count} imágenes llegaron como HEIC, que solo Apple muestra',
+  '{count} mood and activity cards are drawings, so only their words come over':
+    '{count} tarjetas de ánimo y actividad son dibujos, así que solo pasan sus palabras',
+  '{count} notes are behind a password, which nothing but Notes can open':
+    '{count} notas están tras una contraseña que solo Notas puede abrir',
+  '{count} notes are in Recently Deleted, and stay there':
+    '{count} notas están en Eliminados recientemente y ahí se quedan',
+  '{count} drawings and scanned pages are pictures Notes draws itself':
+    '{count} dibujos y páginas escaneadas son imágenes que Notas dibuja por sí misma',
+  '{count} tables inside notes do not come over': '{count} tablas dentro de notas no pasan',
+  '{count} attachments are in iCloud rather than on this Mac':
+    '{count} adjuntos están en iCloud y no en este Mac',
+  'macOS keeps those notes behind Full Disk Access.':
+    'macOS guarda esas notas tras Acceso total al disco.',
+  'There are no notes in Apple Notes on this Mac.': 'No hay notas en Apple Notas en este Mac.',
+  'Those notes could not be read.': 'No se pudieron leer esas notas.',
+  'Read them from this Mac': 'Leerlas desde este Mac',
+  'Turn nibeditor on under Full Disk Access, then ask again.':
+    'Activar nibeditor en Acceso total al disco y volver a intentarlo.',
+  'Open the setting': 'Abrir el ajuste',
+  'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
+    'Apple Diario se exporta solo: Diario, Ajustes, Exportar. Apple Notas no tiene exportación, así que lejos del Mac donde está, lo que se suelta aquí es una carpeta escrita por un exportador.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Este lo lee Pandoc, desde el archivo del disco.',
   'Read it with pandoc': 'Leerlo con pandoc',
-  'Only pandoc reads this one, and it is not installed on this machine.': 'Este solo lo lee pandoc, y no está instalado en este equipo.',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Este solo lo lee pandoc, y no está instalado en este equipo.',
   Rows: 'Filas',
   'As a table': 'Como tabla',
   'One note per row': 'Una nota por fila',
   Into: 'En',
   'Worth knowing': 'Conviene saber',
-  '{count} notes arrived.': { one: 'Llegó {count} nota.', many: 'Llegaron {count} notas.', other: 'Llegaron {count} notas.' },
-  '{count} names were taken, so those files stepped aside.': { one: '{count} nombre ya estaba en uso, así que ese archivo se apartó.', many: '{count} nombres ya estaban en uso, así que esos archivos se apartaron.', other: '{count} nombres ya estaban en uso, así que esos archivos se apartaron.' },
+  '{count} notes arrived.': {
+    one: 'Llegó {count} nota.',
+    many: 'Llegaron {count} notas.',
+    other: 'Llegaron {count} notas.',
+  },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} nombre ya estaba en uso, así que ese archivo se apartó.',
+    many: '{count} nombres ya estaban en uso, así que esos archivos se apartaron.',
+    other: '{count} nombres ya estaban en uso, así que esos archivos se apartaron.',
+  },
   'A table': 'Una tabla',
   'Markdown files': 'Archivos Markdown',
   'A document': 'Un documento',
+  'A PDF, as pages to write on': 'Un PDF, como páginas para escribir encima',
   'Undo the import': 'Deshacer la importación',
   'Choose an export': 'Elegir una exportación',
   Under: 'Dentro de',
@@ -982,13 +1095,15 @@ export const es: Dictionary = {
   'Keep both copies': 'Conservar las dos copias',
   'Let the newest win': 'Que gane la más nueva',
   'Ask me each time': 'Preguntar cada vez',
-  'Nothing is ever thrown away: what does not win is kept as a version.': 'Nada se tira: lo que no gana se guarda como versión.',
+  'Nothing is ever thrown away: what does not win is kept as a version.':
+    'Nada se tira: lo que no gana se guarda como versión.',
   'Waiting for you': 'Pendiente',
   'Keep mine': 'Conservar la mía',
   'Take theirs': 'Tomar la otra',
   'Keep both': 'Conservar las dos',
   'What synced': 'Qué se sincronizó',
-  'Nothing yet. A pass that moves nothing is not written down.': 'Nada todavía. Una pasada que no mueve nada no se apunta.',
+  'Nothing yet. A pass that moves nothing is not written down.':
+    'Nada todavía. Una pasada que no mueve nada no se apunta.',
   'Clear the list': 'Vaciar la lista',
   '{count} down': '{count} recibidas',
   '{count} up': '{count} enviadas',
@@ -996,21 +1111,36 @@ export const es: Dictionary = {
   'Go back': 'Volver atrás',
   'Going back': 'Volviendo atrás',
   'This space, as it was': 'Este espacio, como estaba',
-  '{count} days ago': { one: 'hace {count} día', many: 'hace {count} días', other: 'hace {count} días' },
+  '{count} days ago': {
+    one: 'hace {count} día',
+    many: 'hace {count} días',
+    other: 'hace {count} días',
+  },
   'What would change?': '¿Qué cambiaría?',
-  '{count} notes would go back to what they said then.': { one: '{count} nota volvería a lo que decía entonces.', many: '{count} notas volverían a lo que decían entonces.', other: '{count} notas volverían a lo que decían entonces.' },
+  '{count} notes would go back to what they said then.': {
+    one: '{count} nota volvería a lo que decía entonces.',
+    many: '{count} notas volverían a lo que decían entonces.',
+    other: '{count} notas volverían a lo que decían entonces.',
+  },
   'Nothing has changed since then.': 'Nada ha cambiado desde entonces.',
-  '{count} notes went back.': { one: '{count} nota volvió atrás.', many: '{count} notas volvieron atrás.', other: '{count} notas volvieron atrás.' },
-  'The account keeps a month of versions of every note that syncs.': 'La cuenta guarda un mes de versiones de cada nota que se sincroniza.',
+  '{count} notes went back.': {
+    one: '{count} nota volvió atrás.',
+    many: '{count} notas volvieron atrás.',
+    other: '{count} notas volvieron atrás.',
+  },
+  'The account keeps a month of versions of every note that syncs.':
+    'La cuenta guarda un mes de versiones de cada nota que se sincroniza.',
   'That did not work.': 'Eso no funcionó.',
   'Signing in': 'Iniciando sesión',
   'Ask for a code from an app': 'Pedir un código a una app',
   'Turn on': 'Activar',
   'Turn off': 'Desactivar',
-  'Put this into your authenticator app, then type its code.': 'Poner esto en la app de autenticación y escribir su código.',
+  'Put this into your authenticator app, then type its code.':
+    'Poner esto en la app de autenticación y escribir su código.',
   Secret: 'Secreto',
   'Code from the app': 'Código de la app',
-  'Keep these somewhere safe. Each works once, and they are not shown again.': 'Guardarlos en un lugar seguro. Cada uno sirve una vez y no se vuelven a mostrar.',
+  'Keep these somewhere safe. Each works once, and they are not shown again.':
+    'Guardarlos en un lugar seguro. Cada uno sirve una vez y no se vuelven a mostrar.',
   'Recovery codes': 'Códigos de recuperación',
   'Recovery code': 'Código de recuperación',
   'Recovery codes left': 'Códigos de recuperación restantes',
@@ -1032,7 +1162,8 @@ export const es: Dictionary = {
   Pages: 'Páginas',
   'Page {number} of {count}': 'Página {number} de {count}',
   'What is selected': 'Lo seleccionado',
-  'Canvas: {cards} cards, {links} links, {drawings} drawings': 'Lienzo: {cards} tarjetas, {links} enlaces, {drawings} dibujos',
+  'Canvas: {cards} cards, {links} links, {drawings} drawings':
+    'Lienzo: {cards} tarjetas, {links} enlaces, {drawings} dibujos',
   // The AI providers, the block in a note, and the four rewrites
   AI: 'IA',
   Providers: 'Proveedores',
@@ -1046,8 +1177,10 @@ export const es: Dictionary = {
   'Asking…': 'Preguntando…',
   'No providers yet.': 'Aún no hay proveedores.',
   'Add {name}': 'Añadir {name}',
-  'Keys stay in the secure store on this device.': 'Las claves quedan en el almacén seguro de este dispositivo.',
-  'This browser holds the keys in its own storage.': 'Este navegador guarda las claves en su propio almacenamiento.',
+  'Keys stay in the secure store on this device.':
+    'Las claves quedan en el almacén seguro de este dispositivo.',
+  'This browser holds the keys in its own storage.':
+    'Este navegador guarda las claves en su propio almacenamiento.',
   'Used by the glasses': 'Lo usan las gafas',
   'Could not read the models.': 'No se pudieron leer los modelos.',
   'That provider is not set up yet.': 'Ese proveedor aún no está configurado.',
@@ -1069,20 +1202,97 @@ export const es: Dictionary = {
   'AI block': 'Bloque de IA',
   'Highlight colour': 'Color de resaltado',
   'A single newline breaks the line': 'Un solo salto de línea rompe la línea',
-  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.': 'Desactivado es markdown estándar: dos líneas de un párrafo se leen como una; Obsidian lo llama saltos de línea estrictos.',
+  'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
+    'Desactivado es markdown estándar: dos líneas de un párrafo se leen como una; Obsidian lo llama saltos de línea estrictos.',
   'New links': 'Enlaces nuevos',
-  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.': 'Los wikilinks nombran la nota, así que un enlace sobrevive a su cambio de nombre; ambas escrituras se leen igual.',
+  'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.':
+    'Los wikilinks nombran la nota, así que un enlace sobrevive a su cambio de nombre; ambas escrituras se leen igual.',
   '[[Wikilinks]]': '[[Wikilinks]]',
   'Markdown, shortest name': 'Markdown, nombre más corto',
   'Markdown, relative path': 'Markdown, ruta relativa',
   'Markdown, path in the space': 'Markdown, ruta en el espacio',
+  // Publishing part one.
+  'The folders you choose become public.': 'Las carpetas elegidas se hacen públicas.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Cualquiera con la dirección puede leer lo publicado, borradores incluidos.',
+  'Which notes': 'Qué notas',
+  'Notes outside a rule': 'Notas sin regla',
+  'Are published': 'Se publican',
+  'Stay private': 'Siguen privadas',
+  'Follows the rule': 'Sigue la regla',
+  Published: 'Publicada',
+  Private: 'Privada',
+  '{count} pages': '{count} páginas',
+  '{count} new': '{count} nuevas',
+  '{count} gone': '{count} retiradas',
+  'and more': 'y más',
+  'How it appears': 'Cómo aparece',
+  Description: 'Descripción',
+  'What this site is': 'De qué va este sitio',
+  'Tab icon': 'Icono de la pestaña',
+  Password: 'Contraseña',
+  'Set a new one': 'Poner una nueva',
+  'Ask for a password': 'Pedir una contraseña',
+  'No password': 'Sin contraseña',
+  'Remove the password': 'Quitar la contraseña',
+  'Scan this with your authenticator app, then type its code.':
+    'Escanear esto con la app de autenticación y escribir su código.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Foto',
+  Dictate: 'Dictar',
+  'Add to {name}': 'Añadir a {name}',
+  // Web tabs
+  Reload: 'Recargar',
+  'Clip this page': 'Guardar esta página',
+  'Clip the link': 'Guardar el enlace',
+  'Allow the camera': 'Permitir la cámara',
+  'Allow the clipboard': 'Permitir el portapapeles',
+  'Open in the browser': 'Abrir en el navegador',
+  'Copy the address': 'Copiar la dirección',
+  'Show it here': 'Mostrarlo aquí',
+  Website: 'Sitio web',
+  'Open a website': 'Abrir un sitio web',
+  // Recording, meetings and what a model wrote
+  Record: 'Grabar',
+  Recording: 'Grabación',
+  'Stop recording': 'Detener la grabación',
+  'Meeting notes': 'Notas de reunión',
+  Meeting: 'Reunión',
+  'Stop the meeting': 'Terminar la reunión',
+  Transcribe: 'Transcribir',
+  Transcript: 'Transcripción',
+  'Transcript ({language})': 'Transcripción ({language})',
+  'Written by {model}': 'Escrito por {model}',
+  'Saving the recording': 'Guardando la grabación',
+  'Turning the recording into words': 'Convirtiendo la grabación en palabras',
+  'Open a space to record into.': 'Abrir un espacio donde grabar.',
+  'Sign in to take meeting notes.': 'Iniciar sesión para tomar notas de reunión.',
+  'Sign in to turn a recording into words.':
+    'Iniciar sesión para convertir una grabación en palabras.',
+  'That microphone could not be opened.': 'No se pudo abrir ese micrófono.',
+  'That recording could not be saved.': 'No se pudo guardar esa grabación.',
+  'That recording could not be turned into words.':
+    'No se pudo convertir esa grabación en palabras.',
+  'That recording is not in this space.': 'Esa grabación no está en este espacio.',
+  'That recording is too long to turn into words in one go.':
+    'Esa grabación es demasiado larga para convertirla en palabras de una vez.',
+  'That is as much as one recording may hold.': 'Eso es todo lo que cabe en una grabación.',
+  'Nothing could be heard in that recording.': 'No se oyó nada en esa grabación.',
+  'A piece of the transcript is being tried again.':
+    'Se está reintentando un trozo de la transcripción.',
+  'The transcript is behind and losing pieces.': 'La transcripción va con retraso y pierde trozos.',
+  '{count} pieces of this meeting were lost.': 'Se perdieron {count} trozos de esta reunión.',
+  'Add an AI provider in settings to summarise.':
+    'Añadir un proveedor de IA en los ajustes para resumir.',
+  'The summary could not be written.': 'No se pudo escribir el resumen.',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'no se pudo enviar el correo - probar de nuevo',
   'start again - that took too long': 'empezar de nuevo - eso tardó demasiado',
   'sign in to do that': 'iniciar sesión para hacer eso',
   'that is not something a token can do': 'eso no lo puede hacer un token',
   'something went wrong here - try again': 'algo salió mal aquí - probar de nuevo',
-  'this service cannot keep a secret safely': 'este servicio no puede guardar un secreto de forma segura',
+  'this service cannot keep a secret safely':
+    'este servicio no puede guardar un secreto de forma segura',
   // Pictures, files and what an account has room for.
   'images and PDFs only': 'solo imágenes y PDF',
   'that file is too big': 'ese archivo es demasiado grande',
@@ -1090,8 +1300,10 @@ export const es: Dictionary = {
   'that is more bookmarks than a space holds': 'son más marcadores de los que admite un espacio',
   'that is more paths than a space leaves out': 'son más rutas de las que un espacio deja fuera',
   'that is more files than a space keeps': 'son más archivos de los que guarda un espacio',
-  'that is more than a space keeps about its graph': 'es más de lo que un espacio guarda de su grafo',
-  'that is more folder icons than a space holds': 'son más iconos de carpeta de los que admite un espacio',
+  'that is more than a space keeps about its graph':
+    'es más de lo que un espacio guarda de su grafo',
+  'that is more folder icons than a space holds':
+    'son más iconos de carpeta de los que admite un espacio',
   // Sharing a space, and being let into one.
   'nobody by that address': 'no hay nadie con esa dirección',
   'nobody by that name': 'no hay nadie con ese nombre',
@@ -1111,7 +1323,8 @@ export const es: Dictionary = {
   'that is not a theme': 'eso no es un tema',
   'no such theme': 'no hay ese tema',
   'choose a model first': 'elegir primero un modelo',
-  'set an OpenAI key in Nib’s settings first': 'definir primero una clave de OpenAI en los ajustes de Nib',
+  'set an OpenAI key in Nib’s settings first':
+    'definir primero una clave de OpenAI en los ajustes de Nib',
   'that is a lot of questions - try again later': 'son muchas preguntas - probar más tarde',
   'that is too much audio': 'es demasiado audio',
   'that is more than a spoken command': 'eso es más que un comando hablado',
