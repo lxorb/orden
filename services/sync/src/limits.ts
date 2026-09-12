@@ -142,6 +142,16 @@ export function mayTranscribe(env: Env, userId: string): Promise<boolean> {
   return within(env, 'said', userId, UTTERANCES_AN_HOUR, AN_HOUR)
 }
 
+/** How many times one account may be given a second-factor code to check in an
+ *  hour. Six digits is a million guesses, and without a ceiling a script with an
+ *  afternoon walks them; twenty is far more than anybody mistypes. */
+const SECOND_TRIES_AN_HOUR = 20
+
+/** Whether one more second-factor code may be checked, counting this one. */
+export function mayTrySecond(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'second', userId, SECOND_TRIES_AN_HOUR, AN_HOUR)
+}
+
 /** Whether a message may go now, and what to say when it may not.
  *
  *  Null is the answer that means yes, so that a caller writes

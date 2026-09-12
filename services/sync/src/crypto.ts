@@ -20,7 +20,7 @@ export async function sha256(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-function randomBytes(length: number): Uint8Array {
+export function randomBytes(length: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(length))
 }
 

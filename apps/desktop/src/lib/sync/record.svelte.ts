@@ -21,14 +21,14 @@ import { isRecord, parsed } from '../stored'
 import { invoke } from '../tauri'
 import type { Answer, Clash } from './conflicts'
 
-export const STORAGE_KEY = 'nib:sync-log'
+const STORAGE_KEY = 'nib:sync-log'
 
 /** How many passes are kept. Enough to see a pattern over an afternoon, few
  *  enough that the list is still a list. */
 const KEPT = 60
 
 /** One pass over one space. */
-export interface Pass {
+interface Pass {
   at: number
   /** The space, by the name the reader knows it by. */
   space: string

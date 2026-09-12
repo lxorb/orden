@@ -1,0 +1,356 @@
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+
+import { call, signIn, type TestEnv, testEnv } from './harness'
+import { base32, codeAt, matches, newSecret, otpauth, recoveryCodes } from '../src/second'
+
+interface SecondView {
+  on?: boolean
+  possible?: boolean
+  codesLeft?: number
+  holding?: string
+  secret?: string
+  uri?: string
+  recovery?: string[]
+  second?: boolean
+  token?: string
+  error?: string
+  sessions?: { id: string; name: string; current: boolean; lastUsedAt: number | null }[]
+  ended?: number
+  ok?: boolean
+}
+
+/** The environment secret the factor is kept under. Absent in tests unless a
+ *  test says otherwise, which is itself one of the cases. */
+const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
+
+describe('the codes themselves', () => {
+  test('are base32 the way RFC 4648 writes it', () => {
+    expect(base32(new TextEncoder().encode('f'))).toBe('MY')
+    expect(base32(new TextEncoder().encode('fo'))).toBe('MZXQ')
+    expect(base32(new TextEncoder().encode('foobar'))).toBe('MZXW6YTBOI')
+  })
+
+  test('are the six digits the standard names for a known secret', async () => {
+    // RFC 6238's own test vector: the ASCII secret "12345678901234567890", at
+    // 59 seconds, is 94287082.
+    const secret = [...new TextEncoder().encode('12345678901234567890')]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+
+    expect(await codeAt(secret, Math.floor(59 / 30))).toBe('287082')
+    expect(await codeAt(secret, Math.floor(1111111109 / 30))).toBe('081804')
+    expect(await codeAt(secret, Math.floor(1234567890 / 30))).toBe('005924')
+  })
+
+  test('match now and one step either side, and nothing further out', async () => {
+    const secret = newSecret()
+    const at = 1_700_000_000_000
+
+    expect(await matches(secret, await codeAt(secret, Math.floor(at / 30_000)), at)).toBe(true)
+    expect(await matches(secret, await codeAt(secret, Math.floor(at / 30_000) - 1), at)).toBe(true)
+    expect(await matches(secret, await codeAt(secret, Math.floor(at / 30_000) + 1), at)).toBe(true)
+    expect(await matches(secret, await codeAt(secret, Math.floor(at / 30_000) + 4), at)).toBe(false)
+    expect(await matches(secret, '000000000', at)).toBe(false)
+    expect(await matches(secret, '', at)).toBe(false)
+  })
+
+  test('are offered to an app as a URI it knows', () => {
+    const uri = otpauth(newSecret(), 'a@b.dev')
+
+    expect(uri.startsWith('otpauth://totp/nib%3Aa%40b.dev?secret=')).toBe(true)
+    expect(uri).toContain('issuer=nib')
+    expect(uri).toContain('digits=6')
+  })
+
+  test('and the recovery codes are ten, and all different', () => {
+    const codes = recoveryCodes()
+
+    expect(codes).toHaveLength(10)
+    expect(new Set(codes).size).toBe(10)
+    expect(codes[0]).toMatch(/^[0-9a-f]{5}-[0-9a-f]{5}$/)
+  })
+})
+
+describe('turning it on', () => {
+  let env: TestEnv
+  let token: string
+
+  beforeEach(async () => {
+    env = testEnv(KEPT)
+    token = await signIn(env, 'a@b.dev')
+  })
+
+  afterEach(() => env.close())
+
+  test('is off to begin with, and says whether it can be kept', async () => {
+    const said = await call<SecondView>(env, '/v1/second', { token })
+
+    expect(said.json.on).toBe(false)
+    expect(said.json.possible).toBe(true)
+  })
+
+  test('hands out a secret without turning anything on', async () => {
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+
+    expect(begun.json.secret).toMatch(/^[A-Z2-7]+$/)
+    expect(begun.json.holding).toBeTruthy()
+
+    // Nothing is on until a code out of the app proves it was set up, so
+    // somebody who closes the pane here is not locked out.
+    const said = await call<SecondView>(env, '/v1/second', { token })
+    expect(said.json.on).toBe(false)
+  })
+
+  test('and turns on once a code proves the app has it', async () => {
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const secret = secretOf(env)
+
+    const done = await call<SecondView>(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    expect(done.status).toBe(200)
+    expect(done.json.recovery).toHaveLength(10)
+
+    const said = await call<SecondView>(env, '/v1/second', { token })
+    expect(said.json.on).toBe(true)
+    expect(said.json.codesLeft).toBe(10)
+  })
+
+  test('refuses a code that is not the app’s', async () => {
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const done = await call<SecondView>(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: '000000' },
+    })
+
+    expect(done.status).toBe(400)
+    expect(done.json.error).toBe('that code is not right')
+  })
+
+  test('and offers nothing at all where the service cannot keep a secret', async () => {
+    const bare = testEnv()
+    const other = await signIn(bare, 'a@b.dev')
+
+    const said = await call<SecondView>(bare, '/v1/second', { token: other })
+    expect(said.json.possible).toBe(false)
+
+    const begun = await call<SecondView>(bare, '/v1/second', { token: other, body: {} })
+    expect(begun.status).toBe(503)
+
+    bare.close()
+  })
+})
+
+describe('signing in with it on', () => {
+  let env: TestEnv
+  let secret: string
+
+  beforeEach(async () => {
+    env = testEnv(KEPT)
+    const token = await signIn(env, 'a@b.dev')
+
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    secret = secretOf(env)
+    await call(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
+    })
+  })
+
+  afterEach(() => env.close())
+
+  test('the emailed code is half of it', async () => {
+    const half = await signInHalfWay(env)
+
+    expect(half.json.second).toBe(true)
+    expect(half.json.token).toBeUndefined()
+    expect(half.json.holding).toBeTruthy()
+  })
+
+  test('and the second code finishes it', async () => {
+    const half = await signInHalfWay(env)
+
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    expect(done.status).toBe(200)
+    expect(done.json.token).toBeTruthy()
+
+    const me = await call<SecondView>(env, '/v1/sessions', { token: done.json.token ?? '' })
+    expect(me.status).toBe(200)
+  })
+
+  test('a recovery code finishes it too, and is spent', async () => {
+    // Fresh codes, so the test has one it knows.
+    const token = await signInWith(env, secret)
+    const made = await call<SecondView>(env, '/v1/second/recovery', {
+      token,
+      body: { code: await codeAt(secret, step()) },
+    })
+    const code = made.json.recovery?.[0] ?? ''
+
+    const half = await signInHalfWay(env)
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code },
+    })
+    expect(done.json.token).toBeTruthy()
+
+    // The same code again is nothing.
+    const again = await signInHalfWay(env)
+    const refused = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: again.json.holding, code },
+    })
+    expect(refused.status).toBe(400)
+  })
+
+  test('and a wrong second code is refused', async () => {
+    const half = await signInHalfWay(env)
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: '000000' },
+    })
+
+    expect(done.status).toBe(400)
+    expect(done.json.error).toBe('that code is not right')
+  })
+
+  test('a half-finished sign-in cannot be finished twice', async () => {
+    const half = await signInHalfWay(env)
+    const code = await codeAt(secret, step())
+
+    await call(env, '/v1/auth/second', { body: { holding: half.json.holding, code } })
+    const again = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code },
+    })
+
+    expect(again.status).toBe(400)
+  })
+
+  test('and turning it off takes a code', async () => {
+    const token = await signInWith(env, secret)
+
+    const refused = await call<SecondView>(env, '/v1/second', {
+      method: 'DELETE',
+      token,
+      body: { code: '000000' },
+    })
+    expect(refused.status).toBe(400)
+
+    const off = await call<SecondView>(env, '/v1/second', {
+      method: 'DELETE',
+      token,
+      body: { code: await codeAt(secret, step()) },
+    })
+    expect(off.status).toBe(200)
+
+    const said = await call<SecondView>(env, '/v1/second', { token })
+    expect(said.json.on).toBe(false)
+  })
+})
+
+describe('the sessions a reader can see', () => {
+  let env: TestEnv
+  let token: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+  })
+
+  afterEach(() => env.close())
+
+  test('name the device that opened them, and say which is this one', async () => {
+    const listed = await call<SecondView>(env, '/v1/sessions', { token })
+
+    expect(listed.json.sessions).toHaveLength(1)
+    expect(listed.json.sessions?.[0]?.current).toBe(true)
+  })
+
+  test('and one of them can be ended', async () => {
+    const other = await signIn(env, 'a@b.dev')
+    const listed = await call<SecondView>(env, '/v1/sessions', { token })
+    const theirs = listed.json.sessions?.find((one) => !one.current)
+
+    const gone = await call<SecondView>(env, `/v1/sessions/${theirs?.id ?? ''}`, {
+      method: 'DELETE',
+      token,
+    })
+
+    expect(gone.json.ok).toBe(true)
+
+    const after = await call<SecondView>(env, '/v1/sessions', { token: other })
+    expect(after.status).toBe(401)
+  })
+
+  test('or every one but this', async () => {
+    await signIn(env, 'a@b.dev')
+    await signIn(env, 'a@b.dev')
+
+    const ended = await call<SecondView>(env, '/v1/sessions', { method: 'DELETE', token })
+    expect(ended.json.ended).toBe(2)
+
+    const mine = await call<SecondView>(env, '/v1/sessions', { token })
+    expect(mine.json.sessions).toHaveLength(1)
+  })
+
+  test('and somebody else’s session is not theirs to end', async () => {
+    const other = await signIn(env, 'c@d.dev')
+    const listed = await call<SecondView>(env, '/v1/sessions', { token })
+    const mine = listed.json.sessions?.[0]?.id ?? ''
+
+    const gone = await call<SecondView>(env, `/v1/sessions/${mine}`, {
+      method: 'DELETE',
+      token: other,
+    })
+
+    expect(gone.json.ok).toBe(false)
+
+    const still = await call<SecondView>(env, '/v1/sessions', { token })
+    expect(still.status).toBe(200)
+  })
+})
+
+/** The secret the pending enrolment holds, read out of the table the way only a
+ *  test may: the route hands back base32 and the check wants hex. */
+function secretOf(env: TestEnv): string {
+  const row = env.db
+    .prepare("select value from cached where scope = 'second-pending' order by until desc limit 1")
+    .get() as { value: string } | undefined
+
+  return (row?.value ?? '').split(':')[1] ?? ''
+}
+
+function step(): number {
+  return Math.floor(Date.now() / 30_000)
+}
+
+/** The emailed half of a sign-in for an account that asks for two.
+ *
+ *  The pending row goes first: a second code asked for within thirty seconds is
+ *  answered without a mail being sent, which is the resend gap doing its job and
+ *  not what any of these tests are about. */
+async function signInHalfWay(env: TestEnv) {
+  const { mail } = await import('./harness')
+  env.db.exec('delete from login_codes')
+
+  // The mail is captured whole, so the six digits come out of it the way the
+  // harness's own sign-in reads them.
+  const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+  const said = /(\d{3}) (\d{3})/.exec(logged)
+
+  return await call<SecondView>(env, '/v1/auth/verify', {
+    body: { email: 'a@b.dev', code: `${said?.[1] ?? ''}${said?.[2] ?? ''}` },
+  })
+}
+
+/** A whole sign-in, both halves, for a test that needs a session. */
+async function signInWith(env: TestEnv, secret: string): Promise<string> {
+  const half = await signInHalfWay(env)
+  const done = await call<SecondView>(env, '/v1/auth/second', {
+    body: { holding: half.json.holding, code: await codeAt(secret, step()) },
+  })
+
+  return done.json.token ?? ''
+}

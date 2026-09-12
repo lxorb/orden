@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ask } from './ask'
-import { accountById, auth, presentUser, requireWhoever } from './auth'
+import { accountById, auth, presentUser, requireWhoever, sessions } from './auth'
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
@@ -9,6 +9,7 @@ import { cleanName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
+import { second } from './second'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
@@ -202,6 +203,10 @@ app.route('/v1/spaces', spaces)
 app.route('/v1/trash', trash)
 app.route('/v1/settings', settings)
 app.route('/v1/mcp', mcpAdmin)
+// Which devices are signed in, and the second factor. Behind the guard, where
+// everything about the account is; see auth.ts and second.ts.
+app.route('/v1/sessions', sessions)
+app.route('/v1/second', second)
 app.route('/v1', notes)
 
 app.get('/health', (context) => context.json({ ok: true }))

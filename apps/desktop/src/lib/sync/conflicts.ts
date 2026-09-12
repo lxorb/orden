@@ -24,7 +24,7 @@
  *  the caret to ask about a file they last touched on Tuesday is the wrong shape.
  *  See docs/sync.md. */
 
-export const CONFLICT_RULES = ['both', 'newest', 'ask'] as const
+const CONFLICT_RULES = ['both', 'newest', 'ask'] as const
 
 export type ConflictRule = (typeof CONFLICT_RULES)[number]
 

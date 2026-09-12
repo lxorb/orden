@@ -201,6 +201,26 @@ export interface RemoteNote {
 
 /** A file a space keeps beside its notes: where it sits, and the blob holding
  *  its bytes. Today a PDF, so that a published note linking one can serve it. */
+/** Whether the account asks for a second code when signing in, and how many
+ *  one-shot codes are left for the day the phone is gone. `possible` is false
+ *  where the service has no secret to keep one under. */
+export interface SecondState {
+  on: boolean
+  since: number | null
+  codesLeft: number
+  possible: boolean
+}
+
+/** One session: the device that opened it, when, when it was last seen, and
+ *  whether it is the one asking. */
+export interface RemoteSession {
+  id: string
+  name: string
+  createdAt: number
+  lastUsedAt: number | null
+  current: boolean
+}
+
 /** One version the account holds: when it was written, how big it was, and the
  *  device that sent it. */
 export interface RemoteVersion {
@@ -393,11 +413,63 @@ export const api = {
   /** `guest` is what this device was as a guest, if it was one: handing it over
    *  is how the spaces a link let the device into follow it into the account. */
   verifyCode: (email: string, code: string, guest?: string) =>
-    request<{ token: string; user: Account }>('/v1/auth/verify', {
-      body: { email, code, ...(guest ? { guest } : {}) },
+    request<{ token?: string; user?: Account; second?: boolean; holding?: string }>(
+      '/v1/auth/verify',
+      { body: { email, code, ...(guest ? { guest } : {}) }, device: true },
+    ),
+
+  /** The other half of a sign-in for an account with a second factor: the code
+   *  out of an authenticator app, or one of the recovery codes. */
+  verifySecond: (holding: string, code: string) =>
+    request<{ token: string; user: Account }>('/v1/auth/second', {
+      body: { holding, code },
+      device: true,
     }),
 
   signOut: (token: string) => request<{ ok: true }>('/v1/auth/signout', { method: 'POST', token }),
+
+  /* The second factor, and the sessions it is there to protect. See
+     services/sync/src/second.ts, which says why it is six digits rather than a
+     passkey. */
+
+  second: (token: string) => request<SecondState>('/v1/second', { token }),
+
+  /** A secret to put into an authenticator app. Nothing is on until the confirm
+   *  below proves the app has it. */
+  beginSecond: (token: string) =>
+    request<{ holding: string; secret: string; uri: string }>('/v1/second', {
+      method: 'POST',
+      token,
+      body: {},
+    }),
+
+  confirmSecond: (token: string, holding: string, code: string) =>
+    request<{ on: true; recovery: string[] }>('/v1/second/confirm', {
+      method: 'POST',
+      token,
+      body: { holding, code },
+    }),
+
+  /** Off again, which takes a code: somebody with the session and not the phone
+   *  is who this is there to stop. */
+  endSecond: (token: string, code: string) =>
+    request<{ on: false }>('/v1/second', { method: 'DELETE', token, body: { code } }),
+
+  freshRecovery: (token: string, code: string) =>
+    request<{ recovery: string[] }>('/v1/second/recovery', {
+      method: 'POST',
+      token,
+      body: { code },
+    }),
+
+  sessions: (token: string) => request<{ sessions: RemoteSession[] }>('/v1/sessions', { token }),
+
+  endSession: (token: string, id: string) =>
+    request<{ ok: boolean }>(`/v1/sessions/${id}`, { method: 'DELETE', token }),
+
+  /** Every session but this one. What somebody does when a laptop has gone. */
+  endOtherSessions: (token: string) =>
+    request<{ ended: number }>('/v1/sessions', { method: 'DELETE', token }),
 
   /** Whoever the session belongs to: an account, or the guest a link let in. */
   me: (token: string) => request<{ user?: Account; guest?: Guest }>('/v1/me', { token }),

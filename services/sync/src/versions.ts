@@ -33,7 +33,7 @@ import type { Env, Note } from './types'
 export const KEEP_FOR = 30 * 24 * 60 * 60 * 1000
 
 /** The closest two versions of one note are allowed to be. */
-export const VERSION_EVERY = 5 * 60 * 1000
+const VERSION_EVERY = 5 * 60 * 1000
 
 /** Everything from the last day is kept as it happened; older than that, one per
  *  hour survives. */
@@ -52,7 +52,7 @@ const READ_AT_ONCE = 4000
 const MOST_SHOWN = 300
 
 /** How long a device's name may be. */
-export const DEVICE_LIMIT = 40
+const DEVICE_LIMIT = 40
 
 export interface Version {
   note_id: string

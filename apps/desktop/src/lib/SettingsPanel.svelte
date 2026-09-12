@@ -10,6 +10,7 @@
   import Hint from './Hint.svelte'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
+  import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
@@ -71,6 +72,12 @@
       { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
+      {
+        section: 'account',
+        label: t('Signing in'),
+        text: [t('Ask for a code from an app'), t('Recovery codes left')],
+      },
+      { section: 'account', label: t('Signed in on'), text: [t('End every other session')] },
       {
         section: 'sync',
         label: t('When the same note was written twice'),
@@ -623,6 +630,11 @@
           </p>
         </div>
       </div>
+
+      <!-- What makes the account yours: a second code when signing in, and the
+           devices signed in now. Its own component, because the pane is two small
+           reports rather than a list of settings. -->
+      <Security />
 
       <div class="card">
         <button class="action danger" onclick={() => account.signOut()}>{t('Sign out')}</button>

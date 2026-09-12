@@ -4,7 +4,10 @@ import { called } from './person'
 
 const STORAGE_KEY = 'nib:session'
 
-export type Step = 'email' | 'code'
+/** Where a sign-in is. `second` is the step an account with a second factor
+ *  stands on between the emailed code and the one out of an authenticator app;
+ *  see services/sync/src/second.ts. */
+export type Step = 'email' | 'code' | 'second'
 
 /** A second place to keep the token, for a host whose storage does not outlive a
  *  launch. The Even plugin registers one; nothing else has one, and the plain web
@@ -53,6 +56,12 @@ class Session {
   error = $state<string | null>(null)
   busy = $state(false)
   resendIn = $state(0)
+
+  /** Half a sign-in, for an account that asks for a second code: what the
+   *  emailed code answered with, which the second one is sent back with. Not a
+   *  session and never kept - a sign-in nobody finishes is a sign-in that did
+   *  not happen. */
+  private holding: string | null = null
 
   /** Raised while a fresh sign-in waits for the question about the notes
    *  already on this machine. Syncing holds off until it is answered: a pass
@@ -195,7 +204,27 @@ class Session {
       this.busy = false
     }
 
+    // An account with a second factor is not signed in yet: what came back is
+    // half a sign-in, and the code out of the app finishes it.
+    if (session.second && session.holding) {
+      this.holding = session.holding
+      this.step = 'second'
+      return false
+    }
+
     const { token, user } = session
+    if (!token || !user) {
+      this.error = 'that code is not right'
+      return false
+    }
+
+    await this.settleIn(token, user)
+    return true
+  }
+
+  /** Everything about a session that has just been established, whichever of the
+   *  two ways established it: one code, or a code and then a second one. */
+  private async settleIn(token: string, user: Account): Promise<void> {
     this.guest = null
     localStorage.setItem(STORAGE_KEY, token)
     // Nothing waits on the other store: the session is already in hand, and a
@@ -225,6 +254,29 @@ class Session {
     // false to the caller, which skips the question about the notes already
     // here - and syncing would then start and upload them unasked.
     await this.loadSpaces().catch(() => undefined)
+  }
+
+  /** The other half of a sign-in that asks for two: the code out of the app, or
+   *  one of the recovery codes. Answers whether it was accepted, the way `verify`
+   *  does, so the form knows whether to clear itself. */
+  async second(code: string): Promise<boolean> {
+    if (!this.holding) return false
+
+    this.busy = true
+    this.error = null
+
+    let session
+    try {
+      session = await api.verifySecond(this.holding, code)
+    } catch (error) {
+      this.error = error instanceof ApiError ? error.message : 'could not reach the server'
+      return false
+    } finally {
+      this.busy = false
+    }
+
+    this.holding = null
+    await this.settleIn(session.token, session.user)
     return true
   }
 

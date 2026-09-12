@@ -63,8 +63,3 @@ export function deviceName(): string {
 
   return held
 }
-
-/** For a test that wants a name of its own. */
-export function nameDevice(name: string) {
-  held = name.slice(0, LONGEST)
-}

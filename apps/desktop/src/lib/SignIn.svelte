@@ -26,6 +26,10 @@
    *  resubmit the same digits every time `busy` flips back, burning attempts. */
   let submitted = $state('')
 
+  /** The second factor's other way in, for somebody without their phone. */
+  let recovering = $state(false)
+  let recovery = $state('')
+
   $effect(() => {
     if (account.open && account.step === 'email') emailField?.focus()
   })
@@ -141,6 +145,53 @@
           {account.busy ? t('Sending') : t('Continue')}
         </button>
       </form>
+    {:else if account.step === 'second'}
+      <!-- The other half, for an account with a second factor. The same six
+           boxes: what is typed into them is six digits either way, and the one
+           thing that is different is where they come from. A recovery code is
+           longer and goes in the field under them, for the day the phone is
+           gone. See services/sync/src/second.ts. -->
+      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
+        <p class="sent">{t('Now the code from your authenticator app')}</p>
+
+        <div class="digits">
+          {#each digits as digit, index (index)}
+            <input
+              bind:this={boxes[index]}
+              value={digit}
+              oninput={(event) => onDigit(index, event)}
+              onkeydown={(event) => onDigitKey(index, event)}
+              inputmode="numeric"
+              autocomplete={index === 0 ? 'one-time-code' : 'off'}
+              maxlength="6"
+              aria-label={t('Digit {number}', { number: index + 1 })}
+              style:animation-delay="{index * 32}ms"
+            />
+          {/each}
+        </div>
+
+        {#if recovering}
+          <form
+            onsubmit={(event) => {
+              event.preventDefault()
+              void account.second(recovery)
+            }}
+          >
+            <input
+              bind:value={recovery}
+              type="text"
+              placeholder={t('Recovery code')}
+              aria-label={t('Recovery code')}
+              spellcheck="false"
+            />
+            <button type="submit" disabled={account.busy}>{t('Continue')}</button>
+          </form>
+        {:else}
+          <button class="link" type="button" onclick={() => (recovering = true)}>
+            {t('Use a recovery code')}
+          </button>
+        {/if}
+      </div>
     {:else}
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Code sent to')} <strong>{account.email}</strong></p>

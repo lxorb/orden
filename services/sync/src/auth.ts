@@ -13,7 +13,9 @@ import {
 import { codeMessage, mailer } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings } from './limits'
+import { accepted, asksForSecond, halfWay, whoseHalf } from './second'
 import { makeFirstSpace } from './spaces/first'
+import { deviceIn } from './versions'
 import type { Env, User, Variables, Whoever } from './types'
 
 const CODE_TTL = 10 * 60 * 1000
@@ -25,15 +27,30 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
   const hash = await sha256(token)
 
   const row = await env.DB.prepare(
-    `select u.id, u.email, u.name, u.created_at
+    `select u.id, u.email, u.name, u.created_at, s.last_used_at as seen
        from sessions s join users u on u.id = s.user_id
       where s.token_hash = ? and s.expires_at > ?`,
   )
     .bind(hash, now())
-    .first<User>()
+    .first<User & { seen: number | null }>()
 
-  return row ?? null
+  if (!row) return null
+
+  // When a session was last seen, so the list of them can say. Written at most
+  // once an hour per session rather than on every request: what the reader wants
+  // to know is "today" or "in March", and a write per request would be a write
+  // per keystroke of somebody else's typing.
+  if (!row.seen || now() - row.seen > SEEN_EVERY) {
+    await env.DB.prepare('update sessions set last_used_at = ? where token_hash = ?')
+      .bind(now(), hash)
+      .run()
+  }
+
+  return { id: row.id, email: row.email, name: row.name, created_at: row.created_at }
 }
+
+/** How often a session's own row learns that it is still in use. */
+const SEEN_EVERY = 60 * 60 * 1000
 
 /** The token an `Authorization` header carries, or nothing. The scheme is read
  *  without regard to case, as RFC 7235 says it is written: a client that sends
@@ -77,14 +94,15 @@ export function accountById(env: Env, id: string): Promise<User | null> {
 /** A session for an account, and the row behind it. Sessions that ran out are
  *  cleared as new ones arrive: nothing else would ever take them away, and a
  *  row nobody can use is only a row. */
-export async function openSession(env: Env, userId: string): Promise<string> {
+export async function openSession(env: Env, userId: string, device = ''): Promise<string> {
   await env.DB.prepare('delete from sessions where expires_at < ?').bind(now()).run()
 
   const token = randomToken()
   await env.DB.prepare(
-    'insert into sessions (token_hash, user_id, created_at, expires_at) values (?, ?, ?, ?)',
+    `insert into sessions (token_hash, user_id, created_at, expires_at, id, name, last_used_at)
+     values (?, ?, ?, ?, ?, ?, ?)`,
   )
-    .bind(await sha256(token), userId, now(), now() + SESSION_TTL)
+    .bind(await sha256(token), userId, now(), now() + SESSION_TTL, newId(), device, now())
     .run()
 
   return token
@@ -329,13 +347,116 @@ auth.post('/verify', async (context) => {
 
   await claimWhatWasGuested(context.env, user, held ?? null)
 
-  return context.json({ token: await openSession(context.env, user.id), user: presentUser(user) })
+  // An account with a second factor is not signed in yet: what comes back is
+  // half a sign-in, which the code out of an authenticator app finishes. The
+  // guest's spaces are claimed above either way - proving the address is what
+  // that turned on, and it has been proved. See second.ts.
+  if (await asksForSecond(context.env, user.id)) {
+    return context.json({ second: true, holding: await halfWay(context.env, user) })
+  }
+
+  return context.json({
+    token: await openSession(context.env, user.id, deviceIn(context.req.header('x-nib-device'))),
+    user: presentUser(user),
+  })
+})
+
+/** The other half of a sign-in that asks for a second factor: the code out of
+ *  the app, or one of the recovery codes.
+ *
+ *  Outside the session guard like the two steps before it, because there is no
+ *  session yet - that is the whole point of standing here. */
+auth.post('/second', async (context) => {
+  const body = await readBody(context)
+  const holding = body.text('holding', TOKEN_LIMIT)
+  const code = body.text('code', 64)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
+  const whose = holding ? await whoseHalf(context.env, holding) : null
+  if (!whose) return context.json({ error: 'start again - that took too long' }, 400)
+
+  if (!(await accepted(context.env, whose, code ?? ''))) {
+    return context.json({ error: 'that code is not right' }, 400)
+  }
+
+  const user = await accountById(context.env, whose)
+  if (!user) return context.json({ error: 'that code is not right' }, 400)
+
+  return context.json({
+    token: await openSession(context.env, user.id, deviceIn(context.req.header('x-nib-device'))),
+    user: presentUser(user),
+  })
 })
 
 /** The account as the app sees it: never the session, never the timestamps. */
 export function presentUser(user: User) {
   return { id: user.id, email: user.email, name: user.name }
 }
+
+/** Every session this account has open, and the two ways to close one.
+ *
+ *  A session row used to say nothing but its own hash and when it expires, so
+ *  nobody could answer "is anybody else signed in as me" and nothing could be
+ *  done about it if they were. Which made a second factor half a feature: it
+ *  stops somebody getting in and does nothing about somebody already inside.
+ *
+ *  Behind the session guard, so `sessions` is mounted from index.ts rather than
+ *  here beside the sign-in. */
+export const sessions = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+sessions.get('/', async (context) => {
+  const user = context.get('user')
+  const mine = await sha256(tokenIn(context.req.header('authorization')) ?? '')
+
+  const { results } = await context.env.DB.prepare(
+    `select id, name, created_at, last_used_at, token_hash from sessions
+      where user_id = ? and expires_at > ? order by last_used_at desc, created_at desc`,
+  )
+    .bind(user.id, now())
+    .all<{
+      id: string | null
+      name: string
+      created_at: number
+      last_used_at: number | null
+      token_hash: string
+    }>()
+
+  return context.json({
+    sessions: results.map((one) => ({
+      id: one.id ?? '',
+      name: one.name,
+      createdAt: one.created_at,
+      lastUsedAt: one.last_used_at,
+      // Which row is the one asking, so the app can say "this device" and keep
+      // its own row out of "end every other".
+      current: equals(one.token_hash, mine),
+    })),
+  })
+})
+
+sessions.delete('/:id', async (context) => {
+  const user = context.get('user')
+  const gone = await context.env.DB.prepare('delete from sessions where user_id = ? and id = ?')
+    .bind(user.id, context.req.param('id'))
+    .run()
+
+  return context.json({ ok: !!gone.meta.changes })
+})
+
+/** Everything except the one asking. What somebody does when a laptop has gone
+ *  missing: the sessions end, and every device that had one signs in again. */
+sessions.delete('/', async (context) => {
+  const user = context.get('user')
+  const mine = tokenIn(context.req.header('authorization')) ?? ''
+
+  const gone = await context.env.DB.prepare(
+    'delete from sessions where user_id = ? and token_hash <> ?',
+  )
+    .bind(user.id, await sha256(mine))
+    .run()
+
+  return context.json({ ended: gone.meta.changes })
+})
 
 auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))

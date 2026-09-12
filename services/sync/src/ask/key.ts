@@ -70,7 +70,7 @@ function bytes(text: string): Uint8Array {
  *
  *  HKDF over the environment's secret with the account's id as `info`, so every
  *  account has a different one and none of them is ever written down. */
-async function under(secret: string, userId: string): Promise<CryptoKey> {
+async function under(secret: string, userId: string, salt: string): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey('raw', encoder.encode(secret), 'HKDF', false, [
     'deriveKey',
   ])
@@ -79,7 +79,7 @@ async function under(secret: string, userId: string): Promise<CryptoKey> {
     {
       name: 'HKDF',
       hash: 'SHA-256',
-      salt: encoder.encode(SALT),
+      salt: encoder.encode(salt),
       info: encoder.encode(userId),
     },
     material,
@@ -90,11 +90,19 @@ async function under(secret: string, userId: string): Promise<CryptoKey> {
 }
 
 /** One key, sealed. */
-export async function sealed(secret: string, userId: string, key: string): Promise<string> {
+export async function sealed(
+  secret: string,
+  userId: string,
+  key: string,
+  /** Which derivation this is. A second thing encrypted under the same
+   *  environment secret gets its own, which is what the salt is for; see
+   *  second.ts. */
+  salt: string = SALT,
+): Promise<string> {
   const nonce = crypto.getRandomValues(new Uint8Array(12))
   const sealedBytes = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(userId) },
-    await under(secret, userId),
+    await under(secret, userId, salt),
     encoder.encode(key),
   )
 
@@ -109,6 +117,7 @@ export async function opened(
   secret: string,
   userId: string,
   stored: string,
+  salt: string = SALT,
 ): Promise<string | null> {
   const [version, nonce, body] = stored.split('.')
   if (version !== VERSION || !nonce || !body) return null
@@ -116,7 +125,7 @@ export async function opened(
   try {
     const open = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: bytes(nonce), additionalData: encoder.encode(userId) },
-      await under(secret, userId),
+      await under(secret, userId, salt),
       bytes(body),
     )
     return decoder.decode(open)
