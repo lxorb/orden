@@ -574,17 +574,24 @@ def hand(page: Page, share: dict) -> None:
     page.wait_for_timeout(300)
 
 
+def tile(page: Page, command: str) -> None:
+    """A quick settings tile pressed: the id of a row in the app's own registry,
+    arriving the way a share does."""
+    page.evaluate(
+        """(command) => {
+             window.__android.handed = JSON.stringify({ command, open: '' })
+             window.__nibHanded()
+           }""",
+        command,
+    )
+
+
 def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     """A quick settings tile is a command id; a widget row is a path. Both arrive
     the same way a share does."""
     before = page.evaluate(STATE)
 
-    page.evaluate(
-        """() => {
-             window.__android.handed = '{"command":"new","open":""}'
-             window.__nibHanded()
-           }"""
-    )
+    tile(page, "new")
     page.wait_for_timeout(900)
     after = page.evaluate(STATE)
     say(f"[tile] new note: {json.dumps(after)}")
@@ -593,15 +600,35 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     if after["open"] is not None or after["doc"] != "" or after["name"] == before["name"]:
         wrong(f"the tile did not open a blank note: {json.dumps(after)}")
 
-    # And an id nothing answers to, which is what the recorder's tile is until the
-    # recorder lands.
+    # The recorder's tile, which was the id nothing answered to until the recorder
+    # landed and now reaches the same row the palette offers: the press makes the
+    # recording's note. The row is read first, because a row the palette greys out
+    # does nothing from a tile either - which is the rule this whole file is about -
+    # and a machine with no way to record greys this one out. Pressed again after, so
+    # the run leaves nothing listening.
+    palette(page, "Record")
+    offered = next((one for one in rows(page) if one["label"] == "Record"), None)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+    say(f"[tile] the palette's own Record row: {json.dumps(offered)}")
+
     quiet = page.evaluate(STATE)
-    page.evaluate(
-        """() => {
-             window.__android.handed = '{"command":"record","open":""}'
-             window.__nibHanded()
-           }"""
-    )
+    tile(page, "record")
+    page.wait_for_timeout(1200)
+    started = page.evaluate(STATE)
+    say(f"[tile] after the recorder's tile: {started['name']!r}")
+    if offered and not offered["dim"]:
+        if started == quiet:
+            wrong("the recorder's tile did nothing, though the app has the row")
+        tile(page, "record")
+        page.wait_for_timeout(900)
+    elif started != quiet:
+        wrong(f"a greyed Record row did something from a tile anyway: {json.dumps(started)}")
+
+    # And an id nothing answers to, which is what keeps a tile from a newer build
+    # inert in an older one.
+    quiet = page.evaluate(STATE)
+    tile(page, "not-a-command")
     page.wait_for_timeout(700)
     if page.evaluate(STATE) != quiet:
         wrong("a command the app does not have did something anyway")
