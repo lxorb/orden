@@ -5,7 +5,7 @@
  *  place for both roads in. See inside.ts, which is the half that judges the path
  *  without knowing anything about spaces. */
 
-import { insideSpace, relativeTo } from '../space-paths'
+import { insideSpace, withinSpace } from '../space-paths'
 import type { Space } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
 import { said, type Said } from './args'
@@ -60,8 +60,8 @@ export function relativeIn(args: Said, name = 'path'): string {
 }
 
 /** The note a verb is about: the one it named, or the one on screen when it named
- *  none. Reading what is open is what makes `nib words` and `nib outline` answer
- *  about the thing in front of the reader.
+ *  none and the space holds that one. Reading what is open is what makes `nib
+ *  words` and `nib outline` answer about the thing in front of the reader.
  *
  *  Throws when the note is not there, because every caller of this is about to
  *  read or count its words and there is nothing honest to answer with. */
@@ -73,8 +73,21 @@ export async function noteFor(args: Said, name = 'path'): Promise<Note> {
     const path = open?.path
     if (!open || !path) throw new Error('no note is open, so say which path')
 
+    // And it has to be this space's note. A note is opened from anywhere - a file
+    // the shell handed over, something in a downloads folder - and a caller that
+    // names no path is otherwise handed whatever that is: read by `notes.read`,
+    // and written by `properties.set`, which is the only verb here that changes a
+    // note it did not have to name. The reach of a link is the space or nothing.
+    //
+    // Refused without the path in the sentence, for the same reason the answer
+    // carries `relative` rather than `path`: where a file outside the space sits
+    // on this disk is this machine's own layout, and the caller is whoever wrote
+    // the link.
+    const relative = withinSpace(space.root, path)
+    if (relative === null) throw new Error('no note of this space is open, so say which path')
+
     workspace.flush()
-    return { relative: relativeTo(space.root, path), path, text: open.doc }
+    return { relative, path, text: open.doc }
   }
 
   const relative = relativeIn(args, name)

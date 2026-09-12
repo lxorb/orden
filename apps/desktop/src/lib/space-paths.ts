@@ -5,6 +5,7 @@
  *  `folder/Note`. One file for the two conversions, because publishing, the link
  *  index and the composer all need them. */
 
+import { insideOnly } from './automation/inside'
 import { joinPath } from './tauri'
 
 /** A path inside a space as the space speaks of it: relative to the root, and
@@ -15,6 +16,28 @@ export function relativeTo(root: string, path: string): string {
     .slice(root.length)
     .replace(/^[\\/]+/, '')
     .replace(/\\/g, '/')
+}
+
+/** The same, for a path that may not be inside the space at all: null when this
+ *  root does not hold it.
+ *
+ *  `relativeTo` hands a path it does not recognise straight back, because it is
+ *  asked about paths already known to be inside a space - every row of the file
+ *  list. This is the one to ask about a path that arrived from somewhere else: the
+ *  note somebody opened out of a downloads folder, a path read back out of
+ *  storage. The root has to hold it, and what is left over has to be something the
+ *  space would take, which is `insideOnly` - the same judge a `nib://` link's path
+ *  goes through - so a path that climbs back out from under the root is refused
+ *  here as it is there.
+ *
+ *  Both separators, because which one a path is written with says nothing about
+ *  where it points. */
+export function withinSpace(root: string, path: string): string | null {
+  const folder = root.replace(/\\/g, '/').replace(/\/+$/, '')
+  const file = path.replace(/\\/g, '/')
+  if (!folder || !file.startsWith(`${folder}/`)) return null
+
+  return insideOnly(file.slice(folder.length + 1))
 }
 
 /** The same path back as one the filesystem understands. */

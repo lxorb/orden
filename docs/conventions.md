@@ -83,7 +83,12 @@ where that stops being true:
   device. `insideSpace` then only concatenates, which cannot leave a root
   given steps that hold no `..`. A link reaches four verbs and no writing
   one; `eval` is refused in the crate, before the window is asked, unless
-  the endpoint file turns it on.
+  the endpoint file turns it on. A caller that names no path at all is
+  answered about the note on screen, and that note is judged too: a note
+  opened from a downloads folder is outside every space, so `noteFor` in
+  `automation/space.ts` refuses it through `withinSpace`, which is
+  `insideOnly` under a space's root. The answer names a note relative to
+  the space and never by a path on this disk.
 - **A link inside a note**, because a note can arrive from a shared space, a
   room, a pull or a paste, so its prose is somebody else's. `followLink` in
   `apps/desktop/src/lib/workspace.svelte.ts` judges the target with that
