@@ -24,9 +24,7 @@
 
   <div class="actions">
     <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
-    <button class="nib-button" disabled={restarting} onclick={restart}
-      >{t('Restart now')}</button
-    >
+    <button class="nib-button" disabled={restarting} onclick={restart}>{t('Restart now')}</button>
   </div>
 </div>
 
