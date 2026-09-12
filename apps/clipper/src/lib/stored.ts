@@ -10,6 +10,8 @@
  *  The app does the same in `apps/desktop/src/lib/stored.ts`; these are the few
  *  checks the clipper needs, under the same names. */
 
+import type { Space } from './api'
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -27,6 +29,22 @@ export function text(value: unknown, key: string): string | null {
   if (!isRecord(value)) return null
   const one = value[key]
   return isString(one) ? one : null
+}
+
+/** One of the account's spaces, or null for a row that does not say what one is.
+ *
+ *  Two places are handed a space: the sync API answers with a list of them, and
+ *  `chrome.storage` gives back the list that was remembered. Both used to read one
+ *  for themselves and they had drifted - the stored reader wanted a finite
+ *  position, the API's took any number, so a reply carrying a `NaN` came through
+ *  one and not the other and the picker's order went with it. */
+export function readSpace(value: unknown): Space | null {
+  const id = text(value, 'id')
+  const name = text(value, 'name')
+  if (id === null || name === null) return null
+
+  const position = isRecord(value) ? value.position : null
+  return { id, name, position: isNumber(position) ? position : 0 }
 }
 
 /** `JSON.parse` without the throw: null for nonsense. */

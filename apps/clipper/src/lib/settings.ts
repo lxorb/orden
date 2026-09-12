@@ -10,7 +10,7 @@
  *  off the network and under a frame. */
 
 import type { Space } from './api'
-import { isNumber, isRecord, isString, listOf } from './stored'
+import { isRecord, isString, listOf, readSpace, text } from './stored'
 
 export type Theme = 'system' | 'dark' | 'light'
 
@@ -42,11 +42,6 @@ const KEYS = {
 
 const THEMES: Theme[] = ['system', 'dark', 'light']
 
-function readSpace(value: unknown): Space | null {
-  if (!isRecord(value) || !isString(value.id) || !isString(value.name)) return null
-  return { id: value.id, name: value.name, position: isNumber(value.position) ? value.position : 0 }
-}
-
 function readTarget(value: unknown): Target {
   if (!isRecord(value)) return { spaceId: '', folder: '' }
 
@@ -54,11 +49,6 @@ function readTarget(value: unknown): Target {
     spaceId: isString(value.spaceId) ? value.spaceId : '',
     folder: isString(value.folder) ? value.folder : '',
   }
-}
-
-function text(held: Record<string, unknown>, key: string): string | null {
-  const value = held[key]
-  return isString(value) ? value : null
 }
 
 function shape(held: Record<string, unknown>): Settings {

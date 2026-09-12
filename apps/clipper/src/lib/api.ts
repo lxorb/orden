@@ -12,7 +12,7 @@
  *  but cannot upload a blob, and a clip without its pictures is a note that
  *  breaks the day the article moves. */
 
-import { isRecord, listOf, parsed, text } from './stored'
+import { isRecord, listOf, parsed, readSpace, text } from './stored'
 
 export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
 
@@ -65,16 +65,6 @@ async function request(
 function readAccount(value: unknown): Account | null {
   const email = text(isRecord(value) ? value.user : null, 'email')
   return email === null ? null : { email }
-}
-
-function readSpace(value: unknown): Space | null {
-  if (!isRecord(value)) return null
-
-  const id = text(value, 'id')
-  const name = text(value, 'name')
-  if (id === null || name === null) return null
-
-  return { id, name, position: typeof value.position === 'number' ? value.position : 0 }
 }
 
 /** What the service answered, or a refusal saying it made no sense. A reply the
