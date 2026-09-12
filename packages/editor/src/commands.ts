@@ -201,13 +201,13 @@ export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
 }
 
 /** Inserts a block on its own lines, leaving the caret where you type next. */
-function insertBlock(build: (indent: string) => { text: string; caret: number }): StateCommand {
+function insertBlock(build: () => { text: string; caret: number }): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
     const line = state.doc.lineAt(range.from)
     const atLineStart = range.from === line.from && range.empty
 
-    const { text, caret } = build('')
+    const { text, caret } = build()
     const prefix = atLineStart || !line.text ? '' : '\n'
     const insert = prefix + text
 
@@ -282,7 +282,7 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
 
 /** Enter at the end of an opening fence closes the fence as well, with the
  *  caret on the blank line between. The parser treats a fence nothing closes
- *  as plain text (see `FencedCode` in markdown/extensions.ts), so this is
+ *  as plain text (see `FencedCode` in markdown/fences.ts), so this is
  *  what turns a typed ``` into a code block: typing it does nothing, Enter
  *  makes the block. Only a fence nothing later closes gets this; Enter on a
  *  closed one, or on the closing line of a block, is left to the ordinary
