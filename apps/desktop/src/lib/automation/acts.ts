@@ -21,7 +21,7 @@ import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
-import { noteFor, relativeIn, spaceFor } from './space'
+import { insidePath, noteFor, relativeIn, spaceFor } from './space'
 
 /** What a note's name may end in for the app to treat it as one. */
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
@@ -43,7 +43,9 @@ export async function openNote(args: Said): Promise<unknown> {
 
   // A name rather than a path is what a link written by hand usually says, and
   // what the index already answers: `nib://open?path=Plan` finds `notes/Plan.md`.
-  const relative = named(asked) ?? relativeIn(args)
+  // Resolved first and judged after, so the index's answer is a path on the same
+  // terms as one the caller wrote out; see `insidePath`.
+  const relative = insidePath(named(asked) ?? asked)
   const path = insideSpace(space.root, relative)
 
   const heading = said(args, 'heading')
@@ -63,7 +65,8 @@ export async function openNote(args: Said): Promise<unknown> {
 }
 
 /** The path the index holds for a bare note name, or null when the caller gave
- *  something that looks like a path already. */
+ *  something that looks like a path already. Not a judged path: what it answers is
+ *  judged by the caller, which is the only caller it has. */
 function named(asked: string): string | null {
   if (asked.includes('/') || asked.includes('\\')) return null
 

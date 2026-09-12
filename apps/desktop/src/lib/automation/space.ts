@@ -53,6 +53,15 @@ export function relativeIn(args: Said, name = 'path'): string {
   const asked = said(args, name)
   if (!asked) throw new Error(`say which ${name}`)
 
+  return insidePath(asked)
+}
+
+/** One path, judged. Whatever a verb worked out that a path might be, this is what
+ *  makes it one: `openNote` asks the file index what a bare note name is and hands
+ *  the answer here, so a name and a path come to the same judge rather than the
+ *  index's answer being trusted for being the index's. Resolve first, then judge -
+ *  nothing between this and `insideSpace`. */
+export function insidePath(asked: string): string {
   const safe = insideOnly(asked)
   if (safe === null) throw new Error(`${asked} is not a path inside the space`)
 
