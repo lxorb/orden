@@ -105,6 +105,9 @@ GESTURE = 1500
 #: How many launches a lane gets before any of them is timed; see `ready`.
 WARMING = 3
 
+#: How long the machine is left alone between one lane's round and the next.
+SETTLING = 2000
+
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
@@ -772,6 +775,7 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
     opened = page.evaluate(OPEN_GRAPH)
     lane.profile("graph opened", opened.pop("loaf"))
 
+    page.wait_for_selector(".graph, canvas", state="visible", timeout=90000)
     box = page.locator(".graph, canvas").first.bounding_box()
     if not box:
         return opened
@@ -813,6 +817,10 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     if not opened.get("ms"):
         return {}
 
+    # The element, and a size for it. A plane of ten thousand strokes is still
+    # laying itself out when the div arrives, and a locator asked for a box before
+    # then waits its own thirty seconds and gives up.
+    page.wait_for_selector(".canvas", state="visible", timeout=90000)
     box = page.locator(".canvas").first.bounding_box()
     if not box:
         return {"canvas-open": opened["ms"]}
@@ -1016,6 +1024,11 @@ class Lane:
         page.wait_for_timeout(2500)
         say(f"{self.name}: session written")
 
+    def quiet(self) -> None:
+        """A moment with nothing happening, before something is timed."""
+        if self.page:
+            self.page.wait_for_timeout(SETTLING)
+
     def sweep(self) -> None:
         """The collector, asked. A heap read with garbage still in it is a number
         about when the collector last ran."""
@@ -1145,6 +1158,12 @@ def main() -> int:
                         for other in lanes:
                             if other is not lane:
                                 other.park()
+                        # Parking three pages tears three renderers down, and a
+                        # launch measured in the same breath wore it: whichever lane
+                        # went second in a round paid the best part of a second, and
+                        # it flipped with the order. So the machine is given a moment
+                        # to be quiet again before anything is timed.
+                        lane.quiet()
                         lane.round(part)
 
             browser.close()
