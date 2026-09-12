@@ -293,6 +293,7 @@ class Links {
    *  `space_tags` counts uses rather than notes and keeps the spelling; see the note
    *  beside it in search.rs. */
   tagCounts(): { tag: string; count: number }[] {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- counted and thrown away inside one call
     const counts = new Map<string, number>()
     for (const note of this.notes) {
       for (const tag of note.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)

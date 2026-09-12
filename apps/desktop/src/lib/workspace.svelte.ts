@@ -2410,7 +2410,7 @@ class Workspace {
     if (!links.scanning) return
 
     await links.scanned()
-    if (this.activeSpace?.root === root) this.tags = links.tagCounts()
+    if (this.activeSpace.root === root) this.tags = links.tagCounts()
   }
 
   /** Renames a tag, and everything under it, in every note of the space.

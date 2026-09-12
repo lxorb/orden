@@ -419,9 +419,7 @@ describe('a document too long to parse', () => {
     let held = 0
     for (let at = 0; held < characters; at++) {
       const line =
-        at % 12 === 0
-          ? `## Part ${at}`
-          : `Line ${at} with **bold**, *italic* and a [[link]] in it.`
+        at % 12 === 0 ? `## Part ${at}` : `Line ${at} with **bold**, *italic* and a [[link]] in it.`
       lines.push(line)
       held += line.length + 1
     }
@@ -509,8 +507,9 @@ describe('a document too long to parse', () => {
   })
 
   test('and strict mode on a short one is still strict', () => {
-    const strict = opened(SHORT).update({ effects: modeEffects({ ...DEFAULTS, strict: true }) })
-      .state
+    const strict = opened(SHORT).update({
+      effects: modeEffects({ ...DEFAULTS, strict: true }),
+    }).state
 
     expect(parsedFully(strict)).toBe(true)
     // Strict markdown has no tables, which is the one thing to see from here.

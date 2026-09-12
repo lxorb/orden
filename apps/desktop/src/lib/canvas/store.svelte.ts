@@ -405,6 +405,7 @@ export class CanvasStore implements PlaneSurface {
  *
  *  Weak references, so a canvas that has been closed is collected with everything
  *  else about it and this list never keeps one alive. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
 
 /** Every plane's file written now. Said to `parting.ts` when this module is first
