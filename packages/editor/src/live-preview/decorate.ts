@@ -431,13 +431,11 @@ class Decorator {
           // The caption steps aside while the fence shows its own text: the same
           // words are on the line then, and both would be drawn in one place.
           overlaps(this.state, node.from, node.to) ? '' : fenceCaption(this.state, node),
-          fenceCode(this.state, node),
           infoFrom,
           // The language's own end, not the info string's, so retyping the
           // language leaves the caption after it alone.
           infoFrom + language.length,
           open.from,
-          doc.lineAt(node.to).to,
         ),
         side: 1,
       }).range(open.to),

@@ -3,8 +3,9 @@ import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.
 import { iconElement } from '../icon'
+import { fenceCodeAt } from '../fence'
 import { label as uiLabel } from '../labels'
-import { isRunnableLanguage, runFence } from '../run/run'
+import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/run'
 
 export class BulletWidget extends NibWidget {
   constructor(private readonly depth: number) {
@@ -117,7 +118,15 @@ export class CalloutWidget extends NibWidget {
 }
 
 /** Sits on a code fence's top line: what the block is, what language it is, and
- *  a way to take it. */
+ *  a way to take it.
+ *
+ *  What it does not hold is the block's code. This is built again for every visible
+ *  block on every keystroke, and the code is not drawn here - it is what a press on
+ *  copy or on run asks for, which happens a handful of times in the life of a note.
+ *  So the widget keeps the block's first line and reads the code from the document
+ *  when a press comes. Carrying it meant slicing every visible block's code out of
+ *  the document on each keystroke and then comparing all of it, character by
+ *  character, against the copy the last keystroke made. */
 export class FenceHeaderWidget extends NibWidget {
   constructor(
     private readonly language: string,
@@ -126,14 +135,13 @@ export class FenceHeaderWidget extends NibWidget {
      *  are already on the line and printing them twice would be printing them
      *  over each other. */
     private readonly caption: string,
-    private readonly code: string,
     /** Where the language name lives in the document, so it can be retyped
      *  without disturbing the caption after it. */
     private readonly infoFrom: number,
     private readonly infoTo: number,
-    /** The block's own lines, first to last, which is what a run is keyed by. */
+    /** Where the block's own first line begins, which is the place the code and a
+     *  run are found by. */
     private readonly blockFrom: number,
-    private readonly blockTo: number,
   ) {
     super()
   }
@@ -142,10 +150,8 @@ export class FenceHeaderWidget extends NibWidget {
     return (
       other.language === this.language &&
       other.caption === this.caption &&
-      other.code === this.code &&
       other.infoFrom === this.infoFrom &&
-      other.blockFrom === this.blockFrom &&
-      other.blockTo === this.blockTo
+      other.blockFrom === this.blockFrom
     )
   }
 
@@ -227,7 +233,7 @@ export class FenceHeaderWidget extends NibWidget {
       event.stopPropagation()
 
       navigator.clipboard
-        .writeText(this.code)
+        .writeText(fenceCodeAt(view.state, this.blockFrom))
         .then(() => {
           copy.classList.add('nib-fence-copied')
           copy.title = uiLabel('copied')
@@ -304,7 +310,10 @@ export class FenceHeaderWidget extends NibWidget {
     run.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      runFence(view, { from: this.blockFrom, to: this.blockTo, code: this.code })
+      // Read now rather than remembered: the same block, as the document holds it
+      // at the moment of the press. Null where the block has stopped being one.
+      const fence = runnableFenceAt(view.state, this.blockFrom)
+      if (fence) runFence(view, fence)
     })
 
     return run

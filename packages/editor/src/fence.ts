@@ -1,6 +1,8 @@
+import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { captionIn, languageIn } from '@nib/markdown/code'
+import { enclosingNamed } from './nodes'
 
 /** Reading a fenced code block back out of the document.
  *
@@ -49,4 +51,17 @@ export function fenceCode(state: EditorState, node: SyntaxNode): string {
     .getChildren('CodeText')
     .map((piece) => state.doc.sliceString(piece.from, piece.to))
     .join('')
+}
+
+/** The code of the fenced block a position is in, or the empty string where it is
+ *  in none.
+ *
+ *  For a reader that holds a place in the document rather than a node, and wants
+ *  the code at the moment it asks: the header drawn on a block's top line is built
+ *  again on every keystroke, and copying a block is one press in the life of the
+ *  note - so the header keeps the place and reads the code when the press comes,
+ *  rather than carrying a copy of every visible block's code around. */
+export function fenceCodeAt(state: EditorState, pos: number): string {
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, 1), 'FencedCode')
+  return node ? fenceCode(state, node) : ''
 }

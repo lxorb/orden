@@ -2,6 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { buildDecorations } from './decorate'
+import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
@@ -683,5 +684,70 @@ describe('underline', () => {
 
   test('leaves other inline tags alone', () => {
     expect(concealed('a <b>bold</b> b')).toEqual([])
+  })
+})
+
+/** Ten blocks of a thousand characters each, which is an ordinary page of notes
+ *  about code and is rebuilt on every keystroke. */
+const BODY = 'const x = 1 // padding to make this line long enough to matter\n'.repeat(16)
+const MANY_FENCES = Array.from({ length: 10 }, () => `\`\`\`js\n${BODY}\`\`\`\n\n`).join('')
+
+/** The headers drawn on the top line of each block. */
+function headers(doc: string, cursor: number): FenceHeaderWidget[] {
+  const { decorations } = buildDecorations(state(doc, cursor))
+  const found: FenceHeaderWidget[] = []
+
+  decorations.between(0, doc.length, (_from, _to, value) => {
+    const widget: unknown = value.spec.widget
+    if (widget instanceof FenceHeaderWidget) found.push(widget)
+  })
+
+  return found
+}
+
+/** How many characters of the document get sliced out of it while the decorations
+ *  are built. Counted on the document itself, so every reader of it is counted. */
+function slicedWhileBuilding(doc: string, cursor: number): number {
+  const built = state(doc, cursor)
+  const text = built.doc
+  const real = text.sliceString.bind(text)
+  let chars = 0
+
+  Object.defineProperty(text, 'sliceString', {
+    configurable: true,
+    value: (from: number, to?: number, lineSep?: string) => {
+      chars += (to ?? text.length) - from
+      return real(from, to, lineSep)
+    },
+  })
+
+  buildDecorations(built)
+  return chars
+}
+
+describe('what a keystroke in a note full of code costs', () => {
+  test('the headers read none of the code they sit on', () => {
+    // The header used to be built with the block's code in hand, so every
+    // keystroke sliced all ten bodies out of the document - ten thousand
+    // characters - to draw ten rows that show a language and two buttons.
+    expect(headers(MANY_FENCES, MANY_FENCES.length)).toHaveLength(10)
+    expect(slicedWhileBuilding(MANY_FENCES, MANY_FENCES.length)).toBeLessThan(BODY.length)
+  })
+
+  test('and typing inside a block leaves its header as it was', () => {
+    // Which is what the widget comparison decides. Comparing the code meant the
+    // whole of every visible body, character by character, on each keystroke -
+    // and then a row rebuilt for a change that never showed in it.
+    const one = headers('```js\nlet a = 1\n```\n\nx', 22)[0]
+    const other = headers('```js\nlet a = 12\n```\n\nx', 23)[0]
+
+    expect(one && other && one.eq(other)).toBe(true)
+  })
+
+  test('but a header whose own words changed is drawn again', () => {
+    const one = headers('```js\nlet a = 1\n```\n\nx', 22)[0]
+    const other = headers('```ts setup\nlet a = 1\n```\n\nx', 28)[0]
+
+    expect(one && other && one.eq(other)).toBe(false)
   })
 })

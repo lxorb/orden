@@ -3,7 +3,7 @@ import { syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { describe, expect, test } from 'vitest'
-import { fenceCaption, fenceCode, fenceLanguage } from './fence'
+import { fenceCaption, fenceCode, fenceCodeAt, fenceLanguage } from './fence'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
@@ -61,5 +61,35 @@ describe('what a fence says', () => {
   test('the code is the code either way', () => {
     const { state, node } = fence('```ts src/main.ts\nlet a = 1\nlet b = 2\n```')
     expect(fenceCode(state, node)).toBe('let a = 1\nlet b = 2')
+  })
+})
+
+describe('the code at a place in the document', () => {
+  /** What the header on a block's top line asks for when copy or run is pressed:
+   *  it keeps the place and not the code. */
+  const doc = '# One\n\n```ts\nlet a = 1\nlet b = 2\n```\n\nWords.\n'
+  const at = doc.indexOf('```ts')
+
+  test('is the block that place is in, wherever in it the place sits', () => {
+    const { state } = fence(doc)
+
+    expect(fenceCodeAt(state, at)).toBe('let a = 1\nlet b = 2')
+    expect(fenceCodeAt(state, doc.indexOf('let b'))).toBe('let a = 1\nlet b = 2')
+  })
+
+  test('is nothing where the place is in no block at all', () => {
+    const { state } = fence(doc)
+    expect(fenceCodeAt(state, doc.indexOf('Words.'))).toBe('')
+  })
+
+  test('and is what the document says now, not what it said when it was drawn', () => {
+    const { state } = fence(doc)
+    const typed = parsed(
+      state.update({
+        changes: { from: doc.indexOf('= 1') + 2, to: doc.indexOf('= 1') + 3, insert: '7' },
+      }).state,
+    )
+
+    expect(fenceCodeAt(typed, at)).toBe('let a = 7\nlet b = 2')
   })
 })
