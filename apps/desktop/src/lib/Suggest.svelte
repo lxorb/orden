@@ -37,7 +37,7 @@
   }
 </script>
 
-<ul class="suggest" transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}>
+<ul class="nib-layer suggest" transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}>
   {#each values as value, index (value)}
     {@const parts = split(value)}
     <li>
@@ -55,9 +55,13 @@
 </ul>
 
 <style>
+  /* A floating list of choices, so its shape is `.nib-layer` in the themes
+     package - the same corner, hairline, surface and shadow the menus have. It
+     spent `--shadow-md` where they spend `--shadow-lg`, which made the same kind
+     of thing sit at two heights. What is left here is where it hangs. */
   .suggest {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + var(--space-1));
     left: 0;
     right: 0;
     z-index: 4;
@@ -66,10 +70,6 @@
     margin: 0;
     padding: 0;
     list-style: none;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    box-shadow: var(--shadow-md);
   }
 
   button {
@@ -101,7 +101,7 @@
   /* The letters that were typed, marked where they landed in the value. */
   .matched {
     color: var(--accent);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
   }
 
   :global([data-touch]) button {

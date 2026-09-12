@@ -89,7 +89,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: 1.5rem;
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     animation: settle var(--dur-slow) var(--ease-spring) backwards;
   }
 

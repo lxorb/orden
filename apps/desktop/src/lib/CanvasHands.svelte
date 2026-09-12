@@ -175,9 +175,13 @@
     z-index: 5;
   }
 
+  /* A name beside somebody else's caret. The fade was written as `190ms ease`,
+     which is the one kind of movement in the app a reader cannot turn off:
+     `--dur-*` goes to zero under prefers-reduced-motion and a bare number does
+     not. */
   text {
     font-family: var(--font-ui);
-    font-weight: 550;
-    transition: opacity 190ms ease;
+    font-weight: var(--weight-strong);
+    transition: opacity var(--dur-base) var(--ease-out);
   }
 </style>

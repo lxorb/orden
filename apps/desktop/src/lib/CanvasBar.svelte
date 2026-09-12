@@ -303,7 +303,7 @@
     </button>
   {:else}
     {#if open}
-      <div class="panel" style:--pop="{popAt}px">
+      <div class="nib-layer panel" style:--pop="{popAt}px">
         {#if open === 'pen'}
           <CanvasPen {nib} />
         {:else if open === 'rub'}
@@ -580,6 +580,12 @@
     right: calc(var(--space-2) + 60px);
   }
 
+  /* A small bar over the plane, which is level 2 of the elevation model: the
+     surface, the hairline and the shadow the format bar over a selection wears,
+     and the corner that goes with them. It was drawn at `--radius-lg` - the
+     corner a surface that *replaces* part of the screen takes - which put a
+     shadow from one level and a corner from another on one box. See
+     docs/design.md. */
   .bar {
     max-width: 100%;
     display: flex;
@@ -588,7 +594,7 @@
     padding: var(--space-1);
     background: var(--surface-3);
     border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
   }
 
@@ -779,7 +785,7 @@
     align-self: flex-start;
     min-width: 58px;
     margin-left: var(--space-5);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
     background: var(--surface-3);
     border: 1px solid var(--line-strong);
     border-bottom: none;
@@ -787,7 +793,7 @@
   }
 
   .cluster.top .tab {
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
     border-bottom: 1px solid var(--line-strong);
     border-top: none;
   }
@@ -795,16 +801,14 @@
   /* The panel over the button that opened it, and never off the side of the pane:
      a flyout beside its own tool says what it belongs to, and the middle of the
      screen says nothing. */
+  /* The shape is `.nib-layer` in the themes package, the same as the graph's own
+     card and the two menus; what is here is where it pops out. */
   .panel {
     box-sizing: border-box;
     align-self: flex-start;
     width: min(21rem, 100%);
     margin-left: clamp(0px, calc(var(--pop) - 10.5rem), calc(100% - 21rem));
     padding: var(--space-2);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     animation: lift var(--dur-fast) var(--ease-out);
   }
 

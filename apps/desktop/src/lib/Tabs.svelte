@@ -804,9 +804,9 @@
     display: grid;
     place-items: center;
     flex: none;
-    width: 20px;
+    width: var(--row-height-sm);
     height: 100%;
-    padding: 0 6px 0 0;
+    padding: 0 var(--space-1) 0 0;
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
@@ -820,13 +820,19 @@
     color: var(--danger);
   }
 
+  /* A press is a step stronger than the hover, and "stronger" is towards the ink
+     rather than towards black: mixed with black it came out darker than the
+     danger colour on a dark theme, which is a press that reads as fading. */
   .shut:active {
-    color: color-mix(in srgb, var(--danger) 78%, black);
+    color: color-mix(in srgb, var(--danger) 78%, var(--text-strong));
   }
 
+  /* A mark inside a row that is not the row's own, which is `--icon-sm`. It was
+     7px: a cross a third the size of every other cross in the app, on the one
+     button a tab has. */
   .shut svg {
-    width: 7px;
-    height: 7px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.4;

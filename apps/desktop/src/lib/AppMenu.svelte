@@ -221,7 +221,7 @@
        being read down, and Tab through nineteen rows is not reading it. -->
   <div
     bind:this={surface}
-    class="menu"
+    class="nib-layer menu"
     class:phone={viewport.touch}
     transition:arrive
     use:trap
@@ -361,7 +361,11 @@
 
   /* Under the bars it opens from, which are at the left end of the title bar -
      so it hangs off the button rather than off the panel beside it, and it is
-     in the same place whether the file list is open or shut. */
+     in the same place whether the file list is open or shut.
+
+     The shape is `.nib-layer` in the themes package. This one used to light its
+     surface a step brighter than the context menu does, so the app's two menus
+     were two colours. */
   .menu {
     position: fixed;
     top: calc(var(--titlebar-height) + var(--space-1));
@@ -369,10 +373,6 @@
     z-index: 45;
     display: flex;
     max-height: 78vh;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface-3);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
   }
 
@@ -523,7 +523,7 @@
     background: var(--surface-2);
     color: var(--muted-strong);
     font-size: var(--text-base);
-    font-weight: 500;
+    font-weight: var(--weight-strong);
   }
 
   :global([data-touch]) .phone .groups button.is-on {

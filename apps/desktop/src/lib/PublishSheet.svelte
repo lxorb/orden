@@ -330,7 +330,7 @@
   .dns th {
     background: var(--surface-2);
     color: var(--muted);
-    font-weight: 500;
+    font-weight: var(--weight-strong);
   }
 
   /* The one thing the sheet is for sits under the form rather than beside it. */

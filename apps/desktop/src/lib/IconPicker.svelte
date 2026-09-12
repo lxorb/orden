@@ -459,7 +459,7 @@
   .head {
     padding: 0 4px;
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted);
   }
 

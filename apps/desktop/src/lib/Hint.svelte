@@ -84,6 +84,7 @@
      word, and in the same slot after every label that has one, so a label
      without one sits exactly where it did. */
   button {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,9 +107,11 @@
     outline-offset: 1px;
   }
 
+  /* A mark inside a row rather than in front of a name: `--icon-sm`, which is
+     what every other such mark in the app is. It was 14px. */
   svg {
-    width: 14px;
-    height: 14px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.9;
@@ -128,10 +131,22 @@
 
   /* A thumb needs a target, and the sentence needs the width the screen has.
      Not a whole finger's row: this sits inside one beside the words it belongs
-     to, and a 48px circle in the middle of a label would be the label's size. */
+     to, and a 48px circle in the middle of a label would be the label's size.
+
+     So the glyph grows to Android's 24dp and the *target* grows to the 48 a
+     finger needs, invisibly, around it: what is drawn and what can be hit are
+     two different sizes, which is how a small control is aimed at without being
+     drawn big. It used to be a 26px box - a number of its own, under the floor,
+     and the only thing a finger had to land on. */
   :global([data-touch]) button {
-    width: 26px;
-    height: 26px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
+  }
+
+  :global([data-touch]) button::after {
+    content: '';
+    position: absolute;
+    inset: calc((var(--touch-icon) - var(--touch-target)) / 2);
   }
 
   :global([data-touch]) svg {

@@ -124,7 +124,7 @@
   h3 {
     margin: var(--space-4) 0 var(--space-2);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
 
@@ -175,7 +175,7 @@
     background: none;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     color: var(--muted);
     cursor: pointer;
   }

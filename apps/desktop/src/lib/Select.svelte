@@ -193,7 +193,7 @@
   {:else if open}
     <ul
       {id}
-      class="list"
+      class="nib-layer list"
       class:above
       role="listbox"
       aria-label={label}
@@ -274,10 +274,13 @@
     white-space: nowrap;
   }
 
+  /* A mark inside a control rather than in front of a name, which is `--icon-sm`
+     - the size the find bar's own chevron is drawn at. It was 10px, a third
+     size for one shape. */
   .chevron {
     flex: none;
-    width: 10px;
-    height: 10px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     fill: none;
     stroke: var(--muted);
     stroke-width: 1.4;
@@ -313,26 +316,26 @@
 
   /* ── The list, on a desktop ────────────────────────────────────── */
 
+  /* A floating list of choices, so its shape is `.nib-layer` in the themes
+     package. It used to light its own surface a step brighter than the menus do
+     and spend a smaller shadow than they do, which made a dropdown and the menu
+     beside it two kinds of thing. What is left here is where it hangs. */
   .list {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + var(--space-1));
     right: 0;
     min-width: 100%;
     max-height: 280px;
     margin: 0;
-    padding: 4px;
+    padding: var(--space-1);
     list-style: none;
     overflow-y: auto;
     z-index: 5;
-    background: var(--surface-3);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
   }
 
   .list.above {
     top: auto;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + var(--space-1));
   }
 
   .list li {
@@ -420,7 +423,7 @@
     padding: 14px 20px 8px;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted);
   }
 

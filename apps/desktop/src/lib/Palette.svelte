@@ -124,7 +124,7 @@
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
 
   <div
-    class="palette"
+    class="nib-screen palette"
     use:trap
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
@@ -196,17 +196,16 @@
     z-index: 20;
   }
 
+  /* The shape is `.nib-screen` in the themes package - the surface, the corner,
+     the hairline and the shadow anything that replaces part of the screen wears,
+     and the centring the four of them had a copy of each. What is its own is how
+     wide and how far down: a list of commands starts higher than a question
+     does, because it is a list and needs the room under it. */
   .palette {
-    position: fixed;
+    --screen-width: 34rem;
+
     top: 16vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(34rem, calc(100vw - 3rem));
     z-index: 21;
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
   }
 

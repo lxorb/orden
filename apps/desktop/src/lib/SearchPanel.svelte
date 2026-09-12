@@ -654,7 +654,7 @@
     border-radius: 3px;
     background: var(--accent-soft);
     color: var(--text-strong);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
   }
 
   /* A square that fills when it is on, which is the whole of what it says. */

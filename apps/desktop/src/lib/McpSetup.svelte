@@ -267,7 +267,7 @@
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
 
@@ -376,7 +376,7 @@
     color: var(--accent);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
-    font-weight: 650;
+    font-weight: var(--weight-strong);
     line-height: 22px;
     text-align: center;
   }
@@ -425,7 +425,7 @@
 
   .disclose {
     color: var(--muted-strong);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
   }
 
   @media (hover: hover) {
@@ -496,7 +496,7 @@
     border-radius: var(--radius-md);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),

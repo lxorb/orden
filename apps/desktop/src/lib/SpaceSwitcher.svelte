@@ -126,7 +126,7 @@
        three dots on a row are reached with the row's own menu key rather than with
        Tab; see roving.ts and trap.ts. -->
   <div
-    class="spaces"
+    class="nib-layer spaces"
     role="menu"
     use:trap
     use:roving={{
@@ -323,7 +323,8 @@
   }
 
   /* Under the head and as wide as the list below it, which is what makes this
-     need no measuring: the panel is the anchor. */
+     need no measuring: the panel is the anchor. The shape is `.nib-layer` in the
+     themes package, the same as the two menus. */
   .spaces {
     position: absolute;
     top: 100%;
@@ -331,10 +332,6 @@
     right: var(--space-1);
     z-index: 12;
     padding: var(--space-1);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    box-shadow: var(--shadow-lg);
     max-height: 60vh;
     overflow-y: auto;
     overscroll-behavior: contain;

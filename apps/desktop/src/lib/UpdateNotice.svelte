@@ -79,7 +79,7 @@
   .primary {
     background: var(--accent);
     color: #fff;
-    font-weight: 550;
+    font-weight: var(--weight-strong);
   }
 
   .primary:hover {

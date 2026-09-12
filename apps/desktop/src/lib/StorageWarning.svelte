@@ -81,7 +81,7 @@
 
   .link {
     color: var(--accent);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
   }
 
   :global([data-touch]) .toast {

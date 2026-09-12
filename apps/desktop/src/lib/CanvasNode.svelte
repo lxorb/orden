@@ -419,7 +419,7 @@
     color: var(--card-colour, var(--muted-strong));
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     white-space: nowrap;
   }
 
@@ -503,7 +503,7 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

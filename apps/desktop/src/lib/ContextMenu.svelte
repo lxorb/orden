@@ -173,7 +173,7 @@
 
   <div
     bind:this={element}
-    class="menu"
+    class="nib-layer menu"
     class:touch={viewport.touch}
     class:sheet
     class:above
@@ -216,15 +216,14 @@
 {/if}
 
 <style>
+  /* The shape is `.nib-layer` in the themes package: the corner, the hairline,
+     the surface and the shadow every layer that floats over the app shares. What
+     is left here is where this one is put. */
   .menu {
     position: fixed;
     z-index: 60;
     min-width: 11rem;
     padding: var(--space-1);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
     transform-origin: top left;
     /* Copied here for the script, which places the callout. */
     --inset-top: var(--inset-top);
@@ -344,7 +343,7 @@
     padding: 10px 20px 4px;
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;

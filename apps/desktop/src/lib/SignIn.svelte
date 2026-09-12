@@ -108,7 +108,7 @@
   <div class="scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
 
   <div
-    class="panel"
+    class="nib-screen panel"
     use:trap
     transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}
   >
@@ -248,18 +248,10 @@
     color: var(--muted-strong);
   }
 
+  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .panel {
-    position: fixed;
-    top: 22vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(23rem, calc(100vw - 3rem));
     z-index: 31;
     padding: var(--space-5);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
   }
 
   form {
@@ -300,7 +292,7 @@
     color: #fff;
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -332,7 +324,7 @@
 
   .sent strong {
     color: var(--text);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
   }
 
   .digits {

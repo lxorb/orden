@@ -35,7 +35,7 @@
   <div class="scrim" transition:fade={{ duration: dur(140) }}></div>
 
   <div
-    class="panel"
+    class="nib-screen panel"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -106,21 +106,13 @@
     z-index: 30;
   }
 
+  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .panel {
-    position: fixed;
-    top: 22vh;
-    left: 50%;
-    translate: -50% 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    width: min(23rem, calc(100vw - 3rem));
     z-index: 31;
     padding: var(--space-5);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
   }
 
   .shared {
@@ -199,7 +191,7 @@
     color: #fff;
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),

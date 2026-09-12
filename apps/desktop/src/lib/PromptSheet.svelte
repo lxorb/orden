@@ -71,7 +71,7 @@
   ></div>
 
   <div
-    class="sheet"
+    class="nib-screen sheet"
     use:trap
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
@@ -192,18 +192,12 @@
     z-index: 50;
   }
 
+  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .sheet {
-    position: fixed;
-    top: 22vh;
-    left: 50%;
-    translate: -50% 0;
-    width: min(22rem, calc(100vw - 3rem));
+    --screen-width: 22rem;
+
     z-index: 51;
     padding: var(--space-5);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
   }
 
   form {
@@ -215,7 +209,7 @@
   .title {
     margin: 0;
     font-size: var(--text-base);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
 
@@ -265,7 +259,7 @@
     height: var(--icon-md);
     flex: none;
     font-size: var(--text-xs);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--muted);
   }
 
@@ -324,7 +318,7 @@
     border-radius: var(--radius-md);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),

@@ -52,7 +52,7 @@
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={onclose}></div>
 
   <div
-    class="sheet"
+    class="nib-screen sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -87,21 +87,19 @@
     z-index: 50;
   }
 
+  /* `.nib-screen` in the themes package draws it: the surface, the corner, the
+     hairline, the shadow and the centring that the palette, the prompt, the
+     sign-in panel and the invitation all had a copy of. What is its own is how
+     wide it is and how far down it opens. */
   .sheet {
-    position: fixed;
+    --screen-width: 27rem;
+
     top: 14vh;
-    left: 50%;
-    translate: -50% 0;
     display: flex;
     flex-direction: column;
-    width: min(27rem, calc(100vw - 3rem));
     max-height: 72vh;
     overflow: hidden;
     z-index: 51;
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
   }
 
   /* The head stays while the cards under it scroll: on a phone the sheet is most
@@ -298,7 +296,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     text-align: left;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
@@ -324,7 +322,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -364,7 +362,7 @@
     color: #fff;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }

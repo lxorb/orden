@@ -92,7 +92,7 @@
 
 <div class="corner">
   {#if open}
-    <div class="card">
+    <div class="nib-layer card">
       <!-- What the picture is narrowed to. The search's own language, so a habit
            carries over; the placeholder is what says which three things a picture
            can be asked about. See graph-filter.ts. -->
@@ -283,8 +283,9 @@
     max-width: calc(100% - 2 * var(--space-2));
   }
 
-  /* The canvas panels' card: the surface, the hairline, the large corner and the
-     lift. One shape over a plane, whichever plane it is. */
+  /* The same card the canvas panels have, and the same `.nib-layer` in the themes
+     package that draws every layer floating over the app. One shape over a plane,
+     whichever plane it is. */
   .card {
     box-sizing: border-box;
     width: min(21rem, 100%);
@@ -296,10 +297,6 @@
     flex-direction: column;
     gap: 1px;
     padding: var(--space-2);
-    background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
     overflow-y: auto;
     overscroll-behavior-y: contain;
     animation: lift var(--dur-fast) var(--ease-out);

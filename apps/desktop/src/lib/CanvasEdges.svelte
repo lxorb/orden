@@ -191,7 +191,7 @@
   .words {
     fill: var(--text-strong);
     font-family: var(--font-ui);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     text-anchor: middle;
     dominant-baseline: middle;
     paint-order: stroke;

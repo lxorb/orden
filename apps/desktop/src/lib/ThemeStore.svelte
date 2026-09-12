@@ -431,7 +431,7 @@
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -532,7 +532,7 @@
   .name {
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -595,7 +595,7 @@
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -656,7 +656,7 @@
     border-radius: var(--radius-md);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
