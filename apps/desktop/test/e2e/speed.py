@@ -607,6 +607,12 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
     latency = page.evaluate(TYPING)
     lane.profile("typing at the end of the big note", latency.pop("loaf"))
 
+    # A round where the keys never reached the editor says nothing about typing, and
+    # its noughts would read as "no wait at all".
+    if not latency.pop("keys"):
+        lane.note("the keystrokes went nowhere; that round is not in the typing numbers")
+        latency = {}
+
     reading = page.evaluate(READING)
     lane.profile("reading the big note", reading.pop("loaf"))
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
@@ -643,6 +649,10 @@ TYPING = r"""
   const paint = by((one) => one.ms)
   const handler = by((one) => one.handler)
   return {
+    // How many keystrokes were actually seen, so a round where the keys went
+    // somewhere else is a round with nothing in it rather than a nought: a nought
+    // read as "no wait at all" and dragged the median of every other round down.
+    keys: keys.length,
     'type-paint': paint.middle,
     'type-worst': paint.worst,
     'type-handler': handler.middle,
@@ -755,12 +765,25 @@ async () => {
   const ws = window.nibApp.workspace
   const started = window.__since()
   ws.showPanel('search')
-  for (let spin = 0; spin < 900; spin++) {
-    await window.__painted()
-    if (ws.tags?.length) break
+
+  // Two moments, because they are two questions. The panel is on screen when the
+  // field is there to type in; the tag tree above it says what the space is tagged
+  // with, and where that comes from is the thing being measured - off the disk, which
+  // costs a read of every note, or off the index, which costs nothing and is not
+  // answerable until the space has been scanned once.
+  let panel = 0
+  let tags = 0
+  for (let spin = 0; spin < 900 && !(panel && tags); spin++) {
+    const at = await window.__painted()
+    if (!panel && document.querySelector('[data-search]')) panel = at - started
+    if (!tags && ws.tags?.length) tags = at - started
   }
-  const painted = await window.__painted()
-  return { 'search-panel': painted - started, loaf: window.__marks.loaf.filter((one) => one.ms >= 50) }
+
+  return {
+    'search-panel': panel,
+    'search-tags': tags,
+    loaf: window.__marks.loaf.filter((one) => one.ms >= 50),
+  }
 }
 """
 
@@ -1099,7 +1122,8 @@ SAID = [
     ("palette", "shell: palette on screen", "ms"),
     ("palette-rows", "shell: palette rows", ""),
     ("settings", "shell: settings sheet", "ms"),
-    ("search-panel", "search: panel open, tags counted", "ms"),
+    ("search-panel", "search: panel on screen", "ms"),
+    ("search-tags", "search: the tag tree filled", "ms"),
     ("q-hit", "search: one hit", "ms"),
     ("q-hit-read", "search: rows read for it", ""),
     ("q-none", "search: no hits", "ms"),
