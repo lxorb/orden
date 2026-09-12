@@ -38,9 +38,20 @@
    *  exists rather than after it. */
   const docked = $derived(viewport.touch && viewport.typing)
 
+  /** The colours are a moment's choice rather than a mode, so the row goes back
+   *  to the actions whenever the bar leaves. A phone's bar leaves every time the
+   *  keyboard does, and one that came back showing colours would be answering a
+   *  question nobody had asked. */
+  $effect(() => {
+    if (!docked && !at) colouring = false
+  })
+
   /** Follows the selection, and hides the moment there is nothing selected.
    *  A selected picture has a toolbar of its own, in the same place, and a
-   *  note being read has nothing to format: every button here writes. */
+   *  note being read has nothing to format: every button here writes.
+   *
+   *  Only where there is a pointer. On a phone this answers with no position at
+   *  all, because the bar there is the docked strip; see below. */
   export function follow(current: EditorView) {
     const range = current.state.selection.main
 
@@ -57,6 +68,18 @@
     ) {
       at = null
       colouring = false
+      return
+    }
+
+    // A finger has one bar and it is the strip over the keyboard. The callout is
+    // the pointer's answer - there is nothing to hover with and the thumb is over
+    // the words - and a callout placed while the keyboard was up is what was left
+    // sitting in the middle of the screen when the keyboard went down: `docked`
+    // turns off with the keyboard, and the branch below it must not catch what
+    // falls through. So a touch device has no `at` at all, and the bar arrives and
+    // leaves with the keyboard and nothing else.
+    if (viewport.touch) {
+      at = null
       return
     }
 
@@ -207,6 +230,12 @@
   {/if}
 {/snippet}
 
+<!-- Sitting on the keyboard, and riding it: `viewport.keyboard` is what the visual
+     viewport leaves covered, re-measured on every resize and scroll of it, so the
+     bar follows the keys down rather than being placed once and left there. In the
+     phone app it is nought, because the window itself is shortened to end where
+     the keys begin, and the bar sits on the bottom edge. Either way the whole bar
+     goes when the keyboard does; see viewport.svelte.ts. -->
 {#if docked}
   <div
     class="nib-bar docked"
