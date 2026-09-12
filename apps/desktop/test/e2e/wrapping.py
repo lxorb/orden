@@ -150,9 +150,21 @@ def drive(browser: Browser) -> None:
 
     wait_for(page, "window.nibApp", "the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    # A first visit in a browser is given a welcome note, and the app opens it
+    # after the space is there rather than with it; see `restore` in
+    # workspace.svelte.ts. Seeding before that has happened wins the tab for a
+    # moment and then loses it again, and the export below would be an export of
+    # the welcome note. So the app is let finish opening its own note first.
+    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
-    page.wait_for_timeout(700)
+    # And the note this is about is the one showing, which is the condition the
+    # export needs rather than a length of time.
+    wait_for(
+        page,
+        "window.nib && document.querySelector('.cm-content')"
+        " && window.nibApp.workspace.active?.note?.name?.startsWith('Wrapping')",
+        "the wrapped note to be the one open",
+    )
     shot(page, "01-written")
 
     # The palette, which is how an export is reached without a menu bar.
