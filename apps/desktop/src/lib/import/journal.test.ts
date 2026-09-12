@@ -89,7 +89,7 @@ describe('an Apple Journal export', () => {
   test('is not read as an HTML folder, which it also looks like', async () => {
     // The words kept and the look lost is what the HTML reader says; a Journal
     // export says more than that, so the more specific reader has to win.
-    expect(await detect([anExport()[1] as Source])).toBe('journal')
+    expect(await detect([anExport()[1]!])).toBe('journal')
   })
 
   test('becomes one note per entry, named after the day it was written', async () => {

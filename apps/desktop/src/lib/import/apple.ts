@@ -26,7 +26,7 @@ import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
 
 /** One note, as the crate answers it. */
-export interface AppleNote {
+interface AppleNote {
   /** The folders it sat in, its own name, and `.md`. Which is also what a link
    *  from another note points at, so the two line up without either side having
    *  to guess. */
@@ -40,7 +40,7 @@ export interface AppleNote {
 }
 
 /** One attachment, with its bytes as base64. */
-export interface AppleMedia {
+interface AppleMedia {
   path: string
   bytes: string
 }

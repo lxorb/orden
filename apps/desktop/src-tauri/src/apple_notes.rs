@@ -274,14 +274,15 @@ mod mac {
     /// Why the database could not be copied: one of the two marks the sheet knows,
     /// or the system's own words.
     fn refusal(base: &Path, error: std::io::Error) -> String {
+        // A group container that is there and holds no database is a Mac whose
+        // owner has never opened Notes. Anything else - refused outright, or not
+        // there at all - is the system declining to say, which is what it does
+        // about this folder until the app is allowed to read it.
         match error.kind() {
-            std::io::ErrorKind::PermissionDenied => NO_ACCESS.to_string(),
-            // A group container that is there and holds no database is a Mac
-            // whose owner has never opened Notes. One that is not there at all is
-            // the system declining to say, which is what it does about this
-            // folder until the app is allowed to read it.
             std::io::ErrorKind::NotFound if base.is_dir() => NO_DATABASE.to_string(),
-            std::io::ErrorKind::NotFound => NO_ACCESS.to_string(),
+            std::io::ErrorKind::NotFound | std::io::ErrorKind::PermissionDenied => {
+                NO_ACCESS.to_string()
+            }
             _ => format!("that database would not be read: {error}"),
         }
     }
