@@ -79,6 +79,20 @@ class Held implements SearchNote {
   get chars(): number {
     return this.body.length + (this.lowered?.length ?? 0)
   }
+
+  /** How much of that is the folded copy rather than the note itself. */
+  get folds(): number {
+    return this.lowered?.length ?? 0
+  }
+
+  /** Lets go of everything that can be worked out again from the body: the folded
+   *  copy, and the line index beside it. Both are made once and kept, and both are
+   *  made again from a string already in memory the next time a query asks - which
+   *  is why they go before the note does when the cap has to be met. See `settle`. */
+  release(): void {
+    this.lowered = null
+    this.lines = null
+  }
 }
 
 class Space {
@@ -306,8 +320,22 @@ class Space {
 
   /** What is held, counted, and held to the cap.
    *
-   *  The largest first, because one long note costs what a hundred ordinary ones
-   *  cost and letting it go buys the most room for the fewest notes read again. */
+   *  The folds go first and the notes only after them, because the two cost
+   *  different things to get back. A fold is made from the body already in hand:
+   *  letting one go and making it again is arithmetic over a string in memory. A
+   *  note that was let go is a row out of the store the next time a search reaches
+   *  it - a transaction, and the string built again from the disk.
+   *
+   *  Which is not a fine distinction at the size this happens at. Five thousand
+   *  ordinary notes are twenty-two million characters, under the cap; their folded
+   *  copies are what put them over it. So the first query that looked at a word
+   *  used to throw away two thousand notes and every query after that read those
+   *  two thousand rows again - a no-match search over five thousand notes read two
+   *  thousand one hundred and four rows, every single time, which is what
+   *  space-cache.test.ts now counts.
+   *
+   *  The largest first either way, because one long note costs what a hundred
+   *  ordinary ones cost and letting it go buys the most room for the least work. */
   private settle(): void {
     let held = 0
     for (const note of this.held.values()) held += note.chars
@@ -315,6 +343,16 @@ class Space {
     if (held <= cap) return
 
     const biggest = [...this.held.values()].sort((one, other) => other.chars - one.chars)
+
+    for (const note of biggest) {
+      if (this.characters <= cap) return
+
+      this.characters -= note.folds
+      note.release()
+    }
+
+    // Still over with nothing but bodies left, so the space itself is larger than
+    // the cap and some of it has to go.
     for (const note of biggest) {
       if (this.characters <= cap) break
 

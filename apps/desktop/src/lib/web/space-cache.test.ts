@@ -236,4 +236,58 @@ describe('the cap', () => {
     expect((await searched('Novel')).names).toEqual([])
     expect(space.warmth().of).toBe(3)
   })
+
+  /** A space whose notes fit under the cap and whose folded copies do not, which is
+   *  every space of a few thousand ordinary notes: a query looks at a word, every
+   *  note is folded, and what is held doubles. What must not happen then is the
+   *  notes being thrown away, because a note that was let go is a row read on every
+   *  search after - two thousand one hundred and four of them per search, over five
+   *  thousand notes, which is what this stops. */
+  describe('a space the folds alone put over it', () => {
+    /** The bodies, in characters, and a cap between that and twice it. */
+    function tight() {
+      const bodies = [...disk.files.values()].reduce((sum, row) => sum + row.content.length, 0)
+      holdAtMost(Math.round(bodies * 1.5))
+      return bodies
+    }
+
+    test('lets the folds go and keeps every note', async () => {
+      await space.fill(ROOT)
+      const bodies = tight()
+
+      // A word, so every note is folded on the way past.
+      await searched('wind')
+      const held = space.warmth()
+
+      expect(held.notes).toBe(3)
+      expect(held.dropped).toBe(0)
+      // Under the cap, with every body still there: what went is folds, and only as
+      // many of them as it took.
+      expect(held.characters).toBeLessThanOrEqual(held.cap)
+      expect(held.characters).toBeGreaterThanOrEqual(bodies)
+    })
+
+    test('so a second search still reads nothing at all', async () => {
+      await space.fill(ROOT)
+      tight()
+
+      expect((await searched('wind')).reads).toBe(0)
+      expect((await searched('wind')).reads).toBe(0)
+      // And the search that has to read every note to answer: no hits, no rows.
+      expect((await searched('zzzq')).reads).toBe(0)
+      expect(space.warmth()).toMatchObject({ notes: 3, of: 3, dropped: 0 })
+    })
+
+    test('and answers the same as a space with room to spare', async () => {
+      await space.fill(ROOT)
+      const roomy = await searched('wind')
+
+      space.forget(null)
+      await space.fill(ROOT)
+      tight()
+      const tightly = await searched('wind')
+
+      expect(tightly.names).toEqual(roomy.names)
+    })
+  })
 })
