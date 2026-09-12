@@ -398,7 +398,11 @@ def main() -> int:
 
                 # ── Which opens the picker, in the app's own sheet ─────────
                 page.get_by_role("menuitem", name="Move", exact=True).click()
-                sheet = page.locator("div.sheet:not([role])")
+                # The sheet, by what it is. It was told apart from the menu by having
+                # no role at all until the sheets were given one; now it says it is a
+                # dialog, that it is modal, and what it is called. See
+                # PromptSheet.svelte.
+                sheet = page.locator('div.sheet[role="dialog"]')
                 sheet.wait_for(state="visible", timeout=5000)
                 page.wait_for_timeout(250)
                 page.screenshot(path=str(SHOTS / "touch-move-picker-light.png"))
@@ -497,7 +501,7 @@ def main() -> int:
                 page.screenshot(path=str(SHOTS / "touch-move-menu-dark.png"))
 
                 page.get_by_role("menuitem", name="Move", exact=True).click()
-                page.locator("div.sheet:not([role])").wait_for(state="visible", timeout=5000)
+                page.locator('div.sheet[role="dialog"]').wait_for(state="visible", timeout=5000)
                 page.wait_for_timeout(250)
                 page.screenshot(path=str(SHOTS / "touch-move-picker-dark.png"))
 

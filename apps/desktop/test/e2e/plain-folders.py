@@ -305,7 +305,10 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         row(page, "Loft.md").click(button="right")
         page.wait_for_selector('[role="menu"]:visible', timeout=5000)
         page.get_by_role("menuitem", name="Move", exact=True).click()
-        page.locator("div.sheet:not([role])").wait_for(state="visible", timeout=5000)
+        # The sheet, by what it is. It was told apart from the menu by having no role
+        # at all until the sheets were given one; now it says it is a dialog, that it
+        # is modal, and what it is called. See PromptSheet.svelte.
+        page.locator('div.sheet[role="dialog"]').wait_for(state="visible", timeout=5000)
         page.wait_for_timeout(300)
         page.screenshot(path=str(SHOTS / f"move-{where}.png"))
         say(f"[{label}] wrote move-{where}.png")
