@@ -27,6 +27,7 @@
  *  Pure: a string in, slides out. The app, an export and a published page all
  *  read the same deck out of the same note. */
 
+import { closesFence, fenceMark } from './fences'
 import { lexMarkdown } from './index'
 import type { Token, Tokens } from 'marked'
 
@@ -55,9 +56,6 @@ export interface Slide {
 const HORIZONTAL = /^-{3,}[ \t]*$/
 /** The same in asterisks, which is the break that goes downwards. */
 const VERTICAL = /^\*{3,}[ \t]*$/
-/** A fence opening or closing, indented by up to three spaces as CommonMark
- *  allows before an indented code block takes over. */
-const FENCE = /^ {0,3}(`{3,}|~{3,})[ \t]*(\S*)/
 const BLANK = /^[ \t]*$/
 /** The line that hands the rest of the slide to the presenter. Both spellings,
  *  because reveal.js reads either. */
@@ -98,23 +96,13 @@ function* lines(source: string, at: number): Generator<Line> {
   }
 }
 
-/** Where a fence opened, so its closing line can be recognised and everything
- *  between the two left alone. Null while no fence is open. */
-interface Fence {
-  marker: string
-  length: number
-}
-
-function fenceChange(text: string, open: Fence | null): Fence | null | undefined {
-  const found = FENCE.exec(text)
-  if (!found?.[1]) return undefined
-
-  const marker = found[1][0] ?? ''
-  const length = found[1].length
-
-  if (!open) return { marker, length }
-  // A fence closes on its own marker, at least as long, with nothing after it.
-  return marker === open.marker && length >= open.length && !found[2] ? null : undefined
+/** What a line does to the fence a scan is inside: the mark of the one it opens,
+ *  null for the line that closes the one `open` holds, and undefined for every
+ *  other line - a fence line inside a block that it does not close included, so
+ *  everything between the two delimiters is left alone. See fences.ts. */
+function fenceChange(text: string, open: string | null): string | null | undefined {
+  if (open === null) return fenceMark(text) ?? undefined
+  return closesFence(text, open) ? null : undefined
 }
 
 /** Where the note breaks into slides: the offset each break's line starts at,
@@ -127,7 +115,7 @@ interface Break {
 
 function breaks(source: string, start: number): Break[] {
   const found: Break[] = []
-  let fence: Fence | null = null
+  let fence: string | null = null
   let blank = true
 
   for (const line of lines(source, start)) {
@@ -159,7 +147,7 @@ function breaks(source: string, start: number): Break[] {
 
 /** A slide's own words and the presenter's, told apart. */
 function split(markdown: string): { shown: string; notes: string } {
-  let fence: Fence | null = null
+  let fence: string | null = null
   let blank = true
 
   for (const line of lines(markdown, 0)) {
@@ -280,7 +268,7 @@ export function deckOf(source: string): Slide[] {
  *  makes a note into a deck. */
 export function isDeck(source: string): boolean {
   const start = bodyStart(source)
-  let fence: Fence | null = null
+  let fence: string | null = null
   let blank = true
   /** Whether anything has been written, and whether a break has been passed
    *  with something written before it. */

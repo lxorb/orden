@@ -17,7 +17,10 @@
  *  What it must not touch is code. A comment inside a fence, or inside
  *  backticks, is what the fence is showing - a snippet of HTML with a comment in
  *  it is a perfectly ordinary thing to write about - so this walks the source
- *  rather than running a pattern over it. */
+ *  rather than running a pattern over it. What opens and closes a fence is read
+ *  in fences.ts, which every walk in this package that steps over code shares. */
+
+import { closesFence, fenceMark } from './fences'
 
 /** The two ways a comment is written. `%%` opens and closes with the same
  *  characters, which the scan below does not care about: it looks for the
@@ -26,21 +29,6 @@ const COMMENTS = [
   { open: '<!--', close: '-->' },
   { open: '%%', close: '%%' },
 ] as const
-
-/** A fence line: up to three spaces, then three or more backticks or tildes. */
-const FENCE = /^ {0,3}(`{3,}|~{3,})/
-
-/** Whether a line inside a fence opened with `mark` closes it: the same
- *  character, at least as many of them, and nothing after them. */
-function closes(line: string, mark: string): boolean {
-  const found = FENCE.exec(line)?.[1]
-  if (!found) return false
-  return (
-    found.startsWith(mark.charAt(0)) &&
-    found.length >= mark.length &&
-    !line.trim().slice(found.length)
-  )
-}
 
 /** Where the first comment at or after `at` opens: the marker's own span, and
  *  what will close it. */
@@ -129,12 +117,12 @@ export function withoutComments(source: string): string {
   for (const line of lines) {
     if (fence !== null) {
       out.push(line)
-      if (closes(line, fence)) fence = null
+      if (closesFence(line, fence)) fence = null
       continue
     }
 
     if (!inside) {
-      const mark = FENCE.exec(line)?.[1]
+      const mark = fenceMark(line)
       if (mark) {
         out.push(line)
         fence = mark
