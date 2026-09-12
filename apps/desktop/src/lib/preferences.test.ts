@@ -93,7 +93,7 @@ describe('the sentence behind a setting', () => {
 
 describe('the Appearance pane', () => {
   test('chooses the theme with a dropdown, the built-in first', () => {
-    const one = field('appearance', 'Theme')
+    const one = field('appearance', 'Style')
     if (one.kind !== 'select') throw new Error('the theme is a dropdown')
 
     expect(one.options[0]).toEqual({ value: 'default', label: 'Default' })
@@ -145,7 +145,16 @@ describe('the Appearance pane', () => {
    *  pane asks the two questions it has always had and the store answers the
    *  third. */
   test('and asks two questions, contrast being a theme rather than a switch', () => {
-    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Theme', 'Mode'])
+    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Style', 'Mode'])
+  })
+
+  /** The group is the theme and both rows are about it, so neither row may be
+   *  called Theme as well: the pane read "Theme / Theme / Mode" and said nothing
+   *  about which of the two rows was which. */
+  test('and names each row for what it picks rather than for the group', () => {
+    const group = pane('appearance').groups[0]
+    expect(group?.title).toBe('Theme')
+    expect(group?.fields.map((one) => one.label)).not.toContain(group?.title)
   })
 })
 

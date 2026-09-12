@@ -397,6 +397,7 @@ export const ja: Dictionary = {
   Light: 'ライト',
   Dark: 'ダーク',
   'Switch theme': 'テーマを切り替え',
+  Style: 'スタイル',
   Mode: 'モード',
   System: 'システム',
   'Mode: {name}': 'モード: {name}',

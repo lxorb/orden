@@ -399,6 +399,7 @@ export const gsw: Dictionary = {
   Light: 'Hell',
   Dark: 'Dunkel',
   'Switch theme': 'Design wächsle',
+  Style: 'Stil',
   Mode: 'Modus',
   System: 'System',
   'Mode: {name}': 'Modus: {name}',

@@ -483,8 +483,15 @@ export function preferences(view?: EditorView): Pane[] {
             {
               // The theme, and nothing else. A theme has a dark side or a light
               // one or both; which of them the app is showing is the row below.
+              //
+              // Named for what it picks rather than for the group it is in: the
+              // group is the theme and both rows are about it, so a row called
+              // Theme under a heading called Theme read as "Theme / Theme / Mode"
+              // and said nothing about which of the two was which. This one picks
+              // the look - the palette and the type a theme sets - and the one
+              // below picks which side of it the app is showing.
               kind: 'select',
-              label: t('Theme'),
+              label: t('Style'),
               options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
               get: () => theme.id,
               set: (value) => theme.select(value),
