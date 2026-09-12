@@ -9,11 +9,13 @@
  *  Two things are decided here rather than in the sheets:
  *
  *  The scheme. The app is dark until a reader says otherwise and says so with
- *  `data-theme`; a published page has nobody to ask and no script to ask with, so
- *  the reader's own system decides. The light tokens become the default - a page
- *  on the open web is read on paper-white far more often than not - and the dark
- *  ones are restated under `prefers-color-scheme: dark`. Print is light again,
- *  because paper is.
+ *  `data-theme`; a published page starts from the reader's own system instead.
+ *  The light tokens become the default - a page on the open web is read on
+ *  paper-white far more often than not - and the dark ones are restated under
+ *  `prefers-color-scheme: dark`. A reader who says which they want beats both:
+ *  the button in the bar writes the same `data-theme` the app does, and the two
+ *  stated schemes are restated after the system's so they outrank it. Print is
+ *  light again, because paper is.
  *
  *  The size. The sheets are written to be read, with a paragraph of reasoning
  *  over every rule; what goes over the wire is the rules. Comments go and runs of
@@ -134,8 +136,15 @@ function pageCss(): string {
       // A page on the web is light unless the reader's system says otherwise.
       // Last word over the blocks above, which are the app's way round.
       `:root {${light}}`,
-      `@media (prefers-color-scheme: dark) { :root {${dark}} }`,
-      `@media print { :root {${light}} }`,
+      // And the reader's own word is the last of all: the button in the bar
+      // writes `data-theme` on the root, the way the app does, so the two
+      // stated schemes have to outrank the system's - said with the attribute
+      // rather than by importance, which nothing after this could override.
+      `@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) {${dark}} }`,
+      `:root[data-theme='dark'] {${dark}}`,
+      `:root[data-theme='light'] {${light}}`,
+      // Paper is light whatever the screen was.
+      `@media print { :root, :root[data-theme='dark'] {${light}} }`,
       read(new URL('base.css', THEMES)),
       read(new URL('document.css', THEMES)),
       read(new URL('page.css', BLOG)),

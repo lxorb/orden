@@ -168,12 +168,25 @@ describe('the stylesheet a page is served with', () => {
     expect(PAGE_CSS).toContain('.hl-keyword{')
   })
 
-  test('reads light or dark from the reader rather than from a script', () => {
-    expect(PAGE_CSS).toContain('@media (prefers-color-scheme:dark){:root{')
-    expect(PAGE_CSS).toContain('@media print{:root{')
-    // The page never sets `data-theme`, so the tokens on `:root` are what it
-    // gets, and on the open web those are the light ones.
+  test('reads light or dark from the reader', () => {
+    expect(PAGE_CSS).toContain(
+      "@media (prefers-color-scheme:dark){:root:not([data-theme='light']){",
+    )
+    expect(PAGE_CSS).toContain('@media print{:root,')
+    // Nothing said: the tokens on `:root` are what the page gets, and on the
+    // open web those are the light ones.
     expect(PAGE_CSS).toContain(':root{color-scheme:light;--bg:#fbfcfd')
+  })
+
+  test('and lets a reader who says which one have it', () => {
+    // The button in the bar writes `data-theme`, so both stated schemes are
+    // restated after the system's - otherwise a page would keep the colours the
+    // system asked for and the button would change nothing anybody can see.
+    expect(PAGE_CSS).toContain(":root[data-theme='dark']{color-scheme:dark")
+    expect(PAGE_CSS).toContain(":root[data-theme='light']{color-scheme:light")
+    expect(PAGE_CSS.indexOf(":root[data-theme='dark']{color-scheme:dark")).toBeGreaterThan(
+      PAGE_CSS.indexOf('@media (prefers-color-scheme:dark)'),
+    )
   })
 })
 
