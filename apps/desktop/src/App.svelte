@@ -68,6 +68,9 @@
   import { workspace } from './lib/workspace.svelte'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
+  import { pull } from './lib/pull.svelte'
+  import PullMark from './lib/PullMark.svelte'
+  import { runEntry } from './lib/shortcuts/registry'
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -141,6 +144,7 @@
 
         shortcuts.receive(remote)
         toolbar.receive(remote)
+        pull.receive(remote)
         recovery.receive(remote)
       })
     }
@@ -163,6 +167,17 @@
   // Here rather than on the surface, because the surface is rebuilt with every
   // note; see text-size.ts.
   $effect(() => watchTextSize())
+
+  // What pulling a list or a note down past its top runs. The surfaces it is
+  // attached to have no idea what the app is showing, so the runner is left
+  // here, where the context the keyboard uses is already built; see
+  // pull.svelte.ts.
+  $effect(() => {
+    pull.runs = () => void runEntry(pull.id, appContext())
+    return () => {
+      pull.runs = null
+    }
+  })
 
   // A phone and a tablet show one document at a time, so an arrangement made on a
   // desktop - or on this window before it became one of those devices - comes
@@ -372,8 +387,10 @@
         shortcuts,
         theme,
         // What the phone's format bar holds, which a drive puts together and
-        // presses; see apps/desktop/test/e2e/phone-bar.py.
+        // presses, and which command a pull down past the top runs; see
+        // apps/desktop/test/e2e/phone-bar.py.
         toolbar,
+        pull,
         // The gallery, which a drive cannot reach by pointing: it sits over the
         // settings sheet, and the launch opens it by itself for a reader whose
         // system asks for more contrast. See start.ts.
@@ -732,6 +749,9 @@
 {#if presenting}
   <Slides tab={presenting} />
 {/if}
+
+<!-- What a pull has come to, while a thumb is on it. -->
+<PullMark />
 
 <!-- What the text size has just become, after a pinch or a key. -->
 <SizeBadge />

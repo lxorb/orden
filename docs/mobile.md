@@ -548,6 +548,40 @@ everywhere else. A thumb has no drag and neither does a keyboard, so one pair of
 buttons answers both rather than a gesture that only works on one kind of
 machine.
 
+## Pulling down past the top
+
+A phone has no keyboard to hang a shortcut off and no room for a row of buttons
+along the top, and there is exactly one movement a thumb can make that means
+nothing else: pulling a surface that is already at its top further down. Obsidian
+spends it on the command palette. Nib spends it on whichever command the reader
+names in **Settings > Mobile**, and offers **Search this space** to begin with -
+what a thumb reaches for on a phone is a note, and search is how a note is found.
+`none` is a choice too, for somebody who pulls lists about without meaning
+anything by it.
+
+It listens on the two surfaces that scroll: the note's own scroller, attached in
+`Pane.svelte` because a view is built fresh for every note, and the file list's,
+as a `use:pullable`. The command is a registry id and runs through the same
+`runEntry` the bar's buttons and the keys use.
+
+While a finger is down there is one quiet mark at the top, a ring that fills as
+the pull reaches and a disc once letting go would do something. It follows the
+finger rather than animating - what a reader who has asked for less movement
+loses is the growing, not the following - and it says the command's name to
+anybody listening. The travel is rubber: the first stretch is nearly free and the
+rest gets heavier, which is what tells a thumb that something is being reached
+for.
+
+**It never becomes the browser's own pull.** In a PWA a pull at the top of a
+scrolling document is pull-to-refresh, which would throw the page away and
+rebuild it - the one thing a note editor must never do by accident. Three things
+stop it, and all three were already true here: the window is pinned so the
+document itself never scrolls, `html` says `overscroll-behavior: none` and the
+file list says `contain` on its own scroller, and the move handler is not passive
+and prevents the default as soon as the gesture is this one. The drive dispatches
+the three touch events and checks that a scroll, a sideways drag and a short pull
+all leave everything where it was; see `test/e2e/phone-bar.py`.
+
 ## Capture: the microphone
 
 A phone is the device a recording is actually made on, so the recorder is the same

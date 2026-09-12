@@ -1361,4 +1361,8 @@ export const de: Dictionary = {
   'Take it off': 'Entfernen',
   'Put it on the bar': 'Auf die Leiste',
   'Reset the bar': 'Leiste zurücksetzen',
+  'Pulling down': 'Nach unten ziehen',
+  'A pull past the top runs': 'Ziehen über den Anfang startet',
+  'On the note, and on the list of them.': 'Auf der Notiz und auf der Liste.',
+  Nothing: 'Nichts',
 }

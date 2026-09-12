@@ -1,10 +1,13 @@
-"""The bar over the keyboard on a phone, and the pane it is put together in.
+"""The two things a phone has that a desktop does not: the bar over the keyboard,
+and pulling a list down past its top.
 
 What it proves: the bar draws the reader's own list of commands rather than nine
 hard-coded ones; a button presses the same command its key presses, so the note
-changes; the Mobile pane adds, orders, removes and resets it; and the default set
-is the nine the bar has always had, so nothing changed for anybody who never
-opens the pane.
+changes; the Mobile pane adds, orders, removes and resets it; the default set is
+the nine the bar has always had, so nothing changed for anybody who never opens
+the pane; and a pull past the top of the note runs the command the pane says,
+draws a mark that grows, does nothing when it is a scroll or a sideways drag, and
+never reloads the page.
 
 The keyboard is stood in for. A headless run has no soft keyboard and nothing in
 a browser window can shrink the visual viewport, so the two fields the platform
@@ -133,6 +136,12 @@ class Pages:
         self.server.shutdown()
 
 
+def pulling(page, down: int, across: int = 0, hold: bool = False):
+    """One pull, and how far the mark came. Held, the finger stays down until
+    `LIFT`, which is how a screenshot catches the mark."""
+    return page.evaluate(PULL, {"down": down, "across": across, "hold": hold})
+
+
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
 
@@ -215,6 +224,31 @@ def drive(browser) -> None:
     page.wait_for_timeout(300)
     say(f"after Take it off: {page.evaluate('() => window.nibApp.toolbar.ids')}")
 
+    say("--- pulling the note down past its top ---")
+    page.evaluate("() => (window.nibApp.settings.open = false)")
+    page.wait_for_timeout(500)
+    say(f"the pull runs {page.evaluate('() => window.nibApp.pull.id')}")
+
+    # A finger, dispatched as the touch events the handler listens for: a
+    # headless run has no finger, and these three events are the whole of what
+    # the page ever sees of one.
+    say(f"a short pull: {pulling(page, 40)}")
+    say(f"a long pull:  {pulling(page, 200, hold=True)}")
+    page.wait_for_timeout(200)
+    page.screenshot(path=str(SHOTS / "pulling.png"))
+    say("shot pulling.png, with the finger still down")
+
+    say(f"and on the lift the panel holds: {page.evaluate(LIFT)}")
+    page.wait_for_timeout(600)
+    page.screenshot(path=str(SHOTS / "pulled.png"))
+    say(f"shot pulled.png; the panel is {page.evaluate(PANEL)}")
+
+    say(f"a sideways drag: {pulling(page, 30, across=90)}")
+    say(f"a scroll upwards: {pulling(page, -60)}")
+    say(f"nothing is left held: {page.evaluate('() => window.nibApp.pull.at === 0')}")
+
+    page.evaluate("() => window.nibApp.settings.show('mobile')")
+    page.wait_for_timeout(600)
     page.click('button:text("Reset the bar")')
     page.wait_for_timeout(400)
     say(f"after the reset: {page.evaluate('() => window.nibApp.toolbar.ids')}")
@@ -230,6 +264,62 @@ OFFERS = """
 () => [...document.querySelectorAll('.sheet .setting.button')]
   .map((one) => one.getAttribute('aria-label') ?? (one.querySelector('.name')?.textContent ?? '').trim())
   .slice(-4)
+"""
+
+# Which panel the sidebar is holding, which is what the pull's own command opens.
+PANEL = """
+() => window.nibApp.workspace.panel
+"""
+
+# One pull, as the three touch events a finger sends. The mark's distance is read
+# at the furthest point, before the finger lifts.
+PULL = """
+async ({ down, across, hold }) => {
+  const view = window.nib
+  const scroller = view.scrollDOM
+  scroller.scrollTop = 0
+
+  const box = scroller.getBoundingClientRect()
+  const x = box.left + box.width / 2
+  const y = box.top + 20
+
+  const finger = (clientX, clientY) =>
+    new Touch({ identifier: 1, target: scroller, clientX, clientY })
+
+  const send = (kind, touch) =>
+    scroller.dispatchEvent(
+      new TouchEvent(kind, {
+        bubbles: true,
+        cancelable: true,
+        touches: touch ? [touch] : [],
+        targetTouches: touch ? [touch] : [],
+        changedTouches: touch ? [touch] : [],
+      }),
+    )
+
+  send('touchstart', finger(x, y))
+  // In steps, the way a finger arrives: the handler claims the gesture on one of
+  // them and follows the rest.
+  for (const part of [0.3, 0.6, 1]) {
+    send('touchmove', finger(x + across * part, y + down * part))
+    await new Promise((done) => requestAnimationFrame(done))
+  }
+
+  const at = window.nibApp.pull.at
+  const ready = window.nibApp.pull.ready
+  // Held, so the mark can be looked at: the lift is `LIFT`, next door.
+  if (!hold) send('touchend', null)
+  window.__pullFinger = () => send('touchend', null)
+
+  return { at, ready }
+}
+"""
+
+LIFT = """
+() => {
+  window.__pullFinger?.()
+  return window.nibApp.workspace.panel
+}
 """
 
 # What the pane is showing: the rows on the bar, and how many commands it offers.

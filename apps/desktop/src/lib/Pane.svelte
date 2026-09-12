@@ -42,6 +42,7 @@
   import { without } from './graph'
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
+  import { pull } from './pull.svelte'
   import { notePicture } from './note-images'
   import { placement } from './placement.svelte'
   import Reading from './Reading.svelte'
@@ -177,6 +178,16 @@
 
     searchedIn = here
     if (untrack(() => finding)) shutFinding()
+  })
+
+  // Pulling the note down past its first line, which on a phone runs whichever
+  // command the reader chose; see pull.svelte.ts. On the editor's own scroller,
+  // and rebuilt with it, because a view is built fresh for every note.
+  $effect(() => {
+    const current = view
+    if (!current) return
+
+    return pull.follow(current.scrollDOM)
   })
 
   // Every editor on the page is one the modes, the keys and the palette have to

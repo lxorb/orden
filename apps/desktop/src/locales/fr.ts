@@ -1374,4 +1374,8 @@ export const fr: Dictionary = {
   'Take it off': 'Retirer',
   'Put it on the bar': 'Mettre sur la barre',
   'Reset the bar': 'Réinitialiser la barre',
+  'Pulling down': 'Tirer vers le bas',
+  'A pull past the top runs': 'Tirer au-delà du haut lance',
+  'On the note, and on the list of them.': 'Sur la note et sur la liste.',
+  Nothing: 'Rien',
 }

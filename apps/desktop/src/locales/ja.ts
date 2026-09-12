@@ -1317,4 +1317,8 @@ export const ja: Dictionary = {
   'Take it off': '外す',
   'Put it on the bar': 'バーに追加',
   'Reset the bar': 'バーを初期化',
+  'Pulling down': '下に引く',
+  'A pull past the top runs': '先頭より下に引くと実行',
+  'On the note, and on the list of them.': 'ノートとノートの一覧で。',
+  Nothing: 'なし',
 }

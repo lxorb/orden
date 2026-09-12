@@ -1331,4 +1331,8 @@ export const gsw: Dictionary = {
   'Take it off': 'Wägnä',
   'Put it on the bar': 'Uf di Leischte',
   'Reset the bar': 'Leischte zrugsetze',
+  'Pulling down': 'Abezieh',
+  'A pull past the top runs': 'Zieh über de Afang startet',
+  'On the note, and on the list of them.': 'Uf de Notiz und uf de Lischte.',
+  Nothing: 'Nüt',
 }

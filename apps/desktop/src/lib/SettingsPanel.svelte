@@ -21,6 +21,7 @@
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
   import { runnable } from './shortcuts/registry'
   import { markFor, nameFor, toolbar } from './toolbar.svelte'
+  import { NOTHING, pull } from './pull.svelte'
   import { PRESETS } from './shortcuts/presets'
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
@@ -270,6 +271,21 @@
       ),
     })).filter((group) => group.rows.length)
   })
+
+  /** What the pull may be set to: nothing at all, then every command the bar
+   *  could hold, grouped the way the shortcuts list groups them. One choice, so
+   *  it is a select rather than a second list of rows - and on a phone the app's
+   *  select is the platform's own picker, which handles a long list better than
+   *  anything drawn here would. */
+  const pullChoices = $derived([
+    { value: NOTHING, label: t('Nothing') },
+    ...CATEGORIES.flatMap((category) =>
+      SHORTCUTS.filter((one) => one.category === category.id && runnable(one.id)).map((one) => ({
+        value: one.id,
+        label: `${category.label()}: ${one.label()}`,
+      })),
+    ),
+  ])
 
   function takeBar(event: DragEvent, at: number) {
     event.dataTransfer?.setData('text/plain', String(at))
@@ -1027,6 +1043,25 @@
     <button class="action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
       {t('Reset the bar')}
     </button>
+  </div>
+
+  <h3>{t('Pulling down')}</h3>
+  <div class="card">
+    <div class="setting">
+      <span class="name">
+        {t('A pull past the top runs')}
+        <small>{t('On the note, and on the list of them.')}</small>
+      </span>
+      <div class="pick">
+        <Select
+          value={pull.id}
+          options={pullChoices}
+          onchange={(value: string) => pull.choose(value)}
+          label={t('A pull past the top runs')}
+          plain={viewport.touch}
+        />
+      </div>
+    </div>
   </div>
 
   <h3>{t('Everything else')}</h3>

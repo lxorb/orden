@@ -207,6 +207,7 @@ const KNOWN: Record<string, Check> = {
       : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
   toolbar: buttonList,
+  pull: pulledCommand,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
@@ -303,6 +304,18 @@ function buttonList(value: unknown): string | null {
     }
     if (seen.has(id)) return `${id} is on the toolbar twice`
     seen.add(id)
+  }
+
+  return null
+}
+
+/** Which command the phone's pull gesture runs: one command id, `none` for no
+ *  gesture at all, or null for whichever the app offers. Read for its shape for
+ *  the reason the ids above are. */
+function pulledCommand(value: unknown): string | null {
+  if (value === null || value === 'none') return null
+  if (typeof value !== 'string' || value.length > LONGEST_ID || !ID.test(value)) {
+    return 'pull must be a command id, none, or null'
   }
 
   return null

@@ -31,6 +31,7 @@
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, SortKey } from './workspace.svelte'
+  import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
   import { DEEPEST } from './workspace/graph-settings.svelte'
@@ -600,6 +601,7 @@
           data-region="list"
           data-panel={workspace.panel}
           use:scrollbar={workspace.panel}
+          use:pullable
           in:arrive
           out:leave
         >
