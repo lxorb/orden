@@ -38,9 +38,21 @@ import {
   RuleWidget,
 } from './widgets'
 
-const HEADING = /^(?:ATX|Setext)Heading(\d)$/
-
+/** Nodes whose own lines carry a class, and which one.
+ *
+ *  The headings are written out rather than read off the name with a pattern.
+ *  There are eight names and the walk asks about every node it meets, so the
+ *  pattern was the most-run line in the preview: a thousand-line note spent
+ *  nearly four thousand matches a keystroke on it, which a lookup does not. */
 const LINE_CLASS: Record<string, string> = {
+  ATXHeading1: 'nib-h1',
+  ATXHeading2: 'nib-h2',
+  ATXHeading3: 'nib-h3',
+  ATXHeading4: 'nib-h4',
+  ATXHeading5: 'nib-h5',
+  ATXHeading6: 'nib-h6',
+  SetextHeading1: 'nib-h1',
+  SetextHeading2: 'nib-h2',
   Table: 'nib-table',
   FrontMatter: 'nib-frontmatter',
   FootnoteDef: 'nib-footnote',
@@ -93,12 +105,6 @@ class Decorator {
    *  replacement stands for, and decorating it again would overlap. */
   private visit(node: SyntaxNode): boolean {
     const name = node.name
-
-    const heading = HEADING.exec(name)
-    if (heading) {
-      this.markLines(node, `nib-h${heading[1]}`)
-      return true
-    }
 
     // Front matter drawn as rows is a block replacement, which only a state
     // field may provide - see blocks.ts. Step aside so nothing decorates the

@@ -570,6 +570,23 @@ describe('inline code', () => {
   })
 })
 
+describe('headings', () => {
+  test('every depth styles its line as that depth', () => {
+    for (let depth = 1; depth <= 6; depth++) {
+      expect(lineClasses(`${'#'.repeat(depth)} Title`)).toContain(`nib-h${depth}`)
+    }
+  })
+
+  test('the two underlined forms style theirs as the level they mean', () => {
+    expect(lineClasses('Title\n=====')).toContain('nib-h1')
+    expect(lineClasses('Title\n-----')).toContain('nib-h2')
+  })
+
+  test('seven hashes are not a heading', () => {
+    expect(lineClasses('####### Title').filter((one) => one.startsWith('nib-h'))).toEqual([])
+  })
+})
+
 describe('an unclosed fence', () => {
   const doc = '```\n# Title\n\n**bold**'
 
