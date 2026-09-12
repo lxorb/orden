@@ -18,6 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
+import { flowItems, listItem, unquoted } from './yaml'
 
 /** Where a note's front matter sits.
  *
@@ -48,9 +49,6 @@ interface KeyLine {
 /** A top-level `key:` and whatever follows it on the line. Indented lines are
  *  somebody else's key, and a line that is only a value is part of a list. */
 const KEY = /^([A-Za-z_][\w-]*)[ \t]*:/
-
-/** Quotes around a whole value, which YAML reads as one string. */
-const QUOTED = /^(["'])([\s\S]*)\1$/
 
 /** Where the front matter block sits, or null when the note opens with anything
  *  else - which is most notes.
@@ -100,10 +98,6 @@ export function stripFrontMatter(source: string): string {
   return block ? source.slice(block.to) : source
 }
 
-/** A dash and a space at the start of a line, however far it is indented: the
- *  way YAML writes a list under the key it belongs to. */
-const ITEM = /^[ \t]*-[ \t]+(.*)$/
-
 /** A top-level key read as a list.
  *
  *  YAML writes one three ways and a note may use any of them:
@@ -128,11 +122,7 @@ export function frontMatterList(source: string, key: string): string[] {
   const value = source.slice(line.value.from, line.value.to).trim()
 
   // On the line: a flow sequence, or a single value standing for a list of one.
-  if (value) {
-    const flow = /^\[([\s\S]*)\]$/.exec(value)
-    const parts = flow ? (flow[1] ?? '').split(',') : [value]
-    return parts.map((one) => unquoted(one.trim())).filter(Boolean)
-  }
+  if (value) return (flowItems(value) ?? [unquoted(value)]).filter(Boolean)
 
   // Under it: the `- item` lines, up to the next key of the note's own.
   const out: string[] = []
@@ -144,9 +134,9 @@ export function frontMatterList(source: string, key: string): string[] {
     const text = source.slice(at, stop)
 
     if (text.trim()) {
-      const item = ITEM.exec(text)
-      if (!item) break
-      out.push(unquoted((item[1] ?? '').trim()))
+      const item = listItem(text)
+      if (item === null) break
+      out.push(item)
     }
 
     if (end === -1) break
@@ -189,11 +179,6 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
   }
 
   return null
-}
-
-/** A value with the quotes YAML would take off taken off. */
-function unquoted(value: string): string {
-  return QUOTED.exec(value)?.[2] ?? value
 }
 
 /** One edit that sets several top-level keys at once, in the order given, or null

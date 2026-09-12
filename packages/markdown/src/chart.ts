@@ -28,6 +28,7 @@
  *  document and looked at on its own. */
 
 import { escape } from './html'
+import { flowItems, unquoted } from './yaml'
 
 export type ChartKind = 'bar' | 'line' | 'pie' | 'donut'
 
@@ -76,27 +77,8 @@ function colour(at: number): string {
   return `var(${token}, ${hex})`
 }
 
-/** A value with the quotes it may have been written in taken off. */
-function unquoted(value: string): string {
-  const trimmed = value.trim()
-  const first = trimmed.at(0)
-  if ((first === '"' || first === "'") && trimmed.endsWith(first) && trimmed.length > 1) {
-    return trimmed.slice(1, -1)
-  }
-  return trimmed
-}
-
-/** A `[a, b, c]` sequence, or null when the value is not one. */
-function flow(value: string): string[] | null {
-  const trimmed = value.trim()
-  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null
-
-  const inside = trimmed.slice(1, -1).trim()
-  return inside === '' ? [] : inside.split(',').map(unquoted)
-}
-
-/** A number as YAML would read one, or null for anything that is not one -
- *  including a gap in a series, which is drawn as a gap rather than as a zero. */
+/** A number as YAML would read one, or null for anything that is not one. Its
+ *  only caller draws a zero for the null; see `numbers` below. */
 function numberOf(written: string): number | null {
   const value = Number(unquoted(written))
   return Number.isFinite(value) ? value : null
@@ -132,18 +114,16 @@ export function readChart(source: string): Chart | null {
     const found = pair(line)
     const listed = line.trimStart().startsWith('-')
 
-    // `series:` on its own opens the list under it; any key at the left margin
-    // closes it again.
-    if (found === null) {
-      if (/^\s*series\s*:\s*$/i.test(line)) inSeries = true
-      continue
-    }
+    // A line with no colon on it says nothing this reads. `series:` on its own
+    // is not one of those - it is a key with an empty value, and it is the
+    // branch below that opens the list under it.
+    if (found === null) continue
 
     if (found.indent === 0 && !listed) {
       if (found.key === 'series') {
         // `series: [1, 2, 3]` is one series with no name, which is what somebody
         // writes when there is only one thing to draw.
-        const inline = flow(found.value)
+        const inline = flowItems(found.value)
         inSeries = inline === null
         if (inline) series.push({ title: '', data: numbers(found.value) })
         continue
@@ -152,7 +132,7 @@ export function readChart(source: string): Chart | null {
       inSeries = false
       if (found.key === 'type') kind = KINDS[unquoted(found.value).toLowerCase()] ?? kind
       else if (found.key === 'title') title = unquoted(found.value) || null
-      else if (found.key === 'labels') labels = flow(found.value) ?? [unquoted(found.value)]
+      else if (found.key === 'labels') labels = flowItems(found.value) ?? [unquoted(found.value)]
       continue
     }
 
@@ -176,7 +156,7 @@ export function readChart(source: string): Chart | null {
 /** The numbers a `data:` value holds. A value that is not a number is a zero:
  *  a bar chart with a hole in it says less than one with a bar of nothing. */
 function numbers(value: string): number[] {
-  const listed = flow(value)
+  const listed = flowItems(value)
   if (listed === null) {
     const one = numberOf(value)
     return one === null ? [] : [one]
