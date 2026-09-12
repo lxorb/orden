@@ -118,6 +118,11 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
 
     wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
     wait_for(page, "() => !!window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    # A first visit in a browser is given a welcome note, and the app opens it
+    # after the space is there rather than with it; see `restore` in
+    # workspace.svelte.ts. A panel opened before that has happened is shut again
+    # underneath whatever was about to be photographed.
+    wait_for(page, "() => !!window.nibApp.workspace.active", f"[{label}] the app's own note")
     return page
 
 
@@ -169,10 +174,25 @@ MORE_SPACES = """
   // `isShared` asks two things: which remote space a folder mirrors, and what
   // the account holds for it. There is no Worker behind this run, so both are
   // stood in for; it is the only way a drive can see a shared row at all.
+  //
+  // A whole mirror each, not just the id: every row in the file list asks
+  // `sync.tracked` whether it is a file shared on its own, and that walks the
+  // mirrors and reads each one's root. A mirror without one threw, and an
+  // exception in a row takes the whole sidebar with it. See newMirror in
+  // sync/mirror.ts for the shape.
+  const stand = (spaceId, root) => ({
+    spaceId,
+    root,
+    cursor: 0,
+    notes: {},
+    files: {},
+    shared: true,
+  })
+
   app.sync.mirrors = {
     ...app.sync.mirrors,
-    '/With Nina': { spaceId: 'remote-nina' },
-    [here.root]: { spaceId: 'remote-here' },
+    '/With Nina': stand('remote-nina', '/With Nina'),
+    [here.root]: stand('remote-here', here.root),
   }
   app.account.spaces = [
     { id: 'remote-nina', name: 'With Nina', role: 'write', shared: true },
