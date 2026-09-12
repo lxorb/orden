@@ -495,9 +495,6 @@ function inOrder(nodes: readonly CanvasNode[], order: readonly string[]): Canvas
     .map((one) => one.node)
 }
 
-/** A canvas out of the text of a file. An empty one for a file that is not JSON
- *  at all, which is what a new or a truncated file looks like: an empty plane is
- *  something to draw on, and an error message is not. */
 /** Anything on a canvas that carries an id: a node of any of the five kinds, an
  *  edge, or a stroke of ink. */
 export type Thing = CanvasNode | CanvasEdge | InkStroke
@@ -523,6 +520,9 @@ export function strokeOf(value: unknown): InkStroke | null {
   return readStroke(value)
 }
 
+/** A canvas out of the text of a file. An empty one for a file that is not JSON
+ *  at all, which is what a new or a truncated file looks like: an empty plane is
+ *  something to draw on, and an error message is not. */
 export function readCanvas(text: string): Canvas {
   let parsed: unknown
   try {

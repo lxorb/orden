@@ -178,16 +178,6 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   }
 }
 
-/** The icon the merged file wears: the one either side names, and where both name
- *  one and they differ, the one that sorts first.
- *
- *  The same rule as everything else in here, read for a thing there is only one
- *  of: nothing on either side is lost, and the tie is broken the way `later`
- *  breaks one, so both devices reach the same file without talking. Which does
- *  mean an icon taken away on one device comes back if the other still had it -
- *  exactly what happens to a card deleted on one device and moved on the other,
- *  and for the same reason. Choosing an icon on an open canvas does not go through
- *  here at all; see `follow` in the app's canvas store. */
 /** The colour the merged file's icon is drawn in.
  *
  *  A colour belongs to the icon it colours, so only a side whose icon survived has
@@ -201,6 +191,16 @@ function keptTint(ours: Canvas, theirs: Canvas, kept: string | null): string | n
   return keptIcon(mine, yours)
 }
 
+/** The icon the merged file wears: the one either side names, and where both name
+ *  one and they differ, the one that sorts first.
+ *
+ *  The same rule as everything else in here, read for a thing there is only one
+ *  of: nothing on either side is lost, and the tie is broken the way `later`
+ *  breaks one, so both devices reach the same file without talking. Which does
+ *  mean an icon taken away on one device comes back if the other still had it -
+ *  exactly what happens to a card deleted on one device and moved on the other,
+ *  and for the same reason. Choosing an icon on an open canvas does not go through
+ *  here at all; see `follow` in the app's canvas store. */
 function keptIcon(ours: string | null, theirs: string | null): string | null {
   if (ours === null || ours === theirs) return theirs
   if (theirs === null) return ours
