@@ -203,7 +203,30 @@ class Rooms {
     // looking. See rooms/peers.ts.
     const who = { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() }
     const gone = () => this.rebuild(key)
-    const shape = { noteId: open.noteId, token, who, scheme: theme.current, onPeers, gone }
+
+    // Whether this document is still on the file this room is about. A document
+    // outlives the file in it: the one tab that previews a note takes another note on
+    // rather than being swapped for another document, and `follow` above is an
+    // effect, so it hears about that a beat after the click. For that beat the room
+    // is joined to a file these words are no longer, and this is how it knows.
+    //
+    // `arrivals` is how many notes the document has held, which is exactly the
+    // question - documents.svelte.ts keeps it to tell "the same note, renamed" from
+    // "another note in the same tab". The path used to be compared beside it and
+    // that was the bug: renaming a space rewrites the path of every open note and
+    // keeps every id, so a room in perfectly good order read it as the document
+    // having moved on and refused everything in both directions - while still
+    // telling the file sync it held the file, which left the note mute on both
+    // channels until its tab was closed.
+    //
+    // Worked out once, for either shape of room. Nothing hands a canvas tab another
+    // canvas today, so a plane room is never asked anything but yes; the guard is the
+    // room's rather than the note's, and a room that refuses what is not its file is
+    // not a thing to remember to add later. See rooms/plane.ts.
+    const arrivals = open.note.arrivals
+    const holds = () => open.note.arrivals === arrivals
+
+    const shape = { noteId: open.noteId, token, who, scheme: theme.current, onPeers, gone, holds }
 
     // Which shape of room this file wants is its name, and nothing about the tab; see
     // rooms/kind.ts, and `ready` above, which is what promises the plane is there.
@@ -219,23 +242,6 @@ class Rooms {
       return
     }
 
-    // Whether this document is still on the note this room is about. A document
-    // outlives the file in it: the one tab that previews a note takes another note on
-    // rather than being swapped for another document, and `follow` above is an
-    // effect, so it hears about that a beat after the click. For that beat the room
-    // below is joined to words that are another note's, and this is how it knows.
-    //
-    // `arrivals` is how many notes the document has held, which is exactly the
-    // question - documents.svelte.ts keeps it to tell "the same note, renamed" from
-    // "another note in the same tab". The path used to be compared beside it and
-    // that was the bug: renaming a space rewrites the path of every open note and
-    // keeps every id, so a room in perfectly good order read it as the document
-    // having moved on and refused everything in both directions - while still
-    // telling the file sync it held the file, which left the note mute on both
-    // channels until its tab was closed.
-    const arrivals = open.note.arrivals
-    const holds = () => open.note.arrivals === arrivals
-
     // The words themselves are not handed over: the room reads them from the
     // document when it has something to compare them with, which is a round trip
     // later and may be several keystrokes later. See rooms/room.ts.
@@ -244,7 +250,6 @@ class Rooms {
       note: open.note.live,
       hash: open.hash,
       digest: sha256,
-      holds,
     })
 
     this.held.set(key, { room, noteId: open.noteId, note: open.note, kind })

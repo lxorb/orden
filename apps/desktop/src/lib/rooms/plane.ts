@@ -31,12 +31,27 @@ export interface Drawing {
   /** The room was thrown away and another will be built out of the file; see
    *  `REBUILT` in door.ts. */
   gone: () => void
+  /** Whether the surface above is still on the file this room was joined for.
+   *
+   *  A note's room asks the same question and says why at length; see `holds` in
+   *  room.ts. Nothing in the app hands a canvas tab another canvas today - a plane
+   *  arrives with its surface and goes with it - so nothing reaches this yet. It is
+   *  here because the question is the room's, not the note's: a room that pushes
+   *  into the wrong file is the same accident whichever kind of file it is, and the
+   *  guard must not be the thing that was missing on the day a canvas tab learns to
+   *  adopt one. See `join` in rooms.svelte.ts, which answers it for both. */
+  holds: () => boolean
 }
 
 export class PlaneRoom implements SharedPlane {
   private readonly door: RoomDoor
   private readonly binding: PlaneBinding
   private scheme: 'dark' | 'light'
+  /** Whether this room has been left. A greeting is a round trip and the answer to
+   *  it lands whenever it lands, which can be after the last tab holding the canvas
+   *  closed; what it was about to do must not happen behind the room's back. The
+   *  note's room keeps the same flag for the same reason. */
+  private left = false
 
   constructor(private readonly joining: Drawing) {
     this.scheme = joining.scheme
@@ -49,7 +64,7 @@ export class PlaneRoom implements SharedPlane {
       gone: () => joining.gone(),
     })
 
-    this.binding = new PlaneBinding(this.door.doc, joining.surface)
+    this.binding = new PlaneBinding(this.door.doc, joining.surface, () => this.holds())
   }
 
   /** Whether the plane and the room now hold the same objects, and every stroke
@@ -93,6 +108,7 @@ export class PlaneRoom implements SharedPlane {
   }
 
   leave() {
+    this.left = true
     this.joining.surface.shared = null
     this.joining.surface.handsAre([])
     this.binding.part()
@@ -100,11 +116,24 @@ export class PlaneRoom implements SharedPlane {
     this.joining.onPeers(0)
   }
 
+  /** Whether this room is still about the plane it was joined to: it has not been
+   *  left, and the surface is still on the file it was joined for. Asked before
+   *  anything at all is done to the objects; see `Drawing.holds`. */
+  private holds(): boolean {
+    return !this.left && this.joining.holds()
+  }
+
   /** The room's plane and this device's, brought together, and the surface handed
    *  the room from here on. Nothing was pushed and nothing was watched until now:
    *  what the room holds and what this device drew have to be compared rather than
-   *  one landing on the other. */
+   *  one landing on the other.
+   *
+   *  Joining is a round trip, and a canvas that moved on inside it is a plane these
+   *  objects are no longer: neither side is anybody's news then, and merging would
+   *  write one file's drawing into another's. */
   private together() {
+    if (!this.holds()) return
+
     this.binding.together()
     this.joining.surface.shared = this
   }

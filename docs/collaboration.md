@@ -321,6 +321,19 @@ plane is not a step to take back. The surface's own snapshot history stands asid
 while a plane is in a room: two histories over one plane would each undo the other's
 work.
 
+**Every direction asks whose file it is first.** A document outlives the file in it -
+the one preview tab takes another note on rather than being swapped for another
+document - and the pairing of documents to rooms is worked out in an effect, which
+cannot be synchronous with the click that moved it. So for that beat a room is joined
+to a file these words are no longer, and a change either way would write one file over
+another. Both rooms ask the same question in the same way, `holds`, answered by how
+many files the document has held; a plane refuses a push, an arrival, an undo and the
+merge itself when the answer is no. Nothing hands a canvas tab another canvas today,
+so a plane room is only ever asked and only ever answers yes - the guard is there
+because the question is the room's rather than the note's, and a room that refuses
+what is not its file is not a thing to remember to add on the day a canvas tab learns
+to preview. See `rooms.svelte.ts`, `rooms/plane.ts` and `rooms/bind.ts`.
+
 **What the file sync does** is what it already did for notes, unchanged: a canvas in
 a room is neither pushed nor treated as a disagreement, because the room carried
 every stroke and writes the file itself. A canvas that is *not* in a room still
@@ -866,6 +879,12 @@ real devices look like. The numbers above are from a quiet machine.
   there, a device that drew while it was away, undo taking back what this device
   drew and refusing to touch what somebody else drew, joining not being a step to
   take back, and what a stroke costs a plane forty times the size.
+- `apps/desktop/src/lib/rooms/switching.test.ts` and `rooms/plane.test.ts` - a tab
+  that has moved on to another file with its room still joined, for a note and for a
+  canvas: what is typed or drawn in the new file never reaches the old file's room,
+  what another device writes in the old file never reaches the new one, a room
+  answering inside that beat neither folds nor binds, a room that has been left
+  carries nothing, and undo cannot reach across the switch.
 - `apps/desktop/src/lib/canvas/store.test.ts` - the surface's own end: a plane
   shared to read taking no edit and writing nothing, an edit in a room going to the
   room rather than into a local history, and what arrives being on screen at once

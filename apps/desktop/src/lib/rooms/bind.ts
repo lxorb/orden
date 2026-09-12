@@ -67,8 +67,11 @@ export function replacements(delta: readonly Op[]): Replacement[] {
  *  Said out loud rather than swallowed. Nothing is lost by refusing - the room
  *  about to be joined is the one these words belong to - but a binding still being
  *  asked after the document left it means something let go a beat too late, and
- *  that is worth seeing in a console rather than inferring from a note. */
-function moved(what: string) {
+ *  that is worth seeing in a console rather than inferring from a note.
+ *
+ *  Exported for the canvas's binding, which refuses the same things for the same
+ *  reason and should say so in the same words; see plane-bind.ts. */
+export function moved(what: string) {
   console.warn(`nib: ${what} was refused - the document is on another note now`)
 }
 

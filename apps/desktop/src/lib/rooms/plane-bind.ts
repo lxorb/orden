@@ -18,6 +18,13 @@
  *  the merge that brings the two together is marked as neither device's and is not a
  *  step to take back.
  *
+ *  **Whose file.** Every direction asks `holds` first: whether the surface is still
+ *  on the file this binding was made for. A document outlives the file in it and the
+ *  pairing of documents to rooms is worked out in an effect, so for a beat a room can
+ *  be joined to objects that are now another canvas's - and an edit either way would
+ *  write one drawing into another. The note's binding guards itself the same way and
+ *  says more about the beat; see `bind` in bind.ts.
+ *
  *  **Joining.** A note asks which side is ahead and folds one way; a canvas does not
  *  have to ask. Everything on a plane has an id and a time, so the room's plane and
  *  this device's file are merged - the same symmetric merge two files get, in
@@ -30,6 +37,7 @@ import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@nib/rooms/plane'
 import * as Y from 'yjs'
 import type { Canvas } from '../canvas/format'
 import type { PlaneSurface } from '../canvas/shared'
+import { moved } from './bind'
 import { HERE } from './door'
 
 /** Where the merge that joins the two is marked as having come from: neither this
@@ -51,6 +59,8 @@ export class PlaneBinding {
   constructor(
     private readonly doc: Y.Doc,
     private readonly surface: PlaneSurface,
+    /** Whether the surface is still on the file this binding was made for. */
+    private readonly holds: () => boolean,
   ) {
     this.watched = rootsOf(doc)
 
@@ -72,6 +82,11 @@ export class PlaneBinding {
     for (const change of STACK) this.history.on(change, this.told)
 
     this.heard = (events) => {
+      if (!this.holds()) {
+        moved('a change from another device')
+        return
+      }
+
       const ids = changedIn(events)
       if (ids.size) this.surface.arrived(readPlane(doc, this.surface.canvas, ids))
     }
@@ -101,17 +116,36 @@ export class PlaneBinding {
   /** An edit made here, on its way into the room. `after` is already stamped, so
    *  its times are the ones the room writes down. */
   push(before: Canvas, after: Canvas) {
+    if (!this.holds()) {
+      moved('an edit made in it')
+      return
+    }
+
     this.doc.transact(() => pushPlane(this.doc, before, after), HERE)
   }
 
   /** Answers whether there was anything to take back. The change lands in the
    *  document and comes back through the observer like any other, so the surface,
-   *  the other devices and the file all hear about it the one way. */
+   *  the other devices and the file all hear about it the one way.
+   *
+   *  Which is why both arrows ask as well: an undo is an edit to the room's plane
+   *  like any other, and one taken back in a canvas the surface has moved on from
+   *  would go into a file nobody is looking at. */
   undo(): boolean {
+    if (!this.holds()) {
+      moved('an undo')
+      return false
+    }
+
     return this.history.undo() !== null
   }
 
   redo(): boolean {
+    if (!this.holds()) {
+      moved('a redo')
+      return false
+    }
+
     return this.history.redo() !== null
   }
 

@@ -38,7 +38,9 @@ class Device implements PlaneSurface {
 
   private constructor(file: Canvas) {
     this.canvas = file
-    this.binding = new PlaneBinding(this.doc, this)
+    // One canvas the whole way through here: a plane the surface has moved on from is
+    // plane.test.ts.
+    this.binding = new PlaneBinding(this.doc, this, () => true)
   }
 
   /** The first device into a room. The Worker has already seeded the room from the
