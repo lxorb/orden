@@ -573,6 +573,43 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | `CanvasBar.svelte` | the one bar, and the popovers over it |
 | `CanvasPicked.svelte` | the bar over what is picked |
 
+## The other surface that uses all of this
+
+A page note - sheets of paper in a column, written on with the pen; see
+[pages.md](pages.md) - is this engine wearing paper, and that is worth stating here
+because it is what stops there being two of anything.
+
+It reuses, unchanged: `CanvasBar.svelte`, `CanvasInk.svelte`, `CanvasNode.svelte`,
+`CanvasHands.svelte`, `canvas/ink.ts`, `canvas/paint.ts`, `canvas/svg.ts`,
+`canvas/edits.ts`, `canvas/contacts.ts`, `canvas/camera`, and the two module
+singletons that matter most - `pens.svelte.ts` and `tools.svelte.ts` - so the green
+highlighter somebody picked on a plane is still in their hand on paper. Its store
+extends `CanvasStore`, which gained one `parse`/`serialise` pair for it and nothing
+else: the one edit per gesture, the one undo step, the one debounced write, the room
+binding and the merge when words arrive from elsewhere are all inherited.
+
+Two things were extracted so both surfaces could be held to one rule rather than two
+copies of it:
+
+- **`inks(pointer, glass)`** in `canvas/pointer.ts` - whether a contact of this kind
+  may lay ink down at all. It is `toolFor`'s own condition with the tool left out, so
+  a palm on paper and a palm on a plane are turned away by the same line and the same
+  test. See "Two hands and a pen" above.
+- **`parse`/`serialise`** in `canvas/store.svelte.ts` - the only overridable pair on
+  the store. Both are the canvas format either way round, so a page note and a canvas
+  write the same bytes and a file renamed across the two extensions loses nothing.
+
+The file format is the same format: JSON Canvas, this reader and this writer, with a
+page written as a spec node plus one record under `nib.pages`. `canvas.ts` grew a
+fifth node kind for it - `page` - the way it already had `shape`: a node like any
+other in memory, written under `nib` rather than invented into `nodes`.
+
+What a page note does **not** reuse is `pointer.ts`'s machine, and deliberately: that
+machine is about ports, connectors, resize handles and an endless plane, and a page
+note has none of those. Its own handler is forty lines that call the same ink
+functions. That is reuse of the engine, not a second engine - but it is the honest
+line between the two.
+
 The whole of it is driven for real by `test/e2e/canvas-arrange.py`: the built web app
 in the machine's own Chrome, with mouse, touch and pen events through the DevTools
 protocol, photographing the cursor every tool sets, the pattern at four zooms, the bar

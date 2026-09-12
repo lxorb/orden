@@ -32,6 +32,7 @@
   import CanvasNode from './CanvasNode.svelte'
   import PagesPage from './PagesPage.svelte'
   import { graphPoint, zoomed } from './camera'
+  import { toolPressed } from './canvas/actions'
   import { movedBy, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
@@ -43,10 +44,12 @@
   import { tools } from './canvas/tools.svelte'
   import { type Point } from './canvas/geometry'
   import { pageAt } from '@nib/markdown/pages'
+  import { forgetPaper } from './pages/paper'
   import { PagesStore } from './pages/store.svelte'
   import { t } from './i18n.svelte'
   import { rooms } from './rooms.svelte'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
+  import { shortcuts } from './shortcuts.svelte'
 
   import { pages as pagesState } from './pages/showing.svelte'
   import { viewport } from './viewport.svelte'
@@ -63,6 +66,13 @@
 
   /** The tools that put ink down, which are the ones a palm may not have. */
   const INKING: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
+
+  /** The tools a page note has. The five that mean something on paper; a connector and
+   *  a frame are a plane's, and there is nothing on a sheet to join. */
+  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>(['select', 'hand', 'draw', 'erase', 'lasso'])
+
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
 
   let host = $state<HTMLElement>()
   let width = $state(0)
@@ -94,10 +104,13 @@
     store.pane = { width, height }
   })
 
-  /** The status bar's counter and the outline panel's thumbnails are elsewhere in
-   *  the window, so what they need is said once, here, for the note in front. */
+  /** The status bar's counter and the outline panel's thumbnails are elsewhere in the
+   *  window, so this surface says it is the one in front and they read the rest off its
+   *  store. Once, on the way in and on the way out: the store is the same store all the
+   *  way through, and saying so per scroll would be a write into state the bar has
+   *  already read. See pages/showing.svelte.ts. */
   $effect(() => {
-    pagesState.showing(tab.note.key, { store, page: showing, count: pages.length })
+    pagesState.arrived(tab.note.key, store)
     return () => pagesState.gone(tab.note.key)
   })
 
@@ -113,7 +126,7 @@
   // Words that changed under the surface: a version restored, a copy a sync brought
   // over, the file undo putting one back. The same one line a canvas has.
   $effect(() => {
-    void tab.note.revision
+    follows(tab.note.revision)
     store.follow()
   })
 
@@ -170,6 +183,18 @@
     store.shared?.hand(pointing, live)
   })
 
+  // The papers these pages are pages of, let go of when the tab goes: a PDF open for a
+  // note nobody is looking at is a worker and a pile of bitmaps that nothing will ever
+  // ask for again. Read once, on the way out, so a page added or removed while the tab
+  // is open does not tear the paper down under it.
+  $effect(() => {
+    return () => {
+      for (const path of new Set(pages.map((page) => page.file).filter(Boolean))) {
+        if (path) forgetPaper(path)
+      }
+    }
+  })
+
   // The pane being worked in takes the keyboard, so Delete and Ctrl+Z reach the
   // pages the way they reach an editor. Never while a card is being written in.
   $effect(() => {
@@ -205,8 +230,10 @@
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     touch: viewport.touch,
-    coalesced: typeof PointerEvent !== 'undefined' && 'getCoalescedEvents' in PointerEvent.prototype,
-    predicted: typeof PointerEvent !== 'undefined' && 'getPredictedEvents' in PointerEvent.prototype,
+    coalesced:
+      typeof PointerEvent !== 'undefined' && 'getCoalescedEvents' in PointerEvent.prototype,
+    predicted:
+      typeof PointerEvent !== 'undefined' && 'getPredictedEvents' in PointerEvent.prototype,
   })
 
   /** The gesture under way, if any. Four, which is all a page of paper needs: a
@@ -335,14 +362,20 @@
     }
 
     if (!store.isPicked(hit.id)) store.pick(hit.id, event.shiftKey || event.ctrlKey)
-    gesture = { kind: 'drag', id: event.pointerId, from: point, offset: { x: 0, y: 0 }, moved: false }
+    gesture = {
+      kind: 'drag',
+      id: event.pointerId,
+      from: point,
+      offset: { x: 0, y: 0 },
+      moved: false,
+    }
   }
 
   function onpointermove(event: PointerEvent) {
     pointing = planeAt(event)
 
     const one = gesture
-    if (!one || one.id !== event.pointerId) return
+    if (one?.id !== event.pointerId) return
 
     // A pen lifted off the glass while the button was still reported down: the one
     // thing that must not keep a stroke alive.
@@ -374,7 +407,11 @@
 
       const guessed =
         'getPredictedEvents' in event
-          ? event.getPredictedEvents().map((one) => sampleOf(one, gesture?.kind === 'draw' ? gesture.began : event.timeStamp))
+          ? event
+              .getPredictedEvents()
+              .map((one) =>
+                sampleOf(one, gesture?.kind === 'draw' ? gesture.began : event.timeStamp),
+              )
           : []
       predicted = leadPoint(points[points.length - 2], points[points.length - 1], guessed)
       return
@@ -466,9 +503,7 @@
       const box = host?.getBoundingClientRect()
       const x = event.clientX - (box?.left ?? 0)
       const y = event.clientY - (box?.top ?? 0)
-      store.camera = store.held(
-        zoomed(camera, width, height, x, y, Math.exp(-event.deltaY / 400)),
-      )
+      store.camera = store.held(zoomed(camera, width, height, x, y, Math.exp(-event.deltaY / 400)))
       return
     }
 
@@ -481,6 +516,29 @@
 
   function onkeydown(event: KeyboardEvent) {
     if (store.editing !== null) return
+
+    // The bar teaches the keyboard, and it is one bar: the five tools that mean
+    // something on paper answer the very same keys they answer on a plane, off the same
+    // table and so off the same rebinding. The rest are a canvas's - there is nothing to
+    // connect on a page - and are left for whatever else wants them.
+    const wanted = toolPressed(event)
+    if (wanted && PAPER_TOOLS.has(wanted)) {
+      event.preventDefault()
+      tools.choose(wanted)
+      return
+    }
+
+    if (shortcuts.pressed('edit.undo', event)) {
+      event.preventDefault()
+      store.undo()
+      return
+    }
+
+    if (shortcuts.pressed('edit.redo', event) || shortcuts.pressed('edit.redo.alt', event)) {
+      event.preventDefault()
+      store.redo()
+      return
+    }
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
       if (!store.picked.length || !writable) return

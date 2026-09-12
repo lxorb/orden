@@ -947,7 +947,9 @@ export function writeCanvas(canvas: Canvas): string {
   const written = {
     nodes: canvas.nodes
       .filter((node) => node.type !== 'shape')
-      .map((node) => (isPage(node) ? writtenNode(asSpecNode(node, ++numbered)) : writtenNode(node))),
+      .map((node) =>
+        isPage(node) ? writtenNode(asSpecNode(node, ++numbered)) : writtenNode(node),
+      ),
     edges: canvas.edges.map(writtenEdge),
     ...(Object.keys(nib).length ? { nib: { version: NIB_VERSION, ...nib } } : {}),
   }

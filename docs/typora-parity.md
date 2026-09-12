@@ -360,6 +360,14 @@ Still pandoc's, and offered only where pandoc is installed:
       Craft, OneNote, Tomboy, Airtable and any folder of markdown, read from the
       export the reader already has, in one sheet, on every platform. See
       docs/import.md and section 17
+- [x] A PDF, as pages to write on. One more row of the same sheet: the paper goes
+      into the space byte for byte, so Obsidian still opens it, and a `.pages` note
+      lands beside it whose pages are that paper's pages. Nothing is baked in - no
+      folder of PNGs - each page names the file and the page, and the picture is
+      rendered from the paper when it comes near the view. Which is also the answer
+      to Samsung Notes, GoodNotes, Notability and Apple Notes, none of which
+      documents its own format and all of which export PDF; see docs/pages.md for
+      what can and cannot be read, and why
 
 ## 16. System integration
 
@@ -853,7 +861,20 @@ Features Typora does not have, which are the reason this exists.
       newest win, which is only safe because the words that lose are in the
       histories above; or be asked, which leaves the note alone, holds the other
       copy, and does not push until somebody answers. A canvas is none of the three
-      and never was: both copies merge, because everything on one has an id
+      and never was: both copies merge, because everything on one has an id. A page
+      note is a canvas, so it merges too - the same function, and two devices that
+      each added a page end up with both pages
+- [x] Page notes: sheets of paper in a column, written on with the pen, which is
+      what a tablet is for and what Samsung Notes and Apple Notes are. A4, Letter or
+      a page that grows as far down as somebody keeps writing; the canvas's own four
+      rulings; thumbnails in the outline panel's slot, where the shape of what is
+      open already lives, with a drag to reorder and a page counter in the status
+      bar. The same bar, the same ink and the same palm rejection as the canvas -
+      literally the same components, because two ink engines is two places to fix
+      anything. The file is JSON Canvas with a page written as a node the spec names,
+      so renaming a `.pages` file to `.canvas` opens it in Obsidian and back again
+      loses nothing. Out as a PDF with the ink as vector paths on the original
+      paper - the text stays text - or a PNG or an SVG per page. See docs/pages.md
 - [x] What synced, said quietly: the last few dozen passes, one line each, with
       what came down, what went up and what went wrong in the server's own words.
       On the device, and only for a pass that did something - a log of "nothing

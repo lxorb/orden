@@ -42,6 +42,7 @@
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
+  import { pages } from './lib/pages/showing.svelte'
   import { rooms } from './lib/rooms.svelte'
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
@@ -320,6 +321,11 @@
         // The import sheet, which opens from a row in File: a drive walks the file
         // chooser rather than the menu, so it needs the sheet on screen first.
         importing,
+        // The page note in front, which is the only way to reach its surface's store
+        // from outside its pane: the thumbnails and the page counter already do, and a
+        // drive turns pages and reads what is on them the same way. See
+        // apps/desktop/test/e2e/pages.py.
+        pages,
         // The publish sheet, for the same reason the share sheet is here: it opens
         // from a space's own menu, which a drive cannot reach by pointing. See
         // apps/desktop/test/e2e/site.py.

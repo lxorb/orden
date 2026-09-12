@@ -59,35 +59,6 @@ interface Held {
 
 const held = new Map<string, Held>()
 
-/** The size of every page of a PDF, in CSS pixels, in order.
- *
- *  What an import asks before it writes anything: a page note made from a paper is
- *  the shape of that paper, page by page, so a landscape plate in the middle of a
- *  portrait book gets a landscape page. Nothing is drawn - a page's size is in its
- *  dictionary, so this is a read of the file and not a render of it, which is what
- *  makes it affordable for a book.
- *
- *  Rotation is already in what pdf.js reports, so a page scanned sideways comes back
- *  the way it is meant to be read. */
-export async function pdfPageSizes(path: string): Promise<{ width: number; height: number }[]> {
-  const opened = await openDocument(path)
-
-  try {
-    const sizes: { width: number; height: number }[] = []
-
-    for (let number = 1; number <= opened.doc.numPages; number += 1) {
-      const page = await opened.doc.getPage(number)
-      const view = page.getViewport({ scale: PDF_TO_CSS })
-      sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })
-      page.cleanup()
-    }
-
-    return sizes
-  } finally {
-    await opened.close().catch(() => undefined)
-  }
-}
-
 /** One page of a paper as a picture, drawn now or already drawn.
  *
  *  Null where the paper is not there any more, cannot be read, or has no such page:
@@ -169,8 +140,12 @@ async function draw(one: Held, number: number): Promise<Paper | null> {
   }
 }
 
-/** Everything drawn for one paper, let go of: the last page note showing it has
- *  closed. The document goes too, which is a worker and a copy of the bytes. */
+/** Everything drawn for one paper, let go of: the tab showing it has closed.
+ *
+ *  The document goes too, which is a worker and a copy of the bytes. Reopening one is
+ *  a worker and a read; holding one is a worker and however many bitmaps were drawn,
+ *  for as long as the window is open, which is the wrong way round for a paper nobody
+ *  is looking at. */
 export function forgetPaper(path: string) {
   const one = held.get(path)
   if (!one) return
@@ -178,9 +153,4 @@ export function forgetPaper(path: string) {
   held.delete(path)
   for (const drawing of one.drawn.values()) void drawing.then((paper) => paper?.image.close())
   void one.open.then((opened) => opened.close()).catch(() => undefined)
-}
-
-/** And every paper, which is what signing out or closing the space means. */
-export function forgetEveryPaper() {
-  for (const path of [...held.keys()]) forgetPaper(path)
 }

@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  emptyCanvas,
-  isPage,
-  type PageNode,
-  PAPERS,
-  readCanvas,
-  writeCanvas,
-} from './canvas'
+import { emptyCanvas, isPage, type PageNode, PAPERS, readCanvas, writeCanvas } from './canvas'
 import {
   added,
   blankPages,

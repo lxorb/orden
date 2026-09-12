@@ -230,15 +230,13 @@ export async function readAs(
       const { readTomboy } = await import('./tomboy')
       return readTomboy(sources)
     }
-<<<<<<< HEAD
     case 'journal': {
       const { readJournal } = await import('./journal')
       return readJournal(sources)
-=======
+    }
     case 'pdf-pages': {
       const { readPdfPages } = await import('./pdf-pages')
       return readPdfPages(sources)
->>>>>>> 354af1ed (feat: page notes, in the canvas's own format and on its own ink)
     }
     case 'craft':
     case 'onenote':

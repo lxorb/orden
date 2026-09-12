@@ -34,7 +34,7 @@ export function looksLikePapers(paths: readonly string[]): boolean {
 /** What a paper's page note is called: the paper's own name with `.pages` after the
  *  stem, so `Lecture 4.pdf` is written on in `Lecture 4.pages` and the pair reads as
  *  a pair in the file list. */
-export function pagesNameFor(path: string): string {
+function pagesNameFor(path: string): string {
   const name = path.split('/').pop() ?? path
   return `${name.replace(/\.pdf$/i, '')}.pages`
 }
@@ -52,7 +52,10 @@ export async function readPdfPages(sources: readonly Source[]): Promise<ImportPl
 
     const sizes = await sizesOf(bytes).catch(() => [])
     if (!sizes.length) {
-      lost.push({ text: '{name} could not be read as a PDF, so it arrived as the file only.', values: { name } })
+      lost.push({
+        text: '{name} could not be read as a PDF, so it arrived as the file only.',
+        values: { name },
+      })
       continue
     }
 

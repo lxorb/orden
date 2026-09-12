@@ -319,6 +319,10 @@ export const run = {
         store.pick(node.id)
         store.editing = node.id
         break
+      // A page is never on a canvas, and on a page note a double press on the paper
+      // is a press on the paper: there is nothing to open.
+      case 'page':
+        break
     }
   },
 
@@ -361,9 +365,9 @@ export const run = {
    *  marked contextual there, which is what lets a plane hold a bare letter and
    *  the arrows without being a clash with anything the file list holds. */
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
-    const tool = TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))
+    const tool = toolPressed(event)
     if (tool) {
-      tools.choose(tool[1])
+      tools.choose(tool)
       return true
     }
 
@@ -398,6 +402,16 @@ export const run = {
 
     return false
   },
+}
+
+/** The tool a key asks for, or null where this key is not one of them.
+ *
+ *  Exported because a page note answers the same keys with the same hand: the bar
+ *  teaches the keyboard, and it is one bar. It takes the five that mean something on
+ *  paper and leaves the rest; see Pages.svelte. One table either way, so a reader who
+ *  rebound Draw has their own key on both surfaces. */
+export function toolPressed(event: KeyboardEvent): Tool | null {
+  return TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))?.[1] ?? null
 }
 
 /** Which tool each key puts in your hand. */

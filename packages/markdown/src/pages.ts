@@ -318,8 +318,6 @@ export function reshaped(
  *  and this does not: a stroke's outline is wider than its points, and working that
  *  out is the ink code's job. */
 export function grown(canvas: Canvas, lowest: ReadonlyMap<string, number>): Canvas {
-  let changed = false
-
   const nodes = canvas.nodes.map((node) => {
     if (!isPage(node) || !endless(node.paper)) return node
 
@@ -329,14 +327,17 @@ export function grown(canvas: Canvas, lowest: ReadonlyMap<string, number>): Canv
     const wanted = reach + HEADROOM - node.y
     if (wanted <= node.height) return node
 
-    changed = true
     // In whole screenfuls, so the page grows in steps a scroll can follow rather
     // than by a pixel per stroke.
     const steps = Math.ceil((wanted - node.height) / GROWTH)
     return { ...node, height: node.height + steps * GROWTH }
   })
 
-  return changed ? settled({ ...canvas, nodes }) : canvas
+  // The very same canvas where no page had to grow, which is what every operation
+  // here does and what lets the store tell an edit from a no-op.
+  if (nodes.every((node, at) => node === canvas.nodes[at])) return canvas
+
+  return settled({ ...canvas, nodes })
 }
 
 /** A page note with one blank page on it: what a new one says before anybody has
@@ -369,7 +370,10 @@ export function pagesFromPdf(
  *
  *  What a press asks before it does anything else: ink, a card and a picture all
  *  belong to a page, and a press between two pages belongs to neither. */
-export function pageAt(pages: readonly PageNode[], point: { x: number; y: number }): PageNode | null {
+export function pageAt(
+  pages: readonly PageNode[],
+  point: { x: number; y: number },
+): PageNode | null {
   for (const page of pages) {
     if (
       point.x >= page.x &&

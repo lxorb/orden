@@ -71,6 +71,16 @@ describe('the mark a file wears', () => {
     expect(fileMark('md')).toBe('file')
     expect(fileMark('pdf')).toBe('file')
     expect(fileMark('canvas')).toBe('file')
+    expect(fileMark('pages')).toBe('file')
+  })
+
+  /** A page note wears its own mark and never a canvas's, though the two hold the
+   *  same format: what a row says is what a press on it will open. */
+  test('a page note is its own mark', () => {
+    expect(fileMark('Lecture 4.pages')).toBe('pages')
+    expect(fileMark('Lecture 4.PAGES')).toBe('pages')
+    expect(fileMark('Lecture 4.pages.canvas')).toBe('canvas')
+    expect(fileMark('Lecture 4.canvas.pages')).toBe('pages')
   })
 })
 
@@ -78,7 +88,7 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file', 'web']
+  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pages', 'pdf', 'picture', 'file', 'web']
 
   /** And no folder among them: no row in the list is a folder, so there is no
    *  drawing of one to reach for. See folder-notes.ts. */

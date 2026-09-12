@@ -74,6 +74,8 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 ### Canvas and pen
 
 - Infinite **canvas** with cards, connectors, groups, shapes and ink
+- **Page notes**: A4, Letter or endless pages in a column, with thumbnails
+- **Import a PDF as pages** to write on, and export it back with the ink on it
 - Open **JSON Canvas** files, the same ones Obsidian reads
 - **Pen** support with pressure and tilt: three pens, an eraser and a lasso
 - Built for a tablet and the **S Pen**

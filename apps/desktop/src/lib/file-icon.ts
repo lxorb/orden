@@ -65,12 +65,13 @@ export async function setFileIcon(
 
   // A page note keeps its icon where a canvas keeps one, because it is the same
   // JSON: `nib.icon`, written by the same edit.
-  const edit = isCanvasTarget(path) || isPagesTarget(path)
-    ? canvasIconEdit(before, value, colour)
-    : frontMatterEdits(before, [
-        [ICON_KEY, value],
-        [ICON_COLOUR_KEY, colour],
-      ])
+  const edit =
+    isCanvasTarget(path) || isPagesTarget(path)
+      ? canvasIconEdit(before, value, colour)
+      : frontMatterEdits(before, [
+          [ICON_KEY, value],
+          [ICON_COLOUR_KEY, colour],
+        ])
   if (!edit) return
 
   const after = before.slice(0, edit.from) + edit.insert + before.slice(edit.to)

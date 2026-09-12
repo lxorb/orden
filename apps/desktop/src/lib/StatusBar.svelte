@@ -36,6 +36,15 @@
   /** Whether the numbers are on screen at all, by either road. */
   const asked = $derived(looking || held)
 
+  /** Which page of how many, for a page note, or null for anything else. Read off the
+   *  surface's own store rather than pushed here by it: which page somebody is looking at
+   *  changes on every frame of a scroll, and a write per frame into what this bar has
+   *  already read is an update loop. See pages/showing.svelte.ts. */
+  const paper = $derived.by(() => {
+    const store = pages.current?.store
+    return store ? { at: store.showing, count: store.pages.length } : null
+  })
+
   const counts = $derived(asked ? countText(doc) : null)
 
   /** What is selected, counted. Only while the numbers are on screen and only
@@ -97,7 +106,7 @@
      with a region whose contents are not interactive. See focus.ts. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <footer
-  class:looking={looking || held || reading || !!pages.current}
+  class:looking={looking || held || reading || !!paper}
   data-region="status"
   tabindex="0"
   aria-label={t('What this note is')}
@@ -120,10 +129,8 @@
        scrolling a stack of paper needs to know where they are, which is not something
        they can guess, and it is the same fact the two words beside it are.
        Nothing at all for anything else, so the bar reserves no room for it. -->
-  {#if pages.current}
-    <span class="page"
-      >{t('{at} / {count}', { at: pages.current.page, count: pages.current.count })}</span
-    >
+  {#if paper}
+    <span class="page">{t('{at} / {count}', { at: paper.at, count: paper.count })}</span>
   {/if}
   {#if counts}
     <!-- With something selected the words and the characters read as "this many

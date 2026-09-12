@@ -91,7 +91,8 @@
         ].join(', ')
       case 'dots':
         return `radial-gradient(circle at center, var(--canvas-dot) 1px, transparent 1.2px)`
-      default:
+      // No gradient at all, which is a sheet of paper.
+      case 'blank':
         return 'none'
     }
   })

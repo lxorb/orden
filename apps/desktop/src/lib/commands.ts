@@ -169,19 +169,13 @@ export function exportCommands(): Command[] {
    *  same three words a drawing offers and a page each rather than one picture;
    *  see pages/out.ts. */
   const pagesOut = async (id: ExportId) => {
-    const [out, { readCanvas }, { readPalette }] = await Promise.all([
-      import('./pages/out'),
-      import('./canvas/format'),
-      import('./canvas/palette'),
-    ])
-
-    const about = {
-      canvas: readCanvas(source()),
-      palette: readPalette(document.documentElement),
+    const out = await import('./pages/out')
+    const about = out.pagesOutOf({
+      text: source(),
+      name: name(),
       path: note()?.path ?? null,
       root: workspace.activeSpace?.root ?? null,
-      name: name(),
-    }
+    })
 
     if (id === 'pdf') await out.exportPagesPdf(about)
     else if (id === 'png') await out.exportPagesPng(about)

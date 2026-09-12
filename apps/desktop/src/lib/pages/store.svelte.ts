@@ -155,6 +155,7 @@ export class PagesStore extends CanvasStore {
    *  are asked about, since they are the only ones that grow, and a note of A4 is
    *  then no sums at all. */
   private reach(canvas: Canvas): Map<string, number> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
     const lowest = new Map<string, number>()
     const long = pagesOf(canvas).filter((page) => page.paper === 'long')
     if (!long.length) return lowest

@@ -25,9 +25,10 @@
  *  export's libraries. */
 
 import { onPage, pagesOf } from '@nib/markdown/pages'
-import { type Canvas, type InkStroke, type PageNode } from '../canvas/format'
+import { type Canvas, type InkStroke, type PageNode, readCanvas } from '../canvas/format'
 import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'
+import { readPalette } from '../canvas/palette'
 import { inkSvg } from '../canvas/svg'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
@@ -42,6 +43,29 @@ export interface PagesOut {
   path: string | null
   root: string | null
   name: string
+}
+
+/** The note that is open, as the three exports below want it.
+ *
+ *  Built from the words the tab holds rather than from the store on screen, which is
+ *  the same thing: every edit is written back into those words as it is made, so a
+ *  page note is never further from its text than a keystroke is. `drawingOf` in
+ *  export/drawing.ts is this same one function for a canvas. */
+export function pagesOutOf(open: {
+  text: string
+  name: string
+  path: string | null
+  root: string | null
+}): PagesOut {
+  return {
+    canvas: readCanvas(open.text),
+    // The theme's own colours as colours: a file that has left the app carries no
+    // stylesheet, so nothing in it can look `var(--canvas-1)` up any more.
+    palette: readPalette(document.documentElement),
+    path: open.path,
+    root: open.root,
+    name: open.name,
+  }
 }
 
 /** What the files are called: the note's name without its extension. */
@@ -217,7 +241,8 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
     // The page of the paper this sheet is a sheet of, where there is one and it is
     // still in the document; a sheet whose page has gone gets a blank one, so the
     // ink on it is never lost to a paper that changed under the note.
-    const from = page.page !== undefined && page.page >= 1 && page.page <= carried ? page.page : null
+    const from =
+      page.page !== undefined && page.page >= 1 && page.page <= carried ? page.page : null
     const sheet =
       from !== null && kept[from - 1]
         ? doc.insertPage(carried + at, kept[from - 1])

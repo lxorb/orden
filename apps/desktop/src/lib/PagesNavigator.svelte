@@ -41,10 +41,13 @@
    *  stops rather than on every stroke. */
   const SETTLE = 600
 
-  const current = $derived(showing.current)
-  const store = $derived(current?.store ?? null)
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
+
+  const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
-  const on = $derived(current?.page ?? 0)
+  /** Which page is being looked at, read off the store the way the status bar reads it. */
+  const on = $derived(store?.showing ?? 0)
 
   /** Which page a drag is over, and whether it would land above it. */
   let over = $state<number | null>(null)
@@ -58,12 +61,20 @@
     if (element) palette = readPalette(element)
   })
 
-  /** The canvas element each thumbnail is drawn on, by the page's id. Bound as the
-   *  rows are made, so a page taken away takes its element with it. */
-  let sheets = $state.raw<Record<string, HTMLCanvasElement | undefined>>({})
+  /** The canvas element each thumbnail is drawn on, by the page's id. Bound as the rows
+   *  are made, so a page taken away takes its element with it.
+   *
+   *  Deliberately not state. The drawing below reads it, and `bind:this` writes it on
+   *  every render: state here is an effect that reads and writes the same value, which
+   *  is a loop the framework stops by throwing. Nothing renders from it - it is a
+   *  handful of elements to paint on - so what redraws the thumbnails is the canvas
+   *  changing, and by the time the pause is over every row is mounted. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- painted into, never rendered from; see above
+  const sheets = new Map<string, HTMLCanvasElement>()
 
   function keep(id: string, element: HTMLCanvasElement | undefined) {
-    sheets = { ...sheets, [id]: element }
+    if (element) sheets.set(id, element)
+    else sheets.delete(id)
   }
 
   /** One thumbnail, drawn: the sheet, the PDF page behind it, then the ink. */
@@ -117,14 +128,13 @@
    *  not once per stroke of a rub. */
   let timer = 0
   $effect(() => {
-    void store?.canvas
-    void palette
-    void sheets
+    follows(store?.canvas)
+    follows(palette)
 
     window.clearTimeout(timer)
     timer = window.setTimeout(() => {
       for (const page of pages) {
-        const element = sheets[page.id]
+        const element = sheets.get(page.id)
         if (element) void draw(page, element)
       }
     }, SETTLE)
@@ -137,15 +147,15 @@
   }
 
   function add(after: string | null) {
-    const canvas = store?.canvas
-    if (!canvas || !store) return
+    const held = store
+    if (!held) return
 
-    const { canvas: next, id } = added(canvas, after)
-    store.edit(next)
+    const { canvas: next, id } = added(held.canvas, after)
+    held.edit(next)
     // To the page that was just made, which is where somebody who added one is
     // about to write.
     const at = next.nodes.filter((node) => node.type === 'page').findIndex((one) => one.id === id)
-    if (at >= 0) store.turnTo(at + 1)
+    if (at >= 0) held.turnTo(at + 1)
   }
 
   /** What each ruling is called. Words rather than an app's name, so they are asked
@@ -229,7 +239,7 @@
             draggable="true"
             aria-label={t('Page {number}', { number: at + 1 })}
             aria-current={at + 1 === on ? 'true' : undefined}
-            onclick={() => store?.turnTo(at + 1)}
+            onclick={() => store.turnTo(at + 1)}
             oncontextmenu={(event) =>
               menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
             use:longPress={(event) =>
@@ -246,7 +256,7 @@
               aria-hidden="true"
               style:aspect-ratio="{page.width} / {page.height}"
               bind:this={
-                () => sheets[page.id],
+                () => sheets.get(page.id),
                 (element: HTMLCanvasElement | undefined) => keep(page.id, element)
               }
             ></canvas>
