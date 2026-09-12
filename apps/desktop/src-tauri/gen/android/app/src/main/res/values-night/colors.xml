@@ -2,4 +2,7 @@
 <resources>
     <!-- And the same in the dark. -->
     <color name="launch">#0E1013</color>
+
+    <color name="widget_text">#DDE2EA</color>
+    <color name="widget_muted">#878F9D</color>
 </resources>

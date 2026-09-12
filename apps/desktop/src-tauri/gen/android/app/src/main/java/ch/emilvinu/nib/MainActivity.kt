@@ -1,6 +1,9 @@
 package ch.emilvinu.nib
 
+import android.Manifest
+import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -14,8 +17,27 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
+  companion object {
+    /** A command in the page's own registry, carried in by a quick settings tile
+     *  or a widget. See commands.ts and mobile/handed.ts. */
+    const val EXTRA_COMMAND = "ch.emilvinu.nib.command"
+
+    /** A note to open, carried in by a widget row. */
+    const val EXTRA_OPEN = "ch.emilvinu.nib.open"
+
+    /** Written onto an intent once it has been read, so a launch that is replayed
+     *  - a process killed in the background and restored with the intent it was
+     *  started with - does not make the same note twice. */
+    private const val EXTRA_READ = "ch.emilvinu.nib.read"
+
+    /** Asking for the microphone. Its own number so the answer can be told from
+     *  anything else the app ever asks for. */
+    private const val MICROPHONE = 0x6d69
+  }
+
   // Back closes whatever is over the note rather than the app. Every layer the
   // page opens takes a history entry of its own (see backstack.svelte.ts), so a
   // back press the webview can answer is one it should: WryActivity does exactly
@@ -28,6 +50,18 @@ class MainActivity : TauriActivity() {
   // webview's own thread through the bridge, so it is published between them.
   @Volatile private var edges = "{\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
 
+  // What a tile, a widget row or a share left for the page, waiting until the
+  // page asks. Written on the UI thread by an intent and read on the webview's
+  // own thread, the same way the insets are.
+  @Volatile private var command = ""
+  @Volatile private var opening = ""
+
+  /** The page, once there is one. Held so an intent that arrives while the app is
+   *  already open can say so, and so the recogniser's words have somewhere to go. */
+  private var page: WebView? = null
+
+  private val dictation by lazy { Dictation(this) }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     // Android 15 draws every app under the system bars whether it asks or not,
     // so Nib asks, and paints those areas itself: transparent bars over the
@@ -39,9 +73,40 @@ class MainActivity : TauriActivity() {
       navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
     )
     super.onCreate(savedInstanceState)
+
+    // Read before the page exists, which is the usual case: a share is what
+    // started the app. The page asks for it as it comes up; see mobile/handed.ts.
+    read(intent)
+  }
+
+  /** An intent for an app that is already open. `singleTask` means every share
+   *  after the first arrives here rather than in a second activity. */
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    if (read(intent)) tell("window.__nibHanded?.()")
+  }
+
+  /**
+   * Takes what an intent was carrying and answers whether it was carrying
+   * anything. Nothing here acts on it: what a share becomes, and what a command
+   * id means, is the page's business, and it asks as soon as it can.
+   */
+  private fun read(intent: Intent?): Boolean {
+    if (intent == null || intent.getBooleanExtra(EXTRA_READ, false)) return false
+    intent.putExtra(EXTRA_READ, true)
+
+    val asked = intent.getStringExtra(EXTRA_COMMAND) ?: ""
+    val note = intent.getStringExtra(EXTRA_OPEN) ?: ""
+    if (asked.isNotEmpty()) command = asked
+    if (note.isNotEmpty()) opening = note
+
+    val shared = Shared.take(this, intent)
+    return shared || asked.isNotEmpty() || note.isNotEmpty()
   }
 
   override fun onWebViewCreate(webView: WebView) {
+    page = webView
     webView.addJavascriptInterface(Bridge(), "__NIB_SYSTEM__")
 
     // Two different edges, handled two different ways.
@@ -116,7 +181,39 @@ class MainActivity : TauriActivity() {
     )
   }
 
-  /** The two things the page cannot see for itself; see insets.ts. */
+  /** Runs a line in the page, on the thread a webview may be touched from. */
+  private fun tell(script: String) {
+    val webView = page ?: return
+    webView.post { webView.evaluateJavascript(script, null) }
+  }
+
+  /** What the recogniser heard, or what it is doing; see mobile/dictation.ts. */
+  fun heard(json: String) {
+    tell("window.__nibHeard?.(${JSONObject.quote(json)})")
+  }
+
+  /** The microphone, asked for the first time dictation is turned on. The old
+   *  call rather than a result contract: the webview registers its own contracts
+   *  as it is built, and registering another one this late throws. */
+  fun askForTheMicrophone() {
+    runOnUiThread { requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MICROPHONE) }
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray,
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (requestCode != MICROPHONE) return
+
+    val granted =
+      grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+    dictation.allowedNow(granted)
+  }
+
+  /** What the page cannot see for itself: the window's own edges, what another app
+   *  handed over, what the home screen asked for, and the phone's recogniser. */
   private inner class Bridge {
     @JavascriptInterface fun insets(): String = edges
 
@@ -147,5 +244,42 @@ class MainActivity : TauriActivity() {
         controller.isAppearanceLightNavigationBars = !dark
       }
     }
+
+    /** A tile or a widget row, once. Cleared as it is read, so the same press
+     *  cannot be answered twice. */
+    @JavascriptInterface
+    fun handed(): String {
+      val json = JSONObject()
+      json.put("command", command)
+      json.put("open", opening)
+      command = ""
+      opening = ""
+      return json.toString()
+    }
+
+    /** What another app shared, without the bytes; see Shared.kt. */
+    @JavascriptInterface fun shared(): String = if (Shared.waiting) Shared.json() else ""
+
+    /** One slice of one shared file, as base64. */
+    @JavascriptInterface
+    fun sharedBytes(at: Int, offset: Int, length: Int): String = Shared.bytes(at, offset, length)
+
+    /** The page has written what it was given, and the copies can go. */
+    @JavascriptInterface
+    fun sharedDone() {
+      Shared.clear(this@MainActivity)
+    }
+
+    /** The rows the home screen draws, as JSON; see mobile/widgets.ts. */
+    @JavascriptInterface
+    fun widgets(json: String) {
+      WidgetNotes.write(this@MainActivity, json)
+    }
+
+    /** Whether this phone has a speech recogniser to dictate into. */
+    @JavascriptInterface fun dictates(): Boolean = dictation.available()
+
+    /** Turns dictation on or off; answers whether it is listening now. */
+    @JavascriptInterface fun listen(on: Boolean): Boolean = dictation.listen(on)
   }
 }

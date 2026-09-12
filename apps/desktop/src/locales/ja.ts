@@ -1206,4 +1206,8 @@ export const ja: Dictionary = {
   'Remove the password': 'パスワードを削除',
   'Scan this with your authenticator app, then type its code.':
     '認証アプリでこれを読み取り、コードを入力してください。',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: '写真',
+  Dictate: '音声入力',
+  'Add to {name}': '{name} に追加',
 }

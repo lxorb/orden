@@ -1214,4 +1214,8 @@ export const fr: Dictionary = {
   'Remove the password': 'Retirer le mot de passe',
   'Scan this with your authenticator app, then type its code.':
     'Scannez ceci avec votre application d’authentification, puis saisissez son code.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Photographie',
+  Dictate: 'Dicter',
+  'Add to {name}': 'Ajouter à {name}',
 }

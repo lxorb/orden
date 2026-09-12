@@ -1218,4 +1218,8 @@ export const de: Dictionary = {
   'Remove the password': 'Passwort entfernen',
   'Scan this with your authenticator app, then type its code.':
     'Scanne das mit deiner Authenticator-App und tippe dann den Code.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Foto',
+  Dictate: 'Diktieren',
+  'Add to {name}': 'Zu {name} hinzufügen',
 }

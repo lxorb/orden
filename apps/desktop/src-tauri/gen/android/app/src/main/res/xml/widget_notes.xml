@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The one widget. Three cells by three at the size the home screen offers it, and
+  resizable either way: a reader who wants one row has it, and one who wants five
+  has those.
+
+  `updatePeriodMillis` is nought on purpose. Nothing here polls: the page hands the
+  rows over whenever the file list changes, and a launcher keeps the last drawing
+  it was given, so a widget is right after a reboot without the app having run.
+  The four attributes below it are Android 12's and are ignored before that, where
+  the two minimum sizes are what the launcher reads.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_notes"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="60dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:maxResizeWidth="320dp"
+    android:maxResizeHeight="300dp"
+    android:description="@string/widget_description"
+    android:previewLayout="@layout/widget_notes"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="0" />

@@ -44,7 +44,8 @@ import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
 import { canPrint, printNote } from './export/print'
 import { imagePath } from './images'
-import { canInsertPicture, insertPicture } from './insert-picture'
+import { canDictate, dictating, toggleDictation } from './mobile/dictation'
+import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
 import { prompt } from './prompt.svelte'
@@ -521,6 +522,24 @@ const BLOCKS: Block[] = [
     label: () => t('Picture'),
     apply: (view) => void insertPicture(view),
     ready: (view) => canInsertPicture(view),
+  },
+  // The same picture from the other end: the camera rather than the files. Only
+  // where there is a camera behind the glass, which is what `canTakePhoto` asks,
+  // so a desktop is not offered a row that would open the file chooser twice.
+  {
+    id: 'photo',
+    label: () => t('Photo'),
+    apply: (view) => void takePhoto(view),
+    ready: (view) => canTakePhoto(view),
+  },
+  // Saying it instead of typing it. One row for both states, because there is one
+  // thing to press and the line across the top is what says which; see
+  // mobile/dictation.ts.
+  {
+    id: 'dictate',
+    label: () => (dictating() ? t('Stop') : t('Dictate')),
+    apply: (view) => toggleDictation(view),
+    ready: (view) => canDictate(view),
   },
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),

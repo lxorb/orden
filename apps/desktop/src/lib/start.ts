@@ -13,6 +13,7 @@ import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
+import { startHanded } from './mobile/handed'
 import { modes } from './modes.svelte'
 import { settleUp } from './parting'
 import { recovery } from './recovery.svelte'
@@ -81,6 +82,10 @@ export function start(): () => void {
    *  space and so cannot be listened for until there is one. */
   let stopAutomation: (() => void) | null = null
 
+  /** And the phone's own three ways in: something another app shared, a quick
+   *  settings tile, a widget row. See mobile/handed.ts. */
+  let stopHanded: (() => void) | null = null
+
   void workspace
     .restore()
     .then(async () => {
@@ -92,6 +97,9 @@ export function start(): () => void {
         const { startAutomation } = await import('./automation/start')
         stopAutomation = await startAutomation()
       }
+      // After the space is open, because a share becomes a note in it, a widget
+      // row names one, and the widget's own rows are read out of its file list.
+      stopHanded = startHanded()
     })
     // Nothing else can put this right, and the strip is already showing
     // whatever did come back; the log is where a launch failure belongs, so it
@@ -130,6 +138,7 @@ export function start(): () => void {
     stopLooking()
     stopListening?.()
     stopAutomation?.()
+    stopHanded?.()
   }
 }
 

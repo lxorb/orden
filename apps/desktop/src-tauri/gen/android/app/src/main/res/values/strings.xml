@@ -1,4 +1,21 @@
 <resources>
     <string name="app_name">"Nib"</string>
     <string name="main_activity_title">"Nib"</string>
+
+    <!--
+      The words the system draws for this app rather than the words the app draws
+      for itself. A quick settings tile's label and a widget's description are
+      read by the system before the app has ever run, so they cannot come from the
+      page's own translations the way everything else does; the two that appear
+      once the page has run - a widget's heading, and what it says when there is
+      nothing to list - are handed over by the page instead and these are only
+      what stands there until it does. See mobile/widgets.ts.
+    -->
+    <string name="tile_new">New note</string>
+    <string name="tile_search">Search</string>
+    <string name="tile_record">Record</string>
+    <string name="widget_new">New note</string>
+    <string name="widget_search">Search</string>
+    <string name="widget_empty">No notes yet</string>
+    <string name="widget_description">The notes last written in, a new one, and the search.</string>
 </resources>

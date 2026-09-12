@@ -89,7 +89,15 @@ dependencies {
     // An AI provider's key, in the file Android encrypts with a Keystore key. The
     // phone's half of what the Credential Manager and the Keychain do on a desktop;
     // see secrets.rs and the Secrets bridge in MainActivity.kt.
-    implementation("androidx.security:security-crypto:1.0.0")
+    //
+    // 1.1.0 and not 1.0.0. `MasterKey`, which is the class that asks the Keystore
+    // for a hardware-backed key, was added in 1.1.0; the 1.0.0 artifact holds only
+    // the alias-based `MasterKeys` it replaced, and with that on the path the
+    // import does not resolve and the `create` call falls through to the overload
+    // that takes a file name first - which is why the build failed with "inferred
+    // type is MainActivity but String was expected" rather than with anything
+    // about a version.
+    implementation("androidx.security:security-crypto:1.1.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")

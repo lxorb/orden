@@ -2,8 +2,39 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!--
+      Dictation, and nothing else. The words go straight into the note through
+      Android's own recogniser and are never kept as sound; see Speech.kt and
+      mobile/dictation.ts. Asked for the first time somebody turns it on rather
+      than at install.
+
+      There is deliberately no CAMERA permission. Taking a photo into a note is
+      `ACTION_IMAGE_CAPTURE`, which the camera app serves and which needs nothing
+      of ours - and declaring the permission anyway would make the webview demand
+      a grant before it would open the camera at all. See docs/mobile.md.
+    -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
+
+    <!--
+      The two things the app looks for on the phone. From Android 11 an app sees
+      only the other apps it has named, and both of these are asked with a
+      question rather than started blind: the webview asks whether anything
+      answers `IMAGE_CAPTURE` before it offers the camera for a `capture` input,
+      and `SpeechRecognizer.isRecognitionAvailable` asks whether anything answers
+      the recogniser. Without these two the answer is no on every modern phone and
+      both features quietly do nothing.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <!--
       Notes stay on the phone. Somebody's notes are the most private thing this
@@ -40,6 +71,51 @@
             </intent-filter>
 
             <!--
+              Anything shared to Nib becomes a note. The filters sit on the
+              launcher activity rather than on an activity of their own, which is
+              what puts the app's own icon and name in the share sheet's row and
+              what makes the second share of the day arrive in the app that is
+              already open (`singleTask`, and `onNewIntent`).
+
+              `*/*` on purpose. A note is where anything goes that somebody wants
+              to keep a word about, and Android only ever offers this row to
+              somebody who asked to share something; what the thing is decides
+              what happens to it, in mobile/shared.ts, where text becomes words, a
+              picture becomes a picture beside the note, and everything else
+              becomes a file linked from it.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <!--
+              And a note opened from somewhere else on the phone: a file manager,
+              a mail attachment, a download. Markdown and plain text only, because
+              those are files Nib can be the answer for; a `content://` URI has no
+              path to read an extension off, so the type is all there is to go on.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!--
               `nib://` links, which is how anything else on the phone asks this app
               for something: a shortcut, Tasker, a link in another note. The
               activity is already `singleTask`, so a link reaching an app that is
@@ -54,6 +130,62 @@
                 <data android:scheme="nib" />
             </intent-filter>
         </activity>
+
+        <!--
+          The three quick settings tiles. Each carries the id of a command in the
+          page's own registry and nothing else, so a tile cannot come to mean
+          something slightly different from the row it is named after; see
+          Tiles.kt and commands.ts.
+
+          The recorder's is turned off until the command exists. A disabled
+          service is not offered in the tile picker at all, which is a cleaner
+          answer than a tile that does nothing: flip `android:enabled` to true in
+          the same commit that adds `record`.
+        -->
+        <service
+            android:name=".NewNoteTile"
+            android:exported="true"
+            android:icon="@drawable/ic_new"
+            android:label="@string/tile_new"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".SearchTile"
+            android:exported="true"
+            android:icon="@drawable/ic_search"
+            android:label="@string/tile_search"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".RecordTile"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_record"
+            android:label="@string/tile_record"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- The home screen's widget: the notes last written in, a new one, and
+             the search. See Widgets.kt. -->
+        <receiver
+            android:name=".NotesWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_notes" />
+        </receiver>
 
         <provider
           android:name="androidx.core.content.FileProvider"

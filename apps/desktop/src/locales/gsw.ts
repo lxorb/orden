@@ -1209,4 +1209,8 @@ export const gsw: Dictionary = {
   'Remove the password': 'Passwort entferne',
   'Scan this with your authenticator app, then type its code.':
     'Scann das mit dinere Authenticator-App und tipp dänn de Code.',
+  // The phone's own rows: the camera, dictation, and where a share lands.
+  Photo: 'Foti',
+  Dictate: 'Diktiere',
+  'Add to {name}': 'Zu {name} dezuetue',
 }

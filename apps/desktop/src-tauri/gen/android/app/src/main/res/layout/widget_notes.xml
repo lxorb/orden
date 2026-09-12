@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The widget: the space's name and two marks along the top, then the notes last
+  written in, one per row.
+
+  A launcher inflates this in its own process, so it may only hold the views
+  RemoteViews knows and it reads none of the app's CSS: the sizes here are the
+  touch scale's numbers written out once (a 48dp target, 17sp words, 14dp of side
+  padding), and the colours are @color/widget_*. Rows past what the page handed
+  over are hidden by the provider rather than left blank; see Widgets.kt.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_page"
+    android:orientation="vertical"
+    android:paddingTop="10dp"
+    android:paddingBottom="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp">
+
+        <TextView
+            android:id="@+id/nib_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/widget_muted"
+            android:textSize="13sp"
+            android:text="@string/app_name" />
+
+        <ImageView
+            android:id="@+id/nib_search"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_search"
+            android:tint="@color/widget_text"
+            android:contentDescription="@string/widget_search" />
+
+        <ImageView
+            android:id="@+id/nib_new"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_new"
+            android:tint="@color/widget_text"
+            android:contentDescription="@string/widget_new" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/nib_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:textColor="@color/widget_muted"
+        android:textSize="15sp"
+        android:visibility="gone"
+        android:text="@string/widget_empty" />
+
+    <TextView
+        android:id="@+id/nib_row_0"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_1"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_2"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_3"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_4"
+        style="@style/NibWidgetRow" />
+</LinearLayout>

@@ -111,6 +111,102 @@ jobs:
         run: |
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
+  # Whether the phone's own half of the app changed. Its own job so the answer is
+  # one `if` on the job below rather than one on each of its steps, and because
+  # `on.paths` would gate the whole workflow rather than one job of it.
+  #
+  # It answers yes when it cannot tell. A shallow clone, a force push and the
+  # first push to a branch all leave nothing to compare against, and spending ten
+  # minutes for nothing is cheaper than letting a broken manifest through.
+  android-touched:
+    runs-on: ubuntu-latest
+    outputs:
+      touched: ${{ steps.look.outputs.touched }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - id: look
+        shell: bash
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "nothing to compare against; building anyway"
+            echo "touched=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=$(git diff --name-only "$BASE" "${{ github.sha }}")
+          echo "$changed"
+
+          if echo "$changed" | grep -qE '^(apps/desktop/src-tauri/|\.github/workflows/check\.yml$)'; then
+            echo "touched=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "touched=false" >>"$GITHUB_OUTPUT"
+          fi
+
+  # The Kotlin, the manifest and the resources, compiled. Nothing else in the
+  # project does: `check.yml`'s rust job builds the crate for the runner's own
+  # platform, and the Android project is only ever assembled by
+  # publish-mobile.yml, which does not run on a pull request - so until this job
+  # existed, a manifest that would not build or a Kotlin file that would not
+  # compile reached main and was found by a release.
+  #
+  # The debug APK rather than the release one: it is the same Kotlin, the same
+  # resources and the same manifest merge, without minifying and without a
+  # keystore. What the release build adds is proguard, and what the page needs
+  # kept is asserted in test/android.test.ts instead.
+  android-check:
+    needs: android-touched
+    if: needs.android-touched.outputs.touched == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The Android Gradle plugin runs on 17; the runner's default is newer.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: The NDK the crate is cross-compiled with
+        run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
+
+      # One ABI. What is under test is the Kotlin and the manifest, and a second
+      # architecture compiles the same code again for another machine.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+          key: android-debug
+
+      - run: pnpm install --frozen-lockfile
+
+      # This builds the frontend itself, through the config's beforeBuildCommand.
+      - name: Assemble the debug APK
+        run: |
+          pnpm --filter @nib/desktop exec tauri android build --apk --debug --target aarch64
+
+      - name: Say what came out
+        run: |
+          find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print
+
   # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
   # so a red build never reaches anyone.
   deploy:

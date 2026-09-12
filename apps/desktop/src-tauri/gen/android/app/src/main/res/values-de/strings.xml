@@ -1,0 +1,14 @@
+<resources>
+    <!--
+      The same words in German, which is the other language the app has; see
+      src/locales/de.ts, where the page's own words live. A phone set to anything
+      else reads the English above, which is what the app itself falls back to.
+    -->
+    <string name="tile_new">Neue Notiz</string>
+    <string name="tile_search">Suchen</string>
+    <string name="tile_record">Aufnehmen</string>
+    <string name="widget_new">Neue Notiz</string>
+    <string name="widget_search">Suchen</string>
+    <string name="widget_empty">Noch keine Notizen</string>
+    <string name="widget_description">Die zuletzt geschriebenen Notizen, eine neue und die Suche.</string>
+</resources>

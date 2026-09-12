@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The card a widget is drawn on: the app's own page colour, with a corner radius
+  the home screen rounds everything else to. One shape for both themes - only the
+  colour changes, in values-night/colors.xml.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/launch" />
+    <corners android:radius="20dp" />
+</shape>

@@ -3,4 +3,14 @@
     <!-- Nib's own page colour, light. What the window is painted with before the
          first frame of the app arrives. -->
     <color name="launch">#FBFCFD</color>
+
+    <!-- What a widget is drawn in: the same page the app is, and the two levels of
+         ink on it, from packages/themes/src/tokens.css. A widget is drawn by the
+         launcher in its own process, so nothing of the app's CSS reaches it and
+         these are the one copy of those colours outside the tokens. The launcher's
+         night mode is what picks between this file and values-night, which is the
+         system's setting rather than the app's own theme row: a widget follows the
+         home screen it sits on. -->
+    <color name="widget_text">#1A1D23</color>
+    <color name="widget_muted">#5C6574</color>
 </resources>
