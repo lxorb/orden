@@ -8,7 +8,24 @@ use std::path::Path;
 use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::{in_spaces, is_canvas, is_markdown, is_pdf, Seen, MAX_DEPTH};
+use crate::paths::{
+    cannot, in_spaces, inside, is_canvas, is_markdown, is_pdf, space_root, spaces_root, Seen,
+    MAX_DEPTH,
+};
+
+/// How many notes and folders one read may put in the tree.
+///
+/// The two bounds above it answer different questions: `MAX_DEPTH` bounds one
+/// chain of folders, `Seen` bounds how many chains there are, and neither bounds
+/// how wide a space is. A folder holding a million files is one folder at depth
+/// one, read once, and building a tree of it is a window that never paints.
+///
+/// Far more than any space anybody writes notes in, so a reader never meets it;
+/// and when something does - a space pointed at a build directory, a link the
+/// walk is right to have followed into something enormous - the read stops and
+/// says why. A tree quietly missing half of itself is the answer to avoid: the
+/// sidebar would look finished and be wrong.
+const MAX_ENTRIES: usize = 100_000;
 
 /// A note or a folder, and everything under it if it is a folder.
 #[derive(Serialize)]
@@ -42,25 +59,60 @@ pub fn read_tree(
     root: String,
     options: Option<TreeOptions>,
 ) -> Result<Entry, String> {
+    let spaces = spaces_root(&app)?;
     let path = in_spaces(&app, &root)?;
     if !path.is_dir() {
         return Err("root is not a directory".into());
     }
 
-    Ok(walk(
+    // What a link in this tree may point into: the space being read, whether the
+    // read starts at its top or at a folder inside it - one note linked to from
+    // the folder beside it is somebody arranging their own space.
+    //
+    // Resolved, and resolved here rather than per folder: every link the walk
+    // judges is resolved before it is compared, so the space has to be resolved
+    // too or the two sides would be two different spellings of the same folder and
+    // nothing would match. Said as an error rather than fallen back on for that
+    // reason - a space whose real path cannot be read would otherwise read as a
+    // space whose every folder is a link out of it, which is an empty sidebar and
+    // no reason given. The folder was a directory a line ago, so this does not
+    // happen; if it ever does it says so.
+    let space = space_root(&spaces, &path).unwrap_or_else(|| path.clone());
+    let space = fs::canonicalize(&space).map_err(|error| cannot("resolve", &space, &error))?;
+    let mut left = MAX_ENTRIES;
+
+    walk(
+        &space,
         &path,
         &options.unwrap_or_default(),
         0,
         &mut Seen::default(),
-    ))
+        &mut left,
+    )
 }
 
-/// One folder and its children. A folder nested deeper than `MAX_DEPTH` is read
-/// as empty, and so is one the read has already been inside: either is a symlink
-/// pointing back at one of its own parents, and following those is how a file tree
-/// never finishes loading. The folder is still in the tree; only its children are
-/// left to the one place they live. See `Seen`.
-fn walk(path: &Path, options: &TreeOptions, depth: usize, seen: &mut Seen) -> Entry {
+/// One folder and its children.
+///
+/// Three things make a folder read as empty rather than read at all, and all
+/// three are a link: one nested deeper than `MAX_DEPTH`, one the read has already
+/// been inside, and one whose real path is not in the space. The first two are a
+/// link pointing back at one of its own parents, and following those is how a file
+/// tree never finishes loading; the third is a link pointing off into the rest of
+/// the disk, and following that is how a sidebar comes to list somebody's home
+/// folder. In every case the folder itself stays in the tree - it is a folder, the
+/// reader made it - and only its children are left to the one place they live. See
+/// `Seen` and `in_the_space`.
+///
+/// `left` is what is still allowed in the tree. A read that runs out says so
+/// rather than answering with half a space; see `MAX_ENTRIES`.
+fn walk(
+    space: &Path,
+    path: &Path,
+    options: &TreeOptions,
+    depth: usize,
+    seen: &mut Seen,
+    left: &mut usize,
+) -> Result<Entry, String> {
     let mut children = Vec::new();
 
     if depth < MAX_DEPTH && seen.first_time(path) {
@@ -74,22 +126,20 @@ fn walk(path: &Path, options: &TreeOptions, depth: usize, seen: &mut Seen) -> En
                 }
 
                 if child.is_dir() {
-                    children.push(walk(&child, options, depth + 1, seen));
+                    room(left)?;
+                    children.push(if in_the_space(space, &child) {
+                        walk(space, &child, options, depth + 1, seen, left)?
+                    } else {
+                        folder(&child, name)
+                    });
                 } else if is_markdown(&child) || is_pdf(&child) || is_canvas(&child) {
                     // The notes, the PDFs beside them and the canvases: the
                     // three things a tab can hold. Everything else in a space
                     // belongs to a note rather than standing on its own - a
                     // picture, a PDF's own highlights - and a file list nobody
                     // can act on is noise.
-                    let meta = entry.metadata().ok();
-                    children.push(Entry {
-                        name,
-                        path: child.to_string_lossy().to_string(),
-                        is_dir: false,
-                        modified: clock::of(meta.as_ref().and_then(|one| one.modified().ok())),
-                        created: clock::of(meta.as_ref().and_then(|one| one.created().ok())),
-                        children: Vec::new(),
-                    });
+                    room(left)?;
+                    children.push(listed(&child, name, false, entry.metadata().ok()));
                 }
             }
         }
@@ -97,18 +147,54 @@ fn walk(path: &Path, options: &TreeOptions, depth: usize, seen: &mut Seen) -> En
 
     sort_children(&mut children, options);
 
-    let meta = fs::metadata(path).ok();
-    Entry {
-        name: path.file_name().map_or_else(
+    let mut here = folder(
+        path,
+        path.file_name().map_or_else(
             || path.to_string_lossy().to_string(),
             |name| name.to_string_lossy().to_string(),
         ),
+    );
+    here.children = children;
+    Ok(here)
+}
+
+/// One folder with no children yet, off one `stat` of the folder itself.
+fn folder(path: &Path, name: String) -> Entry {
+    listed(path, name, true, fs::metadata(path).ok())
+}
+
+/// One entry with no children. The listing is a listing: a name, a kind and two
+/// times off the `stat` the caller already had, and not one byte of any note.
+fn listed(path: &Path, name: String, is_dir: bool, meta: Option<fs::Metadata>) -> Entry {
+    Entry {
+        name,
         path: path.to_string_lossy().to_string(),
-        is_dir: true,
+        is_dir,
         modified: clock::of(meta.as_ref().and_then(|one| one.modified().ok())),
         created: clock::of(meta.as_ref().and_then(|one| one.created().ok())),
-        children,
+        children: Vec::new(),
     }
+}
+
+/// Room in the tree for one more entry, or the error that says the space is
+/// larger than a tree.
+fn room(left: &mut usize) -> Result<(), String> {
+    *left = left
+        .checked_sub(1)
+        .ok_or_else(|| format!("this space holds more than {MAX_ENTRIES} notes and folders"))?;
+
+    Ok(())
+}
+
+/// Whether a folder the walk reached is one it may read into: its real path, once
+/// every link along the way has been followed, is inside the space.
+///
+/// `space` is already resolved, so this is one `canonicalize` for the folder and
+/// nothing else. A folder whose real path cannot be read - a link to nowhere, a
+/// folder this user may not look inside - is not one to step into, which is the
+/// cautious answer and the same one `outside_spaces` gives.
+fn in_the_space(space: &Path, child: &Path) -> bool {
+    fs::canonicalize(child).is_ok_and(|real| inside(space, &real))
 }
 
 /// Folders always come first; the chosen key only orders within each group.
@@ -135,8 +221,24 @@ fn sort_children(children: &mut [Entry], options: &TreeOptions) {
 
 #[cfg(test)]
 mod tests {
-    use super::{sort_children, walk, Entry, TreeOptions};
+    use super::{sort_children, walk, Entry, TreeOptions, MAX_ENTRIES};
     use crate::paths::{link_to, Seen};
+    use std::path::Path;
+
+    /// One read of one space, the way `read_tree` does it: the space resolved
+    /// once so that the links under it are judged against a real path, and the
+    /// whole ceiling to spend.
+    fn read(here: &Path, options: &TreeOptions) -> Entry {
+        tree_of(here, options, MAX_ENTRIES).expect("a tree")
+    }
+
+    /// The same with a ceiling of its own, so the test that measures one does not
+    /// have to write a hundred thousand files to reach it.
+    fn tree_of(here: &Path, options: &TreeOptions, most: usize) -> Result<Entry, String> {
+        let space = std::fs::canonicalize(here).expect("a real path");
+        let mut left = most;
+        walk(&space, here, options, 0, &mut Seen::default(), &mut left)
+    }
 
     fn entry(name: &str, is_dir: bool, modified: u64) -> Entry {
         Entry {
@@ -206,7 +308,7 @@ mod tests {
         std::fs::write(here.join("shot.png"), "").expect("a picture");
         std::fs::write(here.join("Reading").join("Deep.PDF"), "").expect("a nested pdf");
 
-        let top = walk(here, &options("name", false), 0, &mut Seen::default());
+        let top = read(here, &options("name", false));
         assert_eq!(
             names(&top.children),
             ["Reading", "Board.canvas", "Idea.md", "paper.pdf"]
@@ -232,7 +334,7 @@ mod tests {
         assert!(link_to(here, &inner.join("up")), "one link back up");
         assert!(link_to(here, &inner.join("over")), "a second link back up");
 
-        let top = walk(here, &options("name", false), 0, &mut Seen::default());
+        let top = read(here, &options("name", false));
         assert_eq!(names(&top.children), ["Notes"]);
 
         let notes = &top.children[0];
@@ -260,12 +362,85 @@ mod tests {
         std::fs::write(here.join("Unreadable.md"), [0x80, 0x80, 0x80]).expect("a note");
         std::fs::write(here.join("Plain.md"), "icon: rocket\n").expect("a second note");
 
-        let top = walk(here, &options("name", false), 0, &mut Seen::default());
+        let top = read(here, &options("name", false));
 
         assert_eq!(names(&top.children), ["Plain.md", "Unreadable.md"]);
         for child in &top.children {
             assert!(child.modified > 0, "{} has no time", child.name);
         }
+    }
+
+    /// A link pointing out of the space, which is the shape of every escape: a
+    /// folder in the space whose real path is the home folder, the top of a disk,
+    /// somebody else's space. The link is listed, because the reader made it and
+    /// it is a folder; nothing under it is, because the tree says what is in this
+    /// space and the rest of the machine is not in this space.
+    #[test]
+    fn a_link_out_of_the_space_is_not_read() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Space");
+        let elsewhere = dir.path().join("Elsewhere");
+        std::fs::create_dir_all(&space).expect("a space");
+        std::fs::create_dir_all(elsewhere.join("Deeper")).expect("somewhere else");
+        std::fs::write(elsewhere.join("Elsewhere.md"), "").expect("a note nobody asked for");
+        std::fs::write(space.join("Idea.md"), "").expect("a note");
+
+        assert!(link_to(&elsewhere, &space.join("out")), "a link out");
+
+        let top = read(&space, &options("name", false));
+        assert_eq!(names(&top.children), ["out", "Idea.md"]);
+
+        let out = &top.children[0];
+        assert!(out.is_dir, "a folder is what it is");
+        assert!(out.children.is_empty(), "the walk left the space");
+    }
+
+    /// The tightest loop there is: a folder holding a link to itself. The link is
+    /// in the space, so the walk is allowed to follow it, and it ends anyway
+    /// because each folder is read once - which is the difference between a
+    /// sidebar and a walk that never returns. See also
+    /// `a_folder_already_read_is_read_as_empty`, which is the same loop one level
+    /// up and twice over.
+    #[test]
+    fn a_folder_linked_to_itself_still_finishes() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let inner = here.join("Notes");
+        std::fs::create_dir_all(&inner).expect("a folder");
+
+        assert!(link_to(&inner, &inner.join("itself")), "a link to itself");
+
+        let top = read(here, &options("name", false));
+        let notes = &top.children[0];
+        assert_eq!(names(&notes.children), ["itself"]);
+        assert!(notes.children[0].children.is_empty(), "read twice");
+    }
+
+    /// A space larger than a tree is refused in words. Half a tree is the answer
+    /// to avoid: the sidebar would look finished and be missing notes.
+    #[test]
+    fn a_space_larger_than_the_tree_says_so() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::create_dir_all(here.join("Reading")).expect("a folder");
+        std::fs::write(here.join("Reading").join("Deep.md"), "").expect("a nested note");
+        std::fs::write(here.join("Idea.md"), "").expect("a note");
+
+        // The folder, the note inside it and the note beside it: three entries.
+        let whole = tree_of(here, &options("name", false), 3).expect("a tree");
+        assert_eq!(names(&whole.children), ["Reading", "Idea.md"]);
+
+        // The number the refusal names is the real ceiling; this read was given a
+        // smaller one so that the test is three files rather than a hundred
+        // thousand.
+        //
+        // Taken apart by hand rather than with `expect_err`, which would want an
+        // `Entry` it can print - and a tree of a space is not something to derive
+        // `Debug` on for the sake of one line of one test.
+        let Err(refused) = tree_of(here, &options("name", false), 2) else {
+            panic!("a space larger than the tree was read anyway");
+        };
+        assert!(refused.contains("notes and folders"), "{refused}");
     }
 
     #[test]
