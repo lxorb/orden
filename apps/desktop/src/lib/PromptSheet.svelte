@@ -70,9 +70,15 @@
     onclick={() => prompt.dismiss()}
   ></div>
 
+  <!-- The same three the shared sheet says, from the same words it is headed
+       with: what it is, that nothing behind it can be reached while it is up, and
+       its name. See Sheet.svelte. -->
   <div
     class="nib-screen sheet"
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={prompt.title}
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
     <form
@@ -286,15 +292,9 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   .row {

@@ -158,9 +158,14 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => store.close()}></div>
 
+  <!-- Named by whatever heads it, which is the theme being looked at or the
+       store itself: the same words, once. -->
   <div
     class="sheet"
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={store.chosen?.name ?? t('Themes')}
     transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}
   >
     <header>
@@ -409,15 +414,9 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  .find:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   .sort {

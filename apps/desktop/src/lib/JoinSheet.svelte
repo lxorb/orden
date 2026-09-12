@@ -172,15 +172,9 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   input::placeholder {

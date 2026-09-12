@@ -281,6 +281,9 @@
   <div
     class="sheet"
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Choose an icon')}
     style:--cell="{cell}px"
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >

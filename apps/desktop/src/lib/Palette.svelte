@@ -3,6 +3,8 @@
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
   import { appCommands, type Command } from './commands'
+  import { fileMark } from './file-mark'
+  import FileMark from './FileMark.svelte'
   import { t } from './i18n.svelte'
   import { rank } from './fuzzy'
   import { shownName } from './note-name'
@@ -126,6 +128,9 @@
   <div
     class="nib-screen palette"
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Search notes and commands')}
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
     <!-- A box with a list under it is one control and not two: the keyboard never
@@ -168,10 +173,17 @@
             >
               <!-- The same tick the menu rows carry, in a slot every command row
                    keeps whether or not there is one in it, so the words line up.
-                   The notes have nothing to tick and so have no slot; see
-                   AppMenu.svelte. -->
+                   See AppMenu.svelte. -->
               {#if asCommands}
                 <span class="tick">{'checked' in item && item.checked ? '✓' : ''}</span>
+                <!-- A note wears the mark it wears everywhere else, in the box
+                     every list keeps for it: the name of a note in the palette used
+                     to start eight pixels in where the same name in the file list
+                     starts thirty-two, so going from one list to the other moved
+                     every word on screen. Read off the name, like every other list
+                     that shows a file and knows little else; see file-mark.ts. -->
+              {:else if 'path' in item}
+                <FileMark mark={fileMark(item.name)} path={item.path} />
               {/if}
               <span class="nib-row-label">{label(item)}</span>
               {#if 'hint' in item && item.hint}<kbd>{item.hint}</kbd>{/if}
@@ -209,6 +221,10 @@
     overflow: hidden;
   }
 
+  /* The hairline under the box is the box's border, so the one answer a box with
+     a caret in it gives - the border turns to the accent - is already the right
+     one here and is drawn in the themes package. It used to take the ring off and
+     put nothing in its place. */
   input {
     width: 100%;
     padding: var(--space-4);
@@ -218,7 +234,7 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-out);
   }
 
   input::placeholder {

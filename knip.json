@@ -17,7 +17,7 @@
         "presenter.html",
         "src/presenter.ts"
       ],
-      "ignoreDependencies": ["katex"]
+      "ignoreDependencies": ["katex", "axe-core"]
     },
     "apps/clipper": {
       "entry": [

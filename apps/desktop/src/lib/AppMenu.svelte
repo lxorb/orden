@@ -221,12 +221,13 @@
        being read down, and Tab through nineteen rows is not reading it. -->
   <div
     bind:this={surface}
-    class="nib-layer menu"
+    class="nib-layer nib-host menu"
     class:phone={viewport.touch}
     transition:arrive
     use:trap
     role="menu"
     tabindex="-1"
+    aria-label={t('Menu')}
     aria-activedescendant={cursor === null ? undefined : `nib-menu-${cursor}`}
     onkeydown={onKey}
   >
@@ -404,12 +405,6 @@
   .row.selected {
     background: var(--surface-hover);
     color: var(--text-strong);
-  }
-
-  /* The keyboard is on the menu rather than on a row, so the box a browser would
-     draw round the menu says nothing about where the cursor is. */
-  .menu:focus-visible {
-    outline: none;
   }
 
   button:disabled {

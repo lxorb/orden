@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { t } from './i18n.svelte'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
   import { trap } from './trap'
@@ -173,7 +174,7 @@
 
   <div
     bind:this={element}
-    class="nib-layer menu"
+    class="nib-layer nib-host menu"
     class:touch={viewport.touch}
     class:sheet
     class:above
@@ -185,6 +186,7 @@
     onkeydown={onKey}
     role="menu"
     tabindex="-1"
+    aria-label={menu.title ?? t('Menu')}
   >
     {#if sheet}
       <div class="grip" aria-hidden="true"></div>

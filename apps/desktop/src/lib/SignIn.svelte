@@ -110,6 +110,9 @@
   <div
     class="nib-screen panel"
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Sign in')}
     transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}
   >
     <!-- Somebody sent a link here, so say what it was before asking for an
@@ -273,15 +276,9 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   input::placeholder {

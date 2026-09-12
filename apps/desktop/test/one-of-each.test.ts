@@ -58,13 +58,28 @@ function rules(style: string): { selector: string; declarations: string }[] {
   }))
 }
 
-/** What a rule sets `outline` to, once each. Read as values rather than matched
- *  in one expression, because `outline: none` and `outline: 2px solid X` differ
- *  only in the value and a lookahead over optional whitespace will happily
- *  backtrack its way past the difference. `outline-offset` is not an outline. */
+/** What a rule sets one property to, once each. Read as values rather than
+ *  matched in one expression, because `outline: none` and `outline: 2px solid X`
+ *  differ only in the value and a lookahead over optional whitespace will happily
+ *  backtrack its way past the difference. Anchored at the property's own name, so
+ *  `outline-offset` is not an outline and `box-shadow` is not a shadow of a
+ *  border. */
+function valuesOf(declarations: string, property: string): string[] {
+  const reading = new RegExp(String.raw`(?:^|;)\s*${property}\s*:\s*([^;]+)`, 'g')
+
+  return [...declarations.matchAll(reading)].map((one) => (one[1] ?? '').trim())
+}
+
 function outlines(declarations: string): string[] {
-  return [...declarations.matchAll(/(?:^|;)\s*outline\s*:\s*([^;]+)/g)].map((one) =>
-    (one[1] ?? '').trim(),
+  return valuesOf(declarations, 'outline')
+}
+
+/** Every rule of every component whose selector is about a focus. */
+function onFocus(): { name: string; selector: string; declarations: string }[] {
+  return components.flatMap((one) =>
+    rules(one.style)
+      .filter((rule) => rule.selector.includes(':focus'))
+      .map((rule) => ({ name: one.name, ...rule })),
   )
 }
 
@@ -186,6 +201,67 @@ describe('the ring a keyboard leaves', () => {
       .sort()
 
     expect(own, `these draw their own focus ring: ${own.join(', ')}`).toEqual([])
+  })
+
+  /** The hole the first two tests left, which was found by walking the app with a
+   *  keyboard: they read `outline` and nothing else, so a ring drawn as a shadow
+   *  went straight past them. Five components had the field's own answer written
+   *  out - four at 3px and one at 1px - and the reader could not see any of them. */
+  test('and never as a shadow, which is a ring the outline cannot see', () => {
+    const own = onFocus()
+      .filter((rule) =>
+        // Turning one off is not drawing one: a name that cannot be written wears
+        // a hairline in red and the halo goes, or the app argues with itself.
+        valuesOf(rule.declarations, 'box-shadow').some((value) => value !== 'none'),
+      )
+      .map((rule) => `${rule.name} (${rule.selector})`)
+      .sort()
+
+    expect(own, `these draw a ring as a shadow: ${own.join(', ')}`).toEqual([])
+  })
+
+  /** And the other half of the same hole: a ring nobody drew at all. Six surfaces
+   *  said `outline: none` on a focus and put nothing in its place - three fields
+   *  and three surfaces that are read - so a keyboard arriving on them left no
+   *  mark whatsoever. Turning the ring off is a real answer in exactly two cases,
+   *  and both of them are one rule in the themes package now. */
+  test('and is never simply taken away by a component', () => {
+    const own = onFocus()
+      .filter((rule) => outlines(rule.declarations).includes('none'))
+      .map((rule) => `${rule.name} (${rule.selector})`)
+      .sort()
+
+    expect(own, `these take the ring off and put nothing in its place: ${own.join(', ')}`).toEqual(
+      [],
+    )
+  })
+
+  /** Where it is turned off, and the only two places it is. */
+  test('and the two surfaces that answer another way are drawn in the themes package', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    // A box that holds the keyboard for the things inside it rather than being
+    // one of them, and the words inside a field whose box is the wrapper.
+    expect(shared).toContain('.nib-host:focus-visible')
+    expect(shared).toContain('.nib-field :is(input, textarea):focus-visible')
+  })
+
+  test('and the surfaces that hold the keyboard for what is in them wear the class', () => {
+    const wearing = components
+      .filter((one) => one.text.includes('nib-host'))
+      .map((one) => one.name)
+      .sort()
+
+    expect(wearing).toEqual([
+      // The plane, which has its own keyboard and is the whole of what is on screen.
+      'lib/AppMenu.svelte',
+      'lib/Canvas.svelte',
+      'lib/ContextMenu.svelte',
+      // The column of pages, and the pane a note is read in.
+      'lib/Pdf.svelte',
+      'lib/Reading.svelte',
+      'lib/Slides.svelte',
+    ])
   })
 
   test('and is left for a keyboard, never drawn on a plain focus', () => {

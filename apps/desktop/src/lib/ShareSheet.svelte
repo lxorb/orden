@@ -404,7 +404,6 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    outline: none;
   }
 
   .compose input::placeholder {

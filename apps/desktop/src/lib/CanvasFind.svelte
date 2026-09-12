@@ -127,15 +127,22 @@
     gap: 2px;
   }
 
+  /* A hairline that is there and is not seen until the keyboard lands in it,
+     which is what turns into the accent: the box had no border at all and took
+     the ring off itself, so there was nothing at all to find it by. The width is
+     the box's, so nothing moves when the colour arrives. */
   input {
     width: 180px;
     padding: 2px 6px;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    outline: none;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
 
   .count {

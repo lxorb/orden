@@ -462,7 +462,7 @@
        keyboard cannot make. -->
   <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
   <div
-    class="scroller"
+    class="scroller nib-host"
     tabindex="-1"
     use:scrollbar={tab.id}
     bind:this={scroller}
@@ -492,10 +492,6 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-  }
-
-  .scroller:focus-visible {
-    outline: none;
   }
 
   /* The page arrives rather than appearing, which is what makes the switch read

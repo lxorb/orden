@@ -503,7 +503,7 @@
      half, because a deck has no furniture: the halves are the screen. -->
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div
-  class="deck"
+  class="deck nib-host"
   tabindex="-1"
   data-move={move ?? 'none'}
   data-still={still ? 'yes' : 'no'}
@@ -539,11 +539,7 @@
   </div>
 </div>
 
-<style>
-  /* Every rule is in packages/themes/src/slides.css, because an exported deck
-     and a published one are drawn by the same ones and a slide has to look the
-     same in all three. */
-  .deck:focus-visible {
-    outline: none;
-  }
-</style>
+<!-- Every rule a slide is drawn with is in packages/themes/src/slides.css,
+     because an exported deck and a published one are drawn by the same ones and a
+     slide has to look the same in all three. `.nib-host` above is the one rule
+     that says a surface taking the keyboard so the keys reach it draws no ring. -->

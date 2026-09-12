@@ -1633,7 +1633,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-  class="canvas"
+  class="canvas nib-host"
   class:narrowed
   style:cursor
   bind:this={host}
@@ -1952,7 +1952,6 @@
     min-height: 0;
     overflow: hidden;
     background: var(--bg);
-    outline: none;
     /* The plane is the thing being touched, so a drag on it must not start a
        text selection or the browser's own panning.
 

@@ -660,7 +660,7 @@
        and the words over each page are what a pointer selects. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="scroller"
+    class="scroller nib-host"
     tabindex="-1"
     use:scrollbar={tab.id}
     bind:this={scroller}
@@ -753,10 +753,6 @@
     overflow-x: auto;
     /* The pages are a stack of sheets on a surface, not paper on paper. */
     background: var(--surface);
-  }
-
-  .scroller:focus-visible {
-    outline: none;
   }
 
   .column {

@@ -261,11 +261,13 @@
     border-color: var(--muted);
   }
 
-  .trigger:focus-visible,
+  /* Open, which is a state and not a focus: the list is hanging off it, and it
+     says so the way the native control does. Where the keyboard is, is the one
+     ring in the themes package - this used to draw a copy of the field's answer
+     on `:focus-visible` as well, which is two answers to one question. */
   .open .trigger {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
-    outline: none;
   }
 
   .trigger:disabled {
@@ -314,9 +316,12 @@
     max-width: 100%;
   }
 
-  .plain .trigger:focus-visible,
   .plain.open .trigger {
     box-shadow: none;
+    color: var(--text-strong);
+  }
+
+  .plain .trigger:focus-visible {
     color: var(--text-strong);
   }
 

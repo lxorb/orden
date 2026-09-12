@@ -196,29 +196,26 @@
 
   /* Nothing but the words. Everything a browser gives a field is taken off it, so
      the name is drawn exactly where the label drew it: same font, same colour,
-     same ground, and no padding to shift it by. */
+     same ground, and no padding to shift it by.
+
+     The corner is said here and not on the focus: what says the name is editable
+     is the app's own answer for a box with a caret in it, which is the halo in the
+     themes package, and this is the corner it is drawn round. A hairline of its
+     own used to be drawn here at 1px where every other field in the app draws 3. */
   input {
     width: 100%;
     min-width: 0;
     padding: 0;
     border: none;
+    border-radius: var(--radius-sm);
     background: none;
     color: inherit;
     font: inherit;
     letter-spacing: inherit;
-    outline: none;
   }
 
-  /* The one thing that says the name is editable: a hairline in the accent. A
-     shadow rather than a border or an outline, so nothing about the row's layout
-     changes as the field arrives. */
-  input:focus {
-    border-radius: var(--radius-sm);
-    box-shadow: 0 0 0 1px var(--accent);
-  }
-
-  /* While the name cannot be written the row wears a hairline in red and this one
-     goes: two rings in two colours around one name is the app arguing with
+  /* While the name cannot be written the row wears a hairline in red and the halo
+     goes: two answers in two colours around one name is the app arguing with
      itself. */
   .wrong input:focus {
     box-shadow: none;

@@ -128,6 +128,7 @@
   <div
     class="nib-layer spaces"
     role="menu"
+    aria-label={t('Spaces')}
     use:trap
     use:roving={{
       current: '.is-on',

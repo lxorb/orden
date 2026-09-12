@@ -53,8 +53,54 @@ body {
   outline-offset: var(--focus-ring-offset);
 }
 
+/* And two places that answer a focus another way instead, both of them here, so
+   the app has exactly three rules about the ring rather than thirty.
+
+   The first is a box that holds the keyboard for the things inside it rather than
+   being one of them: the menu whose rows are the stops, the pane a note is read
+   in, the column of a PDF, a deck of slides, the plane. Each of them is
+   `tabindex="-1"` - never a stop Tab walks to - and each is focused by the app so
+   that the keys which move it land. A ring round the whole of what is on screen
+   answers a question nobody asked: there is nowhere else the keyboard could be.
+
+   Marked, rather than every `[tabindex="-1"]`: a region with nothing in it takes
+   the keyboard itself, and there the ring is the only thing saying that F6
+   landed. */
+.nib-host:focus-visible {
+  outline: none;
+}
+
+/* The second is the words inside a field whose box is the wrapper: the box has
+   the border, the halo and the ring, and the input in it says nothing of its own
+   or the answer is drawn twice. See `.nib-field` below. */
+.nib-field :is(input, textarea):focus-visible {
+  outline: none;
+}
+
 ::selection {
   background: var(--selection);
+}
+
+/* ── Said and not shown ──────────────────────────────────────────── */
+
+/* Words that are only for whoever is listening: the note in front, named once so
+   the page has a heading; what just happened, in the one live region the app
+   announces through; the page a column of a PDF is on.
+
+   Not `display: none` and not `visibility: hidden`, either of which takes the
+   words out of the page for a screen reader as well as for an eye. A one-pixel
+   box, clipped, with the text kept on one line so nothing reflows around it -
+   which is the shape every app that needs this has settled on. */
+.nib-said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ── Dropdowns ───────────────────────────────────────────────────── */
@@ -853,7 +899,6 @@ select option {
   font-size: var(--text-row);
   text-align: left;
   cursor: default;
-  outline: none;
   transition:
     border-color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out);
@@ -879,11 +924,29 @@ textarea.nib-field {
    turns, which is the answer such a box has always given, and it gives that one
    rather than the ring as well - two answers to one question read as a mistake.
    The native dropdown says it the same way, so `select` is in the same rule
-   rather than in a second copy of these three lines further up the file. */
+   rather than in a second copy of these three lines further up the file.
+
+   A box you type into, and only that. The caret is the other half of this answer,
+   and it is what says which of the two kinds a control is rather than which class
+   it happens to wear:
+
+   - The search pill wore the field for its shape - a button with a magnifier in
+     it, the door to the panel whose own field stands in the same place - and this
+     rule was reaching it and taking the ring away. It was the weakest thing in the
+     app to find with a key. A button gets the ring.
+   - Five boxes in sheets and panels had their own copy of the two lines below,
+     because they have a shape of their own and so could not wear the field. The
+     answer is the box's, not the class's, so they do not have to.
+
+   A slider, a checkbox and a colour are inputs too and none of them holds a
+   caret: they are named out here rather than left to be caught by accident, and
+   what they answer with is the one ring. */
 select:focus-visible,
-.nib-field:focus,
-.nib-field:focus-visible,
-.nib-field:focus-within {
+:where(
+    textarea,
+    input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
+  ):not(:where(.nib-field *)):focus,
+.nib-field:has(:is(input, textarea):focus) {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
