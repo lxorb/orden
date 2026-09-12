@@ -410,7 +410,8 @@
                 >
                   <svg class="glyph" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
                   <span class="text">{item.label}</span>
-                  <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
+                  <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
+                  >
                 </button>
               {/each}
             </div>
@@ -639,7 +640,9 @@
           <p class="hint caption">
             <button class="link" onclick={() => void openExternal(url)}>
               {group.caption.text}
-              <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+              <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
+                ><path d="M6 3h7v7M13 3L5 11" /></svg
+              >
             </button>
           </p>
         {:else}

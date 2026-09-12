@@ -81,8 +81,7 @@ export function steppedKey(key: string): string {
 /** Letters read right to left: Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan
  *  and the Arabic presentation forms. Enough to recognise a name written in one
  *  of them, which is all the rule below asks of it. */
-const RIGHT_TO_LEFT_LETTER =
-  /[\u0590-\u05ff\u0600-\u07bf\u0860-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/
+const RIGHT_TO_LEFT_LETTER = /[\u0590-\u05ff\u0600-\u07bf\u0860-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/
 /** Letters read left to right. Latin, Greek and Cyrillic cover what a name in an
  *  Arabic interface is actually written in. */
 const LEFT_TO_RIGHT_LETTER = /[A-Za-z\u00c0-\u02af\u0370-\u052f]/

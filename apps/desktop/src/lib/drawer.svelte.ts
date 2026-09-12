@@ -132,8 +132,7 @@ class Drawer {
       // gesture runs the other way. `factor` is the one place that says so.
       const anywhere = viewport.device === 'phone'
       factor = readingFactor()
-      if (!workspace.panel && !opensDrawer(alongLine(touch.clientX, factor), edge, anywhere))
-        return
+      if (!workspace.panel && !opensDrawer(alongLine(touch.clientX, factor), edge, anywhere)) return
 
       startX = touch.clientX
       startY = touch.clientY

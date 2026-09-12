@@ -138,7 +138,9 @@
               <p>{t('In Claude, open Settings → Connectors and click Add custom connector.')}</p>
               <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}>
                 {t('Open Claude’s connectors')}
-                <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+                <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
+                  ><path d="M6 3h7v7M13 3L5 11" /></svg
+                >
               </button>
             </li>
             <li>

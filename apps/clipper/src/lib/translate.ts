@@ -283,7 +283,7 @@ export function say(
  *
  *  The pages put the answer on their own `html` element, and everything that
  *  mirrors keys off that one attribute. */
-export const RIGHT_TO_LEFT = ['ar', 'fa', 'ps', 'ur']
+const RIGHT_TO_LEFT = ['ar', 'fa', 'ps', 'ur']
 
 export function directionOf(language: string): 'ltr' | 'rtl' {
   const base = language.split('-')[0]?.toLowerCase() ?? ''
