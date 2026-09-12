@@ -487,6 +487,16 @@ select option {
   font-weight: var(--weight-strong);
 }
 
+/* And the quiet things on it step up with it. `--muted` is measured against the
+   page, and a row wearing a fill is not the page: the key beside a command in the
+   palette and the count at the end of a row both fell under 4.5:1 the moment the
+   row they sat on lit up. Said here, once, because every list in the app is made
+   of this row and the ones that hold a hint would each have had to remember. */
+.nib-row.is-on kbd,
+.nib-row.is-on .nib-row-meta {
+  color: var(--muted-strong);
+}
+
 /* Picked with Ctrl or Shift, which is a different fact from being open: a
    neutral fill, so a selection that happens to include the open note still reads
    as two things. */

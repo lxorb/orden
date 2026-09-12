@@ -362,6 +362,11 @@
 
   const size = new SidebarWidth()
   let aside = $state<HTMLElement>()
+  /** How wide it is drawn right now, which is what the handle says it is. Measured
+   *  rather than read off the store, because until somebody has moved it the width
+   *  is the theme's and the store holds null - and a handle that says nothing about
+   *  where it is is a slider with no value. */
+  let asideWidth = $state(0)
 
   // The edge can go while a finger is still on it - Escape, the back gesture, a
   // note chosen on a phone - and then no pointerup ever reaches it.
@@ -385,6 +390,7 @@
      about. -->
 <aside
   bind:this={aside}
+  bind:clientWidth={asideWidth}
   aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
   class:resizing={size.dragging}
   style:width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
@@ -410,7 +416,7 @@
     aria-label={t('Panel width')}
     aria-valuemin={size.narrowest}
     aria-valuemax={size.widest}
-    aria-valuenow={size.pixels ?? undefined}
+    aria-valuenow={Math.round(size.pixels ?? asideWidth) || size.narrowest}
     tabindex="0"
     title={t('Drag to resize')}
     onpointerdown={(event) => size.start(event, aside)}

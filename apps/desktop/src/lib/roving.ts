@@ -139,6 +139,14 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
   const labelOf = (row: HTMLElement) => (settings.label ? settings.label(row) : row.textContent)
 
+  /** A row whose name is being typed. It is a `div` rather than the button a row
+   *  usually is, because a button cannot hold a field, and it is not a row to press
+   *  either: the field in it is what the keyboard is for. So it is not the list's
+   *  tab stop - the field already is one - and putting a tabindex on it left an
+   *  extra stop in the sequence with no name on it at all, which a reader walking
+   *  the panel arrived at and was told nothing about. See NameField.svelte. */
+  const naming = (row: HTMLElement) => row.querySelector('input, textarea') !== null
+
   /** The one row Tab answers: whichever has the keyboard, else the one the list
    *  says is current, else the first. Everything else is reachable but not
    *  stopped on, which is the roving tabindex the practices describe. */
@@ -146,10 +154,15 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const rows = rowsOf()
     if (!rows.length) return
 
-    const holding = rows.find((row) => row.contains(document.activeElement))
-    const stop = holding ?? rows.find((row) => row.matches(currentSelector())) ?? rows[0]
+    const standing = rows.filter((row) => !naming(row))
+    const holding = standing.find((row) => row.contains(document.activeElement))
+    const stop =
+      holding ?? standing.find((row) => row.matches(currentSelector())) ?? standing[0] ?? null
 
-    for (const row of rows) row.tabIndex = row === stop ? 0 : -1
+    for (const row of rows) {
+      if (naming(row)) row.removeAttribute('tabindex')
+      else row.tabIndex = row === stop ? 0 : -1
+    }
 
     // Anywhere in the list, not inside a row: the cross that shuts a tab is the
     // row's neighbour rather than something in it, and looking for it inside each

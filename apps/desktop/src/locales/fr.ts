@@ -1104,6 +1104,7 @@ export const fr: Dictionary = {
   'End every other session': 'Terminer toutes les autres sessions',
 
   // Said and not shown: what a reader is told about a surface
+  'The note': 'La note',
   '{space} panel': 'Panneau {space}',
   'Panel width': 'Largeur du panneau',
   Values: 'Valeurs',

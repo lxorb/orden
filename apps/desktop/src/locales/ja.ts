@@ -1098,6 +1098,7 @@ export const ja: Dictionary = {
   'End every other session': '他のすべてのセッションを終了',
 
   // Said and not shown: what a reader is told about a surface
+  'The note': 'ノート',
   '{space} panel': '{space} パネル',
   'Panel width': 'パネルの幅',
   Values: '値',

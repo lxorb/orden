@@ -1100,6 +1100,7 @@ export const gsw: Dictionary = {
   'End every other session': 'Alli anderi Sitzige beände',
 
   // Said and not shown: what a reader is told about a surface
+  'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',
   'Panel width': 'Breiti vom Bereich',
   Values: 'Wärt',

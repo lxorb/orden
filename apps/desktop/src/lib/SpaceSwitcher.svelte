@@ -144,8 +144,12 @@
     in:arrive={{ y: -LIST_STEP }}
     out:leave={{ y: -LIST_STEP }}
   >
+    <!-- The row and the three dots beside it are one line and two controls. The
+         wrapper is nothing in itself, and says so: a menu's children have to be
+         its rows, and a plain div between the two was enough for the whole list to
+         stop being read as a menu at all. -->
     {#each workspace.spaces as space (space.id)}
-      <div class="line">
+      <div class="line" role="none">
         <button
           class="nib-row"
           class:is-on={space.id === workspace.activeSpaceId}
@@ -175,8 +179,12 @@
         <!-- What the space itself offers. Also a right click on the row and a
              held finger, so the gesture is the one every other list in the app
              answers to. -->
+        <!-- A row of a menu too, and it says so: a plain button among the rows was
+             enough for the whole list to stop being read as a menu. -->
         <button
           class="nib-glyph more"
+          role="menuitem"
+          aria-haspopup="menu"
           title={t('More')}
           aria-label={t('More')}
           onclick={(event) => about(event, space)}
@@ -217,48 +225,53 @@
     {#if sharedWithYou.items.length}
       <hr />
 
+      <!-- One person's files, which is a group of rows in the menu and is named by
+           whoever gave them: their name is written once over the rows rather than
+           again on each of them, so it is the group that carries it. -->
       {#each sharedWithYou.byOwner as group (group.owner)}
-        <!-- The owner's name, quietly, once over their files rather than again on
-             every row: "who gave me this" is one fact about the group. -->
-        <p class="from">{group.owner}</p>
+        <div class="held" role="group" aria-label={group.owner}>
+          <p class="from" aria-hidden="true">{group.owner}</p>
 
-        {#each group.items as item (item.id)}
-          <div class="line">
-            <button
-              class="nib-row"
-              class:is-on={workspace.showingShared(item.id)}
-              role="menuitem"
-              title={item.name}
-              onclick={() => {
-                open = false
-                void sharedWithYou.open(item)
-              }}
-              oncontextmenu={(event) => aboutShared(event, item)}
-              use:longPress={(event) => aboutShared(event, item)}
-            >
-              <span class="nib-badge is-quiet" aria-hidden="true">
-                <FileMark mark={fileMark(item.path)} />
-              </span>
-              <span class="nib-row-label">{item.name}</span>
-              <SharedMark label={t('Shared with you')} />
-            </button>
-
-            <button
-              class="nib-glyph more"
-              title={t('More')}
-              aria-label={t('More')}
-              onclick={(event) => aboutShared(event, item)}
-            >
-              <svg viewBox="0 0 13 13"
-                ><circle cx="3" cy="6.5" r="1" /><circle cx="6.5" cy="6.5" r="1" /><circle
-                  cx="10"
-                  cy="6.5"
-                  r="1"
-                /></svg
+          {#each group.items as item (item.id)}
+            <div class="line" role="none">
+              <button
+                class="nib-row"
+                class:is-on={workspace.showingShared(item.id)}
+                role="menuitem"
+                title={item.name}
+                onclick={() => {
+                  open = false
+                  void sharedWithYou.open(item)
+                }}
+                oncontextmenu={(event) => aboutShared(event, item)}
+                use:longPress={(event) => aboutShared(event, item)}
               >
-            </button>
-          </div>
-        {/each}
+                <span class="nib-badge is-quiet" aria-hidden="true">
+                  <FileMark mark={fileMark(item.path)} />
+                </span>
+                <span class="nib-row-label">{item.name}</span>
+                <SharedMark label={t('Shared with you')} />
+              </button>
+
+              <button
+                class="nib-glyph more"
+                role="menuitem"
+                aria-haspopup="menu"
+                title={t('More')}
+                aria-label={t('More')}
+                onclick={(event) => aboutShared(event, item)}
+              >
+                <svg viewBox="0 0 13 13"
+                  ><circle cx="3" cy="6.5" r="1" /><circle cx="6.5" cy="6.5" r="1" /><circle
+                    cx="10"
+                    cy="6.5"
+                    r="1"
+                  /></svg
+                >
+              </button>
+            </div>
+          {/each}
+        </div>
       {/each}
     {/if}
   </div>
@@ -398,6 +411,13 @@
     margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
+  }
+
+  /* One person's files, held together so the menu can say whose they are. Nothing
+     to lay out: `display: contents` leaves the rows exactly where they were in the
+     list, which is what makes this a name for them rather than a box around them. */
+  .held {
+    display: contents;
   }
 
   /* Who shared the files under it. A label rather than a row: there is nothing to

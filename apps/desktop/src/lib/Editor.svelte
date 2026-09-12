@@ -36,6 +36,7 @@
     shortcutEffect,
   } from '@nib/editor'
   import { EditorStates, noteKey } from './editor-states'
+  import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
@@ -154,6 +155,20 @@
   $effect(() => {
     const first = untrack(() => tab)
     const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
+
+    // The writing surface is a text box as far as anything reading the page is
+    // concerned - CodeMirror says so itself, with `role="textbox"` - and a text box
+    // has to be called something. It was the one thing on every single surface of
+    // the app that axe-core called serious: an unnamed field the size of the
+    // window. The name is the app's to give rather than the library's, because what
+    // is in it is a note.
+    //
+    // Set on the element and not through `contentAttributes`, which is where the
+    // `#write` id comes from: the pane's view outlives every note in it and each
+    // note is a whole state swapped in, so a facet appended to the state that built
+    // the view goes with the first swap. An attribute the library never set is one
+    // it never takes off again; see updateAttrs in @codemirror/view.
+    created.contentDOM.setAttribute('aria-label', t('The note'))
 
     states.started(
       noteKey(first),

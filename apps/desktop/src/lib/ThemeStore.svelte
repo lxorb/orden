@@ -601,9 +601,14 @@
       color var(--dur-fast) var(--ease-out);
   }
 
+  /* The side being looked at is the filled row every "this one" in the app is:
+     the surface says which, and the words go dark. The accent on a wash of itself
+     is the one combination this palette does not carry - it clears three to one
+     against a surface, not four and a half against a tint of itself. The same
+     answer the menu's chosen chip was given; see AppMenu.svelte. */
   .side.at {
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: var(--surface-selected);
+    color: var(--active-file-text-color);
   }
 
   .palette {

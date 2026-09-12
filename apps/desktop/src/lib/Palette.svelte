@@ -160,12 +160,20 @@
       >
         {#each results as item, index (`${label(item)}:${index}`)}
           <li role="none">
+            <!-- A command that cannot be run right now is faded, and says it is out
+                 of anybody's hands rather than only being drawn that way: to
+                 anything reading the list it was an ordinary row in a grey nobody
+                 could read, and eight of the serious things axe-core found in this
+                 app were exactly that. Not `disabled`, which would take the row out
+                 of the list the arrows walk: the row is still there to be read, it
+                 simply does nothing. -->
             <button
               class="nib-row"
               id="nib-palette-{index}"
               role="option"
               tabindex="-1"
               aria-selected={index === cursor}
+              aria-disabled={'disabled' in item && item.disabled ? 'true' : undefined}
               class:is-on={index === cursor}
               class:dim={'disabled' in item && item.disabled}
               onmouseenter={() => (cursor = index)}
