@@ -65,8 +65,7 @@ function navigationSteps(): Step[] {
   // `at` rather than an index, because a webview that keeps no navigation entry
   // hands back an empty list and there is nothing to time.
   const entry = performance.getEntriesByType('navigation').at(0) as
-    | PerformanceNavigationTiming
-    | undefined
+    PerformanceNavigationTiming | undefined
   if (!entry) return []
 
   return [

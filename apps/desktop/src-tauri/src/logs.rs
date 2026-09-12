@@ -59,7 +59,7 @@ pub fn write_log(app: AppHandle, level: String, message: String, at: String) -> 
 /// The log as it stands. A log folder that cannot even be found, or a file that
 /// cannot be read, reads as empty: the window asking has nothing better to show
 /// either way, and a log is not worth an error of its own.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_log(app: AppHandle) -> String {
     log_file(&app)
         .ok()

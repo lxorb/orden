@@ -53,7 +53,7 @@ fn entry(name: &str) -> Result<Entry, String> {
 /// The key kept under `name`, or nothing where none is. An unreadable keychain is
 /// an error and not an absence: a reader whose keyring is locked should be told
 /// that rather than told their key has gone.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn secret_read(name: String) -> Result<Option<String>, String> {
     match entry(&name)?.get_password() {
         Ok(secret) => Ok(Some(secret)),
@@ -63,7 +63,7 @@ pub fn secret_read(name: String) -> Result<Option<String>, String> {
 }
 
 /// Writes one, replacing whatever was there.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn secret_write(name: String, secret: String) -> Result<(), String> {
     entry(&name)?
         .set_password(&secret)
@@ -72,7 +72,7 @@ pub fn secret_write(name: String, secret: String) -> Result<(), String> {
 
 /// Takes one away. A key that was never there is not a failure: taking away what
 /// is already gone is what the caller asked for.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn secret_forget(name: String) -> Result<(), String> {
     match entry(&name)?.delete_credential() {
         Ok(()) | Err(Error::NoEntry) => Ok(()),

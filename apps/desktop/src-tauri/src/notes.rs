@@ -21,7 +21,7 @@ use crate::paths::{
 /// Reads a note, whatever folder it is in. Opening a file from outside the
 /// spaces folder is the deliberate exception the app is built around, and it is
 /// also what makes the pictures beside that file readable.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
     let target = chosen(&path)?;
     let body = fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))?;
@@ -41,7 +41,7 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
 /// file opened from elsewhere, or the file an export was pointed at.
 ///
 /// The line endings the file already had are kept; see `as_written`.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_note(path: String, content: String) -> Result<(), String> {
     let target = chosen(&path)?;
     let body = as_written(&target, &content);
@@ -109,7 +109,7 @@ const HEAD: usize = 8192;
 /// Base64 rather than an array of numbers: a two megabyte picture written out as
 /// JSON digits is twenty megabytes of text for the bridge to parse, and one
 /// export is a document plus every picture in it.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_bytes(path: String, base64: String) -> Result<(), String> {
     let bytes = BASE64
         .decode(base64.as_bytes())
@@ -135,7 +135,7 @@ fn write_file(path: &str, bytes: &[u8]) -> Result<(), String> {
 /// Deletes a note outright. The window sends almost everything to the trash
 /// instead; this is for the cases that are already a copy, such as a file sync
 /// has just replaced.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_file(&target).map_err(|error| cannot("delete", &target, &error))?;
@@ -147,7 +147,7 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 
 /// Renames a note, which is also how it is moved: the new path can name a folder
 /// that does not exist yet.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
@@ -172,14 +172,14 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
 }
 
 /// Makes a folder inside a space, and every folder above it.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     made(&target)
 }
 
 /// Removes a folder and everything under it.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
@@ -194,7 +194,7 @@ pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
 /// around, or a PDF's highlights. This refuses instead of taking those with it,
 /// and the caller ignores the refusal: a folder left standing is a folder, while
 /// a picture taken away is gone. See `unnest` in workspace.svelte.ts.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_dir(&target).map_err(|error| cannot("delete", &target, &error))
@@ -225,7 +225,7 @@ pub struct Stamp {
 ///
 /// Null rather than an error for a file that is gone: a file being deleted or
 /// replaced is a thing that happens, not a failure to report.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn file_stamp(path: String) -> Result<Option<Stamp>, String> {
     Ok(stamp_of(&chosen(&path)?))
 }

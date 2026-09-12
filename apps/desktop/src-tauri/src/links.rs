@@ -96,7 +96,7 @@ pub struct SpaceLinks {
 
 /// Reads every note in a space and returns what links out of each, the headings
 /// and block names inside each, and the other files beside them.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     let dir = in_spaces(&app, &root)?;
     let (notes, others) = files_in(&dir);

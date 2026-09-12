@@ -132,7 +132,7 @@ fn listed(root: &Path) -> Vec<PaperFile> {
 
 /// The words taken out of a PDF, or nothing where none have been. A paper nobody
 /// has read is the ordinary case rather than a failure.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_paper_text(app: AppHandle, path: String) -> Result<String, String> {
     Ok(read_pages(&paper_dir(&app, &path)?))
 }
@@ -140,7 +140,7 @@ pub fn read_paper_text(app: AppHandle, path: String) -> Result<String, String> {
 /// One paper's words written down, or taken away again when the window sends
 /// nothing: a paper that has been deleted, renamed or written over has no words
 /// worth keeping.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_paper_text(app: AppHandle, path: String, content: String) -> Result<(), String> {
     let dir = paper_dir(&app, &path)?;
     write_pages(&dir, &content)?;
@@ -156,7 +156,7 @@ pub fn write_paper_text(app: AppHandle, path: String, content: String) -> Result
 }
 
 /// Every paper the store holds words for.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_paper_texts(app: AppHandle) -> Result<Vec<PaperFile>, String> {
     Ok(listed(&papers_dir(&app)?))
 }

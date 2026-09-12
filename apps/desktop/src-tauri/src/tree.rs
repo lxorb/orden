@@ -36,7 +36,7 @@ pub struct TreeOptions {
 }
 
 /// Reads a space into a tree of notes and folders.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_tree(
     app: AppHandle,
     root: String,

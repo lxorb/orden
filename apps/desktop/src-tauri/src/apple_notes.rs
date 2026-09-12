@@ -71,7 +71,7 @@ pub struct Read {
 }
 
 /// Every note on this Mac, read out of Notes' own database.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_apple_notes() -> Result<Read, String> {
     #[cfg(target_os = "macos")]
     {

@@ -10,6 +10,26 @@
 //! reach the handler only there. Everything about notes is the same on both: the
 //! same folder under the documents directory, read and written by the same
 //! commands.
+//!
+//! One rule about every command that waits for the disk: it says `async`.
+//!
+//! `#[tauri::command]` on a function that is not itself async runs the body *on
+//! the main thread*, inside the webview's own request handler. On Windows that is
+//! the thread with the message loop on it, so a command that reads a folder full
+//! of notes stops the window repainting, stops it answering the mouse, and stops
+//! the webview loading anything else for as long as the read takes - the app looks
+//! wedged, and the wait is the disk's. `#[tauri::command(async)]` on the same
+//! synchronous function runs it on a thread of the runtime's instead and answers
+//! the window when it is done, which is the same command with the freeze taken
+//! out. So everything that touches a file, walks a folder, starts a subprocess or
+//! asks the machine's keychain says it.
+//!
+//! Four kinds of command deliberately do not. The ones that only read state this
+//! builder manages, which is a mutex and no wait at all. `write_log`, whose lines
+//! are appended in the order they were written and would not be if two could be in
+//! the air at once. The two that reach Windows through COM or the registry, since
+//! an apartment belongs to the thread that made it. And `new_window`, which builds
+//! a window.
 
 #[cfg(desktop)]
 mod apple_notes;

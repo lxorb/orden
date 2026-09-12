@@ -52,7 +52,7 @@ pub struct TrashEntry {
 }
 
 /// Moves a note, folder or space into the trash and says what it became.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
         return Err(format!("{kind} is not something Nib can delete"));
@@ -118,7 +118,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 }
 
 /// Everything in the trash, newest first.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
     let _guard = locked();
     let dir = trash_dir(&app)?;
@@ -130,7 +130,7 @@ pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
 
 /// Puts something back where it was and returns where it landed, which is the
 /// old place unless that is taken by now.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     let base = spaces_root(&app)?;
 
@@ -175,7 +175,7 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
 }
 
 /// Takes one thing away for good.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
     if !is_slot(&id) {
         return Err(format!("{id} is not something in the trash"));
@@ -191,7 +191,7 @@ pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
 
 /// The sweep: everything that has waited longer than `age` milliseconds goes.
 /// Returns how many did.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
     let _guard = locked();
     let dir = trash_dir(&app)?;

@@ -33,7 +33,7 @@ fn command(program: &str) -> Command {
 }
 
 /// Whether pandoc is on this machine, which is what decides the export list.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn has_pandoc() -> bool {
     command("pandoc")
         .arg("--version")
@@ -49,7 +49,7 @@ pub fn has_pandoc() -> bool {
 /// Pictures inside the document are written out beside it rather than into
 /// whichever folder the app happens to have been started in, which for an app
 /// launched from its own shortcut is a folder nobody would think to look in.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn import_document(path: String) -> Result<String, String> {
     // The same gate the note readers go through: a file the reader picked in the
     // dialog, judged as a path before pandoc is handed it.
@@ -106,7 +106,7 @@ fn is_format(format: &str) -> bool {
 
 /// Converts markdown with pandoc, the same way Typora does. The source is piped
 /// in rather than written to a temp file, so nothing is left behind.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), String> {
     if !is_format(&format) {
         return Err(format!("{format} is not a format pandoc writes"));

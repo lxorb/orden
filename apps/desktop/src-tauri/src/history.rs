@@ -33,7 +33,7 @@ pub struct Snapshot {
 /// Keeps a copy of a note before it is overwritten. Does nothing for a note with
 /// no text in it, which is what an empty new note is, and nothing when the text
 /// has not changed since the last copy.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
     if content.trim().is_empty() {
         return Ok(());
@@ -71,7 +71,7 @@ pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<()
 }
 
 /// Every kept version of one note, newest first.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_snapshots(app: AppHandle, path: String) -> Result<Vec<Snapshot>, String> {
     let dir = history_root(&app, &path)?;
 
@@ -138,7 +138,7 @@ fn stale(taken: &[u64], now: u64, days: u64) -> Vec<u64> {
 
 /// Sweeps every note's history by the policy above. Answers how many versions
 /// went, which is what the caller logs and nothing else reads.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn purge_snapshots(app: AppHandle, days: u64) -> Result<usize, String> {
     let root = history_dir(&app)?;
     let Ok(entries) = fs::read_dir(&root) else {
@@ -183,7 +183,7 @@ fn moment(file: &Path) -> Option<u64> {
 
 /// Reads one kept version back. Only the history folder is readable this way; a
 /// note itself is read by `read_note`.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_snapshot(app: AppHandle, path: String) -> Result<String, String> {
     let kept = folded(Path::new(&path));
     if !inside(&history_dir(&app)?, &kept) {

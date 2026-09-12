@@ -34,7 +34,7 @@ pub fn spaces_root(app: AppHandle) -> Result<String, String> {
 
 /// Every space on disk, alphabetical. The folder is the source of truth, so a
 /// space copied in by hand simply appears.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_spaces(app: AppHandle) -> Result<Vec<Space>, String> {
     let dir = paths::spaces_root(&app)?;
     let mut spaces = Vec::new();
@@ -59,7 +59,7 @@ pub fn list_spaces(app: AppHandle) -> Result<Vec<Space>, String> {
 
 /// Creates a space and returns where it landed. The folder name is derived from
 /// what was typed, and numbered if that name is taken.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn create_space(app: AppHandle, name: String) -> Result<Space, String> {
     let dir = paths::spaces_root(&app)?;
     let wanted = folder_name(&name).ok_or("that name cannot be used for a folder")?;
@@ -84,7 +84,7 @@ pub fn create_space(app: AppHandle, name: String) -> Result<Space, String> {
 }
 
 /// Renames a space by renaming its folder.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn rename_space(app: AppHandle, from: String, name: String) -> Result<Space, String> {
     let dir = paths::spaces_root(&app)?;
     let source = a_space(&app, &from)?;
@@ -108,7 +108,7 @@ pub fn rename_space(app: AppHandle, from: String, name: String) -> Result<Space,
 /// Deletes a space and every note in it. Only a folder directly inside the
 /// spaces folder is a space, so a mistyped path cannot take a different
 /// directory with it.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn delete_space(app: AppHandle, path: String) -> Result<(), String> {
     let target = a_space(&app, &path)?;
     if !target.is_dir() {

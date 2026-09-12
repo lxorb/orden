@@ -52,7 +52,7 @@ pub fn theme_dir(app: AppHandle) -> Result<String, String> {
 }
 
 /// Every theme file in that folder, by name.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
     let dir = themes_root(&app)?;
     let mut themes = Vec::new();
@@ -88,7 +88,7 @@ pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
 /// above it, because that folder is the app's own data: the snapshots of every
 /// note are under it, and on Windows the webview keeps its profile there too.
 /// And held to the extension, because a theme is a stylesheet.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     let target = folded(Path::new(&path));
     if !is_a_theme(&themes_root(&app)?, &target) {
@@ -116,7 +116,7 @@ fn is_a_theme(dir: &Path, target: &Path) -> bool {
 /// the themes folder. Written whole, so a theme being updated is either the old
 /// one or the new one and never half of each - a half-written stylesheet is what
 /// the window would be showing.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_theme(app: AppHandle, id: String, css: String) -> Result<String, String> {
     if !is_id(&id) {
         return Err(format!("{id} is not a theme id"));
@@ -138,7 +138,7 @@ pub fn write_theme(app: AppHandle, id: String, css: String) -> Result<String, St
 
 /// Takes an installed theme away. A theme that is already gone is not an error:
 /// the folder ends up the way the caller asked for either way.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn remove_theme(app: AppHandle, id: String) -> Result<(), String> {
     if !is_id(&id) {
         return Err(format!("{id} is not a theme id"));
@@ -162,7 +162,7 @@ pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
 }
 
 /// The reader's own additions to whichever theme is active, or nothing at all.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_custom_css(app: AppHandle) -> String {
     custom_css_file(&app)
         .ok()
@@ -182,7 +182,7 @@ pub fn snippets_path(app: AppHandle) -> Result<String, String> {
 
 /// The snippets as they stand, or an empty set if the file is not readable. The
 /// editor works without them, so this is not worth an error.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_snippets(app: AppHandle) -> String {
     snippets_file(&app)
         .ok()

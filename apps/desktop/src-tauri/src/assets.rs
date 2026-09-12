@@ -37,7 +37,7 @@ const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 ///
 /// The bytes go over the IPC as bytes rather than as JSON, which is what makes a
 /// thirty megabyte PDF a copy rather than a hundred megabytes of numbers.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
     let target = beside_a_note(&app, &path)?;
     let Some(bytes) = under(&target, FILE_LIMIT)? else {
@@ -49,7 +49,7 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
 
 /// A picture as a `data:` URI, so an exported page carries its own pictures.
 /// Refuses anything large enough to bloat the file past usefulness.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = beside_a_note(&app, &path)?;
     let Some(bytes) = under(&target, LIMIT)? else {
@@ -97,7 +97,7 @@ fn under(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
 /// The window decides which of them it is - the space's assets folder, beside the
 /// note, a folder named after it - and this decides whether the result is still
 /// somewhere a note of this space may write.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn save_asset(
     app: AppHandle,
     note_path: String,

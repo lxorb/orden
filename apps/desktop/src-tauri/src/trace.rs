@@ -257,7 +257,8 @@ fn before_main() -> Option<Duration> {
 
     // SAFETY: the four are ours and outlive the call, and the handle is the
     // pseudo-handle for this process, which needs no closing. The call writes the
-    // four and nothing else.
+    // four and nothing else. The pointers are taken by name rather than left to a
+    // coercion, which is what `implicit borrow as raw pointer` is about.
     #[allow(
         unsafe_code,
         reason = "there is no safe way to ask Windows when this process was created"
@@ -265,10 +266,10 @@ fn before_main() -> Option<Duration> {
     unsafe {
         GetProcessTimes(
             GetCurrentProcess(),
-            &mut created,
-            &mut exited,
-            &mut kernel,
-            &mut user,
+            std::ptr::from_mut(&mut created),
+            std::ptr::from_mut(&mut exited),
+            std::ptr::from_mut(&mut kernel),
+            std::ptr::from_mut(&mut user),
         )
     }
     .ok()?;

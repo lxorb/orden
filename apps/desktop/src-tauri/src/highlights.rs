@@ -82,13 +82,13 @@ fn write_sidecar(target: &Path, content: &str) -> Result<(), String> {
 }
 
 /// What has been highlighted on a PDF in a space, as the text of its sidecar.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn read_highlights(app: AppHandle, path: String) -> Result<String, String> {
     read_sidecar(&sidecar_of(&in_spaces(&app, &path)?)?)
 }
 
 /// The highlights on a PDF in a space, written down.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn write_highlights(app: AppHandle, path: String, content: String) -> Result<(), String> {
     write_sidecar(&sidecar_of(&in_spaces(&app, &path)?)?, &content)
 }

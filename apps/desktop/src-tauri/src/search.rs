@@ -215,7 +215,7 @@ fn body_of(path: &Path) -> Option<Arc<str>> {
 /// screen and after the link index has had its turn; see startup.svelte.ts and
 /// search/warm.svelte.ts. One space at a time, the way the browser's worker holds
 /// one: another space's notes are memory nobody is about to ask about.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn warm_search(app: AppHandle, root: String) -> Result<Warmth, String> {
     let dir = in_spaces(&app, &root)?;
     let paths = notes_in(&dir);
@@ -282,7 +282,7 @@ struct Batch {
 /// are skipped before the file is read, which is the whole point of leaving one
 /// out: an archive of two thousand notes should cost a search nothing rather than
 /// cost it a read and then a filter.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn search_space(
     app: AppHandle,
     root: String,
@@ -402,7 +402,7 @@ fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) 
 /// together, or taking this away, is a follow-up; see `tagCounts` in
 /// link-index.svelte.ts and `spaceTags` in web/commands.ts, which carries the same
 /// note.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
     let dir = in_spaces(&app, &root)?;
     let mut counts: HashMap<String, usize> = HashMap::new();
