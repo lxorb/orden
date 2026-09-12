@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { fold, width, workDone as firmwareWork, wrap } from './firmware'
+import { fold, width, wrap } from './firmware'
 import { markLines } from './mark'
-import { pagesOf, workDone as pagingWork } from './pages'
-import { BODY_INNER, BODY_ROWS } from './panel'
+import { pagesOf } from './pages'
+import { BODY_INNER } from './panel'
+import { costOf, NOTE as note, PAGING as paging, typed } from '../test/cost'
 
 /** What text mode costs, said out loud.
  *
@@ -20,29 +21,6 @@ import { BODY_INNER, BODY_ROWS } from './panel'
  *  The assertions that hold the speed round to that difference, and pages.test.ts
  *  holds it again from the other end. */
 describe('what text mode costs', () => {
-  const NUMS = 48
-  const paging = { breakAt: 2, gutter: NUMS, inner: BODY_INNER - NUMS - 6, rows: BODY_ROWS }
-
-  const note = Array.from(
-    { length: 160 },
-    (_one, at) =>
-      `## Section ${at}\n\nProse about section ${at}, long enough to wrap across the panel more than once and then some.\n\n- a point\n- another point\n\n`,
-  ).join('')
-
-  /** The note with one line of it rewritten, which is what a keystroke is. The same
-   *  length every round, so what differs between two of them is which line changed
-   *  and nothing else. */
-  const typed = (round: number) =>
-    note.replace('Prose about section 7,', `Prose about section ${String(round).padStart(4, '0')},`)
-
-  /** What one piece of work asked of the firmware and of the pager. */
-  const costOf = (work: () => unknown) => {
-    firmwareWork()
-    pagingWork()
-    work()
-    return { set: firmwareWork(), paged: pagingWork() }
-  }
-
   test('measured', () => {
     // A note this width has not been paged before, so every line of it is broken.
     const cold = costOf(() => pagesOf(typed(1), paging))

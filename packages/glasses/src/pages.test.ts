@@ -1,8 +1,9 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
-import { SPACE, width, workDone as firmwareWork, wrap } from './firmware'
-import { pageAt, pageOfLine, pagesOf, type Paging, workDone as pagingWork } from './pages'
-import { BODY_INNER, BODY_ROWS } from './panel'
+import { SPACE, width, wrap } from './firmware'
+import { pageAt, pageOfLine, pagesOf, type Paging } from './pages'
+import { BODY_INNER, BODY_ROWS, GUTTER } from './panel'
+import { costOf, NOTE, PAGING, typed } from '../test/cost'
 
 const paging = (over: Partial<Paging> = {}): Paging => ({
   breakAt: 2,
@@ -17,7 +18,7 @@ const pages = (source: string, over: Partial<Paging> = {}) => pagesOf(source, pa
 /** The column of line numbers, as `panel.ts` sizes it when the reader has asked
  *  for them. The body is the whole width either way; the numbers are laid over its
  *  left and the note's rows are pushed in to clear them. */
-const NUMS = 54
+const NUMS = GUTTER
 
 const PROSE = Array.from(
   { length: 30 },
@@ -25,8 +26,8 @@ const PROSE = Array.from(
     `Paragraph ${at} with enough words in it to run past the end of one line of the panel quite easily.`,
 ).join('\n\n')
 
-/** The rule the whole reading experience turns on: a page is seven lines of the
- *  firmware's own measure, and never one more. */
+/** The rule the whole reading experience turns on: a page is `BODY_ROWS` lines of
+ *  the firmware's own measure, and never one more. */
 describe('a page holds what the panel holds', () => {
   test('never puts more lines on a page than the body has', () => {
     for (const page of pages(PROSE)) {
@@ -397,18 +398,9 @@ describe('telling two pages apart', () => {
 /** Speed, which is the whole reason the glasses are written to rather than drawn
  *  on. Item three of the brief asks for a keystroke inside one frame. */
 describe('what a page costs', () => {
-  const note = Array.from(
-    { length: 160 },
-    (_one, at) =>
-      `## Section ${at}\n\nProse about section ${at}, long enough to wrap across the panel more than once and then some.\n\n- a point\n- another point\n\n`,
-  ).join('')
-
-  const typed = (round: number) =>
-    note.replace('Prose about section 7,', `Prose about section 7${'x'.repeat(round)},`)
-
   test('pages a note of twenty thousand characters', () => {
-    expect(note.length).toBeGreaterThan(20_000)
-    expect(pagesOf(note, paging({ gutter: NUMS })).length).toBeGreaterThan(100)
+    expect(NOTE.length).toBeGreaterThan(20_000)
+    expect(pagesOf(NOTE, PAGING).length).toBeGreaterThan(100)
   })
 
   /** What actually happens while somebody types: the note is paged again from the
@@ -433,8 +425,8 @@ describe('what a page costs', () => {
   })
 
   test('re-pages a note after a keystroke without breaking its lines again', () => {
-    const first = pagesOf(typed(0), paging({ gutter: NUMS }))
-    const after = pagesOf(typed(1), paging({ gutter: NUMS }))
+    const first = pagesOf(typed(0), PAGING)
+    const after = pagesOf(typed(1), PAGING)
 
     // One line changed, so one page changed. Every other page hashes as it did,
     // which is also what keeps the keystroke off the radio.
@@ -455,26 +447,15 @@ describe('what a page costs', () => {
    *  the glyphs measured. Every one of them is the same number on a busy machine as
    *  on an idle one. */
   test('pages a long note again and again without slowing down', () => {
-    const over = paging({ gutter: NUMS })
-
-    /** A keystroke of this test's own rather than the file's `typed`, for two
-     *  reasons. Every round is a line the cache has not seen, where the tests above
-     *  have already broken `typed(0)` and `typed(1)` and a line already broken would
-     *  be answered rather than broken. And every round is the same length, so what
-     *  differs between two rounds is which line changed and nothing else at all. */
-    const keyed = (round: number) =>
-      note.replace(
-        'Prose about section 7,',
-        `Prose about section ${String(round).padStart(3, '0')},`,
-      )
-
-    /** One paging, and what the firmware and the pager were asked to do for it. */
+    /** One paging, and what the firmware and the pager were asked to do for it.
+     *
+     *  The rounds are marked, so that every one of them is a line the cache has not
+     *  seen: the tests above have already broken `typed(0)` and `typed(1)`, and a
+     *  line already broken is answered rather than broken. */
     const round = (at: number) => {
-      // Whatever an earlier round left counted, dropped.
-      firmwareWork()
-      pagingWork()
-      const pages = pagesOf(keyed(at), over)
-      return { pages: pages.length, set: firmwareWork(), paged: pagingWork() }
+      let pages = 0
+      const cost = costOf(() => (pages = pagesOf(typed(at, 'k'), PAGING).length))
+      return { pages, ...cost }
     }
 
     const first = round(0)
