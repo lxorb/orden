@@ -151,14 +151,38 @@ def held(port: int, switched: bool) -> dict:
 def reasked(popup: Page) -> None:
     """The popup, asked about the page again.
 
-    Its request goes to whichever tab is active, and the popup drawn in a tab of
-    its own is that tab until something else is brought to the front. So the kinds
-    are clicked from JavaScript rather than by the mouse, which would bring this
-    tab back to the front and have the popup read itself.
+    Its request goes to whichever tab is active, and the popup drawn in a tab of its
+    own is that tab until something else is brought to the front. So the kinds are
+    clicked from JavaScript rather than by the mouse, which would bring this tab back
+    to the front and have the popup read itself - and by `evaluate` rather than
+    through a locator, because a locator waits for an element to be visible and
+    Chrome lays nothing out in a tab nobody is looking at.
+
+    Away from Page and back to it, because it is the kind changing that asks.
     """
     for at in (1, 0):
-        popup.locator(".tab").nth(at).evaluate("one => one.click()")
-        popup.wait_for_timeout(150)
+        popup.evaluate("(at) => document.querySelectorAll('.tab')[at].click()", at)
+        popup.wait_for_timeout(200)
+
+
+DREW = """
+  ([wanted]) => {
+    const pre = document.querySelector('pre')
+    if (!pre || !pre.textContent.includes(wanted)) return null
+
+    return { note: pre.textContent, said: document.querySelector('.said')?.textContent ?? '' }
+  }
+"""
+
+
+def drew(popup: Page, wanted: str) -> dict:
+    """What the popup drew, once it says what it was waiting to say.
+
+    Read inside the wait's own call rather than from a locator afterwards: this tab
+    is in the background, where nothing is painted, timers are throttled and a
+    second round trip to it is a second chance for the answer to have moved on.
+    """
+    return popup.wait_for_function(DREW, arg=[wanted], polling=400, timeout=PATIENCE).json_value()
 
 
 def checks(note: str, said: str, asked: dict) -> list[tuple[bool, str]]:
@@ -202,6 +226,9 @@ def main() -> int:
                 args=[f"--disable-extensions-except={DIST}", f"--load-extension={DIST}"],
             )
 
+            problems: list[str] = []
+            context.on("weberror", lambda error: problems.append(str(error.error)))
+
             worker = (
                 context.service_workers[0]
                 if context.service_workers
@@ -221,22 +248,15 @@ def main() -> int:
 
             popup = context.new_page()
             popup.goto(f"{base}/popup.html")
-            popup.wait_for_selector(".kinds")
+            popup.wait_for_function("() => !!document.querySelector('.kinds')")
 
             # The article is what the worker should answer about from here on.
             page.bring_to_front()
             reasked(popup)
 
-            # Polled on a timer rather than on a frame: this tab is in the
-            # background, where nothing is painted and a frame never comes.
-            popup.wait_for_function(
-                "() => (document.querySelector('pre')?.textContent ?? '').includes('author:')",
-                polling=400,
-                timeout=PATIENCE,
-            )
-
-            note = popup.locator("pre").inner_text()
-            said = popup.locator(".said").inner_text()
+            drawn = drew(popup, "author:")
+            note = drawn["note"]
+            said = drawn["said"]
             asked = Provider.asked[0] if Provider.asked else {}
 
             print("\n  the block the popup previews:")
@@ -257,21 +277,19 @@ def main() -> int:
 
             plain = context.new_page()
             plain.goto(f"{base}/popup.html")
-            plain.wait_for_selector(".kinds")
+            plain.wait_for_function("() => !!document.querySelector('.kinds')")
             page.bring_to_front()
             reasked(plain)
-            plain.wait_for_function(
-                "() => (document.querySelector('pre')?.textContent ?? '').includes('source:')",
-                polling=400,
-                timeout=PATIENCE,
-            )
 
-            raw = plain.locator("pre").inner_text()
+            raw = drew(plain, "source:")["note"]
             for ok, one in [
                 ("source: http://127.0.0.1" in raw, "a clip with the switch off is still a clip"),
                 ("author:" not in raw, "and says nothing the interpreter would have filled in"),
                 (len(Provider.asked) == sent, "and the provider was not asked about it"),
-                (plain.locator(".reading").count() == 1, "the row is still there to turn on"),
+                (
+                    plain.evaluate("() => document.querySelectorAll('.reading').length") == 1,
+                    "the row is still there to turn on",
+                ),
             ]:
                 print(f"  {'ok  ' if ok else 'FAIL'}      {one}")
                 failures += 0 if ok else 1
@@ -299,6 +317,13 @@ def main() -> int:
                 failures += 0 if ok else 1
 
             shown.close()
+
+            if problems:
+                print("  page errors:")
+                for one in problems:
+                    print(f"    {one}")
+                failures += len(problems)
+
             context.close()
     finally:
         server.shutdown()

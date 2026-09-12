@@ -11,9 +11,10 @@ note before it is saved; the page's own right-click menu; and `Alt+Shift+K`, `S`
 `L`.
 
 ```sh
-node apps/clipper/scripts/build.js     # dist/ for "Load unpacked", and the store's zip
-pnpm --filter @nib/clipper test        # the unit tests
-python apps/clipper/test/e2e/clip.py   # the reader, in a real Chrome
+node apps/clipper/scripts/build.js          # dist/ for "Load unpacked", and the store's zip
+pnpm --filter @nib/clipper test             # the unit tests
+python apps/clipper/test/e2e/clip.py        # the reader, in a real Chrome
+python apps/clipper/test/e2e/interpret.py   # the interpreter, against a fake provider
 ```
 
 The drives need Playwright's Chromium and run headed, because an extension does not
