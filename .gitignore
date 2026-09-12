@@ -3,6 +3,9 @@ dist/
 # What a before-and-after measurement builds the other half into; see
 # apps/desktop/test/e2e/first-paint.py.
 dist-before/
+# And the build with the names left in it, which is what a profile is read from;
+# see apps/desktop/test/e2e/speed.py.
+dist-profile/
 dist-even/
 target/
 # What Tauri generates for the mobile targets. The Android project is source:

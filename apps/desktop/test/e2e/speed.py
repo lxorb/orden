@@ -47,6 +47,18 @@ A subset by name, when one number is being chased:
     python apps/desktop/test/e2e/speed.py launch search canvas
 
 The names are the keys of `PARTS`. `--rounds` sets how many of each.
+
+When a number here is bad, the next question is which function. The long animation
+frames this prints already name the file and the handler; for the function, build a
+third time with the names left in and take a sampling profile of the one thing:
+
+    NODE_ENV=development pnpm exec vite build --mode development \
+        --outDir dist-profile --minify false
+
+then drive that folder with Chrome's own profiler through `CDPSession`
+(`Profiler.enable`, `Profiler.start`, the gesture, `Profiler.stop`) and sum the
+samples per call frame. Every cause named in this file's comments was found that
+way, and the folder is ignored so it can be left lying about.
 """
 
 from __future__ import annotations
@@ -89,6 +101,9 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
 #: How long to watch for jank while a gesture runs.
 GESTURE = 1500
+
+#: How many launches a lane gets before any of them is timed; see `ready`.
+WARMING = 3
 
 
 def say(words: str) -> None:
@@ -549,6 +564,9 @@ def part_launch(lane: Lane, page: Page) -> dict[str, object]:
     page.wait_for_function("() => window.__marks.editor !== null", timeout=120000)
     page.wait_for_function(LAUNCHED, timeout=120000)
     page.wait_for_timeout(SETTLED_WITHIN)
+    # Swept first, or the heap is whatever the collector had not got round to: the
+    # same build read 123MB one round and 215MB the next without it.
+    lane.sweep()
     found = page.evaluate(LAUNCH, QUIET)
     lane.profile("launch", found.pop("loaf"))
     return found
@@ -699,7 +717,9 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
     # is the one thing on this surface that reads every note there is.
     panel = page.evaluate(PANEL)
     lane.profile("search panel opened", panel.pop("loaf"))
-    page.wait_for_selector("[data-search]", timeout=30000)
+    # Attached rather than visible: the line is a data attribute on a row that a
+    # theme may give no size at all, and what is being read is the attribute.
+    page.wait_for_selector("[data-search]", state="attached", timeout=30000)
     # The pass that reads the space into the worker is part of the launch, not part
     # of a query: wait for it to say it is warm before asking anything.
     page.wait_for_function(
@@ -929,6 +949,7 @@ class Lane:
         self.profiles: dict[str, list[str]] = {}
         self.notes: list[str] = []
         self.page: Page | None = None
+        self.cdp = None
 
         handler = functools.partial(Quiet, directory=str(self.folder))
         self.server = http.server.ThreadingHTTPServer(("127.0.0.1", self.port), handler)
@@ -963,6 +984,7 @@ class Lane:
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"{self.name}: page error: {error}"))
         self.page = page
+        self.cdp = context.new_cdp_session(page)
 
         page.goto(f"{self.origin}/seed.html", wait_until="domcontentloaded")
         plan = {
@@ -975,14 +997,28 @@ class Lane:
         seeded = page.evaluate(SEED, plan)
         say(f"{self.name}: {seeded['rows']} rows seeded into {seeded['stores']}")
 
-        page.goto(self.origin, wait_until="domcontentloaded")
-        page.wait_for_function(LAUNCHED, timeout=180000)
+        # Three launches before anything is timed, not one. Chrome keeps a compiled
+        # copy of a script and writes it on the second or third visit, so the build
+        # that has been served all afternoon comes up faster than the one built five
+        # minutes ago - by three hundred milliseconds to the file list, which is more
+        # than most changes worth making. Every asset of both builds is under a hash
+        # of its own, so each needs its own warming.
+        for _ in range(WARMING):
+            page.goto(self.origin, wait_until="domcontentloaded")
+            page.wait_for_function(LAUNCHED, timeout=180000)
+            page.wait_for_selector("aside .row", timeout=60000)
+
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")
-        page.wait_for_selector("aside .row", timeout=60000)
         # The session is written as things settle, so give it the moment it takes.
         page.wait_for_timeout(2500)
         say(f"{self.name}: session written")
+
+    def sweep(self) -> None:
+        """The collector, asked. A heap read with garbage still in it is a number
+        about when the collector last ran."""
+        if self.cdp:
+            self.cdp.send("HeapProfiler.collectGarbage")
 
     def park(self) -> None:
         """Off the app and onto nothing, so a lane that is not being measured is
@@ -1101,8 +1137,8 @@ def main() -> int:
             # is more than most changes worth making do; the reversal is what makes
             # a median of several rounds mean the code rather than the order.
             for part in parts:
-                for round in range(told.rounds):
-                    turn = lanes if round % 2 == 0 else [*reversed(lanes)]
+                for turn_at in range(told.rounds):
+                    turn = lanes if turn_at % 2 == 0 else [*reversed(lanes)]
                     for lane in turn:
                         for other in lanes:
                             if other is not lane:

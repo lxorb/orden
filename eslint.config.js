@@ -14,6 +14,9 @@ export default tseslint.config(
       // The other half of a before-and-after measurement, built beside the first;
       // see apps/desktop/test/e2e/first-paint.py.
       '**/dist-before/**',
+      // And the build with the names left in it, which is what a profile is read
+      // from; see apps/desktop/test/e2e/speed.py.
+      '**/dist-profile/**',
       '**/dist-even/**',
       '**/target/**',
       // What running the Worker locally leaves behind: a bundle it made, and the

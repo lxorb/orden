@@ -19,9 +19,17 @@ import type { InkStroke } from './format'
 class CountingPath {
   static copied = 0
 
-  moveTo() {}
-  quadraticCurveTo() {}
-  closePath() {}
+  moveTo() {
+    return undefined
+  }
+
+  quadraticCurveTo() {
+    return undefined
+  }
+
+  closePath() {
+    return undefined
+  }
 
   addPath() {
     CountingPath.copied += 1
@@ -65,7 +73,14 @@ function plane(count: number, across = 40): InkStroke[] {
     const y = Math.floor(one / across) * 120
     const points = []
     for (let step = 0; step < 6; step++) {
-      points.push({ x: x + step * 8, y: y + step * 2, pressure: 0.5, tiltX: 0, tiltY: 0, t: step * 10 })
+      points.push({
+        x: x + step * 8,
+        y: y + step * 2,
+        pressure: 0.5,
+        tiltX: 0,
+        tiltY: 0,
+        t: step * 10,
+      })
     }
 
     strokes.push({ id: `s${one}`, tool: 'pen', color: 'ink', size: 3, points })
@@ -98,7 +113,8 @@ describe('repainting the ink under the camera', () => {
     // stroke is copied again: this is the twelve frames a second the comment above
     // is about, and it is now the fills alone.
     const before = strokesBatched()
-    for (let frame = 0; frame < 40; frame++) paintInk(ctx, strokes, view(1000 + frame * 6, 1000), {})
+    for (let frame = 0; frame < 40; frame++)
+      paintInk(ctx, strokes, view(1000 + frame * 6, 1000), {})
 
     expect(strokesBatched() - before).toBe(0)
   })
@@ -126,7 +142,7 @@ describe('repainting the ink under the camera', () => {
     // A stroke drawn where the camera is, which is a new list with the old one at
     // the front of it. One stroke goes in, not six hundred: this is the hundred
     // milliseconds the pen used to lift for.
-    const drawn = { ...(plane(1)[0] as InkStroke), id: 'drawn' }
+    const drawn = { ...plane(1)[0]!, id: 'drawn' }
     drawn.points = drawn.points.map((point) => ({ ...point, x: point.x + 1000, y: point.y + 1000 }))
     paintInk(ctx, [...strokes, drawn], view(1000, 1000), {})
 
@@ -150,8 +166,8 @@ describe('repainting the ink under the camera', () => {
     const strokes = plane(300)
     // Two inks that are not the first, and neither of them grainy: a grain is a
     // tile drawn on a canvas of its own, and there is no canvas under node.
-    strokes[7] = { ...(strokes[7] as InkStroke), tool: 'fountain' }
-    strokes[9] = { ...(strokes[9] as InkStroke), color: 'red' }
+    strokes[7] = { ...strokes[7]!, tool: 'fountain' }
+    strokes[9] = { ...strokes[9]!, color: 'red' }
     const { ctx, fills } = context()
 
     paintInk(ctx, strokes, view(200, 200), {})
