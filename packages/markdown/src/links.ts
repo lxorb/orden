@@ -47,13 +47,17 @@ export interface FoundLink extends Wikilink {
 }
 
 /** Everything between the brackets of a wikilink, in one piece. `[` and `]` are
- *  not among it: Obsidian ends the link at the first `]`, and so does this. */
-const INNER = '[^[\\]\\n]+'
+ *  not among it: Obsidian ends the link at the first `]`, and so does this.
+ *
+ *  Exported because the renderer's own wikilink extension matches the same thing
+ *  anchored at the start of what is left, and two spellings of "between the
+ *  brackets" would be two grammars. */
+export const WIKILINK_INNER = '[^[\\]\\n]+'
 
 /** `[[…]]`, or `![[…]]`. The lookbehind is what makes `\[[Note]]` text: a
  *  backslash escapes the bracket in markdown, and a link nobody wrote must not
  *  be rewritten when a note is renamed. */
-const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${INNER})\\]\\]`, 'g')
+const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
 
 /** `[label](target)`, with an optional `"title"` and an optional `<>` around a
  *  target that has spaces in it. Only the shape is matched here; whether the

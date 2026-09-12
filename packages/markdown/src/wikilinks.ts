@@ -23,6 +23,7 @@ import {
   shownText,
   slugify,
   type Wikilink,
+  WIKILINK_INNER as INNER,
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -51,16 +52,17 @@ export function embedSink(): Embeds {
   return { sections: [], marker: (at) => `<!--nib:embed:${stamp}:${at}-->` }
 }
 
-/** Everything between the brackets of one link, and nothing else: a link takes
- *  one line and holds no brackets of its own, where Obsidian ends one too. */
-const INNER = '[^[\\]\\n]+'
-
 /** An embed with a line to itself, which is where it shows the note rather than
  *  a link to it - the same rule the editor draws by. */
 const EMBED_LINE = new RegExp(`^!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)
 
 /** The same line, matched where an `![[` the scan found sits; see starts.ts. */
 const EMBED_AT = new RegExp(`!\\[\\[${INNER}\\]\\][ \\t]*(?=\\r?\\n|$)`, 'y')
+
+/** One link at the very start of what is left, which is where an inline tokenizer
+ *  is asked. Built once: it used to be compiled on every call, and the inline
+ *  lexer calls a tokenizer at every `[[` in every paragraph of the note. */
+const WIKILINK_AT_START = new RegExp(`^(!?)\\[\\[(${INNER})\\]\\]`)
 
 /** Where the next embed on a line of its own begins: the newline before it, or
  *  the start of the string when it begins there. */
@@ -108,7 +110,7 @@ export function wikilinks(options: {
         // A backslash escapes the bracket, so `\[[Note]]` is words.
         start: (src: string) => /(?<!\\)!?\[\[/.exec(src)?.index,
         tokenizer(src: string) {
-          const match = new RegExp(`^(!?)\\[\\[(${INNER})\\]\\]`).exec(src)
+          const match = WIKILINK_AT_START.exec(src)
           if (!match) return undefined
 
           const link = parseWikilink(match[2] ?? '', match[1] === '!')
