@@ -1,5 +1,6 @@
 import { MOST_EMS } from '@nib/markdown'
 import { chartFigure } from '@nib/markdown/chart'
+import { DIAGRAM_LANGUAGES } from '@nib/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@nib/markdown/engines'
 import type { NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
@@ -90,8 +91,10 @@ export class MathWidget extends NibWidget {
   }
 }
 
-/** Fence languages Typora renders as pictures rather than code. */
-export const DIAGRAM_LANGUAGES = new Set(['mermaid', 'flow', 'sequence'])
+/** Fence languages Typora renders as pictures rather than code. The list itself
+ *  is @nib/markdown's, because a published page has to know it too - it decides
+ *  which fences the app drew a picture for; see packages/markdown/src/diagrams.ts. */
+export { DIAGRAM_LANGUAGES }
 
 /** Every fence drawn rather than coloured, which is the wider question two places
  *  ask: the block field, deciding whether to replace the fence, and the walk in
