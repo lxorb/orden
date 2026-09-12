@@ -84,6 +84,10 @@ def main() -> int:
             )
 
             page.evaluate("() => window.nibApp.settings.show()")
+            # The sheet is fetched the first time it is asked for rather than carried
+            # into the first paint, and what is timed below is swapping between its
+            # panes, not waiting for the sheet. See surfaces.ts.
+            page.wait_for_selector(".nib-screen.sheet", timeout=15000)
             page.wait_for_timeout(500)
             run(
                 page,

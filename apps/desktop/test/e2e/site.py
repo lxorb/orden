@@ -435,6 +435,10 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     for section in ["sync", "account"]:
         page.evaluate("() => window.nibApp.publish.close()")
         page.evaluate(f"() => window.nibApp.settings.show('{section}')")
+        # The sheet is fetched the first time it is asked for rather than carried into
+        # the first paint; what is measured below is what a thumb lands on, and a
+        # sheet that is not there yet has nothing to land on. See surfaces.ts.
+        page.wait_for_selector(".nib-screen.sheet", timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 

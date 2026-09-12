@@ -459,6 +459,11 @@ def drive_settings(browser: Browser) -> None:
     Contrast was a third row, and is a theme in the store instead."""
     page = fresh(browser, "settings")
     page.evaluate("() => window.nibApp.settings.show('appearance')")
+    # The sheet is fetched the first time it is asked for rather than carried into the
+    # first paint, so it arrives a moment after the store says it is open. Waited for,
+    # because every question below is about what the pane does not say and a pane that
+    # is not there yet says nothing at all. See surfaces.ts.
+    page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")
 
@@ -468,6 +473,8 @@ def drive_settings(browser: Browser) -> None:
     )
     say(f"[settings] the appearance pane: {json.dumps(rows[:8], ensure_ascii=False)}")
 
+    if not rows:
+        wrong("the appearance pane is empty, so what it offers cannot be read")
     if any("contrast" in row.lower() for row in rows):
         wrong("the appearance pane still offers a contrast row")
     if page.locator("[role='switch']", has_text="More contrast").count():

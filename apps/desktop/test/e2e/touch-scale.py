@@ -457,6 +457,10 @@ def one(
     page.wait_for_timeout(300)
 
     page.evaluate("() => window.nibApp.settings.show()")
+    # The sheet is fetched the first time it is asked for rather than carried into the
+    # first paint; measuring before it lands measures nothing and reads as a pass. See
+    # surfaces.ts.
+    page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))
     shot(page, f"{label}-{name}-settings-{scheme}")

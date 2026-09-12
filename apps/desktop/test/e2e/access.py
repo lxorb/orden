@@ -633,8 +633,24 @@ def shut(window: Window, times: int = 5) -> None:
 
 
 def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
-    """One layer: opened, measured, photographed, and closed with Escape."""
+    """One layer: opened, measured, photographed, and closed with Escape.
+
+    The layer is waited for before it is measured. The settings sheet is fetched the
+    first time it is asked for rather than carried into the first paint, so the store
+    saying it is open is a moment ahead of it being on screen; a walk that measured
+    the gap would find nothing wrong with a surface that is not there. See
+    surfaces.ts."""
     if not opens(window, how, wait):
+        return
+
+    try:
+        window.page.wait_for_selector(
+            "[role=dialog], [role=menu], .nib-screen, .sheet, .palette",
+            state="visible",
+            timeout=15000,
+        )
+    except Exception:  # noqa: BLE001 - said below rather than walked out on
+        say(f"[{window.name}] {surface}: nothing came up to look at")
         return
 
     window.look(surface)
@@ -735,8 +751,14 @@ def drive(browser: Browser, name: str, width: int, height: int,
 
         if opens(window, "() => void window.nibApp.workspace.createCanvas()", 1400):
             # A canvas is made and then named, and the plane is not on screen until
-            # the name is committed: Escape leaves the row as it is and gets on.
+            # the name is committed: Escape leaves the row as it is and gets on. Then
+            # the plane itself, which is fetched the first time a tab of its kind is
+            # opened rather than carried into the first paint; see surfaces.ts.
             page.keyboard.press("Escape")
+            try:
+                page.wait_for_selector("[role=application]", state="visible", timeout=20000)
+            except Exception:  # noqa: BLE001 - said below rather than walked out on
+                pass
             page.wait_for_timeout(1200)
             if page.evaluate("() => !!document.querySelector('[role=application]')"):
                 window.look("canvas")

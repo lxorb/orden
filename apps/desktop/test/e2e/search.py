@@ -605,6 +605,10 @@ def papers(browser, out: Path) -> None:
         "(path) => window.nibApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
     )
+    # The viewer is fetched the first time a paper is opened rather than carried into
+    # the first paint - it brings pdf.js with it - so the pane is empty until it lands.
+    # Waited for, and then the pages it draws. See surfaces.ts.
+    page.wait_for_selector(".pdf", timeout=20000)
     page.wait_for_timeout(2500)
     searching(page)
     page.wait_for_timeout(400)
