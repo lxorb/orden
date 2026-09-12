@@ -16,6 +16,8 @@ import {
   linkTarget,
   pageFragment,
   parseWikilink,
+  headingsOf,
+  sectionOf,
   shownText,
   withoutBlockIds,
 } from './links'
@@ -414,5 +416,42 @@ describe('block names', () => {
 
   test('a caret inside code stays', () => {
     expect(withoutBlockIds('```\nxor eax ^a\n```')).toBe('```\nxor eax ^a\n```')
+  })
+})
+
+describe('the headings a note holds', () => {
+  test('in order, as the words they show', () => {
+    expect(headingsOf('# One\n\ntext\n\n## Two\n')).toEqual(['One', 'Two'])
+  })
+
+  test('with the hashes some styles close one with taken off', () => {
+    expect(headingsOf('## Two ##\n')).toEqual(['Two'])
+    expect(headingsOf('## ##\n')).toEqual([''])
+  })
+
+  test('keeping a hash that is a letter of the last word', () => {
+    // The closing run needs a blank in front of it, or `F#` is not what it says.
+    expect(headingsOf('# C# and F#\n')).toEqual(['C# and F#'])
+  })
+
+  test('and none from inside a fence', () => {
+    expect(headingsOf('```\n# Not one\n```\n# One\n')).toEqual(['One'])
+  })
+})
+
+describe('the part of a note a link points into', () => {
+  test('a heading names the section under it', () => {
+    const note = '# One\n\nfirst\n\n# Two\n\nsecond\n'
+    expect(sectionOf(note, { heading: 'Two', block: null })).toBe('# Two\n\nsecond')
+    expect(sectionOf(note, { heading: 'Nowhere', block: null })).toBe(null)
+  })
+
+  test('found by the words it shows, closing hashes and all', () => {
+    const note = '# C# and F# #\n\nwords\n'
+    expect(sectionOf(note, { heading: 'C# and F#', block: null })).toBe('# C# and F# #\n\nwords')
+  })
+
+  test('and a note with no heading named is the whole of it', () => {
+    expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
   })
 })

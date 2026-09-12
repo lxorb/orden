@@ -457,7 +457,30 @@ export function slugify(text: string): string {
 
 /** A heading line, and the trailing hashes some styles close one with. */
 const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
-const CLOSING_HASHES = /\s*#+\s*$/
+
+/** A heading line and everything after its hashes, which is either nothing or a
+ *  blank and then the words. `#` alone is an empty heading and `#Title` is not a
+ *  heading at all, which is what CommonMark says of both. */
+const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)$/
+
+/** A closing run of hashes, which needs a blank in front of it to be one.
+ *
+ *  Without the blank, `# C# and F#` lost its last character: the hash there is a
+ *  letter of the name rather than the end of the heading. */
+const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
+
+/** The words a heading line shows: its opening hashes gone, and the closing ones
+ *  gone as well. A line that is not a heading comes back as its own words.
+ *
+ *  Here with the grammar because it decides what `[[Note#Heading]]` can name. The
+ *  editor reads a heading the same way - it draws the note's table of contents and
+ *  writes a link to a heading - so both come through this. */
+export function headingText(line: string): string {
+  const found = HEADING_LINE.exec(line)
+  if (found === null) return line.trim()
+
+  return (found[1] ?? '').replace(CLOSING_HASHES, '').trim()
+}
 
 /** Every heading in a note, in order, as the words it shows. What a link may
  *  point at inside a note, which is why it lives here rather than with the
@@ -468,8 +491,7 @@ export function headingsOf(text: string): string[] {
 
   for (const row of lines(text)) {
     if (row.code) continue
-    const [, hashes = '', words = ''] = HEADING.exec(row.text) ?? []
-    if (hashes) found.push(words.replace(CLOSING_HASHES, '').trim())
+    if (HEADING.test(row.text)) found.push(headingText(row.text))
   }
 
   return found
@@ -513,10 +535,10 @@ function headingSection(source: string, wanted: string): string | null {
       continue
     }
 
-    const [, hashes = '', text = ''] = HEADING.exec(line) ?? []
+    const hashes = HEADING.exec(line)?.[1]
     if (!hashes) continue
 
-    const title = text.replace(CLOSING_HASHES, '').trim()
+    const title = headingText(line)
 
     if (start === -1) {
       if (title.toLowerCase() === needle || slugify(title) === slug) {
