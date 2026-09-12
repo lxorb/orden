@@ -12,21 +12,20 @@
  *    player. Nothing leaves the machine, so it works on a train with no signal.
  *  - **A meeting.** The same recording, in a note of its own, with the transcript
  *    arriving in it every twenty seconds while somebody is still talking and a summary
- *    written above it when it stops. That needs the account: the models are on the
- *    Worker because the key is.
+ *    written above it when it stops. The transcript needs the account, because the
+ *    speech models are on the Worker; the summary takes whichever model the reader has,
+ *    and which one that is belongs to summarise.ts and not to this file.
  *
- *  Everything that can be said to the reader is said in the pill: a red dot, the time
- *  so far, and a stop. Where a piece of the transcript is being tried again the dot
- *  says so, and where something went wrong the pill wears the sentence for a moment
- *  and then goes. There is no dialog anywhere in this file. */
+ *  The pill is the whole of what is shown while it runs: a red dot, the time so far,
+ *  and a stop. The dot says when a piece of the transcript is being tried again, and
+ *  what actually went wrong is said on the line at the top of the document, where work
+ *  that failed and carried on already says so. There is no dialog anywhere in this
+ *  file. */
 
 import { storeBeside } from '../assets'
-import { account } from '../account.svelte'
-import { api } from '../api'
 import { busy } from '../busy.svelte'
 import { i18n, key, message, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
-import { modes } from '../modes.svelte'
 import { settings } from '../settings.svelte'
 import { nameOf } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -42,6 +41,7 @@ import {
   writeAtCaret,
 } from './note'
 import { spaceRelative } from './paths'
+import { canSummarise, summaryOf } from './summarise'
 import { canTranscribe, heardPiece, LIVE_SECONDS } from './transcribe'
 import {
   embedFor,
@@ -277,19 +277,20 @@ class Recorder {
     const text = this.said.join('\n\n').trim()
     if (!text) return
 
-    const token = account.accountToken
-    const model = modes.glassesModel
-    if (!token) return
-    if (!model) {
-      // The account chooses its model once, in the Glasses section, and everything that
-      // thinks on its behalf uses it; there is nothing to fall back to.
-      this.failed(t('Choose a model in settings to summarise a meeting.'))
+    // A meeting with no model to summarise it still leaves the transcript, which is
+    // most of what it was for; the line says the one thing that would add the rest.
+    if (!canSummarise()) {
+      this.failed(t('Add an AI provider in settings to summarise.'))
       return
     }
 
     try {
-      const answered = await api.askSummary(token, text, model, modes.glassesEffort)
-      const written = summaryBlock(answered.summary, model)
+      // Which model, and whose key, is summarise.ts's business and nothing this has to
+      // know: the reader's own provider where there is one, the account's OpenAI key
+      // through the Worker where there is not. It answers with the name so the note can
+      // say who wrote what is in it.
+      const answered = await summaryOf(text)
+      const written = summaryBlock(answered.text, answered.model)
       if (written) insertAbove(path, this.marker, written)
     } catch (error) {
       // The transcript is in the note whatever the model said, so this is something to

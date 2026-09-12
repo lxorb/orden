@@ -303,6 +303,11 @@ export interface Reply {
   models: string[]
   answer: string
   said: string | null
+  /** The language tag the speech model settled on, or empty where it did not say.
+   *  A spoken command has no use for one; a transcript in a note is headed with it. */
+  language: string
+  /** A meeting's transcript, as takeaways and open tasks. */
+  summary: string
 
   // Storage.
   used: number

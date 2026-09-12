@@ -1257,7 +1257,7 @@ export const fr: Dictionary = {
   'The transcript is behind and losing pieces.':
     'La transcription est en retard et perd des morceaux.',
   '{count} pieces of this meeting were lost.': '{count} morceaux de cette réunion ont été perdus.',
-  'Choose a model in settings to summarise a meeting.':
-    'Choisissez un modèle dans les réglages pour résumer une réunion.',
+  'Add an AI provider in settings to summarise.':
+    'Ajoutez un fournisseur d’IA dans les réglages pour résumer.',
   'The summary could not be written.': 'Le résumé n’a pas pu être écrit.',
 }

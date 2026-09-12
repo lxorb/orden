@@ -1248,7 +1248,7 @@ export const ja: Dictionary = {
   'A piece of the transcript is being tried again.': '書き起こしの一部を再試行しています。',
   'The transcript is behind and losing pieces.': '書き起こしが遅れて一部が失われています。',
   '{count} pieces of this meeting were lost.': 'この会議の {count} 個の部分が失われました。',
-  'Choose a model in settings to summarise a meeting.':
-    '会議を要約するには設定でモデルを選んでください。',
+  'Add an AI provider in settings to summarise.':
+    '要約するには設定で AI プロバイダーを追加してください。',
   'The summary could not be written.': '要約を書けませんでした。',
 }

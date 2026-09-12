@@ -1251,7 +1251,7 @@ export const gsw: Dictionary = {
   'A piece of the transcript is being tried again.': 'Es Stuck vom Transkript wird nomol probiert.',
   'The transcript is behind and losing pieces.': 'S Transkript hinkt naa und verliirt Stuck.',
   '{count} pieces of this meeting were lost.': '{count} Stuck vo dem Gspräch sind verlore gange.',
-  'Choose a model in settings to summarise a meeting.':
-    'Wähl i de Iistellige es Modäll zum es Gspräch zämefasse.',
+  'Add an AI provider in settings to summarise.':
+    'Füeg i de Iistellige en KI-Aabieter dezue zum Zämefasse.',
   'The summary could not be written.': 'D Zämefassig hät sich nöd schriibe laa.',
 }

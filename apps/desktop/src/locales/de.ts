@@ -1263,7 +1263,7 @@ export const de: Dictionary = {
   'The transcript is behind and losing pieces.': 'Das Transkript hinkt nach und verliert Stücke.',
   '{count} pieces of this meeting were lost.':
     '{count} Stücke dieses Gesprächs sind verloren gegangen.',
-  'Choose a model in settings to summarise a meeting.':
-    'Wähle in den Einstellungen ein Modell, um ein Gespräch zusammenzufassen.',
+  'Add an AI provider in settings to summarise.':
+    'Füge in den Einstellungen einen KI-Anbieter hinzu, um zusammenzufassen.',
   'The summary could not be written.': 'Die Zusammenfassung konnte nicht geschrieben werden.',
 }
