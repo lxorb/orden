@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { AT_ONCE, freeName, freePath, purgeExpired } from '../src/trash'
+import { AT_ONCE, freeName, purgeExpired } from '../src/trash'
 import { call, signIn, testEnv, type TestEnv, type TrashView } from './harness'
 
 let env: TestEnv
@@ -339,16 +339,13 @@ describe('purging', () => {
   })
 })
 
+/** A restored note's path is numbered by @nib/markdown/paths, which is where
+ *  that rule is now tested; what is left here is the space name, whose numbering
+ *  has no extension to step around. */
 describe('the numbering', () => {
   test('for names', () => {
     expect(freeName(new Set(), 'Work')).toBe('Work')
     expect(freeName(new Set(['Work']), 'Work')).toBe('Work 2')
     expect(freeName(new Set(['Work', 'Work 2']), 'Work')).toBe('Work 3')
-  })
-
-  test('for paths keeps the folder and the extension', () => {
-    expect(freePath(new Set(['a/Idea.md']), 'a/Idea.md')).toBe('a/Idea 2.md')
-    expect(freePath(new Set(['Idea']), 'Idea')).toBe('Idea 2')
-    expect(freePath(new Set(['.hidden']), '.hidden')).toBe('.hidden 2')
   })
 })

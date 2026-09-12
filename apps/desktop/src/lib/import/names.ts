@@ -4,14 +4,11 @@
  *  allowed to hold a slash, a colon, a newline and three hundred characters.
  *  This is the one place that argues with that, so no reader has to.
  *
- *  The rule is Windows', because it is the strictest of the three and a space
- *  that opens on one machine has to open on the others. */
+ *  What a file may hold and how a taken name steps aside are
+ *  @nib/markdown/paths, shared with the clipper and the sync service so that an
+ *  imported note is named the way every other note is. */
 
-/** What no file may hold on Windows, plus the slash nobody may hold anywhere,
- *  and the control characters a pasted title can carry. Each becomes a space
- *  rather than nothing: `Plans: 2026` is a name somebody still recognises, where
- *  `Plans2026` is not. */
-const FORBIDDEN = /[\\/:*?"<>|]|\p{Cc}/gu
+import { freePath, withoutForbidden } from '@nib/markdown/paths'
 
 /** The names MS-DOS took and Windows never gave back, with or without an
  *  extension after them. */
@@ -26,9 +23,7 @@ const LONGEST = 96
 const NOTION_ID = /[ -][0-9a-f]{32}$/i
 
 export function safeName(title: string): string {
-  const one = title
-    .replace(/\s+/g, ' ')
-    .replace(FORBIDDEN, ' ')
+  const one = withoutForbidden(title.replace(/\s+/g, ' '))
     .replace(/\s+/g, ' ')
     // A dot or a space at the end is dropped by Windows itself, so a note
     // called `Plans.` would be written and then not found again.
@@ -80,22 +75,9 @@ export class Names {
    *  folder of the same name is how nib nests, so those are meant to collide and
    *  the caller says which by asking once for each. */
   free(path: string): string {
-    const key = path.toLowerCase()
-    if (!this.taken.has(key)) {
-      this.taken.add(key)
-      return path
-    }
-
-    const at = path.lastIndexOf('.')
-    const stem = at > 0 ? path.slice(0, at) : path
-    const extension = at > 0 ? path.slice(at) : ''
-
-    for (let step = 2; ; step += 1) {
-      const next = `${stem} ${step}${extension}`
-      if (this.taken.has(next.toLowerCase())) continue
-      this.taken.add(next.toLowerCase())
-      return next
-    }
+    const free = freePath(path, (candidate) => this.taken.has(candidate.toLowerCase()))
+    this.taken.add(free.toLowerCase())
+    return free
   }
 
   /** Says a path is taken without asking for one, for the folder a note is

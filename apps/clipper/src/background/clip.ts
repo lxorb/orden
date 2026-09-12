@@ -8,12 +8,13 @@
  *  `problems.ts`, or as the sync service's own words, which the dictionaries
  *  translate like any other string. */
 
+import { numbered } from '@nib/markdown/paths'
 import { api, ApiError, outOfSpace, pathTaken } from '../lib/api'
 import { uploaded } from '../lib/images'
 import type { Kind } from '../lib/kinds'
 import { type Clip, type Clipped, readClip, type Reading, type Saved } from '../lib/messages'
 import { fileName, fits, noteFor } from '../lib/note'
-import { inFolder, numbered } from '../lib/paths'
+import { inFolder } from '../lib/paths'
 import { fill } from '../lib/placeholders'
 import { PROBLEMS } from '../lib/problems'
 import { remember, settings } from '../lib/settings'

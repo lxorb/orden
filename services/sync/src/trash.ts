@@ -1,3 +1,4 @@
+import { freePath } from '@nib/markdown/paths'
 import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
@@ -24,22 +25,6 @@ export function freeName(taken: Set<string>, wanted: string): string {
   if (!taken.has(wanted)) return wanted
   for (let counter = 2; ; counter++) {
     const candidate = `${wanted} ${counter}`
-    if (!taken.has(candidate)) return candidate
-  }
-}
-
-/** The same for a note path: the number goes before the extension, and the
- *  folder stays where it was. */
-export function freePath(taken: Set<string>, wanted: string): string {
-  if (!taken.has(wanted)) return wanted
-  const slash = wanted.lastIndexOf('/')
-  const folder = wanted.slice(0, slash + 1)
-  const file = wanted.slice(slash + 1)
-  const dot = file.lastIndexOf('.')
-  const base = dot > 0 ? file.slice(0, dot) : file
-  const extension = dot > 0 ? file.slice(dot) : ''
-  for (let counter = 2; ; counter++) {
-    const candidate = `${folder}${base} ${counter}${extension}`
     if (!taken.has(candidate)) return candidate
   }
 }
@@ -293,7 +278,8 @@ trash.post('/notes/:id/restore', async (context) => {
   const live = await env.DB.prepare('select path from notes where space_id = ? and deleted = 0')
     .bind(note.space_id)
     .all<{ path: string }>()
-  const path = freePath(new Set(live.results.map((one) => one.path)), note.path)
+  const taken = new Set(live.results.map((one) => one.path))
+  const path = freePath(note.path, (candidate) => taken.has(candidate))
 
   const at = now()
   const seq = await nextSeq(env, note.space_id)

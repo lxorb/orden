@@ -16,6 +16,8 @@
  *  The whole import is one thing to undo. However many thousand files it wrote,
  *  what somebody did was import once. */
 
+import { freePath } from '@nib/markdown/paths'
+
 import { links } from '../link-index.svelte'
 import { folderOf, relativePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -116,7 +118,7 @@ export function restamped(
 
   for (const file of plan.files) {
     const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, held)
+    const free = freePath(wanted, (candidate) => held.has(candidate.toLowerCase()))
     held.add(free.toLowerCase())
 
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
@@ -130,22 +132,6 @@ export function restamped(
   })
 
   return { files, stepped: moved.size }
-}
-
-/** A free path, stepped the way a new note's name is stepped. */
-function freePath(wanted: string, held: ReadonlySet<string>): string {
-  if (!held.has(wanted.toLowerCase())) return wanted
-
-  const at = wanted.lastIndexOf('.')
-  const slash = wanted.lastIndexOf('/')
-  const dotted = at > slash + 1
-  const stem = dotted ? wanted.slice(0, at) : wanted
-  const extension = dotted ? wanted.slice(at) : ''
-
-  for (let step = 2; ; step += 1) {
-    const next = `${stem} ${step}${extension}`
-    if (!held.has(next.toLowerCase())) return next
-  }
 }
 
 /** A note's links, pointing at where the import's own files ended up.

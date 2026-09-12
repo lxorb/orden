@@ -5,6 +5,8 @@
  *  decided here: this is the file's contents and the name it wants, and
  *  `paths.ts` says where that name may go. */
 
+import { withoutForbidden } from '@nib/markdown/paths'
+
 import type { Origin } from './extract'
 
 /** The largest note the API takes; see `services/sync/src/notes.ts`. Checked
@@ -16,9 +18,6 @@ export const MAX_NOTE_BYTES = 4 * 1024 * 1024
  *  the app gives a new note, and deliberately not translated: a file name is a
  *  path, and a path that changes with the language stops matching itself. */
 const UNTITLED = 'Untitled'
-
-/** What a filesystem refuses, plus the control characters. */
-const REFUSED = /[<>:"/\\|?*\p{Cc}]/gu
 
 const encoder = new TextEncoder()
 
@@ -97,8 +96,7 @@ function withoutRepeatedTitle(markdown: string, title: string): string {
 /** A file name the title can be written as: what a filesystem refuses taken
  *  out, one line, and short enough that the path still fits inside a space. */
 export function fileName(title: string): string {
-  const name = title
-    .replace(REFUSED, ' ')
+  const name = withoutForbidden(title)
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
     .slice(0, 60)

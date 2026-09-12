@@ -93,4 +93,13 @@ describe("keeping an import's own names apart", () => {
 
     expect(names.free('Folder')).toBe('Folder 2')
   })
+
+  test('a folder with a dot in its name keeps it', () => {
+    // This counted the last dot of the whole path, so a note with no extension
+    // under such a folder stepped into a folder nobody had: `v1 2.2/Note`.
+    const names = new Names()
+    names.free('v1.2/Note')
+
+    expect(names.free('v1.2/Note')).toBe('v1.2/Note 2')
+  })
 })

@@ -19,6 +19,7 @@
     "./from-html": "./src/from-html.ts",
     "./highlight": "./src/highlight.ts",
     "./links": "./src/links.ts",
+    "./paths": "./src/paths.ts",
     "./properties": "./src/properties.ts",
     "./providers": "./src/providers.ts",
     "./slides": "./src/slides.ts",
