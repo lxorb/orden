@@ -1,4 +1,4 @@
-import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
+import { documentTitle, findLinks, type Heading, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
@@ -8,7 +8,19 @@ import { type NoteFront, readFront } from './blog/front'
 import { gateBody, matches, newTicket, ticketCookie, ticketHolds, ticketIn } from './blog/gate'
 import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
+import { answers, asked as readQuery, hasWords, matching } from './blog/find'
+import { linkedFrom, type Listed } from './blog/nav'
 import { pageOf, pathsOf, rememberedNote } from './blog/paths'
+import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
+import {
+  type Around,
+  aside,
+  bar,
+  contents,
+  counter,
+  ownFiles,
+  underneath,
+} from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
@@ -25,10 +37,26 @@ export { slugFor } from './blog/paths'
  *  pages - and it gets a nonce rather than a door left open: the only script that
  *  runs is the one written here, and the note's own markup is still shown as text
  *  rather than parsed. See `deckPage`. */
-function csp(nonce?: string, forms = false): string {
+function csp(options: { nonce?: string; scripts?: boolean; counter?: string } = {}): string {
+  const { nonce, scripts, counter } = options
+
   return [
     "default-src 'none'",
-    nonce ? `script-src 'nonce-${nonce}'` : "script-src 'none'",
+    // A deck's own script by its nonce; a page's furniture - the search box's
+    // shortcut, the theme button, the hover card, the graph - by its origin,
+    // which is this site. The one inline script a page carries is the line that
+    // puts the reader's theme on before the first paint, and it is named by the
+    // hash of those very characters rather than by `unsafe-inline`. The author's
+    // own `publish.js` is served from here too, so `'self'` covers it; see
+    // docs/publishing.md.
+    nonce
+      ? `script-src 'nonce-${nonce}'`
+      : scripts
+        ? `script-src 'self' '${THEME_JS_HASH}'${counter ? ` ${counter}` : ''}`
+        : "script-src 'none'",
+    // What the hover card fetches, which is a page of this same site and
+    // nothing else.
+    scripts ? "connect-src 'self'" : "connect-src 'none'",
     // The page's own stylesheets, which are served from here; see `sheet` below.
     // Inline styles as well, because KaTeX lays an equation out in `style`
     // attributes and a slide is placed by ones the stage writes.
@@ -45,9 +73,9 @@ function csp(nonce?: string, forms = false): string {
     // so nothing else about this page gains a way out.
     'media-src https: data:',
     "base-uri 'none'",
-    // The password form posts itself back, and nothing on any other page of a
-    // site may post anywhere at all.
-    forms ? "form-action 'self'" : "form-action 'none'",
+    // The search box and the password form both post or get to this site, and
+    // neither they nor anything else on a page may reach anywhere else.
+    "form-action 'self'",
     "frame-ancestors 'none'",
   ].join('; ')
 }
@@ -279,10 +307,10 @@ function withByline(html: string, author: string | null): string {
  *  of every blog, its path is its own hash, so a reader fetches it once and keeps
  *  it, and the second page of a blog carries no stylesheet at all. See
  *  scripts/blog-css.ts. */
-function sheet(css: string): Response {
-  return new Response(css, {
+function sheet(body: string, kind = 'text/css'): Response {
+  return new Response(body, {
     headers: {
-      'content-type': 'text/css; charset=utf-8',
+      'content-type': `${kind}; charset=utf-8`,
       'cache-control': 'public, max-age=31536000, immutable',
       'x-content-type-options': 'nosniff',
     },
@@ -325,19 +353,58 @@ function mathLink(body: string): string {
  *  surface, the reading view and an exported document all carry, so every rule in
  *  base.css and document.css - the very sheets the app loads - lands on this page
  *  too. That is the whole of what makes a published note look like the note. */
+/** What goes around the note: the bar at the top, the pages down the left, the
+ *  contents down the right, what links here at the foot. Every part optional,
+ *  because a site of one note has none of them; see blog/shell.ts. */
+interface Furniture {
+  bar?: string
+  left?: string
+  right?: string
+  under?: string
+  /** The author's own stylesheet and script, and a counter's script. */
+  own?: { css: string | null; js: string | null }
+  counter?: string
+  /** The theme the author chose, as the stylesheet it was installed from. */
+  theme?: string | null
+}
+
 function page(
   head: Head,
   body: string,
   env: Env,
-  options: { status?: number; forms?: boolean; headers?: Record<string, string> } = {},
+  options: {
+    status?: number
+    locked?: boolean
+    headers?: Record<string, string>
+    shell?: Furniture
+  } = {},
 ): Response {
   const author = head.author ?? null
+  const shell = options.shell ?? {}
+
+  // The sheets, in the order they win: the app's own, then the theme the author
+  // installed, then whatever they wrote themselves. Each is served from this
+  // site, so a reader's browser asks nobody else for the way a page looks.
+  const sheets = [PAGE_CSS_PATH, ...(shell.theme ? [shell.theme] : [])]
+  if (shell.own?.css) sheets.push(shell.own.css)
+
+  const scripts = !options.locked
   const html = `<!doctype html>
 <html lang="en"><head>
-${headOf(head, [PAGE_CSS_PATH])}${mathLink(body)}
-</head><body><main id="write">${body}
+${headOf(head, sheets)}${mathLink(body)}
+${scripts ? `<script>${THEME_JS}</script>` : ''}
+${scripts ? `<script defer src="${SITE_JS_PATH}"></script>` : ''}
+${shell.own?.js && scripts ? `<script defer src="${shell.own.js}"></script>` : ''}
+${shell.counter ?? ''}
+</head><body class="site">
+${shell.bar ?? ''}
+<div class="frame">
+${shell.left ?? ''}
+<div class="middle"><main id="write">${body}
 <footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
-</main></body></html>`
+</main>${shell.under ?? ''}</div>
+${shell.right ?? ''}
+</div></body></html>`
 
   return new Response(html, {
     status: options.status ?? 200,
@@ -345,13 +412,23 @@ ${headOf(head, [PAGE_CSS_PATH])}${mathLink(body)}
       'content-type': 'text/html; charset=utf-8',
       // A page nobody has said the password for is that reader's own to hold and
       // no shared cache's.
-      'cache-control': options.forms ? 'private, no-store' : 'public, max-age=60',
-      'content-security-policy': csp(undefined, options.forms),
+      'cache-control': options.locked ? 'private, no-store' : 'public, max-age=60',
+      'content-security-policy': csp({
+        scripts,
+        ...(shell.counter ? { counter: new URL(counterUrl(shell.counter)).origin } : {}),
+      }),
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',
       ...options.headers,
     },
   })
+}
+
+/** The address inside a counter's script tag, for the policy to name its origin.
+ *  Read back off the markup rather than threaded through, so the tag and the
+ *  policy cannot name two different providers. */
+function counterUrl(tag: string): string {
+  return /src="([^"]+)"/.exec(tag)?.[1] ?? 'https://example.invalid'
 }
 
 /** A deck as a page of its own. Every slide is in it, so a reader with scripting
@@ -386,7 +463,7 @@ ${headOf(
       // is minted per response, and one handed to a second reader out of a cache
       // in front of this would be a nonce that is not a nonce.
       'cache-control': 'private, max-age=60',
-      'content-security-policy': csp(nonce),
+      'content-security-policy': csp({ nonce }),
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',
     },
@@ -576,20 +653,131 @@ async function answered(request: Request, held: SitePassword): Promise<boolean> 
   return typeof said === 'string' ? matches(held, said) : false
 }
 
+/** What the site lists, as the navigation, the backlinks and the search read a
+ *  page. One shape, so none of them can mention a page the site has not got. */
+function listed(page: Page): Listed {
+  return { slug: page.slug, title: titleOf(page), path: page.note.path, front: page.front }
+}
+
+/** The published pages as the graph the app draws.
+ *
+ *  A node per page and an edge per link between two of them - the same `NoteGraph`
+ *  the app's own graph is laid out and painted from, built here so the page can
+ *  hand it to the app's own code rather than to a second implementation. Links to
+ *  notes the site does not publish are dropped rather than drawn as the hollow
+ *  nodes the app shows: on a site they would be the names of private notes.
+ *
+ *  `path` is where the node goes when it is pressed, which on a page is a link
+ *  rather than a note to open. */
+function graphOf(pages: readonly Page[], only?: Set<string>): string {
+  const shown = only ? pages.filter((one) => only.has(one.slug)) : pages
+  const at = new Map(shown.map((one, index) => [one.slug, index]))
+  const byName = new Map<string, string>()
+
+  for (const page of shown) {
+    const whole = nameOf(page.note.path)
+    const parts = whole.split('/')
+    for (let one = 0; one < parts.length; one++) byName.set(parts.slice(one).join('/'), page.slug)
+    for (const alias of page.front.aliases ?? []) byName.set(alias, page.slug)
+  }
+
+  const degree = new Map<string, number>()
+  const edges: { a: number; b: number; both: boolean }[] = []
+  const seen = new Set<string>()
+
+  for (const page of shown) {
+    const from = at.get(page.slug)
+    if (from === undefined) continue
+
+    for (const link of page.front.links ?? []) {
+      const target = byName.get(link)
+      const to = target === undefined ? undefined : at.get(target)
+      if (to === undefined || to === from) continue
+
+      const key = from < to ? `${from}-${to}` : `${to}-${from}`
+      if (seen.has(key)) {
+        const held = edges.find((one) => (one.a === from && one.b === to) || (one.a === to && one.b === from))
+        if (held) held.both = true
+        continue
+      }
+
+      seen.add(key)
+      edges.push({ a: from, b: to, both: false })
+      degree.set(page.slug, (degree.get(page.slug) ?? 0) + 1)
+      degree.set(target ?? '', (degree.get(target ?? '') ?? 0) + 1)
+    }
+  }
+
+  return JSON.stringify({
+    nodes: shown.map((one) => ({
+      id: one.slug,
+      name: titleOf(one),
+      path: `/${one.slug}`,
+      degree: degree.get(one.slug) ?? 0,
+      tags: one.front.tags ?? [],
+    })),
+    edges,
+  })
+}
+
+/** The picture, and the same pages as words under it.
+ *
+ *  A canvas is not a list: a reader with scripting off, a reader on a screen
+ *  reader and a search engine all get the links, and the drawing is what is added
+ *  for everybody else. `data-here` is which page is being read, so the graph marks
+ *  it the way the app's does. */
+function graphBody(pages: readonly Page[], here: string, only?: Set<string>): string {
+  const shown = only ? pages.filter((one) => only.has(one.slug)) : pages
+
+  const rows = shown
+    .map((one) => `<li><a href="/${escape(one.slug)}">${escape(titleOf(one))}</a></li>`)
+    .join('')
+
+  return (
+    `<div class="graph" data-here="${escape(here)}">` +
+    `<script type="application/json">${graphOf(pages, only).replace(/</g, String.raw`<`)}</script>` +
+    `</div><ul class="index">${rows}</ul>`
+  )
+}
+
+/** Which pages are one link from this one, for the small graph on a page. */
+function near(pages: readonly Page[], page: Page): Set<string> {
+  const around = new Set<string>([page.slug])
+  const all = pages.map(listed)
+  const here = listed(page)
+
+  for (const one of linkedFrom(all, here)) around.add(one.slug)
+
+  const byName = pages.reduce((map, one) => {
+    const parts = nameOf(one.note.path).split('/')
+    for (let at = 0; at < parts.length; at++) map.set(parts.slice(at).join('/'), one.slug)
+    for (const alias of one.front.aliases ?? []) map.set(alias, one.slug)
+    return map
+  }, new Map<string, string>())
+
+  for (const link of page.front.links ?? []) {
+    const found = byName.get(link)
+    if (found) around.add(found)
+  }
+
+  return around
+}
+
 export async function serveBlog(
   env: Env,
   space: Space,
   url: URL,
   request: Request,
 ): Promise<Response> {
-  // The stylesheets, first of all: they are the same bytes whatever the space,
-  // they are asked for by every page of every blog, and neither the account nor
-  // the notes have anything to say about them.
+  // The stylesheets and the script, first of all: they are the same bytes
+  // whatever the space, they are asked for by every page of every blog, and
+  // neither the account nor the notes have anything to say about them.
   if (url.pathname === PAGE_CSS_PATH) return sheet(PAGE_CSS)
   if (url.pathname === SLIDES_CSS_PATH) return sheet(SLIDES_CSS)
   if (url.pathname === MATH_CSS_PATH) return sheet(MATH_CSS)
+  if (url.pathname === SITE_JS_PATH) return sheet(SITE_JS, 'text/javascript')
 
-  // And the faces that last sheet names, which were the one thing a reader of a
+  // And the faces that maths sheet names, which were the one thing a reader of a
   // page with an equation on it still fetched from somebody else.
   const wanted = MATH_FONTS[url.pathname]
   if (wanted) return face(wanted)
@@ -599,6 +787,9 @@ export async function serveBlog(
   const heading = space.blog_title ?? space.name
   /** Whether the reader asked for the note as a talk rather than as a page. */
   const slides = url.searchParams.has(SLIDES_QUERY)
+  /** A page being fetched for a hover card wants the note and none of the
+   *  furniture around it; see apps/desktop/src/site/site.ts. */
+  const preview = request.headers.get('x-nib-preview') === '1'
 
   if (slug === 'favicon.svg') return favicon(space, site)
   if (slug === 'robots.txt') return robots(url.origin, !!site.password)
@@ -628,7 +819,7 @@ export async function serveBlog(
         { title: heading, site: heading, url: `${url.origin}/`, noindex: true },
         gateBody(heading, url.pathname, wrong),
         env,
-        { status: wrong ? 401 : 200, forms: true },
+        { status: wrong ? 401 : 200, locked: true },
       )
     }
   }
@@ -659,7 +850,16 @@ export async function serveBlog(
     ...over,
   })
 
-  const missing = () => page(about('Not found'), '<h1>Not found</h1>', env, { status: 404 })
+  /** The theme the author installed, served from where its bytes already are. */
+  const theme = site.theme ? `/i/${site.theme.hash}.css` : null
+  const own = ownFiles(byFile)
+  const counting = counter(site)
+
+  const missing = () =>
+    page(about('Not found'), '<h1>Not found</h1>', env, {
+      status: 404,
+      shell: { theme, own, counter: counting },
+    })
 
   // A file the space keeps beside its notes, asked for by the path a link in one
   // of them wrote. Before the notes, because it is settled by the path alone.
@@ -711,13 +911,30 @@ export async function serveBlog(
 
     if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
 
-    const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
+    const headings: Heading[] = []
+    const rendered = renderMarkdown(source, { footnotes: true, toc: true, headings, ...reading })
     head.image ??= firstPicture(rendered, url.origin)
 
-    return page(head, withByline(rendered, author) + presentLink(source), env)
+    return page(head, withByline(rendered, author) + presentLink(source), env, {
+      shell: {
+        theme,
+        own,
+        counter: counting,
+        ...(preview ? {} : { right: contents(headings) }),
+      },
+    })
   }
 
-  const listed = await sitePages(env, space, site)
+  const pageList = await sitePages(env, space, site)
+  const all = pageList.map(listed)
+
+  /** What the furniture is built from, for every page of this site. */
+  const around: Around = {
+    site: heading,
+    pages: all,
+    searchable: all.length > 1,
+    query: url.searchParams.get('q') ?? '',
+  }
 
   // What a machine reads: every page, and the writing newest first. Both are the
   // list above in another shape, so neither can disagree with the site about
@@ -725,18 +942,90 @@ export async function serveBlog(
   if (slug === 'sitemap.xml') {
     return sitemap([
       { url: `${url.origin}/`, title: heading, updated: space.updated_at },
-      ...feedPages(listed, url.origin),
+      ...feedPages(pageList, url.origin),
     ])
   }
 
   if (slug === 'feed.xml') {
-    return feed(feedPages(listed, url.origin), { title: heading, url: url.origin, author })
+    return feed(feedPages(pageList, url.origin), { title: heading, url: url.origin, author })
+  }
+
+  /** The search. Answered by the index, filtered to the pages the site
+   *  publishes, and drawn as a page rather than as a list a script fetches. */
+  if (slug === 'search') {
+    const query = url.searchParams.get('q') ?? ''
+    const one = readQuery(query)
+    const hits = hasWords(one) ? await matching(env, space.id, one) : []
+    const byId = new Map(pageList.map((page) => [page.note.id, page]))
+
+    const found = (
+      hasWords(one)
+        ? hits.flatMap((hit) => {
+            const held = byId.get(hit.noteId)
+            return held ? [{ page: held, words: hit.words }] : []
+          })
+        : // A query of nothing but a tag or a folder is answered from the rows.
+          pageList.map((held) => ({ page: held, words: held.front.summary ?? '' }))
+    ).filter(({ page: held }) => {
+      const tags = held.front.tags ?? []
+      const path = held.note.path.toLowerCase()
+
+      return (
+        one.tags.every((tag) => tags.includes(tag)) &&
+        one.folders.every((folder) => path.includes(folder))
+      )
+    })
+
+    return page(
+      about(query ? `${query} · ${heading}` : `Search ${heading}`, {
+        url: `${url.origin}/search`,
+        noindex: true,
+      }),
+      `<h1>Search</h1>${answers(
+        found.map(({ page: held, words }) => ({
+          slug: held.slug,
+          title: titleOf(held),
+          words,
+        })),
+        one,
+        query,
+      )}`,
+      env,
+      {
+        shell: {
+          bar: bar(around),
+          left: aside(around, 'search'),
+          theme,
+          own,
+          counter: counting,
+        },
+      },
+    )
+  }
+
+  /** The whole site as a picture. The app's own graph, laid out and painted by
+   *  the app's own code; see apps/desktop/src/site/site.ts. */
+  if (slug === 'graph') {
+    return page(
+      about(`Graph · ${heading}`, { url: `${url.origin}/graph` }),
+      `<h1>Graph</h1>${graphBody(pageList, '')}`,
+      env,
+      {
+        shell: {
+          bar: bar(around),
+          left: aside(around, 'graph'),
+          theme,
+          own,
+          counter: counting,
+        },
+      },
+    )
   }
 
   if (!slug) {
     // Newest first, because a blog is read from the top, and by the name the
     // page itself carries rather than by its file name.
-    const items = newestFirst(feedPages(listed, url.origin))
+    const items = newestFirst(feedPages(pageList, url.origin))
       .map((one) => {
         const date = new Date(one.updated).toISOString().slice(0, 10)
         const where = escape(new URL(one.url).pathname)
@@ -750,17 +1039,26 @@ export async function serveBlog(
       about(heading, { url: `${url.origin}/` }),
       `<h1>${escape(heading)}</h1>${byline}<ul class="index">${items}</ul>`,
       env,
+      {
+        shell: {
+          bar: bar(around),
+          left: aside(around, ''),
+          theme,
+          own,
+          counter: counting,
+        },
+      },
     )
   }
 
-  const found = listed.find((one) => pathsOf(one.note.path, one.front).includes(slug))
+  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(slug))
 
   if (!found) {
     // A path this site used to answer on. Somebody's link, somebody's history or
     // somebody's feed reader still says it, so it goes where the page went rather
     // than nowhere. Permanent, because the page did move; see blog/paths.ts.
     const was = await rememberedNote(env, space.id, slug)
-    const moved = was ? listed.find((one) => one.note.id === was) : null
+    const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
 
     return missing()
@@ -777,11 +1075,11 @@ export async function serveBlog(
     escapeHtml: true,
     code: blogFence,
     breaks,
-    resolveLink: linkResolver(listed, files),
+    resolveLink: linkResolver(pageList, files),
     resolveEmbed: await embedded(
       env,
       space,
-      listed.map((one) => one.note),
+      pageList.map((one) => one.note),
       source,
     ),
   }
@@ -791,7 +1089,8 @@ export async function serveBlog(
     url: `${url.origin}/${found.slug}`,
     description: found.front.description ?? found.front.summary ?? site.description,
     image:
-      pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+      pictureAt(found.front.image, byFile, url.origin) ??
+      pictureAt(site.image, byFile, url.origin),
     date: found.front.date,
   })
 
@@ -799,14 +1098,34 @@ export async function serveBlog(
   // same renderer and the same rules, one slide to a screen.
   if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
 
-  const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
+  const headings: Heading[] = []
+  const rendered = renderMarkdown(source, { footnotes: true, toc: true, headings, ...reading })
   head.image ??= firstPicture(rendered, url.origin)
 
-  // The way back sits above the note, where a reader who came from the
-  // index looks for it, and the author right under the title.
+  // A card on hover is the note and nothing else: no navigation to draw inside a
+  // card the size of a paragraph, and no list of what links here.
+  if (preview) {
+    return page(head, withByline(rendered, author), env, { shell: { theme, own } })
+  }
+
+  const here = listed(found)
+
   return page(
     head,
     `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}${presentLink(source)}`,
     env,
+    {
+      shell: {
+        bar: bar(around),
+        left: aside(around, found.slug),
+        right: contents(headings),
+        under: `${underneath(around, here)}${
+          all.length > 2 ? graphBody(pageList, found.slug, near(pageList, found)) : ''
+        }`,
+        theme,
+        own,
+        counter: counting,
+      },
+    },
   )
 }

@@ -34,6 +34,10 @@ const MOST_FOLDERS = 100
 const LONGEST_PATH = 300
 /** A sentence, for the description every page falls back on. */
 const LONGEST_TEXT = 400
+/** A theme's name, and a domain beside a counter's script. */
+const LONGEST_NAME = 60
+/** A URL somebody pasted. */
+const LONGEST_URL = 400
 /** The icon a tab shows, as the drawing the app made of it. Room for a Lucide
  *  stroke or an emoji drawn as text, and far too little to hide anything in. */
 export const LONGEST_ICON = 8 * 1024
@@ -68,6 +72,18 @@ export interface SitePassword {
   at: number
 }
 
+/** What the site is dressed in, where the author chose something other than the
+ *  app's own. One of the themes the app itself renders in, by its name in the
+ *  registry: the page's stylesheet is generated from the same tokens, so a theme
+ *  is a set of colours on both surfaces rather than a second design. */
+export interface SiteAnalytics {
+  /** The script to load, which is the whole of what Plausible, Umami and
+   *  GoatCounter are. */
+  url: string
+  /** What one or two of them want beside it, as `data-domain`. */
+  domain?: string
+}
+
 export interface Site {
   rules: SiteRules
   /** The description and the picture a page with none of its own falls back on. */
@@ -76,6 +92,16 @@ export interface Site {
   /** The icon a tab shows, as an SVG. Drawn by the app, which is the side that
    *  has the icon sets; see docs/publishing.md. */
   icon?: string
+  /** The theme the site is dressed in: its name, and the hash of the stylesheet
+   *  the app uploaded for it. Absent for the one every page has worn until now,
+   *  which is the app's own tokens.
+   *
+   *  The bytes are a blob rather than a column, because a theme's stylesheet is
+   *  tens of kilobytes and the space listing is read on every pass. The page
+   *  links it from where every other blob is served; see blog.ts. */
+  theme?: { name: string; hash: string }
+  /** Where the reader's visit is counted, if the author asked for that. */
+  analytics?: SiteAnalytics
   password?: SitePassword
 }
 
@@ -145,6 +171,20 @@ export function readSite(raw: string | null | undefined): Site {
   const icon = typeof held.icon === 'string' ? held.icon.slice(0, LONGEST_ICON) : ''
   if (icon.startsWith('<svg')) site.icon = icon
 
+  const theme = held.theme as Record<string, unknown> | undefined
+  const themeName = words(theme?.name, LONGEST_NAME)
+  const themeHash = words(theme?.hash, 64)
+  if (themeName && themeHash && /^[a-f0-9]{64}$/.test(themeHash)) {
+    site.theme = { name: themeName, hash: themeHash }
+  }
+
+  const analytics = held.analytics as Record<string, unknown> | undefined
+  const url = words(analytics?.url, LONGEST_URL)
+  if (url && /^https:\/\//i.test(url)) {
+    const domain = words(analytics?.domain, LONGEST_NAME)
+    site.analytics = { url, ...(domain ? { domain } : {}) }
+  }
+
   const password = held.password as Record<string, unknown> | undefined
   if (
     password &&
@@ -210,6 +250,8 @@ export function presentSite(site: Site) {
     ...(site.description === undefined ? {} : { description: site.description }),
     ...(site.image === undefined ? {} : { image: site.image }),
     ...(site.icon === undefined ? {} : { icon: site.icon }),
+    ...(site.theme === undefined ? {} : { theme: site.theme }),
+    ...(site.analytics === undefined ? {} : { analytics: site.analytics }),
     password: !!site.password,
   }
 }
@@ -244,6 +286,30 @@ export function wrong(body: Record<string, unknown>): string | null {
 
   if (typeof body.icon === 'string' && body.icon.length > LONGEST_ICON) {
     return 'that icon is too large'
+  }
+
+  const theme = body.theme
+  if (theme !== undefined && theme !== null) {
+    if (typeof theme !== 'object' || Array.isArray(theme)) {
+      return 'a theme is a name and the stylesheet it was installed from'
+    }
+
+    const held = theme as Record<string, unknown>
+    if (typeof held.name !== 'string' || typeof held.hash !== 'string') {
+      return 'a theme is a name and the stylesheet it was installed from'
+    }
+  }
+
+  const analytics = body.analytics
+  if (analytics !== undefined && analytics !== null) {
+    if (typeof analytics !== 'object' || Array.isArray(analytics)) {
+      return 'analytics is a script to load, or null for none'
+    }
+
+    const url = (analytics as Record<string, unknown>).url
+    if (typeof url !== 'string' || !/^https:\/\//i.test(url)) {
+      return 'an analytics script is an https address'
+    }
   }
 
   const password = body.password

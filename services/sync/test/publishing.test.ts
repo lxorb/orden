@@ -302,7 +302,9 @@ describe('a published note', () => {
     expect(answer.text.match(/class="callout callout-/g)).toHaveLength(15)
     expect(answer.text).toContain('data-callout="recipe"')
     expect(answer.text).toContain('<details class="callout callout-caution"')
-    expect(answer.headers.get('content-security-policy')).toContain("script-src 'none'")
+    // The note's own markup is shown rather than run, whatever a policy says;
+    // what the policy allows is the site's own furniture. See blog.test.ts.
+    expect(answer.headers.get('content-security-policy')).toContain("script-src 'self'")
   })
 
   test('shows what it embeds and says what it cannot show', async () => {

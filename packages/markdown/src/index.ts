@@ -67,6 +67,13 @@ export interface RenderOptions {
    *  break still works - this is a superset of it, not a replacement. See
    *  docs/slides.md. */
   breaks?: boolean
+  /** An array to fill with the headings this document turned out to have, in
+   *  order, for a surface that shows the contents beside the page rather than
+   *  inside it: a published page's right column. Filled while rendering, so
+   *  nothing is parsed twice and a `[toc]` in the note and a column beside it
+   *  cannot disagree. Pass it to `tableOfContents` to get the same list `[toc]`
+   *  writes. */
+  headings?: Heading[]
 }
 
 /** Whether a single newline breaks the line, for every caller that has no answer
@@ -97,7 +104,7 @@ export interface CodeBlock {
   code: string
 }
 
-interface Heading {
+export interface Heading {
   level: number
   text: string
   id: string
@@ -364,7 +371,10 @@ function needsOwn(options: RenderOptions): boolean {
     options.toc === true ||
     options.code !== undefined ||
     options.resolveLink !== undefined ||
-    options.resolveEmbed !== undefined
+    options.resolveEmbed !== undefined ||
+    // A caller that wants the headings wants them from its own parse: the two
+    // shared renderers hand theirs to an array nobody is holding.
+    options.headings !== undefined
   )
 }
 
@@ -379,7 +389,10 @@ function inside(options: RenderOptions): RenderOptions {
 }
 
 export function renderMarkdown(source: string, options: RenderOptions = {}): string {
-  const headings: Heading[] = []
+  // The caller's array where it asked for one, so a surface that draws the
+  // contents beside the page reads the headings this parse found rather than
+  // parsing again for them.
+  const headings: Heading[] = options.headings ?? []
   const embeds = embedSink()
   const marked = needsOwn(options)
     ? renderer(options, headings, embeds)
@@ -429,7 +442,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
 /** Nested lists of links, one level deeper for each step down in heading
  *  level. A jump from h1 to h3 nests once, not twice, so a document that
  *  skips a level does not get an empty rung. */
-function tableOfContents(headings: Heading[]): string {
+export function tableOfContents(headings: Heading[]): string {
   if (!headings.length) return ''
 
   const top = Math.min(...headings.map((heading) => heading.level))

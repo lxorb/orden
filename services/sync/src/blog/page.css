@@ -171,3 +171,423 @@ body {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
 }
+
+/* ── The furniture around a note ─────────────────────────────────── */
+
+/* A site is a note with three things around it: a bar, the pages down the left,
+   the contents of this page down the right. One grid, and every part of it
+   optional - a site of one note is the note, exactly as it was before any of
+   this existed. */
+body.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.site .frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  margin: 0 auto;
+  max-width: 90rem;
+}
+
+/* Two columns from the width where a column of names does not squeeze the
+   prose, three from the width where the contents fit as well. Below that the
+   note has the screen to itself and the navigation is the bar's own list. */
+@media (min-width: 64rem) {
+  .site .frame:has(.pages) {
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 86rem) {
+  .site .frame:has(.pages):has(.toc-aside) {
+    grid-template-columns: 15rem minmax(0, 1fr) 14rem;
+  }
+}
+
+.site .middle {
+  min-width: 0;
+}
+
+/* ── The bar ─────────────────────────────────────────────────────── */
+
+.site .bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.site .bar .home {
+  flex: none;
+  border-bottom: 0;
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: var(--weight-strong);
+}
+
+.site .bar .home:hover {
+  color: var(--accent);
+}
+
+/* The box takes the middle, which is where a reader looks for one. */
+.site .find {
+  flex: 1;
+  min-width: 0;
+  max-width: 26rem;
+  margin: 0 auto;
+}
+
+.site .find input {
+  width: 100%;
+  padding: 7px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: var(--surface);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.site .find input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Three states, one glyph: the moon for dark, the sun for light, and both for
+   whatever the reader's system says. Drawn in text rather than fetched. */
+.site .bar .theme {
+  flex: none;
+  width: var(--touch-target, 40px);
+  height: var(--touch-target, 40px);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--muted-strong);
+  font-size: var(--text-base);
+  cursor: pointer;
+}
+
+.site .bar .theme::before {
+  content: '◐';
+}
+
+.site .bar .theme[data-theme='light']::before {
+  content: '☀';
+}
+
+.site .bar .theme[data-theme='dark']::before {
+  content: '☾';
+}
+
+.site .bar .theme:hover {
+  color: var(--accent);
+}
+
+/* ── The pages, down the left ────────────────────────────────────── */
+
+.site .pages {
+  padding: var(--space-5) var(--space-3) var(--space-6);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.site .pages ul {
+  margin: 0;
+  padding: 0 0 0 var(--space-2);
+  list-style: none;
+}
+
+.site .pages > ul {
+  padding-left: 0;
+}
+
+.site .pages li {
+  margin: 1px 0;
+}
+
+.site .pages a {
+  display: block;
+  padding: 5px 9px;
+  border-bottom: 0;
+  border-radius: var(--radius-sm);
+  color: var(--muted-strong);
+  text-decoration: none;
+}
+
+.site .pages a:hover {
+  background: var(--item-hover-bg-color);
+  color: var(--text-strong);
+}
+
+.site .pages a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--text-strong);
+}
+
+.site .pages summary {
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.site .pages summary::marker,
+.site .pages summary::-webkit-details-marker {
+  display: none;
+}
+
+.site .pages summary::before {
+  content: '›';
+  display: inline-block;
+  width: 1em;
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+
+.site .pages details[open] > summary::before {
+  rotate: 90deg;
+}
+
+.site .pages summary:hover {
+  color: var(--text-strong);
+}
+
+/* On a phone there is no column: the tree is a disclosure under the bar. */
+@media (max-width: 63.99rem) {
+  .site .pages {
+    padding: var(--space-3) var(--space-4) 0;
+  }
+
+  .site .pages > ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .site .pages > ul > li > details {
+    display: none;
+  }
+}
+
+/* ── The contents, down the right ───────────────────────────────── */
+
+/* A `<details>`, closed in the markup, so a phone gets a row it can open and no
+   script is needed to make one. Where there is a column for it, the stylesheet
+   opens it and takes the summary away. */
+.site .toc-aside {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.site .toc-aside summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+
+@media (min-width: 86rem) {
+  .site .toc-aside {
+    position: sticky;
+    top: 4rem;
+    align-self: start;
+    max-height: calc(100dvh - 6rem);
+    overflow-y: auto;
+    padding-top: var(--space-6);
+  }
+
+  .site .toc-aside > summary {
+    display: none;
+  }
+
+  /* A closed disclosure hides what is not its summary; an explicit display puts
+     it back, which is what makes one piece of markup serve both shapes. */
+  .site .toc-aside > .toc {
+    display: block;
+  }
+}
+
+.site .toc-aside .toc ul {
+  margin: 0;
+  padding-left: var(--space-3);
+  list-style: none;
+}
+
+.site .toc-aside .toc a {
+  display: block;
+  padding: 3px 0;
+  border-bottom: 0;
+  color: var(--muted-strong);
+}
+
+.site .toc-aside .toc a:hover {
+  color: var(--accent);
+}
+
+/* ── Under the note ─────────────────────────────────────────────── */
+
+.site .under {
+  padding: 0 var(--space-5) var(--space-6);
+}
+
+.site .linked h2 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  color: var(--muted);
+  border: none;
+}
+
+.site .linked ul {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.site .linked li {
+  margin: 2px 0;
+}
+
+.site .around {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.site .around a {
+  border-bottom: 0;
+  color: var(--muted-strong);
+}
+
+.site .around a:hover {
+  color: var(--accent);
+}
+
+.site .around .before::before {
+  content: '← ';
+}
+
+.site .around .after::after {
+  content: ' →';
+}
+
+/* ── The search page ────────────────────────────────────────────── */
+
+#write .tally {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+#write ul.found {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#write ul.found li {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+#write ul.found a {
+  display: block;
+  padding: var(--space-3) 0;
+  border-bottom: 0;
+  color: var(--text);
+}
+
+#write ul.found .what {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--text-strong);
+}
+
+#write ul.found .where {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+#write ul.found mark {
+  background: var(--accent-soft);
+  color: var(--text-strong);
+}
+
+#write ul.found a:hover .what {
+  color: var(--accent);
+}
+
+#write .empty {
+  color: var(--muted);
+}
+
+/* ── The graph ──────────────────────────────────────────────────── */
+
+/* A canvas the script fills, and the same pages as words under it for anybody
+   the canvas is no use to. Sized here because a canvas has no size of its own. */
+#write .graph {
+  position: relative;
+  height: 26rem;
+  margin: var(--space-4) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.site .under .graph {
+  height: 16rem;
+}
+
+#write .graph canvas {
+  display: block;
+}
+
+/* ── The card a link shows on hover ─────────────────────────────── */
+
+body > .card {
+  position: fixed;
+  z-index: 5;
+  width: min(23rem, calc(100vw - 2rem));
+  max-height: 15rem;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  font-size: var(--text-sm);
+}
+
+body > .card > :first-child {
+  margin-top: 0;
+}
+
+body > .card h1,
+body > .card h2,
+body > .card h3 {
+  font-size: var(--text-base);
+  border: none;
+}

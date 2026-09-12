@@ -161,6 +161,26 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   const icon = sent.icon === undefined ? held.icon : words(sent.icon, LONGEST_ICON)
   if (icon?.startsWith('<svg')) kept.icon = icon
 
+  // A theme by name, and a counter's script. Both take null to mean "none",
+  // which is a different statement from saying nothing about them.
+  if (sent.theme === undefined) {
+    if (held.theme) kept.theme = held.theme
+  } else if (sent.theme && typeof sent.theme === 'object') {
+    const said = sent.theme as Record<string, unknown>
+    const name = words(said.name)
+    const hash = words(said.hash, 64)
+    if (name && hash) kept.theme = { name, hash }
+  }
+
+  if (sent.analytics === undefined) {
+    if (held.analytics) kept.analytics = held.analytics
+  } else if (sent.analytics && typeof sent.analytics === 'object') {
+    const said = sent.analytics as Record<string, unknown>
+    const url = words(said.url, 400)
+    const domain = words(said.domain)
+    if (url) kept.analytics = { url, ...(domain ? { domain } : {}) }
+  }
+
   // A password arriving is a new password, whatever there was: a fresh salt and a
   // fresh signing key, so every reader let in by the old one is asked again.
   if (sent.password === undefined) {

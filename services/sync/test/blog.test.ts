@@ -255,14 +255,23 @@ describe('a published note cannot script the reader', () => {
     expect(response.text).toContain('&lt;script&gt;')
   })
 
-  test('every page forbids scripts outright', async () => {
+  test('every page runs the script the site serves and nothing else', async () => {
     await publish({ subdomain: 'field' })
 
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     const policy = response.headers.get('content-security-policy') ?? ''
 
-    expect(policy).toContain("script-src 'none'")
-    expect(policy).toContain("form-action 'none'")
+    // The furniture - the search shortcut, the theme button, the hover card, the
+    // graph - is a script served from this site, and the one inline line is
+    // named by its own hash. Nothing else may run, nothing else may be fetched,
+    // and a form may only reach back here. See docs/publishing.md.
+    expect(policy).toContain("script-src 'self' 'sha256-")
+    // Inline styles are KaTeX laying out an equation; inline scripts are named
+    // by hash or not at all.
+    expect(policy).not.toContain("script-src 'self' 'unsafe-inline'")
+    expect(policy).toContain("connect-src 'self'")
+    expect(policy).toContain("form-action 'self'")
+    expect(policy).toContain("frame-ancestors 'none'")
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
 
@@ -1016,11 +1025,16 @@ describe('a published note read as slides', () => {
     expect(response.text.match(/<script/g)).toHaveLength(1)
   })
 
-  test('the page itself keeps scripting shut off entirely', async () => {
+  test('the page itself runs the furniture rather than the deck', async () => {
     await publishDeck()
 
     const response = await call(env, '/talk', { host: 'field.nibeditor.com' })
-    expect(response.headers.get('content-security-policy')).toContain("script-src 'none'")
+    const policy = response.headers.get('content-security-policy') ?? ''
+
+    // A page is a page: the site's own furniture, and no nonce - the one script
+    // a deck needs runs on the deck's own page, which is `?slides`.
+    expect(policy).toContain("script-src 'self' 'sha256-")
+    expect(policy).not.toContain('nonce-')
   })
 
   test('a note that is not a deck cannot be asked for as one', async () => {
@@ -1028,7 +1042,7 @@ describe('a published note read as slides', () => {
 
     const response = await call(env, '/hello-world?slides', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('<div class="stage">')
-    expect(response.headers.get('content-security-policy')).toContain("script-src 'none'")
+    expect(response.headers.get('content-security-policy')).not.toContain('nonce-')
   })
 
   test('the markup rules still hold: a note’s own HTML is shown, never run', async () => {

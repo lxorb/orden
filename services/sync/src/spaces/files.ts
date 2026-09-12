@@ -32,8 +32,15 @@ const HASH = /^[a-f0-9]{64}$/
 
 /** What a space may record. A PDF is the one file Nib itself opens, and the one
  *  a published note can point a reader at; anything else beside a note belongs
- *  to that note and is carried inside it. */
+ *  to that note and is carried inside it.
+ *
+ *  And two files by name: `publish.css` and `publish.js` at the root, which are
+ *  Obsidian Publish's own names for the dressing an author puts on their own
+ *  site. They are recorded here rather than in a setting so that they live in the
+ *  vault, travel with it, and are edited in whatever the author edits files with.
+ *  See docs/publishing.md; the site serves them from blog.ts. */
 const KEPT = /\.pdf$/i
+const DRESSING = new Set(['publish.css', 'publish.js'])
 
 export interface SpaceFile {
   /** Relative to the space, `/`-separated: `reading/paper.pdf`. */
@@ -63,7 +70,9 @@ function wrong(value: unknown): string | null {
     if (path.startsWith('/') || path.includes('\\') || path.split('/').includes('..')) {
       return 'a file sits inside its own space'
     }
-    if (!KEPT.test(path)) return 'only PDFs are kept beside the notes'
+    if (!KEPT.test(path) && !DRESSING.has(path.toLowerCase())) {
+      return 'only PDFs, publish.css and publish.js are kept beside the notes'
+    }
   }
 
   return null

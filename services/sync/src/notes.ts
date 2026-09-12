@@ -2,8 +2,9 @@ import { type Context, Hono } from 'hono'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
-import { readFront, writeFront } from './blog/front'
+import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
+import { keepWords } from './blog/words'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
 import {
@@ -139,6 +140,11 @@ export async function addNote(
   // say; see versions.ts.
   await keepVersion(env, note, content, by).catch(() => undefined)
 
+  // And its words, so a site can be searched on the site. Best effort for the
+  // same reason: the note is stored, and an index is rebuildable. See
+  // blog/words.ts.
+  await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+
   return note
 }
 
@@ -224,6 +230,7 @@ export async function saveNote(
   // its permalink or its aliases changed - so that a link somebody else wrote
   // still lands on it. Best effort for the same reason. See blog/paths.ts.
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
+  await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
 
   return updated
 }

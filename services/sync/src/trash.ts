@@ -5,6 +5,7 @@ import { now } from './crypto'
 import { nextSeq, noteKey, presentNote } from './notes'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
+import { forgetWords } from './blog/words'
 import { forgetVersions } from './versions'
 
 /** How long Recently deleted holds on to something. */
@@ -96,6 +97,7 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   // words have gone for good is a version of nothing; the bodies go with the
   // rows, each only once the last row naming it has gone. See versions.ts.
   await forgetVersions(env, note.id)
+  await forgetWords(env, note.id).catch(() => undefined)
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()

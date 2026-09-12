@@ -512,9 +512,9 @@ async function pushFiles(
   const manifest: SpaceFile[] = []
 
   for (const file of listed) {
-    if (!isPdfTarget(file.name)) continue
-
     const path = relative(root, file.path)
+    if (!isPdfTarget(file.name) && !dressesTheSite(path)) continue
+
     const tracked = mirror.files[path]
     // Read and hashed again only when the file has been written since, so a
     // paper nobody has touched costs nothing at all.
@@ -540,7 +540,7 @@ async function pushFiles(
       const bytes = await invoke<ArrayBuffer>('read_file', {
         path: join(root, file.path),
       }).catch(() => null)
-      if (bytes) await api.putBlob(token, file.hash, 'application/pdf', bytes)
+      if (bytes) await api.putBlob(token, file.hash, contentTypeOf(file.path), bytes)
     }
 
     await api.saveSpaceFiles(token, mirror.spaceId, manifest)
@@ -548,6 +548,24 @@ async function pushFiles(
 
   mirror.files = held
   return true
+}
+
+/** The two files a site is dressed with, by Obsidian Publish's own names: a
+ *  stylesheet and a script at the root of the space. They travel with the papers
+ *  because they travel the same way - the bytes as a blob, the name in the
+ *  space's list - and a space that has neither is unaffected. See
+ *  docs/publishing.md. */
+const DRESSING = new Set(['publish.css', 'publish.js'])
+
+function dressesTheSite(path: string): boolean {
+  return DRESSING.has(path.toLowerCase())
+}
+
+function contentTypeOf(path: string): string {
+  if (path.toLowerCase().endsWith('.css')) return 'text/css'
+  if (path.toLowerCase().endsWith('.js')) return 'text/javascript'
+
+  return 'application/pdf'
 }
 
 /** The hash of a file's bytes, or null when it cannot be read - a paper deleted

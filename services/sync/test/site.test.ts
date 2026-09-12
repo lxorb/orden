@@ -415,13 +415,15 @@ describe('a site behind a password', () => {
     expect(answer.headers.get('cache-control')).toContain('no-store')
   })
 
-  test('the policy lets that form post itself and nothing else', async () => {
+  test('the form is the one thing on the page that may run or reach anywhere', async () => {
     const answer = await page('/plan')
-    expect(answer.headers.get('content-security-policy')).toContain("form-action 'self'")
+    const policy = answer.headers.get('content-security-policy') ?? ''
 
-    await setSite({ password: null })
-    const open = await page('/plan')
-    expect(open.headers.get('content-security-policy')).toContain("form-action 'none'")
+    // A form that posts to this site and nowhere else, and not one script: the
+    // page behind the password has the furniture, the form does not.
+    expect(policy).toContain("form-action 'self'")
+    expect(policy).toContain("script-src 'none'")
+    expect(policy).toContain("connect-src 'none'")
   })
 
   test('a wrong password says so and lets nobody in', async () => {

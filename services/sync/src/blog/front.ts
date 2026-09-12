@@ -17,6 +17,7 @@
 
 import { documentTitle } from '@nib/markdown'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
+import { findLinks } from '@nib/markdown/links'
 
 /** Long enough for a sentence somebody wrote as a description, short enough that
  *  the column cannot be used as storage. */
@@ -25,6 +26,11 @@ const LONGEST_TEXT = 400
 const LONGEST_PATH = 200
 /** More aliases than a page has reasons to have. */
 const MOST_ALIASES = 10
+/** More tags than a note carries, and more links than a page of prose holds.
+ *  Both are bounds on a column rather than opinions about writing: past them the
+ *  row is being used as storage. */
+const MOST_TAGS = 40
+const MOST_LINKS = 200
 /** What a feed entry shows of a page that gave no description. Two lines. */
 const LONGEST_SUMMARY = 300
 
@@ -52,6 +58,17 @@ export interface NoteFront {
   /** The first words of the note, for a feed entry and for a description
    *  nobody wrote. Not front matter; it comes out of the same read. */
   summary?: string
+  /** Where this page sits among its siblings in the site's navigation, from
+   *  `order:`. Absent for a page that says nothing, which is sorted by name
+   *  after the ones that do. */
+  order?: number
+  /** The note's own tags, from the front matter. What the site's `tag:` reads;
+   *  an inline `#tag` is one of the page's words and is found as one. */
+  tags?: string[]
+  /** What this note links to, by the name each link used. Not front matter
+   *  either: it comes out of the same read, and it is what lets a page say what
+   *  links to it without every other note being fetched. */
+  links?: string[]
 }
 
 /** `true`, `false`, and the two words YAML reads as those. Anything else is a
@@ -173,6 +190,30 @@ export function frontOf(source: string): NoteFront | null {
   const heading = text(documentTitle(source), 200)
   if (heading) front.heading = heading
 
+  // A note that says nothing about its order has none. `Number('')` is zero,
+  // which would put every silent note first.
+  const said = frontMatterValue(source, 'order')?.trim()
+  const order = said ? Number(said) : Number.NaN
+  if (Number.isFinite(order)) front.order = order
+
+  const tags = frontMatterList(source, 'tags')
+    .map((one) => one.replace(/^#/, '').trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, MOST_TAGS)
+  if (tags.length) front.tags = [...new Set(tags)]
+
+  // Every name this note points at, as it was written. A link to a note the site
+  // does not publish is dropped where it is read rather than here: what a note
+  // says is what a note says, and what is published is the site's answer.
+  const links = [
+    ...new Set(
+      findLinks(source)
+        .filter((one) => !one.embed && one.target)
+        .map((one) => one.target.replace(/\\/g, '/').toLowerCase().slice(0, LONGEST_PATH)),
+    ),
+  ].slice(0, MOST_LINKS)
+  if (links.length) front.links = links
+
   const summary = firstWords(source)
   if (summary) front.summary = summary
 
@@ -210,7 +251,41 @@ export function readFront(raw: string | null): NoteFront {
     if (typeof value === 'string' && value) front[key] = value.slice(0, LONGEST_TEXT)
   }
 
+  if (typeof held.order === 'number' && Number.isFinite(held.order)) front.order = held.order
+
+  for (const key of ['tags', 'links'] as const) {
+    const value = held[key]
+    if (!Array.isArray(value)) continue
+
+    const kept = value
+      .filter((one): one is string => typeof one === 'string' && !!one)
+      .map((one) => one.slice(0, LONGEST_PATH))
+      .slice(0, key === 'tags' ? MOST_TAGS : MOST_LINKS)
+    if (kept.length) front[key] = kept
+  }
+
   return front
+}
+
+/** What a note's page is called: its own `title:`, the heading it opens with,
+ *  or its file name. One answer, because the index, the navigation, the feed and
+ *  the page itself all ask it and a site with two answers reads as two sites. */
+export function titleIn(path: string, front: NoteFront): string {
+  return (
+    front.title ??
+    front.heading ??
+    path
+      .replace(/\.(md|markdown|mdown|mkd)$/i, '')
+      .split('/')
+      .pop() ??
+    path
+  )
+}
+
+/** The same answer from a body rather than from a row, for the two callers that
+ *  have one in hand: the save that indexes it, and the sweep. */
+export function titleFrom(path: string, source: string): string {
+  return titleIn(path, frontOf(source) ?? {})
 }
 
 /** What goes in the column.
