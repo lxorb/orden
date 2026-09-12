@@ -264,9 +264,14 @@
   }
 
   /* The width is held whether or not there is a tick in it, so the labels line
-     up down the list. The same shape the menu rows use. */
+     up down the list. The same shape the menu rows use.
+
+     A whole em, not 0.9 of one: U+2713 is drawn by whatever font has it, and on a
+     page whose lang is Japanese that is a CJK face, where every glyph is full
+     width. Nine tenths of an em cut two pixels off the tick's right arm, which is
+     what scripts/locale-e2e.py reported under `ja`. */
   .tick {
-    width: 0.9em;
+    width: 1em;
     flex: none;
     color: var(--accent);
   }
