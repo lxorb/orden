@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { undrawable } from '@nib/glasses'
 import manifest from '../../../even.app.json'
 
 /** What the store's review reads, held to what it asks for.
@@ -237,23 +238,53 @@ describe('the bundle a package is made of', () => {
 
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
-    // 8.6 MB as this is written, measured on 2026-09-12. The ceiling is close to it
-    // on purpose: this number went from 11.8 MB to 6.0 by leaving libraries out, and
-    // a megabyte back is a library that crept in again. Speed is the selling point,
-    // and on a phone the download is part of it.
+    // 7.36 MB as this is written, measured on 2026-09-12, down from 8.59 by leaving
+    // the catalogues the firmware cannot draw out; see below. The ceiling is close to
+    // it on purpose: this number went from 11.8 MB to 6.0 by leaving libraries out,
+    // and a megabyte back is a library that crept in again. Speed is the selling
+    // point, and on a phone the download is part of it.
     //
-    // Two things in it are not the app, and they are the two to weigh if this ever
-    // has to come down:
-    //
-    //  - 2.5 MB of language catalogues, one chunk each of the 39 in src/locales. A
-    //    reader loads one of them, but the package is fetched whole, so all 39 are
-    //    paid for. The plugin could ship only the ones the firmware can draw: its
-    //    font covers Latin, Cyrillic, Greek and CJK, so the Devanagari, Arabic,
-    //    Tamil, Thai, Burmese and Ethiopic catalogues are a panel of boxes today and
-    //    English would read better. See docs/conventions.md.
-    //  - node-emoji's table, 1.1 MB, which `insteadOf` in
-    //    packages/glasses/src/firmware.ts uses to write an emoji the firmware cannot
-    //    draw as its own `:name:` rather than as a box.
-    expect(bytes).toBeLessThan(10 * 1024 * 1024)
+    // What is left that is not the app, and what to weigh if this has to come down
+    // again: node-emoji's table, 1.1 MB, which `insteadOf` in
+    // packages/glasses/src/firmware.ts uses to write an emoji the firmware cannot
+    // draw as its own `:name:` rather than as a box; and the 23 catalogues that are
+    // shipped, about 1.3 MB between them.
+    expect(bytes).toBeLessThan(8 * 1024 * 1024)
+  })
+
+  /** The catalogues, held to what the font can draw.
+   *
+   *  The app has 39 of them, one lazily loaded chunk each, and the package is fetched
+   *  whole: a reader loads one and pays for all 39. The firmware's one font draws
+   *  Latin, Cyrillic, Greek, CJK and emoji, so fifteen scripts among those 39 would
+   *  put a row of boxes on the glass - and `undrawable` in the glasses package is
+   *  what says which, by measuring rather than by listing. The build carries the list
+   *  because a Vite config cannot import the metrics; this is what keeps the two
+   *  saying the same thing.
+   *
+   *  Measured, the answer is two groups and nothing between them: every Latin,
+   *  Cyrillic, Greek and CJK catalogue is at 0.0% undrawable, and the fifteen scripts
+   *  are at 31% and more. */
+  test('ships the catalogues the firmware can draw, and only those', () => {
+    const where = resolve(app, 'src/locales')
+    const catalogues = readdirSync(where).filter((one) => one.endsWith('.ts'))
+    expect(catalogues.length).toBeGreaterThan(30)
+
+    // By the file's own name rather than by its path: `walk` joins with the
+    // platform's separator, and on Windows that is a backslash.
+    const chunks = files.map((one) => one.name.split(/[\\/]/).at(-1) ?? '')
+    const wrong: string[] = []
+
+    for (const name of catalogues) {
+      const id = name.replace('.ts', '')
+      const share = undrawable(readFileSync(resolve(where, name), 'utf8'))
+      // The chunk is named after the module it came from, with a hash after it.
+      const shipped = chunks.some((one) => new RegExp(`^${id}-[\\w-]+\\.js$`).test(one))
+
+      if (share > 0.1 && shipped) wrong.push(`${id} is ${(share * 100).toFixed(1)}% boxes, shipped`)
+      if (share <= 0.1 && !shipped) wrong.push(`${id} is drawable and is not in the package`)
+    }
+
+    expect(wrong.join('\n')).toBe('')
   })
 })

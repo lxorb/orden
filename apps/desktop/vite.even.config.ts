@@ -116,9 +116,50 @@ export function runFence() {
  *  asks for it: two files import it under two different relative names. */
 const RUNNER = 'packages/editor/src/run/run'
 
+/** An interface catalogue, by the file it is in. */
+const CATALOGUE = /\/locales\/([\w-]+)\.ts$/
+
+/** The catalogues the firmware has no glyphs for.
+ *
+ *  The app has thirty-nine interface catalogues, one lazily loaded chunk each. A
+ *  reader loads one of them; the store packs all thirty-nine, which took this package
+ *  from 6.8 MB to 8.68 MB. And the firmware has one font: it draws Latin, Cyrillic,
+ *  Greek, CJK and emoji, so these fifteen scripts - Devanagari (`hi`, `mr`), Bengali,
+ *  Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Arabic, Persian, Pashto,
+ *  Urdu, Thai, Burmese and Amharic - would put a row of boxes on the glass however
+ *  right the words are. They are not shipped, and the panel says those readers' words
+ *  in English instead; see lib/even/panel-words.ts.
+ *
+ *  **Written out here and measured in the test**, because a Vite config is loaded by
+ *  Node before anything is compiled and cannot import the metrics it would need to
+ *  ask. `src/lib/even/bundle.test.ts` reads every catalogue, asks `undrawable` in the
+ *  glasses package what share of it the font has no glyph for, and holds the staged
+ *  package to the answer: every catalogue over a tenth absent, every one under it
+ *  present. Measured, the two groups are 0.0% and 31% and more, so the day the
+ *  firmware gains a script the test says which line to delete. */
+const NOT_DRAWN = new Set([
+  'am',
+  'ar',
+  'bn',
+  'fa',
+  'gu',
+  'hi',
+  'kn',
+  'ml',
+  'mr',
+  'my',
+  'pa',
+  'ps',
+  'ta',
+  'te',
+  'th',
+  'ur',
+])
+
 function withoutWhatTheGlassesCannotUse() {
   const absent = '\0nib-absent'
   const runner = '\0nib-no-running'
+  const catalogue = '\0nib-no-catalogue:'
 
   return {
     name: 'nib-even-without',
@@ -136,11 +177,25 @@ function withoutWhatTheGlassesCannotUse() {
       })
       if (!found) return null
 
-      return found.id.replace(/\\/g, '/').includes(RUNNER) ? runner : null
+      const path = found.id.replace(/\\/g, '/')
+      const id = CATALOGUE.exec(path)?.[1]
+      if (id !== undefined && NOT_DRAWN.has(id)) return `${catalogue}${id}`
+
+      return path.includes(RUNNER) ? runner : null
     },
     load(asked: string) {
       if (asked === absent) return ABSENT
       if (asked === runner) return NO_RUNNING
+
+      // An empty catalogue rather than a module that throws: every string in this app
+      // is filed under what it says in English, so a catalogue with nothing in it
+      // *is* English. `i18n.load` takes the named export straight out of the module,
+      // and a stub that threw on the way would leave it holding undefined.
+      if (asked.startsWith(catalogue)) {
+        const id = asked.slice(catalogue.length)
+        return `export const ${id.replace(/-/g, '_')} = {}\n`
+      }
+
       return null
     },
   }
