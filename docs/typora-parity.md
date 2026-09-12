@@ -272,7 +272,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 ## 14. Export
 
-Nine formats, in one fixed order in the File menu, the palette and the shortcut
+Ten formats, in one fixed order in the File menu, the palette and the shortcut
 settings. None of them needs anything installed.
 
 - [x] Plain text (headings as lines, aligned columns, links as `words (url)`)

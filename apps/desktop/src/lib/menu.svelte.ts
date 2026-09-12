@@ -144,8 +144,10 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
  *
  *  Here beside the icon for the same reason that is: the share belongs to the
  *  thing rather than to the list, so every list that shows a file can offer it
- *  without knowing anything about sharing - the tree today, a tab's own menu, the
- *  palette. Nothing to offer where there is nothing to share: a file in a space
+ *  without knowing anything about sharing - the tree today and a tab's own menu.
+ *  The palette has no list and no menu to build, so it asks for the document in
+ *  front of the reader instead; both roads end at `shareThisFile`. Nothing to
+ *  offer where there is nothing to share: a file in a space
  *  that is not the account's own, one the account has never been handed, and a
  *  folder, which is not a file. */
 export function shareEntry(path: string | null | undefined): MenuEntry[] {
