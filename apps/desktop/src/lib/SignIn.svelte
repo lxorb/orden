@@ -184,7 +184,8 @@
               aria-label={t('Recovery code')}
               spellcheck="false"
             />
-            <button type="submit" disabled={account.busy}>{t('Continue')}</button>
+            <button class="nib-button" type="submit" disabled={account.busy}>{t('Continue')}</button
+            >
           </form>
         {:else}
           <button class="link" type="button" onclick={() => (recovering = true)}>
