@@ -169,7 +169,6 @@
         </service>
         <service
             android:name=".RecordTile"
-            android:enabled="false"
             android:exported="true"
             android:icon="@drawable/ic_record"
             android:label="@string/tile_record"

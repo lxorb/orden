@@ -125,21 +125,22 @@ describe('the quick settings tiles', () => {
   })
 
   /** The whole of the wiring: a tile carries the id of a row in the app's own
-   *  registry. A tile whose id nothing answers to would be a tile that does
-   *  nothing, which is why the recorder's is turned off rather than shipped. */
-  test('carry command ids the app has, except the recorder’s, which is off', () => {
+   *  registry, which `mobile/handed.ts` looks up and runs. A tile whose id nothing
+   *  answers to would be a tile that does nothing, so the ids are held to the
+   *  registry here and every tile is on.
+   *
+   *  The recorder's was off while its command was another batch; it landed, so the
+   *  service is enabled and the picker offers all three. A row run this way has no
+   *  editor behind it - a tile can be pressed with the app closed - which is why
+   *  `record` acts on the window rather than on a view; see `Block` in commands.ts. */
+  test('carry command ids the app has, and every one of them is on', () => {
     const ids = [...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1])
     expect(ids).toEqual(['new', 'search-space', 'record'])
 
-    expect(commands).toContain("id: 'new'")
-    expect(commands).toContain("id: 'search-space'")
-    // The recorder is another batch. Until it lands the tile would be a row that
-    // does nothing, so the service is turned off and the picker never offers it.
-    expect(commands, 'the recorder has landed: turn its tile on').not.toContain("id: 'record'")
+    for (const id of ids) expect(commands, id).toContain(`id: '${id}'`)
 
     for (const [, name, body = ''] of declared) {
-      const off = body.includes('android:enabled="false"')
-      expect(off, name).toBe(name === 'RecordTile')
+      expect(body.includes('android:enabled="false"'), name).toBe(false)
     }
   })
 })
