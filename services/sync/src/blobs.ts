@@ -19,6 +19,11 @@ const LIMITS: Record<string, number> = {
   'image/webp': 16 * 1024 * 1024,
   'image/avif': 16 * 1024 * 1024,
   'application/pdf': 64 * 1024 * 1024,
+  // What a site is dressed in: the theme the app installed, and the stylesheet
+  // and script an author wrote for their own pages. Small, because none of the
+  // three is a file anybody writes by hand at any size; see docs/publishing.md.
+  'text/css': 512 * 1024,
+  'text/javascript': 512 * 1024,
 }
 
 const HASH = /^[a-f0-9]{64}$/
@@ -43,7 +48,9 @@ blobs.put('/:hash', async (context) => {
 
   const type = typeOf(context.req.header('content-type') ?? '')
   const limit = LIMITS[type]
-  if (limit === undefined) return context.json({ error: 'images and PDFs only' }, 415)
+  if (limit === undefined) {
+    return context.json({ error: 'images, PDFs and a site’s own css or js only' }, 415)
+  }
 
   // Read before the body is: a request that says it is bringing a hundred
   // megabytes is turned away without spending the memory to find out.
