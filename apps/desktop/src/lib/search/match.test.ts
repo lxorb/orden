@@ -211,6 +211,21 @@ describe('front matter', () => {
   test('is nothing at all in a note that has none', () => {
     expect(answers('[status]', { body: 'status: done\n' })).toBe(false)
   })
+
+  /** The block has to close, which is Obsidian's rule and the one the readers in
+   *  @nib/markdown follow: a note that opens with a fence and never closes it
+   *  opens with a rule instead, so there is no key in it to find. The same note
+   *  read by the renderer and by the properties table is in render.test.ts, and
+   *  the twin of this is in matcher.rs. */
+  test('is nothing at all in a block nobody closed', () => {
+    const open = { body: '---\nstatus: done\n\n# Plan\n' }
+
+    expect(answers('[status]', open)).toBe(false)
+    expect(answers('[status:done]', open)).toBe(false)
+    // And the row the note falls back to is its own first line, because the rule
+    // it opens with is the first thing it says.
+    expect(lines('file:Meeting', open)).toEqual(['---'])
+  })
 })
 
 describe('regular expressions', () => {

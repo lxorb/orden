@@ -25,6 +25,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
+use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
 use crate::regex::Pattern;
 use crate::tags::tags_in;
@@ -373,20 +374,21 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
 
 /// Front matter as a map, for `[key]` and `[key:value]`.
 ///
-/// The plain `key: value` lines at the top and nothing else. A value written
-/// as a list underneath its key is left out: reading YAML properly is a parser,
-/// and the operator is worth a few lines, not a dependency.
+/// The block is `front_matter.rs`'s to find, rather than found a second time here:
+/// a block nobody closed is a note that opens with a rule, so `[status:done]`
+/// answers for exactly the notes whose properties table shows that row. Found
+/// twice, the operator and the table were reading two different notes.
+///
+/// The plain `key: value` lines and nothing else. A value written as a list
+/// underneath its key is left out: reading YAML properly is a parser, and the
+/// operator is worth a few lines, not a dependency.
 fn front_matter(body: &str) -> HashMap<String, String> {
     let mut out = HashMap::new();
-    let mut lines = body.lines();
-    if lines.next().map(str::trim) != Some("---") {
+    let Some(block) = front_matter_block(body) else {
         return out;
-    }
+    };
 
-    for line in lines {
-        if line.trim() == "---" {
-            break;
-        }
+    for line in body[block.from..block.close].lines() {
         if line.starts_with(char::is_whitespace) {
             continue;
         }
@@ -731,18 +733,18 @@ fn under(tag: &str, parent: &str) -> bool {
 /// block's own lines are metadata, and its fences are three hyphens: either would
 /// be a row that reads as nothing. The twin of `pastFrontMatter` in match.ts.
 fn past_front_matter(body: &str, starts: &[usize]) -> usize {
-    if line_text(body, starts, 0).trim() != "---" {
+    // front_matter.rs finds the block here too. A block nobody closed is not a
+    // block, so the note starts where it starts.
+    let Some(block) = front_matter_block(body) else {
         return 0;
-    }
+    };
 
-    for line in 1..starts.len() {
-        if line_text(body, starts, line).trim() == "---" {
-            return line + 1;
-        }
-    }
-
-    // A block nobody closed is not a block, so the note starts where it starts.
-    0
+    // The first line beginning after the one the closing fence is on, and the end
+    // of the note where that fence is the last line of it.
+    starts
+        .iter()
+        .position(|&start| start > block.close)
+        .unwrap_or(starts.len())
 }
 
 /// Whether a front matter value looks like a number, as far as holding two of
@@ -1179,6 +1181,27 @@ mod tests {
         // in a note that has none.
         assert!(!answers(&key("later"), NOTE));
         assert!(!answers(&key("status"), "status: done\n"));
+    }
+
+    /// The twin of "is nothing at all in a block nobody closed" in match.test.ts,
+    /// on the note the readers in `front_matter.rs` and the properties table are
+    /// held to as well: the block has to close, so there is no key in this one for
+    /// a search to find either.
+    #[test]
+    fn a_block_nobody_closed_holds_no_keys() {
+        const OPEN: &str = "---\nstatus: done\n\n# Plan\n";
+
+        let key = |one: &str| format!(r#"{{"kind":"property","name":"{one}","value":null}}"#);
+        let pair = |one: &str, said: &str| {
+            format!(r#"{{"kind":"property","name":"{one}","value":"{said}"}}"#)
+        };
+        let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
+
+        assert!(!answers(&key("status"), OPEN));
+        assert!(!answers(&pair("status", "done"), OPEN));
+        // And the row the note falls back to is its own first line, because the
+        // rule it opens with is the first thing it says.
+        assert_eq!(lines(&file("Meeting"), OPEN), ["---"]);
     }
 
     /// The twin of "front matter held against a value" in match.test.ts.

@@ -14,6 +14,7 @@
  *  query.rs is the twin of this on the Rust side, and match.test.ts holds the
  *  two to the same answers. */
 
+import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
 import { isEmpty, type Query, type Unit } from './query'
 import { tagsIn } from './tags'
@@ -241,16 +242,20 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
 
 /** Front matter as a map, for `[key]` and `[key:value]`.
  *
- *  The plain `key: value` lines at the top and nothing else. A value written
- *  as a list underneath its key is left out: reading YAML properly is a
- *  parser, and the operator is worth a few lines, not a dependency. */
+ *  The block is front-matter.ts's to find, rather than found a second time here:
+ *  a block nobody closed is a note that opens with a rule, so `[status:done]`
+ *  answers for exactly the notes whose properties table shows that row. Found
+ *  twice, the operator and the table were reading two different notes.
+ *
+ *  The plain `key: value` lines and nothing else. A value written as a list
+ *  underneath its key is left out: reading YAML properly is a parser, and the
+ *  operator is worth a few lines, not a dependency. */
 function frontMatter(body: string): Map<string, string> {
   const out = new Map<string, string>()
-  const lines = body.split('\n')
-  if (lines[0]?.trim() !== '---') return out
+  const block = frontMatterBlock(body)
+  if (!block) return out
 
-  for (const line of lines.slice(1)) {
-    if (line.trim() === '---') break
+  for (const line of body.slice(block.body.from, block.body.to).split('\n')) {
     if (/^\s/.test(line)) continue
 
     const colon = line.indexOf(':')
@@ -368,17 +373,15 @@ function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>)
  *  block's own lines are metadata, and its fences are three hyphens: either would
  *  be a row that reads as nothing. matcher.rs counts the same way. */
 function pastFrontMatter(body: string, starts: readonly number[]): number {
-  const first = starts[1]
-  if (first === undefined || body.slice(0, first).trim() !== '---') return 0
+  // front-matter.ts finds the block here too. A block nobody closed is not a
+  // block, so the note starts where it starts.
+  const block = frontMatterBlock(body)
+  if (!block) return 0
 
-  for (let line = 1; line < starts.length; line++) {
-    const from = starts[line] ?? 0
-    const to = starts[line + 1] ?? body.length
-    if (body.slice(from, to).trim() === '---') return line + 1
-  }
-
-  // A block nobody closed is not a block, so the note starts where it starts.
-  return 0
+  // The first line beginning after the one the closing fence is on, and the end of
+  // the note where that fence is the last line of it.
+  const past = starts.findIndex((start) => start > block.close)
+  return past === -1 ? starts.length : past
 }
 
 /** Whether a short string holds another. Plain lowercasing rather than the

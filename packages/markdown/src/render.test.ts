@@ -23,6 +23,21 @@ describe('front matter', () => {
     expect(stripFrontMatter('# Title')).toBe('# Title')
   })
 
+  /** Obsidian's rule, and so the app's: the block has to close. A note that opens
+   *  with a fence and never closes it opens with a rule, so the renderer draws
+   *  those lines as the words they are and the properties table stays away. The
+   *  same note is searched in search/match.test.ts and in matcher.rs, which is
+   *  what the fixture is for: three readers, one answer. */
+  test('a block nobody closed is the note’s own words', () => {
+    const open = '---\nstatus: done\n\n# Plan\n'
+    const html = renderMarkdown(open, { properties: true })
+
+    expect(frontMatter(open)).toBeNull()
+    expect(stripFrontMatter(open)).toBe(open)
+    expect(html).toContain('status: done')
+    expect(html).not.toContain('class="properties"')
+  })
+
   test('answers a single field', () => {
     const source = '---\ntitle: "Field Notes"\nauthor: Ada\nexport:\n  paper: A5\n---\n\nBody'
 
