@@ -315,6 +315,9 @@ export interface Reply {
   hash: string
   stored: boolean
 
+  // What the forms on a site have collected; see spaces/answers.ts.
+  answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
+
   // What a publish would change, which is which pages appear and disappear.
   // `more` is further down, where the change feed already asks for it.
   pages: number

@@ -1258,4 +1258,17 @@ export const ja: Dictionary = {
   'Add an AI provider in settings to summarise.':
     '要約するには設定で AI プロバイダーを追加してください。',
   'The summary could not be written.': '要約を書けませんでした。',
+
+  // Publishing part two.
+  Spreadsheet: '表計算',
+  'The app’s own': 'アプリと同じ',
+  'publish.css and publish.js in this space dress the site.': 'このスペースの publish.css と publish.js がサイトの見た目を決めます。',
+  'publish.css in this space dresses the site.': 'このスペースの publish.css がサイトの見た目を決めます。',
+  'publish.js in this space runs on the site.': 'このスペースの publish.js がサイト上で実行されます。',
+  Visits: '訪問',
+  'Counter script': 'カウンターのスクリプト',
+  'Site name it expects': 'スクリプトが求めるサイト名',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.': '訪問の記録はそのスクリプトの提供元に送られます。空欄なら何も送りません。',
+  Answers: '回答',
+  'Save as CSV': 'CSV で保存',
 }

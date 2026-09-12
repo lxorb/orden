@@ -194,7 +194,7 @@ describe('the Publish sheet', () => {
     // The site's own decisions first, then the address: one press of Publish is
     // one statement, and the rules decide what the address then serves.
     expect(world.asked).toEqual([
-      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":""}',
+      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":"","theme":null,"analytics":null}',
       'publish space-1 {"subdomain":"emil","note":"Read me.md"}',
     ])
   })
@@ -207,7 +207,7 @@ describe('the Publish sheet', () => {
     await publish.publish()
 
     expect(world.asked).toEqual([
-      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":""}',
+      'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":"","theme":null,"analytics":null}',
       'publish space-1 {"domain":"notes.example.com","note":null}',
     ])
   })

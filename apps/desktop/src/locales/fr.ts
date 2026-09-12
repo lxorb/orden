@@ -1267,4 +1267,17 @@ export const fr: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Ajoutez un fournisseur d’IA dans les réglages pour résumer.',
   'The summary could not be written.': 'Le résumé n’a pas pu être écrit.',
+
+  // Publishing part two.
+  Spreadsheet: 'Tableur',
+  'The app’s own': 'Celui de l’application',
+  'publish.css and publish.js in this space dress the site.': 'publish.css et publish.js dans cet espace habillent le site.',
+  'publish.css in this space dresses the site.': 'publish.css dans cet espace habille le site.',
+  'publish.js in this space runs on the site.': 'publish.js dans cet espace s’exécute sur le site.',
+  Visits: 'Visites',
+  'Counter script': 'Script de comptage',
+  'Site name it expects': 'Nom de site attendu',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.': 'La visite part vers qui sert ce script. Rien n’est envoyé quand le champ est vide.',
+  Answers: 'Réponses',
+  'Save as CSV': 'Enregistrer en CSV',
 }

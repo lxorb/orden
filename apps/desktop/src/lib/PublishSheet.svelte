@@ -14,7 +14,9 @@
   import { shownName } from './note-name'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
+  import { chooseTarget, download, writeFile } from './export/save'
   import { siteIcon } from './site-icon'
+  import { isDesktop } from './tauri'
   import SpaceMark from './SpaceMark.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -68,6 +70,34 @@
   /** How many names the changed list shows of each kind. Enough to recognise
    *  what is about to happen, few enough to read at a glance. */
   const SHOWN = 6
+
+  /** And how many answers the sheet lists before the file is the better way to
+   *  read them. */
+  const SHOWN_ANSWERS = 20
+
+  const when = (stamp: number) =>
+    new Date(stamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+
+  /** How much the pages come to, said the way the storage line says it. */
+  const size = (bytes: number) =>
+    bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} kB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+
+  /** The answers as a file, saved where the reader says on a desktop and handed
+   *  to the browser to save on the web. Written by the server; see
+   *  services/sync/src/blog/form.ts. */
+  async function saveAnswers() {
+    const csv = await publish.answersCsv()
+    if (!csv) return
+
+    const name = `${publish.space?.name ?? 'answers'} answers`
+    if (isDesktop) {
+      const target = await chooseTarget(name, 'csv', t('Spreadsheet'))
+      if (target) await writeFile(target, csv)
+      return
+    }
+
+    download(`${name}.csv`, { text: csv, mime: 'text/csv' })
+  }
 
   /** The folders a rule can be about: the top of the tree, where somebody thinks
    *  in folders, plus any deeper one that already carries a rule - set here on
@@ -132,6 +162,7 @@
   $effect(() => {
     if (!publish.open || !publish.spaceId) return
     publish.ask()
+    void publish.readAnswers()
   })
 
   // Asked after while the sheet shows a domain, and left alone as soon as it
@@ -245,6 +276,10 @@
           {t('{count} pages', { count: changes.pages })}
           {#if changes.adds.length}· {t('{count} new', { count: changes.adds.length })}{/if}
           {#if changes.removes.length}· {t('{count} gone', { count: changes.removes.length })}{/if}
+          <!-- What the site serves, against the account's own allowance: the
+               pages are notes the account already holds, so publishing them
+               takes no more room. See docs/publishing.md. -->
+          {#if changes.bytes}· {size(changes.bytes)}{/if}
         </p>
         {#if changes.adds.length || changes.removes.length}
           <ul class="changed">
@@ -390,7 +425,65 @@
           <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
         </span>
       </div>
+      <!-- The pages are dressed in the app's own colours unless the author
+           installed a theme; then the site can wear the same one. The reader
+           still chooses light or dark on top of it. -->
+      <div class="row">
+        <span class="name">{t('Theme')}</span>
+        <div class="pick">
+          <Select
+            value={publish.themeName}
+            options={[{ value: '', label: t('The app’s own') }, ...publish.themes]}
+            onchange={(value: string) => (publish.themeName = value)}
+            label={t('Theme')}
+            plain={viewport.touch}
+          />
+        </div>
+      </div>
     </div>
+
+    {#if changes?.dressing.css || changes?.dressing.js}
+      <p class="hint">
+        {changes.dressing.css && changes.dressing.js
+          ? t('publish.css and publish.js in this space dress the site.')
+          : changes.dressing.css
+            ? t('publish.css in this space dresses the site.')
+            : t('publish.js in this space runs on the site.')}
+      </p>
+    {/if}
+
+    <!-- Somebody else's script on the page, which is the whole of what a counter
+         is, so it is said plainly and nothing is set until an author types it. -->
+    <h3>{t('Visits')}</h3>
+
+    <div class="card">
+      <label class="row">
+        <span class="name">{t('Counter script')}</span>
+        <input
+          class="field wide"
+          bind:value={publish.counter}
+          placeholder="https://plausible.io/js/script.js"
+          spellcheck="false"
+          autocapitalize="off"
+        />
+      </label>
+      {#if publish.counter}
+        <label class="row">
+          <span class="name">{t('Site name it expects')}</span>
+          <input
+            class="field"
+            bind:value={publish.counterDomain}
+            placeholder={liveAt || 'example.com'}
+            spellcheck="false"
+            autocapitalize="off"
+          />
+        </label>
+      {/if}
+    </div>
+
+    <p class="hint">
+      {t('The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.')}
+    </p>
 
     <!-- A word said out loud to a room, which is what this is for; see
          services/sync/src/blog/gate.ts. -->
@@ -434,6 +527,36 @@
       {t('Live at')}
       <a href="https://{liveAt}" target="_blank" rel="noreferrer">{liveAt}</a>
     </p>
+
+    <!-- What readers have typed into the forms on it. Quiet, because most sites
+         have none; see services/sync/src/blog/form.ts. -->
+    {#if publish.answers.length}
+      <h3>{t('Answers')}</h3>
+
+      <div class="card">
+        {#each publish.answers.slice(0, SHOWN_ANSWERS) as one (one.id)}
+          <div class="answer">
+            <span class="name">
+              {shownName(one.path.split('/').pop() ?? one.path)}
+              <small>{when(one.at)}</small>
+            </span>
+            <span class="said">
+              {Object.entries(one.answers)
+                .map(([question, said]) => `${question}: ${said}`)
+                .join(' · ')}
+            </span>
+            <button class="pill" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
+          </div>
+        {/each}
+      </div>
+
+      <div class="card">
+        <button class="action" onclick={() => void saveAnswers()}>
+          {t('Save as CSV')}
+        </button>
+      </div>
+    {/if}
+
     <div class="card">
       <button class="action danger" onclick={() => void publish.unpublish()}>
         {t('Stop publishing')}
@@ -523,6 +646,38 @@
 
   .changed .rest::before {
     content: '';
+  }
+
+  /* One answer to a form: which page was asking, what came back, and the row
+     that takes it away. */
+  .answer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    width: 100%;
+    padding: var(--space-2) 0;
+    font-size: var(--text-sm);
+  }
+
+  .answer + .answer {
+    border-top: 1px solid var(--line);
+  }
+
+  .answer .name {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-strong);
+  }
+
+  .answer .name small {
+    margin-left: var(--space-2);
+    color: var(--muted);
+  }
+
+  .answer .said {
+    flex: 1 0 100%;
+    color: var(--muted-strong);
   }
 
   /* The space's own mark, at the size a row's control would be: it is what the

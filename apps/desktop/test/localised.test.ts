@@ -41,6 +41,9 @@ const EXEMPT = [
   /@example\.com$/, // sample addresses
   /^notes\.example\.com$/,
   /^your-name$/,
+  // An example of an address somebody pastes, which is a URL rather than prose.
+  /^https:\/\//,
+  /^example\.com$/,
   /^\.?nibeditor\.com$/,
   /^(B|I|S|M|H|<>|#|"|×)$/, // the format bar's single-glyph labels
   /^(A3|A4|A5|Letter|Legal|PDF|HTML|MCP|LLM|CSS|Nib|DNS|JSON)$/,

@@ -203,6 +203,17 @@ export interface RemoteSpace {
  *  The rules are about folders; a note that says `publish:` in its own front
  *  matter has settled its own case and no rule here changes that. `password` is
  *  only ever whether there is one: the account never hands one back. */
+/** One answer somebody typed into a form on a published page. */
+export interface FormAnswer {
+  id: string
+  /** The note that asked, and its path, so the list says which page. */
+  note: string
+  path: string
+  at: number
+  /** Keyed by the question as the note wrote it; see blog/form.ts. */
+  answers: Record<string, string>
+}
+
 export interface SiteSettings {
   rules: {
     /** Folders published even where the default is to publish nothing. */
@@ -217,6 +228,11 @@ export interface SiteSettings {
   /** The icon a browser tab shows, as the SVG this app drew of the space's own
    *  mark; see site-icon.ts. */
   icon?: string
+  /** The theme the site is dressed in: its name, and the blob its stylesheet
+   *  was uploaded as. */
+  theme?: { name: string; hash: string }
+  /** Where a visit is counted, if the author asked for that at all. */
+  analytics?: { url: string; domain?: string }
   password: boolean
 }
 
@@ -226,6 +242,11 @@ export interface SiteSettings {
  *  before one. */
 export interface SiteChanges {
   pages: number
+  /** How many bytes of notes the site would serve, for the line that says what
+   *  a site costs against the account's allowance. */
+  bytes: number
+  /** Whether the space carries the two files a site is dressed with. */
+  dressing: { css: boolean; js: boolean }
   before: number
   adds: string[]
   removes: string[]
@@ -943,6 +964,8 @@ export const api = {
       description?: string
       image?: string
       icon?: string
+      theme?: { name: string; hash: string } | null
+      analytics?: { url: string; domain?: string } | null
       password?: string | null
     },
   ) =>
@@ -951,6 +974,23 @@ export const api = {
       token,
       body: settings,
     }),
+
+  /** What the forms on a site have collected, newest first, and the same as a
+   *  file for a spreadsheet. */
+  answers: (token: string, spaceId: string) =>
+    request<{ answers: FormAnswer[]; more: boolean }>(`/v1/spaces/${spaceId}/answers`, { token }),
+
+  answersCsv: async (token: string, spaceId: string) => {
+    const response = await fetch(`${BASE}/v1/spaces/${spaceId}/answers.csv`, {
+      headers: { authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) throw new ApiError(response.status, 'could not read the answers')
+    return response.text()
+  },
+
+  forgetAnswer: (token: string, spaceId: string, id: string) =>
+    request<{ ok: true }>(`/v1/spaces/${spaceId}/answers/${id}`, { method: 'DELETE', token }),
 
   /** And what those rules would change, before they are written. */
   sitePreview: (token: string, spaceId: string, rules: SiteSettings['rules']) =>

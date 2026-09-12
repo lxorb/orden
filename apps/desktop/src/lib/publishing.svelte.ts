@@ -16,10 +16,13 @@ import {
   ApiError,
   type DnsRecord,
   type DomainStatus,
+  type FormAnswer,
   type RemoteSpace,
   type SiteChanges,
   type SiteSettings,
 } from './api'
+import { invoke } from './tauri'
+import { theme } from './theme.svelte'
 import { account } from './account.svelte'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
@@ -67,6 +70,20 @@ class Publish {
    *  rules have been asked about. */
   changes = $state<SiteChanges | null>(null)
   asking = $state(false)
+
+  /** Where a visit is counted, as the author typed it. Empty for a site that
+   *  counts nothing, which is every site until somebody asks for one. */
+  counter = $state('')
+  counterDomain = $state('')
+
+  /** The theme the site wears, by the name the app knows it under, or empty for
+   *  the app's own. */
+  themeName = $state('')
+
+  /** What the forms on the site have collected. Read when the sheet opens on a
+   *  published space, because a form nobody has answered is the ordinary case
+   *  and one answer is worth seeing at once. */
+  answers = $state<FormAnswer[]>([])
 
   busy = $state(false)
   error = $state<string | null>(null)
@@ -130,6 +147,81 @@ class Publish {
     this.description = site?.description ?? ''
     this.hasPassword = !!site?.password
     this.password = ''
+    this.counter = site?.analytics?.url ?? ''
+    this.counterDomain = site?.analytics?.domain ?? ''
+    this.themeName = site?.theme?.name ?? ''
+  }
+
+  /** The themes this device has, for the sheet to offer: the app's own first,
+   *  then whatever is in the themes folder. A theme is offered by name because
+   *  that is what the reader of the sheet recognises. */
+  get themes(): { value: string; label: string }[] {
+    return theme.files
+      .filter((one) => !!one.path)
+      .map((one) => ({ value: one.name, label: one.name }))
+  }
+
+  /** The stylesheet of the theme the author chose, sent up as a blob and named
+   *  on the site.
+   *
+   *  The bytes go the way a picture's do - addressed by their own hash, so a
+   *  theme two sites wear is stored once - and the site keeps the name and the
+   *  hash. The app is the side that has the theme, which is why it does the
+   *  sending; see docs/publishing.md. */
+  private async themeFor(
+    token: string,
+  ): Promise<{ name: string; hash: string } | null | undefined> {
+    if (!this.themeName) return null
+
+    const held = this.blog?.site?.theme
+    if (held?.name === this.themeName) return held
+
+    const file = theme.files.find((one) => one.name === this.themeName && one.path)
+    if (!file?.path) return undefined
+
+    const css = await invoke<string>('read_theme', { path: file.path }).catch(() => '')
+    if (!css) return undefined
+
+    const bytes = new TextEncoder().encode(css)
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+
+    await api.putBlob(token, hash, 'text/css', bytes.buffer as ArrayBuffer)
+    return { name: this.themeName, hash }
+  }
+
+  /** The answers the forms on this site have collected. */
+  async readAnswers() {
+    const id = this.spaceId
+    if (!id || !account.accountToken || !this.published) return
+
+    try {
+      this.answers = (await api.answers(account.accountToken, id)).answers
+    } catch {
+      // A site with no forms on it answers this the same way as one whose
+      // answers could not be read: with nothing to show.
+      this.answers = []
+    }
+  }
+
+  /** One answer, gone. Spam arrives, and a message that has been acted on is not
+   *  something to keep for ever. */
+  async forget(one: FormAnswer) {
+    const id = this.spaceId
+    if (!id || !account.accountToken) return
+
+    await api.forgetAnswer(account.accountToken, id, one.id).catch(() => undefined)
+    this.answers = this.answers.filter((held) => held.id !== one.id)
+  }
+
+  /** The answers as a file. Written by the server, because what a column is
+   *  called is decided where an answer is stored; see blog/form.ts. */
+  async answersCsv(): Promise<string | null> {
+    const id = this.spaceId
+    if (!id || !account.accountToken) return null
+
+    return api.answersCsv(account.accountToken, id).catch(() => null)
   }
 
   /** A folder named in one of the two lists, or taken out of it. Written here
@@ -265,10 +357,19 @@ class Publish {
     if (!id || !account.accountToken) return
 
     try {
+      const chosen = await this.themeFor(account.accountToken)
+
       await api.site(account.accountToken, id, {
         rules: this.rules,
         description: this.description.trim(),
         ...(icon ? { icon } : {}),
+        ...(chosen === undefined ? {} : { theme: chosen }),
+        analytics: this.counter.trim()
+          ? {
+              url: this.counter.trim(),
+              ...(this.counterDomain.trim() ? { domain: this.counterDomain.trim() } : {}),
+            }
+          : null,
         // A field left empty is not a password being taken off: the account
         // never handed one back to put in it. Taking one off is its own gesture.
         ...(this.password ? { password: this.password } : {}),

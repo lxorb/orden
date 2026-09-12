@@ -12,6 +12,7 @@ import type { Env, Space, Variables } from '../types'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { fillFronts } from '../blog/fill'
 import { readFront } from '../blog/front'
+import { readSpaceFiles } from './files'
 import { hashPassword, newSiteKey } from '../blog/gate'
 import {
   folders,
@@ -104,9 +105,15 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
     if (was && !is) removes.push(row.path)
   }
 
+  // And whether the space carries the two files an author dresses their own site
+  // with, so the sheet can say they are in use rather than leaving somebody to
+  // wonder whether the name was right. See blog/shell.ts.
+  const beside = readSpaceFiles(space.files).map((one) => one.path.toLowerCase())
+
   return context.json({
     pages: after,
     bytes,
+    dressing: { css: beside.includes('publish.css'), js: beside.includes('publish.js') },
     before,
     adds: adds.slice(0, SHOWN),
     removes: removes.slice(0, SHOWN),
