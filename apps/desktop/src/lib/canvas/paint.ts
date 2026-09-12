@@ -186,12 +186,19 @@ function inside(box: Box, outer: Box): boolean {
  *  expensive half of a repaint and the camera moving does not change them: the
  *  paths are in plane coordinates, so a pan is a transform and the shapes are the
  *  shapes. See `paintInk`. */
-let gathered: {
+interface Batch {
+  stroke: InkStroke
+  path: Path2D
+}
+
+interface Gathered {
   strokes: readonly InkStroke[]
   covers: Box
-  batches: { stroke: InkStroke; path: Path2D }[]
+  batches: Map<string, Batch>
   drawn: number
-} | null = null
+}
+
+let gathered: Gathered | null = null
 
 let batched = 0
 
@@ -213,6 +220,55 @@ export function strokesBatched(): number {
  *  per frame, near enough that the paths hold the part of a plane somebody is
  *  looking at rather than all of it. */
 const SPARE = 1
+
+/** Some of a list of strokes into the batches, from `at` onwards. Answers how
+ *  many went in. */
+function gather(
+  batches: Map<string, Batch>,
+  strokes: readonly InkStroke[],
+  covers: Box,
+  at: number,
+): number {
+  let drawn = 0
+
+  for (let one = at; one < strokes.length; one++) {
+    const stroke = strokes[one]
+    if (!stroke || !meets(strokeBox(stroke), covers)) continue
+
+    // Ink that is set the same way is one shape to fill. The alpha is part of
+    // being set the same way: two strokes at different opacities cannot share a
+    // fill without one of them coming out at the other's.
+    const key = `${stroke.tool}
+${stroke.color}
+${inkOpacity(stroke)}`
+    const batch = batches.get(key)
+
+    if (batch) batch.path.addPath(pathOf(stroke))
+    else {
+      const path = new Path2D()
+      path.addPath(pathOf(stroke))
+      batches.set(key, { stroke, path })
+    }
+
+    drawn++
+  }
+
+  batched += drawn
+  return drawn
+}
+
+/** Whether `now` is `was` with something added on the end - the same strokes, by
+ *  identity, and then more. Which is what drawing one is, and what a room
+ *  delivering one is.
+ *
+ *  A walk of references, which is nothing beside the copies of a hundred thousand
+ *  points that gathering the whole plane again would make. */
+function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean {
+  if (now.length <= was.length) return false
+  for (let one = 0; one < was.length; one++) if (was[one] !== now[one]) return false
+
+  return true
+}
 
 /** Every stroke in view, in as few fills as there are kinds of ink on it.
  *
@@ -250,44 +306,32 @@ export function paintInk(
   place(ctx, view)
 
   const box = seen(view)
-  const held =
-    gathered && gathered.strokes === strokes && inside(box, gathered.covers) ? gathered : null
+  let held = gathered && inside(box, gathered.covers) ? gathered : null
+
+  // The same plane with a stroke added on the end: what was gathered still stands,
+  // and only the new one goes into it. Without this, drawing a stroke on a plane of
+  // ten thousand gathered all ten thousand again, which is the hundred
+  // milliseconds the pen lifted for.
+  if (held && held.strokes !== strokes) {
+    if (grewFrom(held.strokes, strokes)) {
+      held.drawn += gather(held.batches, strokes, held.covers, held.strokes.length)
+      held.strokes = strokes
+    } else {
+      held = null
+    }
+  }
 
   if (!held) {
     // A viewport of plane either side of the view, so panning stays inside what
     // was gathered rather than leaving it on the next frame.
     const covers = grown(box, SPARE * Math.max(box.width, box.height))
-    const batches = new Map<string, { stroke: InkStroke; path: Path2D }>()
-    let drawn = 0
-
-    for (const stroke of strokes) {
-      if (!meets(strokeBox(stroke), covers)) continue
-
-      // Ink that is set the same way is one shape to fill. The alpha is part of
-      // being set the same way: two strokes at different opacities cannot share a
-      // fill without one of them coming out at the other's.
-      const key = `${stroke.tool}
-${stroke.color}
-${inkOpacity(stroke)}`
-      const batch = batches.get(key)
-
-      if (batch) batch.path.addPath(pathOf(stroke))
-      else {
-        const path = new Path2D()
-        path.addPath(pathOf(stroke))
-        batches.set(key, { stroke, path })
-      }
-
-      drawn++
-    }
-
-    batched += drawn
-    gathered = { strokes, covers, batches: [...batches.values()], drawn }
+    const batches = new Map<string, Batch>()
+    held = { strokes, covers, batches, drawn: gather(batches, strokes, covers, 0) }
   }
 
-  const { batches, drawn } = gathered ?? { batches: [], drawn: 0 }
+  gathered = held
 
-  for (const batch of batches) {
+  for (const batch of held.batches.values()) {
     inkStyle(ctx, batch.stroke, palette)
     ctx.fill(batch.path, 'nonzero')
   }
@@ -309,7 +353,7 @@ ${inkOpacity(stroke)}`
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
-  return drawn
+  return held.drawn
 }
 
 /** The one stroke under the pen, on its own layer. Cleared and redrawn on every

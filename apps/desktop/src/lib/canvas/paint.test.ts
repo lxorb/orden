@@ -116,17 +116,34 @@ describe('repainting the ink under the camera', () => {
     expect(strokesBatched() - before).toBeGreaterThan(0)
   })
 
-  test('gathers again when the ink itself changed', () => {
+  test('puts one drawn stroke in on its own, not the plane again', () => {
     const strokes = plane(600)
     const { ctx } = context()
 
     paintInk(ctx, strokes, view(1000, 1000), {})
     const before = strokesBatched()
 
-    // One stroke more, which is a new list: every edit hands one back, and that is
-    // what says the shapes are not the shapes any more.
-    paintInk(ctx, [...strokes, ...plane(1)], view(1000, 1000), {})
-    expect(strokesBatched() - before).toBeGreaterThan(0)
+    // A stroke drawn where the camera is, which is a new list with the old one at
+    // the front of it. One stroke goes in, not six hundred: this is the hundred
+    // milliseconds the pen used to lift for.
+    const drawn = { ...(plane(1)[0] as InkStroke), id: 'drawn' }
+    drawn.points = drawn.points.map((point) => ({ ...point, x: point.x + 1000, y: point.y + 1000 }))
+    paintInk(ctx, [...strokes, drawn], view(1000, 1000), {})
+
+    expect(strokesBatched() - before).toBe(1)
+  })
+
+  test('gathers the plane again when the strokes in it changed rather than grew', () => {
+    const strokes = plane(600)
+    const { ctx } = context()
+
+    paintInk(ctx, strokes, view(1000, 1000), {})
+    const before = strokesBatched()
+
+    // An eraser, a move, a colour: a list of the same length with other objects in
+    // it, and nothing in the batches can be trusted.
+    paintInk(ctx, plane(600), view(1000, 1000), {})
+    expect(strokesBatched() - before).toBeGreaterThan(1)
   })
 
   test('fills once per kind of ink on the plane, however many strokes there are', () => {
