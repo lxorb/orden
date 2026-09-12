@@ -17,6 +17,8 @@
  *  about two copies. See conflicts.ts for the three answers and why asking is
  *  quiet rather than a dialog. */
 
+import { log } from '../log'
+import { insideSpace, withinSpace } from '../space-paths'
 import { isRecord, parsed } from '../stored'
 import { invoke } from '../tauri'
 import type { Answer, Clash } from './conflicts'
@@ -114,18 +116,36 @@ class Record {
    *  Whichever is chosen, the words that lose are kept as a version first, so
    *  this is never the moment something goes for good. */
   async settle(clash: Clash, answer: Answer): Promise<void> {
+    // The path went through storage, so what is in hand is a string rather than a
+    // path: this entry was written by some version of this app, possibly an older
+    // one, and storage is a place anybody at this machine can type into. What
+    // follows is two `write_note`s carrying words the other device sent, which is
+    // the whole of an escape - so the path is judged again here, against the
+    // spaces this device actually holds, and what is written is the path built
+    // back up from the space and the name rather than the string that was held.
+    //
+    // Judged here rather than in `restore`, because the log is restored before the
+    // spaces have been listed and there would be nothing to judge it against; see
+    // start.ts. Nothing else reads a clash's path onto disk.
+    const path = await placed(clash.path)
+    if (path === null) {
+      log('warn', 'sync: a note waiting to be settled is in no space, so it was let go of')
+      this.forget(clash.path)
+      return
+    }
+
     if (answer === 'theirs') {
-      const here = await invoke<string>('read_note', { path: clash.path }).catch(() => null)
+      const here = await invoke<string>('read_note', { path }).catch(() => null)
       if (here?.trim()) {
-        await invoke('snapshot_note', { path: clash.path, content: here }).catch(() => undefined)
+        await invoke('snapshot_note', { path, content: here }).catch(() => undefined)
       }
 
-      await invoke('write_note', { path: clash.path, content: clash.theirs })
+      await invoke('write_note', { path, content: clash.theirs })
     }
 
     if (answer === 'both') {
       const { conflictPath } = await import('./conflicts')
-      await invoke('write_note', { path: conflictPath(clash.path), content: clash.theirs })
+      await invoke('write_note', { path: conflictPath(path), content: clash.theirs })
     }
 
     this.forget(clash.path)
@@ -174,3 +194,19 @@ class Record {
 }
 
 export const record = new Record()
+
+/** A path a space holds, built back up from that space and the name it holds the
+ *  note under, or null when no space on this device holds it.
+ *
+ *  The workspace is asked for rather than imported, because this store is restored
+ *  before it and nothing here needs it until somebody answers a clash. */
+async function placed(path: string): Promise<string | null> {
+  const { workspace } = await import('../workspace.svelte')
+
+  for (const space of workspace.spaces) {
+    const relative = withinSpace(space.root, path)
+    if (relative !== null) return insideSpace(space.root, relative)
+  }
+
+  return null
+}

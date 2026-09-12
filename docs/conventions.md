@@ -94,7 +94,11 @@ where that stops being true:
   `apps/desktop/src/lib/workspace.svelte.ts` judges the target with that
   same `insideOnly` before making the note a link names.
 - **A sync pull**, whose names were written by whoever shares the space:
-  `placeable` in `apps/desktop/src/lib/sync/mirror.ts`.
+  `placeable` in `apps/desktop/src/lib/sync/mirror.ts`. A clash the reader
+  answers a launch later is judged a second time, because its path was
+  written down and read back: `settle` in
+  `apps/desktop/src/lib/sync/record.svelte.ts` asks which space holds it and
+  writes the path built back up from that space.
 - **An import**, where every format reader puts each path component through
   `safeName` before `applyImport` joins it to the space root — and where
   `applyImport` then puts every path through `insideOnly` itself, in one pass

@@ -4,10 +4,29 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { record } from './record.svelte'
 import type { Clash } from './conflicts'
 
 const KEY = 'nib:sync-log'
+
+/** The spaces this device holds, which is what says whether a path read back out
+ *  of storage is a note at all. */
+const spaces = [{ root: '/Work' }]
+
+vi.mock('../workspace.svelte', () => ({ workspace: { spaces } }))
+
+/** Every command settling an answer sent to the crate, and the path it named. */
+const invoked: { command: string; path: string }[] = []
+
+vi.mock('../tauri', () => ({
+  invoke: (command: string, args: Record<string, unknown>) => {
+    invoked.push({ command, path: String(args.path) })
+    return Promise.resolve(command === 'read_note' ? 'what is here' : undefined)
+  },
+  joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
+  isNative: false,
+}))
+
+const { record } = await import('./record.svelte')
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -36,8 +55,16 @@ function stored(): string {
 
 beforeEach(() => {
   localStorage.clear()
+  invoked.length = 0
   record.restore()
 })
+
+/** The log as an earlier launch left it, which is a string like any other string
+ *  and the only thing a restore has to go on. */
+function held(clashes: Clash[]) {
+  localStorage.setItem(KEY, JSON.stringify({ passes: [], clashes }))
+  record.restore()
+}
 
 describe('the log', () => {
   test('keeps a pass that moved something and skips one that moved nothing', () => {
@@ -56,6 +83,46 @@ describe('the log', () => {
 
     expect(record.passes).toHaveLength(0)
     expect(record.clashes).toHaveLength(1)
+  })
+})
+
+/** A clash is written down and read back a launch later, and what comes back out
+ *  of storage is a string: the entry may have been written by another version of
+ *  the app, or edited by hand. Settling one writes a file, so the path is judged
+ *  against the spaces this device holds before anything on disk is touched - and
+ *  what is written is the path built back up from the space and the name, not the
+ *  string storage held. */
+describe('a path read back out of storage', () => {
+  test('is settled when a space holds it', async () => {
+    held([aClash('/Work/Plan.md')])
+
+    await record.settle(record.clashes[0]!, 'theirs')
+
+    expect(invoked).toEqual([
+      { command: 'read_note', path: '/Work/Plan.md' },
+      { command: 'snapshot_note', path: '/Work/Plan.md' },
+      { command: 'write_note', path: '/Work/Plan.md' },
+    ])
+    expect(record.clashes).toHaveLength(0)
+  })
+
+  test('and touches nothing when no space does', async () => {
+    held([aClash('/Users/me/Downloads/theirs.md')])
+
+    await record.settle(record.clashes[0]!, 'theirs')
+
+    expect(invoked).toEqual([])
+    // And it stops being asked about: a note no space holds is not a note.
+    expect(record.clashes).toHaveLength(0)
+  })
+
+  test('nor when it climbs back out of the space it names', async () => {
+    held([aClash('/Work/../../etc/passwd')])
+
+    await record.settle(record.clashes[0]!, 'both')
+
+    expect(invoked).toEqual([])
+    expect(record.clashes).toHaveLength(0)
   })
 })
 
