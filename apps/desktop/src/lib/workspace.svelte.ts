@@ -664,6 +664,10 @@ class Workspace {
 
     // A phone and a tablet show one document at a time.
     this.oneDocument()
+
+    // The tabs were replaced rather than closed one by one, so any page behind one
+    // that has gone is a webview with nothing left to place it; see pages.svelte.ts.
+    pages.keepOnly(this.tabs.map((tab) => tab.id))
     this.persist()
   }
 

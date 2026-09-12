@@ -279,6 +279,19 @@ class Pages {
     if (isDesktop) void invoke('web_close', { tab: tabId }).catch(() => undefined)
   }
 
+  /** Every page whose tab has gone, closed.
+   *
+   *  For the one way tabs disappear without being closed one at a time: an
+   *  arrangement put in place over the top of them - a saved layout, a session, a
+   *  window becoming a phone. A webview nothing is left to place is a browser
+   *  running behind an app with nowhere to draw it. */
+  keepOnly(ids: readonly string[]) {
+    const kept = new Set(ids)
+    for (const tabId of [...this.held.keys()]) {
+      if (!kept.has(tabId)) this.forget(tabId)
+    }
+  }
+
   /** One listener for the window, started by the first web tab that needs it. */
   private async listen(): Promise<void> {
     if (this.listening || !isDesktop) return
