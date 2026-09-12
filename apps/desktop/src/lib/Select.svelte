@@ -250,7 +250,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     line-height: 1.4;
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition:
       border-color var(--dur-fast) var(--ease-out),
@@ -272,6 +272,15 @@
 
   .trigger:disabled {
     opacity: 0.55;
+  }
+
+  /* A choice may be a name rather than a word of the app's own - a folder, a
+     font, a language written in its own script - so each one is placed as a
+     whole. See .nib-row-label in base.css. */
+  .trigger .text,
+  .list li .text,
+  .sheet li button .text {
+    unicode-bidi: isolate;
   }
 
   .trigger .text {
@@ -334,7 +343,7 @@
   .list {
     position: absolute;
     top: calc(100% + var(--space-1));
-    right: 0;
+    inset-inline-end: 0;
     min-width: 100%;
     max-height: 280px;
     margin: 0;
@@ -460,7 +469,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--touch-text);
-    text-align: left;
+    text-align: start;
     cursor: default;
   }
 

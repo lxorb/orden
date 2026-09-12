@@ -22,6 +22,11 @@ import {
 const fill = (template: string, values: Record<string, string | number>): string =>
   i18n.t(template, values)
 
+/** What `<bdi>` is in a string: the isolate a value the other way round is
+ *  wrapped in, and the pop that ends it. See `isolated` in direction.ts. */
+const FSI = '\u2068'
+const PDI = '\u2069'
+
 /** Every catalogue on disk, read the way the app reads them. Loaded as a set
  *  rather than named one by one: forty imports would go stale the first time
  *  somebody added a language, which is the thing this file is here to catch. */
@@ -493,6 +498,31 @@ describe('filling in placeholders', () => {
    *  source of a function on screen. */
   test('reads nothing an object merely inherits', () => {
     expect(fill('{toString} {constructor}', { name: 'x' })).toBe('{toString} {constructor}')
+  })
+
+  /** A name written the other way round keeps its own punctuation instead of
+   *  handing it to the sentence; see `isolated` in direction.ts. Both ways round,
+   *  because both happen: an Arabic note in an English app, and an English note in
+   *  an Arabic one. */
+  test('a name that reads the other way is kept to itself', () => {
+    const arabic = 'خطة.md'
+    expect(fill('Undo deleting {name}', { name: arabic })).toBe(
+      `Undo deleting ${FSI}${arabic}${PDI}`,
+    )
+
+    const was = i18n.choice
+    i18n.choice = 'ar'
+    try {
+      expect(fill('Undo deleting {name}', { name: 'Note.md' })).toBe(
+        `Undo deleting ${FSI}Note.md${PDI}`,
+      )
+      // Nothing to isolate: a name in the language the sentence is in already
+      // reads the way the sentence does. The name above would still be isolated
+      // here, because its `.md` is Latin inside it.
+      expect(fill('Undo deleting {name}', { name: 'خطة' })).toBe('Undo deleting خطة')
+    } finally {
+      i18n.choice = was
+    }
   })
 })
 

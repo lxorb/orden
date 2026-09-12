@@ -36,7 +36,7 @@
 <style>
   .toast {
     position: fixed;
-    left: max(var(--space-4), var(--inset-left));
+    inset-inline-start: max(var(--space-4), var(--inset-start));
     bottom: calc(var(--space-4) + var(--inset-bottom));
     z-index: 40;
     max-width: 20rem;
@@ -85,7 +85,7 @@
   }
 
   :global([data-touch]) .toast {
-    right: max(var(--space-4), var(--inset-right));
+    inset-inline-end: max(var(--space-4), var(--inset-end));
     max-width: none;
   }
 

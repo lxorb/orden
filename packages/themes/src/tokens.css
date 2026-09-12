@@ -172,6 +172,27 @@
   --inset-bottom: env(safe-area-inset-bottom, 0px);
   --inset-left: env(safe-area-inset-left, 0px);
 
+  /* The same two edges named by reading rather than by the glass, so a bar, a
+     toast or a floating button can sit on the side the reader ends a line on and
+     still clear the notch. Everything that mirrors reads these; the four above
+     stay where the hardware is. See apps/desktop/src/lib/direction.ts. */
+  --inset-start: var(--inset-left);
+  --inset-end: var(--inset-right);
+
+  /* Which way round a movement goes: what a transform along the line is
+     multiplied by, so one declaration covers both directions. A knob sliding to
+     its other end, a row nudging under the pointer, a shimmer crossing a bar and
+     a drawer coming out - all of them are `calc(var(--dir) * x)` and none of them
+     is written twice. Only for what a logical property cannot say: everything
+     that can be `inline-start` or `inline-end` is. */
+  --dir: 1;
+
+  /* The same two sides as words, for the handful of properties that take a side
+     and have no logical spelling of it: `transform-origin`, and a gradient's
+     angle where one is named rather than measured. */
+  --dir-start: left;
+  --dir-end: right;
+
   /* Motion. Everything that can move, moves - but on a shared vocabulary
      so the whole app feels like one object rather than many effects. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -187,6 +208,17 @@
   --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
+}
+
+/* A reader of Arabic, Persian, Pashto or Urdu holds the same phone the other way
+   round to nothing: the notch stays where it is, and the start of a line moves to
+   the other side of it. One rule, so nothing downstream repeats it. */
+:root[dir='rtl'] {
+  --inset-start: var(--inset-right);
+  --inset-end: var(--inset-left);
+  --dir: -1;
+  --dir-start: right;
+  --dir-end: left;
 }
 
 /* The whole of what a finger changes, in one place.

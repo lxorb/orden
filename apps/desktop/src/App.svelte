@@ -651,7 +651,7 @@
         class:settling={drawer.settle !== null}
         style:transform={drawer.at === null || viewport.narrow
           ? undefined
-          : `translateX(${drawer.at - drawer.width}px)`}
+          : `translateX(calc(var(--dir) * ${drawer.at - drawer.width}px))`}
         style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
         ontransitionend={(event) => drawer.arrived(event)}
       >
@@ -688,7 +688,7 @@
       class:settling={drawer.settle !== null}
       style:transform={drawer.at === null || !viewport.narrow
         ? undefined
-        : `translateX(${drawer.at}px)`}
+        : `translateX(calc(var(--dir) * ${drawer.at}px))`}
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
       ontransitionend={(event) => drawer.arrived(event)}
     >
@@ -899,7 +899,7 @@
   .leave {
     position: absolute;
     top: max(var(--space-2), var(--inset-top));
-    right: max(var(--space-2), var(--inset-right));
+    inset-inline-end: max(var(--space-2), var(--inset-end));
     z-index: 20;
     display: grid;
     place-items: center;
@@ -978,7 +978,7 @@
   /* Sits above the document, clear of the gesture bar. */
   .fab {
     position: absolute;
-    right: max(16px, var(--inset-right));
+    inset-inline-end: max(16px, var(--inset-end));
     bottom: calc(16px + var(--inset-bottom));
     z-index: 20;
     width: 56px;
@@ -1010,16 +1010,17 @@
   /* Clear of a notch or a rounded corner, whether the panels are a drawer over
      the note or a column beside it. */
   :global([data-touch]) .panels {
-    padding-left: var(--inset-left);
+    padding-inline-start: var(--inset-start);
   }
 
   /* ── Where the sidebar is a drawer over the note ─────────────────── */
 
   :global([data-drawer]) .panels {
     position: fixed;
-    inset: 0 auto 0 0;
+    inset-block: 0;
+    inset-inline: 0 auto;
     z-index: 30;
-    transform: translateX(-100%);
+    transform: translateX(calc(var(--dir) * -100%));
     transition: transform var(--dur-base) var(--ease-out);
     box-shadow: var(--shadow-lg);
   }
@@ -1077,8 +1078,9 @@
      width: it is a panel over the note, the way a members panel is, rather than
      a floor the note slides off. */
   :global([data-drawer]) .panels.right {
-    inset: 0 0 0 auto;
-    transform: translateX(100%);
+    inset-block: 0;
+    inset-inline: auto 0;
+    transform: translateX(calc(var(--dir) * 100%));
   }
 
   :global([data-drawer]) .panels.right.open {
@@ -1095,7 +1097,7 @@
     z-index: 30;
     box-shadow: var(--shadow-lg);
     transition: transform var(--dur-base) var(--ease-out);
-    transform: translateX(100%);
+    transform: translateX(calc(var(--dir) * 100%));
   }
 
   :global([data-drawer][data-narrow]) .panels.right.open {
@@ -1124,12 +1126,12 @@
   }
 
   :global([data-drawer][data-narrow]) .document.open {
-    transform: translateX(100%);
+    transform: translateX(calc(var(--dir) * 100%));
   }
 
   :global([data-drawer][data-narrow]) .document.open,
   :global([data-drawer][data-narrow]) .document.dragging {
-    box-shadow: -16px 0 40px rgb(0 0 0 / 0.3);
+    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / 0.3);
   }
 
   :global([data-drawer][data-narrow]) .document.dragging {

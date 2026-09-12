@@ -274,7 +274,7 @@
     /* Under the clock and battery, and clear of a cutout on the side a tablet
        held sideways puts it. */
     padding-top: var(--inset-top);
-    padding-right: var(--inset-right);
+    padding-inline-end: var(--inset-end);
   }
 
   /* The note's name is titled the way the space's name is over the list beside

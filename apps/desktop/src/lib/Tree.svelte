@@ -1039,7 +1039,7 @@
      this component knowing which kind of screen it is on. The outline's rows and
      the tag tree's are indented the same way. */
   .row {
-    padding-left: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
+    padding-inline-start: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
   }
 
   /* What a row holds, said at the far end of it rather than in front of the name.

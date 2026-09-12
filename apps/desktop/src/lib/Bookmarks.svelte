@@ -366,7 +366,7 @@
     min-height: var(--row-height-sm);
     display: flex;
     align-items: center;
-    padding-left: calc(var(--space-1) + var(--level, 0) * var(--row-indent));
+    padding-inline-start: calc(var(--space-1) + var(--level, 0) * var(--row-indent));
     border: none;
     border-radius: var(--radius-row);
     background: none;
@@ -390,7 +390,7 @@
     position: relative;
     flex: 1;
     min-width: 0;
-    padding-left: calc(var(--level, 0) * var(--row-indent) + var(--lead));
+    padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
 
   .row.nested {

@@ -34,7 +34,7 @@
     flex: none;
     display: grid;
     place-items: center;
-    margin-left: var(--space-1);
+    margin-inline-start: var(--space-1);
     color: var(--muted);
   }
 

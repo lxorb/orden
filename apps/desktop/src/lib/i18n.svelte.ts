@@ -1,6 +1,6 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
 import { setChartLocale } from '@nib/markdown/chart'
-import { directionOf } from './direction'
+import { type Direction, directionOf, factorOf, isolated } from './direction'
 import { keep } from './stored'
 
 /** The English string is its own key. A language that has not translated
@@ -254,12 +254,21 @@ function pick(count: number, locale: string, forms: Forms): string {
  *
  *  Only what was handed over: every object inherits `toString` and
  *  `constructor`, and reading a placeholder off the prototype would put the
- *  source of a function on screen. */
-function fill(text: string, values?: Record<string, string | number>): string {
+ *  source of a function on screen.
+ *
+ *  Each value is isolated where it reads the other way from the sentence around
+ *  it - a note's name, a folder, an address - so its own punctuation stays with
+ *  it; see `isolated` in direction.ts. A value in the sentence's own direction is
+ *  put in exactly as it came. */
+function fill(
+  text: string,
+  values: Record<string, string | number> | undefined,
+  direction: Direction,
+): string {
   if (!values) return text
 
   return text.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    Object.hasOwn(values, name) ? String(values[name]) : whole,
+    Object.hasOwn(values, name) ? isolated(String(values[name]), direction) : whole,
   )
 }
 
@@ -275,6 +284,15 @@ class I18n {
    *  language rather than the system's, so somebody reading a German app on an
    *  English machine reads German dates. */
   readonly language = $derived(this.choice === 'system' ? systemCatalogue() : this.choice)
+
+  /** Which way the interface reads, which is a fact about its language. The same
+   *  answer as the `dir` on the root element, for a component that would rather
+   *  ask a store than the document; see direction.ts. */
+  readonly direction = $derived(directionOf(this.language))
+
+  /** 1 where a line runs to the right and -1 where it runs to the left: what a
+   *  component doing its own arithmetic multiplies a sideways movement by. */
+  readonly factor = $derived(factorOf(this.direction))
 
   /** Whether what is on screen was written in one pass and never read through.
    *  The setting says so under the row, with somewhere to send a correction. */
@@ -329,7 +347,7 @@ class I18n {
   /** Translates one string, filling in `{name}` placeholders. */
   t(text: string, values?: Record<string, string | number>): string {
     const found = this.catalogue[text]
-    return fill(typeof found === 'string' ? found : text, values)
+    return fill(typeof found === 'string' ? found : text, values, this.direction)
   }
 
   /** One of the forms a count wants, in the language's own shape: English has
@@ -347,7 +365,7 @@ class I18n {
           ? pick(count, this.language, found)
           : pick(count, 'en', forms)
 
-    return fill(translated || forms.other, { count, ...values })
+    return fill(translated || forms.other, { count, ...values }, this.direction)
   }
 
   /** A date, a time, or both, in the app's language. */

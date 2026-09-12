@@ -71,7 +71,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition:
       background var(--dur-instant) var(--ease-out),

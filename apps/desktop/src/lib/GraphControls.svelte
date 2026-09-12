@@ -291,7 +291,7 @@
      right on a phone and the tab strip is along the top. */
   .corner {
     position: absolute;
-    left: var(--space-2);
+    inset-inline-start: var(--space-2);
     bottom: calc(var(--space-2) + var(--inset-bottom));
     z-index: 6;
     display: flex;

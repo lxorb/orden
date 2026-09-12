@@ -187,7 +187,7 @@
           disabled={share.busy}
           transition:scale={{ duration: dur(130), start: 0.6 }}
         >
-          <svg viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
+          <svg class="nib-mirror" viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
         </button>
       {/if}
     </form>
@@ -489,7 +489,7 @@
   /* The owner, whose role is the space rather than a choice. */
   .fixed {
     flex: none;
-    padding-right: var(--space-1);
+    padding-inline-end: var(--space-1);
     color: var(--muted);
   }
 
@@ -515,7 +515,7 @@
     flex: none;
     width: 6px;
     height: 6px;
-    margin-right: auto;
+    margin-inline-end: auto;
     border-radius: 50%;
     background: var(--line-strong);
     transition: background var(--dur-base) var(--ease-out);

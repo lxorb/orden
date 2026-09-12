@@ -11,6 +11,7 @@
  *  handle is on its left, where dragging left makes it wider. */
 
 import type { PanelSide } from './workspace.svelte'
+import { readingFactor } from './direction'
 import { forget, isNumber, keep, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
@@ -61,9 +62,11 @@ export class SidebarWidth {
   }
 
   /** Which way the edge goes: the right side's handle is on its left, so a drag
-   *  to the left makes it wider. */
+   *  to the left makes it wider. And under an interface that reads right to left
+   *  the two panels have swapped ends of the window, so both answers swap with
+   *  them: the same drag has to widen the panel it is on either way. */
   private get towards(): number {
-    return this.side === 'right' ? -1 : 1
+    return (this.side === 'right' ? -1 : 1) * readingFactor()
   }
 
   /** True while a finger or pointer is on the edge, so the panel can turn its

@@ -293,7 +293,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
   }
 
@@ -342,7 +342,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: 550;
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }

@@ -42,3 +42,49 @@ export function directionOf(language: string): Direction {
 export function factorOf(direction: Direction): number {
   return direction === 'rtl' ? -1 : 1
 }
+
+/** Which way the interface is reading right now, off the root element - which is
+ *  where `i18n.load` writes it and where every mirroring rule reads it.
+ *
+ *  For the handful of places that measure the screen themselves and cannot be
+ *  told by a stylesheet: the drawer's swipe, the sidebar's resize edge, the
+ *  overlay scrollbar, a table's column drag. A component with a store to hand
+ *  reads `i18n.direction` instead, which is the same answer and reactive. */
+export function reading(): Direction {
+  if (typeof document === 'undefined') return 'ltr'
+  return document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr'
+}
+
+/** The factor for whichever way the interface is reading now. */
+export function readingFactor(): number {
+  return factorOf(reading())
+}
+
+/** Letters read right to left: Hebrew, Arabic, Syriac, Thaana, N'Ko, Samaritan
+ *  and the Arabic presentation forms. Enough to recognise a name written in one
+ *  of them, which is all the rule below asks of it. */
+const RIGHT_TO_LEFT_LETTER =
+  /[\u0590-\u05ff\u0600-\u07bf\u0860-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/
+/** Letters read left to right. Latin, Greek and Cyrillic cover what a name in an
+ *  Arabic interface is actually written in. */
+const LEFT_TO_RIGHT_LETTER = /[A-Za-z\u00c0-\u02af\u0370-\u052f]/
+
+/** One name, count or path put into a sentence, kept to itself.
+ *
+ *  A sentence carries the direction of the language it is written in; a name in
+ *  it may be written in the other one. Left alone, the algorithm that lays out
+ *  mixed text hands the name's own punctuation to the sentence, so a note called
+ *  `khutta.md` in an Arabic sentence shows its `.md` at the wrong end of the name,
+ *  and a bracket or a slash around a Latin path jumps to the other side of it.
+ *
+ *  This is `<bdi>` for a string, for the sentences that are text rather than
+ *  markup: `U+2068 FIRST STRONG ISOLATE` says "this run reads whichever way its
+ *  own first letter reads, and nothing inside it reaches out", and `U+2069 POP
+ *  DIRECTIONAL ISOLATE` ends it. Where the value already reads the way the
+ *  sentence does there is nothing to isolate and nothing is added, so an English
+ *  string in an English interface comes out exactly as it was written. */
+export function isolated(value: string, direction: Direction): string {
+  const otherWay =
+    direction === 'rtl' ? LEFT_TO_RIGHT_LETTER.test(value) : RIGHT_TO_LEFT_LETTER.test(value)
+  return otherWay ? `\u2068${value}\u2069` : value
+}

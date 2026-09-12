@@ -349,7 +349,7 @@
      and lands at the right of the line it wraps onto. */
   .acts {
     flex: none;
-    margin-left: auto;
+    margin-inline-start: auto;
     display: flex;
     align-items: center;
     gap: var(--space-1);
@@ -365,18 +365,18 @@
      the mark in front and the flags behind take out of it. The right-hand room
      is only taken where there are flags to take it. */
   .query {
-    padding-left: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
+    padding-inline-start: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
   }
 
   /* Room for exactly three flags. Worked out from the flag's own size, so it
      comes out right at both scales without the bar knowing which it is on. */
   .query.flagged {
-    padding-right: calc((var(--row-height) - 6px) * 3 + var(--space-3));
+    padding-inline-end: calc((var(--row-height) - 6px) * 3 + var(--space-3));
   }
 
   .mag {
     position: absolute;
-    left: var(--row-pad);
+    inset-inline-start: var(--row-pad);
     top: 50%;
     transform: translateY(-50%);
     /* Stroked rather than filled, like every other mark drawn from a path in
@@ -394,7 +394,7 @@
   .inside {
     position: absolute;
     top: 50%;
-    right: 3px;
+    inset-inline-end: 3px;
     transform: translateY(-50%);
     display: flex;
     align-items: center;

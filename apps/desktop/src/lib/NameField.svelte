@@ -227,7 +227,7 @@
   .reason {
     position: absolute;
     top: calc(100% + 4px);
-    left: 0;
+    inset-inline-start: 0;
     z-index: 6;
   }
 </style>

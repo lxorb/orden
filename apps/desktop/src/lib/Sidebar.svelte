@@ -805,7 +805,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid var(--line);
+    border-inline-end: 1px solid var(--line);
     background: var(--side-bar-bg-color);
   }
 
@@ -813,8 +813,8 @@
      is the other edge. Nothing else about the panel changes: it is the same
      column of the same rows, which is the whole point of one component. */
   aside.right {
-    border-right: 0;
-    border-left: 1px solid var(--line);
+    border-inline-end: 0;
+    border-inline-start: 1px solid var(--line);
   }
 
   /* Wider than the line it sits on, so it can be caught, and drawn only while
@@ -823,7 +823,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    right: -4px;
+    inset-inline-end: -4px;
     width: 8px;
     z-index: 2;
     cursor: col-resize;
@@ -832,13 +832,13 @@
   /* The right side's handle faces the note too, which is its left edge. Both
      the strip and the hairline inside it go over. */
   aside.right .edge {
-    right: auto;
-    left: -4px;
+    inset-inline-end: auto;
+    inset-inline-start: -4px;
   }
 
   aside.right .edge::after {
-    left: auto;
-    right: 3px;
+    inset-inline-start: auto;
+    inset-inline-end: 3px;
   }
 
   .edge::after {
@@ -846,7 +846,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 3px;
+    inset-inline-start: 3px;
     width: 2px;
     background: transparent;
     transition: background var(--dur-fast) var(--ease-out);
@@ -1004,7 +1004,7 @@
      numbers in the markup. The tree is indented the same way. */
   .heading {
     position: relative;
-    padding-left: calc(var(--row-pad) + var(--level) * var(--row-indent));
+    padding-inline-start: calc(var(--row-pad) + var(--level) * var(--row-indent));
     opacity: calc(1 - var(--level) * 0.09);
     transition: transform var(--dur-fast) var(--ease-out);
   }
@@ -1050,7 +1050,7 @@
      would stick to whatever was tapped last. */
   @media (hover: hover) {
     .heading:hover {
-      transform: translateX(2px);
+      transform: translateX(calc(var(--dir) * 2px));
     }
   }
 
@@ -1157,7 +1157,7 @@
   @keyframes dock {
     from {
       opacity: 0;
-      transform: translateX(-12px);
+      transform: translateX(calc(var(--dir) * -12px));
     }
   }
 

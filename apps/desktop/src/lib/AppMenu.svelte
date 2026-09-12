@@ -180,8 +180,11 @@
     return {
       duration: dur(220),
       easing: cubicOut,
+      // Out of the corner it hangs from, which is the corner the words start in:
+      // `--dir` turns the sideways half of the movement round, and the origin is
+      // stated as a logical corner for the same reason.
       css: (t: number) =>
-        `opacity: ${t}; transform: translate(${(t - 1) * 6}px, ${(t - 1) * 6}px) scale(${0.96 + 0.04 * t}); transform-origin: top left`,
+        `opacity: ${t}; transform: translate(calc(var(--dir) * ${(t - 1) * 6}px), ${(t - 1) * 6}px) scale(${0.96 + 0.04 * t}); transform-origin: top var(--dir-start)`,
     }
   }
 
@@ -268,7 +271,7 @@
             onclick={leave}
           >
             <span class="tick" aria-hidden="true">
-              <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+              <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
             </span>
             <span class="nib-row-label">{into}</span>
           </button>
@@ -296,7 +299,7 @@
               <span class="tick"></span>
               <span class="nib-row-label">{leads.label}</span>
               <span class="more" aria-hidden="true">
-                <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+                <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
               </span>
             </button>
           </li>
@@ -370,7 +373,7 @@
   .menu {
     position: fixed;
     top: calc(var(--titlebar-height) + var(--space-1));
-    left: var(--space-2);
+    inset-inline-start: var(--space-2);
     z-index: 45;
     display: flex;
     max-height: 78vh;
@@ -387,7 +390,7 @@
   .groups {
     flex: none;
     width: 8.5rem;
-    border-right: 1px solid var(--line);
+    border-inline-end: 1px solid var(--line);
   }
 
   .rows {
@@ -512,7 +515,7 @@
     flex-wrap: wrap;
     gap: var(--space-1);
     padding: var(--space-2) var(--space-4) var(--space-3);
-    border-right: none;
+    border-inline-end: none;
     border-bottom: 1px solid var(--line);
     overflow: visible;
   }
@@ -550,7 +553,7 @@
   :global([data-touch]) .phone .tick {
     order: 2;
     width: auto;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   /* The way back keeps its chevron in front of the words, where a back button
@@ -558,7 +561,7 @@
   :global([data-touch]) .phone .back .tick {
     order: 0;
     width: 0.9em;
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 
   :global([data-touch]) .phone .hint {

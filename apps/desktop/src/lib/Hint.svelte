@@ -125,7 +125,7 @@
   .sentence {
     position: absolute;
     top: calc(100% + 6px);
-    left: -8px;
+    inset-inline-start: -8px;
     z-index: 6;
   }
 

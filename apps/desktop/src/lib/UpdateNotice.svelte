@@ -31,7 +31,7 @@
 <style>
   .notice {
     position: fixed;
-    right: max(var(--space-4), var(--inset-right));
+    inset-inline-end: max(var(--space-4), var(--inset-end));
     bottom: calc(var(--space-4) + var(--inset-bottom));
     z-index: 40;
     max-width: 22rem;
@@ -71,8 +71,8 @@
   /* A phone has no room beside the text, so the buttons go under it and the
      whole thing spans the screen. */
   :global([data-touch]) .notice {
-    left: max(var(--space-3), var(--inset-left));
-    right: max(var(--space-3), var(--inset-right));
+    inset-inline-start: max(var(--space-3), var(--inset-start));
+    inset-inline-end: max(var(--space-3), var(--inset-end));
     max-width: none;
     flex-direction: column;
     align-items: stretch;

@@ -152,7 +152,7 @@
   /* The tally, in the two colours the rows wear. */
   ins,
   del {
-    margin-right: var(--space-2);
+    margin-inline-end: var(--space-2);
     text-decoration: none;
   }
 

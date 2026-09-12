@@ -797,14 +797,20 @@ export class TableView {
   }
 
   /** Drags the boundary between two columns. Width lives on the header cell,
-   *  and the rest of the column follows because the table is laid out from it. */
+   *  and the rest of the column follows because the table is laid out from it.
+   *
+   *  The handle sits on the column's own end edge, which is its left in a note
+   *  that reads right to left, so there a drag to the left is the one that makes
+   *  the column wider. The note's direction is read once, at the press: a note
+   *  cannot turn round half way through a drag. */
   private startResize(event: MouseEvent, header: HTMLTableCellElement, column: number) {
     event.preventDefault()
     const startX = event.clientX
     const startWidth = header.getBoundingClientRect().width
+    const factor = getComputedStyle(header).direction === 'rtl' ? -1 : 1
 
     const move = (moved: MouseEvent) => {
-      const width = Math.max(48, startWidth + (moved.clientX - startX))
+      const width = Math.max(48, startWidth + (moved.clientX - startX) * factor)
       this.widths[column] = width
       header.style.width = `${width}px`
     }

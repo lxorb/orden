@@ -114,14 +114,14 @@
      is what the fold chevron backs out by. See --line-inset under Folding. */
   --line-inset: calc(1.15em + 2px);
 
-  border-left: 2px solid var(--blockquote-border-color);
-  padding-left: 1.15em;
+  border-inline-start: 2px solid var(--blockquote-border-color);
+  padding-inline-start: 1.15em;
   color: var(--muted-strong);
   transition: border-color var(--dur-base) var(--ease-out);
 }
 
 .cm-line.nib-quote:hover {
-  border-left-color: var(--accent);
+  border-inline-start-color: var(--accent);
 }
 
 /* ── Code ────────────────────────────────────────────────────────── */
@@ -334,8 +334,8 @@
 .nib-fence-row {
   position: absolute;
   top: 6px;
-  left: var(--line-inset, var(--space-4));
-  right: var(--space-3);
+  inset-inline-start: var(--line-inset, var(--space-4));
+  inset-inline-end: var(--space-3);
   height: 1.62em;
   display: flex;
   align-items: center;
@@ -439,7 +439,7 @@
      caption clear them too: one name for the distance, read by all three. */
   --line-inset: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
 
-  padding-left: var(--line-inset);
+  padding-inline-start: var(--line-inset);
 }
 
 .nib-line-numbers .cm-line.nib-code[data-code-number]::before {
@@ -447,12 +447,12 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: var(--space-3);
+  inset-inline-start: var(--space-3);
   width: var(--code-number-width);
-  padding-right: var(--code-number-gap);
-  border-right: 1px solid var(--code-number-rule);
+  padding-inline-end: var(--code-number-gap);
+  border-inline-end: 1px solid var(--code-number-rule);
   color: var(--code-number-color);
-  text-align: right;
+  text-align: end;
   /* A count of the code rather than part of it: nothing here is text of the
      document, so nothing selects it, copies it or takes a click meant for the
      line beside it. */
@@ -603,7 +603,7 @@
 /* Pushes the buttons to the far edge, and stays put whether or not there is a
    word to its left. */
 .nib-run-time {
-  margin-right: auto;
+  margin-inline-end: auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -686,7 +686,7 @@
 
 /* The one line that is a value rather than something the code said. */
 .nib-run-tag {
-  margin-right: var(--space-2);
+  margin-inline-end: var(--space-2);
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   letter-spacing: 0.04em;
@@ -705,7 +705,7 @@
 /* ── Lists ───────────────────────────────────────────────────────── */
 
 .cm-line.nib-li {
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
   text-indent: -1.5em;
 }
 
@@ -725,7 +725,7 @@
 .nib-bullet::before {
   content: '';
   position: absolute;
-  left: 0.16em;
+  inset-inline-start: 0.16em;
   top: 50%;
   width: 5px;
   height: 5px;
@@ -788,7 +788,7 @@
 .nib-checkbox:checked::after {
   content: '';
   position: absolute;
-  left: 4px;
+  inset-inline-start: 4px;
   top: 0.5px;
   width: 4px;
   height: 8px;
@@ -871,9 +871,9 @@
    nearly fits the column should not fold for the sake of an inset. Wider
    than that and it scrolls. */
 .nib-table-scroll {
-  margin-left: -40px;
-  margin-right: calc(-1 * var(--space-5));
-  padding-left: 40px;
+  margin-inline-start: -40px;
+  margin-inline-end: calc(-1 * var(--space-5));
+  padding-inline-start: 40px;
   overflow-x: auto;
 }
 
@@ -903,7 +903,7 @@
   border: 1px solid var(--table-border-color);
   padding: 0.44em 0.7em;
   min-width: 3.5em;
-  text-align: left;
+  text-align: start;
   vertical-align: top;
   word-break: normal;
   overflow-wrap: normal;
@@ -987,6 +987,11 @@
 .nib-table-columns {
   position: absolute;
   top: 0;
+  /* Physical on purpose: the bar is put over whichever header cell is being
+     worked on, measured in pixels from the left of the table's own box - and the
+     browser has already laid the cells out the way the note reads, so the
+     measurement mirrors itself. See `showColumnBar` in
+     packages/editor/src/table/view.ts. */
   left: 0;
   display: flex;
   padding-bottom: 3px;
@@ -1003,12 +1008,12 @@
    into the first cell and sit on its text. */
 .nib-table-grip {
   position: absolute;
-  right: 100%;
+  inset-inline-end: 100%;
   top: 50%;
-  margin-right: 4px;
+  margin-inline-end: 4px;
   display: grid;
   grid-template-columns: repeat(2, 17px);
-  transform: translate(4px, -50%);
+  transform: translate(calc(var(--dir) * 4px), -50%);
 }
 
 .nib-table tr:hover .nib-table-grip,
@@ -1066,7 +1071,7 @@
 .nib-table-resize {
   position: absolute;
   top: 0;
-  right: -3px;
+  inset-inline-end: -3px;
   width: 7px;
   height: 100%;
   cursor: col-resize;
@@ -1076,14 +1081,14 @@
 /* Kept inside the last cell: a handle past the table's edge is overflow,
    and overflow is a scrollbar under every table. */
 .nib-table th:last-child .nib-table-resize {
-  right: 0;
+  inset-inline-end: 0;
 }
 
 .nib-table-resize::after {
   content: '';
   position: absolute;
   top: 0;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 2px;
   height: 100%;
   background: var(--accent);
@@ -1298,8 +1303,8 @@
 /* What a row says about itself beyond its name: the emoji a shortcode stands
    for, the folder a note lives in. */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail {
-  margin-left: auto;
-  padding-left: var(--space-3);
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-3);
   color: var(--muted);
   font-style: normal;
   font-size: 0.95em;
@@ -1311,7 +1316,7 @@
 .nib-toc {
   display: block;
   padding: 1.6em 0 1.6em 1.15em;
-  border-left: 2px solid var(--line);
+  border-inline-start: 2px solid var(--line);
   font-family: var(--font-ui);
   font-size: 0.94em;
   animation: settle-in var(--dur-base) var(--ease-out);
@@ -1331,7 +1336,7 @@
 
 .nib-toc a:hover {
   color: var(--accent);
-  transform: translateX(2px);
+  transform: translateX(calc(var(--dir) * 2px));
 }
 
 .nib-toc-empty::before {
@@ -1429,7 +1434,7 @@
 
 .nib-math-number {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
@@ -1468,7 +1473,7 @@
   font-family: var(--font-mono);
   font-size: 0.82em;
   color: var(--danger);
-  text-align: left;
+  text-align: start;
 }
 
 @keyframes settle-in {
@@ -1492,8 +1497,8 @@
     linear-gradient(var(--line-strong), var(--line-strong)) 0 0 / 2px 100% no-repeat,
     var(--surface);
   background-origin: border-box;
-  border-left: calc(var(--space-4) + 2px) solid transparent;
-  border-right: var(--space-4) solid transparent;
+  border-inline-start: calc(var(--space-4) + 2px) solid transparent;
+  border-inline-end: var(--space-4) solid transparent;
   padding: 0;
 }
 
@@ -1504,7 +1509,7 @@
 
 /* A definition sits under its term, indented the way it renders. */
 .cm-line.nib-definition {
-  padding-left: 1.6em;
+  padding-inline-start: 1.6em;
   color: var(--muted-strong);
 }
 
@@ -1538,7 +1543,7 @@
 .nib-fold-hinge {
   position: absolute;
   top: 50%;
-  right: calc(var(--space-2) + var(--line-inset, 0px));
+  inset-inline-end: calc(var(--space-2) + var(--line-inset, 0px));
   /* A button does not inherit the text's font, and `--line-inset` is measured in
      the line's own em and ch: without this the chevron of a quote and of a
      numbered fence backed out by a few pixels less than their text came in. */
@@ -1600,7 +1605,7 @@
     /* A narrower gap than a pointer's, so the whole of a thumb's target fits in
        the gutter beside the block rather than being clipped at the edge of the
        screen. It still stands clear of the block, which is the rule. */
-    right: calc(var(--space-1) + var(--line-inset, 0px));
+    inset-inline-end: calc(var(--space-1) + var(--line-inset, 0px));
     width: var(--touch-indent);
     height: var(--touch-target);
     margin-top: calc(var(--touch-target) / -2);
@@ -1624,7 +1629,7 @@
   display: inline-block;
   padding: 0 0.45em;
   border-radius: var(--radius-sm);
-  margin-left: 0.45em;
+  margin-inline-start: 0.45em;
   background: var(--surface-2);
   color: var(--muted);
   cursor: pointer;
@@ -1682,7 +1687,7 @@
 .nib-block-handle {
   position: absolute;
   top: 50%;
-  right: calc(var(--space-5) + var(--line-inset, 0px));
+  inset-inline-end: calc(var(--space-5) + var(--line-inset, 0px));
   display: flex;
   width: 15px;
   height: 19px;
@@ -1760,9 +1765,9 @@
    no look at all keeps the quote's own grey bar, which is what an unknown type
    should read as until somebody styles it. */
 .cm-line.nib-callout {
-  border-left-color: var(--callout-accent, var(--blockquote-border-color));
+  border-inline-start-color: var(--callout-accent, var(--blockquote-border-color));
   background: color-mix(in srgb, var(--callout-accent, transparent) 7%, transparent);
-  padding-right: var(--space-3);
+  padding-inline-end: var(--space-3);
 }
 
 .cm-line.nib-callout-note {
@@ -1965,6 +1970,12 @@
     transform var(--dur-base) var(--ease-spring);
 }
 
+/* The four corners are compass points rather than reading sides, and they stay
+   physical under a mirrored interface: the cursor a corner wears and the sign the
+   drag arithmetic multiplies by are both stated per corner, and turning the
+   corners round without turning the pointer maths round would make a picture
+   shrink as it was pulled open. See the resize in
+   packages/editor/src/live-preview/image/widget.ts. */
 .nib-image-handle[data-corner='nw'] {
   top: -5px;
   left: -5px;
@@ -2273,7 +2284,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   letter-spacing: 0.02em;
-  text-align: left;
+  text-align: start;
   cursor: default;
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -2347,7 +2358,7 @@
   color: var(--fg);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  text-align: left;
+  text-align: start;
   cursor: default;
   transition:
     background var(--dur-fast) var(--ease-out),

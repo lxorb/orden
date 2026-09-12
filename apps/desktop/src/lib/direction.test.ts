@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { directionOf, factorOf, RIGHT_TO_LEFT } from './direction'
+import { directionOf, factorOf, isolated, RIGHT_TO_LEFT } from './direction'
 import { LANGUAGES } from './i18n.svelte'
 
 describe('which way a language reads', () => {
@@ -32,6 +32,24 @@ describe('which way a language reads', () => {
   test('every language named here is a language the app has', () => {
     const known = new Set(LANGUAGES.map((language) => language.id))
     for (const id of RIGHT_TO_LEFT) expect(known.has(id)).toBe(true)
+  })
+})
+
+describe('a name inside a sentence', () => {
+  const FSI = '\u2068'
+  const PDI = '\u2069'
+  const arabic = 'خطة'
+
+  test('a name the other way round is wrapped in an isolate', () => {
+    expect(isolated(arabic, 'ltr')).toBe(`${FSI}${arabic}${PDI}`)
+    expect(isolated('Note.md', 'rtl')).toBe(`${FSI}Note.md${PDI}`)
+  })
+
+  test('a name that reads the sentence’s way is left exactly as it came', () => {
+    expect(isolated('Note.md', 'ltr')).toBe('Note.md')
+    expect(isolated(arabic, 'rtl')).toBe(arabic)
+    expect(isolated('', 'ltr')).toBe('')
+    expect(isolated('12', 'rtl')).toBe('12')
   })
 })
 

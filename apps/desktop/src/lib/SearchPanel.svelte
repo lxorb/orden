@@ -463,21 +463,21 @@
      What is left here is the room the mark in front and the marks behind it
      take out of it. */
   .query {
-    padding-left: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
-    transition: padding-right var(--dur-fast) var(--ease-out);
+    padding-inline-start: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
+    transition: padding-inline-end var(--dur-fast) var(--ease-out);
   }
 
   /* Room for the count and the star, taken only once there is a search to
      count or to keep. */
   .query.wide {
-    padding-right: 56px;
+    padding-inline-end: 56px;
   }
 
   /* Over the field's own left padding, so the words start where the pill's
      words did. */
   .mag {
     position: absolute;
-    left: var(--row-pad);
+    inset-inline-start: var(--row-pad);
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -486,7 +486,7 @@
   .found {
     position: absolute;
     top: 50%;
-    right: 32px;
+    inset-inline-end: 32px;
     transform: translateY(-50%);
     color: var(--muted);
     font-family: var(--font-ui);
@@ -499,7 +499,7 @@
   .star {
     position: absolute;
     top: 50%;
-    right: 5px;
+    inset-inline-end: 5px;
     transform: translateY(-50%);
     width: calc(var(--row-height) - 6px);
     height: calc(var(--row-height) - 6px);
@@ -639,7 +639,7 @@
      it sits in front of: it says which kind of answer this is, and it is not the
      answer. */
   .guess {
-    margin-right: 3px;
+    margin-inline-end: 3px;
     color: var(--muted);
   }
 
@@ -676,7 +676,7 @@
     height: var(--icon-md);
     display: grid;
     place-items: center;
-    margin-left: 4px;
+    margin-inline-start: 4px;
     padding: 0;
     border: 1px solid var(--line-strong);
     border-radius: 4px;
@@ -734,7 +734,7 @@
      count and the star need once a thumb has made them bigger, and the field's
      own size, which has to clear where iOS zooms into a focused one. */
   :global([data-touch]) .query.wide {
-    padding-right: 68px;
+    padding-inline-end: 68px;
   }
 
   :global([data-touch]) .swap,

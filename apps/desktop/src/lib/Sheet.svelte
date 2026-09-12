@@ -302,7 +302,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -405,7 +405,7 @@
      needs from this one is the bar's own padding back, so the cross sits in the
      corner rather than a gap away from it. */
   :global([data-touch]) .shut {
-    margin-right: calc(-1 * var(--space-2));
+    margin-inline-end: calc(-1 * var(--space-2));
   }
 
   :global([data-touch]) .sheet :global(.row) {

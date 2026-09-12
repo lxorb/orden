@@ -138,7 +138,7 @@
               <p>{t('In Claude, open Settings → Connectors and click Add custom connector.')}</p>
               <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}>
                 {t('Open Claude’s connectors')}
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+                <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
               </button>
             </li>
             <li>
@@ -360,7 +360,7 @@
 
   .steps li {
     position: relative;
-    padding-left: 34px;
+    padding-inline-start: 34px;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -371,7 +371,7 @@
   .steps li::before {
     content: counter(step);
     position: absolute;
-    left: 0;
+    inset-inline-start: 0;
     top: 0;
     width: 22px;
     height: 22px;
@@ -452,6 +452,7 @@
     width: 12px;
     height: 12px;
     fill: none;
+    transform: scaleX(var(--dir));
     stroke: currentColor;
     stroke-width: 1.5;
     stroke-linecap: round;
@@ -460,7 +461,7 @@
   }
 
   .chevron.open {
-    transform: rotate(90deg);
+    transform: scaleX(var(--dir)) rotate(90deg);
   }
 
   .disclosed,
@@ -468,11 +469,11 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding-left: 17px;
+    padding-inline-start: 17px;
   }
 
   .fresh {
-    padding-left: 0;
+    padding-inline-start: 0;
   }
 
   pre {
@@ -516,7 +517,7 @@
   button.quiet {
     background: none;
     color: var(--muted);
-    padding-right: 0;
+    padding-inline-end: 0;
   }
 
   @media (hover: hover) {
@@ -552,7 +553,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
   }
 

@@ -155,7 +155,7 @@
      there so somebody scrolling knows where they are without the bar. */
   .number {
     position: absolute;
-    right: 10px;
+    inset-inline-end: 10px;
     bottom: 6px;
     color: var(--muted);
     font: 11px/1 var(--font-ui, inherit);

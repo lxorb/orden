@@ -165,7 +165,7 @@
     min-height: var(--row-height);
     padding: 0 calc(var(--row-pad) - var(--space-1));
     font-size: var(--text-row);
-    text-align: left;
+    text-align: start;
   }
 
   button:focus-visible {
@@ -254,7 +254,7 @@
   .act.failed::after {
     content: '';
     position: absolute;
-    right: 2px;
+    inset-inline-end: 2px;
     bottom: 2px;
     width: 5px;
     height: 5px;

@@ -151,7 +151,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
-    text-align: right;
+    text-align: end;
   }
 
   svg {
@@ -198,7 +198,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

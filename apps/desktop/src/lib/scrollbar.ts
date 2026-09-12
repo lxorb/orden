@@ -9,6 +9,7 @@
  *  The same bar everywhere, so the note, the file list and the settings all
  *  scroll the same way. The look is in themes/base.css. */
 
+import { reading } from './direction'
 import { dur } from './motion'
 
 /** The shortest a thumb may be, so a very long note still has something a
@@ -95,8 +96,11 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
   // What hides the platform's own bar, and only where ours is.
   scroller.classList.add('nib-scrolls')
 
-  /** The bar's own box, so it is only written when it has actually moved. */
-  const box = { top: -1, height: -1, right: -1 }
+  /** The bar's own box, so it is only written when it has actually moved. `end`
+   *  is the gap on the side the lines end on, which is the right of the glass in
+   *  English and the left of it in Arabic: a reader's own scrollbar sits at the
+   *  end of the line, the way the platform's does. */
+  const box = { top: -1, height: -1, end: -1 }
   let frame = 0
   let hiding: ReturnType<typeof setTimeout> | undefined
   let easing: ReturnType<typeof setTimeout> | undefined
@@ -110,7 +114,13 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
 
     const visible = scroller.clientHeight
     const top = scroller.offsetTop
-    const right = host.clientWidth - scroller.offsetLeft - scroller.clientWidth
+    // Both gaps are physical - `offsetLeft` counts from the left of the box
+    // whichever way it reads - so which of them is the end of the line is asked
+    // once, here.
+    const end =
+      reading() === 'rtl'
+        ? scroller.offsetLeft
+        : host.clientWidth - scroller.offsetLeft - scroller.clientWidth
     const shape = thumbFor({
       content: scroller.scrollHeight,
       visible,
@@ -119,11 +129,11 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       least: LEAST,
     })
 
-    if (box.top !== top || box.height !== visible || box.right !== right) {
-      Object.assign(box, { top, height: visible, right })
+    if (box.top !== top || box.height !== visible || box.end !== end) {
+      Object.assign(box, { top, height: visible, end })
       bar.style.top = `${top}px`
       bar.style.height = `${visible}px`
-      bar.style.right = `${right}px`
+      bar.style.insetInlineEnd = `${end}px`
     }
 
     bar.classList.toggle('is-needed', !!shape)

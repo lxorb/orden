@@ -147,7 +147,7 @@
      way so it reserves nothing while modal editing is off. */
   .mode {
     position: absolute;
-    left: 0;
+    inset-inline-start: 0;
     bottom: 0;
     padding: 4px var(--space-4);
     font-family: var(--font-mono);
@@ -180,7 +180,7 @@
     transform: translateX(-50%);
     align-items: center;
     gap: var(--space-2);
-    padding-left: var(--space-3);
+    padding-inline-start: var(--space-3);
     animation: pill-in var(--dur-base) var(--ease-spring);
   }
 
@@ -252,7 +252,7 @@
      an invisible bar never reserves a strip of empty space. */
   footer {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     bottom: 0;
     display: flex;
     gap: var(--space-3);

@@ -49,14 +49,26 @@ export function isFinger(pointer: string): boolean {
   return pointer !== 'pen'
 }
 
-/** Whether a finger put down this far from the left of the screen may pull the
- *  drawer out.
+/** How far along the line a touch is: from the left of the screen where the
+ *  words run that way, and from the right where they run the other way.
+ *
+ *  Everything below it is written in reading terms rather than screen terms, so
+ *  one set of rules covers both directions and no rule mentions a side. `factor`
+ *  is 1 or -1; see direction.ts. */
+export function alongLine(x: number, factor: number): number {
+  return factor === 1 ? x : window.innerWidth - x
+}
+
+/** Whether a finger put down this far along the line may pull the drawer out.
  *
  *  A phone's screen is barely wider than a thumb, so there the whole of it is
  *  the handle: an edge-only target is a thin one to find, and nothing is drawn
  *  on a phone's note with a pen anyway. A tablet's note is a page, written and
  *  drawn on across its whole width, so only a drag beginning within the edge
- *  strip is the sidebar's, which is how tablet apps have always read. */
+ *  strip is the sidebar's, which is how tablet apps have always read.
+ *
+ *  `x` is the distance along the line from `alongLine` above, not a screen
+ *  coordinate: a mirrored interface has the strip on its other edge. */
 export function opensDrawer(x: number, edge: number, anywhere: boolean): boolean {
   return anywhere || x <= edge
 }
@@ -73,7 +85,8 @@ export const SETTLE_MAX = 380
 /** Whether the drawer should end up open.
  *
  *  `offset` is how far it has been pulled out, `width` how far it can go, and
- *  `velocity` the finger's last speed - positive when moving right. */
+ *  `velocity` the finger's last speed - positive when moving along the line, so
+ *  positive is rightwards in English and leftwards in Arabic. */
 export function settleOpen(offset: number, width: number, velocity: number): boolean {
   if (Math.abs(velocity) >= FLICK) return velocity > 0
   return offset >= width / 2

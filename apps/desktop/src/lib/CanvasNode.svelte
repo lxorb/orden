@@ -402,7 +402,7 @@
   .editor.inside {
     pointer-events: auto;
     height: auto;
-    text-align: left;
+    text-align: start;
   }
 
   /* As tall as what is in it rather than as tall as the shape, so the line being
@@ -461,7 +461,7 @@
   .card.page :global(ul),
   .card.page :global(ol) {
     margin: 0 0 6px;
-    padding-left: 1.2em;
+    padding-inline-start: 1.2em;
   }
 
   .card.page :global(img) {

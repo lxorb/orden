@@ -18,7 +18,7 @@
    page writes to the note. */
 #write .task-list-item input[type='checkbox'] {
   font-size: inherit;
-  left: -1.45em;
+  inset-inline-start: -1.45em;
   top: 0.4em;
 }
 
@@ -45,7 +45,7 @@
 }
 
 #write .toc ul ul {
-  padding-left: 1.1em;
+  padding-inline-start: 1.1em;
 }
 
 #write .toc li {

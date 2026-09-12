@@ -78,7 +78,7 @@
   .value.plain {
     border-color: transparent;
     background: none;
-    padding-left: 0;
+    padding-inline-start: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }

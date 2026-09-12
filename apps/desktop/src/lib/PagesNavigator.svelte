@@ -314,7 +314,7 @@
 
   .page .number {
     position: absolute;
-    right: 3px;
+    inset-inline-end: 3px;
     bottom: 2px;
     color: var(--muted);
     font-size: 10px;

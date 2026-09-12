@@ -355,7 +355,7 @@
     padding: var(--space-2);
     list-style: none;
     overflow-y: auto;
-    border-right: 1px solid var(--line);
+    border-inline-end: 1px solid var(--line);
   }
 
   /* The month a run of versions is in. The app's own section label, so a year of
@@ -382,7 +382,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
@@ -417,7 +417,7 @@
     font-style: normal;
     font-size: var(--text-xs);
     color: var(--muted);
-    text-align: right;
+    text-align: end;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -482,7 +482,7 @@
   }
 
   .tally {
-    margin-left: auto;
+    margin-inline-start: auto;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
@@ -498,7 +498,7 @@
   }
 
   .tally del {
-    margin-left: var(--space-2);
+    margin-inline-start: var(--space-2);
     color: var(--danger);
   }
 
@@ -531,7 +531,7 @@
   .gutter {
     flex: none;
     width: 2.5em;
-    text-align: right;
+    text-align: end;
     color: var(--muted);
     user-select: none;
   }

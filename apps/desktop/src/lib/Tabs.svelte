@@ -2,7 +2,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, menu, shareEntry, type MenuEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
@@ -172,10 +172,15 @@
   const takes = (transfer: DataTransfer | null) => isTabDrag(transfer) || isTreeDrag(transfer)
 
   /** Where in the strip the pointer is: before the tab it is over, or after it
-   *  once past the middle. The gap after the last tab is the end of the strip. */
+   *  once past the middle. The gap after the last tab is the end of the strip.
+   *
+   *  Past the middle is further along the line rather than further right: the
+   *  strip is laid out the way the interface reads, so under Arabic the half
+   *  nearer the left of the screen is the later one. */
   function placeIn(event: DragEvent & { currentTarget: HTMLElement }, at: number): number {
     const box = event.currentTarget.getBoundingClientRect()
-    return event.clientX > box.left + box.width / 2 ? at + 1 : at
+    const past = (event.clientX - (box.left + box.width / 2)) * i18n.factor
+    return past > 0 ? at + 1 : at
   }
 
   /** Marks the place between the tabs the drop would take. The pane underneath
@@ -244,7 +249,7 @@
         use:longPress={(event) =>
           walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
       >
-        <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+        <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
       </button>
       <button
         class="step"
@@ -253,7 +258,7 @@
         disabled={!walking.canGoForward}
         onclick={() => workspace.goForward(walking.id)}
       >
-        <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+        <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
       </button>
     </div>
   {/if}
@@ -502,7 +507,7 @@
     display: flex;
     align-items: center;
     flex: none;
-    padding-left: var(--space-1);
+    padding-inline-start: var(--space-1);
   }
 
   .step {
@@ -546,7 +551,7 @@
     height: var(--row-height);
     display: grid;
     place-items: center;
-    margin-left: 2px;
+    margin-inline-start: 2px;
     border-radius: var(--radius-row);
     color: var(--muted);
   }
@@ -722,11 +727,15 @@
 
   /* The name, and the whole of what a tab is as wide as. The dots and the book
      beside it keep their size; this is the part that shortens. */
+  /* A note's own name, isolated: a file called `خطة.md` in a strip that reads
+     left to right keeps its extension at its own end rather than throwing the
+     dot across the name. See .nib-row-label in base.css. */
   .label {
     min-width: 0;
     max-width: var(--tab-name);
     overflow: hidden;
     text-overflow: ellipsis;
+    unicode-bidi: isolate;
   }
 
   .tab.active .pick {
@@ -778,14 +787,14 @@
     flex: none;
     align-items: center;
     /* Overlapped by a third of themselves, which is what makes a stack. */
-    margin-right: -2px;
+    margin-inline-end: -2px;
   }
 
   .who {
     width: 5px;
     height: 5px;
     flex: none;
-    margin-right: -2px;
+    margin-inline-end: -2px;
     border-radius: 50%;
     background: var(--accent);
     /* A ring in the tab's own colour, so two dots against each other still read

@@ -143,7 +143,7 @@
     disabled={!page.back}
     onclick={() => onstep('back')}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
@@ -157,7 +157,7 @@
     disabled={!page.forward}
     onclick={() => onstep('forward')}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}

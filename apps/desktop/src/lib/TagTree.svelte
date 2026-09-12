@@ -142,7 +142,7 @@
     --lead: 2px;
     flex: 1;
     min-width: 0;
-    padding-left: calc(var(--level, 0) * var(--row-indent) + var(--lead));
+    padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
 
   .row.nested {

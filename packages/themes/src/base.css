@@ -162,8 +162,8 @@ select option {
   /* A phone has no room for a comfortable measure; the screen is the measure.
      Physical on purpose: an inset is which edge of the glass the cutout is on,
      which does not turn round with the reading direction. */
-  padding-left: max(var(--space-5), var(--inset-left));
-  padding-right: max(var(--space-5), var(--inset-right));
+  padding-inline-start: max(var(--space-5), var(--inset-start));
+  padding-inline-end: max(var(--space-5), var(--inset-end));
   font-family: var(--font-content);
   font-size: var(--text-content);
   line-height: var(--leading-content);
@@ -514,7 +514,7 @@ select option {
   font-size: var(--text-row);
   font-weight: var(--weight-row);
   line-height: 1.35;
-  text-align: left;
+  text-align: start;
   cursor: default;
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -675,6 +675,18 @@ select option {
   place-items: center;
 }
 
+/* A row's words are whatever they are named: a note called `2026-plan.md`, a
+   space called `مشروع`, a tag, an address. A name in the other direction has to
+   stay one piece inside a row that reads this way, or its own punctuation - a
+   dot, a dash, a slash, a bracket - goes to the far end of the name and the row
+   reads as a different name. Isolated, so the row places the name as one neutral
+   run and the name itself reads whichever way it is written. Every list in the
+   app is built from these two classes, so this is the one place it is said. */
+.nib-row-label,
+.nib-row-meta {
+  unicode-bidi: isolate;
+}
+
 .nib-row-label {
   flex: 1;
   min-width: 0;
@@ -694,6 +706,21 @@ select option {
 
 [data-touch] .nib-row-meta {
   font-size: var(--text-sm);
+}
+
+/* ── A mark that points along the line ──────── */
+
+/* Back, forward, a step further into a list, a link that leaves the app: marks
+   whose whole meaning is a direction along the words. Under an interface that
+   reads the other way they point the other way, and they are turned over rather
+   than drawn twice, so there is one shape per mark to keep right.
+
+   Only on a mark that points *along* a line. A tick, a cross, a chevron pointing
+   down, a magnifying glass, a clock: those say the same thing whichever way the
+   words run, and turning them over would only make them wrong-handed. See
+   apps/desktop/src/lib/direction.ts. */
+:root[dir='rtl'] .nib-mirror {
+  transform: scaleX(-1);
 }
 
 /* ── Section labels ────────────────────────── */
@@ -817,7 +844,7 @@ select option {
   content: '';
   position: absolute;
   top: 3px;
-  left: 3px;
+  inset-inline-start: 3px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -833,7 +860,7 @@ select option {
 
 .nib-switch.on::after {
   background: #fff;
-  transform: translateX(16px);
+  transform: translateX(calc(var(--dir) * 16px));
 }
 
 /* Out of anybody's hands right now: the same fade every other disabled control
@@ -854,7 +881,7 @@ select option {
 }
 
 [data-touch] .nib-switch.on::after {
-  transform: translateX(20px);
+  transform: translateX(calc(var(--dir) * 20px));
 }
 
 /* ── A button with words in it ─────────────── */
@@ -973,7 +1000,7 @@ select option {
   color: var(--text-strong);
   font-family: var(--font-ui);
   font-size: var(--text-row);
-  text-align: left;
+  text-align: start;
   cursor: default;
   transition:
     border-color var(--dur-fast) var(--ease-out),
@@ -1063,7 +1090,7 @@ select:focus-visible,
   font-weight: 400;
   line-height: 1.45;
   white-space: normal;
-  text-align: left;
+  text-align: start;
   /* Read rather than pressed, and it sits over the row it is about. */
   pointer-events: none;
 }
@@ -1132,6 +1159,11 @@ select:focus-visible,
 .nib-segmented-thumb {
   position: absolute;
   top: 0;
+  /* Physical on purpose, and one of the few: slide.ts measures the chosen half
+     with `offsetLeft` - which counts from the left edge whichever way the row
+     reads - and moves the surface there with a transform. A logical inset here
+     would put the surface's own origin on the other side under a right-to-left
+     interface and leave the measurement pointing at the wrong half. */
   left: 0;
   z-index: 0;
   border-radius: calc(var(--radius-md) - 3px);
@@ -1341,7 +1373,7 @@ select:focus-visible,
 .nib-scrollbar-thumb {
   position: absolute;
   top: 0;
-  right: 2px;
+  inset-inline-end: 2px;
   width: var(--scrollbar-thumb);
   border-radius: 99px;
   background: var(--scrollbar);
@@ -1486,7 +1518,7 @@ select:focus-visible,
 #write ul,
 #write ol {
   margin: 0 0 1.15em;
-  padding-left: 1.55em;
+  padding-inline-start: 1.55em;
 }
 
 #write li {
@@ -1505,7 +1537,7 @@ select:focus-visible,
 #write ul > li::before {
   content: '';
   position: absolute;
-  margin-left: -1em;
+  margin-inline-start: -1em;
   margin-top: 0.72em;
   width: 5px;
   height: 5px;
@@ -1536,7 +1568,7 @@ select:focus-visible,
 #write .task-list-item input[type='checkbox'] {
   appearance: none;
   position: absolute;
-  left: -1.5em;
+  inset-inline-start: -1.5em;
   top: 0.36em;
   width: 15px;
   height: 15px;
@@ -1563,7 +1595,7 @@ select:focus-visible,
 #write .task-list-item input[type='checkbox']:checked::after {
   content: '';
   position: absolute;
-  left: 4.5px;
+  inset-inline-start: 4.5px;
   top: 1px;
   width: 4px;
   height: 8px;
@@ -1593,13 +1625,13 @@ select:focus-visible,
 #write blockquote {
   margin: 1.5em 0;
   padding: 0.1em 0 0.1em 1.15em;
-  border-left: 2px solid var(--blockquote-border-color);
+  border-inline-start: 2px solid var(--blockquote-border-color);
   color: var(--muted-strong);
   transition: border-color var(--dur-base) var(--ease-out);
 }
 
 #write blockquote:hover {
-  border-left-color: var(--accent);
+  border-inline-start-color: var(--accent);
 }
 
 /* ── Tables ──────────────────────────────────────────────────────── */
@@ -1615,7 +1647,7 @@ select:focus-visible,
 #write td {
   border: 1px solid var(--table-border-color);
   padding: 0.5em 0.75em;
-  text-align: left;
+  text-align: start;
 }
 
 /* The grid is a hairline; the one rule worth reading is the one under the
@@ -1711,8 +1743,8 @@ select:focus-visible,
 }
 
 #write .toc {
-  border-left: 2px solid var(--line);
-  padding-left: 1.15em;
+  border-inline-start: 2px solid var(--line);
+  padding-inline-start: 1.15em;
   margin: 1.6em 0;
 }
 
@@ -1728,7 +1760,7 @@ select:focus-visible,
 
 #write .toc a:hover {
   color: var(--accent);
-  transform: translateX(2px);
+  transform: translateX(calc(var(--dir) * 2px));
 }
 
 /* ── Math and diagrams ───────────────────────────────────────────── */
@@ -1754,7 +1786,7 @@ select:focus-visible,
 #write .callout {
   margin: 1.5em 0;
   padding: 0.85em 1.1em;
-  border-left: 3px solid var(--callout-accent, var(--accent));
+  border-inline-start: 3px solid var(--callout-accent, var(--accent));
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: color-mix(in srgb, var(--callout-accent, var(--accent)) 8%, transparent);
 }
@@ -1798,7 +1830,7 @@ select:focus-visible,
   width: 0.9em;
   height: 0.9em;
   flex: none;
-  margin-left: -0.1em;
+  margin-inline-start: -0.1em;
   opacity: 0.75;
   transition: transform var(--dur-fast) var(--ease-out);
 }
@@ -1942,8 +1974,8 @@ select:focus-visible,
   flex-direction: column;
   gap: 1px;
   margin: var(--space-3) 0;
-  padding-left: var(--space-3);
-  border-left: 2px solid var(--line-strong);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 2px solid var(--line-strong);
 }
 
 /* The first word over a group has no room above it: the bar already says where

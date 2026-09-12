@@ -370,7 +370,7 @@
       <header class="bar">
         {#if !settings.listing}
           <button class="icon" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
-            <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+            <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
           </button>
         {/if}
 
@@ -410,7 +410,7 @@
                 >
                   <svg class="glyph" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
                   <span class="text">{item.label}</span>
-                  <svg class="chevron" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
+                  <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
                 </button>
               {/each}
             </div>
@@ -467,7 +467,7 @@
         {:else}
           <button class="setting link" onclick={() => go(hit.section)}>
             <span class="name">{hit.label}<small>{titleOf(hit.section)}</small></span>
-            <svg class="chevron" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
+            <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
           </button>
         {/if}
       {/each}
@@ -639,7 +639,7 @@
           <p class="hint caption">
             <button class="link" onclick={() => void openExternal(url)}>
               {group.caption.text}
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+              <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
             </button>
           </p>
         {:else}
@@ -1255,7 +1255,7 @@
     flex-direction: column;
     gap: 2px;
     padding: var(--space-4) var(--space-3);
-    border-right: 1px solid var(--line);
+    border-inline-end: 1px solid var(--line);
     background: var(--bg);
     overflow-y: auto;
   }
@@ -1338,7 +1338,7 @@
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -1355,6 +1355,16 @@
   .item.active {
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  /* Whatever a row is named, placed as one piece: a pane's own name is the app's
+     word, but the rows below hold an address, a folder, a font and a key, and
+     one of those in the other direction would otherwise take the row's
+     punctuation with it. See .nib-row-label in base.css. */
+  .item .text,
+  .setting .name .what,
+  .setting .value {
+    unicode-bidi: isolate;
   }
 
   .item .text {
@@ -1440,7 +1450,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
   }
 
@@ -1483,7 +1493,7 @@
   .setting .value {
     flex: none;
     width: 4.5rem;
-    text-align: right;
+    text-align: end;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
@@ -1534,7 +1544,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: var(--weight-row);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -1874,7 +1884,7 @@
 
   .words .inline {
     width: 100%;
-    text-align: left;
+    text-align: start;
     border-color: var(--line);
   }
 
@@ -1929,7 +1939,7 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: right;
+    text-align: end;
     outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
@@ -2056,7 +2066,7 @@
 
   /* Without a back button before it, the title lines up with the cards. */
   .sheet.phone .bar h1.inset {
-    padding-left: 10px;
+    padding-inline-start: 10px;
   }
 
   .sheet.phone .bar .icon {
@@ -2090,7 +2100,7 @@
   .sheet.phone nav {
     gap: 0;
     padding: var(--space-3) var(--space-4) calc(var(--space-5) + var(--touch-bottom));
-    border-right: none;
+    border-inline-end: none;
     background: none;
   }
 
@@ -2142,8 +2152,8 @@
     content: '';
     position: absolute;
     top: 0;
-    left: calc(var(--touch-pad) + var(--touch-icon) + var(--touch-gap));
-    right: 0;
+    inset-inline-start: calc(var(--touch-pad) + var(--touch-icon) + var(--touch-gap));
+    inset-inline-end: 0;
     height: 1px;
     background: var(--line);
   }
@@ -2218,8 +2228,8 @@
     content: '';
     position: absolute;
     top: 0;
-    left: var(--touch-pad);
-    right: 0;
+    inset-inline-start: var(--touch-pad);
+    inset-inline-end: 0;
     height: 1px;
     background: var(--line);
   }

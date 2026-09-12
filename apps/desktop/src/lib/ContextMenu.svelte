@@ -263,7 +263,7 @@
 
   kbd {
     flex: none;
-    margin-left: var(--space-3);
+    margin-inline-start: var(--space-3);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);

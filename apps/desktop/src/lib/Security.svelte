@@ -319,7 +319,7 @@
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: left;
+    text-align: start;
     cursor: default;
   }
 
@@ -348,7 +348,7 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    text-align: right;
+    text-align: end;
     outline: none;
     transition:
       border-color var(--dur-fast) var(--ease-out),
@@ -439,7 +439,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: var(--weight-row);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -488,7 +488,7 @@
   /* Which row is this device, said quietly beside its name rather than as a
      badge: it is a fact about the row, not a state to notice. */
   small {
-    margin-left: var(--space-2);
+    margin-inline-start: var(--space-2);
     font-size: var(--text-xs);
     color: var(--muted);
   }
@@ -545,8 +545,8 @@
     content: '';
     position: absolute;
     top: 0;
-    left: var(--touch-pad);
-    right: 0;
+    inset-inline-start: var(--touch-pad);
+    inset-inline-end: 0;
     height: 1px;
     background: var(--line);
   }

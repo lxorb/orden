@@ -217,8 +217,7 @@
    column rather than one line across a projector. */
 .deck .notes > * {
   max-width: 46rem;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
 
 .deck .notes > :first-child {

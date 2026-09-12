@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte'
 import {
+  alongLine,
   CLAIM,
   claimsGesture,
   isFinger,
@@ -9,6 +10,7 @@ import {
   SETTLE_MIN,
   settleOpen,
 } from './swipe'
+import { readingFactor } from './direction'
 import { fullscreen } from './fullscreen.svelte'
 import { dur } from './motion'
 import { viewport } from './viewport.svelte'
@@ -77,6 +79,11 @@ class Drawer {
     let lastX = 0
     let lastAt = 0
     let velocity = 0
+    /** 1 while the interface reads left to right and -1 while it reads the other
+     *  way, read once at the start of each gesture: a language cannot change
+     *  half way through a swipe, and reading the document on every move would be
+     *  a read in the middle of the one handler that must not do any. */
+    let factor = 1
     /** What is on the screen. A stylus reaches a webview as a touch as well as
      *  a pointer, and only the pointer says which it is, so the kind is taken
      *  from the pointer event that runs first. */
@@ -118,8 +125,15 @@ class Drawer {
       // Closed, only the edge strip opens it on a tablet, where the note is a
       // page wide enough to be written and drawn on. Open, the drag that puts
       // it away may start anywhere over the note.
+      //
+      // Measured from the edge the lines start at rather than from the left of
+      // the glass: the drawer comes out of the side the words come from, so under
+      // a right-to-left interface the strip is the other edge and the whole
+      // gesture runs the other way. `factor` is the one place that says so.
       const anywhere = viewport.device === 'phone'
-      if (!workspace.panel && !opensDrawer(touch.clientX, edge, anywhere)) return
+      factor = readingFactor()
+      if (!workspace.panel && !opensDrawer(alongLine(touch.clientX, factor), edge, anywhere))
+        return
 
       startX = touch.clientX
       startY = touch.clientY
@@ -141,7 +155,7 @@ class Drawer {
       const touch = single(event)
       if (!candidate || !touch) return
 
-      const dx = touch.clientX - startX
+      const dx = (touch.clientX - startX) * factor
       const dy = touch.clientY - startY
 
       if (!claimed) {
@@ -153,8 +167,8 @@ class Drawer {
           return
         }
         if (!claimsGesture(dx, dy)) return
-        // Closed, only a rightward pull opens it; a leftward one on the
-        // document means nothing and should be left alone.
+        // Closed, only a pull along the line opens it; one back towards the edge
+        // it came from means nothing on the document and should be left alone.
         if (!workspace.panel && dx < 0) {
           candidate = false
           this.held = false
@@ -184,7 +198,7 @@ class Drawer {
       if (!ready || !width) return
 
       const elapsed = event.timeStamp - lastAt
-      if (elapsed > 0) velocity = (touch.clientX - lastX) / elapsed
+      if (elapsed > 0) velocity = ((touch.clientX - lastX) / elapsed) * factor
       lastX = touch.clientX
       lastAt = event.timeStamp
 

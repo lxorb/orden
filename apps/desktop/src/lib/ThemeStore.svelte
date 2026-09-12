@@ -182,7 +182,7 @@
           }}
           aria-label={t('Back')}
         >
-          <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+          <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
         </button>
         <p class="title">{store.chosen.name}</p>
       {:else}
@@ -469,7 +469,7 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
     background: var(--surface-2);
-    text-align: left;
+    text-align: start;
     cursor: default;
     overflow: hidden;
     transition:

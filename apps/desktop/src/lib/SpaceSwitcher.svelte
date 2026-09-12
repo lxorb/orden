@@ -302,7 +302,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
-    text-align: left;
+    text-align: start;
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }

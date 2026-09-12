@@ -25,6 +25,7 @@
     width: 100%;
     height: 100%;
     flex: none;
+    transform: scaleX(var(--dir));
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
@@ -37,6 +38,6 @@
      Turned rather than swapped for a second drawing, so the two states are one mark
      moving; see motion.ts. */
   .turn.open {
-    transform: rotate(90deg);
+    transform: scaleX(var(--dir)) rotate(90deg);
   }
 </style>

@@ -680,7 +680,7 @@
   }
 
   .answer .name small {
-    margin-left: var(--space-2);
+    margin-inline-start: var(--space-2);
     color: var(--muted);
   }
 
@@ -700,7 +700,7 @@
   .field.wide {
     flex: 1;
     min-width: 0;
-    text-align: left;
+    text-align: start;
   }
 
   .pick {
@@ -740,7 +740,7 @@
   .dns td {
     border: 1px solid var(--line);
     padding: 5px 7px;
-    text-align: left;
+    text-align: start;
     white-space: nowrap;
   }
 

@@ -104,7 +104,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     line-height: 1.5;
-    text-align: left;
+    text-align: start;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
