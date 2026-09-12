@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -10,8 +10,8 @@ import { describe, expect, test } from 'vitest'
  *  reached by a static import from `src/main.ts` is fetched, parsed and run before a
  *  window is on screen, whether or not the reader ever uses what is in it.
  *
- *  Batch 109 measured that graph at 3.41 megabytes of built JavaScript and brought it
- *  to 1.91. Nothing in it was wrong; it was five static imports of things that are
+ *  Batch 109 measured that graph at 3.20 megabytes of built JavaScript and brought it
+ *  to 1.70. Nothing in it was wrong; it was five static imports of things that are
  *  almost never needed at once - the whole Lucide set for seven file marks, KaTeX and
  *  its chemistry pack and the emoji table for the notes that have a formula or a
  *  `:shortcode:` in them, the Vim keymap for a mode that is off, the canvas and the
@@ -128,8 +128,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,447,446 bytes over 424 files as this is written, measured on 2026-09-12, against
- *  1.91 MB of built JavaScript in the chunks `index.html` preloads - source counts
+ *  3,387,525 bytes over 423 files as this is written, measured on 2026-09-12, against
+ *  1.70 MB of built JavaScript in the chunks `index.html` preloads - source counts
  *  the comments, and this repository has a great many of them. Both ceilings are ten
  *  per cent over what was measured: close enough that a whole subsystem arriving
  *  eagerly fails here, wide enough that a fortnight of ordinary work on the shell
@@ -139,9 +139,18 @@ function holds(tail: string): boolean {
  *  `node_modules` weighs is not something this file can read - and because the
  *  libraries are where the megabytes were in the first place. Which is also why the
  *  count matters beside the bytes: every one of these modules is parsed and run before
- *  a window is on screen, and half of them are twenty lines. */
-const BUDGET = 3_790_000
-const MOST_FILES = 466
+ *  a window is on screen, and half of them are twenty lines.
+ *
+ *  The built figure beside it is what a browser actually fetches before the entry
+ *  module has run, and it is read off the build rather than from here:
+ *
+ *      pnpm exec vite build --mode production
+ *
+ *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
+ *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
+ *  bundler chunked it. Anything not in that list is behind a dynamic import. */
+const BUDGET = 3_730_000
+const MOST_FILES = 465
 
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
@@ -222,6 +231,20 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
+  })
+
+  /** The thirty-nine catalogues, which are the other side of the same bargain: one
+   *  chunk per language, fetched when a reader chooses one. Between them they are
+   *  larger than everything else this test is about, and a single static import of any
+   *  of them would put every row of every language in front of the first paint. See
+   *  src/lib/i18n.svelte.ts, which loads them. */
+  test('and no catalogue of any language', () => {
+    const catalogues = readdirSync(fileURLToPath(new URL('../src/locales/', import.meta.url)))
+    expect(catalogues.length).toBeGreaterThan(30)
+
+    for (const one of catalogues) {
+      expect(holds(`/locales/${one}`), one).toBe(false)
+    }
   })
 
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {
