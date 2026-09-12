@@ -73,6 +73,28 @@ describe('the look of things the browser also has an opinion about', () => {
       `these would diverge from the themed dropdown: ${offenders.join(', ')}`,
     ).toEqual([])
   })
+
+  /** A custom property stated in terms of itself is a cycle, and a cycle makes the
+   *  property invalid at computed-value time rather than resolving to what it
+   *  inherited. It is not "the same value, said again": it is the value gone, on that
+   *  element and on everything under it. Nothing is reported, `getComputedStyle`
+   *  answers the empty string, and every rule that reads it takes its fallback - so
+   *  it looks like it works, which is what this file is for.
+   *
+   *  `.menu` in ContextMenu.svelte restated all four `--inset-*` "for the script",
+   *  which is the one thing that never needs doing: a custom property inherits, so
+   *  the tokens' own values on the document reach every element on the page. The
+   *  script read four zeroes instead, and a phone's menu was placed clear of the
+   *  notch by nothing while the sheet's own padding fell back with it. */
+  test('no component states a custom property in terms of itself', () => {
+    const cycles = components.flatMap((one) =>
+      [...one.text.matchAll(/--([\w-]+)\s*:\s*var\(\s*--([\w-]+)\s*[,)]/g)]
+        .filter(([, named, read]) => named === read)
+        .map(([said]) => `${one.name}: ${said.trim()}`),
+    )
+
+    expect(cycles, `these resolve to nothing at all: ${cycles.join(', ')}`).toEqual([])
+  })
 })
 
 /** Every file the app and the theme package are written from, whatever its kind:

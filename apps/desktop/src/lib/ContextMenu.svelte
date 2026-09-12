@@ -32,8 +32,22 @@
     return trim([...rest, DIVIDER, ...danger])
   })
 
-  /** The safe-area insets, which CSS can see and JavaScript cannot: the
-   *  stylesheet copies them into custom properties for this to read. */
+  /** The safe-area insets, which CSS can see and JavaScript cannot: the tokens hold
+   *  them as `--inset-*` on the document, from `env()` or from what an Android
+   *  activity handed over, and a custom property inherits - so any element on the
+   *  page can be asked and this one asks the menu it is placing.
+   *
+   *  Which is why the rule below says nothing about them. It used to restate all four
+   *  on `.menu` "for the script": `--inset-top: var(--inset-top)` is a property
+   *  defined in terms of itself, and a cycle makes a custom property invalid at
+   *  computed-value time rather than resolving to what it inherited. Measured in
+   *  Chromium: with the copy there, `--inset-top` reads as the empty string, all four
+   *  of these are 0, and `.sheet .rows`' own padding - `max(var(--space-2),
+   *  var(--inset-left))` - is not the 8px it names but 0, because a declaration built
+   *  on an invalid property is invalid too and padding falls to its initial value.
+   *  Without it: 24 and 16 for a notch that deep, and 16px of padding. So a phone's
+   *  menu was placed clear of the notch by nought and its sheet had no side padding at
+   *  all, on the one kind of screen that has either. */
   function insets(node: HTMLElement) {
     const style = getComputedStyle(node)
     const px = (name: string) => parseFloat(style.getPropertyValue(name)) || 0
@@ -227,11 +241,6 @@
     min-width: 11rem;
     padding: var(--space-1);
     transform-origin: top left;
-    /* Copied here for the script, which places the callout. */
-    --inset-top: var(--inset-top);
-    --inset-right: var(--inset-right);
-    --inset-bottom: var(--inset-bottom);
-    --inset-left: var(--inset-left);
   }
 
   /* The rows are `.nib-row`, the same row every list in the app is made of; a
