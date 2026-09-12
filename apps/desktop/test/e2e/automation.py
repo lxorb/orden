@@ -97,6 +97,13 @@ STATE = """
 
 failures: list[str] = []
 
+# What the browser says about the app's policy rather than about the app. The policy
+# is delivered as a `<meta>` in the page because the web app has no server of ours
+# to set a header, and `frame-ancestors` is meaningless there and deliberately left
+# in for the header the installed app is served with. Chrome logs that at error
+# level on every load; see apps/desktop/src/csp.ts.
+EXPECTED = ["'frame-ancestors' is ignored when delivered via a <meta> element"]
+
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
@@ -105,6 +112,17 @@ def say(words: str) -> None:
 def wrong(what: str) -> None:
     say(f"FAILED: {what}")
     failures.append(what)
+
+
+def heard(kind: str, text: str) -> None:
+    """A line the page wrote. Anything the browser calls an error is a failure,
+    except what it says about the policy rather than about the app."""
+    if kind != "error":
+        return
+    if any(one in text for one in EXPECTED):
+        return
+
+    wrong(f"console error: {text}")
 
 
 def build() -> None:
@@ -198,12 +216,7 @@ def fresh(browser: Browser) -> Page:
     )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.on(
-        "console",
-        lambda message: wrong(f"console error: {message.text}")
-        if message.type == "error"
-        else None,
-    )
+    page.on("console", lambda message: heard(message.type, message.text))
 
     page.goto(ORIGIN, wait_until="domcontentloaded")
     ready(page, "seed")
