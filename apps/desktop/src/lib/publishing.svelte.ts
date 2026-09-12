@@ -26,6 +26,7 @@ import { theme } from './theme.svelte'
 import { account } from './account.svelte'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
+import { log } from './log'
 import { ownsRemotely } from './sharing.svelte'
 import { sync } from './sync.svelte'
 import type { Space } from './workspace.svelte'
@@ -353,6 +354,27 @@ class Publish {
         ? { subdomain: this.subdomain, note }
         : { domain: this.domain, note },
     )
+
+    if (!this.error) await this.sendDiagrams()
+  }
+
+  /** The diagrams of the space, drawn here and sent up beside the theme.
+   *
+   *  After the address rather than before it: a page whose diagram has not arrived
+   *  yet shows the fence as code, which is what it showed before this existed, and
+   *  a publish should not wait on a drawing library to say it worked. Nothing is
+   *  said on screen either way - a space with no diagram in it pays one listing,
+   *  and a space with one gets its pictures. See site-diagrams.ts. */
+  private async sendDiagrams() {
+    const id = this.spaceId
+    const root = this.space?.root
+    if (!id || !root || !account.accountToken) return
+
+    const { pushDiagrams } = await import('./site-diagrams')
+    const drawn = await pushDiagrams(account.accountToken, id, root).catch(() => null)
+    if (drawn && (drawn.sent || drawn.refused)) {
+      log('info', `site diagrams: ${drawn.sent} drawn and sent, ${drawn.refused} refused`)
+    }
   }
 
   /** What the site decides, written whole. */

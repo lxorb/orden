@@ -4,6 +4,15 @@ import type { Scheme } from './theme.svelte'
 /** Drawn with the theme's face, which the document names in its stylesheet. */
 const FONT = "'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
 
+/** And the face a diagram bound for a published page is drawn with.
+ *
+ *  Geist is left out on purpose. A picture in an `<img>` fetches nothing, so the
+ *  face named in it has to be one the reader's machine already has - and a
+ *  published page does not serve Geist either, so its own prose falls back to the
+ *  same stack. Naming a face the reader will not have would mean laying the boxes
+ *  out here against Geist and drawing the words there in something else. */
+const PAGE_FONT = "ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
+
 /** flowchart.js takes colours rather than a theme; these are the surface,
  *  line and text tokens of each scheme. */
 const FLOW = {
@@ -23,11 +32,26 @@ const FLOW = {
 
 let sequence = 0
 
+/** Whether the drawing is going into a document or into a file of its own.
+ *
+ *  A published page shows a diagram as an `<img>` pointing at an SVG the app drew
+ *  and uploaded, which is a stricter place than the middle of a document: nothing
+ *  in it may be fetched, and the only text a browser will lay out there is SVG
+ *  text. So the labels stop being HTML in a `<foreignObject>` - which is what
+ *  mermaid writes by default and what an image would show as an empty box - and
+ *  the face is one the reader is certain to have. See site-diagrams.ts. */
+export type DiagramFor = 'document' | 'page'
+
 /** A diagram fence as SVG, drawn for the scheme the document will have
  *  rather than the one on screen: a dark diagram on white paper is unreadable,
  *  and the editor only knows the screen. Both renderers are heavy, so neither
  *  loads until a note has a diagram. */
-export async function drawDiagram(code: string, language: string, scheme: Scheme): Promise<string> {
+export async function drawDiagram(
+  code: string,
+  language: string,
+  scheme: Scheme,
+  where: DiagramFor = 'document',
+): Promise<string> {
   // Not in the plugin. A diagram cannot be read on a panel of one font in one
   // size, and the two renderers that draw them are most of what the store's review
   // objected to: between them mermaid and flowchart.js brought twenty one URLs and
@@ -40,17 +64,20 @@ export async function drawDiagram(code: string, language: string, scheme: Scheme
   if (__EVEN_PLUGIN__) throw new Error('no diagrams in the Even Realities plugin')
 
   if (language === 'flow') return drawFlowchart(code, scheme)
-  return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme)
+  return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme, where)
 }
 
-async function drawMermaid(code: string, scheme: Scheme): Promise<string> {
+async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Promise<string> {
   const { default: mermaid } = await import('mermaid')
 
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
     theme: scheme === 'light' ? 'default' : 'dark',
-    fontFamily: FONT,
+    fontFamily: where === 'page' ? PAGE_FONT : FONT,
+    // Labels as SVG text rather than as HTML in a `<foreignObject>`, for a
+    // drawing that has to stand on its own in an `<img>`; see `DiagramFor`.
+    ...(where === 'page' ? { htmlLabels: false } : {}),
   })
 
   const { svg } = await mermaid.render(`nib-export-${sequence++}`, code)
