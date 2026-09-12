@@ -18,9 +18,9 @@ import { type EditorView, sharedOf } from '@nib/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
 import { without } from './records'
-import { roomKind, type RoomKind } from './rooms/kind'
-import { PlaneRoom } from './rooms/plane'
-import { Room } from './rooms/room'
+import { roomKind } from './rooms/kind'
+import type { PlaneRoom } from './rooms/plane'
+import type { Room } from './rooms/room'
 import { deviceAccent, deviceName, personName } from './rooms/who'
 import { t } from './i18n.svelte'
 import { type Scheme, theme } from './theme.svelte'
@@ -41,12 +41,29 @@ interface Open {
 
 /** One file in a room: the room, which file the room is about - so a document that
  *  has moved on to another file is noticed and rejoined - and which shape of room it
- *  is, so a file whose name crossed the two is noticed the same way. */
-interface Joined {
-  room: Room | PlaneRoom
-  noteId: string
-  note: NoteDoc
-  kind: RoomKind
+ *  is, so a file whose name crossed the two is noticed the same way.
+ *
+ *  The two shapes together, because the kind says which room this is: a plane's room
+ *  is about the objects on a surface and a note's is about one text, and only the
+ *  second of them has a caret to carry. That used to be asked with `instanceof`,
+ *  which is a question only code holding the class can ask - and the classes arrive
+ *  when the first room is joined now. The kind was already here and answers it
+ *  exactly; see `join`. */
+type Joined = { noteId: string; note: NoteDoc } & (
+  | { kind: 'words'; room: Room }
+  | { kind: 'plane'; room: PlaneRoom }
+)
+
+/** The two kinds of room, once they are here.
+ *
+ *  Collaborating costs yjs, the awareness protocol and lib0 under both of them, which
+ *  between them were a tenth of everything the window evaluated before it drew
+ *  anything - and none of it means a thing until somebody is signed in, because a room
+ *  is only ever joined for a file the account holds. So the engine arrives with the
+ *  account rather than with the app; see `reach`. */
+interface Engine {
+  Room: typeof import('./rooms/room').Room
+  PlaneRoom: typeof import('./rooms/plane').PlaneRoom
 }
 
 function hex(digest: ArrayBuffer): string {
@@ -61,6 +78,12 @@ class Rooms {
   /** How many other devices are in each open file, by document key. Where the tab
    *  gets its dots. */
   present = $state<Record<string, number>>({})
+
+  /** The engine, once it is here, and the one fetch of it. Plain fields rather than
+   *  state: nothing on the page draws either of them, and `follow` works the pairing
+   *  out again when the engine lands. */
+  private engine: Engine | null = null
+  private reaching: Promise<void> | null = null
 
   private readonly held = new Map<string, Joined>()
   /** The canvas surfaces on screen, by document key; see `drawing`. */
@@ -115,9 +138,36 @@ class Rooms {
 
     if (!token) return
 
+    // The engine comes with the account. Signing in and having a note open can be the
+    // same moment, so the first pass through here with a token fetches it and is
+    // answered by this same method when it lands - by which time nothing has changed
+    // except that the classes are in hand. Nothing is joined in the meantime, which
+    // is a file carried by the file sync exactly as it is for a note nobody else has
+    // open.
+    if (!this.engine) {
+      void this.reach()
+      return
+    }
+
     for (const [key, one] of wanted) {
       if (!this.held.has(key) && this.ready(one)) this.join(key, one, token)
     }
+  }
+
+  /** The collaboration engine, on its way, once.
+   *
+   *  Reached through `follow` above, which is the app's way of saying that somebody is
+   *  signed in and something is open - the only circumstances in which a room is ever
+   *  joined. Nothing waits for the answer: what it is for is that by the time a file
+   *  is open and tracked the classes are already here, so joining a room is as
+   *  immediate as it was when they came with the window. */
+  reach(): Promise<void> {
+    return (this.reaching ??= Promise.all([import('./rooms/room'), import('./rooms/plane')]).then(
+      ([words, planes]) => {
+        this.engine = { Room: words.Room, PlaneRoom: planes.PlaneRoom }
+        this.follow(this.open)
+      },
+    ))
   }
 
   /** A canvas surface arriving, or going.
@@ -146,7 +196,7 @@ class Rooms {
     if (!shared) return
 
     for (const joined of this.held.values()) {
-      if (joined.note.live !== shared || !(joined.room instanceof Room)) continue
+      if (joined.note.live !== shared || joined.kind !== 'words') continue
 
       const at = view.state.selection.main
       joined.room.moved(at.anchor, at.head)
@@ -194,6 +244,10 @@ class Rooms {
   }
 
   private join(key: string, open: Open, token: string) {
+    // Called from `follow`, which does not reach here until the engine has landed.
+    const engine = this.engine
+    if (!engine) return
+
     const onPeers = (count: number) => {
       this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
     }
@@ -234,7 +288,7 @@ class Rooms {
     const surface = this.planes.get(key)
     if (kind === 'plane' && surface) {
       this.held.set(key, {
-        room: new PlaneRoom({ ...shape, surface }),
+        room: new engine.PlaneRoom({ ...shape, surface }),
         noteId: open.noteId,
         note: open.note,
         kind,
@@ -245,14 +299,14 @@ class Rooms {
     // The words themselves are not handed over: the room reads them from the
     // document when it has something to compare them with, which is a round trip
     // later and may be several keystrokes later. See rooms/room.ts.
-    const room = new Room({
+    const room = new engine.Room({
       ...shape,
       note: open.note.live,
       hash: open.hash,
       digest: sha256,
     })
 
-    this.held.set(key, { room, noteId: open.noteId, note: open.note, kind })
+    this.held.set(key, { room, noteId: open.noteId, note: open.note, kind: 'words' })
   }
 }
 

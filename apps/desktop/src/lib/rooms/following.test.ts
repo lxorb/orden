@@ -14,7 +14,7 @@
  *  meeting when a room answers, and the binding between a note and a room's text.
  *  The other end of the socket is the same protocol module both ends use. */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { emptyCanvas } from '@nib/markdown/canvas'
 import { receive, syncUpdate, TEXT } from '@nib/rooms'
 import { Awareness } from 'y-protocols/awareness'
@@ -194,6 +194,17 @@ async function following(note: Doc, server: Server, hash = words(note)) {
 
   return socket
 }
+
+/** The engine, in hand before anything is timed.
+ *
+ *  The two kinds of room are fetched when the account first has something to join a
+ *  room for, and nothing in the app waits for them: `follow` starts the fetch and is
+ *  answered again when it lands. Every test below is about the pairing rather than
+ *  about that one fetch, so it is done once here - which is also the state the app is
+ *  in for all but the first moment of a session. See `reach` in rooms.svelte.ts. */
+beforeAll(async () => {
+  await rooms.reach()
+})
 
 beforeEach(() => {
   rooms.clear()
