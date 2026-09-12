@@ -2,16 +2,41 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf } from '@nib/markdown/links'
-import { type NoteIndex, noteIndex, type NoteRef, resolveNote } from './notes'
+import {
+  fuzzy,
+  type NoteIndex,
+  noteIndex,
+  type NoteRef,
+  resolveNote,
+  type SpaceBlock,
+} from './notes'
 
 /** What `[[` offers: the notes in the space, then the headings and blocks inside
- *  the one that was chosen.
+ *  the one that was chosen - or, when the space is what you want to search, every
+ *  heading and every block there is.
  *
- *  Three lists, decided by what has been typed between the brackets. Nothing
+ *  Five lists, decided by what has been typed between the brackets. Nothing
  *  before a `#` is a note; after a `#` it is a heading of that note; after a `#^`
  *  it is one of its blocks - and picking a block that has no name yet is what
  *  gives it one, which is the only thing here that writes to another note and so
- *  the only thing that goes back out through a facet. */
+ *  the only thing that goes back out through a facet.
+ *
+ *  The other two are for the link you want to write without remembering which
+ *  note it is in, which is most of them:
+ *
+ *  - `[[##` offers every heading of the space, each with the note it is in beside
+ *    it, and writes `[[Note#Heading]]`. Free, because the index already holds
+ *    every heading of every note.
+ *  - `[[^^` offers every block of the space, and writes `[[Note#^id]]`. The blocks
+ *    that already have a name come first, out of the index; the rest are found by
+ *    their own words through the app's search, which is the only thing that can
+ *    read a space without the editor reading a space. Two characters before it
+ *    asks, so a `[[^^` on its own is a list and not a query, and once it has asked
+ *    the popup filters what came back rather than asking again per keystroke.
+ *
+ *  Neither is Obsidian's; both are the same popup, the same keys and the same
+ *  brackets. A note written with one travels as `[[Note#Heading]]`, which is
+ *  Obsidian's own spelling, so nothing about the file is nib's. */
 
 /** Gives a block of another note a name and returns it, so a link can point at
  *  the block rather than at the note. Supplied by the app, which owns the file;
@@ -25,6 +50,18 @@ export const blockNamer = Facet.define<
  *  typing two or three letters, short enough that the popup is a list. */
 const MOST_SHOWN = 40
 
+/** How much has to be typed after `^^` before the space is searched. Two
+ *  characters, because one is every note in the space and the answer to it is a
+ *  list nobody can read. */
+const LEAST_SEARCHED = 2
+
+/** How long the two characters that open a space-wide list are, which is how far
+ *  back the row that is picked has to reach to take them with it. */
+const MARKER = 2
+
+/** A note's extension, which is not part of the name a link writes. */
+const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+
 /** Everything between `[[` and the caret, or null when the caret is not in a
  *  link. `]]` is not required: the link is being written. */
 function typing(context: CompletionContext) {
@@ -33,15 +70,22 @@ function typing(context: CompletionContext) {
 
 /** Puts the text in and finishes the link, so a chosen note needs no closing
  *  brackets typed after it. Whatever `]]` is already there is stepped over
- *  rather than doubled, which is what close-brackets leaves behind. */
-function insert(text: string) {
+ *  rather than doubled, which is what close-brackets leaves behind.
+ *
+ *  `back` is how many characters in front of where the popup started go with the
+ *  row: two for the `##` or `^^` that opened a space-wide list, which the link
+ *  being written must not keep. The popup starts after those characters rather
+ *  than on them so that what is typed filters on a heading's own words rather
+ *  than on the marks that asked for headings. */
+function insert(text: string, back = 0) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
+    const start = from - back
     const closed = view.state.doc.sliceString(to, to + 2) === ']]'
     const tail = closed ? '' : ']]'
-    const at = from + text.length + tail.length + (closed ? 2 : 0)
+    const at = start + text.length + tail.length + (closed ? 2 : 0)
 
     view.dispatch({
-      changes: { from, to, insert: text + tail },
+      changes: { from: start, to, insert: text + tail },
       selection: { anchor: at },
       userEvent: 'input.complete',
     })
@@ -53,7 +97,7 @@ function insert(text: string) {
  *  that is unambiguous, as Obsidian writes it. */
 function nameFor(index: NoteIndex, note: NoteRef): string {
   const same = index.notes.filter((one) => one.name.toLowerCase() === note.name.toLowerCase())
-  return same.length > 1 ? note.path.replace(/\.(md|markdown|mdown|mkd)$/i, '') : note.name
+  return same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name
 }
 
 /** A folder to read at a glance, or nothing for a note at the top of the space. */
@@ -150,18 +194,125 @@ async function blockOptions(index: NoteIndex, note: NoteRef, typed: string): Pro
 /** Picks a block that has nothing to link to yet: the app names it, and the name
  *  it gives back is what goes into the link. Nothing is written into this note
  *  until that lands, so a target that could not be written leaves no link
- *  pointing at a name nothing has. */
-function name(path: string, line: number) {
+ *  pointing at a name nothing has.
+ *
+ *  `before` is whatever the link needs in front of the name - nothing for a block
+ *  of the note already named in the link, `Note#` for one found across the space -
+ *  and `back` is what the row has to take with it; see `insert`. */
+function name(path: string, line: number, before = '', back = 0) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert(`^${id}`)(view, completion, from, to)
+        if (id) insert(`${before}^${id}`, back)(view, completion, from, to)
       })
       // Nothing to say to the writer: the link is still there to be finished by
       // hand, which is what inserting nothing leaves them with.
       .catch(() => undefined)
   }
+}
+
+/** Every heading in the space, as rows that write the whole link.
+ *
+ *  Out of the index, which already holds them: no note is read, whatever has been
+ *  typed. The note's name is the row's detail, muted beside the heading, because
+ *  the heading is what is being looked for and the note is which one it is. */
+function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
+  const needle = typed.trim().toLowerCase()
+  const rows: Completion[] = []
+
+  for (const note of index.notes) {
+    for (const heading of note.headings) {
+      if (!fuzzy(heading, needle)) continue
+
+      rows.push({
+        label: heading,
+        detail: note.name,
+        apply: insert(`${nameFor(index, note)}#${heading}`, MARKER),
+        type: 'keyword',
+      })
+      if (rows.length >= MOST_SHOWN) return rows
+    }
+  }
+
+  return rows
+}
+
+/** The blocks of the space that already answer to a name, out of the index.
+ *
+ *  First in the list, because they are the ones somebody has already made a link
+ *  to and picking one writes nothing into any note. A name is all there is to show
+ *  for one - the index holds the names and not the words around them - so these
+ *  are matched on the name itself, which is what somebody typing `a1b` means. */
+function namedBlocks(index: NoteIndex, needle: string): Completion[] {
+  const rows: Completion[] = []
+
+  for (const note of index.notes) {
+    for (const id of note.blocks) {
+      if (!fuzzy(id, needle)) continue
+
+      rows.push({
+        label: `^${id}`,
+        detail: note.name,
+        apply: insert(`${nameFor(index, note)}#^${id}`, MARKER),
+        type: 'property',
+        // Above the found ones, whatever the popup's own scores make of them.
+        boost: 1,
+      })
+      if (rows.length >= MOST_SHOWN) return rows
+    }
+  }
+
+  return rows
+}
+
+/** One block the app's search found, as a row.
+ *
+ *  The line that matched is the label, since that is what was being looked for.
+ *  A block that has a name is linked to by it; one that has not is named when it
+ *  is picked, by the app, which is the same writer the grip's Copy link uses. */
+function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
+  const note = index.notes.find((one) => one.path === block.path)
+  const target = note ? nameFor(index, note) : block.path.replace(MARKDOWN, '')
+
+  return {
+    label: block.text,
+    ...(note ? { detail: note.name } : {}),
+    apply: block.id
+      ? insert(`${target}#^${block.id}`, MARKER)
+      : name(block.path, block.line, `${target}#`, MARKER),
+    type: 'property',
+  }
+}
+
+/** Every block in the space: the named ones, and then the ones the search found
+ *  by their own words.
+ *
+ *  The search is asked once, for two or more characters, and only after the index
+ *  has given what it can. Nothing here reads a note - the app answers out of the
+ *  space's own search, which is a walk in Rust or a worker with the bodies already
+ *  in hand - and the popup filters what came back as more is typed rather than
+ *  asking again. Blocks of the note being written in are left to `[[#^`, which
+ *  offers them out of the text on the screen rather than the copy on the disk. */
+async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[]> {
+  const needle = typed.trim().toLowerCase()
+  const rows = namedBlocks(index, needle)
+  const named = new Set(rows.map((row) => row.label))
+
+  if (!index.searchBlocks || needle.length < LEAST_SEARCHED) return rows
+
+  const found = await index.searchBlocks(needle, MOST_SHOWN).catch(() => [])
+
+  for (const block of found) {
+    if (!block.text.trim()) continue
+    if (block.path === index.path) continue
+    if (block.id && named.has(`^${block.id}`)) continue
+
+    rows.push(foundBlock(index, block))
+    if (rows.length >= MOST_SHOWN) break
+  }
+
+  return rows
 }
 
 export function wikilinkCompletions(
@@ -173,6 +324,22 @@ export function wikilinkCompletions(
   const index = context.state.facet(noteIndex)
   const inner = typed.text.slice(2)
   const hash = inner.indexOf('#')
+
+  // The whole space, which is what the doubled mark asks for. The popup starts
+  // past the two characters so that what is typed matches a heading's own words,
+  // and the row that is picked takes them with it; see `insert`.
+  const across = typed.from + 2 + MARKER
+
+  if (inner.startsWith('##')) {
+    const options = spaceHeadings(index, inner.slice(MARKER))
+    return options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null
+  }
+
+  if (inner.startsWith('^^')) {
+    return spaceBlocks(index, inner.slice(MARKER)).then((options) =>
+      options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null,
+    )
+  }
 
   if (hash === -1) {
     const options = noteOptions(index, inner)

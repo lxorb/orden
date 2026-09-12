@@ -83,6 +83,8 @@ export {
   resolveRelative,
   noteIndexEffect,
   setNoteIndex,
+  type SpaceBlock,
+  type SpaceTag,
 } from './wikilink/notes'
 export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'

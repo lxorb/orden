@@ -305,6 +305,71 @@ describe('a space of two thousand notes', () => {
   })
 })
 
+describe('what the editor is told about the tags', () => {
+  test('every tag of the space, with the notes under each', async () => {
+    await space({
+      'Plan.md': '---\ntags: [work/nib]\n---\n\n# Plan\n\nwords #work/nib again\n',
+      'One.md': 'filed under #work\n',
+      'Two.md': 'and #reading\n',
+    })
+
+    expect(links.index(null).tags).toEqual([
+      // A note counts once for a tag however often it writes it, and a nested
+      // tag counts towards every level above it.
+      { tag: 'work', notes: 2 },
+      { tag: 'reading', notes: 1 },
+      { tag: 'work/nib', notes: 1 },
+    ])
+  })
+
+  test('a tag written now is offered now', async () => {
+    await space({ 'Plan.md': '# Plan\n' })
+    expect(links.index(null).tags).toEqual([])
+
+    links.noteSaved(at('Plan.md'), '# Plan\n\n#later\n')
+    expect(links.index(null).tags).toEqual([{ tag: 'later', notes: 1 }])
+  })
+})
+
+describe('the blocks the whole space holds', () => {
+  test('are found by their own words, with the name each already carries', async () => {
+    await space({
+      'Plan.md': '# Plan\n\nthe second half of it ^a1b2c3\n',
+      'One.md': '# One\n\nnothing about halves\n',
+    })
+
+    expect(await links.searchBlocks('second half', 10)).toEqual([
+      // The name is the link's, not the row's: what is shown is what the line says.
+      { path: 'Plan.md', line: 2, text: 'the second half of it', id: 'a1b2c3' },
+    ])
+  })
+
+  test('a word too short to search for finds nothing, and asks nothing', async () => {
+    await space({ 'Plan.md': '# Plan\n\na line\n' })
+
+    expect(await links.searchBlocks('a', 10)).toEqual([])
+  })
+
+  test('leave out the notes the space leaves out', async () => {
+    await space({
+      'Plan.md': '# Plan\n\nthe second half of it\n',
+      'archive/Old.md': '# Old\n\nthe second half of that\n',
+    })
+
+    const { workspace } = await import('./workspace.svelte')
+    const was = workspace.excluded.of
+    workspace.excluded.of = () => ['archive']
+
+    try {
+      expect((await links.searchBlocks('second half', 10)).map((one) => one.path)).toEqual([
+        'Plan.md',
+      ])
+    } finally {
+      workspace.excluded.of = was
+    }
+  })
+})
+
 describe('renaming a note rewrites the links to it', () => {
   test('every note that pointed at it, and no others', async () => {
     await space({

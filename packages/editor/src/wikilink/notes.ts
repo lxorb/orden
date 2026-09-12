@@ -25,6 +25,34 @@ export interface NoteRef {
   aliases: readonly string[]
 }
 
+/** One tag the space uses, and how many of its notes carry it.
+ *
+ *  The count is notes and not uses, which is what the app can answer from the
+ *  scan it already has: a note is counted once however many times it writes the
+ *  tag. `#work/nib` counts towards `work` as well, because that is what the tag
+ *  tree and the `tag:` operator both mean by a slash. */
+export interface SpaceTag {
+  /** The path, without the hash: `work/nib`. */
+  tag: string
+  notes: number
+}
+
+/** One block somewhere in the space, as a row that can be linked to.
+ *
+ *  A line rather than a whole block, because this comes back from the search and
+ *  the search answers in lines: the line is what matched, and the name a link
+ *  needs goes at the end of the block that line belongs to. */
+export interface SpaceBlock {
+  /** The note it is in, relative to the space. */
+  path: string
+  /** Which line, counting from zero, which is what the app's writer takes. */
+  line: number
+  /** The line as a row shows it: trimmed, and cut short. */
+  text: string
+  /** The name it already carries, or null for a block nothing links to yet. */
+  id: string | null
+}
+
 export interface NoteIndex {
   notes: readonly NoteRef[]
   /** Everything in the space that is not a note, relative to it: the PDF a
@@ -37,6 +65,21 @@ export interface NoteIndex {
    *  Relative to the space, like every path here. Null for a note with no home
    *  yet. */
   path: string | null
+  /** Every tag of the space, most used first, for the `#` popup. Empty where the
+   *  editor is standing on its own, which offers nothing rather than nothing
+   *  useful. Here rather than in a facet of its own because it is the same fact
+   *  the notes are - what the space holds - and it arrives and is replaced with
+   *  them; see tags.ts. */
+  tags?: readonly SpaceTag[] | undefined
+  /** Blocks anywhere in the space whose words hold `text`, at most `most` of
+   *  them: what `[[^^` offers past the blocks that already have a name.
+   *
+   *  The app's own search, which is the only thing that can answer it: a space's
+   *  bodies are on a disk or in a worker's cache, and the editor reading every
+   *  note per keystroke is the one implementation that was never allowed. Absent
+   *  where the editor stands alone, and `[[^^` then offers the named blocks the
+   *  index already knows. */
+  searchBlocks?: ((text: string, most: number) => Promise<readonly SpaceBlock[]>) | undefined
   /** The markdown of one note, by path. An embed and the hover preview draw
    *  their frame first and fill it in when this lands. */
   read: (path: string) => Promise<string | null>
@@ -138,6 +181,32 @@ export interface NoteJump {
 export const noteOpener = Facet.define<(jump: NoteJump) => void, (jump: NoteJump) => void>({
   combine: (values) => values[0] ?? (() => undefined),
 })
+
+/** Whether every character of `needle` stands in `text` in order, however far
+ *  apart: `pln` finds "The plan", `cnvs` finds `work/nib/canvas`.
+ *
+ *  One matcher, for every list that offers the space's own words rather than one
+ *  note's: the headings and blocks of the whole space behind `[[##` and `[[^^`,
+ *  and the tags behind `#`. Those are remembered as a word of themselves and not
+ *  as the characters they open with, which is what a substring match wants. The
+ *  popup's own filtering is this shape too, so a row kept here is a row it keeps
+ *  rather than one it drops again for a reason nobody can see.
+ *
+ *  `needle` is already folded; `text` is folded here. */
+export function fuzzy(text: string, needle: string): boolean {
+  if (!needle) return true
+
+  const folded = text.toLowerCase()
+  let at = 0
+
+  for (const character of needle) {
+    at = folded.indexOf(character, at)
+    if (at === -1) return false
+    at++
+  }
+
+  return true
+}
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 

@@ -20,6 +20,8 @@ import {
   resolveFile,
   resolveNote,
   resolveRelative,
+  type SpaceBlock,
+  type SpaceTag,
 } from '@nib/editor'
 import {
   blockIdOf,
@@ -29,6 +31,7 @@ import {
   isCanvasTarget,
   isTabFile,
   type LinkKind,
+  withoutBlockIds,
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
@@ -128,6 +131,42 @@ class Links {
       aliases: note.aliases,
     })),
   )
+
+  /** Every tag of the space with the notes under it, most carried first, as the
+   *  editor's `#` popup needs to see it.
+   *
+   *  Out of the same scan the links came from, which already read every note's
+   *  tags: a second walk for this would be a second walk over the whole space, and
+   *  `space_tags` counts uses where a popup wants to say how many notes a name
+   *  would file this one beside. A tag counts towards every level above it, since
+   *  `#work/nib` is a note under `work` as well - the slashes are a path, the way
+   *  the tag tree and the `tag:` operator both read them.
+   *
+   *  Derived, so it is nothing at all until something asks and is built again only
+   *  when the index has actually changed; see `refs` above for why the notes are
+   *  raw state. */
+  private readonly tagCounts = $derived.by((): SpaceTag[] => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const counts = new Map<string, number>()
+
+    for (const note of this.notes) {
+      // One note is one count per name, whatever the note wrote twice.
+      const under = new Set<string>()
+
+      for (const tag of note.tags) {
+        const parts = tag.split('/').filter(Boolean)
+        for (let depth = 1; depth <= parts.length; depth++) {
+          under.add(parts.slice(0, depth).join('/'))
+        }
+      }
+
+      for (const path of under) counts.set(path, (counts.get(path) ?? 0) + 1)
+    }
+
+    return [...counts]
+      .map(([tag, notes]) => ({ tag, notes }))
+      .sort((one, other) => other.notes - one.notes || (one.tag < other.tag ? -1 : 1))
+  })
 
   /** The whole space as a graph: a node per note, an edge per pair of notes that
    *  link to each other. The graph view reads this one, so there is no second
@@ -354,6 +393,12 @@ class Links {
       files: this.files,
       path,
       read: (wanted) => this.readNote(wanted),
+      // What the `#` popup offers, and what `[[^^` asks the space for. Both go
+      // with the rest of what the space holds rather than through a facet of
+      // their own, for the same reason the query fence does: they are the same
+      // fact, and they are replaced when it changes.
+      tags: this.tagCounts,
+      searchBlocks: (text, most) => this.searchBlocks(text, most),
       // What a ` ```query ` fence in the note answers with, and what a row in it
       // opens. Handed over with the rest of what the space holds, so a fence is
       // answered again whenever a note is saved: this object is remade then, and a
@@ -717,6 +762,51 @@ class Links {
 
     if (touched) this.changed()
     return touched
+  }
+
+  /** Blocks anywhere in the space whose words hold `text`: what the editor's
+   *  `[[^^` offers past the blocks that already carry a name.
+   *
+   *  Through `searchSpace`, which is the one road to a space's words - the
+   *  desktop's walk is behind the Rust crate and the browser's is in a worker,
+   *  with the bodies already in hand - so this costs one search and never a read
+   *  per note. Asked once per `^^`, not once per keystroke: the popup filters what
+   *  came back as more is typed. See wikilink/complete.ts in the editor.
+   *
+   *  Quoted, so a phrase of two words is one phrase; the notes the space leaves
+   *  out are left out of this too, the way they are left out of the search and the
+   *  graph. */
+  async searchBlocks(text: string, most: number): Promise<SpaceBlock[]> {
+    const root = this.root
+    const needle = text.trim()
+    if (!root || needle.length < 2) return []
+
+    const { workspace } = await import('./workspace.svelte')
+    const found: Hit[] = []
+
+    await searchSpace(
+      root,
+      parseQuery(`"${needle.replace(/(["\\])/g, '\\$1')}"`),
+      [],
+      most,
+      (batch) => found.push(...batch.hits),
+      workspace.excluded.of(root),
+    ).catch(() => undefined)
+
+    return (
+      found
+        // A paper has pages rather than blocks and nothing to write a name into.
+        .filter((hit) => hit.page === undefined)
+        .slice(0, most)
+        .map((hit) => ({
+          path: this.relative(hit.path) ?? hit.path,
+          line: hit.line,
+          // The name a block already carries is a marker and not a word of the
+          // row; the link writes it, and nothing that shows a note shows it.
+          text: withoutBlockIds(hit.text).trim(),
+          id: blockIdOf(hit.text),
+        }))
+    )
   }
 
   /** Gives a block of another note a name, so a link can point at the block.
