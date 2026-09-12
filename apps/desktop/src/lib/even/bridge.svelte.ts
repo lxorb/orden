@@ -23,8 +23,8 @@ import { api } from '../api'
 import { bestOf, type Command, commandIn, commandWords, settled } from './commands'
 import type { Field } from '../preferences'
 import { fileMark } from '../file-mark'
-import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
+import { panelWord } from './panel-words'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
@@ -74,7 +74,7 @@ type Folds = ((path: string) => boolean) | null
  *  A switch is on or off, a choice is the label of the option it is on, a number is
  *  the number. Translated by whoever built the field, so this only picks. */
 function saying(field: Field): string {
-  if (field.kind === 'switch') return field.get() ? t('On') : t('Off')
+  if (field.kind === 'switch') return field.get() ? panelWord('On') : panelWord('Off')
   if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
   if (field.kind === 'text') return field.get() || field.placeholder
 
@@ -285,7 +285,7 @@ class Bridge {
   /** The space's own contents, and what the glasses may do to them. */
   private world(): World {
     return {
-      space: () => workspace.activeSpace?.name ?? t('Notes'),
+      space: () => workspace.activeSpace?.name ?? panelWord('Notes'),
       contents: () => rowsOf(workspace.tree, null),
       spaces: () =>
         workspace.spaces.map((one) => ({
@@ -318,20 +318,25 @@ class Bridge {
   }
 
   /** The words the glasses say for themselves, translated once. */
+  /** What the panel says, in a language the firmware can draw.
+   *
+   *  `panelWord` rather than `t`: the app has thirty-nine catalogues and the firmware
+   *  has one font, so a reader in Thai or Hindi had a menu of boxes. The phone's own
+   *  panes stay in their language; see panel-words.ts. */
   private words(): Words {
     return {
-      spaces: t('Spaces'),
-      notes: t('Notes'),
-      switchSpace: t('Switch space'),
-      changeNote: t('Change note'),
-      voiceOn: t('Voice on'),
-      voiceOff: t('Voice off'),
-      thinking: t('Thinking'),
-      nothingHere: t('Nothing here'),
-      noAnswer: t('No answer'),
-      settings: t('Settings'),
-      reset: t('Reset glasses settings'),
-      done: t('Done'),
+      spaces: panelWord('Spaces'),
+      notes: panelWord('Notes'),
+      switchSpace: panelWord('Switch space'),
+      changeNote: panelWord('Change note'),
+      voiceOn: panelWord('Voice on'),
+      voiceOff: panelWord('Voice off'),
+      thinking: panelWord('Thinking'),
+      nothingHere: panelWord('Nothing here'),
+      noAnswer: panelWord('No answer'),
+      settings: panelWord('Settings'),
+      reset: panelWord('Reset glasses settings'),
+      done: panelWord('Done'),
     }
   }
 
@@ -339,11 +344,11 @@ class Bridge {
    *  section is drawn from too. Nothing about which settings there are lives here;
    *  see even/settings.ts. */
   private settings(): Settings {
-    const found = (id: string) => glassesSettings().find((one) => one.id === id)
+    const found = (id: string) => glassesSettings(panelWord).find((one) => one.id === id)
 
     return {
       rows: () =>
-        glassesSettings()
+        glassesSettings(panelWord)
           .filter((one) => one.onGlasses)
           .map((one) => ({ id: one.id, label: one.field.label, value: saying(one.field) })),
 
@@ -842,7 +847,7 @@ class Bridge {
 
     const token = account.accountToken
     if (!token) {
-      this.act(shell.answered(question, t('Sign in to ask a question.')))
+      this.act(shell.answered(question, panelWord('Sign in to ask a question.')))
       return
     }
 

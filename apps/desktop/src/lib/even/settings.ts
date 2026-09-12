@@ -71,7 +71,14 @@ const MARK_WORDS: { id: keyof Marks; label: string }[] = [
   { id: 'highlight', label: key('Highlight') },
 ]
 
+/** How a string is turned into words. `t` for the phone, `panelWord` for the glass:
+ *  the firmware's font has no Devanagari, Thai or Arabic, so a panel written in one
+ *  of those is a panel of boxes. See panel-words.ts, and `undrawable` in the glasses
+ *  package, which is what decides it. */
+type Say = (text: string) => string
+
 function chooser(
+  say: Say,
   label: string,
   values: readonly string[],
   words: Record<string, string>,
@@ -82,18 +89,22 @@ function chooser(
   return {
     kind: 'select',
     label,
-    options: values.map((value) => ({ value, label: t(words[value] ?? value) })),
+    options: values.map((value) => ({ value, label: say(words[value] ?? value) })),
     initial,
     get,
     set,
   }
 }
 
-/** Everything the glasses have, in the order both surfaces show it. */
-export function glassesSettings(): Setting[] {
-  const reading = t('Reading')
-  const marked = t('Markdown on the panel')
-  const voice = t('Voice')
+/** Everything the glasses have, in the order both surfaces show it.
+ *
+ *  `say` is how the labels are put into words: the phone's pane leaves it alone and
+ *  gets the reader's language, and the glasses hand in `panelWord`, which is English
+ *  wherever the firmware cannot draw that language. One schema either way. */
+export function glassesSettings(say: Say = t): Setting[] {
+  const reading = say('Reading')
+  const marked = say('Markdown on the panel')
+  const voice = say('Voice')
 
   return [
     {
@@ -106,15 +117,15 @@ export function glassesSettings(): Setting[] {
         // with its heading staying put above every page of it, is a document; a
         // note cut every seven lines wherever they fall is a scroll.
         kind: 'select',
-        label: t('New page at'),
+        label: say('New page at'),
         options: [
-          { value: '1', label: t('H1') },
-          { value: '2', label: t('H2 and above') },
-          { value: '3', label: t('H3 and above') },
-          { value: '4', label: t('H4 and above') },
-          { value: '5', label: t('H5 and above') },
-          { value: '6', label: t('Every heading') },
-          { value: '0', label: t('Never') },
+          { value: '1', label: say('H1') },
+          { value: '2', label: say('H2 and above') },
+          { value: '3', label: say('H3 and above') },
+          { value: '4', label: say('H4 and above') },
+          { value: '5', label: say('H5 and above') },
+          { value: '6', label: say('Every heading') },
+          { value: '0', label: say('Never') },
         ],
         initial: '2',
         get: () => String(modes.glassesBreak),
@@ -127,7 +138,7 @@ export function glassesSettings(): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: t('Line numbers'),
+        label: say('Line numbers'),
         initial: true,
         get: () => modes.glassesLineNumbers,
         set: (on) => modes.setGlassesLineNumbers(on),
@@ -138,7 +149,8 @@ export function glassesSettings(): Setting[] {
       group: reading,
       onGlasses: true,
       field: chooser(
-        t('Blank lines'),
+        say,
+        say('Blank lines'),
         COMPACTIONS,
         COMPACTION_WORDS,
         DEFAULT_COMPACTION,
@@ -151,7 +163,8 @@ export function glassesSettings(): Setting[] {
       group: reading,
       onGlasses: true,
       field: chooser(
-        t('Scrolling'),
+        say,
+        say('Scrolling'),
         SCROLLS,
         SCROLL_WORDS,
         'paged',
@@ -166,7 +179,7 @@ export function glassesSettings(): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: t(one.label),
+        label: say(one.label),
         initial: MARKS_INITIAL[one.id],
         get: () => modes.glassesMarks[one.id],
         set: (on) => modes.setGlassesMark(one.id, on),
@@ -179,7 +192,7 @@ export function glassesSettings(): Setting[] {
       onGlasses: true,
       field: {
         kind: 'switch',
-        label: t('Voice commands'),
+        label: say('Voice commands'),
         initial: false,
         get: () => modes.glassesVoice,
         set: (on) => modes.setGlassesVoice(on),
