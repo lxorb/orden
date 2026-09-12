@@ -584,6 +584,11 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
         return {}
 
     ready(page, lane)
+    # The launch's own reads have to be out of the way first. This part is about the
+    # editor, and a keystroke measured while the space is still being scanned measures
+    # the scan: the browser blamed `IDBRequest.onsuccess` for eight hundred
+    # milliseconds inside the typing window, in both builds alike.
+    settled(page)
     opened = page.evaluate(OPEN_NOTE, f"{lane.root}/long.md")
     lane.profile("big note opened", opened["loaf"])
 
@@ -932,6 +937,16 @@ PARTS = {
 }
 
 
+def settled(page: Page) -> None:
+    """The launch's own passes finished: the index scanned, and a quiet moment after
+    it. What is measured after this is the thing being measured."""
+    page.wait_for_function(
+        "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
+        timeout=180000,
+    )
+    page.wait_for_timeout(2500)
+
+
 def ready(page: Page, lane: Lane) -> None:
     """The app up, on the space, with the file list showing."""
     if not page.evaluate("() => !!window.nibApp"):
@@ -1113,6 +1128,11 @@ def main() -> int:
     ask.add_argument("parts", nargs="*", default=[], help=f"any of {', '.join(PARTS)}")
     ask.add_argument("--rounds", type=int, default=5)
     ask.add_argument("--space", default="", help="big or empty, for one of them alone")
+    # Four lanes in one browser served by one Python process do not leave each other
+    # alone: the launch moments in a four-lane run came out two and three times what
+    # they are, and by lane rather than by turn. So a number that is about the launch
+    # itself is taken one build at a time, and the two runs compared.
+    ask.add_argument("--build", default="", help="before or after, for one of them alone")
     told = ask.parse_args()
 
     parts = told.parts or list(PARTS)
@@ -1122,11 +1142,12 @@ def main() -> int:
             return 1
 
     spaces = [told.space] if told.space else ["big", "empty"]
-    wanted = [
-        Lane(tag, folder, space)
-        for space in spaces
+    builds = [
+        (tag, folder)
         for tag, folder in (("before", "dist-before"), ("after", "dist"))
+        if not told.build or told.build == tag
     ]
+    wanted = [Lane(tag, folder, space) for space in spaces for tag, folder in builds]
     lanes = [one for one in wanted if (one.folder / "index.html").exists()]
     if not lanes:
         say("nothing built")

@@ -59,11 +59,16 @@
    *  it finds its shape. Six leaves the rest of the frame for the drawing. */
   const A_FRAME = 6
 
-  /** And how long a frame may spend on it while nothing is being drawn, which is
-   *  what a reader who asked for less movement gets. More than the above because
-   *  there is no drawing to leave room for and the picture is not on screen yet -
-   *  eight frames for a space of five thousand notes, against the second and a half
-   *  of a thread answering nothing that reaching it in one go used to cost. */
+  /** And how long a frame may spend on it while nothing is being drawn, which is what
+   *  a reader who asked for less movement gets. More than the above because there is
+   *  no drawing to leave room for and the picture is not on screen yet.
+   *
+   *  What this trades: reaching the arrangement in one go was a second and a half of a
+   *  thread that answered nothing at all on a space of five thousand notes. A frame at
+   *  a time it takes longer in total - the same work at ten milliseconds a frame is
+   *  about two seconds of a picture that is not there yet - but every one of those
+   *  frames takes a keystroke, a click and a scroll. Which is the right way round: a
+   *  reader who asked not to watch things move did not ask for the app to stop. */
   const A_SETTLE = 10
 
   /** How far a pointer may travel and still count as a click rather than a

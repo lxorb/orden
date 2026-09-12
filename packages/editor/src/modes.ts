@@ -94,6 +94,13 @@ const markdownFor = once((strict: boolean): Extension =>
  *  stop highlighting past a size for the same reason. */
 const PARSED_AT_MOST = 512 * 1024
 
+/** What the language compartment holds for a document that is not being parsed.
+ *
+ *  One value rather than a fresh empty array each time, for the reason `once.ts`
+ *  gives: a compartment handed a different value - even an equal one - is a
+ *  configuration rebuilt, and a configuration rebuilt drops whatever was parsed. */
+const NO_LANGUAGE: Extension = []
+
 /** Whether a document is long enough that the parse is left out of it. Exported so
  *  the app can say so where it says what else is true of the note; see
  *  `parsedFully` in index.ts. */
@@ -163,7 +170,7 @@ const parseGuard = EditorState.transactionExtender.of((transaction) => {
 
   return {
     effects: language.reconfigure(
-      plain ? [] : markdownFor(strictnessAfter(was, transaction.effects)),
+      plain ? NO_LANGUAGE : markdownFor(strictnessAfter(was, transaction.effects)),
     ),
   }
 })
@@ -259,7 +266,7 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
  */
 export function modeExtensions(length = 0): Extension {
   return [
-    language.of(tooLongToParse(length) ? [] : markdownFor(false)),
+    language.of(tooLongToParse(length) ? NO_LANGUAGE : markdownFor(false)),
     // Which language the compartment holds when it holds one, and the guard that
     // takes it away from a document too long to be worth parsing.
     strictness,
