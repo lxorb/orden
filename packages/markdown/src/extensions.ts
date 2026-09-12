@@ -375,6 +375,11 @@ const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
  *  the code after it as prose. */
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
+  // One scan of the bytes for a note that defines none, which is nearly every
+  // note: every definition opens with the mark, so a source without it is never
+  // read line by line at all. This runs on every render of every note.
+  if (!source.includes('*[')) return found
+
   let fence: string | null = null
 
   for (const line of source.split('\n')) {
