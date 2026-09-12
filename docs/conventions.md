@@ -302,7 +302,8 @@ app through `t()`; every key is translated in every catalogue.
 `apps/desktop/src/lib/i18n.svelte.ts` is the whole mechanism, and
 `apps/desktop/src/locales/` holds one catalogue per language. **The English
 string is its own key**, so nothing can come out blank: a language that has not
-translated a row shows the English.
+translated a row shows the English. The clipper says the same thing in the same
+languages with its own rows; see *The clipper's half* below.
 
 ### Adding a string
 
@@ -367,6 +368,35 @@ Rules the tests enforce:
    desktop and phone widths and fails on anything the translation cut off that
    the English does not. A row that asked for the ellipsis it was offered is
    listed rather than failed: the element said its text may be cut.
+
+### The clipper's half
+
+The extension says the same thing in the same languages, with its own sixty rows:
+`apps/clipper/src/lib/translate.ts` is the mechanism and `apps/clipper/src/locales/`
+holds the catalogues. The language list, the tags a browser is answered under and
+the shape of a count row are the app's, row for row, and a change to one of the
+three belongs in both files - a deliberate copy rather than a shared package,
+because an extension bundle and an app bundle have nothing else in common and the
+two catalogues hold different rows. The pages wrap it in a rune the way the app
+does; the service worker, which Chrome stops between clips, asks `words()` for a
+catalogue and translates without one.
+
+A language is added the same way, and the rows the app already has for it are
+**lifted from `apps/desktop/src/locales/<id>.ts`** rather than translated again:
+half the extension's rows are words the app already says, and one word per term is
+the whole point. `apps/clipper/src/lib/i18n.test.ts` is the gate, and
+`python apps/clipper/test/e2e/locales.py` photographs the popup at the width Chrome
+gives it and the options page at its own, in the same five hard languages.
+
+The handful of words **Chrome** draws rather than the extension - the tile on
+`chrome://extensions`, the store listing, the shortcut list - live in
+`apps/clipper/public/_locales/<tag>/messages.json`, because Chrome's own mechanism
+is the only one those surfaces have and it picks the folder by the browser's
+interface language, not by what somebody chose in the options page. Only languages
+Chrome has an interface in can be folders there, which is thirty-one of the
+thirty-nine; the rest read the whole extension in their own language with Chrome's
+tile beside it in English. The gate holds the two halves to the same languages and
+checks that every `__MSG_*` the manifest asks for is answered.
 
 Keep one word per term. nib's own vocabulary, and what to follow:
 

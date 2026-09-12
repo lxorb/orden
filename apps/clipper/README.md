@@ -15,11 +15,33 @@ node apps/clipper/scripts/build.js          # dist/ for "Load unpacked", and the
 pnpm --filter @nib/clipper test             # the unit tests
 python apps/clipper/test/e2e/clip.py        # the reader, in a real Chrome
 python apps/clipper/test/e2e/interpret.py   # the interpreter, against a fake provider
+python apps/clipper/test/e2e/locales.py     # both pages, in five hard languages
 ```
 
 The drives need Playwright's Chromium and run headed, because an extension does not
 load in the headless shell. `CHROMIUM` names a browser to use instead of the one
 Playwright registered.
+
+## Its words
+
+**Thirty-nine languages**, the same list the app offers and chosen the same way:
+`src/locales/` holds one catalogue per language, the English string is its own key,
+and `src/lib/translate.ts` is the whole mechanism. The catalogue is fetched when it
+is asked for, so a popup opens with one of them rather than all of them. German is
+the reference every other catalogue is held to; `src/lib/i18n.test.ts` fails the
+build when one is short of a row, carries a row nothing asks for, has the wrong
+count forms for its language, loses a placeholder or holds an em dash.
+
+The words Chrome itself draws - the tile on `chrome://extensions`, the listing in
+the store, the shortcut list - are `public/_locales`' business instead, because
+Chrome's own mechanism is the only one those surfaces have and it picks by the
+browser's interface language. Thirty-one of the thirty-nine are languages Chrome
+has an interface in; the rest get the whole of the extension in their own language
+and Chrome's tile beside it in English. The same test holds the two halves to the
+same languages.
+
+See docs/conventions.md, *Words the reader sees*, for the glossary both products
+share and what to do when a string or a language is added.
 
 ## The interpreter
 
