@@ -44,7 +44,7 @@ export const MOST_BYTES = 24 * 1024
 
 /** What a note that says nothing about itself gets. */
 const DEFAULTS = ['all', 'none'] as const
-export type Otherwise = (typeof DEFAULTS)[number]
+type Otherwise = (typeof DEFAULTS)[number]
 
 export interface SiteRules {
   /** Folders published even where the default is to publish nothing. */
@@ -79,7 +79,7 @@ export interface Site {
   password?: SitePassword
 }
 
-export const DEFAULT_RULES: SiteRules = { include: [], exclude: [], otherwise: 'all' }
+const DEFAULT_RULES: SiteRules = { include: [], exclude: [], otherwise: 'all' }
 
 /** A folder path as the space spells it: forward slashes, no leading slash, no
  *  climbing out. The empty string is the space itself, which is a rule about
@@ -176,7 +176,8 @@ function inside(path: string, folder: string): boolean {
  *  can be included again and the deeper word is the one that counts. */
 function longest(path: string, rules: readonly string[]): number {
   let found = -1
-  for (const folder of rules) if (inside(path, folder) && folder.length > found) found = folder.length
+  for (const folder of rules)
+    if (inside(path, folder) && folder.length > found) found = folder.length
   return found
 }
 
@@ -229,10 +230,7 @@ export function wrong(body: Record<string, unknown>): string | null {
         return `${key} holds at most ${MOST_FOLDERS} folders`
       }
     }
-    if (
-      given.otherwise !== undefined &&
-      !DEFAULTS.some((one) => one === given.otherwise)
-    ) {
+    if (given.otherwise !== undefined && !DEFAULTS.some((one) => one === given.otherwise)) {
       return 'otherwise is all or none'
     }
   }

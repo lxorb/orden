@@ -1185,7 +1185,8 @@ export const gsw: Dictionary = {
   'Markdown, path in the space': 'Markdown, Pfad im Ruum',
   // Publishing part one.
   'The folders you choose become public.': 'Die usgwählte Ordner wärde öffentlich.',
-  'Anyone with the address can read what is published, drafts included.': 'Wer d Adrässe hät, list alles Veröffentlichti, Entwürf inklusive.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Wer d Adrässe hät, list alles Veröffentlichti, Entwürf inklusive.',
   'Which notes': 'Weli Notize',
   'Notes outside a rule': 'Notize ohni Regle',
   'Are published': 'Wärde veröffentlicht',
@@ -1206,4 +1207,6 @@ export const gsw: Dictionary = {
   'Ask for a password': 'Passwort verlange',
   'No password': 'Kes Passwort',
   'Remove the password': 'Passwort entferne',
+  'Scan this with your authenticator app, then type its code.':
+    'Scann das mit dinere Authenticator-App und tipp dänn de Code.',
 }

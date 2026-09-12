@@ -1212,4 +1212,6 @@ export const fr: Dictionary = {
   'Ask for a password': 'Demander un mot de passe',
   'No password': 'Aucun mot de passe',
   'Remove the password': 'Retirer le mot de passe',
+  'Scan this with your authenticator app, then type its code.':
+    'Scannez ceci avec votre application d’authentification, puis saisissez son code.',
 }

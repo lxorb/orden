@@ -70,7 +70,7 @@ function flag(value: string | null): boolean | undefined {
 /** One path inside the site, as the site spells paths: lower case, no leading or
  *  trailing slash, no `..`, one slash between parts. Anything left over after
  *  that is not a path and is dropped. */
-export function cleanSlug(value: string): string {
+function cleanSlug(value: string): string {
   const parts = value
     .trim()
     .toLowerCase()
@@ -95,7 +95,7 @@ function text(value: string | null, longest = LONGEST_TEXT): string | undefined 
  *  the same words twice. Everything that is markup for something - a fence, a
  *  quote, a picture, a table - is passed over rather than shown as the characters
  *  it is written with. */
-export function firstWords(source: string): string | undefined {
+function firstWords(source: string): string | undefined {
   const body = stripFrontMatter(source)
   let words = ''
   let fenced = false

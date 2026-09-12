@@ -457,10 +457,7 @@ function titleOf(page: Page): string {
   return (
     page.front.title ??
     page.front.heading ??
-    page.note.path
-      .replace(MARKDOWN, '')
-      .split('/')
-      .pop() ??
+    page.note.path.replace(MARKDOWN, '').split('/').pop() ??
     page.note.path
   )
 }
@@ -511,12 +508,7 @@ function feedPages(listed: readonly Page[], origin: string): FeedPage[] {
  *  half a kilobyte would be a Worker that starts slower for every request there
  *  is. See docs/publishing.md. */
 function favicon(space: Space, site: Site): Response {
-  const letter = escape(
-    (space.blog_title ?? space.name)
-      .trim()
-      .slice(0, 1)
-      .toUpperCase(),
-  )
+  const letter = escape((space.blog_title ?? space.name).trim().slice(0, 1).toUpperCase())
 
   const drawn =
     site.icon ??
@@ -544,7 +536,12 @@ function pictureAt(
 ): string | undefined {
   if (!said) return undefined
 
-  const written = said.replace(/^!?\[\[/, '').replace(/\]\]$/, '').split('|')[0]?.trim() ?? ''
+  const written =
+    said
+      .replace(/^!?\[\[/, '')
+      .replace(/\]\]$/, '')
+      .split('|')[0]
+      ?.trim() ?? ''
   if (!written) return undefined
 
   if (/^https?:\/\//i.test(written)) return written
@@ -662,8 +659,7 @@ export async function serveBlog(
     ...over,
   })
 
-  const missing = () =>
-    page(about('Not found'), '<h1>Not found</h1>', env, { status: 404 })
+  const missing = () => page(about('Not found'), '<h1>Not found</h1>', env, { status: 404 })
 
   // A file the space keeps beside its notes, asked for by the path a link in one
   // of them wrote. Before the notes, because it is settled by the path alone.
@@ -794,7 +790,8 @@ export async function serveBlog(
     article: true,
     url: `${url.origin}/${found.slug}`,
     description: found.front.description ?? found.front.summary ?? site.description,
-    image: pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+    image:
+      pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
     date: found.front.date,
   })
 

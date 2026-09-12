@@ -74,18 +74,22 @@
    *  another day, or on another machine. Nothing is hidden, and a vault of four
    *  hundred folders does not become four hundred rows. */
   const ruled = $derived.by(() => {
-    const tops = new Set<string>()
+    const tops: string[] = []
+    const seen = (folder: string) => {
+      if (folder && !tops.includes(folder)) tops.push(folder)
+    }
 
     if (showing) {
       for (const note of workspace.notes) {
-        const folder = publish.relativeTo(note.path).split('/')[0]
-        if (folder && folder !== publish.relativeTo(note.path)) tops.add(folder)
+        const relative = publish.relativeTo(note.path)
+        const folder = relative.split('/')[0] ?? ''
+        if (folder !== relative) seen(folder)
       }
     }
 
-    for (const folder of [...publish.rules.include, ...publish.rules.exclude]) tops.add(folder)
+    for (const folder of [...publish.rules.include, ...publish.rules.exclude]) seen(folder)
 
-    return [...tops].sort((one, other) => one.localeCompare(other))
+    return tops.sort((one, other) => one.localeCompare(other))
   })
 
   function ruleFor(folder: string): string {

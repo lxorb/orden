@@ -307,11 +307,11 @@ export interface Reply {
   stored: boolean
 
   // What a publish would change, which is which pages appear and disappear.
+  // `more` is further down, where the change feed already asks for it.
   pages: number
   before: number
   adds: string[]
   removes: string[]
-  more: boolean
 
   // Spaces, what they keep above their file list, and their published address.
   space: SpaceView

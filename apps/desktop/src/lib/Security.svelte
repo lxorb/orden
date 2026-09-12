@@ -31,6 +31,33 @@
   let secret = $state<{ holding: string; secret: string; uri: string } | null>(null)
   let code = $state('')
   let codes = $state<string[] | null>(null)
+  /** The `otpauth://` URI as a square to point a phone at, once the encoder has
+   *  been fetched. Null until then, and the secret under it works either way. */
+  let square = $state<string | null>(null)
+
+  // Drawn when there is something to draw and not before: the encoder is a few
+  // kilobytes that nobody who never turns this on should download.
+  $effect(() => {
+    const uri = secret?.uri
+    if (!uri) {
+      square = null
+      return
+    }
+
+    let current = true
+    void import('uqr')
+      .then(({ renderSVG }) => {
+        if (current) square = renderSVG(uri, { border: 1, pixelSize: 6 })
+      })
+      .catch(() => {
+        // The secret underneath is the same secret; a square that could not be
+        // drawn costs a reader one paste rather than the setting.
+      })
+
+    return () => {
+      current = false
+    }
+  })
 
   async function look() {
     const token = account.accountToken
@@ -164,7 +191,16 @@
 
   {#if secret}
     <div class="card" transition:fade={{ duration: dur(130) }}>
-      <p class="hint">{t('Put this into your authenticator app, then type its code.')}</p>
+      <p class="hint">{t('Scan this with your authenticator app, then type its code.')}</p>
+      <!-- The code is the ordinary way in: the app is on a phone and the pane is
+           on a laptop, so pointing one at the other is fewer steps than typing
+           thirty-two characters. The secret stays under it for the other case -
+           the pane and the app on the same machine, where nothing can scan a
+           screen it is on. -->
+      {#if square}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        <figure class="square">{@html square}</figure>
+      {/if}
       <Copyable value={secret.secret} label={t('Secret')} />
       <div class="setting">
         <span class="name">{t('Code from the app')}</span>
@@ -328,6 +364,24 @@
   .inline:focus {
     border-color: var(--accent);
     background: var(--bg);
+  }
+
+  /* The square, on a plate of its own: a code has to be dark on light to be
+     read by a camera, whichever theme the app is in, and the plate is what makes
+     that a decision rather than an accident. */
+  .square {
+    align-self: flex-start;
+    margin: var(--space-2) 0;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    background: #fff;
+    line-height: 0;
+  }
+
+  .square :global(svg) {
+    display: block;
+    width: 8.5rem;
+    height: 8.5rem;
   }
 
   /* The ten recovery codes, as many to a line as fit. */

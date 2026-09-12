@@ -136,11 +136,10 @@ class Publish {
    *  rather than in the sheet so that asking what it would change is one call in
    *  one place. */
   rule(which: 'include' | 'exclude', folder: string, wanted: boolean) {
-    const held = new Set(this.rules[which])
-    if (wanted) held.add(folder)
-    else held.delete(folder)
+    const held = this.rules[which].filter((one) => one !== folder)
+    if (wanted) held.push(folder)
 
-    this.rules = { ...this.rules, [which]: [...held] }
+    this.rules = { ...this.rules, [which]: held }
     this.ask()
   }
 

@@ -82,7 +82,8 @@ export function feed(
   site: { title: string; url: string; author: string | null },
 ): Response {
   const ordered = newestFirst(pages).slice(0, MOST_ENTRIES)
-  const updated = new Date(ordered.length ? moment(ordered[0]!) : Date.now()).toISOString()
+  const newest = ordered[0]
+  const updated = new Date(newest ? moment(newest) : Date.now()).toISOString()
 
   const entries = ordered
     .map(

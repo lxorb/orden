@@ -31,7 +31,7 @@ const LASTS = 30 * 24 * 60 * 60 * 1000
 
 /** What the cookie is called. Named for what it is: the reader has been let in
  *  to one site, and a site is one hostname, so nothing about it travels. */
-export const TICKET = 'nib_site'
+const TICKET = 'nib_site'
 
 /** How hard the hash is to try. A hundred thousand rounds of PBKDF2 is what a
  *  Worker can do inside one request and what a password guesser cannot do a
@@ -53,9 +53,7 @@ export function newSiteKey(): string {
 }
 
 async function derived(password: string, salt: string): Promise<string> {
-  const key = await crypto.subtle.importKey('raw', bytes(password), 'PBKDF2', false, [
-    'deriveBits',
-  ])
+  const key = await crypto.subtle.importKey('raw', bytes(password), 'PBKDF2', false, ['deriveBits'])
 
   const bits = await crypto.subtle.deriveBits(
     { name: 'PBKDF2', hash: 'SHA-256', salt: bytes(salt), iterations: ROUNDS },

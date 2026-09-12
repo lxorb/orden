@@ -1194,7 +1194,8 @@ export const de: Dictionary = {
   'Markdown, path in the space': 'Markdown, Pfad im Raum',
   // Publishing part one.
   'The folders you choose become public.': 'Die gewählten Ordner werden öffentlich.',
-  'Anyone with the address can read what is published, drafts included.': 'Wer die Adresse hat, liest alles Veröffentlichte, Entwürfe eingeschlossen.',
+  'Anyone with the address can read what is published, drafts included.':
+    'Wer die Adresse hat, liest alles Veröffentlichte, Entwürfe eingeschlossen.',
   'Which notes': 'Welche Notizen',
   'Notes outside a rule': 'Notizen ohne Regel',
   'Are published': 'Werden veröffentlicht',
@@ -1215,4 +1216,6 @@ export const de: Dictionary = {
   'Ask for a password': 'Passwort verlangen',
   'No password': 'Kein Passwort',
   'Remove the password': 'Passwort entfernen',
+  'Scan this with your authenticator app, then type its code.':
+    'Scanne das mit deiner Authenticator-App und tippe dann den Code.',
 }

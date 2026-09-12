@@ -60,7 +60,7 @@ export function siteIcon(mark: Element | null): string | null {
     )
   }
 
-  const said = (mark.textContent ?? '').trim()
+  const said = mark.textContent.trim()
   if (!said) return null
 
   // An emoji, or the letter a space wears until it has an icon: both are type,
@@ -73,7 +73,9 @@ export function siteIcon(mark: Element | null): string | null {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}">` +
     `<rect width="${SIZE}" height="${SIZE}" rx="${RADIUS}" fill="${GROUND}"/>` +
     `<text x="${SIZE / 2}" y="${SIZE - (letter ? 9 : 7)}" text-anchor="middle"` +
-    `${letter ? ` fill="${INK}" font-family="ui-sans-serif,system-ui,sans-serif" font-weight="600" font-size="19"` : ' font-size="24"'}` +
+    (letter
+      ? ` fill="${INK}" font-family="ui-sans-serif,system-ui,sans-serif" font-weight="600" font-size="19"`
+      : ' font-size="24"') +
     `>${said}</text></svg>`
   )
 }

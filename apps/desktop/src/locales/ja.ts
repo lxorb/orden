@@ -1182,7 +1182,8 @@ export const ja: Dictionary = {
   'Markdown, path in the space': 'Markdown、スパース内のパス',
   // Publishing part one.
   'The folders you choose become public.': '選んだフォルダが公開されます。',
-  'Anyone with the address can read what is published, drafts included.': 'アドレスを知る人は下書きを含めて公開分をすべて読めます。',
+  'Anyone with the address can read what is published, drafts included.':
+    'アドレスを知る人は下書きを含めて公開分をすべて読めます。',
   'Which notes': 'どのノート',
   'Notes outside a rule': 'ルール外のノート',
   'Are published': '公開する',
@@ -1203,4 +1204,6 @@ export const ja: Dictionary = {
   'Ask for a password': 'パスワードを求める',
   'No password': 'パスワードなし',
   'Remove the password': 'パスワードを削除',
+  'Scan this with your authenticator app, then type its code.':
+    '認証アプリでこれを読み取り、コードを入力してください。',
 }
