@@ -637,6 +637,8 @@ export const ja: Dictionary = {
 
   // History
   'Version history': '変更履歴',
+  'Copy link to this note': 'このノートへのリンクをコピー',
+  'that link could not be followed': 'そのリンクをたどれませんでした',
   'Save this note first; there is nothing to compare against yet.':
     'まずノートを保存してください。まだ比較するものがありません。',
   'No earlier versions yet. One is kept each time you save.':

@@ -13,6 +13,8 @@
 
 mod assets;
 mod clock;
+#[cfg(desktop)]
+mod endpoint;
 mod front_matter;
 mod fuzzy;
 mod highlights;
@@ -46,6 +48,7 @@ mod trash;
 mod tree;
 #[cfg(desktop)]
 mod updates;
+mod uris;
 
 use paths::Opened;
 #[cfg(desktop)]
@@ -110,6 +113,7 @@ macro_rules! commands {
             trash::restore_trash,
             trash::purge_trash,
             trash::purge_trash_older_than,
+            uris::take_startup_uris,
             $($desktop)*
         ]
     };
@@ -161,13 +165,27 @@ pub fn run() {
 
     // The opener is how a link leaves the app anywhere, and the os plugin is how
     // the window knows which build it is running as.
+    //
+    // Deep links come after single instance above, which is the order that plugin
+    // asks for: on Windows and Linux a `nib://` link reaching an app that is
+    // already open arrives as a second launch, and single instance is what hands
+    // it over to be read as a link. See uris.rs.
     let builder = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
-        .manage(Opened::default());
+        .plugin(tauri_plugin_deep_link::init())
+        .manage(Opened::default())
+        .manage(uris::Pending::default());
+
+    // What the `nib` command's requests wait in while the window answers them.
+    // Managed here rather than where the socket opens, because a builder is the
+    // one place state can be added; see endpoint.rs.
+    #[cfg(desktop)]
+    let builder = builder.manage(endpoint::Waiting::default());
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
+        endpoint::automation_result,
         launch::take_startup_files,
         launch::new_window,
         pandoc::has_pandoc,
@@ -209,6 +227,16 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(root) = paths::spaces_root(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
+
+    // Links into the app, on every platform: the one the app was launched by, and
+    // every one that arrives while it is running.
+    uris::watch(handle);
+
+    // And the socket the `nib` command drives the app through, which only a
+    // desktop has. It comes up after the links above and before the window is
+    // seen, so a request that arrives in the first moment finds a window to ask.
+    #[cfg(desktop)]
+    endpoint::start(handle);
 
     // A command line is a desktop's way of being handed a file. A phone app is
     // launched by tapping it, and there is nothing in `args` worth reading.

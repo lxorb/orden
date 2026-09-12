@@ -857,4 +857,31 @@ Features Typora does not have, which are the reason this exists.
       anything is written - a model replacing a paragraph is the one gesture here
       that can lose work, and by the time an undo has been read the paragraph is
       off the screen
-
+- [x] `nib://` links, the way `obsidian://` works, so a shortcut, a launcher or
+      another program can open a note, a heading or a block, make a note or add to
+      one, search, or run any row the palette knows. On a desktop the installer
+      registers the scheme and a second launch hands the link to the window that is
+      already open; on Android an intent filter on the one activity; on the web
+      `web+nib://`, which is the only shape a browser lets a page register, handed
+      back as `?nib=` and taken off the address once it has been followed.
+      x-callback-url's `x-success`, `x-error` and `x-cancel` are all three real, so
+      a link is a step in a shortcut rather than the end of one. A link may ask for
+      four things and nothing else, and a test pins the list: writing over a note,
+      moving one, deleting one and running code are out of a link's reach, `new`
+      refuses a note that is already there unless it was asked to append, and a
+      callback goes to `http(s)` or back into nib and nowhere else. A row in the
+      palette copies a correct link to what is open, with the heading the caret is
+      in on it, which is also how anybody finds out the scheme is there
+- [x] A command line that drives the app that is running, the way Obsidian's does:
+      `nib files read`, `nib search`, `nib backlinks`, `nib orphans`,
+      `nib properties set`, `nib outline`, `nib words`, `nib commands run`,
+      `nib sync now`, `nib screenshot`, twenty-six verbs in all. Over a socket the
+      app opens on 127.0.0.1 on a port the system hands out at every launch, behind
+      a secret in the app's own config folder, and nothing that changes a note runs
+      without `--yes` - which the app enforces rather than the script. The same
+      dispatcher the links use, so neither road can grow a verb the other lacks or a
+      check the other does not have, and every verb is the call the app itself makes:
+      a note written this way is snapshotted, undoable and synced like any other
+      edit. `eval` is there and off, behind a line in that same file, because it runs
+      whatever it is sent with everything the window can reach. See
+      docs/automation.md

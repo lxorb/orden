@@ -641,6 +641,8 @@ export const fr: Dictionary = {
 
   // History
   'Version history': 'Historique des versions',
+  'Copy link to this note': 'Copier le lien vers cette note',
+  'that link could not be followed': 'ce lien n’a pas pu être suivi',
   'Save this note first; there is nothing to compare against yet.':
     'Enregistrez d’abord cette note ; il n’y a encore rien à comparer.',
   'No earlier versions yet. One is kept each time you save.':

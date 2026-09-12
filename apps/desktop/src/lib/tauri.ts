@@ -47,6 +47,17 @@ interface WindowLike {
   /** Keeps the window over every other application's. A page in a browser has no
    *  window of its own to raise, so there it does nothing. */
   setAlwaysOnTop(on: boolean): Promise<void>
+  /** Where the window is on the screen, and how big it is, in the pixels the
+   *  system counts in, with `scaleFactor` to turn them into the points a screen
+   *  capture is asked for in.
+   *
+   *  Read by one caller, `nib screenshot`, which has to say which rectangle to
+   *  photograph: a webview cannot take a picture of the window it is in, so the
+   *  command line does it with the platform's own tool. See
+   *  automation/answers.ts and apps/cli/nib.mjs. */
+  outerPosition(): Promise<{ x: number; y: number }>
+  outerSize(): Promise<{ width: number; height: number }>
+  scaleFactor(): Promise<number>
   close(): Promise<void>
   destroy(): Promise<void>
   setTitle(title: string): Promise<void>
@@ -70,6 +81,11 @@ const browserWindow: WindowLike = {
   },
   isFullscreen: () => Promise.resolve(document.fullscreenElement !== null),
   setAlwaysOnTop: () => Promise.resolve(),
+  // A page does not know where on the screen it is drawn, and nothing in a
+  // browser is going to photograph it: the CLI is a desktop's alone.
+  outerPosition: () => Promise.resolve({ x: 0, y: 0 }),
+  outerSize: () => Promise.resolve({ width: window.innerWidth, height: window.innerHeight }),
+  scaleFactor: () => Promise.resolve(window.devicePixelRatio),
   close: () => Promise.resolve(),
   destroy: () => Promise.resolve(),
   setTitle: (title: string) => {

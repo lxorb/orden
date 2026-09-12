@@ -91,12 +91,14 @@ export default tseslint.config(
   {
     // Build and tool configuration sits outside every tsconfig, so the rules
     // that need type information cannot see it; the plain rules still apply.
-    files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs,ts}'],
+    // `apps/cli` is there for the same reason: it is a Node script rather than a
+    // package that is compiled, and nothing imports it.
+    files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs,ts}', 'apps/cli/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
   {
     // Command-line scripts talk through the console; that is their output.
-    files: ['scripts/**/*.{js,mjs,ts}'],
+    files: ['scripts/**/*.{js,mjs,ts}', 'apps/cli/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
   {

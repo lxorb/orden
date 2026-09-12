@@ -777,6 +777,21 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !workspace.active?.path,
       run: () => (settings.historyOpen = true),
     },
+    // A `nib://` link to what is open, for a task manager, a shortcut or another
+    // note somewhere else. Also the whole of how anybody finds out the scheme
+    // exists. Not in the plugin, which cannot be reached by a link and whose
+    // bundle the automation code deliberately stays out of; see
+    // automation/verbs.ts and docs/automation.md.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
+            id: 'copy-uri',
+            label: t('Copy link to this note'),
+            disabled: !workspace.active?.path,
+            run: () => void import('./automation/link').then((m) => m.copyNoteLink()),
+          },
+        ]),
 
     ...workspace.recent
       .filter((path) => !workspace.tabs.some((tab) => tab.path === path))

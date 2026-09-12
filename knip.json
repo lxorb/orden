@@ -19,6 +19,9 @@
       ],
       "ignoreDependencies": ["katex", "axe-core"]
     },
+    "apps/cli": {
+      "ignoreBinaries": ["screencapture"]
+    },
     "apps/clipper": {
       "entry": [
         "src/**/*.svelte",

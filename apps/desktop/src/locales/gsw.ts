@@ -639,6 +639,8 @@ export const gsw: Dictionary = {
 
   // History
   'Version history': 'Versionsverlauf',
+  'Copy link to this note': 'Link zu dere Notiz kopiere',
+  'that link could not be followed': 'dem Link het me nöd chönne folge',
   'Save this note first; there is nothing to compare against yet.':
     'Spicher d Notiz zerscht; es git no nüt zum verglichä.',
   'No earlier versions yet. One is kept each time you save.':

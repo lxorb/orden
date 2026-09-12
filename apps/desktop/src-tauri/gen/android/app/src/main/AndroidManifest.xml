@@ -38,6 +38,21 @@
                 <!-- AndroidTV support -->
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
+
+            <!--
+              `nib://` links, which is how anything else on the phone asks this app
+              for something: a shortcut, Tasker, a link in another note. The
+              activity is already `singleTask`, so a link reaching an app that is
+              already open goes to the window that is there rather than starting a
+              second one. What a link means is read in the window; see
+              apps/desktop/src/lib/automation and docs/automation.md.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="nib" />
+            </intent-filter>
         </activity>
 
         <provider

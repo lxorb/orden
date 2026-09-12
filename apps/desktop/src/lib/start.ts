@@ -77,11 +77,21 @@ export function start(): () => void {
   /** What the files handed over by a second launch are heard on, once there is
    *  something listening. Torn down with everything else. */
   let stopListening: (() => void) | null = null
+  /** And the same for `nib://` links and the `nib` command, both of which act on a
+   *  space and so cannot be listened for until there is one. */
+  let stopAutomation: (() => void) | null = null
 
   void workspace
     .restore()
     .then(async () => {
       stopListening = await openLaunchFiles()
+      // The plugin is a page on a pair of glasses: nothing can hand it a link and
+      // it has no socket, so the whole of automation is left out of that build
+      // rather than guarded inside it. See vite.even.config.ts.
+      if (!__EVEN_PLUGIN__) {
+        const { startAutomation } = await import('./automation/start')
+        stopAutomation = await startAutomation()
+      }
     })
     // Nothing else can put this right, and the strip is already showing
     // whatever did come back; the log is where a launch failure belongs, so it
@@ -119,6 +129,7 @@ export function start(): () => void {
     stopWatching()
     stopLooking()
     stopListening?.()
+    stopAutomation?.()
   }
 }
 

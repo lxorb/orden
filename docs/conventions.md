@@ -28,6 +28,7 @@ same commands on every push to `main`.
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |
+| `apps/cli` | `nib`, which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
 | `services/sync` | The Cloudflare Worker: sync, publishing, MCP, accounts, and the theme store's catalogue. Tests run routes against real SQL. A published page is the note; see `docs/publishing.md`. |
 
 One file, one responsibility. A file that has to explain two jobs in its
