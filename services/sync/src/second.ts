@@ -150,11 +150,7 @@ export async function codeAt(secretHex: string, step: number): Promise<string> {
  *  The step rather than a yes, because a code that has been answered with must
  *  not be answered with again - RFC 6238 §5.2 - and the step is what can be
  *  written down to say so. The code itself is not ours to keep. */
-async function stepMatching(
-  secretHex: string,
-  given: string,
-  at = now(),
-): Promise<number | null> {
+async function stepMatching(secretHex: string, given: string, at = now()): Promise<number | null> {
   const entered = given.replace(/\D/g, '')
   if (entered.length !== DIGITS) return null
 
