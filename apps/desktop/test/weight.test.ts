@@ -73,7 +73,7 @@ const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:'"`\\])\/\/[^\n]*/g
 /** What a file asks for at load time. `import type` is erased before anything runs, so
  *  a type from a heavy module costs nothing and is left out. */
 function asked(file: string): string[] {
-  const source = readFileSync(file, 'utf8').replace(COMMENTS, (whole, head?: string) => head ?? '')
+  const source = readFileSync(file, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? '')
   const found: string[] = []
 
   for (const match of source.matchAll(STATIC)) {

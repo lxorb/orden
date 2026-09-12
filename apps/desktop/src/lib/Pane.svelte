@@ -47,13 +47,7 @@
   import Reading from './Reading.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
-  import {
-    canvasSurface,
-    graphSurface,
-    pagesSurface,
-    pdfSurface,
-    webSurface,
-  } from './surfaces'
+  import { canvasSurface, graphSurface, pagesSurface, pdfSurface, webSurface } from './surfaces'
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'

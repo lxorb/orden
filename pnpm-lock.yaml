@@ -273,9 +273,6 @@ importers:
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2
-      node-emoji:
-        specifier: ^2.2.0
-        version: 2.2.0
     devDependencies:
       '@types/node':
         specifier: ^24.13.3

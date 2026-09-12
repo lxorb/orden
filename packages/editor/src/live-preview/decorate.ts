@@ -771,7 +771,7 @@ export function buildDecorations(
  *  behind it is left as the characters it was written with and gets no widget at all,
  *  so there is nothing on screen to fill in later the way a formula's box is filled.
  *  See @nib/markdown/engines. */
-const enginesLanded = StateEffect.define<null>()
+const enginesLanded = StateEffect.define()
 
 export const livePreviewDecorations = ViewPlugin.fromClass(
   class {
