@@ -3,9 +3,23 @@
    Typora theme variables are aliased at the bottom so Typora themes drop in. */
 
 :root {
-  --font-ui: 'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
-  --font-content: 'iA Writer Quattro', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
-  --font-mono: 'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  /* Geist and iA Writer draw no Arabic letter at all, so a name or a note in one
+     of the Arabic scripts falls through to whatever the platform happens to reach
+     for - which on Windows is a face that joins badly and on Android is none of
+     the ones a reader would choose. The faces the platforms actually ship are
+     named here, after the app's own two and before the generic: a browser takes
+     each character from the first family in the list that has it, so English is
+     still Geist, Arabic is Arabic, and nothing is downloaded for either.
+
+     `--font-arabic` is named once and spliced into all three stacks, so a Persian
+     comment inside a code fence shapes as well as a Persian heading. Urdu wants
+     something else again, which is the `[lang|='ur']` block below. */
+  --font-arabic: 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', 'Noto Sans Arabic', 'Tahoma';
+  --font-ui: 'Geist', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-content:
+    'iA Writer Quattro', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-mono:
+    'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas', var(--font-arabic), monospace;
 
   --text-xs: 11px;
   --text-sm: 12.5px;
@@ -14,6 +28,9 @@
      mostly is, and 12.5 was the size of a caption being asked to be the body.
      See docs/design.md. */
   --text-row: 13.5px;
+  /* How much room a row's own line takes. A token because one script needs half
+     again as much as another: see the Urdu block below. */
+  --leading-row: 1.35;
   --text-base: 15px;
   /* What a bar across the top of a column is titled with: the space's name over
      the list, the note's name over the page. One step above the rows under it,
@@ -208,6 +225,31 @@
   --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
+}
+
+/* Urdu is written in Nastaliq, which hangs each word down and back rather than
+   standing its letters on a line. A face drawn for it needs about half again the
+   leading a naskh face does, and a row measured for Latin cuts the tail off the
+   first word: `.nib-row-label` clips what overflows it, so the leading is what
+   decides whether a name is whole. The three numbers below were measured on the
+   locale drive at both sizes - see scripts/locale-e2e.py - and the row's own
+   height is only raised where a pointer sets it, because a thumb's row is 56 and
+   has the room already.
+
+   Naskh for Arabic, Persian and Pashto is right and Nastaliq for them would be
+   wrong, so this is the one language that restates the face. Nothing is fetched:
+   where a platform has none of these, the reader keeps the naskh face above. */
+:root[lang|='ur'] {
+  --font-arabic:
+    'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Naskh Arabic',
+    'Tahoma';
+  --leading-row: 2.05;
+  --leading-content: 2.15;
+}
+
+:root[lang|='ur']:not([data-touch]) {
+  --row-height: 34px;
+  --row-height-sm: 30px;
 }
 
 /* A reader of Arabic, Persian, Pashto or Urdu holds the same phone the other way

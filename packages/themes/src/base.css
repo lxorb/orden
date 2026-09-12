@@ -513,7 +513,7 @@ select option {
   font-family: var(--font-ui);
   font-size: var(--text-row);
   font-weight: var(--weight-row);
-  line-height: 1.35;
+  line-height: var(--leading-row);
   text-align: start;
   cursor: default;
   transition:
