@@ -66,7 +66,13 @@
     [importing.spaceName, importing.under].filter(Boolean).join(' / ') || t('This space'),
   )
 
-  const ready = $derived(importing.stage === 'ready' && !!plan?.files.length && !!importing.root)
+  /** Whether there is an import to ask for. An export over the ceiling reads as
+   *  ready - the plan was built, it is simply too big to write - and the sheet
+   *  says so above; without the error in here it said so and offered Import
+   *  anyway, which is a refusal a reader can press past. */
+  const ready = $derived(
+    importing.stage === 'ready' && !!plan?.files.length && !!importing.root && !importing.error,
+  )
 
   async function choose() {
     await importing.take(await pickFiles())
