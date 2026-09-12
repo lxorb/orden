@@ -50,8 +50,7 @@ interface Open {
  *  when the first room is joined now. The kind was already here and answers it
  *  exactly; see `join`. */
 type Joined = { noteId: string; note: NoteDoc } & (
-  | { kind: 'words'; room: Room }
-  | { kind: 'plane'; room: PlaneRoom }
+  { kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom }
 )
 
 /** The two kinds of room, once they are here.
