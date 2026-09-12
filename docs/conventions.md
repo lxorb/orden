@@ -72,6 +72,17 @@ and exits with the number of drives that failed. Every drive is run with
 is a development one, because a production build hides the `window.nibApp` the
 drives seed through.
 
+Six of them - `collaborate`, `draw-together`, `first-sync`, `publishing`,
+`share`, `signin` - start the real Worker under `wrangler dev`, and two things
+follow from that. They need `CLOUDFLARE_API_TOKEN` in the environment, because
+the Worker binds Workers AI and that has no local emulation, so wrangler opens a
+remote proxy session for it and will not start without one; nothing the drives
+do reaches the AI. And they bake their own Worker's address into `dist` as the
+API, so the runner makes the shared build again after each of them. A drive the
+runner cannot start for either reason - no token, or a port something else holds
+- is reported `blocked` rather than failed, because neither is the app being
+wrong.
+
 ## Types
 
 Every package extends `tsconfig.base.json`. Beyond `strict`: an index may

@@ -29,6 +29,11 @@ Two things about the set that are not true of a drive on its own:
     hand and by other people at the same time. A drive whose port is already
     taken is not a drive that failed, so its port is waited for and it is called
     blocked rather than failed if the wait runs out.
+  - Those same six need `CLOUDFLARE_API_TOKEN` in the environment, because the
+    Worker binds Workers AI and that has no local emulation: `wrangler dev`
+    opens a remote proxy session for it and will not start without one. Without
+    the token they are called blocked too, rather than run and failed several
+    screens into wrangler's output.
 
 The table at the end holds the exit status, how long it took and where it put
 its screenshots. The exit status of the run is the number of drives that failed;
@@ -76,6 +81,15 @@ PICKED = re.compile(r"^[A-Z_]*PORT[A-Z_]* = (\d+)$", re.MULTILINE)
 #: build it leaves behind is no use to the drive after it, so the shared one is
 #: made again; see the note at the top of this file.
 WORKER_BUILD = "VITE_NIB_API"
+
+#: What one of those drives needs in the environment before it can start its
+#: Worker at all. The Worker binds Workers AI, which has no local emulation, so
+#: `wrangler dev` opens a remote proxy session for it and refuses to start
+#: without a token in a non-interactive shell. Nothing the drives themselves do
+#: reaches the AI; it is the binding being there that asks for this. A drive
+#: without it fails several screens into wrangler's own output, which reads as
+#: the app being broken, so it is called blocked here instead.
+WORKER_TOKEN = "CLOUDFLARE_API_TOKEN"
 
 #: How long to wait for a port somebody else is using, and how often to look.
 FREEING = 180
@@ -228,6 +242,14 @@ def main() -> int:
     for at, one in enumerate(found, 1):
         print(f"=== {at}/{len(found)} {one.name} ===", flush=True)
 
+        source = one.read_text(encoding="utf-8")
+        worker = WORKER_BUILD in source
+
+        if worker and not os.environ.get(WORKER_TOKEN):
+            print(f"  skipped: its Worker needs {WORKER_TOKEN} in the environment", flush=True)
+            table.append((one.name, BLOCKED, 0.0, kind_of(one), "", f"no {WORKER_TOKEN}"))
+            continue
+
         busy = free(one, said.freeing)
         if busy:
             ports = ", ".join(str(port) for port in busy)
@@ -243,7 +265,7 @@ def main() -> int:
         # that is gone the moment they are. The drive after this one would open
         # that build and find no API behind it, so the shared build is made
         # again here rather than left as a trap.
-        if WORKER_BUILD in one.read_text(encoding="utf-8") and not said.no_rebuild:
+        if worker and not said.no_rebuild:
             print(f"  {one.name} built against its own Worker; rebuilding", flush=True)
             if build() != 0:
                 return len(found)
