@@ -60,6 +60,20 @@ const ANTHROPIC_VERSION = '2023-06-01'
  *  enough for a page of prose, which is what the block and the rewrites ask for. */
 const MOST_TOKENS = 4096
 
+/** The other ways of writing "this machine", and the one the app can reach.
+ *
+ *  `127.0.0.1` and `localhost` are the same machine to every network stack alive.
+ *  They are not the same host to a content security policy, and nib's policy names
+ *  `http://localhost:*` and no other plain-http origin, which is deliberate: plain
+ *  http to this machine is what a local model is, and plain http to anywhere else
+ *  is what the policy exists to forbid. See src/csp.ts.
+ *
+ *  A request to the other spelling is refused by the webview before it leaves, and
+ *  the only trace is a console line nobody typing an address into a settings field
+ *  would think to look for. So the address is written the way the policy can
+ *  honour it, which is the same address. */
+const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|\[::1\])(?=[:/]|$)/i
+
 /** A base URL as a root that ends in `/v1`.
  *
  *  Somebody typing an address for a local model types `http://localhost:11434`, or
@@ -70,7 +84,10 @@ const MOST_TOKENS = 4096
 export function apiRoot(provider: Provider): string {
   if (provider.kind !== 'compatible') return ROOTS[provider.kind]
 
-  const typed = (provider.baseUrl ?? '').trim().replace(/\/+$/, '')
+  const typed = (provider.baseUrl ?? '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(LOOPBACK, 'http://localhost')
   if (!typed) return ''
   return /\/v\d+$/.test(typed) ? typed : `${typed}/v1`
 }

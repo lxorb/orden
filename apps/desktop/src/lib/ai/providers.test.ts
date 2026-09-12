@@ -46,6 +46,23 @@ describe('where a provider lives', () => {
     expect(apiRoot(local('https://gateway.example/v2'))).toBe('https://gateway.example/v2')
   })
 
+  /** The content policy names `http://localhost:*` and no other plain-http origin,
+   *  and a policy reads `127.0.0.1` as a different host; see src/csp.ts and the
+   *  comment on `LOOPBACK`. Typing either spelling has to reach the same server. */
+  test('every way of writing this machine becomes the one the policy allows', () => {
+    expect(apiRoot(local('http://127.0.0.1:11434'))).toBe('http://localhost:11434/v1')
+    expect(apiRoot(local('http://127.0.0.1:11434/v1'))).toBe('http://localhost:11434/v1')
+    expect(apiRoot(local('http://[::1]:1234'))).toBe('http://localhost:1234/v1')
+    expect(apiRoot(local('HTTP://127.0.0.1:1234'))).toBe('http://localhost:1234/v1')
+  })
+
+  test('leaves an address that only begins like one alone', () => {
+    // A host of somebody else's that starts with those digits, and the same
+    // address over https, which the policy allows anywhere.
+    expect(apiRoot(local('http://127.0.0.100:80'))).toBe('http://127.0.0.100:80/v1')
+    expect(apiRoot(local('https://127.0.0.1:8443'))).toBe('https://127.0.0.1:8443/v1')
+  })
+
   test('no address is no provider', () => {
     expect(apiRoot(local(''))).toBe('')
     expect(apiRoot(local('   '))).toBe('')

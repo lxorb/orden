@@ -314,11 +314,20 @@ def state(page: Page) -> dict:
     return page.evaluate(STATE)
 
 
-# A request the fake provider deliberately refused. The browser logs one of these
-# for every failed fetch, whoever made it and however well it was handled, so it
-# is not the app saying anything: the app's own answer is the line across the top
-# of the window, which every step below reads.
-REFUSED = re.compile(r"Failed to load resource.*\b(401|403|404|500)\b")
+# Console lines that are not the app saying anything went wrong.
+#
+# The first is a request the fake provider deliberately refused: the browser logs
+# one for every failed fetch, whoever made it and however well it was handled. The
+# app's own answer is the line across the top of the window, which every step below
+# reads instead.
+#
+# The second is the app's own content policy pointing out that one of its
+# directives is a header's and not a `<meta>`'s, which is by design and is written
+# down as such; see src/csp.ts. It appears once on every page load.
+NOT_OURS = re.compile(
+    r"Failed to load resource.*\b(401|403|404|500)\b"
+    r"|'frame-ancestors' is ignored when delivered via a <meta> element"
+)
 
 
 def fresh(browser: Browser, label: str) -> Page:
@@ -331,7 +340,7 @@ def fresh(browser: Browser, label: str) -> Page:
     page.on(
         "console",
         lambda message: wrong(f"[{label}] console error: {message.text}")
-        if message.type == "error" and not REFUSED.search(message.text)
+        if message.type == "error" and not NOT_OURS.search(message.text)
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")

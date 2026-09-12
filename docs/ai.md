@@ -43,6 +43,16 @@ The base URL is forgiving about `/v1`. `http://localhost:11434`,
 `http://localhost:11434/v1` and `http://localhost:11434/v1/` are the same
 server; nib adds exactly one `/v1` and never two.
 
+It is also forgiving about how you spell this machine. `http://127.0.0.1:11434`
+and `http://[::1]:11434` are rewritten to `http://localhost:11434`, which is the
+same server to every network stack and a different host to a content security
+policy. nib's policy names `http://localhost:*` and no other plain-http origin,
+on purpose: plain http to this machine is what a local model is, and plain http
+to anywhere else is what the policy exists to forbid. Without the rewrite, an
+address typed with digits would be refused by the webview before it left, and the
+only trace would be a line in a console nobody typing into a settings field would
+think to open. See `src/csp.ts`.
+
 The model list is fetched, never written down. A table of model names in the
 source is wrong within weeks, and a model on your own machine has a name only
 your machine knows. Press **List models** and nib asks. That press is also the
