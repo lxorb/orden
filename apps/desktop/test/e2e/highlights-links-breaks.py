@@ -130,6 +130,21 @@ def wrong(what: str) -> None:
     failures.append(what)
 
 
+# Not this batch's, and not this drive's to fix: the desktop build delivers its
+# content policy in a `<meta>`, where `frame-ancestors` has no meaning, and the
+# browser says so once on every page load. It is the content-policy work's own
+# line and it breaks every drive in this folder the same way, so it is named here
+# rather than swallowed by a pattern that could hide something real.
+NOISE = (
+    "The Content Security Policy directive 'frame-ancestors' is ignored when "
+    "delivered via a <meta> element."
+)
+
+
+def ignored(said: str) -> bool:
+    return said.strip() == NOISE
+
+
 def is_true(claim: bool, what: str) -> None:
     if claim:
         say(f"ok: {what}")
@@ -220,7 +235,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page.on(
         "console",
         lambda message: wrong(f"console error: {message.text}")
-        if message.type == "error"
+        if message.type == "error" and not ignored(message.text)
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
@@ -444,13 +459,24 @@ def the_bar(page: Page) -> None:
     page.wait_for_timeout(300)
     page.locator(".nib-bar-at button.swatch").first.focus()
     page.keyboard.press("Enter")
-    page.wait_for_timeout(400)
+    page.wait_for_timeout(600)
     is_true(
         page.locator(".nib-bar-at button.swatch").count() == 6,
         "Enter on the dot opens the colours",
     )
 
-    page.locator(".nib-bar-at button.swatch").first.focus()
+    # The row swapped under the keyboard, so the button it was on has gone. The
+    # keyboard has to land on the row that replaced it rather than on the page: a
+    # focus on nothing is what takes the bar away on the next selection, which is
+    # the one thing `follow` is written to prevent.
+    inside = page.evaluate(
+        """() => {
+          const bar = document.querySelector('.nib-bar-at')
+          return bar ? bar.contains(document.activeElement) : false
+        }"""
+    )
+    is_true(inside, "and the keyboard stays in the bar rather than falling to the page")
+
     page.keyboard.press("ArrowRight")
     page.wait_for_timeout(200)
     moved = page.evaluate(

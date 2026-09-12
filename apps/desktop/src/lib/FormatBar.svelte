@@ -13,6 +13,7 @@
     type Transaction,
   } from '@nib/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
+  import { tick } from 'svelte'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
@@ -106,8 +107,29 @@
    *  the others fill - the canvas says "no colour" the same way. */
   const dotFor = (tone: number | null) => (tone === null ? undefined : `var(--canvas-${tone})`)
 
+  /** Shows the colours, or puts the actions back, and leaves the keyboard with
+   *  something to stand on.
+   *
+   *  The row swaps rather than opening a surface of its own, so the button the
+   *  keyboard was on is one of the buttons that go - and focus would fall to the
+   *  page, which is the same "focus on nothing" the bar already guards against in
+   *  `follow`. So the dot the arrows would want next takes it: the first colour on
+   *  the way in, the one dot on the way back. Only when the keyboard was in the
+   *  bar at all - a pointer never focuses these buttons, because the press
+   *  prevents it, and a hand that clicked a dot has not asked for the focus. */
+  async function showColours(on: boolean) {
+    const keyboard = bar?.contains(document.activeElement) ?? false
+    colouring = on
+    if (!keyboard) return
+
+    await tick()
+    bar?.querySelector<HTMLElement>('button.swatch')?.focus()
+  }
+
   /** Highlights the selection in this colour, and keeps it: the button, the
-   *  shortcut and the menu row all write it from now on. */
+   *  shortcut and the menu row all write it from now on. The command puts the
+   *  keyboard back in the note, which is where it belongs once a word is
+   *  formatted, so the row swapping back needs no help here. */
   function pick(colour: HighlightColour) {
     modes.setHighlightTone(colour.tone)
     colouring = false
@@ -171,7 +193,7 @@
     {#each HIGHLIGHT_COLOURS as colour (colour.name)}
       {@render dot(colour, colour.tone === modes.highlight.tone, () => pick(colour))}
     {/each}
-    {@render press(t('Highlight colour'), '×', () => (colouring = false))}
+    {@render press(t('Highlight colour'), '×', () => void showColours(false))}
   {:else}
     {#each ACTIONS as action (action.title)}
       {@render press(action.title, action.label, () => run(action.command))}
@@ -179,7 +201,7 @@
       <!-- The colours sit behind one dot, next to the button they are about, so
            the bar says which colour that button is loaded with. -->
       {#if action.title === HIGHLIGHT}
-        {@render dot(modes.highlight, false, () => (colouring = true))}
+        {@render dot(modes.highlight, false, () => void showColours(true))}
       {/if}
     {/each}
   {/if}
