@@ -1,5 +1,6 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
 import { setChartLocale } from '@nib/markdown/chart'
+import { directionOf } from './direction'
 import { keep } from './stored'
 
 /** The English string is its own key. A language that has not translated
@@ -301,8 +302,13 @@ class I18n {
    *  writes to storage a test has none of. */
   async load(): Promise<void> {
     const wanted = this.language
-    // Not in a test, which has no page to mark.
-    if (typeof document !== 'undefined') document.documentElement.lang = wanted
+    // Not in a test, which has no page to mark. `dir` beside `lang`, because
+    // which way the interface reads is a fact about the language and every rule
+    // that mirrors keys off this one attribute; see direction.ts.
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = wanted
+      document.documentElement.dir = directionOf(wanted)
+    }
     // A chart's numbers are grouped the way this language groups them, on every
     // surface that draws one; see `setChartLocale` in @nib/markdown/chart.
     setChartLocale(wanted)

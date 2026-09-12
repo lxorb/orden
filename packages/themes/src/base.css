@@ -159,7 +159,9 @@ select option {
   max-width: var(--measure);
   margin: 0 auto;
   padding: var(--space-7) var(--space-5) 45vh;
-  /* A phone has no room for a comfortable measure; the screen is the measure. */
+  /* A phone has no room for a comfortable measure; the screen is the measure.
+     Physical on purpose: an inset is which edge of the glass the cutout is on,
+     which does not turn round with the reading direction. */
   padding-left: max(var(--space-5), var(--inset-left));
   padding-right: max(var(--space-5), var(--inset-right));
   font-family: var(--font-content);
@@ -171,6 +173,39 @@ select option {
 
 #write > *:first-child {
   margin-top: 0;
+}
+
+/* A note reads whichever way it was written, and never whichever way the
+   interface reads: every block takes the direction of its own first strong
+   character, so an English note in an Arabic app and an Arabic note in an
+   English app both read right, and a note with both in it reads right block by
+   block. The note's own Right to left mode still sets `dir` on the surface,
+   which is what decides a block with no strong character in it at all.
+
+   Every block has to be named: `unicode-bidi` is one of the few properties that
+   does not inherit, so the value on `#write` would reach the loose words
+   directly inside it and nothing else. One rule for the writing surface, the
+   reading view and a published page, because all three are `#write`. See
+   apps/desktop/src/lib/direction.ts. */
+#write > *,
+#write p,
+#write li,
+#write dt,
+#write dd,
+#write blockquote,
+#write figcaption,
+#write summary,
+#write th,
+#write td {
+  unicode-bidi: plaintext;
+}
+
+/* Code is laid out rather than read: a line that happens to start with an Arabic
+   string would turn round and take its indentation with it. It keeps the note's
+   own direction, whatever is in it. */
+#write pre,
+#write pre * {
+  unicode-bidi: normal;
 }
 
 /* ── The signature: syntax characters bleeding in like ink ───────── */

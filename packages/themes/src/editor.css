@@ -258,6 +258,17 @@
    text column, which is also what the selection's rectangles are sized from
    (see the writing surface above), so a selection in a block ends where the
    block does. */
+/* A code line and a table row are laid out rather than read: base.css gives
+   every block in a note the direction of its own first strong character, and
+   these two are the exceptions. A fence line that begins with an Arabic string
+   would turn round and take its indentation with it, and a table row would take
+   its pipes, so the columns would come apart row by row. Both keep the note's
+   own direction, whatever is written in them. */
+.cm-line.nib-code,
+.cm-line.nib-table {
+  unicode-bidi: normal;
+}
+
 .cm-line.nib-code {
   /* How far the block's own text comes in: the fold chevron stands outside it
      rather than on its edge, and the caption starts level with the code. */
