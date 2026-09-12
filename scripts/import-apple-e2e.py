@@ -156,17 +156,17 @@ def journal_export() -> pathlib.Path:
 
 
 def notes_export() -> pathlib.Path:
-    """What a third-party exporter writes: a folder per notebook."""
+    """What a third-party exporter writes: a folder per notebook, at the top."""
     path = OUT / "Apple Notes export.zip"
 
     with zipfile.ZipFile(path, "w") as zip_:
         zip_.writestr(
-            "Exported/Notes/Groceries.html",
+            "Notes/Groceries.html",
             EXPORTED.replace("TITLE", "Groceries").replace("BODY", "Milk and eggs"),
         )
-        zip_.writestr("Exported/Notes/photo.png", png(20, 12, 200))
+        zip_.writestr("Notes/photo.png", png(20, 12, 200))
         zip_.writestr(
-            "Exported/Work/Ideas.html",
+            "Work/Ideas.html",
             EXPORTED.replace("TITLE", "Ideas").replace("BODY", "A folder per notebook"),
         )
 
@@ -218,21 +218,16 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
 
 SEED = """
 async ([notePath, note]) => {
+  // No version: the app has opened this database already and made its stores,
+  // and asking for a version behind the one it made is an error rather than an
+  // upgrade. So this is a row in a store that is there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
-    request.onupgradeneeded = () => {
-      const made = request.result
-      if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('assets')) made.createObjectStore('assets', { keyPath: 'path' })
-      if (!made.objectStoreNames.contains('meta')) made.createObjectStore('meta')
-      if (!made.objectStoreNames.contains('snapshots')) {
-        const store = made.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
-        store.createIndex('notePath', 'notePath')
-      }
-    }
+    const request = indexedDB.open('nib')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
+
+  if (!db.objectStoreNames.contains('files')) throw new Error('no files store yet')
 
   const now = Date.now()
   await new Promise((resolve, reject) => {
@@ -274,7 +269,9 @@ async () => {
 """
 
 ROWS = """() =>
-  [...document.querySelectorAll('.palette ul li button .text')].map((row) => row.textContent.trim())
+  [...document.querySelectorAll('#nib-palette-list .nib-row-label')].map((row) =>
+    row.textContent.trim(),
+  )
 """
 
 SHEET = """() => {
@@ -387,7 +384,8 @@ def faults_notes(said: str, stored: dict) -> list[str]:
     if "Apple Notes" not in said:
         bad.append("the sheet did not name the format")
 
-    first = "/Notes/Exported/Notes/Groceries.md"
+    # Named after the file that was picked, which is the rule for every import.
+    first = "/Notes/Apple Notes export/Notes/Groceries.md"
     if first not in notes:
         return bad + [f"no note at {first}: {sorted(notes)}"]
 
@@ -397,7 +395,7 @@ def faults_notes(said: str, stored: dict) -> list[str]:
     if "![](photo.png)" not in text:
         bad.append(f"the attachment's own address was not followed: {text!r}")
 
-    if "/Notes/Exported/Work/Ideas.md" not in notes:
+    if "/Notes/Apple Notes export/Work/Ideas.md" not in notes:
         bad.append("the second notebook did not arrive as a folder")
 
     return bad
