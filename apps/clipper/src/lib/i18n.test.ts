@@ -3,7 +3,7 @@ import { de } from '../locales/de'
 import { fr } from '../locales/fr'
 import { gsw } from '../locales/gsw'
 import { ja } from '../locales/ja'
-import { type Dictionary, LANGUAGES } from './translate'
+import { type Dictionary, LANGUAGES, translate } from './translate'
 import { LABELS } from './kinds'
 import { PROBLEMS } from './problems'
 
@@ -13,13 +13,6 @@ const TRANSLATIONS: [string, Dictionary][] = [
   ['fr', fr],
   ['ja', ja],
 ]
-
-/** The same substitution `t()` performs, without the reactive wrapper. */
-function fill(template: string, values: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    name in values ? String(values[name]) : whole,
-  )
-}
 
 describe.each(TRANSLATIONS)('the %s dictionary', (language, dictionary) => {
   test('has a translation for every entry', () => {
@@ -124,12 +117,26 @@ describe('the language list', () => {
   })
 })
 
+/** Through `translate` itself rather than through a copy of its substitution.
+ *  This file used to hold one, so nothing here exercised the real thing and a
+ *  drift in it would have left every test green. */
 describe('filling in placeholders', () => {
   test('substitutes what it is given', () => {
-    expect(fill('Resend in {seconds}s', { seconds: 12 })).toBe('Resend in 12s')
+    expect(translate('en', 'Resend in {seconds}s', { seconds: 12 })).toBe('Resend in 12s')
   })
 
   test('leaves an unknown placeholder alone', () => {
-    expect(fill('{a} and {b}', { a: '1' })).toBe('1 and {b}')
+    expect(translate('en', '{a} and {b}', { a: '1' })).toBe('1 and {b}')
+  })
+
+  test('and fills them into the translated string, not the English one', () => {
+    const german: Dictionary = de
+    const source = Object.keys(german).find((one) => one.includes('{')) ?? ''
+    const name = /\{(\w+)\}/.exec(source)?.[1] ?? ''
+
+    expect(source, 'no German entry carries a placeholder to test with').not.toBe('')
+    expect(translate('de', source, { [name]: 'X' })).toBe(
+      (german[source] ?? '').replace(`{${name}}`, 'X'),
+    )
   })
 })
