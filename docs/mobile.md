@@ -513,6 +513,41 @@ the app. `MainActivity` turns `handleBackNavigation` on, which is what makes the
 webview answer a back press while it has somewhere to go back to and finish the
 activity when it does not.
 
+## The bar over the keyboard
+
+A phone has one toolbar: the strip that arrives with the keyboard and leaves with
+it. What it holds is the reader's, chosen in **Settings > Mobile**, and it goes on
+the account beside the shortcuts - the phone it is for is the worst place to put a
+list together.
+
+The buttons are command ids from the one registry that holds every command whole:
+the shortcuts list, which carries the app entries' own `run` and the editor
+bindings' specs. `runEntry` in `shortcuts/registry.ts` presses one, so a button
+presses exactly what the key for it presses rather than a second copy of the same
+command. Panel and fixed entries are not offered: a panel key means nothing
+outside the file list, and a fixed one is a fact about the keyboard.
+
+Each button wears a mark rather than an icon. The bar has always drawn one
+character per button, the icon set is loaded on demand and is larger than the app
+around it, and a row of little pictures over the keyboard is what every other
+editor's bar looks like. A command with a typographic mark of its own wears it -
+`B`, `<>`, `•`, `¶` - and everything else wears the first letter of its own name,
+which is what `B`, `I` and `S` already were. The table is in
+`toolbar.svelte.ts`; nothing else needs one.
+
+The default is the nine the bar has always held, in the order it held them, and a
+bar nobody has touched is stored as nothing at all - on this device and on the
+account. That is the shortcuts' own rule: a list written out in full would freeze
+today's nine into every device that ever opened the pane, and a default that grew
+later would reach nobody. `null` travels to the account for the same reason a
+taken-away key does: another device has to be able to learn that this one went
+back.
+
+Ordering is a drag where there is a pointer and the two arrows on every row
+everywhere else. A thumb has no drag and neither does a keyboard, so one pair of
+buttons answers both rather than a gesture that only works on one kind of
+machine.
+
 ## Capture: the microphone
 
 A phone is the device a recording is actually made on, so the recorder is the same

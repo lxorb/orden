@@ -1,28 +1,31 @@
 <script lang="ts">
   import {
-    clearFormatting,
-    highlightSelection,
-    insertLink,
     selectedImage,
-    setHeading,
     toggleHighlight,
-    toggleQuote,
-    toggleWrap,
     type EditorView,
     type StateCommand,
     type Transaction,
   } from '@nib/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
-  import Link from 'lucide/dist/esm/icons/link.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import CanvasIcon from './CanvasIcon.svelte'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { roving } from './roving'
+  import { type AppContext, runEntry } from './shortcuts/registry'
+  import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { viewport } from './viewport.svelte'
 
-  const { view }: { view?: EditorView | undefined } = $props()
+  const {
+    view,
+    context,
+  }: {
+    view?: EditorView | undefined
+    /** What a registry command needs that only the running app has; see
+     *  App.svelte, which builds the same one for the keyboard. */
+    context?: (() => AppContext) | undefined
+  } = $props()
 
   let at = $state<{ x: number; y: number } | null>(null)
   let bar = $state<HTMLElement>()
@@ -108,39 +111,22 @@
     view.focus()
   }
 
-  /** The one action the dot of colours stands beside, named once so the markup
-   *  below does not match on a translated string twice. */
-  const HIGHLIGHT = t('Highlight')
+  /** Presses one of the reader's own buttons, which is a command in the app's
+   *  registry: the same thing the key for it presses, run through the same
+   *  function. See toolbar.svelte.ts. */
+  function act(id: string) {
+    runEntry(id, context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined })
+  }
 
-  /** One button on the bar: the mark it wears, what it is called, and what it runs.
-   *
-   *  A letter where a letter says it - `B` has been bold in every word processor
-   *  there has ever been - and the app's own glyph where no letter does. `#` said
-   *  Link here and `#` is how a tag starts in nib's markdown, with `H` already
-   *  standing for Heading: one character cannot mean both, so a link is drawn as the
-   *  chain Lucide draws it with, which is the set the whole interface is drawn in.
-   *
-   *  `low` is for a letter whose ink sits at the top of its own em box rather than
-   *  across the middle of it: a quotation mark is set where quotes go in running
-   *  text, which on a row read across the middle is a mark sitting high in its
-   *  cell. */
-  const ACTIONS: {
-    label: string
-    glyph?: IconNode
-    low?: boolean
-    title: string
-    command: StateCommand
-  }[] = [
-    { label: 'B', title: t('Bold'), command: toggleWrap('**') },
-    { label: 'I', title: t('Italic'), command: toggleWrap('*') },
-    { label: 'S', title: t('Strikethrough'), command: toggleWrap('~~') },
-    { label: 'M', title: HIGHLIGHT, command: highlightSelection },
-    { label: '<>', title: t('Code'), command: toggleWrap('`') },
-    { label: 'H', title: t('Heading'), command: setHeading(2) },
-    { label: '"', low: true, title: t('Quote'), command: toggleQuote },
-    { label: '', glyph: Link, title: t('Link'), command: insertLink },
-    { label: '×', title: t('Clear formatting'), command: clearFormatting },
-  ]
+  /** The one action the dot of colours stands beside. By id rather than by its
+   *  name, so the markup below does not match on a translated string. */
+  const HIGHLIGHT = 'format.highlight'
+
+  /** What the bar holds: the reader's list, or the nine it has always held. What
+   *  each of them wears - a letter, a glyph, a mark that sits high in its own em
+   *  box - is toolbar.svelte.ts, because the list is the reader's and the marks
+   *  have to answer for whatever is on it. */
+  const held = $derived(toolbar.ids)
 
   /** A colour as the dot that offers it: the tone at full strength, the way the
    *  row of dots on the canvas draws the same six. The wash `--mark-*` is for the
@@ -251,18 +237,16 @@
     {/each}
     {@render press(t('Highlight colour'), '×', () => void showColours(false))}
   {:else}
-    {#each ACTIONS as action (action.title)}
-      {@render press(
-        action.title,
-        action.label,
-        () => run(action.command),
-        action.glyph ?? null,
-        action.low ?? false,
-      )}
+    <!-- The reader's own list of commands, by id: a mark to press and the
+         command's own name behind it. See toolbar.svelte.ts, which decides what a
+         mark is, and the Mobile pane in the settings, which is where the list is
+         put together. -->
+    {#each held as id (id)}
+      {@render press(nameFor(id), markFor(id), () => act(id), glyphFor(id), lowMark(id))}
 
       <!-- The colours sit behind one dot, next to the button they are about, so
            the bar says which colour that button is loaded with. -->
-      {#if action.title === HIGHLIGHT}
+      {#if id === HIGHLIGHT}
         {@render dot(modes.highlight, false, () => void showColours(true))}
       {/if}
     {/each}

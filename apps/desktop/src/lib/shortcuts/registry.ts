@@ -993,6 +993,47 @@ export const SHORTCUTS: Shortcut[] = [
 
 export const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
 
+const EDITOR_BY_ID = new Map(EDITOR_SPECS.map((one) => [one.id, one]))
+
+/** Runs whatever an id names, and answers whether there was anything to run.
+ *
+ *  The registry holds both halves of every command already - the app entries
+ *  carry their own `run`, and the editor's keep theirs in the specs the keymap
+ *  is built from - so a button that presses a command by id presses the same
+ *  thing the key does rather than a second copy of it. What the phone's format
+ *  bar is made of; see toolbar.svelte.ts.
+ *
+ *  False for an id nothing answers to, for an editor command with no editor on
+ *  screen, and for the panel and fixed entries: a panel key only means anything
+ *  inside the file list, and a fixed one is a fact about the keyboard rather
+ *  than a command. */
+export function runEntry(id: string, context: AppContext): boolean {
+  const spec = EDITOR_BY_ID.get(id)
+  if (spec) {
+    const view = context.view
+    if (!view) return false
+
+    spec.run(view)
+    view.focus()
+    return true
+  }
+
+  const entry = BY_ID.get(id)
+  if (entry?.scope !== 'app' || !entry.run) return false
+
+  entry.run(context)
+  return true
+}
+
+/** Whether an id is one `runEntry` can press at all, which is what the settings
+ *  offer and what a saved list is cleaned against. */
+export function runnable(id: string): boolean {
+  if (EDITOR_BY_ID.has(id)) return true
+
+  const entry = BY_ID.get(id)
+  return !!entry && entry.scope === 'app' && !!entry.run
+}
+
 /** Combinations the machine underneath usually swallows. Not a refusal - the
  *  app cannot know what a given system does with a given key - but a warning
  *  beside the binding, so nobody sets a key and wonders why nothing happens. */

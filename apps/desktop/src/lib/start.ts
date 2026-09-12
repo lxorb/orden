@@ -24,6 +24,7 @@ import { currentWindow, invoke, isDesktop } from './tauri'
 import { mark } from './trace'
 import { CONTRAST_THEME, theme } from './theme.svelte'
 import { store as themeStore } from './themes/store.svelte'
+import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
 import { updates } from './updates.svelte'
@@ -43,6 +44,9 @@ export function start(): () => void {
   theme.init()
   modes.restore()
   shortcuts.restore()
+  // What the phone's format bar holds, which is the reader's own list of the
+  // same command ids the shortcuts are filed under; see toolbar.svelte.ts.
+  toolbar.restore()
   settings.restore()
   // Which providers are set up, and the one glyph on an `ai` fence that asks one.
   // Installed whether or not any are, so a press on a block in a note somebody was

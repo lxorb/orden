@@ -1362,4 +1362,16 @@ export const fr: Dictionary = {
 
   // The size of the text, said after a pinch or a key.
   '{percent}% text': 'texte à {percent} %',
+
+  // The bar over the keyboard on a phone, and the pane it is put together in.
+  Mobile: 'Mobile',
+  'The bar sits over the keyboard on a phone.':
+    'La barre se place au-dessus du clavier sur un téléphone.',
+  'On the bar': 'Sur la barre',
+  'Everything else': 'Tout le reste',
+  'Search commands': 'Rechercher une commande',
+  'Nothing on the bar.': 'Rien sur la barre.',
+  'Take it off': 'Retirer',
+  'Put it on the bar': 'Mettre sur la barre',
+  'Reset the bar': 'Réinitialiser la barre',
 }

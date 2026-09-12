@@ -19,6 +19,8 @@
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  import { runnable } from './shortcuts/registry'
+  import { markFor, nameFor, toolbar } from './toolbar.svelte'
   import { PRESETS } from './shortcuts/presets'
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
@@ -235,6 +237,59 @@
       ),
     })).filter((group) => group.rows.length)
   })
+
+  // ── Mobile ──────────────────────────────────────────────────────
+
+  /** What is typed into the box over the commands the bar can hold. */
+  let barFilter = $state('')
+
+  /** Which row is being dragged along the bar, while one is, and where it would
+   *  land. The same shape the outline's sections use; see Sidebar.svelte. */
+  let dragging = $state<number | null>(null)
+  let dropAt = $state<number | null>(null)
+
+  /** Everything the bar could hold that it does not already, grouped the way the
+   *  shortcuts list groups the same commands - because it is the same list.
+   *  Panel and fixed entries are left out: a panel key means nothing outside the
+   *  file list, and a fixed one is a fact about the keyboard. */
+  const barOffers = $derived.by(() => {
+    const needle = barFilter.trim().toLowerCase()
+    const held = new Set(toolbar.ids)
+
+    return CATEGORIES.map((category) => ({
+      id: category.id,
+      label: category.label(),
+      rows: SHORTCUTS.filter(
+        (one) =>
+          one.category === category.id &&
+          runnable(one.id) &&
+          !held.has(one.id) &&
+          (!needle ||
+            one.label().toLowerCase().includes(needle) ||
+            category.label().toLowerCase().includes(needle)),
+      ),
+    })).filter((group) => group.rows.length)
+  })
+
+  function takeBar(event: DragEvent, at: number) {
+    event.dataTransfer?.setData('text/plain', String(at))
+    dragging = at
+  }
+
+  function overBar(event: DragEvent, at: number) {
+    if (dragging === null || dragging === at) return
+
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    dropAt = at
+  }
+
+  function dropBar(event: DragEvent, at: number) {
+    event.preventDefault()
+    if (dragging !== null) toolbar.move(dragging, at)
+    dragging = null
+    dropAt = null
+  }
 
   /** The next keystroke goes to whichever row is listening.
    *
@@ -700,6 +755,8 @@
     {/if}
   {:else if settings.section === 'shortcuts'}
     {@render keyboard()}
+  {:else if settings.section === 'mobile'}
+    {@render phone()}
   {:else if settings.section === 'sync'}
     <!-- Its own component, for the same reason as the connector's: what syncing
          is doing is a small report with two decisions in it. -->
@@ -902,6 +959,103 @@
   <div class="card">
     <button class="action" onclick={() => shortcuts.resetAll()}>{t('Reset all shortcuts')}</button>
   </div>
+{/snippet}
+
+<!-- The bar over the keyboard on a phone: which commands it holds and in what
+     order. The rows are the shortcuts pane's rows - a name, and the controls that
+     act on it - because they are rows about the same commands.
+
+     Dragging orders them where there is a pointer, and the two arrows order them
+     everywhere: a thumb has no drag and a keyboard has no drag either, and one
+     pair of buttons answers both. -->
+{#snippet phone()}
+  <p class="lead">{t('The bar sits over the keyboard on a phone.')}</p>
+
+  <h3>{t('On the bar')}</h3>
+  <div class="card">
+    {#each toolbar.ids as id, at (id)}
+      <div
+        class="setting button"
+        class:landing={dropAt === at}
+        role="group"
+        aria-label={nameFor(id)}
+        draggable={!viewport.touch}
+        ondragstart={(event) => takeBar(event, at)}
+        ondragover={(event) => overBar(event, at)}
+        ondragleave={() => (dropAt = null)}
+        ondragend={() => {
+          dragging = null
+          dropAt = null
+        }}
+        ondrop={(event) => dropBar(event, at)}
+      >
+        <span class="mark">{markFor(id)}</span>
+        <span class="name">{nameFor(id)}</span>
+        <button
+          class="revert"
+          disabled={at === 0}
+          title={t('Move up')}
+          aria-label={t('Move up')}
+          onclick={() => toolbar.move(at, at - 1)}
+        >
+          <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
+        </button>
+        <button
+          class="revert"
+          disabled={at === toolbar.ids.length - 1}
+          title={t('Move down')}
+          aria-label={t('Move down')}
+          onclick={() => toolbar.move(at, at + 1)}
+        >
+          <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
+        </button>
+        <button
+          class="revert"
+          title={t('Take it off')}
+          aria-label={t('Take it off')}
+          onclick={() => toolbar.remove(id)}
+        >
+          <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        </button>
+      </div>
+    {:else}
+      <p class="note">{t('Nothing on the bar.')}</p>
+    {/each}
+  </div>
+
+  <div class="card">
+    <button class="action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
+      {t('Reset the bar')}
+    </button>
+  </div>
+
+  <h3>{t('Everything else')}</h3>
+  <label class="search">
+    <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+    <input bind:value={barFilter} placeholder={t('Search commands')} spellcheck="false" />
+  </label>
+
+  {#each barOffers as group (group.id)}
+    <h3>{group.label}</h3>
+    <div class="card">
+      {#each group.rows as entry (entry.id)}
+        <div class="setting button">
+          <span class="mark">{markFor(entry.id)}</span>
+          <span class="name">{entry.label()}</span>
+          <button
+            class="revert"
+            title={t('Put it on the bar')}
+            aria-label={t('Put it on the bar')}
+            onclick={() => toolbar.add(entry.id)}
+          >
+            <svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg>
+          </button>
+        </div>
+      {/each}
+    </div>
+  {:else}
+    <p class="note">{t('Nothing matches.')}</p>
+  {/each}
 {/snippet}
 
 <!-- The key, the model and how hard it thinks. Written out rather than declared
@@ -1392,6 +1546,33 @@
 
   .pill:active {
     background: var(--accent-soft);
+  }
+
+  /* ── A button on the phone's bar ───────────────────────────────── */
+
+  .setting.button {
+    gap: var(--space-2);
+  }
+
+  /* The character the button wears, drawn as the bar draws it: a small square of
+     the writing face, so the row shows what will be on the keyboard rather than
+     only what it does. */
+  .setting .mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text-strong);
+    font-size: var(--text-sm);
+  }
+
+  /* Where a dragged row would land, drawn as the line the outline's sections
+     use rather than as a moved row: nothing jumps until the drop. */
+  .setting.button.landing {
+    box-shadow: inset 0 2px 0 var(--accent);
   }
 
   /* ── A shortcut and its key ────────────────────────────────────── */
@@ -2069,9 +2250,17 @@
     font-size: var(--touch-text);
   }
 
+  /* The floor, not a size of its own: three of these in a row is what a button
+     on the bar carries, and a thumb has to land on each. */
   .sheet.phone .revert {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  .sheet.phone .setting .mark {
     width: 34px;
     height: 34px;
+    font-size: var(--text-base);
   }
 
   .sheet.phone .clash {

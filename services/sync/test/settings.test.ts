@@ -338,6 +338,50 @@ describe('a name that is not a setting', () => {
   })
 })
 
+describe('the phone bar an account carries', () => {
+  test('keeps the commands on it, in order', async () => {
+    const set = await patch({ toolbar: ['format.bold', 'paragraph.quote'] })
+    expect(set.status).toBe(200)
+    expect(set.json.settings.toolbar).toEqual(['format.bold', 'paragraph.quote'])
+
+    const read = await call(env, '/v1/settings', { token })
+    expect(read.json.settings.toolbar).toEqual(['format.bold', 'paragraph.quote'])
+  })
+
+  test('takes null, which is the default bar', async () => {
+    // A choice like any other: without it a device could never learn that
+    // another one went back to the default.
+    expect((await patch({ toolbar: null })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.toolbar).toBeNull()
+  })
+
+  test('takes a bar with nothing on it', async () => {
+    expect((await patch({ toolbar: [] })).status).toBe(200)
+  })
+
+  test('keeps a command this version has never heard of', async () => {
+    // Read for its shape rather than against a list, for the reason a shortcut
+    // id is: the commands are the app's.
+    expect((await patch({ toolbar: ['something.new'] })).status).toBe(200)
+  })
+
+  test('refuses what is not a command id', async () => {
+    expect((await patch({ toolbar: ['Format Bold'] })).status).toBe(400)
+    expect((await patch({ toolbar: ['../etc'] })).status).toBe(400)
+    expect((await patch({ toolbar: [7] })).status).toBe(400)
+    expect((await patch({ toolbar: 'format.bold' })).status).toBe(400)
+  })
+
+  test('refuses the same command twice', async () => {
+    expect((await patch({ toolbar: ['format.bold', 'format.bold'] })).status).toBe(400)
+  })
+
+  test('refuses more than a bar holds', async () => {
+    const many = Array.from({ length: 25 }, (_unused, index) => `app.thing-${index}`)
+    expect((await patch({ toolbar: many })).status).toBe(400)
+  })
+})
+
 describe('the shortcuts an account carries', () => {
   test('keep a map of keys', async () => {
     const set = await patch({ shortcuts: { 'format.bold': 'Mod-Alt-b', 'app.save': 'F2' } })

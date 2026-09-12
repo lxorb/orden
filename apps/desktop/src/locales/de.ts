@@ -1350,4 +1350,15 @@ export const de: Dictionary = {
     'Das ist viel Zuhören - versuche es später erneut',
   // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% Schrift',
+
+  // The bar over the keyboard on a phone, and the pane it is put together in.
+  Mobile: 'Mobil',
+  'The bar sits over the keyboard on a phone.': 'Die Leiste sitzt über der Tastatur am Handy.',
+  'On the bar': 'Auf der Leiste',
+  'Everything else': 'Alles andere',
+  'Search commands': 'Befehle suchen',
+  'Nothing on the bar.': 'Nichts auf der Leiste.',
+  'Take it off': 'Entfernen',
+  'Put it on the bar': 'Auf die Leiste',
+  'Reset the bar': 'Leiste zurücksetzen',
 }

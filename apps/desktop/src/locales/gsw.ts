@@ -1320,4 +1320,15 @@ export const gsw: Dictionary = {
 
   // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% Schrift',
+
+  // The bar over the keyboard on a phone, and the pane it is put together in.
+  Mobile: 'Mobil',
+  'The bar sits over the keyboard on a phone.': 'Di Leischte sitzt überem Tastefäld am Händy.',
+  'On the bar': 'Uf de Leischte',
+  'Everything else': 'Alles andere',
+  'Search commands': 'Befähl sueche',
+  'Nothing on the bar.': 'Nüt uf de Leischte.',
+  'Take it off': 'Wägnä',
+  'Put it on the bar': 'Uf di Leischte',
+  'Reset the bar': 'Leischte zrugsetze',
 }

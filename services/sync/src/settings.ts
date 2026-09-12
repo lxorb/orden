@@ -206,6 +206,7 @@ const KNOWN: Record<string, Check> = {
       ? null
       : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
+  toolbar: buttonList,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
@@ -277,6 +278,35 @@ function isCombination(value: string): boolean {
  *  shortcut. An id this version has never heard of is kept and handed back;
  *  nothing here has to know what it means. */
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/
+
+/** How many buttons the phone's format bar may hold. Well past what a phone can
+ *  show at once, because a bar longer than the screen scrolls. */
+const MOST_BUTTONS = 24
+
+/** The commands on that bar, in order, by the ids the shortcuts are filed
+ *  under. Null is the default set, which the app has to be able to say: without
+ *  it a device could never learn that another one went back to it.
+ *
+ *  The ids are read for their shape rather than against a list, for the reason
+ *  the shortcut ids are: the commands are the app's, and a server that knew them
+ *  would have to be deployed before every new one. Nothing twice, because the
+ *  bar is a set of buttons. */
+function buttonList(value: unknown): string | null {
+  if (value === null) return null
+  if (!Array.isArray(value)) return 'toolbar must be a list of command ids or null'
+  if (value.length > MOST_BUTTONS) return `toolbar holds at most ${MOST_BUTTONS} commands`
+
+  const seen = new Set<string>()
+  for (const id of value as unknown[]) {
+    if (typeof id !== 'string' || id.length > LONGEST_ID || !ID.test(id)) {
+      return `${String(id)} is not a command id`
+    }
+    if (seen.has(id)) return `${id} is on the toolbar twice`
+    seen.add(id)
+  }
+
+  return null
+}
 
 function shortcutMap(value: unknown): string | null {
   if (!value || typeof value !== 'object' || Array.isArray(value))

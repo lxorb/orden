@@ -366,6 +366,11 @@ export interface AccountSettings {
   /** Which keyboard the map above is: one of shortcuts/presets.ts, or
    *  `custom` for a map somebody put together themselves. */
   preset?: string
+  /** Which commands the phone's format bar holds, in order, by the same ids the
+   *  shortcuts are filed under. Null for the default set, which is what lets a
+   *  default that changes later reach everybody who never chose; see
+   *  toolbar.svelte.ts. */
+  toolbar?: string[] | null
   /** Modal editing, which is a mode rather than a map: it can be on over any
    *  of the presets. */
   vim?: boolean

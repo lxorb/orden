@@ -434,9 +434,15 @@ select option {
     color var(--dur-instant) var(--ease-out);
 }
 
-.nib-bar button:hover {
-  background: var(--accent);
-  color: #fff;
+/* Only where there is a pointer. A tap on a phone leaves `:hover` on the button
+   it landed on until something else is touched, so the last button pressed sat
+   there in the accent as though it were on - and on the bar over the keyboard,
+   where every press is a tap, that was every press. */
+@media (hover: hover) {
+  .nib-bar button:hover {
+    background: var(--accent);
+    color: #fff;
+  }
 }
 
 .nib-bar button:active {

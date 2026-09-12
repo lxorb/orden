@@ -1306,4 +1306,15 @@ export const ja: Dictionary = {
 
   // The size of the text, said after a pinch or a key.
   '{percent}% text': '文字 {percent}%',
+
+  // The bar over the keyboard on a phone, and the pane it is put together in.
+  Mobile: 'モバイル',
+  'The bar sits over the keyboard on a phone.': 'スマートフォンではキーボードの上に並びます。',
+  'On the bar': 'バーの上',
+  'Everything else': 'その他',
+  'Search commands': 'コマンドを検索',
+  'Nothing on the bar.': 'バーには何もありません。',
+  'Take it off': '外す',
+  'Put it on the bar': 'バーに追加',
+  'Reset the bar': 'バーを初期化',
 }

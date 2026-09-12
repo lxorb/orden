@@ -26,6 +26,8 @@ export const ICONS: Record<string, string> = {
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
   // A keyboard: the row of keys is the shortcut, not the writing.
   shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
+  // A phone, upright, with the bar this pane is about across the bottom of it.
+  mobile: 'M5 1.8h6a1 1 0 0 1 1 1v10.4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2.8a1 1 0 0 1 1-1zM4 11h8',
   // A word under the checker's wavy line, with the tick it earns.
   spelling: 'M2 11.5L5.6 3l3.6 8.5M3.4 8.6h4.4M9.6 12.8l1.8 1.7 3.1-3.5',
   markdown: 'M2.5 3.5h11v9h-11zM4.5 10.5V6l2 2.4L8.5 6v4.5M10.5 6v4.5M9 9l1.5 1.5L12 9',
@@ -65,6 +67,11 @@ export function sectionGroups(): Item[][] {
       { id: 'general', label: t('General') },
       { id: 'editor', label: t('Editor') },
       { id: 'shortcuts', label: t('Shortcuts') },
+      // The bar over the keyboard on a phone, and the pull on its lists. Here on
+      // every device rather than only where there is a thumb: it goes on the
+      // account, and putting a bar together with a keyboard is easier than doing
+      // it with the thumb it is for.
+      { id: 'mobile', label: t('Mobile') },
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },

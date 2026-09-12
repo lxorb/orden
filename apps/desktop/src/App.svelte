@@ -67,6 +67,7 @@
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { shortcuts } from './lib/shortcuts.svelte'
+  import { toolbar } from './lib/toolbar.svelte'
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -139,6 +140,7 @@
         if (!remote) return
 
         shortcuts.receive(remote)
+        toolbar.receive(remote)
         recovery.receive(remote)
       })
     }
@@ -369,6 +371,9 @@
         modes,
         shortcuts,
         theme,
+        // What the phone's format bar holds, which a drive puts together and
+        // presses; see apps/desktop/test/e2e/phone-bar.py.
+        toolbar,
         // The gallery, which a drive cannot reach by pointing: it sits over the
         // settings sheet, and the launch opens it by itself for a reader whose
         // system asks for more contrast. See start.ts.
@@ -531,7 +536,16 @@
     // note is being presented the only app key is the one that stops.
     if (present.on && !shortcuts.pressed('app.present', event)) return
 
-    shortcuts.handle(event, {
+    shortcuts.handle(event, appContext())
+  }
+
+  /** What a command from the registry needs that only the running app has. Built
+   *  here rather than twice, because the keyboard is not the only thing that
+   *  presses one: the buttons on the format bar are registry commands too, and a
+   *  bar that built its own context would be a second answer to what the app is
+   *  showing. */
+  function appContext() {
+    return {
       view,
       palette: () => {
         palette = true
@@ -539,7 +553,7 @@
       // The document alone, with the app out of the way and the window's own
       // frame with it; see fullscreen.svelte.ts.
       fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
-    })
+    }
   }
   /** Half of what the app tells somebody it tells with a colour: the gear in the
    *  panel's foot is lit while a pass is running and red when the last one failed,
@@ -741,7 +755,7 @@
 {#if SettingsPanel}
   <SettingsPanel {view} />
 {/if}
-<FormatBar bind:this={formatBar} {view} />
+<FormatBar bind:this={formatBar} {view} context={appContext} />
 <History bind:open={settings.historyOpen} />
 <ShareSheet />
 <PublishSheet />

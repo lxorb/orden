@@ -17,6 +17,7 @@ export type Section =
   | 'general'
   | 'editor'
   | 'shortcuts'
+  | 'mobile'
   | 'spelling'
   | 'markdown'
   | 'appearance'
