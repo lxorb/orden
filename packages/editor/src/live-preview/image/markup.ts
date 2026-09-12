@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { attributeValue } from '../../attributes'
 
 /** Reading an image out of the document and writing one back.
  *
@@ -36,10 +37,6 @@ function unescapeAttr(value: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
-}
-
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 }
 
 function attribute(tag: string, name: string): string | undefined {
@@ -150,8 +147,8 @@ export function imageMarkup(spec: ImageSpec): string {
     return `![${spec.alt}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
   }
 
-  const attrs = [`src="${escapeAttr(spec.src)}"`, `alt="${escapeAttr(spec.alt)}"`]
-  if (spec.title) attrs.push(`title="${escapeAttr(spec.title)}"`)
+  const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
+  if (spec.title) attrs.push(`title="${attributeValue(spec.title)}"`)
   if (zoomed) attrs.push(`style="zoom:${spec.zoom}%;"`)
   else attrs.push(`width="${spec.width}"`)
   return `<img ${attrs.join(' ')} />`
