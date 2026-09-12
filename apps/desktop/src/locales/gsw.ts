@@ -1265,13 +1265,15 @@ export const gsw: Dictionary = {
   // Publishing part two.
   Spreadsheet: 'Tabälle',
   'The app’s own': 'Das vo de App',
-  'publish.css and publish.js in this space dress the site.': 'publish.css und publish.js i dere Ablag gstalte d Siite.',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css und publish.js i dere Ablag gstalte d Siite.',
   'publish.css in this space dresses the site.': 'publish.css i dere Ablag gstaltet d Siite.',
   'publish.js in this space runs on the site.': 'publish.js i dere Ablag lauft uf de Siite.',
   Visits: 'Bsüech',
   'Counter script': 'Zäll-Skript',
   'Site name it expects': 'Erwartete Siitename',
-  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.': 'De Bsuech gaht a die, wo das Skript uusliefere. Wänn s läär isch, wird nüt gschickt.',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'De Bsuech gaht a die, wo das Skript uusliefere. Wänn s läär isch, wird nüt gschickt.',
   Answers: 'Antworte',
   'Save as CSV': 'Als CSV spichere',
 }

@@ -1056,3 +1056,58 @@ Features Typora does not have, which are the reason this exists.
       the top of the document says what went wrong in words. Every piece counts against
       the same hourly allowance the glasses spend, and the route holds a piece to two
       minutes and four megabytes so a Worker is never asked to hold more than it has
+
+- [x] A search box on the site, answered by the Worker over an index written when
+      the note was saved: words, a phrase, a refusal, `tag:` and `path:`, which is
+      the part of the app's grammar that means the same thing to a stranger. The
+      box is a form and the answers are a page, so a reader with scripting off
+      searches as well as anybody; every answer is joined to the published pages,
+      so a private note can be in the index and never in an answer
+- [x] The published pages as a graph, on `/graph` and as a small one under a page
+      that has neighbours, drawn by the app's own layout and painter - imported,
+      not reimplemented, so a space looks like itself on both surfaces. The same
+      pages are listed as words under the canvas for anybody the canvas is no use
+      to, and a link to an unpublished note is dropped rather than drawn as the
+      hollow node the app shows
+- [x] The contents of a page beside it on a wide screen and collapsed on a phone,
+      from the same heading list `[toc]` writes - the renderer hands them over, so
+      one page cannot have two answers. A `<details>` the stylesheet opens where
+      there is a column for it, which is a disclosure with no script at all
+- [x] "Linked from" under each page, read off what every other page said about
+      itself when it was saved rather than from a link index, and drawn from the
+      published list alone: a private note that links here is not named
+- [x] A navigation of the published tree with folders as disclosures, the folder
+      you are inside open, the page you are reading marked, `order:` deciding
+      where a page and a folder sit, and previous and next at the foot in that
+      same order. A page the rules leave out is not listed and is still reachable
+      by its own address
+- [x] A card on hover showing the page a link points at, the app's own preview
+      design, fetched when the pointer has been still and kept for the visit. The
+      page being previewed is asked for with a header that says so, and the Worker
+      answers with the note and none of the furniture
+- [x] Light or dark from the reader's system, a button that remembers their choice
+      per site, and the author's own theme - one of the ones the app wears, its
+      stylesheet uploaded by the app and served from the site. One inline line
+      applies the remembered choice before the first paint and the policy names it
+      by its own hash; nothing else inline may run
+- [x] `publish.css` and `publish.js` at the root of the space, Obsidian Publish's
+      own names, travelling with the vault as files rather than living in a
+      setting. The stylesheet wins over the site's own and the theme's; the script
+      is the one thing on a published page that runs an author's own code, under
+      `script-src 'self'` and never inline
+- [x] An optional counter: one script URL in the sheet, loaded only when set, with
+      that origin named in the policy and the plain sentence that the reader's
+      visit goes to whoever serves it. Google Analytics is not offered, because its
+      install is an inline script and of all of them it is the one whose business
+      is the reader
+- [x] A form in a note - a ` ```form ` fence, nib's own grammar since Obsidian has
+      none - rendered as a real form that posts and comes back, with the answers on
+      the account beside the note that asked, read in the publish sheet and
+      exported as CSV. No third party, no captcha, nothing kept about the reader
+      but the message, and spam held off by the rate limit every other route uses
+- [ ] A mermaid diagram on a published page. Reconsidered rather than assumed: a
+      Worker has no DOM to measure text in, the client renderer is about a megabyte
+      the Worker would carry for every site including the ones with no diagram, and
+      a CDN is what the KaTeX round removed. The way forward is the app drawing it
+      at save time and storing the SVG, which is how the favicon and the theme
+      already work

@@ -80,7 +80,11 @@
 
   /** How much the pages come to, said the way the storage line says it. */
   const size = (bytes: number) =>
-    bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} kB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    bytes < 1024
+      ? `${bytes} B`
+      : bytes < 1024 * 1024
+        ? `${Math.round(bytes / 1024)} kB`
+        : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 
   /** The answers as a file, saved where the reader says on a desktop and handed
    *  to the browser to save on the web. Written by the server; see
@@ -482,7 +486,9 @@
     </div>
 
     <p class="hint">
-      {t('The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.')}
+      {t(
+        'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.',
+      )}
     </p>
 
     <!-- A word said out loud to a room, which is what this is for; see

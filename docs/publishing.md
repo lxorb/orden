@@ -302,6 +302,223 @@ An SVG and nothing else. Every browser still shipped draws an SVG favicon; the
 PNG that one or two platforms would rather have needs a rasteriser in a Worker or
 a canvas dance in the app, and a tab icon is not worth either.
 
+## Getting around a site
+
+Part one decided which notes are on a site. This is everything a reader of one
+needs that a single page cannot give them, and all of it is built from the same
+list of published pages - which is the reason it is safe: a navigation built from
+the file tree, or backlinks built from the link index, would each be a place where
+a private note could leak its name.
+
+**The pages, down the left.** The published tree, folders as disclosures, the
+folder you are inside already open, the page you are reading marked. A level
+reads as its own pages first - in `order:` and then by name - and its folders
+after them, which is also the order previous and next follow at the foot of a
+page. `order:` is a number in the front matter; a page that says nothing is
+sorted by name after the ones that do, and a folder sits where the earliest
+`order:` under it puts it.
+
+**The contents, down the right.** The headings of this page, from the same list
+`[toc]` writes - the renderer hands them over rather than being asked twice, so a
+note with a `[toc]` in it and the column beside it cannot disagree. Fewer than
+three headings is not a table of contents and gets none. It is a `<details>`,
+closed in the markup, so a phone gets a row it can open; where there is a column
+to put it in the stylesheet opens it and hides the summary. No script.
+
+**What links here.** Under the note, from what each page said about itself when it
+was saved: the links out of a note are on its row, so this costs no reads. Only
+published pages, and an alias counts as a name for the page it belongs to.
+
+**Previous and next.** The pages either side of this one in the order the
+navigation shows, across folders, because the next thing to read is the next
+thing to read.
+
+A site of one note has none of this. A site of two has the tree and no graph. The
+furniture appears as there is something for it to be about.
+
+## Searching a site on the site
+
+A box in the bar, `/` to focus it, and a page of answers at `/search?q=…`. No
+script does the searching: the box is a form, the answers are a page, and a
+reader with scripting off searches exactly as well as anybody else.
+
+**The grammar is the part of the app's that means the same thing here**: words,
+`"a phrase"`, `-not`, `tag:work`, `path:folder`. The rest of what the app speaks -
+the task operators, the property comparisons, the regular expressions - is for
+somebody standing in their own vault with the file tree in front of them; a
+stranger reading three posts has nothing to point them at, so those are left out
+rather than half-answered. `tag:` reads the note's own front matter; an inline
+`#tag` is one of the page's words and is found as one.
+
+**Answered by an index, never by reading a thousand notes.** SQLite's own
+full-text index, which D1 carries, written when the note is saved from the same
+parse that reads its front matter: the path, the title, and the note's prose with
+the markup taken out, capped at sixteen kilobytes. Diacritics are folded, so
+`cafe` finds `café`. The matched words come back marked by the index itself.
+
+Every note of the space is in that index and every answer is joined to the pages
+the site publishes, so a private note can be in the index and can never be in an
+answer. That is the one thing a search on a site must not get wrong, and it is
+why the join is not optional.
+
+## The graph, on the site
+
+`/graph` draws the published pages and the links between them, and a page with
+neighbours draws a small one under it.
+
+It is the app's own graph: `Layout` and `paint` from `apps/desktop/src/lib`,
+imported into the page's script and bundled with it. Not a second implementation
+and not a library - the physics, the radii, the framing and every pixel are the
+ones the app draws, so a space looks like itself on both surfaces. What the page
+adds is reading the graph the server wrote into the document, sizing the canvas,
+and following a link when a node is pressed.
+
+No dragging, no zoom, no controls: a reader of a blog is being shown how the
+pages hang together and then following one. The same pages are listed as words
+under the canvas, so a reader with scripting off, a screen reader and a search
+engine all get the links.
+
+A link to a note the site does not publish is dropped rather than drawn as the
+hollow node the app shows: on a site that node would be the name of a private
+note.
+
+## The card a link shows
+
+Hovering a link to another page of the site shows the page, the way the app's own
+hover preview does. Fetched when the pointer has been still for a third of a
+second, kept for the rest of the visit, forty pages at most. A long press is the
+gesture where there is no pointer.
+
+The page being previewed is fetched with `x-nib-preview`, which is how the Worker
+knows to answer with the note and none of the furniture: no navigation to draw
+inside a card the size of a paragraph.
+
+## Light, dark, and the author's theme
+
+A page has always followed the reader's system. Now there is a button as well:
+system, light, dark, remembered for that site.
+
+One inline line in the head puts the remembered choice on before the first paint,
+because the alternative is a page that paints in the wrong scheme and corrects
+itself. It is the only inline script a site carries and the policy names it by the
+hash of those very characters - never `unsafe-inline`.
+
+**The author's own theme** is one of the themes the app itself wears. The app
+uploads that theme's stylesheet as a blob and the site keeps its name and hash; a
+page then links it after its own sheet, from where every other blob is served. The
+app is the side that has the themes installed, so the app is the side that sends
+one - the same reasoning as the favicon. The reader's light-or-dark choice still
+sits on top of it, because a theme is a set of tokens and both schemes are in it.
+
+## The author's own CSS and JS
+
+`publish.css` and `publish.js` at the root of the space, which are Obsidian
+Publish's own names. They travel the way a paper does - the bytes as a blob, the
+name in the space's file list - so they live in the vault, are edited in whatever
+edits files, and move with it.
+
+The stylesheet is linked after the site's own and after the theme, so it wins.
+The script is the one thing on a published page that runs code somebody wrote,
+and it is their own page it runs on: `script-src 'self'`, which covers the site's
+own script and theirs, and nothing inline but the one hashed line above. A script
+from anywhere else is still refused by the policy.
+
+The publish sheet says when the space carries either, so a name typed wrong shows
+up as "no dressing" rather than as silence.
+
+## Counting visits
+
+A script URL in the sheet - Plausible, Umami, GoatCounter, or anything else that
+installs as one tag - and the page loads it. Nothing is set until somebody types
+one, and the policy names that one origin and no other.
+
+Said plainly in the sheet and here: **the reader's visit goes to whoever serves
+that script.** That is what analytics is, and a site that counts nothing tells
+nobody anything.
+
+Google Analytics is deliberately not offered. Its install is an inline script
+with an id in it, which would mean either `unsafe-inline` on every page of every
+site that uses one or a hash computed per request for the privilege - and of all
+the providers it is the one whose whole business is the reader. Anything that
+installs as a single script tag works today.
+
+## Forms
+
+The one thing a blog could not do without leaving somebody else's script on the
+page. A note that asks "what did you think" or "tell me when you are free" wants
+a form, and every way of having one meant a third party who then held the answers.
+
+A fence in the note:
+
+    ```form
+    title: Say hello
+    send: Send it
+    fields:
+      - Your name
+      - Your email: email
+      - * What you want to say: lines
+      - Which day: choice Monday | Tuesday
+    ```
+
+A field is its label, and after the colon what kind it is: `text` by default,
+`email`, `lines` for a paragraph, `number`, or `choice` with the choices after it.
+A `*` in front means it must be answered. Obsidian has no form block, so there is
+no key to borrow and this is nib's own; it is written to read as a note rather
+than as a config file, and a fence that says something else is shown as the fence
+it is rather than guessed at.
+
+On the page it is a real form. It posts, the page comes back saying thank you, and
+a reader with scripting off is not told to enable anything. What is accepted is
+what the note asked: a field the form does not have cannot be sent, a required one
+that is empty is refused with one line, and an address that is not one is refused
+by name.
+
+**What the account keeps is the message and nothing else.** No address, no user
+agent, no fingerprint. Spam is held off by counting - ten answers an hour from one
+machine, two hundred to one site - which is the same rate limit every other route
+uses, keyed by a hash that lives as long as the window. No captcha: a captcha is a
+third party watching the reader.
+
+The answers are read in the publish sheet: which page was asking, what came back,
+when, and a row to delete one. `Save as CSV` writes the file the server built, so
+what a column is called is decided where an answer is stored.
+
+The one asymmetry worth naming: in the app a `form` fence is shown as a fence.
+The form is a thing a page does, and the note is where the questions are written.
+
+## What a site costs
+
+The account's allowance is one gigabyte of notes and files, and publishing takes
+none of it: a page **is** the note, so a site serves bytes the account already
+holds. There is no second pile to meter, which is why there is no per-site
+allowance - a site cannot hold what the account does not.
+
+What the sheet says instead is the number that is true: how many pages the site
+would have and how many bytes of notes that is. Version bytes stay outside the
+quota, as they were.
+
+What publishing does add is traffic, which is bandwidth rather than storage and is
+the service's bill rather than the reader's allowance. If that ever needs a
+ceiling it is a ceiling on requests, not on bytes stored, and it is a pricing
+decision rather than an engineering one.
+
+## Mermaid, still not on a page
+
+A `mermaid`, `flow` or `sequence` fence stays a code block, and this is the round
+in which that was reconsidered rather than assumed.
+
+Rendering one on the server needs a DOM to measure text in, which a Worker has
+none of, and no Worker-safe renderer exists. Rendering one in the reader's browser
+means the mermaid bundle, which is about a megabyte: the Worker would have to
+carry it as source - the way it carries KaTeX's 254kB of faces - and every deploy
+and every cold start would pay for it, on every site, for the pages that have no
+diagram. A CDN is what the KaTeX round deliberately removed.
+
+The honest way forward, if this matters: the app draws the diagram when the note
+is saved and stores the SVG beside it, the way the favicon and the theme are
+handled - the side that has a DOM does the drawing, and the page costs nothing at
+all. That is a batch of its own.
+
 ### Checking this part
 
 - `services/sync/test/site.test.ts` - what a note says about itself, which notes
@@ -311,10 +528,19 @@ a canvas dance in the app, and a tab icon is not worth either.
 - `apps/desktop/src/lib/publishing.test.ts` - the rules read off the listing, a
   folder in one list or the other, the preview asked of the server, and a password
   that is never handed back.
+- `services/sync/test/site-parts.test.ts` - the search grammar, the words a note
+  is indexed by, the navigation's order, a folder open where the reader is inside
+  it, what links to a page, a form read from a fence and an answer read against
+  it, and the spreadsheet the answers become.
+- `services/sync/test/site-script.test.ts` - that the script a page runs is still
+  the one the app's own modules make, which is what catches a forgotten
+  `pnpm blog:js`.
 - `python apps/desktop/test/e2e/site.py` - the sheet on a desktop and a phone
   against a real Worker: a folder made private, what the sheet says will change, a
   page served and a page not served, a permalink, a rename that redirects, the
-  feed and the sitemap, a password typed on the site itself, and the favicon.
+  feed and the sitemap, a password typed on the site itself, the favicon, the
+  search box answering, the tree and the contents beside a page, what links to it,
+  the graph, and a form answered on the page and read back on the account.
 
 ## How to check it
 

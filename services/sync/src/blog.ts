@@ -20,15 +20,7 @@ import { answers, asked as readQuery, hasWords, matching } from './blog/find'
 import { linkedFrom, type Listed } from './blog/nav'
 import { pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
-import {
-  type Around,
-  aside,
-  bar,
-  contents,
-  counter,
-  ownFiles,
-  underneath,
-} from './blog/shell'
+import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { machineOf, maySendAnswer, mayTakeAnswer } from './limits'
 import { newId } from './crypto'
@@ -706,7 +698,9 @@ function graphOf(pages: readonly Page[], only?: Set<string>): string {
 
       const key = from < to ? `${from}-${to}` : `${to}-${from}`
       if (seen.has(key)) {
-        const held = edges.find((one) => (one.a === from && one.b === to) || (one.a === to && one.b === from))
+        const held = edges.find(
+          (one) => (one.a === from && one.b === to) || (one.a === to && one.b === from),
+        )
         if (held) held.both = true
         continue
       }
@@ -1191,8 +1185,7 @@ export async function serveBlog(
     url: `${url.origin}/${found.slug}`,
     description: found.front.description ?? found.front.summary ?? site.description,
     image:
-      pictureAt(found.front.image, byFile, url.origin) ??
-      pictureAt(site.image, byFile, url.origin),
+      pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
     date: found.front.date,
   })
 

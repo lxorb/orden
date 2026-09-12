@@ -244,7 +244,11 @@ describe('a site with forms on it', () => {
     })
     note = wrote.json.note.id
 
-    await call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body: { subdomain: 'field' } })
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
   })
 
   afterEach(() => env.close())

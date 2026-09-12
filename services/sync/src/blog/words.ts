@@ -29,22 +29,24 @@ const MOST_WORDS = 16 * 1024
  *  not prose at all (a fence, a picture's address, an HTML tag). A parse would
  *  be the same answer for ten times the work per save. */
 export function plainWords(source: string): string {
-  return stripFrontMatter(source)
-    // A fence is code, and code is not what somebody is searching a blog for.
-    .replace(/^(```|~~~)[\s\S]*?^\1[^\n]*$/gm, ' ')
-    // A picture is its words, and its address is not words at all.
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/!\[\[([^|\]]*\|)?([^\]]*)\]\]/g, '$2')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[\[([^|\]]*\|)?([^\]]*)\]\]/g, '$2')
-    // What is left of the marks: emphasis, headings, quotes, rules, list
-    // bullets, table pipes, inline code.
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/[*_~`>|#]+/g, ' ')
-    .replace(/^[ \t]*[-+][ \t]+/gm, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, MOST_WORDS)
+  return (
+    stripFrontMatter(source)
+      // A fence is code, and code is not what somebody is searching a blog for.
+      .replace(/^(```|~~~)[\s\S]*?^\1[^\n]*$/gm, ' ')
+      // A picture is its words, and its address is not words at all.
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/!\[\[([^|\]]*\|)?([^\]]*)\]\]/g, '$2')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/\[\[([^|\]]*\|)?([^\]]*)\]\]/g, '$2')
+      // What is left of the marks: emphasis, headings, quotes, rules, list
+      // bullets, table pipes, inline code.
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/[*_~`>|#]+/g, ' ')
+      .replace(/^[ \t]*[-+][ \t]+/gm, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, MOST_WORDS)
+  )
 }
 
 /** Puts one note into the index, replacing whatever was there.

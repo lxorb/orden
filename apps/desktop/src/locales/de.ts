@@ -1277,13 +1277,16 @@ export const de: Dictionary = {
   // Publishing part two.
   Spreadsheet: 'Tabelle',
   'The app’s own': 'Das der App',
-  'publish.css and publish.js in this space dress the site.': 'publish.css und publish.js in diesem Bereich gestalten die Seite.',
-  'publish.css in this space dresses the site.': 'publish.css in diesem Bereich gestaltet die Seite.',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css und publish.js in diesem Bereich gestalten die Seite.',
+  'publish.css in this space dresses the site.':
+    'publish.css in diesem Bereich gestaltet die Seite.',
   'publish.js in this space runs on the site.': 'publish.js in diesem Bereich läuft auf der Seite.',
   Visits: 'Besuche',
   'Counter script': 'Zähl-Skript',
   'Site name it expects': 'Erwarteter Seitenname',
-  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.': 'Der Besuch geht an wen auch immer dieses Skript ausliefert. Leer wird nichts gesendet.',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Der Besuch geht an wen auch immer dieses Skript ausliefert. Leer wird nichts gesendet.',
   Answers: 'Antworten',
   'Save as CSV': 'Als CSV speichern',
 }
