@@ -15,13 +15,19 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Every job in this file says what its token may do, and every one of them
+    # only reads: nothing here writes a release, opens a pull request or touches
+    # a package. A job with no block of its own inherits whatever the
+    # repository's default is, which is a permission nobody chose for it.
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # No version here: it comes from the root package.json's packageManager.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm
@@ -50,6 +56,8 @@ jobs:
   # runner does not compile is code no lint reads and no test runs. No row waits
   # on another: a lint that only fires on one platform should say which.
   rust:
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -60,22 +68,26 @@ jobs:
         # One spelling of every step below, whichever runner reads it.
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
         with:
+          # Named, and not left to the `@stable` the ref used to carry: with the
+          # action pinned to a commit, the ref no longer says which toolchain to
+          # install, and this is the input that does.
+          toolchain: stable
           components: clippy, rustfmt
 
       # The cache key this action builds already carries the runner's own OS, so
       # the two rows keep two caches without being told to.
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: |
             apps/desktop/src-tauri
@@ -120,10 +132,12 @@ jobs:
   # minutes for nothing is cheaper than letting a broken manifest through.
   android-touched:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       touched: ${{ steps.look.outputs.touched }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0
 
@@ -164,23 +178,25 @@ jobs:
     needs: android-touched
     if: needs.android-touched.outputs.touched == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm
 
       # The Android Gradle plugin runs on 17; the runner's default is newer.
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
@@ -190,11 +206,15 @@ jobs:
       # The same two targets publish-mobile passes, because that is what decides
       # the variant: two or more of them and the CLI builds the `universal`
       # flavour, which is the one R8 runs over there.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
         with:
+          # Named, and not left to the `@stable` the ref used to carry: with the
+          # action pinned to a commit, the ref no longer says which toolchain to
+          # install, and this is the input that does.
+          toolchain: stable
           targets: aarch64-linux-android,x86_64-linux-android
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: apps/desktop/src-tauri
           key: android
@@ -238,6 +258,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
+    # The Worker and the database are reached with a Cloudflare token, not with
+    # this one, so even the deploy only reads the repository.
+    permissions:
+      contents: read
+
     # Deploys queue rather than race. Cancelling one halfway is how a database
     # ends up migrated for a Worker that never arrived.
     concurrency:
@@ -245,11 +270,11 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm

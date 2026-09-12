@@ -18,12 +18,21 @@ on:
 env:
   VERSION: ${{ inputs.version || '0.4.0' }}
 
+# The floor, so a job added below without a block of its own still only reads.
+# Every job states its own as well, because what a job may do is part of what the
+# job is. Nothing in this file writes anywhere: it builds every Linux package from
+# a release that already exists and reports what came out.
+permissions:
+  contents: read
+
 jobs:
   # What Tauri actually put in the .deb, since every Linux package unpacks it.
   deb:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - run: sudo apt-get update && sudo apt-get install -y desktop-file-utils
 
@@ -74,10 +83,20 @@ jobs:
 
   aur:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
+      # The same digest publish-linux.yml pins, and for the same reason: the
+      # `base-devel` tag is rebuilt daily, and this row is what decides whether
+      # the PKGBUILD that goes to every Arch user builds at all. Two files
+      # answering that question from two different images is two answers. The
+      # `pacman -Syu` inside keeps the packages current, so the pin costs no
+      # freshness; it is raised when somebody decides to.
       - name: makepkg in an archlinux container
+        env:
+          ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
         run: |
           mkdir -p out
           cat > /tmp/aur.sh <<'SH'
@@ -123,9 +142,9 @@ jobs:
           diff -u /repo/packaging/aur/nib-bin/.SRCINFO /repo/out/SRCINFO
           echo '.SRCINFO is current'
           SH
-          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh archlinux:base-devel bash /aur.sh
+          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh "$ARCH_IMAGE" bash /aur.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: srcinfo
@@ -138,8 +157,10 @@ jobs:
   flatpak:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # A from-source build wants the runtime, the SDK, the vendored crates and
       # a release target directory all at once. Not /opt/hostedtoolcache: it is
@@ -255,6 +276,8 @@ jobs:
           jq -e '(.errors // []) - ["appstream-external-screenshot-url", "appstream-remote-icon-not-mirrored"] | length == 0' lint.json
 
   snap:
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -265,7 +288,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       # The snap stages no WebKitGTK of its own, so the platform snap the
       # gnome extension pulls in has to be the one carrying it.
       - name: What the gnome platform snap carries
@@ -275,7 +298,7 @@ jobs:
           grep -q "libwebkit2gtk-4[.]1[.]so[.]0$" webkit.txt
           echo "webkit2gtk-4.1 comes from the platform snap"
 
-      - uses: snapcore/action-build@v1
+      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
         id: build
         with:
           path: packaging/snap
@@ -292,9 +315,11 @@ jobs:
 
   nix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: cachix/install-nix-action@v31
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -313,7 +338,7 @@ jobs:
           timeout 20 xvfb-run -a ./result/bin/nib > nib.log 2>&1 || true
           cat nib.log
           ! grep -qiE "error while loading shared libraries|cannot open shared object" nib.log
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: flake-lock

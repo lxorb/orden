@@ -32,7 +32,7 @@ jobs:
       tag: ${{ steps.decide.outputs.tag }}
       rolling: ${{ steps.decide.outputs.rolling }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # The whole history, so the newest tag can be found from main.
           fetch-depth: 0
@@ -72,23 +72,27 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # No version here: it comes from the root package.json's packageManager.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
         with:
+          # Named, and not left to the `@stable` the ref used to carry: with the
+          # action pinned to a commit, the ref no longer says which toolchain to
+          # install, and this is the input that does.
+          toolchain: stable
           # Universal is a Tauri target, not a rustup one, so that row names the
           # real targets itself. Everything else builds for what it runs on.
           targets: ${{ matrix.rust || matrix.target }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: |
             apps/desktop/src-tauri
@@ -118,7 +122,7 @@ jobs:
           pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nib-${{ matrix.label }}
           if-no-files-found: error
@@ -148,8 +152,8 @@ jobs:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with: { path: artifacts }
 
       # Before the manifest, which builds its download URLs from the filenames.

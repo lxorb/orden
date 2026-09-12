@@ -20,6 +20,10 @@ concurrency:
   group: publish-even
   cancel-in-progress: false
 
+# The floor, so a job added below without a block of its own still only reads.
+# Every job states its own as well, because what a job may do is part of what the
+# job is. The plugin goes to the Even Hub over its own account, not over this
+# token, so nothing here writes anything on GitHub.
 permissions:
   contents: read
 
@@ -30,13 +34,15 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
       publish: ${{ steps.gate.outputs.publish }}
       package: ${{ steps.gate.outputs.package }}
       version: ${{ steps.gate.outputs.version }}
       changelog: ${{ steps.gate.outputs.changelog }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           # This commit only. The manifest the push started from is fetched by
           # its own hash below, which is one object however long the history
@@ -111,12 +117,14 @@ jobs:
     if: needs.gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
           cache: pnpm

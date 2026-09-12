@@ -25,12 +25,18 @@ concurrency:
   group: publish
   cancel-in-progress: false
 
+# The floor, so a job added below without a block of its own still only reads.
+# Every job states its own as well, because what a job may do is part of what the
+# job is.
 permissions:
   contents: read
 
 jobs:
   gate:
     runs-on: ubuntu-latest
+    # It checks nothing out and calls nothing: two secrets read as booleans and a
+    # tag picked apart. Nothing for a token to do, so it is handed none.
+    permissions: {}
     outputs:
       publish: ${{ steps.release.outputs.publish }}
       tag: ${{ steps.release.outputs.tag }}
@@ -77,8 +83,13 @@ jobs:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.winget == 'true'
     runs-on: ubuntu-latest
+    # The pull request against winget-pkgs is opened with the PAT below. This
+    # token only reads: the action asks this repository for the release's assets
+    # with it, and fetches komac with it.
+    permissions:
+      contents: read
     steps:
-      - uses: vedantmgoyal9/winget-releaser@v2
+      - uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e # v2
         with:
           identifier: lxorb.Nib
           version: ${{ needs.gate.outputs.version }}
@@ -98,11 +109,15 @@ jobs:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
     runs-on: ubuntu-latest
+    # The commit goes to lxorb/scoop-bucket on the PACKAGING_TOKEN. This token
+    # only downloads this release's own installers.
+    permissions:
+      contents: read
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           repository: lxorb/scoop-bucket
           token: ${{ secrets.PACKAGING_TOKEN }}
@@ -148,11 +163,15 @@ jobs:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
     runs-on: ubuntu-latest
+    # Likewise: the tap is pushed to on the PACKAGING_TOKEN, and this token only
+    # downloads the dmg to hash it.
+    permissions:
+      contents: read
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           repository: lxorb/homebrew-tap
           token: ${{ secrets.PACKAGING_TOKEN }}
@@ -186,11 +205,15 @@ jobs:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.chocolatey == 'true'
     runs-on: windows-latest
+    # The package is pushed to the community repository on its own API key; this
+    # token only downloads the two MSIs to hash them.
+    permissions:
+      contents: read
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # Chocolatey installs for the whole machine, so this package carries the
       # MSI rather than the per-user NSIS setup. The install script spells every
