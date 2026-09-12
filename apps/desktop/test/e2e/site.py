@@ -66,12 +66,25 @@ DESKTOP_AGENT = (
 #: The notes the site is made of. Everything the rules and the front matter have
 #: to be right about, and nothing else.
 NOTES = {
-    "Public/One.md": "# One\n\nThe first words of it.\n\n![a shot](/i/abc123.png)\n",
-    "Public/Two.md": "---\ndate: 2026-05-06\ndescription: The second one.\n---\n\n# Two\n\nMore.\n",
-    "Drafts/Three.md": "# Three\n\nNot ready.\n",
+    "Public/One.md": (
+        "---\norder: 1\ntags:\n  - fieldwork\n---\n\n# One\n\n"
+        "The first words of it, about mycology.\n\n![a shot](/i/abc123.png)\n\n"
+        "## A heading\n\nSomething under it.\n\n## Another heading\n\nAnd under that.\n\n"
+        "### Deeper\n\nA link to [[Pinned]] and to [[Public/Two]].\n"
+    ),
+    "Public/Two.md": (
+        "---\ndate: 2026-05-06\ndescription: The second one.\norder: 2\n---\n\n"
+        "# Two\n\nMore about mycology, and a link back to [[Public/One]].\n"
+    ),
+    "Drafts/Three.md": "# Three\n\nNot ready, and secretly about mycology.\n",
     "Quiet.md": "---\npublish: false\n---\n\n# Quiet\n\nNever on the site.\n",
     "Pinned.md": "---\npermalink: pinned/here\naliases:\n  - old-pin\n---\n\n# Pinned\n",
     "Moved.md": "# Moved\n\nThis note is about to be renamed.\n",
+    "Say hello.md": (
+        "# Say hello\n\nTell me what you think.\n\n"
+        "```form\ntitle: Say hello\nsend: Send it\nfields:\n"
+        "  - * Your name\n  - Your email: email\n  - What you want to say: lines\n```\n"
+    ),
 }
 
 
@@ -198,7 +211,10 @@ class Worker:
         if done.returncode != 0:
             raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
 
-        say(f"{done.stdout.count('0029') + done.stdout.count('0030')} of the new two named")
+        # The four publishing carries: the note's front matter and the site's
+        # own block, then the search index and the answers a form takes.
+        named = sum(done.stdout.count(one) for one in ('0029', '0030', '0031', '0032'))
+        say(f"{named} of the four publishing migrations named")
 
     def sql(self, statement: str) -> str:
         done = npx(
@@ -460,6 +476,211 @@ def pages(worker: Worker, token: str, space: str) -> None:
     say(f"the favicon is {icon.headers.get('content-type')}, {len(icon.text)} bytes")
 
 
+def furniture() -> None:
+    """The bar, the tree, the contents, what links here, and where to go next."""
+    one = site("/public/one")
+
+    for what, wanted in [
+        ("the search box", 'name="q"'),
+        ("the theme button", 'class="theme"'),
+        ("the page tree", 'class="pages"'),
+        ("the contents beside it", 'class="toc-aside"'),
+        ("what links here", "Linked from"),
+        ("it lined up under the note", 'class="under"'),
+        ("previous and next", 'class="around"'),
+        ("a small graph", 'class="graph"'),
+        ("the site script", "/s/"),
+    ]:
+        say(f"a page carries {what}: {wanted in one.text}")
+
+    say(f"the tree marks the page: {'aria-current' in one.text}")
+    say(f"and opens the folder it is in: {'<details open><summary>Public' in one.text}")
+
+    headings = re.findall(r'<a href="#([^"]+)"', one.text)
+    say(f"the contents list: {headings[:4]}")
+
+    linked = re.search(r'class="linked".*?</nav>', one.text, re.S)
+    say(f"linked from: {sorted(set(re.findall(r'>([^<>]+)</a>', linked.group(0) if linked else '')))}")
+
+    say(f"previous and next: {re.findall(r'class=.(before|after). href=.([^\"]+).', one.text)}")
+
+    graph = site("/graph")
+    nodes = re.findall(r'"name":"([^"]+)"', graph.text)
+    say(f"the graph page names: {sorted(set(nodes))}")
+
+
+def searching() -> None:
+    """The box, answered by the index over the published pages only."""
+    for query, what in [
+        ("mycology", "a word two pages share"),
+        ("%22first+words%22", "a phrase"),
+        ("mycology+-back", "a word refused"),
+        ("tag:fieldwork", "a tag"),
+        ("path:public", "a folder"),
+        ("nothing-matches-this", "a word nobody wrote"),
+    ]:
+        answer = site(f"/search?q={query}")
+        found = re.findall(r'class="what">([^<]+)<', answer.text)
+        say(f"{what} ({query}): {found}")
+
+    say(f"a private note is never an answer: {'Three' not in site('/search?q=mycology').text}")
+
+
+def forms(token: str, space: str) -> None:
+    """A form on the page, answered by a reader and read back on the account."""
+    page = site("/say-hello")
+    action = re.search(r'action="/form/([^"]+)"', page.text)
+    say(f"the form posts to the note that asked: {bool(action)}")
+    if not action:
+        return
+
+    note = action.group(1)
+    sent = site(
+        f"/form/{note}",
+        data=b"your-name=Ada&your-email=ada%40example.com&what-you-want-to-say=Hello+there",
+        follow=False,
+    )
+    say(f"an answer lands: {sent.status} to {sent.headers.get('location')}")
+    say(f"and the page says so: {'Thank you' in site(f'/say-hello?sent={note}').text}")
+
+    refused = site(f"/form/{note}", data=b"your-email=ada%40example.com", follow=False)
+    say(f"a question it needs is refused: {'wrong=' in (refused.headers.get('location') or '')}")
+
+    held = request(f"/v1/spaces/{space}/answers", token)
+    say(f"the account holds: {[row['answers'] for row in held.get('answers', [])]}")
+
+
+def dressing(token: str, space: str) -> None:
+    """The author's own stylesheet, and a counter's script."""
+    css = b"#write{--nib-drive:1}"
+    digest = hashlib.sha256(css).hexdigest()
+
+    put = urllib.request.Request(
+        f"{ORIGIN}/v1/blobs/{digest}",
+        data=css,
+        method="PUT",
+        headers={"authorization": f"Bearer {token}", "content-type": "text/css"},
+    )
+    with urllib.request.urlopen(put, timeout=30) as answer:
+        answer.read()
+
+    request(
+        f"/v1/spaces/{space}/files",
+        token,
+        {"files": [{"path": "publish.css", "hash": digest}]},
+        method="PUT",
+    )
+    request(
+        f"/v1/spaces/{space}/site",
+        token,
+        {"analytics": {"url": "https://plausible.io/js/script.js", "domain": BLOG_HOST}},
+        method="PUT",
+    )
+
+    one = site("/public/one")
+    policy = one.headers.get("content-security-policy") or ""
+    say(f"the author's own stylesheet is linked: {f'/i/{digest}.css' in one.text}")
+    say(f"the counter is loaded: {'plausible.io/js/script.js' in one.text}")
+    say(f"and named in the policy: {'https://plausible.io' in policy}")
+    say(f"the scripts are the site's own: {'script-src ' in policy}")
+
+
+def looking(browser, out: Path) -> None:
+    """The site itself, in a browser, on a desktop and a phone."""
+    for name, width, height, agent, finger in [
+        ("site-desktop", 1440, 900, DESKTOP_AGENT, False),
+        ("site-phone", 390, 844, PHONE_AGENT, True),
+    ]:
+        context = browser.new_context(
+            viewport={"width": width, "height": height},
+            user_agent=agent,
+            has_touch=finger,
+            is_mobile=finger,
+            color_scheme="light" if finger else "dark",
+            device_scale_factor=2,
+        )
+        page = context.new_page()
+        page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
+        page.goto(f"{ORIGIN}/public/one", wait_until="load")
+        page.wait_for_timeout(1200)
+
+        page.screenshot(path=str(out / f"{name}-page.png"))
+        say(f"shot {name}-page.png")
+
+        # The graph, which is the app's own layout painting on a canvas.
+        page.goto(f"{ORIGIN}/graph", wait_until="load")
+        page.wait_for_timeout(2500)
+        drawn = page.evaluate(
+            """() => {
+              const canvas = document.querySelector('.graph canvas')
+              if (!canvas) return null
+              const context = canvas.getContext('2d')
+              const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+              let painted = 0
+              for (let at = 3; at < pixels.length; at += 4) if (pixels[at] > 0) painted++
+              return { width: canvas.width, painted }
+            }"""
+        )
+        say(f"[{name}] the graph painted: {drawn}")
+        page.screenshot(path=str(out / f"{name}-graph.png"))
+        say(f"shot {name}-graph.png")
+
+        # The search box, focused by the slash the way it is in the app.
+        page.goto(f"{ORIGIN}/", wait_until="load")
+        page.wait_for_timeout(600)
+        page.keyboard.press("/")
+        focused = page.evaluate("() => document.activeElement?.getAttribute('name')")
+        say(f"[{name}] slash focuses: {focused}")
+
+        page.fill('input[name="q"]', "mycology")
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(1200)
+        rows = page.evaluate(
+            "() => [...document.querySelectorAll('.found .what')].map((one) => one.textContent)"
+        )
+        say(f"[{name}] searching for mycology found: {rows}")
+        page.screenshot(path=str(out / f"{name}-search.png"))
+        say(f"shot {name}-search.png")
+
+        # The theme the reader chose, remembered for the site - and the colours
+        # of the page with it, since a button that only sets an attribute has
+        # changed nothing a reader can see.
+        page.goto(f"{ORIGIN}/public/one", wait_until="load")
+        page.wait_for_timeout(600)
+        ground = "() => getComputedStyle(document.body).backgroundColor"
+        themed = (
+            "() => [document.documentElement.dataset.theme,"
+            " localStorage.getItem('nib:site-theme')]"
+        )
+        was = page.evaluate(ground)
+        page.click("button.theme")
+        page.wait_for_timeout(400)
+        chosen = page.evaluate(themed)
+        first = page.evaluate(ground)
+
+        # Twice, because the first press lands on whichever the system already
+        # said on one of the two screens: the second proves the other direction.
+        page.click("button.theme")
+        page.wait_for_timeout(400)
+        say(f"[{name}] the theme button says: {chosen} then {page.evaluate(themed)}")
+        say(f"[{name}] and the page turns: {was} -> {first} -> {page.evaluate(ground)}")
+        page.screenshot(path=str(out / f"{name}-theme.png"))
+        say(f"shot {name}-theme.png")
+
+        # The card a link shows on hover, which a finger asks for differently.
+        if not finger:
+            page.hover('.pages a[href="/public/two"]')
+            page.wait_for_timeout(1400)
+            card = page.evaluate(
+                "() => { const one = document.querySelector('body > .card'); return one && !one.hidden ? one.textContent.trim().slice(0, 40) : null }"
+            )
+            say(f"[{name}] the hover card shows: {card!r}")
+            page.screenshot(path=str(out / f"{name}-hover.png"))
+            say(f"shot {name}-hover.png")
+
+        context.close()
+
+
 def password(worker: Worker, token: str, space: str) -> None:
     """The form, a wrong word, the right one, and the note behind it."""
     request(f"/v1/spaces/{space}/site", token, {"password": PASSWORD}, method="PUT")
@@ -533,6 +754,23 @@ def main() -> int:
     try:
         say("--- what the hostname serves ---")
         pages(worker, token, space)
+        say("--- getting around it ---")
+        furniture()
+        say("--- searching it ---")
+        searching()
+        say("--- a form on a page ---")
+        forms(token, space)
+        say("--- the author's own dressing ---")
+        dressing(token, space)
+
+        say("--- the site in a browser ---")
+        with sync_playwright() as play:
+            browser = play.chromium.launch(channel="chrome")
+            try:
+                looking(browser, SHOTS)
+            finally:
+                browser.close()
+
         say("--- behind a password ---")
         password(worker, token, space)
     finally:
