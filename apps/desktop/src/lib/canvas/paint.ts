@@ -161,6 +161,59 @@ function wipe(ctx: CanvasRenderingContext2D, view: View) {
   ctx.clearRect(0, 0, width * ratio, height * ratio)
 }
 
+/** A box grown by `slack` on every side. */
+function grown(box: Box, slack: number): Box {
+  return {
+    x: box.x - slack,
+    y: box.y - slack,
+    width: box.width + 2 * slack,
+    height: box.height + 2 * slack,
+  }
+}
+
+function inside(box: Box, outer: Box): boolean {
+  return (
+    box.x >= outer.x &&
+    box.y >= outer.y &&
+    box.x + box.width <= outer.x + outer.width &&
+    box.y + box.height <= outer.y + outer.height
+  )
+}
+
+/** The batches last gathered, and the part of the plane they cover.
+ *
+ *  One, because there is one plane on screen. Kept because gathering them is the
+ *  expensive half of a repaint and the camera moving does not change them: the
+ *  paths are in plane coordinates, so a pan is a transform and the shapes are the
+ *  shapes. See `paintInk`. */
+let gathered: {
+  strokes: readonly InkStroke[]
+  covers: Box
+  batches: { stroke: InkStroke; path: Path2D }[]
+  drawn: number
+} | null = null
+
+let batched = 0
+
+/** How many strokes have been put into a batch path, ever - a running total, read
+ *  as a difference either side of whatever is being asked about.
+ *
+ *  Counted rather than timed, for the reason fuzzy.ts gives beside its own
+ *  counters: a clock says what the machine was doing and a count says what the
+ *  code did. That a pan over a plane of ten thousand strokes adds up to no strokes
+ *  at all after the first frame is the whole of the paragraph in `paintInk`, and it
+ *  is asserted in paint.test.ts. */
+export function strokesBatched(): number {
+  return batched
+}
+
+/** How much of the plane either side of the view is gathered, as a share of the
+ *  view's own size. One viewport of margin all round, which is the pan a hand
+ *  makes in a second or so: far enough that a drag is one gather rather than one
+ *  per frame, near enough that the paths hold the part of a plane somebody is
+ *  looking at rather than all of it. */
+const SPARE = 1
+
 /** Every stroke in view, in as few fills as there are kinds of ink on it.
  *
  *  Strokes drawn in the same tool and the same colour are one shape as far as
@@ -174,6 +227,17 @@ function wipe(ctx: CanvasRenderingContext2D, view: View) {
  *  one word are now one shape and darken once, which is what a highlighter does
  *  on paper.
  *
+ *  The batches themselves are kept between repaints, because putting them
+ *  together is what a repaint mostly costs and the camera has nothing to do with
+ *  them: `addPath` copies a stroke's outline into the batch, so a plane of ten
+ *  thousand strokes copied a hundred thousand points of geometry per frame while
+ *  it was being panned - a hundred milliseconds a frame, which is twelve frames a
+ *  second on a plane a reader is dragging with their hand. The paths are in plane
+ *  coordinates, so what they are does not depend on where the camera is; only
+ *  *which* of them are gathered does. So they are gathered for a viewport of plane
+ *  either side of the view and kept until the camera leaves that, and a pan is the
+ *  fills and nothing else.
+ *
  *  Answers how many strokes were painted, which is what the measurement reads. */
 export function paintInk(
   ctx: CanvasRenderingContext2D,
@@ -186,32 +250,44 @@ export function paintInk(
   place(ctx, view)
 
   const box = seen(view)
+  const held =
+    gathered && gathered.strokes === strokes && inside(box, gathered.covers) ? gathered : null
 
-  const batches = new Map<string, { stroke: InkStroke; path: Path2D }>()
-  let drawn = 0
+  if (!held) {
+    // A viewport of plane either side of the view, so panning stays inside what
+    // was gathered rather than leaving it on the next frame.
+    const covers = grown(box, SPARE * Math.max(box.width, box.height))
+    const batches = new Map<string, { stroke: InkStroke; path: Path2D }>()
+    let drawn = 0
 
-  for (const stroke of strokes) {
-    if (!meets(strokeBox(stroke), box)) continue
+    for (const stroke of strokes) {
+      if (!meets(strokeBox(stroke), covers)) continue
 
-    // Ink that is set the same way is one shape to fill. The alpha is part of
-    // being set the same way: two strokes at different opacities cannot share a
-    // fill without one of them coming out at the other's.
-    const key = `${stroke.tool}
+      // Ink that is set the same way is one shape to fill. The alpha is part of
+      // being set the same way: two strokes at different opacities cannot share a
+      // fill without one of them coming out at the other's.
+      const key = `${stroke.tool}
 ${stroke.color}
 ${inkOpacity(stroke)}`
-    const held = batches.get(key)
+      const batch = batches.get(key)
 
-    if (held) held.path.addPath(pathOf(stroke))
-    else {
-      const path = new Path2D()
-      path.addPath(pathOf(stroke))
-      batches.set(key, { stroke, path })
+      if (batch) batch.path.addPath(pathOf(stroke))
+      else {
+        const path = new Path2D()
+        path.addPath(pathOf(stroke))
+        batches.set(key, { stroke, path })
+      }
+
+      drawn++
     }
 
-    drawn++
+    batched += drawn
+    gathered = { strokes, covers, batches: [...batches.values()], drawn }
   }
 
-  for (const batch of batches.values()) {
+  const { batches, drawn } = gathered ?? { batches: [], drawn: 0 }
+
+  for (const batch of batches) {
     inkStyle(ctx, batch.stroke, palette)
     ctx.fill(batch.path, 'nonzero')
   }

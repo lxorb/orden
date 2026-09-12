@@ -11,6 +11,10 @@ vi.mock('../link-index.svelte', () => ({
       path,
       read: () => Promise.resolve(null),
     }),
+    // A card renders through the reading view, which asks the index which note a
+    // link means; see `pointer` in reading/render.ts.
+    targetOf: (_from: string | null, link: { target: string }) =>
+      link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
   },
 }))
 
