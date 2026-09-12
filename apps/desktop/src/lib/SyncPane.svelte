@@ -105,9 +105,11 @@
       // whether more is waiting, because it is bounded in writes per request -
       // and an answer of four hundred used to read as the whole space when it was
       // the first four hundred of twelve.
+      let put = 0
       for (let round = 0; round < ROUNDS; round++) {
         const done = await api.rollback(token, spaceId, moment())
-        rolled = (rolled ?? 0) + done.notes
+        put += done.notes
+        rolled = put
 
         if (!done.partial || done.notes === 0) break
       }
