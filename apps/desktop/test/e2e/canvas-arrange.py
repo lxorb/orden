@@ -203,6 +203,27 @@ def canvas_of(page: Page) -> dict:
     return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
 
 
+def written(page: Page, holds: str, patience: int = 8000) -> None:
+    """Waits until the file says what the gesture just did.
+
+    Serialising the plane is the size of the plane, so it is written once the changes
+    have stopped coming rather than per event: the file a drive reads straight after a
+    drag is the plane as it was before it. `holds` is a line of JavaScript about
+    `plane`, the parsed file. Waited on rather than slept through, because the pause is
+    the app's own and this drive should not have to know how long it is; see
+    WRITE_DELAY in lib/canvas/store.svelte.ts."""
+    try:
+        page.wait_for_function(
+            "() => { const doc = window.nibApp.workspace.active?.doc;"
+            " if (!doc) return false;"
+            " let plane; try { plane = JSON.parse(doc) } catch { return false }"
+            f" return {holds} }}",
+            timeout=patience,
+        )
+    except Exception:  # noqa: BLE001 - the check after this says what was missing
+        pass
+
+
 def cursor_of(page: Page) -> str:
     return page.evaluate("() => getComputedStyle(document.querySelector('.canvas')).cursor")
 
@@ -436,7 +457,7 @@ def check_connector(page: Page) -> None:
 
     shot(page, "canvas-connector-aiming")
     page.mouse.up()
-    page.wait_for_timeout(700)
+    written(page, "plane.edges.length >= 1")
 
     edges = canvas_of(page).get("edges", [])
     if len(edges) != 1:
@@ -607,7 +628,7 @@ def check_arranging(page: Page) -> None:
         fail("the bar over several things picked does not offer to group them")
     else:
         grouped.first.click()
-        page.wait_for_timeout(600)
+        written(page, "plane.nodes.some((one) => one.type === 'group')")
         frames = [one for one in canvas_of(page)["nodes"] if one["type"] == "group"]
         if len(frames) != 1:
             fail(f"grouping several things did not make one frame ({len(frames)})")
@@ -621,7 +642,7 @@ def check_arranging(page: Page) -> None:
             fail("the bar over a frame does not offer to take it apart")
         else:
             ungrouped.first.click()
-            page.wait_for_timeout(600)
+            written(page, "!plane.nodes.some((one) => one.type === 'group')")
             left = canvas_of(page)["nodes"]
             if any(one["type"] == "group" for one in left):
                 fail("ungrouping left the frame behind")
@@ -656,7 +677,7 @@ def check_arranging(page: Page) -> None:
     # One press of undo puts both the copy and the move back, because they are one
     # thing somebody did.
     page.keyboard.press("Control+z")
-    page.wait_for_timeout(600)
+    written(page, "plane.nodes.length === 3")
     if len(canvas_of(page)["nodes"]) != 3:
         fail("one undo did not take back both the copy and the drag that made it")
     else:
@@ -683,7 +704,10 @@ def check_arranging(page: Page) -> None:
         shot(page, "canvas-resize-aspect")
         page.mouse.up()
         page.keyboard.up("Shift")
-        page.wait_for_timeout(700)
+        written(
+            page,
+            f"plane.nodes.some((one) => one.id === 'bb' && one.width !== {was['width']})",
+        )
 
         now = next(one for one in canvas_of(page)["nodes"] if one["id"] == "bb")
         before = was["width"] / was["height"]
@@ -909,7 +933,7 @@ def check_sharp_stroke(page: Page, cdp) -> None:
         )
 
     pen_stroke(page, cdp, zigzag)
-    page.wait_for_timeout(200)
+    written(page, "(plane.nib?.ink ?? []).length > 0")
     shot(page, "canvas-sharp-stroke")
 
     drawn = canvas_of(page).get("nib", {}).get("ink", [])
