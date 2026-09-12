@@ -101,11 +101,17 @@ describe('the marks a row wears', () => {
     expect(Object.keys(MARKS).sort()).toEqual([...MARK_NAMES].sort())
   })
 
+  /** By value rather than by identity, because the marks are imported one file each
+   *  rather than off the library's index - a static import from the index puts all six
+   *  thousand icons in front of the app's first paint. The two are the same drawing and
+   *  need not be the same array; see file-mark.ts. */
   test('all of them come from the icon library rather than being drawn here', () => {
-    const library = Object.values(lucide).filter(Array.isArray)
+    const library = Object.values(lucide)
+      .filter(Array.isArray)
+      .map((one) => JSON.stringify(one))
 
     for (const name of MARK_NAMES) {
-      expect(library, name).toContain(MARKS[name])
+      expect(library, name).toContain(JSON.stringify(MARKS[name]))
     }
   })
 

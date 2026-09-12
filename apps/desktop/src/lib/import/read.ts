@@ -11,8 +11,7 @@
 
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
-import { hasNotionId } from './names'
-import { looksLikePapers } from './pdf-pages'
+import { hasNotionId, looksLikePapers } from './names'
 import type { Rows } from './table'
 
 /** How many files are opened to work out what an export is. Enough to be sure,

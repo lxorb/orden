@@ -24,13 +24,6 @@ import { PDF_TO_CSS } from '../pdf/pages'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
-/** Whether these files are papers and nothing else. Every one of them, because a
- *  zip with a PDF in it among four hundred notes is somebody's notes and not a paper
- *  they want to write on; one file, or a handful of them, is. */
-export function looksLikePapers(paths: readonly string[]): boolean {
-  return paths.length > 0 && paths.every((one) => /\.pdf$/i.test(one))
-}
-
 /** What a paper's page note is called: the paper's own name with `.pages` after the
  *  stem, so `Lecture 4.pdf` is written on in `Lecture 4.pages` and the pair reads as
  *  a pair in the file list. */

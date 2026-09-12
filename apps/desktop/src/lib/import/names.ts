@@ -22,6 +22,18 @@ const LONGEST = 96
  *  characters after a space, or after a hyphen in the HTML export. */
 const NOTION_ID = /[ -][0-9a-f]{32}$/i
 
+/** Whether these files are papers and nothing else. Every one of them, because a
+ *  zip with a PDF in it among four hundred notes is somebody's notes and not a paper
+ *  they want to write on; one file, or a handful of them, is. See pdf-pages.ts, which
+ *  is what such a drop is read by.
+ *
+ *  Here rather than beside that reader because read.ts asks this of every import
+ *  there is, and the reader brings pdf.js with it - half a megabyte, in front of the
+ *  first paint, to answer a question about an extension. */
+export function looksLikePapers(paths: readonly string[]): boolean {
+  return paths.length > 0 && paths.every((one) => /\.pdf$/i.test(one))
+}
+
 export function safeName(title: string): string {
   const one = withoutForbidden(title.replace(/\s+/g, ' '))
     .replace(/\s+/g, ' ')

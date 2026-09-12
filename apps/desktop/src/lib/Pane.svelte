@@ -31,13 +31,10 @@
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
-  import Canvas from './Canvas.svelte'
-  import Pages from './Pages.svelte'
   import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
   import FindBar from './FindBar.svelte'
-  import Graph from './Graph.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
   import { showEditorMenu } from './editor-menu'
@@ -46,12 +43,17 @@
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
   import { notePicture } from './note-images'
-  import Pdf from './Pdf.svelte'
   import { placement } from './placement.svelte'
   import Reading from './Reading.svelte'
-  import WebTab from './web-tab/WebTab.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
+  import {
+    canvasSurface,
+    graphSurface,
+    pagesSurface,
+    pdfSurface,
+    webSurface,
+  } from './surfaces'
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
@@ -370,43 +372,59 @@
     />
   {/if}
 
+  <!-- Every surface below the editor is fetched the first time a tab of its kind is
+       opened rather than before the window is on screen; see surfaces.ts. The awaited
+       promise is kept, so only the first canvas, PDF, deck of pages, graph or website
+       of a session waits, and switching back to one does not. Nothing is drawn while
+       one is on its way: the pane keeps its own ground for a frame, which is what it
+       looked like before the surface was asked for. -->
   {#if tab?.kind === 'graph'}
     <!-- The graph of the space is a tab like a note is, so it takes the note's
          place in the pane rather than a surface of its own. -->
-    <Graph
-      graph={picture}
-      whole
-      current={workspace.relativeNote}
-      onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
-      onescape={() => void workspace.closeAsking(tab.id)}
-    />
+    {#await graphSurface() then Graph}
+      <Graph
+        graph={picture}
+        whole
+        current={workspace.relativeNote}
+        onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
+        onescape={() => void workspace.closeAsking(tab.id)}
+      />
+    {/await}
   {:else if tab?.kind === 'canvas'}
     <!-- A plane of cards, in the note's place. Keyed like the reading view and a
          PDF: a canvas is a document of its own and nothing about it is swapped
          into an editor. -->
     {#key tab.id}
-      <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await canvasSurface() then Canvas}
+        <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
     {/key}
   {:else if tab?.kind === 'pages'}
     <!-- Pages of paper, in the note's place. Keyed like the canvas beside it: a page
          note is a document of its own and nothing about it is swapped into an
          editor. -->
     {#key tab.id}
-      <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await pagesSurface() then Pages}
+        <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
     {/key}
   {:else if tab?.kind === 'pdf'}
     <!-- A paper being read, beside the notes about it. Keyed like the reading
          view: a PDF is a document of its own and nothing about it is swapped
          into an editor. -->
     {#key tab.id}
-      <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await pdfSurface() then Pdf}
+        <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
     {/key}
   {:else if tab?.kind === 'web'}
     <!-- A website, in the note's place. Keyed like the others: the page is a webview
          of its own placed over this pane, and nothing about it is swapped into an
          editor. See docs/web-tabs.md. -->
     {#key tab.id}
-      <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await webSurface() then WebTab}
+        <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
     {/key}
   {:else if tab?.coming}
     <!-- A note whose row the account's first pass listed and whose words have not

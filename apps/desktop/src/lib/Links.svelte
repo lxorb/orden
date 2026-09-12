@@ -11,8 +11,8 @@
    *  middle, what it is linked to around it, and nothing else. It comes from the
    *  same index the lists do, so the two cannot disagree about the space. */
 
-  import Graph from './Graph.svelte'
   import { neighbourhood, type NoteGraph, without } from './graph'
+  import { graphSurface } from './surfaces'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -116,12 +116,17 @@
 {#if !path}
   <p class="empty-text">{t('No note is open')}</p>
 {:else if graph}
-  <Graph
-    graph={around}
-    current={workspace.panelNote}
-    onopen={(target: string, keep: boolean) => workspace.openRelative(target, keep)}
-    onescape={() => onlist?.()}
-  />
+  <!-- The picture itself, with its layout and its painter, is fetched the first time
+       somebody asks for one - here or in a tab of its own, whichever comes first; see
+       surfaces.ts. The list below is what the panel opens on. -->
+  {#await graphSurface() then Graph}
+    <Graph
+      graph={around}
+      current={workspace.panelNote}
+      onopen={(target: string, keep: boolean) => workspace.openRelative(target, keep)}
+      onescape={() => onlist?.()}
+    />
+  {/await}
 {:else}
   <!-- Backlinks first: what points here is what the panel is opened for. -->
   <p class="nib-section">{t('Backlinks')}<span>{backlinks.length}</span></p>

@@ -8,6 +8,10 @@
  *  parser will take. */
 
 import { renderMarkdown } from '@nib/markdown'
+// Both heavy libraries handed over outright. In the app a formula is set by a render
+// that has awaited them - `prepareFences` and `runExport` do - and these render
+// synchronously; see @nib/markdown/engines.
+import '@nib/markdown/eager'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { type EpubOptions, forReading, sectionsOf, toEpub, toXhtml } from './epub'
