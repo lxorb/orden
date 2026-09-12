@@ -267,3 +267,71 @@ describe('the icon two copies of a canvas wear', () => {
     expect(ids(both)).toEqual(['a'])
   })
 })
+
+/** What stamping an edit costs, counted.
+ *
+ *  Every gesture ends in one of these, and an eraser ends in one per point of the
+ *  drag. It used to build two maps over every node, every edge and every stroke and
+ *  look each one up: on a plane of ten thousand strokes the browser blamed the
+ *  pointer coming up for a hundred and fifty milliseconds, and three of the walks in
+ *  it were here.
+ *
+ *  What changed is found by identity - the operations hand back the very same objects
+ *  for what they did not touch - so what is counted is the ids compared. A stroke
+ *  drawn on a plane of six hundred compares one, not twelve hundred. A count rather
+ *  than a clock, for the reason the rest of this suite gives. */
+describe('what stamping an edit compares', () => {
+  /** A plane of `count` strokes whose ids say how often they were read. */
+  function counted(count: number) {
+    const reads = { ids: 0 }
+    const ink = Array.from({ length: count }, (_, at) => {
+      const held = stroke(`s${at}`, at)
+      return {
+        ...held,
+        get id() {
+          reads.ids += 1
+          return held.id
+        },
+      }
+    })
+
+    return { reads, ink }
+  }
+
+  test('is the stroke that was drawn, not the plane it was drawn on', () => {
+    const { reads, ink } = counted(600)
+    const before = stamped(plane(), plane({ ink }), 1000)
+
+    const drawn = stroke('drawn', 9999)
+    reads.ids = 0
+    const after = stamped(before, { ...before, ink: [...before.ink, drawn] }, 2000)
+
+    // Six hundred and one ids on the plane, and the walk that writes a time against
+    // each of them reads every one. What it no longer does is read them all again
+    // twice over to work out which one moved: the comparison is the one stroke.
+    expect(reads.ids).toBeLessThanOrEqual(ink.length + 2)
+    expect(after.at.drawn).toBe(2000)
+    // And every other stroke keeps the time it had.
+    expect(after.at.s0).toBe(1000)
+    expect(after.at.s599).toBe(1000)
+  })
+
+  test('and one stroke erased is the one stroke, with a tombstone for it', () => {
+    const { ink } = counted(600)
+    const before = stamped(plane(), plane({ ink }), 1000)
+    const after = stamped(before, { ...before, ink: before.ink.slice(0, -1) }, 2000)
+
+    expect(after.ink).toHaveLength(599)
+    expect(after.gone.s599).toBe(2000)
+    expect(after.at.s599).toBeUndefined()
+    expect(after.at.s0).toBe(1000)
+  })
+
+  test('a plane read from a file gets a time against everything on it', () => {
+    // Another app's canvas, or one written before any of this: no times at all.
+    const arrived = plane({ nodes: [card('a'), card('b')], at: {} })
+    const stampedNow = stamped(arrived, { ...arrived, nodes: [...arrived.nodes, card('c')] }, 3000)
+
+    expect(stampedNow.at).toEqual({ a: 3000, b: 3000, c: 3000 })
+  })
+})

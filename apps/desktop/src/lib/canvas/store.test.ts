@@ -74,8 +74,11 @@ describe('a plane in a space somebody shared to read', () => {
     const { store, note } = opened()
 
     store.edit({ ...store.canvas, nodes: [card('a')] })
-
     expect(ids(store.canvas)).toEqual(['a'])
+
+    // The plane is right at once and the file catches up: serialising it is the size
+    // of the plane, so it waits for the drawing to stop. See `edit`.
+    store.part()
     expect(readCanvas(note.text).nodes).toHaveLength(1)
   })
 })
@@ -134,6 +137,43 @@ describe('a gesture that edits as it goes', () => {
       vi.useRealTimers()
     }
   })
+
+  /** What one stroke costs the pointer coming up.
+   *
+   *  It used to be the whole document: the plane written out, the previous text read
+   *  back and both of them walked to find what changed - a hundred and fifty
+   *  milliseconds on a plane of ten thousand strokes, on the tick the pen lifted,
+   *  while the hand was already moving. Now the plane on screen is right at once and
+   *  the file catches up when the drawing stops. Counted in writes rather than
+   *  milliseconds, for the reason the rest of these give. */
+  test('a stroke finished writes nothing until the drawing stops', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      let writes = 0
+      const replace = note.replace.bind(note)
+      note.replace = (text: string) => {
+        writes += 1
+        replace(text)
+      }
+
+      // Six strokes drawn one after another, as a hand draws them.
+      for (let stroke = 0; stroke < 6; stroke++) {
+        store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card(`s${stroke}`)] })
+        vi.advanceTimersByTime(100)
+      }
+
+      expect(writes).toBe(0)
+      expect(ids(store.canvas)).toHaveLength(6)
+
+      // One write for the six, once the hand stops.
+      vi.advanceTimersByTime(1300)
+      expect(writes).toBe(1)
+      expect(ids(readCanvas(note.text))).toHaveLength(6)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe('a plane that is in a room', () => {
@@ -163,6 +203,7 @@ describe('a plane that is in a room', () => {
     store.shared = room()
 
     store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.part()
 
     expect(ids(readCanvas(note.text))).toEqual(['a'])
   })

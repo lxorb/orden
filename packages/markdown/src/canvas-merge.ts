@@ -41,38 +41,116 @@ function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
  *  what was just deleted - loses its tombstone, or the merge would delete it
  *  again the moment the file reached another device. */
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
-  const was = new Map<string, Thing>([
-    ...byId(before.nodes),
-    ...byId(before.edges),
-    ...byId(before.ink),
-  ])
-  const is = new Map<string, Thing>([
-    ...byId(after.nodes),
-    ...byId(after.edges),
-    ...byId(after.ink),
-  ])
+  const changed: string[] = []
+  const removed: string[] = []
+  const touched = { changed, removed }
 
+  // A list at a time, and only the lists that are not the very same list. Drawing
+  // one stroke on a plane of ten thousand touches the ink and leaves the nodes and
+  // the edges exactly as they were, so there is nothing to compare in two of the
+  // three; and the ink itself is the old list with one more on the end, which a walk
+  // of references finds without building anything.
+  //
+  // What that was worth: this used to build two maps over every node, edge and
+  // stroke and then look every one of them up, on every edit - which for an eraser
+  // is every point of a drag. The browser blamed the pointer coming up for a
+  // hundred and fifty milliseconds on a plane of ten thousand strokes, and this was
+  // three of the walks in it.
+  diff(before.nodes, after.nodes, touched)
+  diff(before.edges, after.edges, touched)
+  diff(before.ink, after.ink, touched)
+
+  // A time against everything on the plane, which is what makes this the one place
+  // that has to be right: a thing with no time loses every merge, and a time left
+  // behind for something that is no longer there would keep a tombstone from being
+  // written. So the plane is still walked once and the record still built from it -
+  // what has gone is the two maps over all of it and the lookup per thing.
+  const touchedIds = new Set(changed)
   const at: Record<string, number> = {}
+  const when = (id: string) => (touchedIds.has(id) ? now : (before.at[id] ?? now))
 
-  for (const [id, thing] of is) {
-    const older = was.get(id)
-    const kept = before.at[id]
-    at[id] = older === thing && kept !== undefined ? kept : now
+  for (const thing of after.nodes) {
+    const id = thing.id
+    at[id] = when(id)
+  }
+  for (const thing of after.edges) {
+    const id = thing.id
+    at[id] = when(id)
+  }
+  for (const thing of after.ink) {
+    const id = thing.id
+    at[id] = when(id)
   }
 
   const gone: Record<string, number> = {}
 
-  for (const [id, when] of Object.entries(before.gone)) {
+  for (const [id, since] of Object.entries(before.gone)) {
     // A tombstone for something that is on the plane again is no longer true.
-    if (is.has(id) || now - when >= TOMBSTONE_KEPT) continue
-    gone[id] = when
+    if (at[id] !== undefined || now - since >= TOMBSTONE_KEPT) continue
+    gone[id] = since
   }
 
-  for (const id of was.keys()) {
-    if (!is.has(id)) gone[id] = now
+  for (const id of removed) {
+    if (at[id] === undefined) gone[id] = now
   }
 
   return { ...after, at, gone }
+}
+
+/** What changed between two versions of one list, by identity.
+ *
+ *  The operations that make a new canvas hand back the very same objects for
+ *  everything they did not touch, so identity is the whole test. Two lists that are
+ *  the same list changed nothing; otherwise the common prefix and the common suffix
+ *  are walked off the ends - which is the whole of an append, an insert or one thing
+ *  replaced - and only what is left between them is put into maps.
+ *
+ *  `changed` collects what is on the plane now and was not there in this form
+ *  before; `removed` collects what has gone. */
+function diff<T extends Thing>(
+  before: readonly T[],
+  after: readonly T[],
+  touched: { changed: string[]; removed: string[] },
+): void {
+  if (before === after) return
+
+  let head = 0
+  const shortest = Math.min(before.length, after.length)
+  while (head < shortest && before[head] === after[head]) head++
+
+  let tail = 0
+  while (
+    tail < shortest - head &&
+    before[before.length - 1 - tail] === after[after.length - 1 - tail]
+  ) {
+    tail++
+  }
+
+  const wasMiddle = before.slice(head, before.length - tail)
+  const isMiddle = after.slice(head, after.length - tail)
+
+  // The common case is one of the two being empty: a stroke added, or a stroke
+  // erased. A map is built only where both ends have something in them.
+  if (wasMiddle.length === 0) {
+    for (const thing of isMiddle) touched.changed.push(thing.id)
+    return
+  }
+
+  if (isMiddle.length === 0) {
+    for (const thing of wasMiddle) touched.removed.push(thing.id)
+    return
+  }
+
+  const was = byId(wasMiddle)
+  const is = byId(isMiddle)
+
+  for (const [id, thing] of is) {
+    if (was.get(id) !== thing) touched.changed.push(id)
+  }
+
+  for (const id of was.keys()) {
+    if (!is.has(id)) touched.removed.push(id)
+  }
 }
 
 /** When something last changed, on one side. Zero for something that side has

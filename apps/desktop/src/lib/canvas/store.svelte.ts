@@ -103,6 +103,7 @@ export class CanvasStore implements PlaneSurface {
     this.tab = tab
     this.note = tab.note
     this.read()
+    drawn.add(new WeakRef(this))
   }
 
   get camera(): Camera {
@@ -148,9 +149,17 @@ export class CanvasStore implements PlaneSurface {
    *  `run` names the gesture an edit belongs to, for the one kind that cannot
    *  wait for the pointer to come up: an eraser has to answer under the nib, so
    *  it edits on every point of the drag. Edits that name the same run are one
-   *  thing somebody did - one step to take back - and the file is written when
-   *  the run goes quiet rather than once per point, because writing it is the
-   *  size of the plane and a drag is a hundred events. */
+   *  thing somebody did - one step to take back.
+   *
+   *  Writing the plane down waits either way, and for the same reason: serialising
+   *  it is the size of the plane, and the size of the plane is a hundred and fifty
+   *  milliseconds on one with ten thousand strokes on it. That used to be spent on
+   *  the tick the pen came up - the whole document written out, the previous one
+   *  read back as a string and both of them walked character by character to work
+   *  out what changed - while the hand was still moving on to the next stroke. What
+   *  is on screen does not wait for any of it: the plane on screen is `canvas`, and
+   *  this is the file catching up. `part` writes what is owing when the tab or the
+   *  window goes. */
   edit(next: Canvas, run?: string) {
     if (next === this.canvas || this.readOnly) return
 
@@ -166,8 +175,7 @@ export class CanvasStore implements PlaneSurface {
     if (this.shared) this.shared.push(before, after)
     else if (!carrying) this.history.record(before)
 
-    if (run === undefined) this.commit()
-    else this.soon()
+    this.soon()
   }
 
   undo() {
@@ -383,5 +391,27 @@ export class CanvasStore implements PlaneSurface {
     const box = this.box
     if (box) this.camera = framingBox(box, width, height, PADDING)
     else this.fit(width, height)
+  }
+}
+
+/** Every plane that has been opened in this window, weakly.
+ *
+ *  A plane's file is written once the drawing stops rather than on the tick the pen
+ *  came up, and a surface going away writes what is owing itself - but a window
+ *  closing tears nothing down: no effect's cleanup runs, so nothing would call
+ *  `part`. Until the file is written the document is not one the workspace knows is
+ *  unsaved either, so the window would not even ask.
+ *
+ *  Weak references, so a canvas that has been closed is collected with everything
+ *  else about it and this list never keeps one alive. */
+const drawn = new Set<WeakRef<CanvasStore>>()
+
+/** Every plane's file written now. Called where the window is going; see `onClose`
+ *  in start.ts. */
+export function flushCanvases(): void {
+  for (const held of drawn) {
+    const store = held.deref()
+    if (store) store.part()
+    else drawn.delete(held)
   }
 }
