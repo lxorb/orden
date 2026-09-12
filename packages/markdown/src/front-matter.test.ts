@@ -24,6 +24,16 @@ describe('reading the front matter', () => {
     expect(frontMatter('---\ntitle: Hi\n--- and more\n\nBody')).toBeNull()
   })
 
+  /** Obsidian's rule, and the twin of "an indented opening fence opens nothing"
+   *  in front_matter.rs, which used to take an indented one and so read a note
+   *  the browser build read as prose. */
+  test('an opening fence stands at the left margin', () => {
+    expect(frontMatter('  ---\ntitle: Hi\n---\n\nBody')).toBeNull()
+    expect(frontMatter('\t---\ntitle: Hi\n---\n\nBody')).toBeNull()
+    // Space after the fence is nothing at all, though.
+    expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
+  })
+
   test('the note without it, which is what a renderer reads', () => {
     expect(stripFrontMatter('---\ntitle: Hi\n---\n# Title')).toBe('# Title')
     expect(stripFrontMatter('# Title')).toBe('# Title')

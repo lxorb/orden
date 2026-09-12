@@ -17,9 +17,7 @@
 //!
 //! The twin of this is `packages/markdown/src/front-matter.ts`, which the browser
 //! build reads a space with, and the tests at the bottom are the twin of
-//! `front-matter.test.ts`: the same notes, the same answers. One difference, which
-//! no test on either side fixes: an opening fence indented by a space opens a
-//! block here, where the twin asks for it at the left margin.
+//! `front-matter.test.ts`: the same notes, the same answers.
 
 /// Where a note's front matter sits, in bytes.
 ///
@@ -37,10 +35,14 @@ pub struct Block {
 /// Where the block sits, or None where the note opens with anything else, which
 /// is most notes.
 ///
-/// The block has to close, or the note opens with a rule rather than metadata.
+/// Two things make one, and both are Obsidian's: the opening fence is the note's
+/// first line at the left margin, and the block closes. An indented fence is an
+/// indented rule, and a block nobody closed is a note that opens with a rule.
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
-    if body[..first].trim() != "---" {
+    // Space after the fence is nothing; space before it is a fence that is not at
+    // the margin, which no reader of a markdown file takes for metadata.
+    if body[..first].trim_end() != "---" {
         return None;
     }
 
@@ -228,6 +230,21 @@ mod tests {
         assert!(block("---").is_none());
         // A block that never closes is a note that opens with a rule.
         assert!(block("---\nicon: rocket\n\n# Plan").is_none());
+    }
+
+    /// The opening fence stands at the left margin, which is where Obsidian and
+    /// every other reader of a markdown file look for it. The twin of "an opening
+    /// fence stands at the left margin".
+    #[test]
+    fn an_indented_opening_fence_opens_nothing() {
+        assert!(block("  ---\nicon: rocket\n---\n").is_none());
+        assert!(block("\t---\nicon: rocket\n---\n").is_none());
+        assert_eq!(icon("  ---\nicon: rocket\n---\n"), None);
+        // Space after the fence is nothing at all, though.
+        assert_eq!(
+            icon("---  \nicon: rocket\n---\n").as_deref(),
+            Some("rocket")
+        );
     }
 
     #[test]
