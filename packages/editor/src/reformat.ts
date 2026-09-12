@@ -73,7 +73,7 @@ export function reformat(source: string): string {
 
 /** How many lines the document's front matter takes, or null when it has none.
  *  Only at the very top, and only when what follows looks like YAML, which is
- *  the same test the parser makes (see `FrontMatter` in markdown/extensions.ts)
+ *  the same test the parser makes (see `FrontMatter` in markdown/constructs.ts)
  *  so that the two agree on what a leading `---` is. */
 function readFrontMatter(lines: readonly string[]): number | null {
   if (lines[0]?.trim() !== '---') return null

@@ -282,7 +282,7 @@ let counted = 0
 
 /** Folds those ranges, with the lines going first when there is somebody looking
  *  at them. `caret` is whatever else the fold had to say - where the caret has to
- *  sit for the fold to hold; see foldWithCaret in fold.ts. */
+ *  sit for the fold to hold; see `caretFor` in fold.ts. */
 export function shutFolds(
   target: FoldTarget,
   ranges: readonly FoldRange[],

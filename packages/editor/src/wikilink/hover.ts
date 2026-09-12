@@ -29,9 +29,6 @@ export const notePreviews = hoverTooltip(
     // CodeMirror reports a hover as a position and not as the event behind it,
     // so whether the key is down has to be asked of links.ts, which watches it
     // for the pointer already. One place decides what "held" means.
-    // CodeMirror reports a hover as a position and not as the event behind it,
-    // so whether the key is down is asked of links.ts, which watches it for the
-    // pointer already. One place decides what "held" means.
     if (!modifierHeld()) return null
 
     const link = linkAt(view.state, pos)

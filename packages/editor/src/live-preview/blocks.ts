@@ -305,11 +305,6 @@ export function buildBlockDecorations(state: EditorState): DecorationSet {
   return buildBlocks(state).decorations
 }
 
-/** Whether a selection touches any of the constructs found last time. Only
- *  those care where the caret is - one hides its source while the caret is in
- *  it and shows it again on the way out - so a caret that stays clear of all
- *  of them leaves the decorations exactly as they were. Compared the way
- *  `overlaps` does, edges included. */
 /** Which widget a drawn fence gets. One place, so the three of them read as the
  *  three kinds they are rather than as a nested question. */
 function widgetFor(language: string, code: string, index: NoteIndex) {
@@ -318,6 +313,11 @@ function widgetFor(language: string, code: string, index: NoteIndex) {
   return new DiagramWidget(code, language)
 }
 
+/** Whether a selection touches any of the constructs found last time. Only
+ *  those care where the caret is - one hides its source while the caret is in
+ *  it and shows it again on the way out - so a caret that stays clear of all
+ *  of them leaves the decorations exactly as they were. Compared the way
+ *  `overlaps` does, edges included. */
 function crosses(
   spans: readonly { from: number; to: number }[],
   ranges: readonly SelectionRange[],
