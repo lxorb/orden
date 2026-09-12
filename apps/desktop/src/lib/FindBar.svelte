@@ -262,7 +262,12 @@
         </button>
       {/if}
 
-      <button class="nib-glyph act shut" title={t('Close')} aria-label={t('Close')} onclick={onclose}>
+      <button
+        class="nib-glyph act shut"
+        title={t('Close')}
+        aria-label={t('Close')}
+        onclick={onclose}
+      >
         <svg viewBox="0 0 13 13" aria-hidden="true"
           ><path d="M3.6 3.6l5.8 5.8M9.4 3.6l-5.8 5.8" /></svg
         >

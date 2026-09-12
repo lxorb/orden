@@ -65,5 +65,4 @@
   .toggle:not(.on) .edge {
     transform: translateX(-3.6px);
   }
-
 </style>

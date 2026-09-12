@@ -379,7 +379,6 @@
     .more:focus-visible {
       opacity: 1;
     }
-
   }
 
   @media (hover: none) {
