@@ -22,15 +22,23 @@
  *  with either kind of quote or none at all. */
 const TITLED = /^title\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+))\s*$/i
 
+/** The first word of a trimmed info string.
+ *
+ *  A pattern that is run once, rather than `split`, which runs its separator at
+ *  every character of the string. The live preview reads the info string of every
+ *  visible fence on every keystroke, so the difference showed. */
+const FIRST_WORD = /^\S+/
+
 /** The language a fence names, lowercased by nobody: the first word of its info
  *  string, or the empty string. */
 export function languageIn(info: string): string {
-  return info.trim().split(/\s+/, 1)[0] ?? ''
+  return FIRST_WORD.exec(info.trim())?.[0] ?? ''
 }
 
 /** The caption a fence carries, or the empty string. */
 export function captionIn(info: string): string {
-  const rest = info.trim().slice(languageIn(info).length).trim()
+  const trimmed = info.trim()
+  const rest = trimmed.slice(languageIn(trimmed).length).trim()
   const titled = TITLED.exec(rest)
 
   return titled ? (titled[1] ?? titled[2] ?? titled[3] ?? '') : rest
