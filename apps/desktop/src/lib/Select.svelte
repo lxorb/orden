@@ -484,8 +484,13 @@
     font-size: var(--touch-text);
   }
 
+  /* The borderless one too. It said `min-height: 0`, which is what a control
+     says to stop itself making the row taller - but the row it sits in is
+     already `--touch-row`, so all the zero did was leave the one thing that
+     opens the list 36px tall inside a 56px row. The floor fits inside the row
+     with ten pixels to spare, and a settings pane is mostly these. */
   :global([data-touch]) .plain .trigger {
-    min-height: 0;
+    min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
 </style>
