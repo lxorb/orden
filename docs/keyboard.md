@@ -303,6 +303,25 @@ Thirty rules had their own copy of the same two lines before this, which is
 thirty chances for one of them to be a different thickness. `one-of-each.test.ts`
 now fails if a component draws its own.
 
+### The size of the text
+
+Ctrl and the wheel over the note, which is also what a trackpad pinch arrives as
+on every platform. It changes the app's own text size - `--zoom`, the value the
+slider in Appearance sets and the value the keys step - and never the webview's
+zoom: that would scale the panel and the tab strip with the words, would not be
+remembered, and would not reach the phone or the browser build. The listener is
+not passive and prevents the default, which is what stops WebView2 and WKWebView
+from zooming underneath; the window's own zoom hotkeys are off for the same
+reason. What has just happened is said once, as a badge over the note, and goes.
+
+The keys stay where they are: **Ctrl+Shift+=**, **Ctrl+Shift+-** and
+**Ctrl+Alt+0**. Ctrl+= and Ctrl+- are Heading up and Heading down in the editor
+and have been since the first version, Ctrl+0 is Paragraph, and Ctrl+Shift+0 is
+the clash the digit rule above is about. These three are also Typora's own, which
+is the editor nib is closest to. A surface with a zoom of its own - the canvas,
+the graph, a page note - answers the same gesture on its own element, and the
+note's rule stands down on anything one of them has already prevented.
+
 ### Not covered
 
 The canvas and the Even glasses. The plane has its own keyboard already, one
@@ -321,6 +340,7 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
+| `apps/desktop/src/lib/text-size.ts` | Ctrl and the wheel over the note, and what it does not touch |
 | `packages/editor/src/fold.ts` | the five folding commands, and what a level is |
 | `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |

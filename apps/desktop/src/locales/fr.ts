@@ -1359,4 +1359,7 @@ export const fr: Dictionary = {
   'that is more than a spoken command': 'cela dépasse une commande vocale',
   'that is a lot of listening - try again later':
     'cela fait beaucoup d’écoute - réessayez plus tard',
+
+  // The size of the text, said after a pinch or a key.
+  '{percent}% text': 'texte à {percent} %',
 }

@@ -27,7 +27,9 @@
   import SignIn from './lib/SignIn.svelte'
   import Slides from './lib/Slides.svelte'
   import { present } from './lib/slides/present.svelte'
+  import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
+  import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
   import { ai } from './lib/ai/store.svelte'
@@ -154,6 +156,11 @@
       views.onSelection = null
     }
   })
+
+  // Ctrl and the wheel over the note, which a trackpad pinch also arrives as.
+  // Here rather than on the surface, because the surface is rebuilt with every
+  // note; see text-size.ts.
+  $effect(() => watchTextSize())
 
   // A phone and a tablet show one document at a time, so an arrangement made on a
   // desktop - or on this window before it became one of those devices - comes
@@ -711,6 +718,9 @@
 {#if presenting}
   <Slides tab={presenting} />
 {/if}
+
+<!-- What the text size has just become, after a pinch or a key. -->
+<SizeBadge />
 
 <StorageWarning />
 

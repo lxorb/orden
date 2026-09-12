@@ -1317,4 +1317,7 @@ export const gsw: Dictionary = {
   'that is too much audio': 'Das isch z vil Audio',
   'that is more than a spoken command': 'Das isch mee als en Sprachbefehl',
   'that is a lot of listening - try again later': 'Das isch vil Zuelose - probier s spöter nomal',
+
+  // The size of the text, said after a pinch or a key.
+  '{percent}% text': '{percent}% Schrift',
 }

@@ -1303,4 +1303,7 @@ export const ja: Dictionary = {
   'that is more than a spoken command': '音声コマンドとしては長すぎます',
   'that is a lot of listening - try again later':
     '聞き取りが多すぎます。しばらくしてからお試しください',
+
+  // The size of the text, said after a pinch or a key.
+  '{percent}% text': '文字 {percent}%',
 }
