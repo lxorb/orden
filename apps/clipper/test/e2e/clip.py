@@ -92,9 +92,10 @@ def checks(clip: dict, probe: dict, origin: str) -> list[tuple[bool, str]]:
         ("alert('svg')" not in markdown, "an svg's script does not reach the note"),
         ("Decoration the page" not in markdown, "nor what the page calls decoration"),
         ("Navigation nobody" not in markdown, "nor the navigation beside the article"),
-        ("````rust" in markdown, "a fence names its language and clears its own backticks"),
-        ("| a | b |" in markdown, "a table comes out as one"),
-        ("  - nested" in markdown, "a nested list keeps its nesting"),
+        # Which shapes markdown has - fences, tables, nested lists - is
+        # @nib/markdown/from-html's, and is tested there against jsdom. What is
+        # asked here is what only a real browser and a real message channel can
+        # answer: that the characters survive the trip out of the page.
         ("​" in markdown, "zero width text survives"),
         ("\U0001f600" in markdown and "\U0001f1fa\U0001f1f8" in markdown, "so do emoji"),
         ("מלל" in markdown, "so does right to left text"),

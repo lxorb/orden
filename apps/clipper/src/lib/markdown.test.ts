@@ -6,82 +6,17 @@ import { fill } from './placeholders'
  *  cleaned and absolute, straight into the converter. */
 const md = (html: string) => toMarkdown(html).markdown
 
-describe('the shapes markdown has', () => {
-  test('writes headings as hashes', () => {
-    expect(md('<h1>One</h1><h3>Three</h3>')).toBe('# One\n\n### Three')
-  })
-
-  test('writes the emphasis the editor writes', () => {
-    expect(md('<p><b>bold</b> and <i>italic</i></p>')).toBe('**bold** and *italic*')
-  })
-
-  test('writes a strikethrough the way GitHub spells it', () => {
-    expect(md('<p><del>gone</del></p>')).toBe('~~gone~~')
-  })
-
-  test('writes a bullet with one space after the marker', () => {
-    expect(md('<ul><li>one</li><li>two</li></ul>')).toBe('- one\n- two')
-  })
-
-  test('numbers an ordered list from where it says it starts', () => {
-    expect(md('<ol start="3"><li>three</li><li>four</li></ol>')).toBe('3. three\n4. four')
-  })
-
-  test('lines a nested list up under the text above it', () => {
-    expect(md('<ul><li>outer<ul><li>inner</li></ul></li></ul>')).toBe('- outer\n  - inner')
-  })
-
-  test('keeps a task list ticked', () => {
+/** What the conversion itself does - which shapes markdown has, what a fence
+ *  says, what never reaches a note - is @nib/markdown/from-html's, and is tested
+ *  there. Here is only that the clipper goes through it, and the one thing that is
+ *  the clipper's own: a picture becomes a placeholder. */
+describe('an article as markdown', () => {
+  test('comes out as the converter writes it', () => {
     const html =
-      '<ul><li><input type="checkbox" checked> done</li><li><input type="checkbox"> todo</li></ul>'
+      '<h1>One</h1><p><b>bold</b> and <code>id</code></p><ul><li>a</li><li>b</li></ul>' +
+      '<pre><code class="language-ts">let a = 1</code></pre><script>alert(1)</script>'
 
-    expect(md(html)).toBe('- [x] done\n- [ ] todo')
-  })
-
-  test('writes a table as a pipe table', () => {
-    const html = '<table><tr><th>a</th><th>b</th></tr><tr><td>1</td><td>2</td></tr></table>'
-    expect(md(html)).toContain('| a | b |')
-    expect(md(html)).toContain('| 1 | 2 |')
-  })
-
-  test('writes a rule the way the tokens do', () => {
-    expect(md('<p>a</p><hr><p>b</p>')).toBe('a\n\n---\n\nb')
-  })
-
-  test('marks a quotation', () => {
-    expect(md('<blockquote><p>said</p></blockquote>')).toBe('> said')
-  })
-})
-
-describe('code', () => {
-  test('fences a block with the language its class names', () => {
-    expect(md('<pre><code class="language-ts">const a = 1</code></pre>')).toBe(
-      '```ts\nconst a = 1\n```',
-    )
-  })
-
-  test('reads the older spelling of that class', () => {
-    expect(md('<pre><code class="lang-py">x = 1</code></pre>')).toBe('```py\nx = 1\n```')
-  })
-
-  test('reads the class off the block when the code carries none', () => {
-    expect(md('<pre class="language-go"><code>x := 1</code></pre>')).toBe('```go\nx := 1\n```')
-  })
-
-  test('fences a preformatted block with no code element in it', () => {
-    expect(md('<pre>$ ls\nfile</pre>')).toBe('```\n$ ls\nfile\n```')
-  })
-
-  test('opens a longer fence than the code closes', () => {
-    expect(md('<pre><code>a ``` b</code></pre>')).toBe('````\na ``` b\n````')
-  })
-
-  test('leaves an empty block out', () => {
-    expect(md('<pre>  </pre>')).toBe('')
-  })
-
-  test('keeps inline code inline', () => {
-    expect(md('<p>the <code>id</code> field</p>')).toBe('the `id` field')
+    expect(md(html)).toBe('# One\n\n**bold** and `id`\n\n- a\n- b\n\n```ts\nlet a = 1\n```')
   })
 })
 
@@ -169,20 +104,6 @@ describe('filling the numbers in', () => {
     expect(fill('![a](nib:0)', ['https://x.example/caf%C3%A9.png'])).toBe(
       '![a](https://x.example/caf%C3%A9.png)',
     )
-  })
-})
-
-describe('what never reaches a note', () => {
-  test('a script, even one the cleaning missed', () => {
-    expect(md('<p>a</p><script>alert(1)</script>')).toBe('a')
-  })
-
-  test('a stylesheet', () => {
-    expect(md('<style>p{color:red}</style><p>a</p>')).toBe('a')
-  })
-
-  test('an embedded player', () => {
-    expect(md('<p>a</p><iframe src="https://player.example"></iframe>')).toBe('a')
   })
 })
 

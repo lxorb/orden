@@ -139,6 +139,28 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<pre>  indented\n  lines</pre>')).toBe('```\n  indented\n  lines\n```')
   })
 
+  test('the older spelling of the language class reads too, and either half may carry it', () => {
+    expect(htmlToMarkdown('<pre><code class="lang-py">x = 1</code></pre>')).toBe(
+      '```py\nx = 1\n```',
+    )
+    expect(htmlToMarkdown('<pre class="language-go"><code>x := 1</code></pre>')).toBe(
+      '```go\nx := 1\n```',
+    )
+  })
+
+  test('a block holding nothing is nothing to fence', () => {
+    expect(htmlToMarkdown('<pre>  </pre>')).toBe('')
+  })
+
+  test('code inside a sentence stays inside it', () => {
+    expect(htmlToMarkdown('<p>the <code>id</code> field</p>')).toBe('the `id` field')
+  })
+
+  test('a rule and a quotation come out as the editor writes them', () => {
+    expect(htmlToMarkdown('<p>a</p><hr><p>b</p>')).toBe('a\n\n---\n\nb')
+    expect(htmlToMarkdown('<blockquote><p>said</p></blockquote>')).toBe('> said')
+  })
+
   test('tables survive, via the GFM rules', () => {
     const markdown = htmlToMarkdown(
       '<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>',

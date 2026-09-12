@@ -340,7 +340,14 @@ function named(row: Row): Provider {
   }
 }
 
-/** Every provider, for a test and for anything that wants to name them. */
+/** Every provider, without the two parts of a row that are the table's own.
+ *
+ *  For the two tests that hold the table to what it promises: this package's own,
+ *  which says every row asks for a sandbox and none for more than it needs, and the
+ *  editor's web-frame test, which says the allowlist a frame is actually built with
+ *  narrows none of it. That second one needs both halves at once - the table here
+ *  and the frame there - so it lives in the editor, which is the half that builds
+ *  the frame. */
 export function providers(): Provider[] {
   return ROWS.map(named)
 }
