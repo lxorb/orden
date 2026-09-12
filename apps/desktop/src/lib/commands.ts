@@ -457,11 +457,17 @@ function foldingCommands(view?: EditorView): Command[] {
  *  is offered in three places and one of them - the editor's `/` menu - runs it
  *  against whichever pane it opened in, which is not always the pane the row was
  *  built for. `label` is a thunk for the same reason it is in the shortcut
- *  registry: the words follow the language without the list being rebuilt. */
+ *  registry: the words follow the language without the list being rebuilt.
+ *
+ *  The view may be absent, and each row says for itself what that means. Almost all
+ *  of them write into a note and do nothing without one, which is the state `ready`
+ *  greys them out in anyway. A couple act on the window instead: recording opens a
+ *  microphone and makes its own note if it has to, and that is what lets a row be run
+ *  by its id from somewhere with no editor at all - the Android quick settings tile. */
 interface Block {
   id: string
   label: () => string
-  apply: (view: EditorView) => void
+  apply: (view?: EditorView) => void
   /** Whether a view can take it. A block writes, so the default is a view that
    *  is not read-only. */
   ready?: (view: EditorView | undefined) => boolean
@@ -469,7 +475,9 @@ interface Block {
 
 /** A state command as something to do to a view. */
 function on(command: StateCommand) {
-  return (view: EditorView) => {
+  return (view?: EditorView) => {
+    if (!view) return
+
     command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
     view.focus()
   }
@@ -502,7 +510,7 @@ const BLOCKS: Block[] = [
     id: 'paragraph.table',
     label: () => t('Table'),
     apply: (view) => {
-      insertTableToEdit(view)
+      if (view) insertTableToEdit(view)
     },
   },
   block('paragraph.code-block', () => t('Code block'), insertCodeFence),
@@ -513,11 +521,7 @@ const BLOCKS: Block[] = [
   // is asked for with the glyph on the fence, and a key that only wrote an empty
   // fence would be a key for half the gesture. See ai/block.ts in the editor
   // package for what the block and its answer look like in the file.
-  {
-    id: 'ai-block',
-    label: () => t('AI block'),
-    apply: insertAiBlock,
-  },
+  block('ai-block', () => t('AI block'), insertAiBlock),
   block('paragraph.callout', () => t('Callout'), insertCallout),
   block('paragraph.bullet-list', () => t('Bulleted list'), toggleBulletList),
   block('paragraph.ordered-list', () => t('Numbered list'), toggleOrderedList),
@@ -528,7 +532,9 @@ const BLOCKS: Block[] = [
   {
     id: 'picture',
     label: () => t('Picture'),
-    apply: (view) => void insertPicture(view),
+    apply: (view) => {
+      if (view) void insertPicture(view)
+    },
     ready: (view) => canInsertPicture(view),
   },
   // The same picture from the other end: the camera rather than the files. Only
@@ -583,9 +589,10 @@ export function blockCommands(view?: EditorView): Command[] {
       label: one.label(),
       ...(hint === undefined ? {} : { hint }),
       disabled: !ready,
-      run: () => {
-        if (view) one.apply(view)
-      },
+      // The view as it was, absent and all: a row that needs one does nothing
+      // without it and says so by being greyed out, and a row that acts on the
+      // window - recording - runs from anywhere its id is looked up. See `Block`.
+      run: () => one.apply(view),
     }
   })
 }

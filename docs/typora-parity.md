@@ -1002,3 +1002,36 @@ Features Typora does not have, which are the reason this exists.
 - [x] The authenticator setup shows a square to point a phone at as well as the
       secret to paste, which is what turns thirty-two typed characters into one
       camera
+- [x] `Record`: one command, from the palette, the Paragraph menu, the editor's `/`
+      menu and the one plus a thumb can reach on a phone. It opens the microphone and
+      writes the best container the platform gives - Opus in a WebM on Chromium, AAC
+      in an MP4 on WebKit - beside the note, in the same folder a pasted picture goes
+      into, through the same command and the same table of what a file name means.
+      The note gets `![[recording-2026-09-12-1432.weba]]` at the caret, which draws as
+      the player `![[take.mp3]]` already draws; with no note open it makes one. While
+      it runs there is one quiet pill in the status bar and nothing else: a red dot, the
+      time so far, and a stop. Recording needs nothing but the microphone, so it works
+      on a train
+- [x] `Transcribe`, on that player's own menu: the file goes through the same Whisper
+      path the glasses' voice commands go through - Workers AI first, the account's own
+      OpenAI key as the fallback, `POST /v1/ask/heard` - and the words come back under
+      the player as one `> [!quote]` callout, headed with the language the model heard
+      and with one italic line saying which model wrote it. A recording is decoded here
+      and sent as the 16 kHz mono WAV that route has always taken, in pieces of a
+      minute, so the file in the note stays the small modern container the platform
+      wrote and the Worker needs no decoder at all
+- [x] `Meeting notes`: the same recording, in a note of its own with `date` and
+      `duration` in its front matter, and the transcript arriving in it every twenty
+      seconds while somebody is still talking. Speakers are named only where the model
+      named them: nothing on this path knows who was talking, and inventing a speaker
+      is worse than not naming one. At stop, a summary - takeaways and the tasks it
+      left open - is written above the transcript by whichever model the reader has:
+      their own provider through `ai.complete` where there is one, the account's OpenAI
+      key through the Worker where there is not. Everything a model wrote says so in
+      one quiet line, and nothing else in the note is touched
+- [x] Honest about what it costs: a recording stops itself at twenty-four megabytes
+      and keeps what it has, a piece of a transcript that fails is tried again on the
+      same curve a room rejoins on, the pill's dot says when one is, and the line at
+      the top of the document says what went wrong in words. Every piece counts against
+      the same hourly allowance the glasses spend, and the route holds a piece to two
+      minutes and four megabytes so a Worker is never asked to hold more than it has

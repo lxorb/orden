@@ -504,6 +504,38 @@ the app. `MainActivity` turns `handleBackNavigation` on, which is what makes the
 webview answer a back press while it has somewhere to go back to and finish the
 activity when it does not.
 
+## Capture: the microphone
+
+A phone is the device a recording is actually made on, so the recorder is the same
+code on all three builds and the phone is where its two concessions are.
+
+**The permission.** `getUserMedia` inside a WebView asks the *app* for
+`android.permission.RECORD_AUDIO`, and an app that never declared it is refused
+before the reader is ever asked - so the manifest declares it, and that is the whole
+of what is declared: no camera, no storage. Nothing opens the microphone until
+somebody presses Record. The runtime grant is the WebView's own dialog and has not
+been walked on a device yet; it is the one thing in this batch a phone has to confirm.
+
+**Where the command is.** The plus at the top of the list panel is the only one a
+thumb can reach, so a held finger on it offers `Record` beside New note and New
+canvas, and `Meeting notes` where the account can transcribe. Both make a note of
+their own when there is none, which is what a command pressed in a hurry has to do.
+The same two rows are in the palette and in the Paragraph menu, out of one list, by
+one id each - `record` and `meeting` - which is also what the Android quick settings
+tile calls. See `apps/desktop/src/lib/recorder/commands.ts`.
+
+**What it looks like while it runs.** One pill, in the middle of the bottom edge: a
+red dot, the time so far, and a stop. It is not inside the status bar's own footer,
+which is a hover away and so never appears on a phone at all - a red dot somebody
+started has to be there to be pressed. It wears `.nib-bar`, the same shape as every
+other floating bar, so its stop is a thumb's width there without a number of its own.
+
+**What needs the network.** The recording does not: it is the platform's own
+`MediaRecorder` writing a file into the space, and it works with no signal. The
+transcript and the summary do, because the speech models are on the Worker and the
+key they spend is the account's. See `docs/even.md` for that route and
+`docs/typora-parity.md` for the whole of what the two commands write into a note.
+
 ## What the phone build does not have
 
 Half the app is about a desktop, and none of it is compiled in: no updater, no
