@@ -123,6 +123,10 @@ class Publish {
     this.dns = []
     this.status = null
     this.availability = { checking: false, available: null }
+    // Whatever the last space's forms collected is not this space's: reading
+    // them is a request away, and a space with no forms never clears a list it
+    // does not know about.
+    this.answers = []
     this.open = true
   }
 

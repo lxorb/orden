@@ -15,6 +15,8 @@ interface World {
   available: { available: boolean; reason?: string }
   /** What the domain routes answer with. */
   domain: { state: string; dns: never[]; detail: string | null }
+  /** The answers the forms on the site have collected. */
+  answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
 }
 
 const world = vi.hoisted((): World => ({
@@ -23,6 +25,7 @@ const world = vi.hoisted((): World => ({
   refuse: null,
   available: { available: true },
   domain: { state: 'pending', dns: [], detail: null },
+  answers: [],
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -50,6 +53,12 @@ vi.mock('./api', async (importOriginal) => {
       sitePreview: (_token: string, id: string) =>
         answer(`preview ${id}`, { pages: 0, before: 0, adds: [], removes: [], more: false }),
       domainStatus: (_token: string, id: string) => answer(`status ${id}`, world.domain),
+      answers: (_token: string, id: string) =>
+        answer(`answers ${id}`, { answers: world.answers, more: false }),
+      answersCsv: (_token: string, id: string) =>
+        answer(`answers.csv ${id}`, ['"when","Your name"', '"1","Ada"', ''].join('\n')),
+      forgetAnswer: (_token: string, id: string, one: string) =>
+        answer(`forget ${one} of ${id}`, { ok: true as const }),
       verifyDomain: (_token: string, id: string) => answer(`verify ${id}`, world.domain),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
     },
@@ -105,6 +114,7 @@ beforeEach(() => {
   world.refuse = null
   world.available = { available: true }
   world.domain = { state: 'pending', dns: [], detail: null }
+  world.answers = []
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -382,5 +392,73 @@ describe('the Publish sheet', () => {
 
     publish.close()
     expect(publish.open).toBe(false)
+  })
+})
+
+/** What the forms on a site collected, which is the one thing the sheet shows
+ *  that came from somebody other than the reader of it. */
+describe('the answers a site has collected', () => {
+  const one = {
+    id: 'answer-1',
+    note: 'note-1',
+    path: 'Say hello.md',
+    at: 1,
+    answers: { 'Your name': 'Ada' },
+  }
+
+  test('are read for a site that is live', async () => {
+    account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+    world.answers = [one]
+
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+
+    expect(world.asked).toContain('answers space-1')
+    expect(publish.answers).toEqual([one])
+  })
+
+  test('and not for a space that is not published at all', async () => {
+    world.answers = [one]
+
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+
+    expect(world.asked).toEqual([])
+    expect(publish.answers).toEqual([])
+  })
+
+  test('a site with no forms on it shows nothing rather than an error', async () => {
+    account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+    world.refuse = 'no answers here'
+
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+
+    expect(publish.answers).toEqual([])
+    expect(publish.error).toBeNull()
+  })
+
+  test('one can be forgotten, and the list is the shorter one', async () => {
+    account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+    world.answers = [one]
+
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+    await publish.forget(one)
+
+    expect(world.asked).toContain('forget answer-1 of space-1')
+    expect(publish.answers).toEqual([])
+  })
+
+  test('and the spreadsheet is the server’s, not the sheet’s', async () => {
+    // What a column is called is decided where an answer is stored, so the file
+    // is asked for rather than assembled here.
+    account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+
+    publish.show(local('Notes'))
+    const csv = await publish.answersCsv()
+
+    expect(world.asked).toContain('answers.csv space-1')
+    expect(csv).toContain('"when"')
   })
 })
