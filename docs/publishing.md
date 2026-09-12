@@ -536,7 +536,8 @@ all. That is a batch of its own.
 - `services/sync/test/site-parts.test.ts` - the search grammar, the words a note
   is indexed by, the navigation's order, a folder open where the reader is inside
   it, what links to a page, a form read from a fence and an answer read against
-  it, and the spreadsheet the answers become.
+  it, the spreadsheet the answers become, and the theme the author chose linked
+  after the site's own sheet.
 - `services/sync/test/site-script.test.ts` - that the script a page runs is still
   the one the app's own modules make, which is what catches a forgotten
   `pnpm blog:js`.
@@ -545,7 +546,11 @@ all. That is a batch of its own.
   page served and a page not served, a permalink, a rename that redirects, the
   feed and the sitemap, a password typed on the site itself, the favicon, the
   search box answering, the tree and the contents beside a page, what links to it,
-  the graph, and a form answered on the page and read back on the account.
+  the graph, and a form answered on the page and read back on the account. The
+  last part of it is a real browser on the site, on a desktop and a phone: it
+  counts the pixels the graph painted, presses `/` and searches, presses the
+  theme button twice and reads the colour of the page each time, hovers a link
+  for its card, and leaves the screenshots beside the sheet's.
 
 ## How to check it
 
