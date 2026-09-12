@@ -250,8 +250,11 @@ def kept_pens(page: Page) -> list[str]:
 
 
 def drag(page: Page, one, onto) -> None:
-    """A pen held until the row lets go of it, then dragged onto another. The
-    wait is the whole gesture: a finger that sets off at once is scrolling."""
+    """A pen held and then dragged onto another. The wait is the whole gesture:
+    a finger that sets off at once is scrolling.
+
+    Nothing should come of it now; it is driven so that the row going back to
+    something you arrange would be noticed."""
     here = one.bounding_box()
     there = onto.bounding_box()
     assert here and there
@@ -406,17 +409,24 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(350)
         shot(page, f"pen-bar-folded-{device}-{theme}")
 
-        # Unfolded again, and one pen dragged along the row past another.
+        # Unfolded again, and one pen dragged along the row past another, which
+        # must do nothing. The row used to be a row you arranged; it is three
+        # fixed slots now - something to write with, something to sketch with,
+        # something to mark with - because a row that grows is a row that
+        # overflows and then it needs managing, which is not what anybody opened
+        # a canvas to do. See PEN_SLOTS in canvas/pens.svelte.ts.
         page.locator('button[aria-label="The pens"]').click()
         page.wait_for_timeout(350)
 
         was = kept_pens(page)
         drag(page, pen_at(page, 0), pen_at(page, 2))
         now = kept_pens(page)
-        if now != [was[1], was[2], was[0]]:
-            failures.append(f"{label}: a pen held and dragged did not move ({was} to {now})")
+        if now != was:
+            failures.append(f"{label}: dragging a pen rearranged the row ({was} to {now})")
+        elif len(now) != 3:
+            failures.append(f"{label}: the row holds {len(now)} pens rather than three: {now}")
         else:
-            say(f"[{label}] a pen held and dragged along the row moved to where it was dropped")
+            say(f"[{label}] the three slots stayed as they were: {now}")
 
         # And the whole bar dragged by its grip to the other edge.
         grip = page.locator('[aria-label="Move the bar"]')
