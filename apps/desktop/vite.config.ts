@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import manifest from './even.app.json'
+import { CSP } from './src/csp'
 
 const host = process.env.TAURI_DEV_HOST
 
@@ -30,12 +31,21 @@ export default defineConfig({
   // and leaves out what a pair of glasses cannot use.
   define: { __EVEN_BUILD__: JSON.stringify(stamp()), __EVEN_PLUGIN__: 'false' },
   clearScreen: false,
+  // The same policy the installed app is served with. `tauri dev` loads the dev
+  // server rather than the bundle, so without this the app being worked on is a
+  // looser app than the one that ships - and a policy nobody develops under is a
+  // policy that breaks on the day it is turned on. The header as well as the meta
+  // in index.html, because only a header carries `frame-ancestors`. See src/csp.ts.
   server: {
     port: 1420,
     strictPort: true,
     host: host || false,
     hmr: host ? { protocol: 'ws', host, port: 1421 } : undefined,
     watch: { ignored: ['**/src-tauri/**'] },
+    headers: { 'Content-Security-Policy': CSP },
+  },
+  preview: {
+    headers: { 'Content-Security-Policy': CSP },
   },
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
   build: {

@@ -2,6 +2,16 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- The same policy the installed app is served with, because a browser and
+         the PWA have no server of ours to set the header. One string, written in
+         `src/csp.ts` and held to it by `test/csp.test.ts`; that file says what
+         each line is for. First in the head, since a policy only governs what is
+         parsed after it. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src-attr 'none'; script-src-elem 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: asset: http://asset.localhost; media-src 'self' data: blob: https: asset: http://asset.localhost; font-src 'self' data:; connect-src 'self' https: wss: ws://localhost:* http://localhost:* ipc: http://ipc.localhost asset: http://asset.localhost blob: data:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    />
     <!-- `viewport-fit=cover` is what makes env(safe-area-inset-*) mean anything:
          without it a phone reports zero and the notch covers the header. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
