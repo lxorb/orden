@@ -132,6 +132,33 @@ the API, so the runner makes the shared build again after each of them.
 A drive whose port something else already holds is reported `blocked` rather
 than failed, because that is not the app being wrong.
 
+## The launch
+
+A slow launch can only be measured on the machine that has one: the disk, the
+antivirus and the webview runtime are the three biggest terms in it and none of
+the three is in this repository. So the app says it itself. Set
+`NIB_TRACE_STARTUP` and every launch appends a page to `startup-trace.log` in the
+app's log folder - `%LOCALAPPDATA%\ch.emilvinu.nib\logs` on Windows,
+`~/Library/Logs/ch.emilvinu.nib` on macOS, `~/.local/share/ch.emilvinu.nib/logs`
+on Linux:
+
+```powershell
+setx NIB_TRACE_STARTUP 1      # then start Nib the way you always do
+setx NIB_TRACE_STARTUP ""     # and off again
+```
+
+One page, one launch, two clocks on one axis: the crate's steps from before its
+own first line to the window being shown, and the window's own from the page
+being requested to the last stage of the launch order. Each line says when it
+happened and how long since the line above it, which is the column the answer is
+in. `windows, before our first line` is the machine loading the binary, and a
+launch whose cost is in that row is not one this code can make faster. See
+`apps/desktop/src-tauri/src/trace.rs` and `apps/desktop/src/lib/trace.ts`.
+
+Off costs one environment read and a push onto an array, so there is no build to
+make and no flag to pass: the app somebody already has is the app that answers
+this.
+
 ## Types
 
 Every package extends `tsconfig.base.json`. Beyond `strict`: an index may
