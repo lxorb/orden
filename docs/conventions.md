@@ -81,14 +81,16 @@ undo it.
 
 Six of them - `collaborate`, `draw-together`, `first-sync`, `publishing`,
 `share`, `signin` - start the real Worker under `wrangler dev`, and two things
-follow from that. They need `CLOUDFLARE_API_TOKEN` in the environment, because
+follow from that. They want `CLOUDFLARE_API_TOKEN` in the environment, because
 the Worker binds Workers AI and that has no local emulation, so wrangler opens a
-remote proxy session for it and will not start without one; nothing the drives
-do reaches the AI. And they bake their own Worker's address into `dist` as the
-API, so the runner makes the shared build again after each of them. A drive the
-runner cannot start for either reason - no token, or a port something else holds
-- is reported `blocked` rather than failed, because neither is the app being
-wrong.
+remote proxy session for it and cannot without one; nothing the drives do
+reaches the AI. The two that hold a socket open, `collaborate` and
+`draw-together`, do not start without it; the ones that only make requests have
+been seen to carry on. And they bake their own Worker's address into `dist` as
+the API, so the runner makes the shared build again after each of them.
+
+A drive whose port something else already holds is reported `blocked` rather
+than failed, because that is not the app being wrong.
 
 ## Types
 

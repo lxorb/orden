@@ -29,11 +29,12 @@ Two things about the set that are not true of a drive on its own:
     hand and by other people at the same time. A drive whose port is already
     taken is not a drive that failed, so its port is waited for and it is called
     blocked rather than failed if the wait runs out.
-  - Those same six need `CLOUDFLARE_API_TOKEN` in the environment, because the
+  - Those same six want `CLOUDFLARE_API_TOKEN` in the environment, because the
     Worker binds Workers AI and that has no local emulation: `wrangler dev`
-    opens a remote proxy session for it and will not start without one. Without
-    the token they are called blocked too, rather than run and failed several
-    screens into wrangler's output.
+    opens a remote proxy session for it and cannot without one. The two that
+    hold a socket open die without it; the ones that only make requests have
+    been seen to carry on. So the run says the token is missing and goes ahead
+    anyway.
 
 The table at the end holds the exit status, how long it took and where it put
 its screenshots. The exit status of the run is the number of drives that failed;
@@ -82,13 +83,14 @@ PICKED = re.compile(r"^[A-Z_]*PORT[A-Z_]* = (\d+)$", re.MULTILINE)
 #: made again; see the note at the top of this file.
 WORKER_BUILD = "VITE_NIB_API"
 
-#: What one of those drives needs in the environment before it can start its
-#: Worker at all. The Worker binds Workers AI, which has no local emulation, so
-#: `wrangler dev` opens a remote proxy session for it and refuses to start
-#: without a token in a non-interactive shell. Nothing the drives themselves do
-#: reaches the AI; it is the binding being there that asks for this. A drive
-#: without it fails several screens into wrangler's own output, which reads as
-#: the app being broken, so it is called blocked here instead.
+#: What such a drive wants in the environment. The Worker binds Workers AI,
+#: which has no local emulation, so `wrangler dev` opens a remote proxy session
+#: for it and cannot without a token in a non-interactive shell. Nothing the
+#: drives themselves do reaches the AI; it is the binding being there that asks
+#: for this. Whether the failure is fatal depends on the drive: the two that
+#: hold a socket open die on it, and the ones that only make requests have been
+#: seen to carry on. So this is said and not acted on, because skipping a drive
+#: that would have passed is worse than a drive that says why it did not.
 WORKER_TOKEN = "CLOUDFLARE_API_TOKEN"
 
 #: How long to wait for a port somebody else is using, and how often to look.
@@ -246,9 +248,7 @@ def main() -> int:
         worker = WORKER_BUILD in source
 
         if worker and not os.environ.get(WORKER_TOKEN):
-            print(f"  skipped: its Worker needs {WORKER_TOKEN} in the environment", flush=True)
-            table.append((one.name, BLOCKED, 0.0, kind_of(one), "", f"no {WORKER_TOKEN}"))
-            continue
+            print(f"  note: no {WORKER_TOKEN}, so its Worker may not start", flush=True)
 
         busy = free(one, said.freeing)
         if busy:
