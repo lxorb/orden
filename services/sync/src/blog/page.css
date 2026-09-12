@@ -315,12 +315,13 @@ body.site {
 
 .site .pages ul {
   margin: 0;
-  padding: 0 0 0 var(--space-2);
+  padding: 0;
+  padding-inline-start: var(--space-2);
   list-style: none;
 }
 
 .site .pages > ul {
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 .site .pages li {
@@ -462,7 +463,7 @@ body.site {
 
 .site .toc-aside .toc ul {
   margin: 0;
-  padding-left: var(--space-3);
+  padding-inline-start: var(--space-3);
   list-style: none;
 }
 

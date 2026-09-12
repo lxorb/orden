@@ -276,6 +276,20 @@ export function say(
   return fill(typeof found === 'string' ? found : source, values)
 }
 
+/** Which way a language reads. The four are the ones with a catalogue here, and
+ *  the same four the app names: a copy on purpose, the way the language list is,
+ *  because an extension bundle and an app bundle share nothing else. See
+ *  `apps/desktop/src/lib/direction.ts` for the whole of the rule.
+ *
+ *  The pages put the answer on their own `html` element, and everything that
+ *  mirrors keys off that one attribute. */
+export const RIGHT_TO_LEFT = ['ar', 'fa', 'ps', 'ur']
+
+export function directionOf(language: string): 'ltr' | 'rtl' {
+  const base = language.split('-')[0]?.toLowerCase() ?? ''
+  return RIGHT_TO_LEFT.includes(base) ? 'rtl' : 'ltr'
+}
+
 /** What the service worker translates through: the catalogue for a choice,
  *  fetched once, as a function of a string.
  *

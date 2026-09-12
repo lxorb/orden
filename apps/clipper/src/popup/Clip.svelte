@@ -294,11 +294,14 @@
     position: absolute;
     top: 3px;
     bottom: 3px;
-    left: 3px;
+    inset-inline-start: 3px;
     width: calc((100% - 6px) / 3);
     border-radius: calc(var(--radius-md) - 2px);
     background: var(--accent);
-    translate: calc(var(--at) * 100%) 0;
+    /* Which of the three is chosen, counted from the end a line starts at, so it
+       moves towards the words under a right-to-left interface; see
+       apps/desktop/src/lib/direction.ts. */
+    translate: calc(var(--dir) * var(--at) * 100%) 0;
     transition: translate var(--dur-base) var(--ease-out);
   }
 
@@ -438,7 +441,7 @@
 
   .reading select,
   .target select {
-    padding-right: 30px;
+    padding-inline-end: 30px;
   }
 
   .save {

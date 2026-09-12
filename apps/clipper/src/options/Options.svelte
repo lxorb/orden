@@ -435,7 +435,7 @@
   }
 
   .setting select {
-    padding-right: 30px;
+    padding-inline-end: 30px;
   }
 
   .quiet {

@@ -9,6 +9,7 @@
 import {
   catalogueOf,
   type Dictionary,
+  directionOf,
   fill,
   LANGUAGES,
   languageOf,
@@ -65,7 +66,13 @@ class I18n {
   async use(choice: string): Promise<void> {
     this.choice = choice
     const wanted = this.language
-    if (typeof document !== 'undefined') document.documentElement.lang = wanted
+    // `dir` beside `lang`: which way the pages read is a fact about the language,
+    // and one attribute is what every mirroring rule in the shared stylesheets
+    // keys off; see translate.ts.
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = wanted
+      document.documentElement.dir = directionOf(wanted)
+    }
 
     const next = await catalogueOf(wanted)
     if (this.language !== wanted) return

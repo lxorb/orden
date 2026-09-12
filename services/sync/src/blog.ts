@@ -375,6 +375,20 @@ function mathLink(body: string): string {
  *  to choose yet; when it has one, this is where it arrives. */
 const PAGE_LANGUAGE = 'en'
 
+/** Which way the page reads, from the language above and nothing else - the same
+ *  rule and the same four languages as the app's, which is why the list is stated
+ *  and not guessed; see apps/desktop/src/lib/direction.ts.
+ *
+ *  On the `html` element, so the furniture mirrors with it: the bar, the pages
+ *  down one side, the contents down the other, the foot. The note inside is a
+ *  different question and answers it itself - every block in `#write` takes the
+ *  direction of its own first strong character, so an Arabic note on an English
+ *  site reads right either way; see base.css. */
+const RIGHT_TO_LEFT_PAGES = ['ar', 'fa', 'ps', 'ur']
+const PAGE_DIRECTION = RIGHT_TO_LEFT_PAGES.includes(PAGE_LANGUAGE.split('-')[0] ?? '')
+  ? 'rtl'
+  : 'ltr'
+
 /** What goes around the note: the bar at the top, the pages down the left, the
  *  contents down the right, what links here at the foot. Every part optional,
  *  because a site of one note has none of them; see blog/shell.ts. */
@@ -412,7 +426,7 @@ function page(
 
   const scripts = !options.locked
   const html = `<!doctype html>
-<html lang="${PAGE_LANGUAGE}"><head>
+<html lang="${PAGE_LANGUAGE}" dir="${PAGE_DIRECTION}"><head>
 ${headOf(head, sheets)}${mathLink(body)}
 ${scripts ? `<script>${THEME_JS}</script>` : ''}
 ${scripts ? `<script defer src="${SITE_JS_PATH}"></script>` : ''}
@@ -466,7 +480,7 @@ function deckPage(head: Head, body: string): Response {
   const nonce = crypto.randomUUID().replace(/-/g, '')
 
   const html = `<!doctype html>
-<html lang="${PAGE_LANGUAGE}"><head>
+<html lang="${PAGE_LANGUAGE}" dir="${PAGE_DIRECTION}"><head>
 ${headOf(
   {
     ...head,
