@@ -354,6 +354,19 @@ Features Typora does not have, which are the reason this exists.
       fade together, the fold lands when they have gone and the mark that is left
       fades in, and opening runs it backwards - so nothing under the block jumps.
       Reduced motion makes all of it instant
+- [x] Obsidian's Fold more and Fold less, which take a note one level at a time:
+      more folds every block at the deepest level that still has something open,
+      less opens the shallowest level that has something folded, and the two walk
+      each other back press for press. Neither holds a number. What a level is is
+      read out of the note every time - how deeply a foldable block sits inside the
+      others, which is what the syntax tree already says: a subsection inside a
+      section, a child item inside its item, a fence inside a callout - and what is
+      folded is read out of the folds. So nothing is stored, nothing is reset by an
+      edit, and there is no invisible "which level are we on?" to get out of step
+      with the screen. Neither ever touches a block a fold above it has already
+      taken off the screen, so every press changes something or answers no. Two
+      rows in View and in the palette, on no chord, which is where Obsidian leaves
+      them too
 - [x] A mark in the margin beside every block. Take hold of it to move the block,
       where a heading's block is its whole section, the way folding and the
       outline already mean it; the line it would land on is drawn as it is
@@ -434,6 +447,30 @@ Features Typora does not have, which are the reason this exists.
       slash, so `and/or` and `24/7` are words. The rows are the ones the
       Paragraph menu and the palette show, out of one list, in the popup that
       `[[` and `:emoji:` already open
+- [x] `[[##` and `[[^^`, for the link you want to write without first remembering
+      which note it is in. `##` offers every heading of the space, each row the
+      heading with the note it is in muted beside it; `^^` offers every block,
+      starting with the ones that already answer to a name and then the lines the
+      words themselves find. Picking one writes `[[Note#Heading]]` or
+      `[[Note#^id]]`, so the file is Obsidian's spelling and nothing in it is
+      nib's, and a block that had no name is given one by the same writer the
+      grip's Copy link uses. Neither reads a space: the headings and the names are
+      already in the index, and the words are found through the app's own search -
+      one question, once two characters are in, and the popup filters what came
+      back rather than asking again per keystroke. In the popup `[[`, `:emoji:`,
+      `/` and a snippet already open
+- [x] `#` finishes a tag the space already uses, with the notes under each counted
+      beside it, so one thing keeps one name: `#reading` and `#Reading` are two
+      sets of notes and nothing on the screen says so until it is too late. The
+      whole path is the row, so a `/` narrows to the level under it and `canvas`
+      finds `work/nib/canvas` without the two levels above it being typed out.
+      Where a tag can be, and nowhere else: after a hash that opens a word, never
+      in the middle of one, so `C#` and a URL's fragment are left alone; never in
+      code, maths or an address; and at the start of a line it waits for a letter,
+      because `# ` there is a heading and a popup on the way to one is a popup in
+      the way. Inside the front matter it answers under a `tags:` key as well -
+      on its own line, after a comma, or under an item of the list - where a tag
+      is written without the hash because YAML reads one as a comment
 - [x] `aliases` in a note's front matter, whichever of the three ways YAML writes
       a list. `[[Roadmap]]` finds the note that declared it, the completion
       offers an alias under the note's own name, and backlinks and unlinked

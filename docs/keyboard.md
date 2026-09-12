@@ -237,6 +237,39 @@ for "the one before" and "the one after" take it instead. The switcher is on the
 space bar because that is where the word is written, and it opens the sidebar
 header's own menu rather than a second copy of it.
 
+**Folding**
+
+| | |
+| --- | --- |
+| Ctrl+Alt+[ | fold whatever the caret is in, and open it again (already there) |
+| Ctrl+Alt+] | open all of it (already there) |
+| no key | Fold everything, Fold more, Fold less |
+
+The three without a key are three rows in View and three rows in the palette, and
+that is deliberate rather than unfinished. Obsidian ships all three unbound too.
+Folding everything is the press nobody makes twice in a row, and the two level
+commands are read-with-one-hand presses rather than writing presses, so none of
+them is worth a chord that the writing would otherwise have. Any of the three can
+be put on a key in Settings, like everything else in the registry.
+
+**The popup at the caret**
+
+One popup, whatever opened it: `/` for a block, `:` for an emoji, a snippet's own
+word, `[[` for a note, `[[##` for any heading in the space, `[[^^` for any block,
+`#` for a tag.
+
+| Key | What it does |
+| --- | --- |
+| a letter | narrows the rows; the letters that matched are marked in each |
+| Up, Down | the row before, the row after |
+| Enter | take it: the row replaces what was typed, and a link closes its own brackets |
+| Escape | leave it; what was typed stays exactly as typed |
+
+One surface for seven things, because the alternative is seven popups with seven
+sets of keys and one of them getting Escape wrong. It is CodeMirror's own
+completion tooltip, which is why it behaves the same at the caret on a phone as
+it does on a desktop.
+
 ### Layers
 
 Sheets, menus, the settings, the pickers, the palette. All of them:
@@ -286,4 +319,8 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
+| `packages/editor/src/fold.ts` | the five folding commands, and what a level is |
+| `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |
+| `apps/desktop/test/e2e/fold-levels.py` | Fold more and Fold less, driven from the palette |
+| `apps/desktop/test/e2e/completions.py` | `[[##`, `[[^^` and `#` in the popup, driven by typing |
