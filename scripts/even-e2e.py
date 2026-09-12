@@ -44,6 +44,11 @@ NOTE_PATH = f"{SPACE}/Even Realities glasses.md"
 OTHER_PATH = f"{SPACE}/Monday standup.md"
 DEEP_PATH = f"{SPACE}/Inbox/Reading list.md"
 CANVAS_PATH = f"{SPACE}/A canvas.canvas"
+# Everything the app has learned to write since the mapping was last driven: the
+# properties at the head of a note, a fence with a caption, callouts by name, a
+# comment to nobody, and a folded section. Its own note rather than more of the one
+# above, so every assertion about that note's pages still says what it said.
+MORE_PATH = f"{SPACE}/Everything else.md"
 
 # A second space, for the icons: one that chose an icon and one that did not.
 OTHER_SPACE = "/Uni"
@@ -106,6 +111,54 @@ A footnote[^one], a [link](https://nibeditor.com) and a wikilink to
 
 No backtick, no check mark, no ballot box, no tab: ✓ ✗ ☐ ☑ and a tab between
 these	two words. Nothing is dropped, and nothing draws as nothing.
+"""
+
+MORE = r"""---
+tags: [glasses, panel]
+status: reading
+---
+
+# Everything else
+
+%% A note to myself, which nobody is read out to. %%
+
+Words around %% an aside %% a comment.
+
+## A fence with a caption
+
+```ts src/panel.ts
+const rows = 8
+```
+
+## Callouts by name
+
+> [!warning]
+> Mind the gap.
+
+> [!recipe]
+> Flour and water.
+
+> [!tip] Mind the gap
+> Between the two.
+
+> [!note]- Shut
+> Behind the fold.
+
+## What is left
+
+- [ ] a task not done
+- [x] a task done
+
+| Band | Rows |
+| :--- | ---: |
+| head | 1 |
+| body | 8 |
+
+Inline $E = mc^2$ and a display formula:
+
+$$
+\int_0^1 x^2\,dx = \frac{1}{3}
+$$
 """
 
 OTHER = "# Monday standup\n\nSomewhere for the wikilink to point.\n"
@@ -387,8 +440,13 @@ window.__bands = () => {
 
 SEED = r"""
 async ([rows]) => {
-  const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib', 1)
+  // Whatever version the app itself made, rather than a version of this script's
+  // own: the page has already booted by the time this runs, so the database is
+  // there and asking for an older version is a `VersionError` and a drive that
+  // measures nothing. Only a database this script somehow met first is created here,
+  // and then at the version it is opened at.
+  const open = (version) => new Promise((resolve, reject) => {
+    const request = version === undefined ? indexedDB.open('nib') : indexedDB.open('nib', version)
     request.onupgradeneeded = () => {
       const made = request.result
       if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
@@ -403,6 +461,13 @@ async ([rows]) => {
     request.onerror = () => reject(request.error)
   })
 
+  let db = await open()
+  if (!db.objectStoreNames.contains('files')) {
+    const version = db.version + 1
+    db.close()
+    db = await open(version)
+  }
+
   const put = (store, row) => new Promise((resolve, reject) => {
     const request = db.transaction(store, 'readwrite').objectStore(store).put(row)
     request.onsuccess = () => resolve()
@@ -412,6 +477,14 @@ async ([rows]) => {
   const now = Date.now()
   for (const [path, content] of rows) {
     await put('files', { path, content, modified: now, created: now })
+    // And a row in `stats`, because that is what the file list is built from: one
+    // row per file with its dates and nothing else, so a tree can be drawn without
+    // reading a single body. A seed that wrote only the bodies left the app with
+    // three notes it could open by name and an empty sidebar. See
+    // lib/web/store.ts, where every write puts both.
+    if (db.objectStoreNames.contains('stats')) {
+      await put('stats', { path, modified: now, created: now })
+    }
   }
 
   // The picture the note names, so that nothing on the page asks the server for
@@ -428,6 +501,9 @@ async ([rows]) => {
     data: png.buffer,
     modified: now,
   })
+  if (db.objectStoreNames.contains('stats')) {
+    await put('stats', { path: '/Notes/sketch.png', modified: now, created: now })
+  }
 
   return true
 }
@@ -526,6 +602,7 @@ def main() -> int:
                         [OTHER_PATH, OTHER],
                         [DEEP_PATH, DEEP],
                         [CANVAS_PATH, CANVAS],
+                        [MORE_PATH, MORE],
                     ]
                 ],
             )
@@ -1093,6 +1170,56 @@ def main() -> int:
             back = page.evaluate("window.__bands()")
             screens.append({"name": "glasses-3", "lineNumbers": True, **naming(back)})
 
+            # ── Everything the app has learned to write since ─────────────────
+            # The mapping has unit tests for each of these; what this says is that a
+            # note holding all of them reaches the panel through the whole road - the
+            # app's own reader, the plugin's paging, the containers - and that nothing
+            # the reader was never meant to see came with it.
+            open_note(page, "Everything else")
+            page.wait_for_timeout(900)
+            whole = []
+            for _page in range(12):
+                bands = page.evaluate("window.__bands()")
+                whole.append(f"{bands.get('nibHead', '')}\n{bands.get('nibBody', '')}")
+                page.evaluate("window.__gesture('down')")
+                page.wait_for_timeout(180)
+
+            said = "\n".join(whole)
+            report.ok(
+                "a captioned fence says what it is above the code, and names the language alone",
+                "src/panel.ts" in said and "‘‘‘ts" in said and "‘‘‘ts src" not in said,
+                next((one for one in said.split("\n") if "src/panel.ts" in one), "not there"),
+            )
+            report.ok(
+                "callouts say which kind they are, named or not, folded or not",
+                all(one in said for one in ["WARNING", "RECIPE", "Mind the gap", "Behind the fold"]),
+                "; ".join(one for one in ["WARNING", "RECIPE", "Behind the fold"] if one not in said),
+            )
+            report.ok(
+                "and a callout's fold sign is not read out as words",
+                "]-" not in said and "[!" not in said,
+            )
+            report.ok(
+                "a comment is not on the panel, whichever way it was written",
+                "note to myself" not in said and "an aside" not in said,
+            )
+            report.ok(
+                "the properties at the head of a note are not on the panel either",
+                "tags:" not in said and "status: reading" not in said,
+            )
+            report.ok(
+                "tasks are boxes, filled or not",
+                "□ a task not done" in said and "■ a task done" in said,
+            )
+            report.ok(
+                "a table keeps its columns, and maths keeps its dollars",
+                "head" in said and "body" in said and "$$" in said and "E = mc^2" in said,
+            )
+            page.screenshot(path=str(OUT / "phone-everything.png"))
+
+            open_note(page, "Even Realities glasses")
+            page.wait_for_timeout(900)
+
             # ── The glasses' own microphone, and what a command costs on it ──
             # Emil, on even 0.5.7: "right now it's extremely delayed ... it takes so
             # long for a voice command that there's no reason to use it." This is the
@@ -1287,24 +1414,36 @@ def main() -> int:
             press(page, "Show sidebar")
             page.wait_for_timeout(400)
 
+            # The rail of squares is gone: the spaces are a switcher at the top of the
+            # sidebar now, and each row wears its mark in a badge. Opened by its own
+            # name, which is the button that says which space is up.
+            opened = press(page, "Notes") or press(page, "Uni")
+            page.wait_for_timeout(500)
+
             marks = page.evaluate(
                 """
-                () => [...document.querySelectorAll('.space')].map((one) => {
-                  const path = one.querySelector('svg path')
+                () => [...document.querySelectorAll('.spaces .nib-row')].map((one) => {
+                  const badge = one.querySelector('.nib-badge')
+                  const path = badge ? badge.querySelector('svg path') : null
                   return {
-                    name: one.getAttribute('aria-label'),
-                    shape: one.querySelectorAll('svg path').length,
+                    name: (one.querySelector('.nib-row-label')?.textContent ?? '').trim(),
+                    shape: badge ? badge.querySelectorAll('svg path').length : 0,
                     // The half that cannot be seen in the DOM: an element in the
-                    // wrong namespace is there, is white, is the right size, and
-                    // draws nothing at all. See scripts/even-stage.mjs.
+                    // wrong namespace is there, is the right size, and draws nothing
+                    // at all. See scripts/even-stage.mjs.
                     drawn: path ? path.namespaceURI : null,
-                    said: one.textContent.trim(),
+                    said: badge ? (badge.textContent ?? '').trim() : '',
                   }
                 })
                 """
             )
             wearing = next((one for one in marks if one["name"] == "Notes"), None)
             plain = next((one for one in marks if one["name"] == "Uni"), None)
+            report.ok(
+                "the spaces open from the switcher in the sidebar",
+                opened and len(marks) >= 2,
+                f"{len(marks)} rows",
+            )
             report.ok(
                 "a space that chose an icon draws it in the plugin",
                 bool(
@@ -1315,7 +1454,7 @@ def main() -> int:
                 json.dumps(wearing),
             )
             report.ok(
-                "and one that chose none draws its letter, never an empty square",
+                "and one that chose none draws its letter, never an empty badge",
                 bool(plain and plain["shape"] == 0 and plain["said"] == "U"),
                 json.dumps(plain),
             )
