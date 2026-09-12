@@ -35,26 +35,55 @@ class Said {
   words = $state('')
 
   private clearing: ReturnType<typeof setTimeout> | undefined
-  /** The last thing said, so saying it again says it again: the region is
-   *  emptied first and the words are put back a beat later, which is the only
-   *  way to make a live region repeat itself. */
-  private last = ''
+
+  /** What was last written into the region, as a plain field rather than as
+   *  state - and that is the whole of why this class has two of them.
+   *
+   *  `say` is called from an `$effect`: the sync light and a tab's save dot both
+   *  become words in App.svelte. A reactive read inside an effect is a
+   *  dependency, so reading `words` here made every caller an effect that depends
+   *  on the very state this writes - and the empty-then-restore below, which is
+   *  what makes a live region repeat itself, then wrote that dependency twice per
+   *  call. Svelte ran the effect again, it said the same thing again, and a
+   *  thousand rounds later the whole batch was abandoned with
+   *  `effect_update_depth_exceeded`: the page is drawn and never updates again,
+   *  so a menu does not open and a space cannot be chosen. This field answers the
+   *  same question - is that already what the region says - without being
+   *  something anybody can depend on. */
+  private showing = ''
+
+  /** Which call is the current one, so a restore a beat late cannot put an older
+   *  sentence back over a newer one. */
+  private turn = 0
 
   say(words: string): void {
     const asked = words.trim()
     if (!asked) return
 
     clearTimeout(this.clearing)
+    const mine = ++this.turn
 
-    if (asked === this.last && this.words === asked) {
-      this.words = ''
-      queueMicrotask(() => (this.words = asked))
+    // The same thing again is the region emptied first and the words put back a
+    // beat later, which is the only way to make a live region repeat itself.
+    if (asked === this.showing) {
+      this.write('')
+      queueMicrotask(() => {
+        if (mine === this.turn) this.write(asked)
+      })
     } else {
-      this.words = asked
+      this.write(asked)
     }
 
-    this.last = asked
-    this.clearing = setTimeout(() => (this.words = ''), HELD)
+    this.clearing = setTimeout(() => {
+      if (mine === this.turn) this.write('')
+    }, HELD)
+  }
+
+  /** The one place the region's text changes, so the plain copy above can never
+   *  drift from the state the page reads. */
+  private write(words: string): void {
+    this.showing = words
+    this.words = words
   }
 }
 
