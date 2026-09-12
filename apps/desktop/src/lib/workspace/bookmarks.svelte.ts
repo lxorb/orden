@@ -168,6 +168,13 @@ function read(): Record<string, Kept> {
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
 
+  /** What the last change is still offering to the account; see `put`. The offer
+   *  outlives the call that caused it - the row answers in the frame the click
+   *  happened in and the account hears after - so this is how anything that has to
+   *  know the offer was made waits for the offer itself rather than for a moment
+   *  to pass. Not state: nothing on screen reads it. */
+  offered: Promise<unknown> = Promise.resolve()
+
   /** Which space the rows on screen belong to. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
   constructor(private readonly root: () => string | null) {}
@@ -388,8 +395,9 @@ export class Bookmarks {
     this.write()
 
     // Imported here rather than at the top: syncing reads the workspace this
-    // store belongs to, and the two would import each other.
-    void import('../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
+    // store belongs to, and the two would import each other. Kept rather than
+    // dropped, so the offer is something that can be waited for; nothing has to.
+    this.offered = import('../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
   }
 
   private write() {
