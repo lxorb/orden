@@ -477,7 +477,7 @@
              sitting: a panel held on a note nobody remembers holding it on is
              worse than one that simply follows. -->
         <button
-          class="tool"
+          class="nib-glyph tool"
           class:active={held}
           title={held ? t('Follow the open note') : t('Stay on this note')}
           aria-label={held ? t('Follow the open note') : t('Stay on this note')}
@@ -494,7 +494,7 @@
           <!-- One link out, two, or three. Not four: at four most spaces answer
                with the space, and the picture of the whole space is a tab away. -->
           <button
-            class="depth"
+            class="nib-glyph depth"
             title={t('Depth')}
             aria-label={t('Depth')}
             onclick={() =>
@@ -505,7 +505,7 @@
           </button>
         {/if}
         <button
-          class="tool"
+          class="nib-glyph tool"
           class:active={graphing}
           title={t('Graph')}
           aria-label={t('Graph')}
@@ -819,33 +819,15 @@
     gap: 2px;
   }
 
+  /* What is at the far end of the tab row is `.nib-glyph` in the themes package,
+     the same square as every other icon button. They used to be drawn here with
+     a width and no height and nothing said about padding, so each of them wore
+     the browser's own `1px 6px` and stretched to the row; and their hover went
+     to `--text` where every other glyph button's goes to `--text-strong`.
+     What is left is the one that says a number rather than a mark. */
   .tools button {
-    width: var(--row-height);
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--muted);
-    font-family: var(--font-ui);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .tools button:hover {
-      background: var(--surface-hover);
-      color: var(--text);
-    }
-  }
-
-  .tools button:active {
-    background: var(--surface-press);
-    color: var(--text-strong);
   }
 
   .tools button.active {
