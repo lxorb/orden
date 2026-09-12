@@ -2,6 +2,7 @@ import { NibWidget } from './widget'
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { headingLevel, headingText } from '../headings'
 
 export interface Heading {
   level: number
@@ -9,26 +10,16 @@ export interface Heading {
   from: number
 }
 
-const HEADING = /^(?:ATX|Setext)Heading(\d)$/
-
 /** Every heading in the document, in order. */
 export function headings(state: EditorState): Heading[] {
   const found: Heading[] = []
 
   syntaxTree(state).iterate({
     enter: (node) => {
-      const match = HEADING.exec(node.name)
-      if (!match) return true
+      const level = headingLevel(node.name)
+      if (level === null) return true
 
-      const line = state.doc.lineAt(node.from)
-      found.push({
-        level: Number(match[1] ?? '1'),
-        text: line.text
-          .replace(/^#{1,6}\s*/, '')
-          .replace(/\s*#+\s*$/, '')
-          .trim(),
-        from: node.from,
-      })
+      found.push({ level, text: headingText(state.doc.lineAt(node.from).text), from: node.from })
       return false
     },
   })

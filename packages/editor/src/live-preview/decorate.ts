@@ -15,6 +15,7 @@ import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
+import { HEADING_LEVEL } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
@@ -40,25 +41,21 @@ import {
 
 /** Nodes whose own lines carry a class, and which one.
  *
- *  The headings are written out rather than read off the name with a pattern.
- *  There are eight names and the walk asks about every node it meets, so the
- *  pattern was the most-run line in the preview: a thousand-line note spent
- *  nearly four thousand matches a keystroke on it, which a lookup does not. */
+ *  A table rather than a pattern per node: the walk asks about every node it
+ *  meets, so reading a heading's level off its name with a pattern was the
+ *  most-run line in the preview - a thousand-line note spent nearly four thousand
+ *  matches a keystroke on it, which a lookup does not. The heading rows are built
+ *  from headings.ts rather than written out again, so the one list of heading node
+ *  names serves the preview, the table of contents and the block handles. */
 const LINE_CLASS: Record<string, string> = {
-  ATXHeading1: 'nib-h1',
-  ATXHeading2: 'nib-h2',
-  ATXHeading3: 'nib-h3',
-  ATXHeading4: 'nib-h4',
-  ATXHeading5: 'nib-h5',
-  ATXHeading6: 'nib-h6',
-  SetextHeading1: 'nib-h1',
-  SetextHeading2: 'nib-h2',
   Table: 'nib-table',
   FrontMatter: 'nib-frontmatter',
   FootnoteDef: 'nib-footnote',
   DefinitionDetail: 'nib-definition',
   AbbrevDef: 'nib-abbrev',
 }
+
+for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `nib-h${level}`
 
 class Decorator {
   private readonly marks: Range<Decoration>[] = []

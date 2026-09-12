@@ -17,6 +17,7 @@
 import { foldable, syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { headingLevel } from '../headings'
 
 /** What a block is, in a word. The app turns these into the reader's own
  *  language; the editor never writes them down. */
@@ -59,7 +60,7 @@ const KINDS: Readonly<Record<string, BlockKind>> = {
 }
 
 function kindOf(name: string): BlockKind | null {
-  if (/^(?:ATX|Setext)Heading\d$/.test(name)) return 'heading'
+  if (headingLevel(name) !== null) return 'heading'
   return KINDS[name] ?? null
 }
 

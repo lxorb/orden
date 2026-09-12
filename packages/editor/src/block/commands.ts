@@ -13,6 +13,7 @@
 import type { ChangeSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds } from '@nib/markdown/links'
+import { headingText } from '../headings'
 import { copyBlock, cutBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan } from './span'
 
@@ -87,7 +88,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const first = doc.lineAt(span.from)
 
   if (span.kind === 'heading') {
-    const words = first.text.replace(/^\s*#{1,6}\s*/, '').trim()
+    const words = headingText(first.text)
     return words ? `#${words}` : null
   }
 
