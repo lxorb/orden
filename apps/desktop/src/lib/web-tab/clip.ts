@@ -36,8 +36,8 @@ export async function clipPage(
   // A page that never said what it is called is named after the site, which is
   // better than Untitled and is what the bar has been showing all along. A browser
   // build is always in that position: a frame's title belongs to the site.
-  const title = read?.title || fallback.title || plainOrigin(url)
-  const page = { url, title, html: read?.html ?? '' }
+  const named = (read?.title ?? fallback.title).trim()
+  const page = { url, title: named.length ? named : plainOrigin(url), html: read?.html ?? '' }
 
   return workspace.noteFrom(clipNote(page, new Date()))
 }
