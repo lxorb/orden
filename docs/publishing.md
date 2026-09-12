@@ -133,6 +133,189 @@ out of the same renderer and were already the same markup.
   as woff2 and nothing else, so a browser from before 2016 sets the maths in its
   own serif. The markup and the layout are still KaTeX's.
 
+## What a site chooses
+
+Publishing a space used to publish every note in it. That is the right default
+for a space somebody made to be a blog, and the wrong one for the space somebody
+already writes in, which is most spaces.
+
+So there are two places a decision can live, and they are not equals.
+
+**The note decides for itself.** `publish: true` or `publish: false` in its front
+matter, which is Obsidian Publish's own key, so a vault that already has them
+keeps them and a vault that leaves nib keeps working. A note that says either has
+settled its own case, and no rule about its folder changes that: what the author
+wrote in the file wins over a row in a pane, always. A value we do not
+understand - `publish: maybe` - is read as silence rather than as a page taken
+down by a typo.
+
+**The site decides for the rest.** In `Publish`: folders that are published,
+folders that are never published, and one default for everything outside both.
+The deeper rule counts, so `Work` private and `Work/Notes` published reads the
+way it sounds. The rows offered are the top of the tree, where somebody thinks in
+folders, plus any deeper folder that already carries a rule, so a vault of four
+hundred folders is not four hundred rows and nothing is hidden.
+
+Where it is kept: one JSON column on the space's row beside the bookmarks, the
+folder icons, the graph and the excluded paths, because all of those are read on
+the same request and a second table would be a second read per page. See
+`services/sync/src/blog/site.ts` for the column and the one decision read off it,
+and `spaces/site.ts` for the route that writes it.
+
+### What a note says about itself, and where that is kept
+
+`publish`, `permalink`, `aliases`, `title`, `description`, `image` (or `cover`)
+and `date` all live in the note. The site has to decide about a thousand notes to
+answer one request, and the note bodies are in R2, so what the head of a note
+says is read once - when the note is written, which is one parse of something
+already in hand - and kept on the row as JSON. The note's first heading and its
+first sentence ride along, because they come out of the same read and they are
+what a list of pages and a feed entry want.
+
+Every note written since this existed carries it. A vault that synced last month
+does not, and a `publish: false` nobody has read is a page on the internet that
+was meant to be private - so a space being published, or having its rules
+changed, or being asked what those rules would do, reads its own unread notes
+first, two hundred at a time, and the nightly sweep finishes anything bigger.
+See `blog/front.ts` and `blog/fill.ts`.
+
+### What a publish will change
+
+Obsidian Publish shows an upload dialog: these files will be added, these
+changed, these removed. nib has nothing to upload. A page **is** the note, served
+live, so the words on a page change when the note changes and no publish is
+involved.
+
+What a publish can change is which pages exist. So that is what the sheet says,
+before the button: how many pages the site will have, how many appear, how many
+go away, and the names of both. Worked out by the server - the same function that
+serves the pages, so the answer cannot drift from the truth - and asked again a
+quarter of a second after each rule is changed.
+
+A diff of a page's text is deliberately not offered: there is no older version on
+the site to diff against, because the site is showing the note as it stands. The
+note's own history is where its earlier words are; see `docs/sync.md`.
+
+## Where a page lives
+
+`Notes/First idea.md` is `/notes/first-idea` by default. `permalink: ideas/first`
+puts it at `/ideas/first` instead, and its path no longer answers. `aliases:` -
+the same key the app follows a link by - are other paths that land on it.
+
+And then the part nobody thinks about until it has happened: a page moves. A note
+is renamed, a permalink is reconsidered, an alias is dropped. The old path is
+already in somebody's history, somebody's feed reader and somebody else's link,
+and a 404 is the one answer that helps nobody.
+
+So a path is remembered at the moment it stops being true, which is the moment
+the note is written: what the path and the front matter were is in hand there, so
+nothing has to be walked and nothing at all is written in the ordinary case. What
+it becomes is a permanent redirect to wherever the page is now. Fifty paths per
+note are kept, oldest let go after that. See `blog/paths.ts`.
+
+This is the thing a static site generator makes people keep a redirects file by
+hand for.
+
+## What the head of a page says
+
+A published page now says what it is to the machines that read pages: a title, a
+description, where it lives, and the card a link pasted into a chat draws.
+
+- The description is the note's own `description:`, or its first sentence -
+  skipping the heading, the fences, the quotes and the pictures - or the site's
+  own description behind both.
+- The picture is the note's `image:` or `cover:`, or the first picture in the page
+  itself, or the site's. `/i/<hash>` is where a picture in a note already lives,
+  so that is what a note names; an address of somebody else's is taken as it was
+  written. A card with a picture is a different card, so the kind is said rather
+  than guessed at.
+- The canonical, `og:url` and the feed link are absolute, because the machines
+  that read them do not resolve a relative address.
+
+One place writes all of it, and it writes only what it was given: a page with no
+description has no description tag rather than an empty one. See `blog/head.ts`.
+
+## What the machines read
+
+`sitemap.xml` lists every page and the site's own front. No priorities and no
+change frequencies: both are guesses no search engine has read since 2015, and a
+wrong guess is worse than none.
+
+`feed.xml` is the writing, newest first by the note's `date:` and otherwise by
+when it was last written, thirty entries, each with the description the note gave
+or its first words. Never the whole note: a feed is a table of contents, and a
+page read in a feed reader is a page nobody visits.
+
+Atom rather than RSS, and one rather than both. Atom says what a date means and
+what a summary is made of; RSS leaves both to the reader, and every reader that
+reads RSS reads Atom.
+
+`robots.txt` points at the sitemap, and says `Disallow: /` while the site has a
+password - because everything a crawler would be shown then is the password form.
+
+All three are built per request from the same list the index is drawn from, and
+cached for an hour. A blog written in twice a week does not need a build step.
+
+## A site behind a password
+
+What it is for: notes somebody wants a few named people to read and nobody else -
+a draft with a client, a handbook for a team, a wedding page. The alternative in
+the app is sharing, which is an account and a link per person; this is one word
+said out loud to a room.
+
+What it is not: security for the notes themselves. One password everybody in a
+room knows is one password somebody forwards, so it keeps a site out of a search
+engine and out of a stranger's hands, and that is the whole of the claim.
+Anything that must not leave is not published.
+
+How it is kept: PBKDF2 with a hundred thousand rounds and a salt of its own, so
+the column is not a password. What a reader carries afterwards is a ticket signed
+with a key made when the password was set - not the password, and not a session
+anybody has to store - so setting a new password or taking it off ends every
+ticket the old one handed out. A month, `HttpOnly`, `Secure`, `SameSite=Lax`.
+
+The form is the site's own design and says nothing but the site's name: no hint,
+because a hint is half the password, and no explanation of what is behind it,
+because whoever sent the address said that. It is the one page in nib that may
+post anything anywhere, and the policy says so in as many words:
+`form-action 'self'` on that page and `'none'` on every other. It carries
+`noindex`, and nothing behind it is ever cached by anything but the reader's own
+browser.
+
+See `blog/gate.ts`.
+
+## The icon a tab shows
+
+The space's own mark, served at `/favicon.svg` and linked from every page.
+
+Drawn by the app rather than the Worker, and the reason is the icons: a space
+wears an emoji, a Lucide stroke or a finished drawing out of a set the app fetches
+when it is first asked for one. The side that has the sets is the side that can
+render one, and a Worker that bundled every set to answer with half a kilobyte
+would start slower for every request there is. So the app reads the mark it has
+already drawn in the sheet, writes it as a small SVG document, and the account
+keeps it; see `apps/desktop/src/lib/site-icon.ts`. A space with no icon yet gets
+its first letter on the same ground, drawn by the Worker out of the name it
+already has, so the two answers look like one.
+
+An SVG and nothing else. Every browser still shipped draws an SVG favicon; the
+PNG that one or two platforms would rather have needs a rasteriser in a Worker or
+a canvas dance in the app, and a tab icon is not worth either.
+
+### Checking this part
+
+- `services/sync/test/site.test.ts` - what a note says about itself, which notes
+  the rules publish, what a preview says before anything changes, permalinks,
+  aliases, the redirect a rename leaves, the head of a page, the sitemap, the
+  feed, robots, the favicon, and the password from both sides of the form.
+- `apps/desktop/src/lib/publishing.test.ts` - the rules read off the listing, a
+  folder in one list or the other, the preview asked of the server, and a password
+  that is never handed back.
+- `python apps/desktop/test/e2e/site.py` - the sheet on a desktop and a phone
+  against a real Worker: a folder made private, what the sheet says will change, a
+  page served and a page not served, a permalink, a rename that redirects, the
+  feed and the sitemap, a password typed on the site itself, and the favicon.
+
 ## How to check it
 
 - `python apps/desktop/test/e2e/publishing.py` builds the web app, runs the

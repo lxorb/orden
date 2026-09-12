@@ -900,3 +900,42 @@ Features Typora does not have, which are the reason this exists.
       edit. `eval` is there and off, behind a line in that same file, because it runs
       whatever it is sent with everything the window can reach. See
       docs/automation.md
+
+- [x] A note decides whether it is published: `publish: true|false` in its front
+      matter, which is Obsidian Publish's own key, so a vault moves between the
+      two without being rewritten. Above it, folder rules and one default in the
+      publish sheet, so a space somebody already writes in can put one folder on
+      the web and keep the rest. The note wins over every rule: what the author
+      wrote in the file is not overridden by a row in a pane
+- [x] What a publish will change, before it changes anything: how many pages the
+      site will have, which appear and which disappear, by name. Not Obsidian's
+      upload dialog, because there is nothing to upload - a nib page is the note,
+      live - so the only thing a publish can change is which pages exist, and that
+      is what the sheet shows
+- [x] `permalink:` sets where a page lives and `aliases:` are the other paths that
+      find it, both Obsidian Publish's keys. And the part nobody thinks about
+      until it has happened: a path that used to work keeps working. A rename, a
+      reconsidered permalink or a dropped alias leaves a permanent redirect
+      behind, so no link anybody else wrote ever goes dead
+- [x] A password for the whole site, hashed with PBKDF2 and a salt of its own,
+      checked by a signed ticket in a cookie that lasts a month. One minimal form
+      in the site's own design, no hint, `noindex` on it, and a robots.txt that
+      says no to everything while it is on. Setting a new password ends every
+      ticket the old one handed out
+- [x] `sitemap.xml`, an Atom feed at `feed.xml` linked from every page, and a
+      robots.txt that is honest about the site. Atom rather than RSS because it
+      says what a date means and what a summary is made of, and every reader that
+      reads RSS reads Atom
+- [x] The title, the description, the canonical, the Open Graph and Twitter tags
+      of a page, from `description` and `image` (or `cover`) in its front matter
+      and the site's own defaults behind them. A page that wrote no description
+      gets its own first sentence, and one that named no picture gets the first
+      picture in it, so the ordinary post has a card without anybody filling in a
+      form
+- [x] A favicon: the space's own mark, drawn by the app - which is the side that
+      has the icon sets - and served at `/favicon.svg`. A space with no icon yet
+      gets its letter on the same ground, drawn by the Worker from the name it
+      already has
+- [x] The authenticator setup shows a square to point a phone at as well as the
+      secret to paste, which is what turns thirty-two typed characters into one
+      camera
