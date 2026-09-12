@@ -2,7 +2,7 @@
   import { fly } from 'svelte/transition'
   import { firstOf, refreshSpaces } from '../lib/account'
   import type { Space } from '../lib/api'
-  import { t } from '../lib/i18n.svelte'
+  import { amount, plural, t } from '../lib/i18n.svelte'
   import { ready as setUp } from '../lib/interpret/providers'
   import { setupOf } from '../lib/interpret/setup'
   import { named, templateFor, templatesOf } from '../lib/interpret/templates'
@@ -244,7 +244,14 @@
     {#if refused}
       {t(refused)}
     {:else if on}
-      {t('{count} characters sent', { count: characters.toLocaleString() })}
+      <!-- A count, so the row is the shape the language wants rather than
+           English's two, and the number is grouped the way this language groups
+           one rather than the way the browser's own does. -->
+      {plural(
+        characters,
+        { one: '{count} character sent', other: '{count} characters sent' },
+        { count: amount(characters) },
+      )}
     {/if}
   </p>
 {/if}

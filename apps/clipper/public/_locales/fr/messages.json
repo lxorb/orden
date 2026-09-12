@@ -1,8 +1,6 @@
 {
   "name": { "message": "Nib" },
-  "description": {
-    "message": "Capturez une page, une sélection ou un lien dans vos notes Nib."
-  },
+  "description": { "message": "Capturez une page, une sélection ou un lien dans vos notes Nib." },
   "clipPage": { "message": "Capturer la page" },
   "clipSelection": { "message": "Capturer la sélection" },
   "clipLink": { "message": "Capturer le lien" }

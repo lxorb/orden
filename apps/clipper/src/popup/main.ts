@@ -6,12 +6,13 @@ import { opening } from '../lib/opened'
 import { settings } from '../lib/settings'
 import { applyTheme } from '../lib/theme'
 
-// One read of storage before anything is drawn, so the popup opens already in
-// the right language and the right scheme instead of flashing into them. It is
-// the only thing between opening and the first frame.
+// One read of storage and the catalogue it names, before anything is drawn, so
+// the popup opens already in the right language and the right scheme instead of
+// flashing into them. The two are all there is between opening and the first
+// frame.
 const held = await settings()
 opening(held)
-i18n.use(held.language)
+await i18n.use(held.language)
 applyTheme(held.theme)
 
 const target = document.getElementById('app')

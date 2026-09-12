@@ -14,7 +14,7 @@ import { type Kind, KINDS, LABELS } from '../lib/kinds'
 import { type Answer, type Ask, readAsk } from '../lib/messages'
 import { PROBLEMS } from '../lib/problems'
 import { settings, type Settings } from '../lib/settings'
-import { translate } from '../lib/translate'
+import { words } from '../lib/translate'
 
 type Menus = NonNullable<chrome.contextMenus.CreateProperties['contexts']>
 
@@ -34,6 +34,7 @@ const PARENT = 'nib'
  *  the popup shows, in the same order. */
 async function buildMenus() {
   const { language } = await settings()
+  const said = await words(language)
   await chrome.contextMenus.removeAll()
 
   chrome.contextMenus.create({ id: PARENT, title: 'Nib', contexts: EVERYWHERE })
@@ -42,7 +43,7 @@ async function buildMenus() {
     chrome.contextMenus.create({
       id: kind,
       parentId: PARENT,
-      title: translate(language, LABELS[kind]),
+      title: said(LABELS[kind]),
       contexts: WHERE[kind],
     })
   }
@@ -65,8 +66,12 @@ async function targetSpace(held: Settings): Promise<string> {
  *  goes where the last one went, and the toolbar button says how it went. */
 async function straightToNotes(kind: Kind, tabId: number, link: string | null) {
   const held = await settings()
+  // The words before the work: a catalogue is one small module off the disk, and
+  // the sentence a failure needs is needed at the moment it fails rather than a
+  // round trip later.
+  const said = await words(held.language)
   const say = (problem: string) => {
-    failed(tabId, problem, held.language)
+    failed(tabId, said(problem))
   }
 
   working(tabId)

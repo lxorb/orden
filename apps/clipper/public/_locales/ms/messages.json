@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "Klip halaman, pilihan atau pautan ke dalam nota Nib anda." },
+  "clipPage": { "message": "Klip halaman" },
+  "clipSelection": { "message": "Klip pilihan" },
+  "clipLink": { "message": "Klip pautan" }
+}

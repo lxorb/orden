@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "Вырезайте страницу, выделение или ссылку в свои заметки Nib." },
+  "clipPage": { "message": "Вырезать страницу" },
+  "clipSelection": { "message": "Вырезать выделение" },
+  "clipLink": { "message": "Вырезать ссылку" }
+}

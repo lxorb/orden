@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "Wytnij stronę, zaznaczenie lub link do swoich notatek w Nib." },
+  "clipPage": { "message": "Wytnij stronę" },
+  "clipSelection": { "message": "Wytnij zaznaczenie" },
+  "clipLink": { "message": "Wytnij link" }
+}

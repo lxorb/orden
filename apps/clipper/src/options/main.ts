@@ -8,7 +8,7 @@ import { applyTheme } from '../lib/theme'
 
 const held = await settings()
 opening(held)
-i18n.use(held.language)
+await i18n.use(held.language)
 applyTheme(held.theme)
 
 const target = document.getElementById('app')

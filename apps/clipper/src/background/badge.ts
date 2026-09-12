@@ -7,8 +7,6 @@
  *  only place a service worker can put words without asking for permission to
  *  raise notifications. */
 
-import { translate } from '../lib/translate'
-
 /** The accent and the danger colour from `packages/themes/src/tokens.css`. A
  *  worker cannot read a stylesheet, so the two badge colours are the one place
  *  in the extension that names them again. */
@@ -45,7 +43,10 @@ export function done(tabId: number, path: string): void {
   clearAfter(tabId, KEPT)
 }
 
-export function failed(tabId: number, problem: string, language: string): void {
-  set(tabId, '!', DANGER, translate(language, problem))
+/** The sentence arrives translated: the worker has the language in hand from the
+ *  same read of storage that started the clip, and a badge is not the place to go
+ *  looking for a dictionary. */
+export function failed(tabId: number, sentence: string): void {
+  set(tabId, '!', DANGER, sentence)
   clearAfter(tabId, KEPT_ON_FAILURE)
 }

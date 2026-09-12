@@ -2,10 +2,16 @@
  *  permissions can say why they are asked for. `vite.config.ts` emits it as
  *  `manifest.json` beside the bundles.
  *
- *  Chrome's own surfaces - the tile on chrome://extensions, the shortcut list -
- *  read their words from `_locales`, which is the only mechanism they have.
- *  Everything the extension itself draws is translated through the dictionaries
- *  in `src/locales`, the same way the app does it; see `lib/i18n.svelte.ts`. */
+ *  Chrome's own surfaces - the tile on chrome://extensions, the listing in the
+ *  store, the shortcut list - read their words from `_locales`, which is the only
+ *  mechanism they have: Chrome picks the folder by its own interface language and
+ *  falls back to `default_locale`. So `public/_locales` covers the languages
+ *  Chrome's interface is translated into, which is thirty-one of the catalogues.
+ *
+ *  Everything the extension itself draws is translated through those catalogues
+ *  instead - all thirty-nine of them, chosen on the options page rather than by
+ *  the browser; see `lib/translate.ts`. `src/lib/i18n.test.ts` holds the two
+ *  halves to the same languages. */
 
 export const manifest: chrome.runtime.ManifestV3 = {
   manifest_version: 3,

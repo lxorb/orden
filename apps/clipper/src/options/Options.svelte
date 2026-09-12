@@ -10,7 +10,7 @@
   import SignIn from '../lib/SignIn.svelte'
   import { forget, remember, settings, type Theme } from '../lib/settings'
   import { applyTheme, followSystem } from '../lib/theme'
-  import { LANGUAGES } from '../lib/translate'
+  import { CATALOGUES_URL, LANGUAGES } from '../lib/translate'
 
   const held = opened()
 
@@ -162,7 +162,7 @@
   }
 
   function chooseLanguage(next: string) {
-    i18n.use(next)
+    void i18n.use(next)
     void remember({ language: next })
   }
 
@@ -279,7 +279,7 @@
 
         <div class="setting">
           <span class="name">{t('Templates')}</span>
-          <button class="quiet" type="button" onclick={restore}>{t('Restore')}</button>
+          <button class="quiet" type="button" onclick={restore}>{t('Reset')}</button>
         </div>
 
         <textarea
@@ -307,6 +307,18 @@
           {/each}
         </select>
       </div>
+
+      <!-- Most of the catalogues were written in one pass and never read through.
+           Saying so is the honest part; the link is the useful part, because the
+           reader who can see the wrong word is the only person who can put it
+           right. The app's language row says the same thing. -->
+      {#if i18n.machine}
+        <p class="said">
+          <a href={CATALOGUES_URL} target="_blank" rel="noreferrer">
+            {t('Machine-translated. Corrections welcome.')}
+          </a>
+        </p>
+      {/if}
 
       <div class="setting">
         <span class="name">{t('Appearance')}</span>

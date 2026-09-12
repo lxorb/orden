@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "Вирізайте сторінку, виділення або посилання у свої нотатки Nib." },
+  "clipPage": { "message": "Вирізати сторінку" },
+  "clipSelection": { "message": "Вирізати виділення" },
+  "clipLink": { "message": "Вирізати посилання" }
+}

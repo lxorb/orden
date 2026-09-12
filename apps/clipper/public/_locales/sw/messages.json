@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "Dondoa ukurasa, uteuzi au kiungo katika madokezo yako ya Nib." },
+  "clipPage": { "message": "Dondoa ukurasa" },
+  "clipSelection": { "message": "Dondoa uteuzi" },
+  "clipLink": { "message": "Dondoa kiungo" }
+}

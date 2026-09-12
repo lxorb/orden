@@ -1,0 +1,7 @@
+{
+  "name": { "message": "Nib" },
+  "description": { "message": "ገጽ፣ ምርጫ ወይም አገናኝ ወደ Nib ማስታወሻዎችህ ቅነጥብ።" },
+  "clipPage": { "message": "ገጹን ቅነጥብ" },
+  "clipSelection": { "message": "ምርጫውን ቅነጥብ" },
+  "clipLink": { "message": "አገናኙን ቅነጥብ" }
+}
