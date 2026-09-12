@@ -991,6 +991,8 @@ export const zhHantHK: Dictionary = {
   'That export is too big to read in one go.': '該匯出檔太大，無法一次讀完。',
   'Import into': '匯入到',
   'That import could not be written.': '無法寫入這次匯入的內容。',
+  'That import would have landed outside the space, so nothing was written.':
+    '這次匯入會落在空間以外，所以沒有寫入任何內容。',
   '{count} files': '{count}個檔案',
   'This space': '此空間',
   'Drop an export here': '把匯出檔拖到這裏',

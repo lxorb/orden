@@ -1,7 +1,38 @@
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { restamped } from './apply'
 import type { ImportPlan, Planned } from './plan'
+
+/** Every write the import made: the command and the path it was handed. The
+ *  point of the last two tests is that this stays empty. */
+const wrote: { command: string; path: string }[] = []
+
+vi.mock('../tauri', () => ({
+  invoke: (command: string, args: Record<string, unknown>) => {
+    wrote.push({ command, path: String(args.path) })
+    return Promise.resolve()
+  },
+  // Enough of the real one for a test; which separator a platform writes is not
+  // what any of this is about.
+  joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
+  isNative: false,
+}))
+
+vi.mock('../workspace.svelte', () => ({
+  workspace: {
+    files: [],
+    undone: { record: () => undefined },
+    loadTree: () => Promise.resolve(),
+  },
+}))
+
+vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
+
+const { applyImport, restamped } = await import('./apply')
+
+beforeEach(() => {
+  wrote.length = 0
+})
 
 function planOf(files: Planned[]): ImportPlan {
   return { format: 'markdown', files, lost: [] }
@@ -90,5 +121,40 @@ describe('a name that is already taken', () => {
     const stamped = restamped(planOf([note('Plan.md', 'x')]), new Set(['PLAN.MD']), '')
 
     expect(stamped.files[0]?.path).toBe('Plan 2.md')
+  })
+})
+
+/** The write site judges what it is about to write, whatever the reader handed
+ *  it. Every format reader puts each part of a name through `safeName`, so a path
+ *  that climbs out of the space means a reader forwarded a zip entry's own name -
+ *  a bug, and one nothing further along would have caught. */
+describe('a path no space would take', () => {
+  const target = { root: '/Work', folder: '' }
+
+  test('is refused before a single file is written, when it climbs out', async () => {
+    const plan = planOf([note('Plan.md', '# Plan'), note('../../outside.md', '# not yours')])
+
+    await expect(applyImport(plan, target)).rejects.toThrow(/outside the space/)
+    expect(wrote).toEqual([])
+  })
+
+  test('and when it names a disk of its own', async () => {
+    const plan = planOf([file('C:/Windows/System32/drivers/etc/hosts')])
+
+    await expect(applyImport(plan, target)).rejects.toThrow(/outside the space/)
+    expect(wrote).toEqual([])
+  })
+
+  test('while an import of ordinary names writes every one of them', async () => {
+    const landed = await applyImport(planOf([note('Plan.md', '# Plan'), file('assets/x.png')]), {
+      root: '/Work',
+      folder: 'In',
+    })
+
+    expect(wrote).toEqual([
+      { command: 'write_note', path: '/Work/In/Plan.md' },
+      { command: 'write_bytes', path: '/Work/In/assets/x.png' },
+    ])
+    expect(landed.paths).toEqual(['/Work/In/Plan.md', '/Work/In/assets/x.png'])
   })
 })

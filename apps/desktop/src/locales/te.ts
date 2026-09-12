@@ -1015,6 +1015,8 @@ export const te: Dictionary = {
   'That export is too big to read in one go.': 'ఒకేసారి చదవడానికి ఆ ఎక్స్‌పోర్ట్ చాలా పెద్దది.',
   'Import into': 'ఇందులోకి ఇంపోర్ట్ చేయి',
   'That import could not be written.': 'ఆ ఇంపోర్ట్ రాయలేకపోయింది.',
+  'That import would have landed outside the space, so nothing was written.':
+    'ఆ ఇంపోర్ట్ స్పేస్ వెలుపల పడేది, కాబట్టి ఏదీ రాయలేదు.',
   '{count} files': { one: '{count} ఫైల్', other: '{count} ఫైల్‌లు' },
   'This space': 'ఈ స్పేస్',
   'Drop an export here': 'ఒక ఎక్స్‌పోర్ట్ ఇక్కడ వదలండి',

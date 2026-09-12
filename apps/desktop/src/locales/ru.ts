@@ -1053,6 +1053,8 @@ export const ru: Dictionary = {
     'Этот экспорт слишком велик, чтобы прочитать его сразу.',
   'Import into': 'Импорт в',
   'That import could not be written.': 'Не удалось записать этот импорт.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Этот импорт оказался бы вне пространства, поэтому ничего не записано.',
   '{count} files': {
     one: '{count} файл',
     few: '{count} файла',

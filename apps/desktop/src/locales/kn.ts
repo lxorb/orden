@@ -1019,6 +1019,8 @@ export const kn: Dictionary = {
   'That export is too big to read in one go.': 'ಒಂದೇ ಬಾರಿ ಓದಲು ಆ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ತುಂಬಾ ದೊಡ್ಡದು.',
   'Import into': 'ಇದರೊಳಗೆ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'That import could not be written.': 'ಆ ಇಂಪೋರ್ಟ್ ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  'That import would have landed outside the space, so nothing was written.':
+    'ಆ ಇಂಪೋರ್ಟ್ ಸ್ಪೇಸ್‌ನ ಹೊರಗೆ ಇಳಿಯುತ್ತಿತ್ತು, ಆದ್ದರಿಂದ ಏನೂ ಬರೆಯಲಿಲ್ಲ.',
   '{count} files': { one: '{count} ಫೈಲ್', other: '{count} ಫೈಲ್‌ಗಳು' },
   'This space': 'ಈ ಸ್ಪೇಸ್',
   'Drop an export here': 'ಒಂದು ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಇಲ್ಲಿ ಬಿಡಿ',

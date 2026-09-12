@@ -1031,6 +1031,8 @@ export const ptPT: Dictionary = {
     'Essa exportação é demasiado grande para ler de uma vez.',
   'Import into': 'Importar para',
   'That import could not be written.': 'Não foi possível escrever essa importação.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Essa importação teria ficado fora do espaço, por isso nada foi escrito.',
   '{count} files': {
     one: '{count} ficheiro',
     many: '{count} ficheiros',

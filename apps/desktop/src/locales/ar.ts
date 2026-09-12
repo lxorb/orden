@@ -1061,6 +1061,8 @@ export const ar: Dictionary = {
   'That export is too big to read in one go.': 'هذا التصدير أكبر من أن يُقرأ مرة واحدة.',
   'Import into': 'استيراد إلى',
   'That import could not be written.': 'تعذّر كتابة هذا الاستيراد.',
+  'That import would have landed outside the space, so nothing was written.':
+    'كان هذا الاستيراد سيحلّ خارج المساحة، فلم يُكتب شيء.',
   '{count} files': {
     zero: '{count} ملفات',
     one: '{count} ملف',

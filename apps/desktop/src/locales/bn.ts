@@ -1012,6 +1012,8 @@ export const bn: Dictionary = {
   'That export is too big to read in one go.': 'এই এক্সপোর্ট একবারে পড়ার মতো অনেক বড়।',
   'Import into': 'এখানে ইমপোর্ট',
   'That import could not be written.': 'এই ইমপোর্ট লেখা গেল না।',
+  'That import would have landed outside the space, so nothing was written.':
+    'এই ইমপোর্ট স্পেসের বাইরে গিয়ে পড়ত, তাই কিছুই লেখা হয়নি।',
   '{count} files': { one: '{count}টি ফাইল', other: '{count}টি ফাইল' },
   'This space': 'এই স্পেস',
   'Drop an export here': 'এখানে একটি এক্সপোর্ট ছাড়ুন',

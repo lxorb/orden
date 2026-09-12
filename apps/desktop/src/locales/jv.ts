@@ -1007,6 +1007,8 @@ export const jv: Dictionary = {
   'That export is too big to read in one go.': 'Ekspor kuwi gedhe banget kanggo diwaca sepisanan.',
   'Import into': 'Impor menyang',
   'That import could not be written.': 'Impor kuwi ora bisa ditulis.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Impor kuwi bakal tiba ing njaba papan, mula ora ana sing ditulis.',
   '{count} files': '{count} berkas',
   'This space': 'Papan iki',
   'Drop an export here': 'Selehake ekspor ing kene',

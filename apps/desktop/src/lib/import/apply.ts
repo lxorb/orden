@@ -6,6 +6,16 @@
  *  sheet is closed. Nothing here writes to disk itself and nothing here knows
  *  whether the app is on a desktop, in a browser or on a phone.
  *
+ *  Every path is judged here before any of them is written, by the same
+ *  `insideOnly` a `nib://` link's path goes through. Each format reader already
+ *  puts every part of a name through `safeName`, so this catches nothing an
+ *  honest reader does: what it catches is a new reader that forwards a zip
+ *  entry's own name, which is a path somebody else wrote and which nothing
+ *  further along would refuse - `write_note` and `write_bytes` take whatever path
+ *  they are handed. Judged in one pass in front of the loop, so a plan holding
+ *  one such name writes none of its thousand other files rather than half of
+ *  them. See the Security section of docs/conventions.md.
+ *
  *  Two rules about names, both of which the sheet has already said out loud:
  *
  *  Nothing is written over. A name that is taken steps aside the way a new note's
@@ -18,7 +28,10 @@
 
 import { freePath } from '@nib/markdown/paths'
 
+import { insideOnly } from '../automation/inside'
+import { key } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { log } from '../log'
 import { folderOf, relativePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
@@ -53,10 +66,11 @@ export async function applyImport(
   options: Writing = {},
 ): Promise<Landed> {
   const stamped = restamped(plan, takenIn(target), target.folder)
+  const files = judged(stamped.files)
   const paths: string[] = []
   let done = 0
 
-  for (const file of stamped.files) {
+  for (const file of files) {
     const path = joinPath(target.root, file.path)
 
     if (file.kind === 'note') {
@@ -68,7 +82,7 @@ export async function applyImport(
 
     paths.push(path)
     done += 1
-    options.onWritten?.(done, stamped.files.length)
+    options.onWritten?.(done, files.length)
   }
 
   if (paths.length) {
@@ -80,6 +94,29 @@ export async function applyImport(
 
   return { paths, stepped: stamped.stepped }
 }
+
+/** The plan's files with every path judged, and the judge's own answer as the
+ *  path: the string that is joined to the space root is the one `insideOnly`
+ *  handed back, so nothing but a judged path can reach a write.
+ *
+ *  Throws for the first path that is not one, before anything is written. The
+ *  sentence is the reader's rather than a log line because the sheet shows it;
+ *  it says nothing about which file, since a name that escapes is a bug in a
+ *  format reader and the name itself is the least of what somebody would want to
+ *  know about it. The log has the path. */
+function judged(files: readonly Planned[]): Planned[] {
+  return files.map((file) => {
+    const inside = insideOnly(file.path)
+    if (inside === null) {
+      log('error', `import: ${file.path} is not a path inside a space, so nothing was written`)
+      throw new Error(ESCAPING)
+    }
+
+    return { ...file, path: inside }
+  })
+}
+
+const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
 
 /** Every path the space already holds, lowercased, so a name that is taken can be
  *  recognised however it is spelled. */

@@ -1004,6 +1004,8 @@ export const my: Dictionary = {
   'That export is too big to read in one go.': 'ထိုထုတ်မှုသည် တစ်ကြိမ်တည်းဖတ်ရန် အလွန်ကြီးသည်။',
   'Import into': 'ဤအရာထဲ သွင်းပါ',
   'That import could not be written.': 'ထိုသွင်းမှုကို ရေးမရပါ။',
+  'That import would have landed outside the space, so nothing was written.':
+    'ထိုသွင်းမှုသည် နေရာအပြင်ဘက်တွင် ရောက်မည်ဖြစ်သဖြင့် မည်သည်ကိုမျှ ရေးမထားပါ။',
   '{count} files': 'ဖိုင် {count}',
   'This space': 'ဤနေရာ',
   'Drop an export here': 'ထုတ်မှုကို ဤနေရာတွင် ချပါ',

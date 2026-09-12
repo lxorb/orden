@@ -1001,6 +1001,8 @@ export const ko: Dictionary = {
   'That export is too big to read in one go.': '그 내보내기는 한 번에 읽기에 너무 큽니다.',
   'Import into': '가져올 곳',
   'That import could not be written.': '그 가져오기를 쓸 수 없었습니다.',
+  'That import would have landed outside the space, so nothing was written.':
+    '그 가져오기는 공간 밖에 놓이게 되어 아무것도 쓰지 않았습니다.',
   '{count} files': '파일 {count}개',
   'This space': '이 공간',
   'Drop an export here': '여기에 내보내기를 놓으세요',

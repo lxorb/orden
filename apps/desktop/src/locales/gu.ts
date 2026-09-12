@@ -1009,6 +1009,8 @@ export const gu: Dictionary = {
   'That export is too big to read in one go.': 'એ નિકાસ એક સાથે વાંચવા બહુ મોટો છે.',
   'Import into': 'આમાં આયાત કરો',
   'That import could not be written.': 'એ આયાત લખાઈ નહીં.',
+  'That import would have landed outside the space, so nothing was written.':
+    'એ આયાત સ્પેસની બહાર ઊતરી હોત, તેથી કંઈ લખાયું નહીં.',
   '{count} files': { one: '{count} ફાઇલ', other: '{count} ફાઇલ' },
   'This space': 'આ જગ્યા',
   'Drop an export here': 'નિકાસ અહીં મૂકો',

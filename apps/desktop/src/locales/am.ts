@@ -1000,6 +1000,8 @@ export const am: Dictionary = {
   'That export is too big to read in one go.': 'ያ ልኬት በአንድ ጊዜ ለማንበብ በጣም ትልቅ ነው።',
   'Import into': 'ወደዚህ አምጣ',
   'That import could not be written.': 'ያ ማምጣት መጻፍ አልቻለም።',
+  'That import would have landed outside the space, so nothing was written.':
+    'ያ ማምጣት ከቦታው ውጭ ያርፍ ነበር፤ ስለዚህ ምንም አልተጻፈም።',
   '{count} files': { one: '{count} ፋይል', other: '{count} ፋይሎች' },
   'This space': 'ይህ ቦታ',
   'Drop an export here': 'ልኬት እዚህ ጣል',

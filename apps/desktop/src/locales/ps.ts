@@ -1012,6 +1012,8 @@ export const ps: Dictionary = {
   'That export is too big to read in one go.': 'هغه صادره د يو ځل لوستلو لپاره ډېره لويه ده.',
   'Import into': 'واردول دې ته',
   'That import could not be written.': 'هغه واردات ونه ليکل شوه.',
+  'That import would have landed outside the space, so nothing was written.':
+    'هغه واردات به د ځای بهر ته ورسېدل، نو هیڅ ونه لیکل شو.',
   '{count} files': { one: '{count} دوتنه', other: '{count} دوتنې' },
   'This space': 'دا ځای',
   'Drop an export here': 'يوه صادره دلته وغورځوئ',

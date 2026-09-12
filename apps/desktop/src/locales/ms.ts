@@ -1009,6 +1009,8 @@ export const ms: Dictionary = {
   'That export is too big to read in one go.': 'Eksport itu terlalu besar untuk dibaca sekali gus.',
   'Import into': 'Import ke',
   'That import could not be written.': 'Import itu tidak dapat ditulis.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Import itu akan mendarat di luar ruang, jadi tiada apa yang ditulis.',
   '{count} files': '{count} fail',
   'This space': 'Ruang ini',
   'Drop an export here': 'Lepaskan satu eksport di sini',

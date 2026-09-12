@@ -1015,6 +1015,8 @@ export const tr: Dictionary = {
     'Bu dışa aktarma bir kerede okunamayacak kadar büyük.',
   'Import into': 'Şuraya aktar',
   'That import could not be written.': 'Bu içe aktarma yazılamadı.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Bu içe aktarma alanın dışına düşecekti, bu yüzden hiçbir şey yazılmadı.',
   '{count} files': { one: '{count} dosya', other: '{count} dosya' },
   'This space': 'Bu alan',
   'Drop an export here': 'Bir dışa aktarmayı buraya bırakın',

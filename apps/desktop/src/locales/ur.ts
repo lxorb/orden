@@ -1013,6 +1013,8 @@ export const ur: Dictionary = {
   'That export is too big to read in one go.': 'یہ ایکسپورٹ ایک بار میں پڑھنے کے لیے بہت بڑا ہے۔',
   'Import into': 'اس میں امپورٹ کریں',
   'That import could not be written.': 'یہ امپورٹ لکھا نہیں جا سکا۔',
+  'That import would have landed outside the space, so nothing was written.':
+    'یہ امپورٹ اسپیس سے باہر جا پڑتا، اس لیے کچھ نہیں لکھا گیا۔',
   '{count} files': { one: '{count} فائل', other: '{count} فائلیں' },
   'This space': 'یہ اسپیس',
   'Drop an export here': 'ایکسپورٹ یہاں چھوڑیں',

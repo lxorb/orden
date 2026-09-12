@@ -1011,6 +1011,8 @@ export const id: Dictionary = {
     'Ekspor itu terlalu besar untuk dibaca sekali jalan.',
   'Import into': 'Impor ke',
   'That import could not be written.': 'Impor itu tidak dapat ditulis.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Impor itu akan mendarat di luar ruang, jadi tidak ada yang ditulis.',
   '{count} files': '{count} berkas',
   'This space': 'Ruang ini',
   'Drop an export here': 'Letakkan sebuah ekspor di sini',

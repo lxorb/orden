@@ -1050,6 +1050,8 @@ export const pl: Dictionary = {
   'That export is too big to read in one go.': 'Ten eksport jest za duży, by przeczytać go na raz.',
   'Import into': 'Importuj do',
   'That import could not be written.': 'Nie udało się zapisać tego importu.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Ten import wylądowałby poza przestrzenią, więc nic nie zostało zapisane.',
   '{count} files': {
     one: '{count} plik',
     few: '{count} pliki',

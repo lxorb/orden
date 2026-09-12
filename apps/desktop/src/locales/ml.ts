@@ -1024,6 +1024,8 @@ export const ml: Dictionary = {
   'That export is too big to read in one go.': 'ഒറ്റയടിക്ക് വായിക്കാൻ ആ എക്സ്പോർട്ട് വളരെ വലുതാണ്.',
   'Import into': 'ഇതിലേക്ക് ഇംപോർട്ട് ചെയ്യുക',
   'That import could not be written.': 'ആ ഇംപോർട്ട് എഴുതാനായില്ല.',
+  'That import would have landed outside the space, so nothing was written.':
+    'ആ ഇംപോർട്ട് സ്പേസിന് പുറത്ത് എത്തുമായിരുന്നു, അതിനാൽ ഒന്നും എഴുതിയില്ല.',
   '{count} files': { one: '{count} ഫയൽ', other: '{count} ഫയലുകൾ' },
   'This space': 'ഈ സ്പേസ്',
   'Drop an export here': 'ഒരു എക്സ്പോർട്ട് ഇവിടെ ഇടുക',

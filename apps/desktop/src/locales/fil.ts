@@ -1025,6 +1025,8 @@ export const fil: Dictionary = {
     'Masyadong malaki ang export na iyon para mabasa nang sabay-sabay.',
   'Import into': 'I-import sa',
   'That import could not be written.': 'Hindi naisulat ang import na iyon.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Mapupunta sa labas ng espasyo ang import na iyon, kaya walang naisulat.',
   '{count} files': { one: '{count} file', other: '{count} file' },
   'This space': 'Espasyong ito',
   'Drop an export here': 'Ihulog ang export dito',

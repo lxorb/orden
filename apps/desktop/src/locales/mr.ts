@@ -1011,6 +1011,8 @@ export const mr: Dictionary = {
   'That export is too big to read in one go.': 'तो एक्सपोर्ट एकाच वेळी वाचण्यास फार मोठा आहे.',
   'Import into': 'यात इंपोर्ट करा',
   'That import could not be written.': 'तो इंपोर्ट लिहिता आला नाही.',
+  'That import would have landed outside the space, so nothing was written.':
+    'तो इंपोर्ट स्पेसच्या बाहेर पडला असता, म्हणून काहीही लिहिले नाही.',
   '{count} files': { one: '{count} फाइल', other: '{count} फाइल' },
   'This space': 'हा स्पेस',
   'Drop an export here': 'एक्सपोर्ट येथे टाका',

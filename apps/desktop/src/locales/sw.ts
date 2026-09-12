@@ -1022,6 +1022,8 @@ export const sw: Dictionary = {
   'That export is too big to read in one go.': 'Utoaji huo ni mkubwa mno kusomwa kwa mara moja.',
   'Import into': 'Ingiza kwenye',
   'That import could not be written.': 'Uingizaji huo haukuandikwa.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Uingizaji huo ungetua nje ya nafasi, kwa hiyo hakuna kilichoandikwa.',
   '{count} files': { one: 'faili {count}', other: 'faili {count}' },
   'This space': 'Nafasi hii',
   'Drop an export here': 'Dondosha utoaji hapa',

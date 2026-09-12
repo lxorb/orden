@@ -995,6 +995,8 @@ export const th: Dictionary = {
   'That export is too big to read in one go.': 'ไฟล์ส่งออกนั้นใหญ่เกินกว่าจะอ่านทีเดียว',
   'Import into': 'นำเข้าไปที่',
   'That import could not be written.': 'เขียนสิ่งที่นำเข้าไม่ได้',
+  'That import would have landed outside the space, so nothing was written.':
+    'สิ่งที่นำเข้านี้จะไปอยู่นอกพื้นที่ จึงไม่ได้เขียนอะไรเลย',
   '{count} files': '{count} ไฟล์',
   'This space': 'พื้นที่นี้',
   'Drop an export here': 'วางไฟล์ส่งออกที่นี่',

@@ -1039,6 +1039,8 @@ export const it: Dictionary = {
     'Quell’esportazione è troppo grande da leggere in una volta.',
   'Import into': 'Importa in',
   'That import could not be written.': 'Quell’importazione non è stata scritta.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Quell’importazione sarebbe finita fuori dallo spazio, quindi non è stato scritto nulla.',
   '{count} files': { one: '{count} file', many: '{count} file', other: '{count} file' },
   'This space': 'Questo spazio',
   'Drop an export here': 'Trascina qui un’esportazione',

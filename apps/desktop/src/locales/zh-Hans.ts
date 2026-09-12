@@ -991,6 +991,8 @@ export const zhHans: Dictionary = {
   'That export is too big to read in one go.': '该导出文件太大，无法一次读取。',
   'Import into': '导入到',
   'That import could not be written.': '无法写入此次导入的内容。',
+  'That import would have landed outside the space, so nothing was written.':
+    '这次导入会落在空间之外，因此没有写入任何内容。',
   '{count} files': '{count}个文件',
   'This space': '此空间',
   'Drop an export here': '把导出文件拖到这里',

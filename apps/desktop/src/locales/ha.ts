@@ -1025,6 +1025,8 @@ export const ha: Dictionary = {
     'Wannan fitarwa ta yi girma sosai don karantawa a lokaci ɗaya.',
   'Import into': 'Shigar cikin',
   'That import could not be written.': 'Ba a iya rubuta wannan shigarwa ba.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Wannan shigarwa za ta sauka a wajen wurin, don haka ba a rubuta kome ba.',
   '{count} files': { one: 'fayil {count}', other: 'fayiloli {count}' },
   'This space': 'Wannan wurin',
   'Drop an export here': 'Saukar da fitarwa nan',

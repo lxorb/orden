@@ -1052,6 +1052,8 @@ export const uk: Dictionary = {
   'That export is too big to read in one go.': 'Цей експорт завеликий, щоб прочитати його за раз.',
   'Import into': 'Імпорт до',
   'That import could not be written.': 'Не вдалося записати цей імпорт.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Цей імпорт опинився б поза простором, тому нічого не записано.',
   '{count} files': {
     one: '{count} файл',
     few: '{count} файли',

@@ -1016,6 +1016,8 @@ export const gsw: Dictionary = {
   'That export is too big to read in one go.': 'Dä Export isch z gross zum uf eimal läse.',
   'Import into': 'Importiere uf',
   'That import could not be written.': 'Dä Import het sich nöd schriibe laa.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Dä Import wär usserhalb vo de Ablag gladet, drum isch nüt gschriebe worde.',
   '{count} files': { one: '{count} Datei', other: '{count} Dateie' },
   'This space': 'Dä Bereich',
   'Drop an export here': 'Export do häre zieh',

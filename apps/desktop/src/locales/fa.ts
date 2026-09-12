@@ -1012,6 +1012,8 @@ export const fa: Dictionary = {
   'That export is too big to read in one go.': 'آن برون‌بری برای خواندن در یک بار بسیار بزرگ است.',
   'Import into': 'درون‌آوری به',
   'That import could not be written.': 'آن درون‌آوری نوشته نشد.',
+  'That import would have landed outside the space, so nothing was written.':
+    'آن درون‌آوری بیرون از فضا می‌نشست، پس چیزی نوشته نشد.',
   '{count} files': { one: '{count} پرونده', other: '{count} پرونده' },
   'This space': 'این فضا',
   'Drop an export here': 'یک برون‌بری را اینجا بیندازید',

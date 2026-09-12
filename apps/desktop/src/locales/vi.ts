@@ -1002,6 +1002,8 @@ export const vi: Dictionary = {
   'That export is too big to read in one go.': 'Bản xuất đó quá lớn để đọc một lần.',
   'Import into': 'Nhập vào',
   'That import could not be written.': 'Không ghi được phần đã nhập.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Phần nhập này sẽ nằm ngoài không gian, nên không có gì được ghi.',
   '{count} files': '{count} tệp',
   'This space': 'Không gian này',
   'Drop an export here': 'Thả một bản xuất vào đây',

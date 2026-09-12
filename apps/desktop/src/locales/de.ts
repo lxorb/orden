@@ -1025,6 +1025,8 @@ export const de: Dictionary = {
     'Dieser Export ist zu groß, um ihn auf einmal zu lesen.',
   'Import into': 'Importieren nach',
   'That import could not be written.': 'Dieser Import konnte nicht geschrieben werden.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Dieser Import wäre ausserhalb des Bereichs gelandet, also wurde nichts geschrieben.',
   '{count} files': { one: '{count} Datei', other: '{count} Dateien' },
   'This space': 'Dieser Bereich',
   'Drop an export here': 'Export hierher ziehen',

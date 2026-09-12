@@ -91,9 +91,11 @@ where that stops being true:
 - **A sync pull**, whose names were written by whoever shares the space:
   `placeable` in `apps/desktop/src/lib/sync/mirror.ts`.
 - **An import**, where every format reader puts each path component through
-  `safeName` before `applyImport` joins it to the space root. The check
-  lives in the readers, so a new format that forwards a zip entry's own name
-  unsanitised is a new hole; nothing at the write site would catch it.
+  `safeName` before `applyImport` joins it to the space root — and where
+  `applyImport` then puts every path through `insideOnly` itself, in one pass
+  in front of the writing, so a new format that forwards a zip entry's own
+  name unsanitised writes nothing rather than escaping. The judge's own answer
+  is the string that is joined to the root.
 - **The browser build**, which has no filesystem: the same three commands
   are rows in IndexedDB (`apps/desktop/src/lib/web/commands.ts`), and
   `web/paths.ts` clamps at the virtual root.

@@ -1023,6 +1023,8 @@ export const ta: Dictionary = {
   'That export is too big to read in one go.': 'அந்த ஏற்றுமதி ஒரே முறையில் படிக்க மிகப் பெரியது.',
   'Import into': 'இதனுள் இறக்குமதி செய்',
   'That import could not be written.': 'அந்த இறக்குமதியை எழுத முடியவில்லை.',
+  'That import would have landed outside the space, so nothing was written.':
+    'அந்த இறக்குமதி இடத்திற்கு வெளியே சேரும், எனவே எதுவும் எழுதப்படவில்லை.',
   '{count} files': { one: '{count} கோப்பு', other: '{count} கோப்புகள்' },
   'This space': 'இந்த இடம்',
   'Drop an export here': 'ஏற்றுமதியை இங்கே இடவும்',

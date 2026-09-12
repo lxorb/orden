@@ -1019,6 +1019,8 @@ export const pa: Dictionary = {
   'That export is too big to read in one go.': 'ਉਹ ਸਮੱਗਰੀ ਇੱਕੋ ਵਾਰ ਪੜ੍ਹਨ ਲਈ ਬਹੁਤ ਵੱਡੀ ਹੈ।',
   'Import into': 'ਇਸ ਵਿੱਚ ਲਿਆਓ',
   'That import could not be written.': 'ਉਹ ਅੰਦਰ ਲਿਆਂਦੀ ਸਮੱਗਰੀ ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ।',
+  'That import would have landed outside the space, so nothing was written.':
+    'ਉਹ ਅੰਦਰ ਲਿਆਂਦੀ ਸਮੱਗਰੀ ਥਾਂ ਤੋਂ ਬਾਹਰ ਜਾ ਪੈਂਦੀ, ਇਸ ਲਈ ਕੁਝ ਵੀ ਨਹੀਂ ਲਿਖਿਆ ਗਿਆ।',
   '{count} files': { one: '{count} ਫ਼ਾਈਲ', other: '{count} ਫ਼ਾਈਲਾਂ' },
   'This space': 'ਇਹ ਥਾਂ',
   'Drop an export here': 'ਬਾਹਰ ਭੇਜੀ ਸਮੱਗਰੀ ਇੱਥੇ ਸੁੱਟੋ',

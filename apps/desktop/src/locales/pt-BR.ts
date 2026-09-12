@@ -1029,6 +1029,8 @@ export const ptBR: Dictionary = {
     'Essa exportação é grande demais para ler de uma vez.',
   'Import into': 'Importar para',
   'That import could not be written.': 'Não foi possível gravar essa importação.',
+  'That import would have landed outside the space, so nothing was written.':
+    'Essa importação teria caído fora do espaço, então nada foi gravado.',
   '{count} files': { one: '{count} arquivo', many: '{count} arquivos', other: '{count} arquivos' },
   'This space': 'Este espaço',
   'Drop an export here': 'Soltar uma exportação aqui',

@@ -1008,6 +1008,8 @@ export const ja: Dictionary = {
   'That export is too big to read in one go.': 'この書き出しは一度に読み込むには大きすぎます。',
   'Import into': 'インポート先',
   'That import could not be written.': 'このインポートは書き込めませんでした。',
+  'That import would have landed outside the space, so nothing was written.':
+    'このインポートはスペースの外に書き込まれるため、何も書き込みませんでした。',
   '{count} files': '{count} 個のファイル',
   'This space': 'このスペース',
   'Drop an export here': '書き出したファイルをここへ',
