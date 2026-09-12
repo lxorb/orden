@@ -110,16 +110,17 @@ the notes in step, and asking a question. See section 5.
 - `updateImageRawData` takes `{ containerID, containerName, imageData }` and
   nothing else: no width, no height, no stride. The container says how wide the
   rows are. `imageData` may be a `number[]`, a `Uint8Array`, an `ArrayBuffer` or
-  base64, and the plugin sends `number[]`, which the SDK's own note says the host
-  takes best.
+  base64. The plugin sends none of them: `sdk.ts` does not carry
+  `updateImageRawData` at all, and a note goes to the glasses as text. This is
+  here for when one does.
 - **Encoded image bytes (PNG) are the documented format**: the host decodes,
   scales and does its own reduction to four bits, and its own display notes say
   its reduction is better than one done in the app. Raw Gray8 and packed Gray4
   are also accepted (simulator changelog 0.9.2), but **the packed byte layout is
-  not published anywhere** - not the nibble order, not the row padding. So the
-  plugin sends PNG. `encode.ts` can pack Gray4 and is tested round trip, and
-  `Sheets` will use it on request, but it is not the default and its layout is an
-  assumption until somebody publishes one.
+  not published anywhere** - not the nibble order, not the row padding. So a
+  plugin that sent pictures would send PNG. Nothing packs Gray4 here: there is no
+  encoder in `packages/glasses`, and writing one against an unpublished layout
+  would be writing against a guess.
 - Compression is not an API. SDK 0.0.12 added LZ4 inside the image path; there is
   no flag.
 
@@ -481,7 +482,7 @@ which every app is checked for on its root page.
 
 - **The sidebar** is the space's name, a rule, and everything in it with every
   folder open. Canvases are never listed, and neither are PDFs or pictures: a
-  canvas cannot be set in one font on seven lines, and a row that does nothing is
+  canvas cannot be set in one font on eight lines, and a row that does nothing is
   worse than no row. A folder is a label rather than a row the cursor can land on,
   because every folder in that list is already open and there is nothing a tap on
   one could do; the cursor steps over them, so **every tap the reader makes opens
@@ -673,11 +674,11 @@ are two paths because the platform gives two and neither is everywhere:
 2. **The glasses' own microphone**, under `g2-microphone`.
    `audioControl(true, glasses)` streams processed PCM through `onEvenHubEvent`.
    Nothing on the device turns that into words, so an utterance is cut out of the
-   stream and sent to `POST /v1/ask/heard`, which transcribes it with the account's
-   own OpenAI key where there is one and otherwise with Whisper on Workers AI
-   (`@cf/openai/whisper-large-v3-turbo`, falling back to `@cf/openai/whisper`), which
-   has a free daily allowance and costs neurons past it - so a reader with no OpenAI
-   account at all can still talk to their glasses.
+   stream and sent to `POST /v1/ask/heard`, which transcribes it with Whisper on
+   Workers AI first, key or no key (`@cf/openai/whisper-large-v3-turbo`, falling
+   back to `@cf/openai/whisper`), and asks the account's own OpenAI key only where
+   Whisper heard nothing. Whisper has a free daily allowance and costs neurons past
+   it - so a reader with no OpenAI account at all can still talk to their glasses.
 
 The second path is where the plugin's own latency comes from, and getting it down is
 what section 5.1 is about.
@@ -836,7 +837,7 @@ The word "question" turns everything after it into a prompt.
   all: `search_notes` to find something and `read_note` to read it. A question
   about one note costs one note.
 - The prompt demands the shape: one sentence with the answer, a blank line, then
-  more detail only if it is needed. A panel is seven lines and the reader is
+  more detail only if it is needed. A panel is eight lines and the reader is
   walking.
 - The answer opens a screen of its own and scrolls a line at a time. A double tap
   or "close" goes back.
@@ -997,7 +998,8 @@ typing, and a collaborator's paragraph should appear.
 The editor's build writes `even.html` beside `index.html` out of one bundle.
 Almost all of the output is shared; the plugin's own code and the Even Hub SDK are
 chunks nothing in `index.html` reaches, so the plain web build carries none of it.
-That is checked: `dist/index.html` mentions neither.
+Nothing checks that, though: the bundle test builds and reads `dist-even`, and no
+test, script or workflow looks at the editor's own `dist`.
 
 The Worker in `services/sync` serves `apps/desktop/dist` through its assets
 binding. Its not-found handling is `single-page-application`, which would answer
@@ -1260,7 +1262,7 @@ of the review's questions has an answer. It holds it to both findings and to the
 consequences: no URL outside the manifest's own whitelist (read from
 `even.app.json`, so the two cannot drift), no `new Function`, `Function(`, `eval(`
 or timer given a string, no play button and none of the sandbox's protocol in any
-`.js`, none of the named libraries, and under 14 MB. It is the slowest test in the
+`.js`, none of the named libraries, and under 8 MB. It is the slowest test in the
 repository and it is the only one that could have caught either finding before an
 upload did.
 
@@ -1479,7 +1481,7 @@ character is within a pixel of where the glasses will put it, the wrapping, the
 bands, the gutter and the rules are exact, and only the letterforms are borrowed.
 
 ```sh
-pnpm --filter @nib/desktop build
+pnpm --filter @nib/desktop build:even
 python scripts/even-e2e.py
 ```
 
@@ -1604,7 +1606,7 @@ In rough order of how much rests on it:
    but neither is documented anywhere and no published example uses them. If they
    are what they look like, the answer view could be one send of the whole answer
    with the firmware scrolling it, instead of a send per line. The plugin scrolls by
-   sending the seven rows it wants, which is correct whatever the firmware does.
+   sending the eight rows it wants, which is correct whatever the firmware does.
 4. **The OS list and menu containers.** `ListContainerProperty` renders a native
    scrolling list with a selection border, and `MenuContainerProperty` a contextual
    menu of up to ten items; a `listEvent` reports the selected row. Either could
@@ -1615,7 +1617,7 @@ In rough order of how much rests on it:
 5. **Embedded notes.** A `![[note]]` reads as the words it showed rather than as
    the note it names. The reading view resolves those through the link index; the
    glasses do not, yet.
-6. **Memory.** Nobody publishes a budget. Seven text containers is far less than
+6. **Memory.** Nobody publishes a budget. Six text containers is far less than
    four image containers at the maximum size, so this is much less of a worry than
    it was, but `createStartUpPageContainer` answering `outOfMemory` is still the
    thing to watch.
@@ -1627,7 +1629,7 @@ In rough order of how much rests on it:
 The whole drive, in a browser, against a bridge that answers like the device:
 
 ```sh
-pnpm --filter @nib/desktop build
+pnpm --filter @nib/desktop build:even
 python scripts/even-e2e.py
 ```
 
