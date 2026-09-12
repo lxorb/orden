@@ -77,6 +77,14 @@ describe('a note read as rows', () => {
   test('and an empty block reads as no rows rather than as unreadable', () => {
     expect(readProperties('---\n---\n')).toEqual([])
   })
+
+  test('a list at the key’s own margin, which is YAML too', () => {
+    // `frontMatterList` has always read this shape, so the reading view drawing
+    // the source instead of rows for the same block was the two disagreeing.
+    expect(said('---\naliases:\n- One\n- Two\n---\n\nWords.\n')).toEqual([
+      { key: 'aliases', kind: 'list', value: '', items: ['One', 'Two'] },
+    ])
+  })
 })
 
 describe('a block this cannot draw', () => {

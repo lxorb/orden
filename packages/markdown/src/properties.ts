@@ -21,6 +21,7 @@
 
 import { frontMatterBlock } from './front-matter'
 import { escape } from './html'
+import { flowItems, listItem, unquoted } from './yaml'
 
 /** What a value looks like it is, which decides what it is drawn as. */
 export type PropertyKind = 'text' | 'list' | 'number' | 'date' | 'checkbox' | 'map'
@@ -43,18 +44,9 @@ export interface Property {
  *  that is only a value is part of a list. */
 const KEY = /^([A-Za-z_][\w-]*)[ \t]*:(.*)$/
 
-/** A `- item` line, however far it is indented. */
-const ITEM = /^[ \t]+-[ \t]*(.*)$/
-
 /** A `key: value` line indented under another key: the shape `export:` uses to
  *  say what paper a note prints on. */
 const NESTED = /^[ \t]+([A-Za-z_][\w-]*)[ \t]*:[ \t]*(.*)$/
-
-/** Quotes around a whole value, which YAML reads as one string. */
-const QUOTED = /^(["'])([\s\S]*)\1$/
-
-/** A flow sequence: `[a, b, c]`, and `[]` for a list of nothing. */
-const FLOW = /^\[([\s\S]*)\]$/
 
 /** `true` and `false`, which is how Obsidian writes a checkbox. YAML 1.1 also
  *  reads `yes` and `no` as booleans, and this deliberately does not: a note whose
@@ -72,25 +64,12 @@ const DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
  *  thousand lines between two fences is left as the source it is. */
 const MOST_KEYS = 64
 
-function unquoted(value: string): string {
-  return QUOTED.exec(value)?.[2] ?? value
-}
-
 /** What a value on the line is. */
 function kindOf(value: string): PropertyKind {
   if (YES_NO.test(value)) return 'checkbox'
   if (NUMBER.test(value)) return 'number'
   if (DATE.test(value)) return 'date'
   return 'text'
-}
-
-/** The items of a flow sequence, or null when the value is not one. */
-function flow(value: string): string[] | null {
-  const found = FLOW.exec(value)
-  if (!found) return null
-
-  const inside = (found[1] ?? '').trim()
-  return inside === '' ? [] : inside.split(',').map((one) => unquoted(one.trim()))
 }
 
 /** Every line of the block, with where each one sits. */
@@ -137,7 +116,7 @@ export function readProperties(source: string): Property[] | null {
 
     const key = found[1] ?? ''
     const written = (found[2] ?? '').trim()
-    const listed = flow(written)
+    const listed = flowItems(written)
 
     if (listed !== null) {
       out.push({ key, kind: 'list', value: '', items: listed, from: line.from, to: line.to })
@@ -163,20 +142,25 @@ export function readProperties(source: string): Property[] | null {
       const next = lines[at + 1]
       if (!next) break
       if (next.text.trim() === '') break
-      if (!next.text.startsWith(' ') && !next.text.startsWith('\t')) break
 
-      const item = ITEM.exec(next.text)
+      const item = listItem(next.text)
+      // What belongs to the key above is indented under it - except a list,
+      // which YAML lets sit at the key's own margin. Read by the same helper
+      // `frontMatterList` uses, so the rows and the values agree about that.
+      const indented = next.text.startsWith(' ') || next.text.startsWith('\t')
+      if (item === null && !indented) break
+
       const pair = item === null ? NESTED.exec(next.text) : null
-      if (!item && !pair) return null
+      if (item === null && !pair) return null
       // One or the other, never both: a key with a list and a map under it is
       // not something YAML means either.
-      if (item && mapped) return null
+      if (item !== null && mapped) return null
       if (pair && items.length && !mapped) return null
 
-      if (item) items.push(unquoted((item[1] ?? '').trim()))
+      if (item !== null) items.push(item)
       else {
         mapped = true
-        items.push(`${pair?.[1] ?? ''}: ${unquoted((pair?.[2] ?? '').trim())}`.trim())
+        items.push(`${pair?.[1] ?? ''}: ${unquoted(pair?.[2] ?? '')}`.trim())
       }
 
       last = next.to
