@@ -42,7 +42,7 @@ SERVICE = ROOT / "services" / "sync"
 SHOTS = APP / "test" / "e2e" / "shots" / "site"
 
 # Above 18000, and not a port any other drive here uses.
-PORT = 18991
+PORT = 18974
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 # Every browser resolves `*.localhost` itself, so a blog's own hostname needs no
@@ -387,6 +387,24 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
         page.evaluate(f"() => window.nibApp.settings.show('{section}')")
         page.wait_for_timeout(900)
         shot(section)
+
+        # And measured, on the phone, where the floor is a platform rule rather
+        # than a preference: everything a thumb lands on clears --touch-target.
+        if finger:
+            small = page.evaluate(
+                """() => {
+                  const floor = parseFloat(
+                    getComputedStyle(document.documentElement).getPropertyValue('--touch-target'),
+                  )
+                  return [...document.querySelectorAll('.sheet button, .sheet input, .sheet select')]
+                    .filter((one) => {
+                      const box = one.getBoundingClientRect()
+                      return box.width > 0 && box.height > 0 && box.height < floor - 0.5
+                    })
+                    .map((one) => `${one.tagName.toLowerCase()}.${one.className} ${Math.round(one.getBoundingClientRect().height)}px`)
+                }"""
+            )
+            say(f"[{name}] {section}: {len(small)} targets under the floor {small[:4]}")
 
     context.close()
 

@@ -507,6 +507,7 @@
 
   :global(.sheet.phone) .inline {
     width: 55%;
+    min-height: var(--touch-target);
     padding: 8px 10px;
     font-size: var(--touch-text);
   }
