@@ -20,11 +20,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # The head of this branch: the launch as it is now.
-          - name: head
+          # The head of this branch: the trace, and the fix.
+          - name: after
             ref: ''
+          # The trace and nothing else, so the before and the after are the same
+          # binary with one change in it and both can say where their time went.
+          - name: before
+            ref: 476e07850701c88ad6c2aeedb8421b0854c0877f
           # The last tagged release, from 00:13 this morning - the build before
-          # everything that landed today.
+          # everything that landed today. No trace in it; timed by the clock.
           - name: v0.7.0
             ref: v0.7.0
     runs-on: windows-latest
