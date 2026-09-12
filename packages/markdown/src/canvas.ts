@@ -131,8 +131,91 @@ interface ShapeNode extends NodeBase {
   text?: string
 }
 
-export type CanvasNode = TextNode | FileNode | LinkNode | GroupNode | ShapeNode
+/** The sizes a page comes in, in CSS pixels at 96 to the inch, portrait.
+ *
+ *  Three, and the third is not a size. A4 is what the world outside North America
+ *  prints on and Letter is what North America prints on, and a note that is going
+ *  to be printed wants to be the shape of the paper it will be printed on from the
+ *  first stroke rather than reflowed at the end. `long` is the other kind of page
+ *  altogether: as wide as A4 and as tall as somebody keeps writing, which is what
+ *  a page of notes taken in a lecture actually is.
+ *
+ *  In pixels rather than in millimetres because everything else on the plane is in
+ *  pixels - a card's box, a stroke's width, the grid - and a page that measured
+ *  itself in another unit would be one conversion away from every sum in the app.
+ *  The numbers are the millimetres at 96dpi, rounded: 210x297mm is 794x1123. */
+export const PAPERS = {
+  a4: { width: 794, height: 1123 },
+  letter: { width: 816, height: 1056 },
+  long: { width: 794, height: 1123 },
+} as const
+
+export type Paper = keyof typeof PAPERS
+
+const PAPER_NAMES = Object.keys(PAPERS) as Paper[]
+
+export function isPaper(value: unknown): value is Paper {
+  return PAPER_NAMES.some((one) => one === value)
+}
+
+/** Whether this size grows downwards instead of ending. A long page is the one
+ *  that does, which is the whole of what makes it different from A4. */
+export function endless(paper: Paper): boolean {
+  return paper === 'long'
+}
+
+/** What is ruled on a page under everything written on it. The four the canvas's
+ *  own background already offers, named the same, because it is the same drawing
+ *  code: see lattice.ts in the app. */
+export const PATTERNS = ['blank', 'lines', 'grid', 'dots'] as const
+export type Pattern = (typeof PATTERNS)[number]
+
+export function isPattern(value: unknown): value is Pattern {
+  return PATTERNS.some((one) => one === value)
+}
+
+/** A page: a sheet with a size, a ruling, and possibly a page of a PDF behind it.
+ *
+ *  A node like any other, which is the whole design. Everything on a page note
+ *  already lives on a plane - the cards, the pictures, the shapes, the ink - and
+ *  making a page one more thing on that plane means one drag, one merge, one
+ *  tombstone and one room for all of it. Nothing in the app or in a room has to
+ *  know a page from a card; only this file does, and only when it writes one down.
+ *
+ *  On disk a page is a node the JSON Canvas spec names, so a page note renamed to
+ *  `.canvas` opens in Obsidian: a page with a PDF behind it is a `file` node with
+ *  `subpath: "#page=3"`, which is the spelling Obsidian's own PDF embed reads, and
+ *  a page with nothing behind it is a `group` node with a label. What the spec has
+ *  no word for - the size preset and the ruling - goes in one record under
+ *  `nib.pages`, beside the id it belongs to. A hand-edited file that lost that
+ *  record loses the ruling and keeps the page as the frame it looks like, which is
+ *  the right way for this to fail.
+ *
+ *  `file` and `page` travel together: a page of a PDF is a path and a number, and
+ *  neither means anything without the other. The PDF itself stays in the space, so
+ *  Obsidian opens the paper whatever happens to this file. */
+interface PageNode extends NodeBase {
+  type: 'page'
+  paper: Paper
+  pattern: Pattern
+  /** The PDF this page is a page of, relative to the space, or absent. */
+  file?: string
+  /** Which page of it, counting from one. */
+  page?: number
+}
+
+export type CanvasNode = TextNode | FileNode | LinkNode | GroupNode | ShapeNode | PageNode
 export type NodeKind = CanvasNode['type']
+
+/** Whether a node is a page. The one question the app asks that this module
+ *  answers rather than the app, because `type` is the only thing that says so and
+ *  a string comparison spelled out in twenty places is twenty places to misspell
+ *  it. */
+export function isPage(node: CanvasNode): node is PageNode {
+  return node.type === 'page'
+}
+
+export type { PageNode }
 
 export interface CanvasEdge {
   id: string
@@ -468,6 +551,109 @@ function readShape(value: unknown): ShapeNode | null {
   }
 }
 
+/** The record a page keeps under `nib.pages`: which id it is about, and the two
+ *  things the spec has no word for. */
+function readPageRecord(value: unknown): { id: string; paper: Paper; pattern: Pattern } | null {
+  if (!isRecord(value) || !isString(value.id) || !value.id) return null
+
+  return {
+    id: value.id,
+    paper: isPaper(value.paper) ? value.paper : 'a4',
+    pattern: isPattern(value.pattern) ? value.pattern : 'blank',
+  }
+}
+
+/** A node the file called a page, as the page it is.
+ *
+ *  The geometry and the PDF come off the spec node, which is where they were
+ *  written; the size and the ruling come off the record. A `file` node's own path
+ *  and `#page=` fragment are the paper behind the page, so nothing is written
+ *  twice and Obsidian reads the same two values this does.
+ *
+ *  Only a `file` or a `group` node becomes a page. A record under `nib.pages`
+ *  naming a text card is a file somebody edited by hand into something that is not
+ *  a page note, and the card stays a card. */
+function asPage(node: CanvasNode, record: { paper: Paper; pattern: Pattern }): PageNode | null {
+  if (node.type !== 'file' && node.type !== 'group') return null
+
+  const page = node.type === 'file' ? pageOfSubpath(node.subpath) : null
+
+  return {
+    id: node.id,
+    type: 'page',
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height,
+    ...(node.color === undefined ? {} : { color: node.color }),
+    paper: record.paper,
+    pattern: record.pattern,
+    ...(node.type === 'file' && page !== null ? { file: node.file, page } : {}),
+  }
+}
+
+/** Which page of a PDF a `#page=3` names, or null. The spelling Obsidian writes
+ *  and a browser's own viewer reads; `pageFragment` in links.ts asks the same of a
+ *  wikilink, and the two agree on purpose. */
+function pageOfSubpath(subpath: string | undefined): number | null {
+  const digits = /^#page=(\d+)$/i.exec((subpath ?? '').trim())?.[1]
+  if (digits === undefined) return null
+
+  const page = Number(digits)
+  return Number.isInteger(page) && page > 0 ? page : null
+}
+
+/** One page out of the fields a record holds, which is how a room holds one: a
+ *  single object saying everything about the page, `page` and all.
+ *
+ *  What a room reads a stored page back through, the way `nodeOf` does for a card;
+ *  see plane.ts in @nib/rooms. A file writes a page in two halves instead, and
+ *  `readCanvas` puts those together before anything else sees them. */
+function readPage(value: unknown): PageNode | null {
+  if (!isRecord(value) || !isString(value.id) || !value.id) return null
+
+  const page = isNumber(value.page) ? Math.floor(value.page) : 0
+  const file = isString(value.file) ? value.file : ''
+
+  return {
+    id: value.id,
+    type: 'page',
+    x: pixels(value.x, 0),
+    y: pixels(value.y, 0),
+    width: Math.max(1, pixels(value.width, PAPERS.a4.width)),
+    height: Math.max(1, pixels(value.height, PAPERS.a4.height)),
+    ...colour(value.color),
+    paper: isPaper(value.paper) ? value.paper : 'a4',
+    pattern: isPattern(value.pattern) ? value.pattern : 'blank',
+    ...(file && page > 0 ? { file, page } : {}),
+  }
+}
+
+/** A page as the spec node it is written as: the PDF page it shows, or a labelled
+ *  frame. What Obsidian sees, and the only shape of a page that ever reaches
+ *  `nodes`. */
+function asSpecNode(page: PageNode, at: number): CanvasNode {
+  const base = {
+    id: page.id,
+    x: page.x,
+    y: page.y,
+    width: page.width,
+    height: page.height,
+    ...(page.color === undefined ? {} : { color: page.color }),
+  }
+
+  if (page.file && page.page) {
+    return { ...base, type: 'file', file: page.file, subpath: `#page=${page.page}` }
+  }
+
+  return { ...base, type: 'group', label: `Page ${at + 1}` }
+}
+
+/** The record a page carries beside its node. */
+function writtenPage(page: PageNode): Record<string, unknown> {
+  return { id: page.id, paper: page.paper, pattern: page.pattern }
+}
+
 /** A map of id to a number, with anything that is not one left out. What `at`
  *  and `gone` both are. */
 function readTimes(value: unknown): Record<string, number> {
@@ -507,6 +693,7 @@ export type Thing = CanvasNode | CanvasEdge | InkStroke
  *  a stored object back through; see plane.ts in @nib/rooms. */
 export function nodeOf(value: unknown): CanvasNode | null {
   if (isRecord(value) && value.type === 'shape') return readShape(value)
+  if (isRecord(value) && value.type === 'page') return readPage(value)
   return readNode(value)
 }
 
@@ -591,6 +778,24 @@ export function readCanvas(text: string): Canvas {
     ? nib.order.filter((id): id is string => isString(id) && !!id)
     : []
 
+  // The pages last, because a page is a spec node that has already been read as
+  // one: this is the record beside it saying that is what it was. Swapped in place
+  // rather than appended, so a page keeps where it sat in `nodes` and the stacking
+  // order the file wrote is the order it comes back in.
+  if (Array.isArray(nib.pages)) {
+    const paged = new Map<string, { paper: Paper; pattern: Pattern }>()
+    for (const entry of nib.pages) {
+      const record = readPageRecord(entry)
+      if (record && !paged.has(record.id)) paged.set(record.id, record)
+    }
+
+    for (const [at, node] of nodes.entries()) {
+      const record = paged.get(node.id)
+      const page = record ? asPage(node, record) : null
+      if (page) nodes[at] = page
+    }
+  }
+
   return {
     nodes: inOrder(nodes, order),
     edges,
@@ -641,6 +846,10 @@ function writtenNode(node: CanvasNode): Record<string, unknown> {
     case 'shape':
       // Never reached: shapes are taken out before this is called and written
       // under `nib` instead. Here so the switch covers every kind.
+      return base
+    case 'page':
+      // Never reached either, and for the opposite reason: a page is turned into
+      // the spec node it is written as before it gets here. See `asSpecNode`.
       return base
   }
 }
@@ -709,10 +918,11 @@ const NIB_VERSION = 1
  *  cards is exactly the file the spec describes, with no key of Nib's in it. */
 export function writeCanvas(canvas: Canvas): string {
   const shapes = canvas.nodes.filter((node): node is ShapeNode => node.type === 'shape')
-  const ink = canvas.ink.map(writtenStroke)
+  const pages = canvas.nodes.filter(isPage)
   // Worth writing only when something is not where the spec would put it: a
   // canvas of nothing but cards stacks in the order `nodes` already gives, and
   // a second list saying so again is noise in the file.
+  const ink = canvas.ink.map(writtenStroke)
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
 
   const nib = {
@@ -720,6 +930,9 @@ export function writeCanvas(canvas: Canvas): string {
     // to read: what the row in the file list wears.
     ...(canvas.icon ? { icon: canvas.icon } : {}),
     ...(canvas.icon && canvas.iconColor ? { iconColor: canvas.iconColor } : {}),
+    // Before the ink, because the pages are what the ink is written on, and the
+    // list's own order is the order they turn in.
+    ...(pages.length ? { pages: pages.map(writtenPage) } : {}),
     ...(ink.length ? { ink } : {}),
     ...(shapes.length ? { shapes: shapes.map(writtenShape) } : {}),
     ...(order.length ? { order } : {}),
@@ -727,8 +940,14 @@ export function writeCanvas(canvas: Canvas): string {
     ...(Object.keys(canvas.gone).length ? { gone: sortedTimes(canvas.gone) } : {}),
   }
 
+  // A page goes into `nodes` as the spec node it is - a PDF page, or a labelled
+  // frame - so a page note is a JSON Canvas file and nothing in it is an invention
+  // of ours. Numbered as they are written, which is the order they are in.
+  let numbered = -1
   const written = {
-    nodes: canvas.nodes.filter((node) => node.type !== 'shape').map(writtenNode),
+    nodes: canvas.nodes
+      .filter((node) => node.type !== 'shape')
+      .map((node) => (isPage(node) ? writtenNode(asSpecNode(node, ++numbered)) : writtenNode(node))),
     edges: canvas.edges.map(writtenEdge),
     ...(Object.keys(nib).length ? { nib: { version: NIB_VERSION, ...nib } } : {}),
   }

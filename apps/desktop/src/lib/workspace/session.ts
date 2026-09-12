@@ -14,6 +14,7 @@
  *  fields it does have. */
 
 import type { FoldLines } from '@nib/editor'
+import { isPagesTarget } from '@nib/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
 import { isNumber, isRecord, isString, stringList } from '../stored'
@@ -129,7 +130,7 @@ function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'web']
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'pages', 'web']
 
 /** Which kind of tab an entry is, which is its file's name first and what the entry
  *  claims second.
@@ -149,10 +150,17 @@ function tabKind(value: unknown, path: unknown): TabKind {
   const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'
   if (typeof path !== 'string') return said
 
+  // The two planes are one room and two surfaces, so the extension is asked twice:
+  // once for the shape of the document, which `roomKind` answers, and once for who
+  // draws it, which only the name can say. Pages first, since a `.pages` file that
+  // came back as a canvas would be drawn on an endless plane with its pages
+  // invisible - the file would survive, being the same format, and nobody could
+  // find their paper.
+  if (isPagesTarget(path)) return 'pages'
   if (roomKind(path) === 'plane') return 'canvas'
   // And the other way: a canvas over a file whose name says words would draw an
   // empty plane over the prose in it.
-  return said === 'canvas' ? 'note' : said
+  return said === 'canvas' || said === 'pages' ? 'note' : said
 }
 
 function isSpace(value: unknown): value is Space {

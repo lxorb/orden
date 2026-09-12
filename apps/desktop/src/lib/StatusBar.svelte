@@ -3,6 +3,7 @@
   import { countText } from './counts'
   import { t } from './i18n.svelte'
   import { VIM_WORDS } from './modes.svelte'
+  import { pages } from './pages/showing.svelte'
   import { recorder } from './recorder/recording.svelte'
   import { spanOf } from './recorder/transcript'
   import { views } from './views.svelte'
@@ -96,7 +97,7 @@
      with a region whose contents are not interactive. See focus.ts. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <footer
-  class:looking={looking || held || reading}
+  class:looking={looking || held || reading || !!pages.current}
   data-region="status"
   tabindex="0"
   aria-label={t('What this note is')}
@@ -113,6 +114,15 @@
       class="reading"
       title={t('Shown as plain text, so typing stays instant in a note this long')}
       >{t('No preview')}</span
+    >
+  {/if}
+  <!-- Which page of how many, for a page note, and it shows unasked: a reader
+       scrolling a stack of paper needs to know where they are, which is not something
+       they can guess, and it is the same fact the two words beside it are.
+       Nothing at all for anything else, so the bar reserves no room for it. -->
+  {#if pages.current}
+    <span class="page"
+      >{t('{at} / {count}', { at: pages.current.page, count: pages.current.count })}</span
     >
   {/if}
   {#if counts}
@@ -261,6 +271,12 @@
   /* Said once and quietly; the numbers come in beside it on hover. */
   .reading {
     letter-spacing: 0.03em;
+  }
+
+  /* Which page of how many. A little stronger than the counts beside it, because it
+     is the one number here nobody had to ask for. */
+  .page {
+    color: var(--muted-strong);
   }
 
   /* There is no hover on a phone, so this never appears - but it still sits in

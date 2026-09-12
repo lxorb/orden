@@ -165,6 +165,29 @@ export function exportCommands(): Command[] {
     else if (id === 'pdf') await picture.exportCanvasPdf(drawing)
   }
 
+  /** The pages, out: one PDF of the whole note, or one file per page in a zip. The
+   *  same three words a drawing offers and a page each rather than one picture;
+   *  see pages/out.ts. */
+  const pagesOut = async (id: ExportId) => {
+    const [out, { readCanvas }, { readPalette }] = await Promise.all([
+      import('./pages/out'),
+      import('./canvas/format'),
+      import('./canvas/palette'),
+    ])
+
+    const about = {
+      canvas: readCanvas(source()),
+      palette: readPalette(document.documentElement),
+      path: note()?.path ?? null,
+      root: workspace.activeSpace?.root ?? null,
+      name: name(),
+    }
+
+    if (id === 'pdf') await out.exportPagesPdf(about)
+    else if (id === 'png') await out.exportPagesPng(about)
+    else if (id === 'svg') await out.exportPagesSvg(about)
+  }
+
   /** A paper or a picture the app is only showing, handed over as it stands. */
   const copyOut = async () => {
     const path = note()?.path
@@ -184,6 +207,7 @@ export function exportCommands(): Command[] {
   const run = (id: ExportId) => () =>
     busy.start(t('Exporting'), async () => {
       if (kind === 'canvas') await drawingOut(id)
+      else if (kind === 'pages') await pagesOut(id)
       else if (id === 'slides-html' || id === 'slides-pdf') await slidesOut(id)
       else if (id === 'copy') await copyOut()
       else if (isNoteFormat(id)) await noteOut(id)
@@ -729,6 +753,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
     { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
+    { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
     ...(viewport.device === 'phone'
       ? []
       : [

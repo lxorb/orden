@@ -13,14 +13,23 @@
  *  three different conclusions about one file. Nothing else may decide it - not what
  *  a tab was opened as, and not what a session wrote down about it months ago. */
 
-import { isCanvasTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 
 /** The two shapes a room's document comes in, named as the service names them. */
 export type RoomKind = 'words' | 'plane'
 
 /** The shape the room for this file has. A file with no name at all - a draft
  *  nobody has saved - is words, which is what a tab with some text in it can always
- *  be read as; it has no room either way. */
+ *  be read as; it has no room either way.
+ *
+ *  Two extensions are planes and not one. A page note is a canvas with pages on it:
+ *  the same objects with the same ids in the same JSON Canvas file, so the shared
+ *  document is the same map of objects by id and the settle writes the same bytes.
+ *  A third kind here would be a third name for one shape, and the first thing it
+ *  would buy is a way for the two ends of a file to disagree about which of two
+ *  identical things it is. Which surface opens the file is a different question,
+ *  asked of the same name somewhere else; see workspace/session.ts. */
 export function roomKind(path: string | null | undefined): RoomKind {
-  return isCanvasTarget(path ?? '') ? 'plane' : 'words'
+  const name = path ?? ''
+  return isCanvasTarget(name) || isPagesTarget(name) ? 'plane' : 'words'
 }

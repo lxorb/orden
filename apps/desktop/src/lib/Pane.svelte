@@ -32,6 +32,7 @@
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import Canvas from './Canvas.svelte'
+  import Pages from './Pages.svelte'
   import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
@@ -84,6 +85,7 @@
     !!tab &&
       tab.kind !== 'graph' &&
       tab.kind !== 'canvas' &&
+      tab.kind !== 'pages' &&
       tab.kind !== 'pdf' &&
       tab.kind !== 'web' &&
       !tab.reading,
@@ -384,6 +386,13 @@
          into an editor. -->
     {#key tab.id}
       <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
+    {/key}
+  {:else if tab?.kind === 'pages'}
+    <!-- Pages of paper, in the note's place. Keyed like the canvas beside it: a page
+         note is a document of its own and nothing about it is swapped into an
+         editor. -->
+    {#key tab.id}
+      <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
     {/key}
   {:else if tab?.kind === 'pdf'}
     <!-- A paper being read, beside the notes about it. Keyed like the reading

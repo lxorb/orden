@@ -12,6 +12,7 @@
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 import { hasNotionId } from './names'
+import { looksLikePapers } from './pdf-pages'
 import type { Rows } from './table'
 
 /** How many files are opened to work out what an export is. Enough to be sure,
@@ -36,6 +37,12 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 
   if (has(/\.enex$/i)) return 'evernote'
   if (has(/\.note$/i)) return 'tomboy'
+
+  // Papers and nothing else: somebody's own PDF, to be written on rather than
+  // converted. Before everything below, because a `.pdf` is the one extension on this
+  // list that says outright what the file is; after the two above only because those
+  // are as certain and were already asked. See pdf-pages.ts.
+  if (looksLikePapers(paths)) return 'pdf-pages'
 
   const bundle = await bundleWriter(sources)
   if (bundle) return bundle
@@ -223,9 +230,15 @@ export async function readAs(
       const { readTomboy } = await import('./tomboy')
       return readTomboy(sources)
     }
+<<<<<<< HEAD
     case 'journal': {
       const { readJournal } = await import('./journal')
       return readJournal(sources)
+=======
+    case 'pdf-pages': {
+      const { readPdfPages } = await import('./pdf-pages')
+      return readPdfPages(sources)
+>>>>>>> 354af1ed (feat: page notes, in the canvas's own format and on its own ink)
     }
     case 'craft':
     case 'onenote':

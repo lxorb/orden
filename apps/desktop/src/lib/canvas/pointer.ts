@@ -53,7 +53,7 @@ export function puts(tool: Tool): tool is PutTool {
  *  become a connector when both ends land on a card. */
 const JOINS: ReadonlySet<Tool> = new Set<Tool>(['line', 'arrow', 'elbow'])
 
-type PointerKind = 'mouse' | 'pen' | 'touch'
+export type PointerKind = 'mouse' | 'pen' | 'touch'
 
 /** Which end of a connector: the one it leaves, or the one it arrives at. */
 type EdgeEnd = 'from' | 'to'
@@ -514,8 +514,22 @@ const INK: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
  *  finger draws. And a reader who wants it anyway says so once, in the pen's own
  *  row, and is believed. */
 function toolFor(input: Down, context: Context): Tool {
-  if (input.pointer !== 'touch' || !context.penSeen || context.fingerDraws) return context.tool
+  if (inks(input.pointer, context)) return context.tool
   return INK.has(context.tool) ? 'select' : context.tool
+}
+
+/** Whether a contact of this kind may lay ink down at all, which is the rule above
+ *  with the tool left out of it.
+ *
+ *  Its own function because a page note asks the same question of the same glass, and
+ *  there is one answer: a hand resting on paper while the other one writes must not
+ *  leave a mark, whichever surface the paper is on. Pure, like everything else here,
+ *  so both surfaces are held to it by the same test. */
+export function inks(
+  pointer: PointerKind,
+  glass: { penSeen: boolean; fingerDraws: boolean },
+): boolean {
+  return pointer !== 'touch' || !glass.penSeen || glass.fingerDraws
 }
 
 /** One event. The machine and the effects, never a change in place: a reducer

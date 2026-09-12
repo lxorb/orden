@@ -107,6 +107,26 @@ export class CanvasStore implements PlaneSurface {
     drawn.add(new WeakRef(this))
   }
 
+  /** The file's words as a plane, and a plane as the file's words.
+   *
+   *  Overridable, and the only pair of methods that is. A page note is the same
+   *  plane in the same format with pages among the objects on it, so it wants this
+   *  whole class - the one edit per gesture, the one undo step, the one write once
+   *  the changes stop, the room - and differs in nothing but what it does to the
+   *  canvas on the way in and out: the pages are laid out in a column, and a long
+   *  page grows. Which is two lines, and this is where they go. See
+   *  pages/store.svelte.ts.
+   *
+   *  Both are the canvas format either way round, so a page note and a canvas write
+   *  the same bytes and a file renamed across the two loses nothing. */
+  protected parse(text: string): Canvas {
+    return readCanvas(text)
+  }
+
+  protected serialise(canvas: Canvas): string {
+    return writeCanvas(canvas)
+  }
+
   get camera(): Camera {
     return this.tab.camera ?? { x: 0, y: 0, scale: 1 }
   }
@@ -269,7 +289,7 @@ export class CanvasStore implements PlaneSurface {
   follow(): boolean {
     if (this.note.revision === this.at) return false
 
-    const arrived = readCanvas(this.note.text)
+    const arrived = this.parse(this.note.text)
     const ours = this.canvas
     // A plane in a room always has something of its own: the room's other devices
     // are holding it, so words arriving under it are one more copy to merge with
@@ -296,12 +316,12 @@ export class CanvasStore implements PlaneSurface {
 
     // Written back only when the merge actually kept something of ours, so a
     // canvas that arrived unchanged does not start a round of writes.
-    if (writeCanvas(together) !== this.note.text) this.commit()
+    if (this.serialise(together) !== this.note.text) this.commit()
     return true
   }
 
-  private read() {
-    this.canvas = readCanvas(this.note.text)
+  protected read() {
+    this.canvas = this.parse(this.note.text)
     this.at = this.note.revision
     this.keepPicked()
   }
@@ -309,11 +329,11 @@ export class CanvasStore implements PlaneSurface {
   /** The canvas into the document, which marks it unsaved and starts the clock
    *  on the auto-save. The revision is noted so `follow` can tell our own write
    *  from somebody else's. */
-  private commit() {
+  protected commit() {
     clearTimeout(this.writing)
     this.writing = undefined
 
-    const text = writeCanvas(this.canvas)
+    const text = this.serialise(this.canvas)
     // A plane that comes back saying exactly what the file says is not an edit, and
     // marking the note unsaved for it would start a round of writes over nothing.
     if (text !== this.note.text) this.note.replace(text)

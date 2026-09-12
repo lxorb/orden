@@ -29,6 +29,7 @@ import {
   type FoundLink,
   freeBlockId,
   isCanvasTarget,
+  isPagesTarget,
   isTabFile,
   type LinkKind,
   withoutBlockIds,
@@ -354,7 +355,9 @@ class Links {
     const relative = this.relative(path)
     if (!relative) return
 
-    if (isCanvasTarget(relative)) {
+    // A page note too: its pages are file nodes naming the PDF behind them, which
+    // is a link out of it exactly as a canvas's cards are.
+    if (isCanvasTarget(relative) || isPagesTarget(relative)) {
       this.put(scanCanvas(relative, content))
       return
     }
@@ -375,7 +378,7 @@ class Links {
    *  the disk for a panel that is about the file on screen. */
   canvasRead(path: string, content: string) {
     const relative = this.relative(path)
-    if (!relative || !isCanvasTarget(relative)) return
+    if (!relative || !(isCanvasTarget(relative) || isPagesTarget(relative))) return
 
     this.put(scanCanvas(relative, content))
   }

@@ -1,0 +1,164 @@
+<script lang="ts">
+  /** One sheet of paper: its edge, its ruling, and the page of a PDF behind it
+   *  where there is one.
+   *
+   *  A component per page, like the PDF viewer's, because a page is what comes and
+   *  goes: the picture of a page is drawn when the page is near the view and let go
+   *  of when it is not, which is what keeps a note made from a four hundred page
+   *  scan costing the same as one made from four. Nothing here handles a pointer -
+   *  the surface above owns every gesture - so the whole sheet can be inert and
+   *  never be in the way of a stroke.
+   *
+   *  The ruling is four CSS gradients and no drawing at all. Lines, a grid and dots
+   *  are exactly what a repeating gradient is for, they are crisp at every zoom
+   *  because the transform above scales them, and the colour is the canvas's own
+   *  `--canvas-dot`, which is the token that already answers "a faint rule, in
+   *  whichever theme is on". Dark and light are therefore honest without this file
+   *  knowing which it is in.
+   *
+   *  The pitch is the paper's and not the screen's: 8mm ruled lines and a 5mm grid,
+   *  which is what school paper and graph paper are, so a page printed out has the
+   *  ruling it had on screen. */
+
+  import { onDestroy } from 'svelte'
+  import type { PageNode } from './canvas/format'
+  import { paperOf } from './pages/paper'
+
+  const {
+    page,
+    number,
+  }: {
+    page: PageNode
+    /** Counting from one, which is what a page's label says. */
+    number: number
+  } = $props()
+
+  /** The ruling pitches, in the pixels everything else on the plane is in: 8mm and
+   *  5mm at 96 to the inch. */
+  const LINES = 30
+  const GRID = 19
+
+  /** The page of the PDF behind this sheet, once it has been drawn. */
+  let paper = $state.raw<ImageBitmap | null>(null)
+  let sheet = $state<HTMLCanvasElement>()
+
+  /** Whether this page wants a picture at all. */
+  const backed = $derived(!!page.file && !!page.page)
+
+  $effect(() => {
+    if (!backed) return
+
+    const file = page.file
+    const at = page.page
+    if (!file || !at) return
+
+    let alive = true
+    void paperOf(file, at).then((drawn) => {
+      if (alive) paper = drawn?.image ?? null
+    })
+
+    return () => {
+      alive = false
+      paper = null
+    }
+  })
+
+  // The picture onto the sheet, at the size the page is. Drawn once per page rather
+  // than per frame: the transform above is what a zoom does to it, exactly as it is
+  // for the ink.
+  $effect(() => {
+    const element = sheet
+    const image = paper
+    if (!element || !image) return
+
+    element.width = image.width
+    element.height = image.height
+    element.getContext('2d')?.drawImage(image, 0, 0)
+  })
+
+  onDestroy(() => (paper = null))
+
+  /** The ruling, as the background of the sheet. `blank` is no gradient at all,
+   *  which is a sheet of paper. */
+  const ruling = $derived.by(() => {
+    switch (page.pattern) {
+      case 'lines':
+        return `repeating-linear-gradient(to bottom, transparent 0, transparent ${LINES - 1}px, var(--canvas-dot) ${LINES - 1}px, var(--canvas-dot) ${LINES}px)`
+      case 'grid':
+        return [
+          `repeating-linear-gradient(to bottom, transparent 0, transparent ${GRID - 1}px, var(--canvas-dot) ${GRID - 1}px, var(--canvas-dot) ${GRID}px)`,
+          `repeating-linear-gradient(to right, transparent 0, transparent ${GRID - 1}px, var(--canvas-dot) ${GRID - 1}px, var(--canvas-dot) ${GRID}px)`,
+        ].join(', ')
+      case 'dots':
+        return `radial-gradient(circle at center, var(--canvas-dot) 1px, transparent 1.2px)`
+      default:
+        return 'none'
+    }
+  })
+
+  const ruled = $derived(page.pattern === 'dots' ? `${GRID}px ${GRID}px` : 'auto')
+</script>
+
+<div
+  class="sheet"
+  class:ruled={page.pattern !== 'blank'}
+  style:left="{page.x}px"
+  style:top="{page.y}px"
+  style:width="{page.width}px"
+  style:height="{page.height}px"
+  style:background-image={ruling}
+  style:background-size={ruled}
+  aria-hidden="true"
+>
+  {#if backed}
+    <!-- The page of the paper, at whatever resolution it was drawn at, scaled to
+         the page. A sheet whose PDF has gone stays a sheet: what is written on it
+         is still readable, which is the point of keeping the ink beside the paper
+         rather than in it. -->
+    <canvas bind:this={sheet} class:there={!!paper}></canvas>
+  {/if}
+  <span class="number">{number}</span>
+</div>
+
+<style>
+  /* One sheet: white paper in the light and a dark sheet in the dark, with an edge
+     rather than a shadow at the top so a column of them reads as separate pages
+     without a stack of blurs to composite. */
+  .sheet {
+    position: absolute;
+    background-color: var(--surface);
+    background-repeat: repeat;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .sheet canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  /* Faded in when it arrives, so a page that took a moment to rasterise does not
+     appear with a snap under the nib. */
+  .sheet canvas.there {
+    opacity: 1;
+  }
+
+  /* The page's number, in the corner of the sheet, quiet enough to be ignored and
+     there so somebody scrolling knows where they are without the bar. */
+  .number {
+    position: absolute;
+    right: 10px;
+    bottom: 6px;
+    color: var(--muted);
+    font: 11px/1 var(--font-ui, inherit);
+    opacity: 0.55;
+    user-select: none;
+  }
+</style>

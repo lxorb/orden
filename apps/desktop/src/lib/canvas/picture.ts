@@ -163,7 +163,10 @@ function cardBody(node: CanvasNode, canvasPath: string | null): string {
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml" style="opacity:.75">${escaped(node.file)}</div>`
     case 'group':
     case 'shape':
-      // Drawn as themselves rather than as a card with words in it.
+    case 'page':
+      // Drawn as themselves rather than as a card with words in it. A page never
+      // reaches a canvas's picture at all - a page note goes out through pages/out.ts,
+      // which puts one page on one sheet - and is here so the switch covers every kind.
       return ''
   }
 }
@@ -270,6 +273,7 @@ function saidBy(node: CanvasNode): string {
       return node.file
     case 'group':
     case 'shape':
+    case 'page':
       return ''
   }
 }

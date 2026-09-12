@@ -26,6 +26,8 @@
   import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
+  import { pages } from './pages/showing.svelte'
+  import PagesNavigator from './PagesNavigator.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, SortKey } from './workspace.svelte'
@@ -647,7 +649,13 @@
               <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
             {/if}
           {:else if workspace.panel === 'outline'}
-            {#if workspace.headings.length}
+            <!-- A page note has pages where a note has headings, and they are the
+                 same thing: the shape of what is open, and a row that goes to a part
+                 of it. So the panel shows whichever the thing in front has, in the
+                 same place, rather than growing a fourth panel nobody asked for. -->
+            {#if pages.current}
+              <PagesNavigator />
+            {:else if workspace.headings.length}
               <!-- The same walk and the same one tab stop every list in the app
                    has; see roving.ts. Enter goes to the heading and hands the
                    keyboard to the note, Space goes to it and stays here, so a note

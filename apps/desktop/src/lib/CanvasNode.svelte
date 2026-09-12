@@ -295,7 +295,7 @@
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own words, through the same renderer the reading view uses -->
       <div class="card page inside">{@html html}</div>
     {/if}
-  {:else if node.label}
+  {:else if node.type === 'group' && node.label}
     <span class="label">{node.label}</span>
   {/if}
 </div>

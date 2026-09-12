@@ -19,7 +19,7 @@
  *  the settle writes, and the two questions a settle asks before it writes at all. */
 
 import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
-import { isCanvasTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
 import { planeIsEmpty, readPlane, seedPlane } from '@nib/rooms/plane'
 import type * as Y from 'yjs'
@@ -29,9 +29,17 @@ export type RoomKind = 'words' | 'plane'
 
 const KINDS: readonly RoomKind[] = ['words', 'plane']
 
-/** Which shape the room for a file has. */
+/** Which shape the room for a file has.
+ *
+ *  A page note - `.pages` - is a plane too, and the same one. Its file is JSON
+ *  Canvas with pages among the nodes, read and written by the very functions below,
+ *  so the document a room holds and the bytes a settle writes are the same either
+ *  way. Which means a file renamed between the two extensions is not a crossing at
+ *  all: the room keeps its plane, the settle keeps writing it, and nothing is lost
+ *  in either direction. See `crossed` in room.ts for what a real crossing costs,
+ *  and rooms/kind.ts in the app, which states this same rule for the other end. */
 export function roomKind(path: string): RoomKind {
-  return isCanvasTarget(path) ? 'plane' : 'words'
+  return isCanvasTarget(path) || isPagesTarget(path) ? 'plane' : 'words'
 }
 
 /** A kind that came off a header or out of storage, which is to say a kind that

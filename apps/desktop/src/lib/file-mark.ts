@@ -10,8 +10,17 @@
  *  on an entry: a hit in a search and a tab in a strip both know a name and
  *  little else. `FileMark.svelte` draws what it answers. */
 
-import { isCanvasTarget, isImageTarget, isPdfTarget } from '@nib/markdown/links'
-import { BookText, File, FileText, Globe, Image, type IconNode, Workflow } from 'lucide'
+import { isCanvasTarget, isImageTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
+import {
+  BookText,
+  File,
+  FileText,
+  Globe,
+  Image,
+  type IconNode,
+  NotebookPen,
+  Workflow,
+} from 'lucide'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
 
@@ -34,7 +43,7 @@ import type { TabKind } from './workspace/documents.svelte'
  *  and only the line inside it tells them apart; the index is asked for that, once,
  *  by the component that draws the mark. See web-tab/note.ts, which says why the
  *  file is a note rather than an extension of its own, and `FileMark.svelte`. */
-export type FileMark = 'note' | 'canvas' | 'pdf' | 'picture' | 'file' | 'web'
+export type FileMark = 'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web'
 
 /** The mark a file's name earns it.
  *
@@ -45,6 +54,7 @@ export type FileMark = 'note' | 'canvas' | 'pdf' | 'picture' | 'file' | 'web'
  */
 export function fileMark(name: string): FileMark {
   if (isCanvasTarget(name)) return 'canvas'
+  if (isPagesTarget(name)) return 'pages'
   if (isPdfTarget(name)) return 'pdf'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
@@ -83,6 +93,10 @@ export function markOf(kind: TabKind): FileMark | null {
 export const MARKS: Record<FileMark, IconNode> = {
   note: FileText,
   canvas: Workflow,
+  // A pad with a pen on it, which is the one shape in the set that says "paper you
+  // write on by hand" rather than "a file with words in it". The nib is what tells
+  // it from the book a PDF wears at 13px.
+  pages: NotebookPen,
   pdf: BookText,
   picture: Image,
   file: File,

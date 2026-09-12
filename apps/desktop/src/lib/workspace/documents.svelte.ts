@@ -28,13 +28,14 @@ export const UNTITLED = 'Untitled'
  *  without one, because a picture of the notes belongs beside them rather than in
  *  a panel; a PDF is a tab without one because a paper someone is reading belongs
  *  in the same place as the notes they are making about it; a canvas is a file of
- *  its own with its own surface, and its words are the JSON in it; a website is a
+ *  its own with its own surface, and its words are the JSON in it; a page note is
+ *  the same file with pages in it, and the same is true of its words; a website is a
  *  note whose front matter says `url:`, drawn as the page it points at rather than
  *  as the two lines in the file. See docs/web-tabs.md. */
-export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'web'
+export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web'
 
-/** Whether a tab's words are a file's words: a note, and a canvas, whose words
- *  are the JSON in it.
+/** Whether a tab's words are a file's words: a note, a canvas, and a page note,
+ *  whose words are the JSON in them.
  *
  *  What the answer decides is every place words cross between a tab and a file:
  *  whether there is anything unsaved, what a save writes, and what a tab that is
@@ -47,7 +48,7 @@ export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'web'
  *  whose words are a document, which is why a web tab has no collaboration and
  *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
-  return kind === 'note' || kind === 'canvas'
+  return kind === 'note' || kind === 'canvas' || kind === 'pages'
 }
 
 export interface DocumentStart {

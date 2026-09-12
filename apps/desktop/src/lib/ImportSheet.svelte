@@ -41,6 +41,9 @@
     table: key('A table'),
     markdown: key('Markdown files'),
     pandoc: key('A document'),
+    // Not an app's name: what arrived is somebody's own paper, and what the row says
+    // is what the import will do with it.
+    'pdf-pages': key('A PDF, as pages to write on'),
   }
 
   let over = $state(false)

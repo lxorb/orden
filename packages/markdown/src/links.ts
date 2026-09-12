@@ -98,6 +98,19 @@ export function isCanvasTarget(target: string): boolean {
   return /\.canvas$/i.test(target.trim())
 }
 
+/** Whether a target names a page note: pages of paper written on with a pen, which
+ *  Nib keeps in a `.pages` file.
+ *
+ *  The bytes are a canvas's bytes - JSON Canvas 1.0, one reader, one writer; see
+ *  canvas.ts - and the extension is what says which surface opens it and which
+ *  panel goes beside it. Two extensions rather than one because the only thing both
+ *  ends of a file can see is its name: a tab, a room and a Durable Object all ask
+ *  the name what a file is, and a flag inside the JSON would be a question none of
+ *  them could ask without reading the file first. */
+export function isPagesTarget(target: string): boolean {
+  return /\.pages$/i.test(target.trim())
+}
+
 /** The extensions a picture is written in. `apng` and `ico` are here because a
  *  browser draws them and somebody's notes may hold one. */
 const IMAGE = /\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i
@@ -157,18 +170,18 @@ export function embedKind(target: string): EmbedKind | null {
 }
 
 /** Whether a target names a file the app opens in a tab of its own rather than a
- *  note: a PDF, or a canvas.
+ *  note: a PDF, a canvas, or a page note.
  *
- *  These two behave alike everywhere a link is read. Both resolve through the
+ *  These three behave alike everywhere a link is read. All resolve through the
  *  files of the space rather than its notes, because a file has no headings and
- *  nothing to be told apart by except its extension; both are followed to the
+ *  nothing to be told apart by except its extension; all are followed to the
  *  file itself; and a link to one the space does not hold is a link to nothing,
  *  never a reason to make a note under that name.
  *
  *  Not to be confused with `isNoteTarget`, which asks something else entirely:
  *  whether a target points inside the space at all rather than out at the web. */
 export function isTabFile(target: string): boolean {
-  return isPdfTarget(target) || isCanvasTarget(target)
+  return isPdfTarget(target) || isCanvasTarget(target) || isPagesTarget(target)
 }
 
 /** Obsidian writes how wide to draw an embed after the bar: `![[pic.png|300]]`,

@@ -1,4 +1,4 @@
-import { isCanvasTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -126,7 +126,8 @@ export function excludeEntry(path: string | null | undefined): MenuEntry[] {
  *  `folder` rather than a second function, because the tree knows which its row is
  *  and nothing else about a row differs. */
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
-  if (!path || (!folder && !isMarkdownPath(path) && !isCanvasTarget(path))) return []
+  if (!path) return []
+  if (!folder && !isMarkdownPath(path) && !isCanvasTarget(path) && !isPagesTarget(path)) return []
 
   const take = () => (folder ? workspace.setFolderIcon(path, null) : void setFileIcon(path, null))
 

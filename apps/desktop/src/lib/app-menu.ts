@@ -204,6 +204,7 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         { label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
         { label: t('New canvas'), run: () => void workspace.createCanvas() },
+        { label: t('New page note'), run: () => void workspace.createPages() },
         { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
         ...(imported ? [{ label: imported.label, run: imported.run }] : []),
         { label: t('New space'), run: () => void newSpace() },

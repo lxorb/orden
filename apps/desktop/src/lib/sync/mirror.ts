@@ -18,7 +18,7 @@
  *  and nobody has to go looking for a second file. See canvas-merge.ts. */
 
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
-import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
@@ -337,7 +337,13 @@ export async function pull(
         // will settle on, since the merge gives the same file either way round.
         // Which is the same answer under every rule: nothing was lost, so there
         // is nothing to choose between.
-        const together = isCanvasTarget(remote.path) ? mergeCanvasFiles(local, content) : null
+        // A page note merges the way a canvas does, because it is the same file: the
+        // same objects with the same ids and the same times, so the union keeps every
+        // stroke either device wrote and every page either of them added.
+        const together =
+          isCanvasTarget(remote.path) || isPagesTarget(remote.path)
+            ? mergeCanvasFiles(local, content)
+            : null
 
         if (together !== null) {
           await writeDown(target, together, local)
@@ -627,7 +633,7 @@ async function keepBoth(
   const sent = isString(server.content) ? server.content : ''
   const ours = await invoke<string>('read_note', { path: here })
 
-  if (isCanvasTarget(path)) {
+  if (isCanvasTarget(path) || isPagesTarget(path)) {
     const together = mergeCanvasFiles(ours, sent)
     await writeDown(here, together, ours)
     const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)

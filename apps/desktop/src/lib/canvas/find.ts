@@ -71,5 +71,9 @@ function saysOf(node: Canvas['nodes'][number]): string {
       return node.label ?? ''
     case 'shape':
       return node.text ?? ''
+    // A page has nothing written on it: what is written is the cards and the ink on
+    // top of it, which the find bar reaches on their own.
+    case 'page':
+      return ''
   }
 }

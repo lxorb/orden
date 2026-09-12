@@ -8,7 +8,14 @@ import {
 import { account } from './account.svelte'
 import { arriving } from './arriving.svelte'
 import { blankCanvas } from './canvas/format'
-import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
+import {
+  blockIds,
+  isCanvasTarget,
+  isPagesTarget,
+  isPdfTarget,
+  isTabFile,
+} from '@nib/markdown/links'
+import { blankPages } from '@nib/markdown/pages'
 import { freePath } from '@nib/markdown/paths'
 import { taskAt } from '@nib/markdown/tasks'
 import { paperGone, paperMoved } from './pdf/papers'
@@ -107,13 +114,13 @@ export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
-/** The two things the file list makes, each of which arrives as a row waiting
+/** The three things the file list makes, each of which arrives as a row waiting
  *  for a name; see `startNaming`.
  *
  *  No folder among them. A note that holds notes is how a space is organised, so
  *  the folders on disk are made by nesting and by nothing else; see
  *  folder-notes.ts and docs/tree.md. */
-type NewKind = 'note' | 'canvas'
+type NewKind = 'note' | 'canvas' | 'pages'
 
 /** What a row of each kind is called while it has no name: never shown, since
  *  the field it arrives in is empty, but the row is in the tree and the tree is
@@ -122,6 +129,7 @@ type NewKind = 'note' | 'canvas'
 const PLACEHOLDER: Record<NewKind, string> = {
   note: 'Untitled.md',
   canvas: 'Untitled.canvas',
+  pages: 'Untitled.pages',
 }
 
 export type { Heading } from './outline'
@@ -1172,6 +1180,78 @@ class Workspace {
     }
   }
 
+  /** A page note in the space, in a tab of its own. The same three lines a canvas
+   *  gets, and for the same reason: its words are the JSON in the file, so the tab
+   *  holds a document exactly as a note's tab does and everything that crosses
+   *  between words and a file works here without knowing what a page is.
+   *
+   *  `page` counts from one, and null means wherever the tab was left. */
+  async openPages(path: string, page: number | null = null) {
+    const existing = this.tabs.find((tab) => tab.kind === 'pages' && tab.path === path)
+    if (existing) {
+      this.activeTabId = existing.id
+      if (page !== null) this.gotoPage = { path, page }
+      this.showNote()
+      return
+    }
+
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    // Gone, or unreadable. A page note that cannot be read is not blank paper to
+    // write on: saving one over it would take the file with it.
+    if (text === null) return
+
+    const file = this.document({
+      kind: 'pages',
+      path,
+      name: basename(path),
+      text,
+      dirty: false,
+    })
+    const tab = new Tab(file, this.panes.focusedId)
+    if (page !== null) tab.page = page
+    this.add(tab)
+    this.dropScaffolding(tab)
+
+    // A page note made from a PDF names that PDF on every page, which is a link out
+    // of it: the same scan a canvas's file nodes go through, because they are file
+    // nodes.
+    links.canvasRead(path, text)
+
+    this.showNote()
+    this.remember(path)
+    this.persist()
+  }
+
+  /** Makes a page note in a folder and opens it. The row asks for the name first
+   *  where there is a list to ask in, exactly as a note's and a canvas's do. */
+  async createPages(folder?: string, named?: string) {
+    const dir = folder ?? this.activeSpace?.root
+    if (!dir) return
+    if (named === undefined && this.startNaming('pages', dir)) return
+
+    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.pages))
+    const content = blankPages()
+
+    this.showEntry(this.freshEntry(path, false))
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+
+    const file = this.document({
+      kind: 'pages',
+      path,
+      name: basename(path),
+      text: content,
+      dirty: false,
+    })
+    const tab = this.add(new Tab(file, this.panes.focusedId))
+    this.showNote()
+    this.remember(path)
+    this.dropScaffolding(tab)
+
+    await invoke('write_note', { path, content })
+    await this.loadTree()
+    this.persist()
+  }
+
   /** Which page of a PDF a followed link asked for. Read and taken down by the
    *  pane showing that PDF, the way `goto` is by the one showing a note. */
   gotoPage = $state<{ path: string; page: number } | null>(null)
@@ -1227,6 +1307,16 @@ class Workspace {
     // not reached yet opens as the note it also is, and the next pass settles it.
     if (isMarkdownPath(path) && links.urlOf(path) !== null) {
       await this.openWeb(path)
+      return
+    }
+
+    if (isPagesTarget(path)) {
+      // Not in front of a pair of glasses either, and for the same reason a canvas
+      // is not: a page of handwriting has nothing the panel could put on its seven
+      // lines.
+      if (isPlugin()) return
+
+      await this.openPages(path)
       return
     }
 
@@ -2900,6 +2990,7 @@ class Workspace {
 
     const dir = folderOf(naming.path)
     if (naming.making === 'canvas') await this.createCanvas(dir, name)
+    else if (naming.making === 'pages') await this.createPages(dir, name)
     else await this.createNote(dir, name)
   }
 
@@ -3257,10 +3348,17 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    // A PDF and a canvas are files: a link to one the space does not hold is a
-    // link to nothing, never a reason to make a note under that name.
+    // A PDF, a canvas and a page note are files: a link to one the space does not
+    // hold is a link to nothing, never a reason to make a note under that name.
     if (isPdfTarget(jump.target)) {
       if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page)
+      return
+    }
+
+    if (isPagesTarget(jump.target)) {
+      // `#page=3` means the same thing here as it does in a PDF, because it is the
+      // same question about the same kind of thing; see links.ts.
+      if (jump.path) await this.openPages(insideSpace(root, jump.path), jump.page)
       return
     }
 

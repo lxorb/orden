@@ -31,6 +31,11 @@ export type FormatId =
   | 'table'
   | 'markdown'
   | 'pandoc'
+  /** A PDF, brought in as pages to write on: the paper itself, and a page note
+   *  beside it whose pages are that paper's pages. The one row here that is not
+   *  another app's export - somebody's own paper is a thing to write on, and the
+   *  door that already takes files is the door to bring it through. */
+  | 'pdf-pages'
 
 /** One file the import will write. A note carries words, anything else carries
  *  bytes, and both are addressed the same way so the writing does not branch. */

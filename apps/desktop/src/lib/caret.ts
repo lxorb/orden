@@ -12,9 +12,10 @@
 
 /** What is showing in the pane that has the focus. */
 export interface Showing {
-  /** Only an editor is given the caret from out here. A canvas, a paper, the graph
-   *  and a page in a web tab each take the keyboard themselves, and already do. */
-  kind: 'note' | 'canvas' | 'pdf' | 'graph' | 'web'
+  /** Only an editor is given the caret from out here. A canvas, a page note, a paper,
+   *  the graph and a page in a web tab each take the keyboard themselves, and already
+   *  do. */
+  kind: 'note' | 'canvas' | 'pages' | 'pdf' | 'graph' | 'web'
   /** A note being read is a page, and a page has no caret to put anywhere. */
   reading: boolean
 }

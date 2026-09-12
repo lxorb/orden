@@ -316,6 +316,8 @@ function nameOfFormat(format: FormatId): string {
       return 'Apple Notes'
     case 'journal':
       return 'Journal'
+    case 'pdf-pages':
+      return 'Papers'
     case 'table':
     case 'markdown':
     case 'pandoc':

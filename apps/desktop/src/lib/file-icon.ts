@@ -21,7 +21,7 @@
 
 import { canvasIconEdit } from '@nib/markdown/canvas'
 import { frontMatterEdits } from '@nib/markdown/front-matter'
-import { isCanvasTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
@@ -63,7 +63,9 @@ export async function setFileIcon(
   // heard of is not one either: both come out as no key at all.
   const colour = value === null ? null : readTint(tint)
 
-  const edit = isCanvasTarget(path)
+  // A page note keeps its icon where a canvas keeps one, because it is the same
+  // JSON: `nib.icon`, written by the same edit.
+  const edit = isCanvasTarget(path) || isPagesTarget(path)
     ? canvasIconEdit(before, value, colour)
     : frontMatterEdits(before, [
         [ICON_KEY, value],

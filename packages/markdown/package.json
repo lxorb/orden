@@ -20,6 +20,7 @@
     "./highlight": "./src/highlight.ts",
     "./highlights": "./src/highlights.ts",
     "./links": "./src/links.ts",
+    "./pages": "./src/pages.ts",
     "./paths": "./src/paths.ts",
     "./properties": "./src/properties.ts",
     "./providers": "./src/providers.ts",

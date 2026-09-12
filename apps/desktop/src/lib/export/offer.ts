@@ -18,7 +18,7 @@ import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 /** The kinds of document that go out differently. Narrower than a tab's kind: a
  *  deck is a note with slide breaks in it, and a file the app is only showing is
  *  worth a row for exactly as long as its bytes can be reached. */
-export type ExportKind = 'note' | 'deck' | 'canvas' | 'file' | 'none'
+export type ExportKind = 'note' | 'deck' | 'canvas' | 'pages' | 'file' | 'none'
 
 /** The rows the ten markdown formats do not cover: a canvas as one drawing, a
  *  deck as slides, and a file the app never wrote handed over as it stands.
@@ -52,6 +52,11 @@ const OFFERS: Record<ExportKind, readonly ExportId[]> = {
   note: [...FORMATS, ...VARIANTS],
   deck: [...FORMATS, 'slides-html', 'slides-pdf', ...VARIANTS],
   canvas: ['png', 'svg', 'pdf'],
+  // A page note is pages, so its three rows mean a page each rather than one
+  // picture: a PDF of the whole note, and a PNG or an SVG per page in a zip. The
+  // same three words, because they are the same three formats; what differs is that
+  // paper has pages and a plane does not.
+  pages: ['pdf', 'png', 'svg'],
   file: ['copy'],
   none: [],
 }
@@ -92,6 +97,9 @@ export function exportKindOf(open: Open | null): ExportKind {
 
     case 'canvas':
       return 'canvas'
+
+    case 'pages':
+      return 'pages'
 
     // A copy is bytes read off a path, so a paper with no path behind it is a
     // paper the app cannot hand over.
