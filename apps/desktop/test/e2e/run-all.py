@@ -21,7 +21,7 @@ throws is an app that broke. The last column says which kind each one is.
 
 Two things about the set that are not true of a drive on its own:
 
-  - Six of them build the app against a Worker of their own, which bakes that
+  - Ten of them build the app against a Worker of their own, which bakes that
     Worker's address into `dist` as the API. The build left behind then points
     at a port with nothing on it, so the shared build is made again after any
     drive that did this; see WORKER_BUILD.
@@ -29,7 +29,7 @@ Two things about the set that are not true of a drive on its own:
     hand and by other people at the same time. A drive whose port is already
     taken is not a drive that failed, so its port is waited for and it is called
     blocked rather than failed if the wait runs out.
-  - Those same six want `CLOUDFLARE_API_TOKEN` in the environment, because the
+  - Those same ten want `CLOUDFLARE_API_TOKEN` in the environment, because the
     Worker binds Workers AI and that has no local emulation: `wrangler dev`
     opens a remote proxy session for it and cannot without one. The two that
     hold a socket open die without it; the ones that only make requests have
