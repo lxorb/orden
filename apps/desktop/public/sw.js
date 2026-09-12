@@ -26,7 +26,10 @@ const STORE = 'assets'
 
 /** What a file's name says it holds. A browser will draw a JPEG announced as
  *  `image/jpg`; it will draw nothing at all for an SVG that is not
- *  `image/svg+xml`, which is why the name is asked before the row. */
+ *  `image/svg+xml`, which is why the name is asked before the row.
+ *
+ *  The app's own copy is src/lib/mime.ts, and asset-route.test.ts holds this one
+ *  to it entry by entry. */
 const TYPES = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -37,6 +40,8 @@ const TYPES = {
   svg: 'image/svg+xml',
   bmp: 'image/bmp',
   ico: 'image/x-icon',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
   pdf: 'application/pdf',
   mp3: 'audio/mpeg',
   m4a: 'audio/mp4',
@@ -124,9 +129,11 @@ function nameOf(path) {
 }
 
 function typeOf(path, stored) {
-  const extension = /\.([a-z0-9]+)$/i.exec(path)
-  const known = (extension && TYPES[extension[1].toLowerCase()]) || UNKNOWN_TYPE
-  return known === UNKNOWN_TYPE && stored ? stored : known
+  // The same rule as `assetType` in src/lib/web/asset-route.ts: the name, then
+  // what was written down beside the row, then bytes and no claim.
+  const extension = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(path)
+  const known = extension && TYPES[extension[1].toLowerCase()]
+  return known || stored || UNKNOWN_TYPE
 }
 
 /** The row's base64 as bytes, or null for a row that is not base64 - which would

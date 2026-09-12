@@ -9,8 +9,9 @@ public/sw.js out of the same IndexedDB the notes are in.
 So this drive is about a picture being *there*: pasted into a note and drawn in the
 editor, drawn the same in the reading view, drawn again after a reload - because an
 address that survives a reload is the whole reason it is an address rather than a
-`blob:` - named three ways in one note, and dropped onto a plane. On a pointer and
-on a finger, because the claim is that the two are one design.
+`blob:` - named three ways in one note, brought in from a Notion export through the
+Import sheet, and dropped onto a plane. On a pointer and on a finger, because the
+claim is that the two are one design.
 
 The worker itself is asked directly as well: what it says a picture is, how long it
 may be kept, what a picture that is not there gets, and that it does not answer for
@@ -36,8 +37,10 @@ import socket
 import socketserver
 import struct
 import subprocess
+import tempfile
 import threading
 import time
+import zipfile
 import zlib
 from pathlib import Path
 
@@ -85,6 +88,33 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
 
 PASTED = base64.b64encode(png(220, 150, (250, 120, 60))).decode()
 DROPPED = base64.b64encode(png(180, 180, (70, 170, 250))).decode()
+IMPORTED = png(200, 130, (120, 220, 130))
+
+# The ids Notion sticks on the end of every name it writes; the same shape
+# test/e2e/import.py builds its fixture in.
+PLAN = "1a2b3c4d5e6f78901a2b3c4d5e6f7890"
+KIT = "aaaabbbbccccddddeeeeffff00001111"
+
+
+def notion_zip(into: Path) -> Path:
+    """A Notion export with a picture in it: a page, a page under it, and the
+    picture beside that one. Written here rather than kept in the repository, for
+    the same reason the pasted picture is."""
+    path = into / "Export-4b7c1d2e.zip"
+
+    with zipfile.ZipFile(path, "w") as zip_file:
+        zip_file.writestr(
+            f"Plan {PLAN}.md",
+            f"# Plan\n\nSee [Kit list](Plan%20{PLAN}/Kit%20list%20{KIT}.md).\n",
+        )
+        zip_file.writestr(
+            f"Plan {PLAN}/Kit list {KIT}.md",
+            f"# Kit list\n\nA tent and a stove.\n\n![](tent%20{KIT}.png)\n",
+        )
+        zip_file.writestr(f"Plan {PLAN}/tent {KIT}.png", IMPORTED)
+
+    return path
+
 
 NOTE = """# Pictures
 
@@ -206,6 +236,9 @@ async () => {
 """
 
 failures: list[str] = []
+
+# Where the Notion export is written for the run, set by `main`.
+FIXTURES = Path(tempfile.gettempdir())
 
 
 def say(words: str) -> None:
@@ -411,6 +444,49 @@ def three_ways(page: Page, where: str, relative: str) -> None:
     page.wait_for_timeout(1200)
 
 
+OPEN_NAMED = """
+async (stem) => {
+  const ws = window.nibApp.workspace
+  await ws.loadTree()
+  const found = ws.notes.find((one) => one.name.startsWith(stem))
+  if (!found) return null
+  await ws.openEntry(found.path, { activate: true })
+  return found.path
+}
+"""
+
+
+def imported(page: Page, where: str, zip_path: Path) -> None:
+    """A Notion export brought in through the Import sheet, and the picture it
+    carried drawn in the note that names it.
+
+    An import writes a picture through `write_bytes` under a path it chose, rather
+    than through the app's own naming: a name somebody else picked and not a hash,
+    which is the other half of the addressing this drive is about."""
+    page.evaluate("() => window.nibApp.importing.show()")
+    page.wait_for_selector("button.drop", timeout=20000)
+    page.wait_for_timeout(450)
+
+    with page.expect_file_chooser() as chooser:
+        page.click("button.drop")
+    chooser.value.set_files(str(zip_path))
+
+    page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
+    say(f"[{where}] the sheet read a {page.evaluate('() => window.nibApp.importing.format')}")
+    page.click("button.primary")
+    page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
+    page.evaluate("() => window.nibApp.importing.close()")
+    page.wait_for_timeout(400)
+
+    opened = page.evaluate(OPEN_NAMED, "Kit list")
+    if not opened:
+        wrong(f"{where}: nothing called Kit list arrived")
+        return
+
+    page.wait_for_timeout(1200)
+    say(f"[{where}] {opened} says {page.evaluate('() => window.nibApp.workspace.active.doc')!r}")
+
+
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
     root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
@@ -473,6 +549,30 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
+    # A Notion export, through the Import sheet. The picture in it arrives under a
+    # name somebody else chose rather than a hash of its bytes, which is the other
+    # half of the addressing: it draws, and it is not offered for keeping for good.
+    imported(page, "import", notion_zip(FIXTURES))
+    shot(page, "06-editor-imported")
+    expect_drawn(page, "the imported note", 1)
+
+    brought = page.evaluate(
+        "() => new URL(document.querySelector('img[src*=\"/asset/\"]').src).pathname"
+    )
+    asked = page.evaluate(ASKED, brought)
+    say(f"[worker] the imported picture: {brought} {json.dumps(asked)}")
+    if asked["type"] != "image/png":
+        wrong(f"the imported picture is served as {asked['type']!r}")
+    if asked["cache"] != "no-cache":
+        wrong(f"a picture named by a person was offered for keeping: {asked['cache']!r}")
+
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(1200)
+    shot(page, "07-reading-imported")
+    expect_drawn(page, "the imported note, read", 1)
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(400)
+
     # A plane: a picture dropped on it is a card of its own, drawn through the same
     # resolver the note's pictures go through.
     opened = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
@@ -502,7 +602,7 @@ def drive(browser: Browser) -> None:
         }"""
     )
     say(f"[plane] {json.dumps(plane)}")
-    shot(page, "06-plane-dropped")
+    shot(page, "08-plane-dropped")
     if not plane:
         wrong("a picture dropped on the plane is not on the plane")
     else:
@@ -540,25 +640,42 @@ def finger(browser: Browser) -> None:
     page.wait_for_timeout(1200)
     shot(page, "13-phone-reading-after-reload")
     expect_drawn(page, "phone reading after a reload", 3, wide=420)
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(400)
+
+    # And a Notion export through the sheet on a phone, which is where somebody
+    # moving off another app actually does it.
+    imported(page, "phone import", notion_zip(FIXTURES))
+    shot(page, "14-phone-imported")
+    expect_drawn(page, "the imported note on a phone", 1, wide=420)
+
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(1200)
+    shot(page, "15-phone-reading-imported")
+    expect_drawn(page, "the imported note read on a phone", 1, wide=420)
 
     page.context.close()
 
 
 def main() -> int:
+    global FIXTURES
+
     build()
     shutil.rmtree(SHOTS, ignore_errors=True)
     server = serve()
 
     try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                say("--- a pointer ---")
-                drive(browser)
-                say("--- a finger ---")
-                finger(browser)
-            finally:
-                browser.close()
+        with tempfile.TemporaryDirectory() as made:
+            FIXTURES = Path(made)
+            with sync_playwright() as play:
+                browser = play.chromium.launch(channel="chrome")
+                try:
+                    say("--- a pointer ---")
+                    drive(browser)
+                    say("--- a finger ---")
+                    finger(browser)
+                finally:
+                    browser.close()
     finally:
         server.shutdown()
         server.server_close()
@@ -569,7 +686,7 @@ def main() -> int:
             print(f"  - {one}", flush=True)
         return 1
 
-    print("\na pasted picture draws, reads, reloads and lands on a plane", flush=True)
+    print("\na picture pasted, named, imported and dropped draws everywhere", flush=True)
     return 0
 
 

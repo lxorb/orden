@@ -1,7 +1,6 @@
 /** The desktop app's command surface, served from the browser's own storage.
  *  Same names, same shapes - so every call site works on both. */
 
-import { mimeOf } from '../export/copy'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { scanCanvas, scanNote, type SpaceLinks } from '../scan-note'
@@ -596,7 +595,7 @@ export async function webInvoke<T>(
       // brought along.
       await assets.put({
         path: normalise(path),
-        type: mimeOf(path),
+        type: assetType(path),
         data: args.base64 as string,
         modified: now(),
       })

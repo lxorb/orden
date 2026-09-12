@@ -6,21 +6,8 @@
  *  same download every other export ends in. */
 
 import { fileBytes } from '../bytes'
+import { mimeOfPath, UNKNOWN_TYPE } from '../mime'
 import { deliver } from './save'
-
-/** What the bytes are, so a browser's own download opens them with the right
- *  program. Anything else is handed over as bytes, with no claim about what they
- *  hold, which is what a browser does with an unknown file anyway. */
-const MIMES: Record<string, string> = {
-  pdf: 'application/pdf',
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  svg: 'image/svg+xml',
-}
 
 /** The extension a path ends in, lowercased, or `bin` for a file with none. A
  *  dot in a folder name along the way is not an extension. */
@@ -28,9 +15,11 @@ export function extensionOf(path: string): string {
   return /\.([^.\\/]+)$/.exec(path)?.[1]?.toLowerCase() ?? 'bin'
 }
 
-/** What the copy is offered as, which is what the file already is. */
+/** What the copy is offered as, which is what the file already is. A file whose
+ *  name says nothing goes over as bytes, with no claim about what they hold,
+ *  which is what a browser does with an unknown file anyway. */
 export function mimeOf(path: string): string {
-  return MIMES[extensionOf(path)] ?? 'application/octet-stream'
+  return mimeOfPath(path) ?? UNKNOWN_TYPE
 }
 
 /** Copies the file at `path`, and answers where the copy went, or null when the

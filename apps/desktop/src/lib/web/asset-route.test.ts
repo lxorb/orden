@@ -1,13 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import {
-  ASSET_ROUTE,
-  assetRoute,
-  assetStorePath,
-  assetType,
-  mimeOfPath,
-  UNKNOWN_TYPE,
-} from './asset-route'
+import { ASSET_ROUTE, assetRoute, assetStorePath, assetType } from './asset-route'
+import { MIME_TYPES, mimeOfPath, UNKNOWN_TYPE } from '../mime'
 
 const SW = new URL('../../../public/sw.js', import.meta.url)
 
@@ -73,9 +67,10 @@ describe('what a stored file says it is', () => {
     expect(mimeOfPath('/Work/assets/a.webp')).toBe('image/webp')
   })
 
-  test('a name that says nothing claims nothing', () => {
-    expect(mimeOfPath('a.wat')).toBe(UNKNOWN_TYPE)
-    expect(mimeOfPath('noextension')).toBe(UNKNOWN_TYPE)
+  test('a name that says nothing says nothing', () => {
+    expect(mimeOfPath('a.wat')).toBeNull()
+    expect(mimeOfPath('noextension')).toBeNull()
+    expect(assetType('a.wat')).toBe(UNKNOWN_TYPE)
   })
 
   test('the name is asked before the row, because old rows are wrong', () => {
@@ -104,15 +99,11 @@ describe('the worker and the page agree', () => {
     expect(source).toContain(`const STORE = 'assets'`)
   })
 
-  test('on every type', () => {
-    // Read out of the page's own table rather than listed again here, so a type
+  test('on every media type there is', () => {
+    // Walked out of the app's own table rather than listed again here, so a type
     // added to one and not the other is what fails.
-    for (const extension of ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'bmp', 'ico']) {
-      expect(source).toContain(`${extension}: '${mimeOfPath(`a.${extension}`)}'`)
-    }
-
-    for (const extension of ['pdf', 'mp3', 'm4a', 'wav', 'ogg', 'flac', 'mp4', 'webm', 'mov']) {
-      expect(source).toContain(`${extension}: '${mimeOfPath(`a.${extension}`)}'`)
+    for (const [extension, type] of Object.entries(MIME_TYPES)) {
+      expect(source).toContain(`${extension}: '${type}'`)
     }
 
     expect(source).toContain(`const UNKNOWN_TYPE = '${UNKNOWN_TYPE}'`)
