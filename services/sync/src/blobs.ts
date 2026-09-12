@@ -24,7 +24,15 @@ const LIMITS: Record<string, number> = {
   // three is a file anybody writes by hand at any size; see docs/publishing.md.
   'text/css': 512 * 1024,
   'text/javascript': 512 * 1024,
+  // A diagram the app drew for a published page, which is the same kind of thing:
+  // a few kilobytes of machine-written SVG, never a file anybody typed. See
+  // packages/markdown/src/diagrams.ts.
+  'image/svg+xml': 512 * 1024,
 }
+
+/** The kinds that are a document rather than a picture in a note, and that are
+ *  therefore served only where a published page could point a reader at one. */
+const DOCUMENTS = new Set(['application/pdf'])
 
 const HASH = /^[a-f0-9]{64}$/
 
@@ -148,6 +156,18 @@ blobs.delete('/:hash', async (context) => {
  *  private space is not something a hash gets anybody any more. */
 export const publicBlobs = new Hono<{ Bindings: Env }>()
 
+/** What an SVG served from here may do, which is nothing.
+ *
+ *  An SVG is a document: inside an `<img>` - which is the only way a page here
+ *  writes one - a browser runs no script and fetches nothing anyway, but the
+ *  address is a link like any other and somebody may open it on its own. Then it
+ *  is a document on this site's origin, and one drawn by a drawing library out of
+ *  text somebody wrote. So it is sandboxed into an origin of its own with nothing
+ *  allowed but the styles the picture's own colours are written in. The app strips
+ *  scripts and handlers before it uploads one; this is the half that does not
+ *  depend on which version of the app drew it. */
+const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+
 /** Whether any published space says it keeps this file beside its notes, which is
  *  the one condition under which a page here writes its URL.
  *
@@ -180,7 +200,7 @@ publicBlobs.get('/:name', async (context) => {
   // A document, and nothing that reads one of those from here has a session to
   // show; see the header. Answered as missing rather than as refused, because to
   // anybody who has not been given the file that is what it is.
-  if (type === 'application/pdf' && !(await publishedAnywhere(context.env, hash))) {
+  if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash))) {
     return context.notFound()
   }
 
@@ -193,6 +213,7 @@ publicBlobs.get('/:name', async (context) => {
       // The type is the one that was accepted on the way in; nothing here is to
       // be read as anything else, whatever the bytes look like.
       'x-content-type-options': 'nosniff',
+      ...(type === 'image/svg+xml' ? { 'content-security-policy': SVG_POLICY } : {}),
     },
   })
 })
