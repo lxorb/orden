@@ -15,7 +15,7 @@
   import { fade } from 'svelte/transition'
 
   import { key, t } from './i18n.svelte'
-  import { importing } from './importing.svelte'
+  import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
   import type { FormatId } from './import/plan'
   import { dur } from './motion'
@@ -36,6 +36,8 @@
     craft: 'Craft',
     onenote: 'OneNote',
     tomboy: 'Tomboy',
+    'apple-notes': 'Apple Notes',
+    journal: 'Apple Journal',
     table: key('A table'),
     markdown: key('Markdown files'),
     pandoc: key('A document'),
@@ -122,9 +124,38 @@
       <span class="hint">{t('A zip, a folder, or a file another app wrote')}</span>
     </button>
 
+    <!-- Apple's own two apps, which are the two that hand over nothing to drop.
+         Journal has an export; Notes has none at all, and on the Mac it is on
+         there is a database to read instead of an exporter to install. -->
+    {#if onMac()}
+      <div class="card">
+        <div class="row">
+          <span class="name">{t('Apple Notes')}</span>
+          <button
+            class="pill"
+            onclick={() => void importing.readMac()}
+            disabled={importing.stage === 'reading'}
+          >
+            {t('Read them from this Mac')}
+          </button>
+        </div>
+        {#if importing.noAccess}
+          <p class="hint">
+            {t('Turn nibeditor on under Full Disk Access, then ask again.')}
+          </p>
+          <div class="row">
+            <span class="name">{t('Full Disk Access')}</span>
+            <button class="pill" onclick={() => void importing.openAccess()}>
+              {t('Open the setting')}
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
     <p class="note">
       {t(
-        'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.',
+        'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.',
       )}
     </p>
   {:else}

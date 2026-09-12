@@ -166,8 +166,12 @@ function codePoint(value: number): string | null {
 }
 
 /** Where the tag that closes this one starts, counting nesting, or the end of
- *  the document when nothing closes it. */
-function closingOf(xml: string, name: string, after: number): number {
+ *  the document when nothing closes it.
+ *
+ *  Exported because one format is read by cutting a part out of its markup: an
+ *  Apple Journal entry's date and title are two divs whose words become the
+ *  note's front matter and its name, and what is left is the entry. */
+export function closingOf(xml: string, name: string, after: number): number {
   let depth = 1
 
   for (const tag of tagsIn(xml, after)) {

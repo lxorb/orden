@@ -18,6 +18,12 @@ import type { Rows } from './table'
  *  few enough that a zip of six thousand notes is not unpacked to answer it. */
 const PEEK = 20
 
+/** One Apple Journal entry, as its export names it. */
+const ENTRY = /(^|\/)entries\/[^/]+\.html?$/i
+
+/** The three marks macOS leaves in rich text it writes out as HTML. */
+const APPLE_HTML = /Cocoa HTML Writer|Apple-converted-space|-apple-system-font/i
+
 /** What pandoc reads and nothing here does. Only offered where pandoc is
  *  installed, which the sheet knows and this does not. */
 const PANDOC = /\.(docx|odt|rtf|epub|rst|textile|tex|opml|org|docbook|fb2)$/i
@@ -34,6 +40,10 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   const bundle = await bundleWriter(sources)
   if (bundle) return bundle
 
+  // Apple Journal writes `Entries/` beside `Resources/` and its own date above
+  // every entry, which nothing else does.
+  if (await looksLikeJournal(sources)) return 'journal'
+
   // Takeout names the folder, and a Keep note says what it is even loose.
   if (has(/(^|\/)Keep\//i)) return 'keep'
 
@@ -49,8 +59,14 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 
   if (csv.length && !markdown.length && !html.length) return 'table'
 
+  // Both of these say so in the HTML itself, and both are asked before the
+  // markdown branch: an exporter that writes a note twice, once as markdown and
+  // once as HTML, is still that app's export.
+  if (html.length && (await looksLikeOneNote(sources))) return 'onenote'
+  if (html.length && (await looksLikeApple(sources))) return 'apple-notes'
+
   if (markdown.length) return (await looksLikeBear(sources)) ? 'bear' : 'markdown'
-  if (html.length) return (await looksLikeOneNote(sources)) ? 'onenote' : 'markdown'
+  if (html.length) return 'markdown'
   if (has(PANDOC)) return 'pandoc'
 
   return null
@@ -110,6 +126,38 @@ async function looksLikeBear(sources: readonly Source[]): Promise<boolean> {
 
   for (const note of notes) {
     if (/(^|[\s(])#[^#\s][^#\n]{0,60}#/m.test(await note.text())) return true
+  }
+
+  return false
+}
+
+/** An Apple Journal export: one HTML document per entry under `Entries/`, with
+ *  the media under `Resources/`.
+ *
+ *  The entry says so itself - Journal draws the date above it in a div of its own
+ *  - and a set of dated names beside a `Resources/` folder says it too, for an
+ *  export whose documents that line is not in. */
+async function looksLikeJournal(sources: readonly Source[]): Promise<boolean> {
+  const entries = sources.filter((one) => ENTRY.test(one.path)).slice(0, PEEK)
+  if (!entries.length) return false
+
+  for (const entry of entries) {
+    if (/class="pageHeader"/i.test((await entry.text()).slice(0, 8000))) return true
+  }
+
+  const dated = entries.every((one) => /^\d{4}-\d{2}-\d{2}/.test(one.path.split('/').pop() ?? ''))
+  return dated && sources.some((one) => /(^|\/)resources\//i.test(one.path))
+}
+
+/** Apple's own HTML, which is what every Apple Notes exporter hands over: a
+ *  note's rich text written out the way macOS writes rich text anywhere. The
+ *  third-party exporters read the note through the system and save that, so this
+ *  is the sign they share rather than a sign one of them invented. */
+async function looksLikeApple(sources: readonly Source[]): Promise<boolean> {
+  const pages = sources.filter((one) => /\.html?$/i.test(one.path)).slice(0, PEEK)
+
+  for (const page of pages) {
+    if (APPLE_HTML.test((await page.text()).slice(0, 4000))) return true
   }
 
   return false
@@ -175,8 +223,13 @@ export async function readAs(
       const { readTomboy } = await import('./tomboy')
       return readTomboy(sources)
     }
+    case 'journal': {
+      const { readJournal } = await import('./journal')
+      return readJournal(sources)
+    }
     case 'craft':
     case 'onenote':
+    case 'apple-notes':
     case 'markdown': {
       const { readPlain } = await import('./plain')
       return readPlain(sources, { format })

@@ -11,7 +11,10 @@
  *  zip of six thousand notes takes a moment, and a sheet that is closed and
  *  opened again should not read it twice. */
 
+import { platform } from '@tauri-apps/plugin-os'
+
 import { message, t } from './i18n.svelte'
+import { NO_ACCESS, NO_DATABASE } from './import/apple'
 import { applyImport } from './import/apply'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
 import { detect, readAs } from './import/read'
@@ -19,6 +22,7 @@ import { sourcesFrom, tooMuch, type Picked, type Source } from './import/sources
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
+import { invoke, isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** What the sheet is doing, which is what it draws. */
@@ -52,6 +56,10 @@ class Importing {
   /** How many names were taken, once it has been written. */
   stepped = $state(0)
 
+  /** Set when macOS refuses the folder Notes keeps its notes in, which is what it
+   *  does until the app has Full Disk Access. */
+  noAccess = $state(false)
+
   /** The files behind the plan. Not state: they hold the whole export, and
    *  nothing draws them. */
   private sources: Source[] = []
@@ -78,6 +86,7 @@ class Importing {
 
   forget() {
     this.stage = 'waiting'
+    this.noAccess = false
     this.sources = []
     this.plan = null
     this.format = null
@@ -112,6 +121,38 @@ class Importing {
       this.stage = 'waiting'
       this.error = message(error, t('That export could not be read.'))
     }
+  }
+
+  /** Apple Notes on this Mac, read out of the database Notes keeps.
+   *
+   *  The one import with no file in it, because Notes has no export: what a reader
+   *  would otherwise be told is to install something else first. Only in the
+   *  desktop app on a Mac, which is where that database is. */
+  async readMac() {
+    this.stage = 'reading'
+    this.error = null
+    this.noAccess = false
+    this.sources = []
+
+    try {
+      const { readMacNotes } = await import('./import/apple')
+      const plan = await readMacNotes()
+
+      this.format = plan.format
+      this.folder = nameOfFormat(plan.format)
+      this.plan = plan
+      this.stage = 'ready'
+    } catch (error) {
+      this.stage = 'waiting'
+      this.error = whyNotRead(error)
+      this.noAccess = message(error, '') === NO_ACCESS
+    }
+  }
+
+  /** Opens Full Disk Access in System Settings, since a sheet that names a
+   *  permission and leaves the reader to find the pane has asked twice. */
+  async openAccess() {
+    await invoke('open_full_disk_access').catch(() => undefined)
   }
 
   /** The plan again, for a choice that changes what would be made. */
@@ -199,6 +240,30 @@ class Importing {
       this.error = message(error, t('That import could not be written.'))
     }
   }
+}
+
+/** Whether this machine is the one platform that can be read without an export:
+ *  a Mac, in the desktop app. `platform()` reads what the os plugin left in the
+ *  page before the first script ran, so this is known without waiting. */
+export function onMac(): boolean {
+  return isDesktop && platform() === 'macos'
+}
+
+/** Why a read of the Mac's own notes did not happen, in words. The crate answers
+ *  two of these as marks rather than sentences, because what to say about a
+ *  permission is the sheet's business and not the crate's. */
+function whyNotRead(error: unknown): string {
+  const said = message(error, '')
+
+  if (said === NO_ACCESS) {
+    return t('macOS keeps those notes behind Full Disk Access.')
+  }
+
+  if (said === NO_DATABASE) {
+    return t('There are no notes in Apple Notes on this Mac.')
+  }
+
+  return message(error, t('Those notes could not be read.'))
 }
 
 /** What the import's own folder is called: after the file that was picked, since

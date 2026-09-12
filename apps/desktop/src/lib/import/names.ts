@@ -49,6 +49,25 @@ export function hasNotionId(name: string): boolean {
   return NOTION_ID.test(at > 0 ? name.slice(0, at) : name)
 }
 
+/** Every part of a path made into a name a file may have, the extension kept.
+ *
+ *  Two formats need this: a folder of markdown, whose folders were named by
+ *  whoever made them, and Apple Notes, whose folders are named after the ones in
+ *  Notes. `each` is what a format does to a part before it is made safe - taking
+ *  the id off a Notion name, for one - and nothing by default. */
+export function safeParts(path: string, each: (part: string) => string = (part) => part): string {
+  const parts = path.split('/').filter(Boolean)
+  const last = parts.pop() ?? ''
+  const at = last.lastIndexOf('.')
+  const stem = at > 0 ? last.slice(0, at) : last
+  const extension = at > 0 ? last.slice(at) : ''
+
+  const folders = parts.map((one) => safeName(each(one)))
+  const name = `${safeName(each(stem))}${extension}`
+
+  return [...folders, name].join('/')
+}
+
 /** A title out of the first line of a note, for the formats that do not carry
  *  one: the heading if it opens with one, the first words otherwise. */
 export function titleFrom(text: string): string | null {

@@ -14,7 +14,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'
-import { Names, safeName, withoutNotionId } from './names'
+import { Names, safeParts, withoutNotionId } from './names'
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 
@@ -103,14 +103,5 @@ function placedPath(path: string): string | null {
  *  Notion leaves on the end of names taken off wherever it appears: a folder of
  *  markdown might have come from there through some other tool. */
 function tidyParts(path: string): string {
-  const parts = path.split('/').filter(Boolean)
-  const last = parts.pop() ?? ''
-  const at = last.lastIndexOf('.')
-  const stem = at > 0 ? last.slice(0, at) : last
-  const extension = at > 0 ? last.slice(at) : ''
-
-  const folders = parts.map((one) => safeName(withoutNotionId(one)))
-  const name = `${safeName(withoutNotionId(stem))}${extension}`
-
-  return [...folders, name].join('/')
+  return safeParts(path, withoutNotionId)
 }

@@ -100,8 +100,15 @@ function splitTarget(inside: string): { target: string; title: string } {
 }
 
 /** Whether this points somewhere else entirely, in which case it is left alone:
- *  a web address, a mail address, or a heading inside this very note. */
+ *  a web address, a mail address, or a heading inside this very note.
+ *
+ *  `file:` is the exception, because it is not somewhere else: it is a path on
+ *  the machine the export came off, which is what macOS writes into a note's
+ *  HTML for every attachment. If that file is in the export it is one of the
+ *  files arriving, and if it is not, the link is left as it was like any other. */
 function isAddress(target: string): boolean {
+  if (/^file:/i.test(target)) return false
+
   return /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#') || target.startsWith('//')
 }
 

@@ -11,7 +11,11 @@
  *  about to write before it starts. */
 
 /** Which app the files came out of. `markdown` is the plain case: a folder of
- *  notes, which is what half of these apps export when asked nicely. */
+ *  notes, which is what half of these apps export when asked nicely.
+ *
+ *  `apple-notes` is the one that arrives two ways: as a folder some exporter
+ *  wrote, and on a Mac out of Notes' own database. Both are Apple Notes, so both
+ *  are called that. */
 export type FormatId =
   | 'notion'
   | 'evernote'
@@ -22,6 +26,8 @@ export type FormatId =
   | 'craft'
   | 'onenote'
   | 'tomboy'
+  | 'apple-notes'
+  | 'journal'
   | 'table'
   | 'markdown'
   | 'pandoc'
