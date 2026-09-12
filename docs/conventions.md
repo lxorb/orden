@@ -47,6 +47,31 @@ The Rust crate: `cargo fmt --check`, `cargo clippy -- -D warnings` (the lint
 policy lives in `Cargo.toml`), `cargo test`. It does not compile on every
 machine; CI is the reference.
 
+## Drives
+
+`apps/desktop/test/e2e/*.py` is a drive each: it serves the built web app on a
+port of its own, seeds a space through `window.nibApp`, walks the app in the
+machine's own Chrome and photographs what it found into
+`apps/desktop/test/e2e/shots/`. A drive that checks something exits non-zero
+when it does not find it; the rest print what they saw. They are not in `pnpm
+test`, because each one is a build and a browser.
+
+The whole set, one build and then one drive at a time:
+
+```sh
+python apps/desktop/test/e2e/run-all.py              # build once, run all
+python apps/desktop/test/e2e/run-all.py --no-build   # reuse apps/desktop/dist
+python apps/desktop/test/e2e/run-all.py --only tree  # the drives matching a word
+python apps/desktop/test/e2e/run-all.py --list       # what would run, in order
+```
+
+It prints a table of what passed, what it cost and where the screenshots went,
+and exits with the number of drives that failed. Every drive is run with
+`NIB_SKIP_BUILD=1`, which is how a drive is told the build in
+`apps/desktop/dist` is the one to use; a new drive should honour it. The build
+is a development one, because a production build hides the `window.nibApp` the
+drives seed through.
+
 ## Types
 
 Every package extends `tsconfig.base.json`. Beyond `strict`: an index may
