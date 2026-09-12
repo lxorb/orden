@@ -15,6 +15,7 @@ for is the site the first half published.
     the way round the tree, the contents, what links here, previous and next
     the searching a word, a phrase, a refusal, a tag, a folder, and a draft
     the forms     an answer taken on the page and read back on the account
+    the diagrams  a mermaid fence the app drew, as a picture on the page
     the dressing  publish.css, and a counter named in the policy
     the browser   the graph painted, the slash, the theme, and a hover card
     the password  the form, a wrong word, the right one, and the note behind it
@@ -47,8 +48,9 @@ APP = ROOT / "apps" / "desktop"
 SERVICE = ROOT / "services" / "sync"
 SHOTS = APP / "test" / "e2e" / "shots" / "site"
 
-# Above 18000, and not a port any other drive here uses.
-PORT = 18974
+# In this drive's own band, and not a port any other drive here uses: several of
+# these run at once, in worktrees of their own, against Workers of their own.
+PORT = 20841
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 # Every browser resolves `*.localhost` itself, so a blog's own hostname needs no
@@ -81,6 +83,11 @@ NOTES = {
     "Public/Two.md": (
         "---\ndate: 2026-05-06\ndescription: The second one.\norder: 2\n---\n\n"
         "# Two\n\nMore about mycology, and a link back to [[Public/One]].\n"
+    ),
+    "Public/Diagram.md": (
+        "---\norder: 3\n---\n\n# A diagram\n\nHow a note reaches a page.\n\n"
+        "```mermaid\ngraph TD\n  A[A note] --> B[The reading view]\n"
+        "  A --> C[A published page]\n```\n"
     ),
     "Drafts/Three.md": "# Three\n\nNot ready, and secretly about mycology.\n",
     "Quiet.md": "---\npublish: false\n---\n\n# Quiet\n\nNever on the site.\n",
@@ -404,6 +411,25 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] published: enabled={live['enabled']} at {live['subdomain']} rules={live['site']['rules']}")
     shot("published")
 
+    # And the diagrams, which the app draws with the real mermaid in this real
+    # browser and sends up as pictures: the Worker has no DOM to draw one in. What
+    # this device has already sent is written down under the space, so that is what
+    # says it happened; see apps/desktop/src/lib/site-diagrams.ts.
+    drawn = []
+    until = time.monotonic() + 40
+    while time.monotonic() < until:
+        drawn = page.evaluate(
+            """() => {
+              const id = window.nibApp.publish.spaceId
+              try { return JSON.parse(localStorage.getItem(`nib:diagrams:${id}`) ?? '[]') } catch { return [] }
+            }"""
+        )
+        if drawn:
+            break
+        page.wait_for_timeout(500)
+
+    say(f"[{name}] the app drew and sent {len(drawn)} pictures for its one diagram")
+
     # The two panes P10 left behind, on the way past: the design pass measured
     # them and this is where they are looked at.
     for section in ["sync", "account"]:
@@ -558,6 +584,42 @@ def forms(token: str, space: str) -> None:
     say(f"the account holds: {[row['answers'] for row in held.get('answers', [])]}")
 
 
+def diagrams() -> list[str]:
+    """A mermaid fence as a picture on the page.
+
+    Nothing here draws anything: the app drew both pictures in the half above and
+    sent them up, and what the Worker does is write an `<img>` where the fence
+    stood. Answers the two addresses, for the browser pass below."""
+    page = site("/public/diagram")
+    figure = re.search(r'<figure class="diagram"[^>]*>(.*?)</figure>', page.text, re.S)
+    say(f"the page carries a figure rather than a fence: {bool(figure)}")
+    say(f"and nothing is left as code: {'language-mermaid' not in page.text}")
+
+    if not figure:
+        return []
+
+    inside = figure.group(1)
+    sources = re.findall(r'src="([^"]+)"', inside)
+    say(f"it names {len(sources)} pictures, for {re.findall(r'data-scheme="([^"]+)"', inside)}")
+    say(f"with alt text: {re.findall(r'alt="([^"]*)"', inside)}")
+
+    for src in sources:
+        answer = site(src)
+        say(
+            f"{src} answers {answer.status} as {answer.headers.get('content-type')},"
+            f" {len(answer.text)} bytes, {answer.headers.get('cache-control')}"
+        )
+        say(f"  and is allowed: {answer.headers.get('content-security-policy')}")
+        say(f"  it has a size of its own: {re.findall(r'<svg[^>]*?(width=\"[^\"]+\")', answer.text)}")
+        say(f"  and no script in it: {'<script' not in answer.text}")
+
+    policy = page.headers.get("content-security-policy") or ""
+    allowed = "img-src 'self'" in policy
+    say(f"and the policy lets the page show its own pictures: {allowed}")
+
+    return sources
+
+
 def dressing(token: str, space: str) -> None:
     """The author's own stylesheet, and a counter's script."""
     css = b"#write{--nib-drive:1}"
@@ -591,6 +653,60 @@ def dressing(token: str, space: str) -> None:
     say(f"the counter is loaded: {'plausible.io/js/script.js' in one.text}")
     say(f"and named in the policy: {'https://plausible.io' in policy}")
     say(f"the scripts are the site's own: {'script-src ' in policy}")
+
+
+def drawn(browser, out: Path) -> None:
+    """The diagram on the page, in a browser, both ways round.
+
+    The whole point of the design is here: a picture per scheme, and the one shown
+    follows both the reader's system and the button in the bar. And a page with a
+    diagram on it still asks nobody but this site for anything, which is why the
+    drawing is a blob of the author's rather than a library from a CDN."""
+    context = browser.new_context(
+        viewport={"width": 1000, "height": 900},
+        user_agent=DESKTOP_AGENT,
+        device_scale_factor=2,
+    )
+    page = context.new_page()
+    page.on("pageerror", lambda error: say(f"[drawn] page error: {error}"))
+
+    asked: list[str] = []
+    page.on("request", lambda one: asked.append(one.url))
+
+    #: Which picture the browser is actually showing, and whether it arrived.
+    SHOWING = """() => [...document.querySelectorAll('.diagram img')].map((one) => ({
+      scheme: one.dataset.scheme ?? 'both',
+      shown: getComputedStyle(one).display !== 'none',
+      width: one.naturalWidth,
+      height: one.naturalHeight,
+    }))"""
+
+    for scheme in ["light", "dark"]:
+        page.emulate_media(color_scheme=scheme)
+        page.goto(f"{ORIGIN}/public/diagram", wait_until="load")
+        page.wait_for_timeout(800)
+
+        say(f"[drawn] with the system on {scheme}: {page.evaluate(SHOWING)}")
+        page.screenshot(path=str(out / f"site-diagram-{scheme}.png"))
+        say(f"shot site-diagram-{scheme}.png")
+
+    # And the reader's own word, which is the case a `prefers-color-scheme` inside
+    # the picture could never have answered: the system says dark, the button says
+    # light, and the light picture is the one on the page.
+    page.click("button.theme")
+    page.wait_for_timeout(300)
+    while page.evaluate("() => document.documentElement.dataset.theme") != "light":
+        page.click("button.theme")
+        page.wait_for_timeout(300)
+
+    say(f"[drawn] with the system on dark and the button on light: {page.evaluate(SHOWING)}")
+    page.screenshot(path=str(out / "site-diagram-chosen.png"))
+    say("shot site-diagram-chosen.png")
+
+    elsewhere = sorted({one for one in asked if not one.startswith(ORIGIN)})
+    say(f"[drawn] it asked {len(asked)} times, and nobody but this site: {elsewhere or 'nobody'}")
+
+    context.close()
 
 
 def looking(browser, out: Path) -> None:
@@ -768,6 +884,19 @@ def main() -> int:
         searching()
         say("--- a form on a page ---")
         forms(token, space)
+        say("--- a diagram the app drew ---")
+        diagrams()
+
+        # In a browser before the counter is set below, so that "it asked nobody
+        # but this site" is the whole truth rather than the truth minus one script
+        # the author asked for.
+        with sync_playwright() as play:
+            browser = play.chromium.launch(channel="chrome")
+            try:
+                drawn(browser, SHOTS)
+            finally:
+                browser.close()
+
         say("--- the author's own dressing ---")
         dressing(token, space)
 

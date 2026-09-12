@@ -10,7 +10,7 @@ served on.
 Then the two are compared: the tag and class tree of each `#write`, which is the
 whole of what a stylesheet has to work with. Nothing may differ except what is
 written down in ALLOWED below - the page's own furniture, the metadata that became
-that furniture, and the one diagram a Worker cannot draw.
+that furniture, and the diagram this drive never drew.
 
 The drive also lists every address the published page asked its browser for, and
 fails if one of them is not this origin's: KaTeX's stylesheet and the faces an
@@ -323,7 +323,8 @@ TREE = """
 ALLOWED = [
     "the page's own furniture: the way back, the byline, the offer to present, the footer",
     "the front matter, which became that furniture rather than a table on the page",
-    "the mermaid diagram, which stays a code block: drawing one needs a DOM",
+    "the mermaid diagram, which this drive publishes through the API rather than"
+    " from the app, so nothing has drawn its picture and the fence stays code",
 ]
 
 #: The page's own chrome, which the note has nothing to do with.
