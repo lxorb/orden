@@ -1,0 +1,16 @@
+-- The last step a second-factor code was accepted at, so one cannot be accepted
+-- twice.
+--
+-- RFC 6238 §5.2: a verifier must not accept the same code twice. Without this
+-- column it did - for the ninety seconds a code stays inside the drift window,
+-- one read over somebody's shoulder, out of a phishing page or off a screen
+-- share was a second sign-in as well as the first.
+--
+-- A step rather than a code, because the code is not ours to write down: the
+-- step is the number the code was derived from, so remembering it spends that
+-- code and every earlier one and says nothing about any of them.
+--
+-- Null for an account that has never answered with one, which is every account
+-- that has just enrolled: the enrolment's own code proves the app has the
+-- secret and is not a sign-in.
+alter table users add column totp_step integer;

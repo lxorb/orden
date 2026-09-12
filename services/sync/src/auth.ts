@@ -13,7 +13,7 @@ import {
 import { codeMessage, mailer } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings } from './limits'
-import { accepted, asksForSecond, halfWay, whoseHalf } from './second'
+import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { makeFirstSpace } from './spaces/first'
 import { deviceIn } from './versions'
 import type { Env, User, Variables, Whoever } from './types'
@@ -375,12 +375,17 @@ auth.post('/second', async (context) => {
   const whose = holding ? await whoseHalf(context.env, holding) : null
   if (!whose) return context.json({ error: 'start again - that took too long' }, 400)
 
-  if (!(await accepted(context.env, whose, code ?? ''))) {
+  if (!(await accepted(context.env, whose, code ?? '', machineOf(context.req)))) {
     return context.json({ error: 'that code is not right' }, 400)
   }
 
   const user = await accountById(context.env, whose)
   if (!user) return context.json({ error: 'that code is not right' }, 400)
+
+  // The emailed half is spent now that the second one has worked, and not
+  // before: a mistyped code is not a reason to ask for another mail. See
+  // `whoseHalf`.
+  await spendHalf(context.env, holding ?? '')
 
   return context.json({
     token: await openSession(context.env, user.id, deviceIn(context.req.header('x-nib-device'))),

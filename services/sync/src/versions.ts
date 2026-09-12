@@ -26,7 +26,7 @@
  *  storage nobody asked to keep, and a reader who does not want their words on
  *  the account has a clearer lever than a slider, which is not to sync. */
 
-import { now } from './crypto'
+import { cleanName, now } from './crypto'
 import type { Env, Note } from './types'
 
 /** How long the account keeps a version. */
@@ -44,12 +44,22 @@ const DAY = 24 * HOUR
  *  invocation has a ceiling on those and a busy month has plenty of both. */
 const AT_ONCE = 400
 
-/** How many rows the thinning pass looks at in one run. */
-const READ_AT_ONCE = 4000
-
 /** The most versions a route hands back at once. A month of one an hour is 720,
  *  and a list nobody scrolls is a list nobody reads. */
 const MOST_SHOWN = 300
+
+/** The most versions the account keeps of any one note.
+ *
+ *  A month under the two rules above is the first day at one every five minutes
+ *  and twenty-nine days at one an hour, which is 984 - so a note somebody writes
+ *  in every day of a month lands just under this and nothing anybody does reaches
+ *  it by accident.
+ *
+ *  It is here rather than left to the sweep because the sweep runs nightly with a
+ *  write budget, and a note written in all day makes 288 versions between two
+ *  runs of it. A ceiling that holds where the version is written is one the
+ *  bucket can be sized against; one that waits for a sweep is a hope. */
+export const MOST_KEPT = 1024
 
 /** How long a device's name may be. */
 const DEVICE_LIMIT = 40
@@ -79,10 +89,14 @@ export function presentVersion(version: Version) {
  *  shows the moment with no name beside it, which is what the device's own
  *  snapshots look like. See docs/sync.md. */
 export function deviceIn(header: string | undefined): string {
-  return (header ?? '')
-    .replace(/[\r\n]/g, ' ')
-    .trim()
-    .slice(0, DEVICE_LIMIT)
+  // Cleaned the way a person's name is, because that is what it is: a word
+  // somebody's client chose, shown in the history sheet and beside a session in
+  // the Account pane. A newline was already taken out; the rest of the control
+  // characters were not, and a name is words and not layout either way.
+  //
+  // Cut by code point rather than by unit, so a bound of forty never lands in
+  // the middle of an emoji and leaves half a character in the column.
+  return [...cleanName(header ?? '')].slice(0, DEVICE_LIMIT).join('')
 }
 
 /** Keeps what the account was just sent, unless it says nothing new.
@@ -121,6 +135,56 @@ export async function keepVersion(
   )
     .bind(note.id, now(), note.hash, note.size, by)
     .run()
+
+  await keepAtMost(env, note.id)
+}
+
+/** The ceiling on one note's history, held where the version is written.
+ *
+ *  Counted rather than read, because almost every save is nowhere near the
+ *  ceiling and a count on the note's own index is one seek. Over it, the oldest
+ *  go - which is the same answer the month gives, arrived at sooner. */
+async function keepAtMost(env: Env, noteId: string): Promise<void> {
+  const held = await env.DB.prepare(
+    'select count(*) as many from note_versions where note_id = ?',
+  )
+    .bind(noteId)
+    .first<{ many: number }>()
+
+  const over = (held?.many ?? 0) - MOST_KEPT
+  if (over <= 0) return
+
+  const { results } = await env.DB.prepare(
+    `delete from note_versions
+      where note_id = ?1
+        and at in (select at from note_versions where note_id = ?1 order by at limit ?2)
+      returning hash`,
+  )
+    .bind(noteId, over)
+    .all<{ hash: string }>()
+
+  await forgetBodies(env, results.map((one) => one.hash))
+}
+
+/** The bodies of versions that have gone, for the hashes no row names any more.
+ *
+ *  The one place a version's bytes are taken away, because the rule is one rule:
+ *  a body goes when the last row naming it has, so a version two notes share
+ *  outlives either of them losing it. Answers how many went. */
+async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<number> {
+  let gone = 0
+
+  for (const hash of new Set(hashes)) {
+    const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
+      .bind(hash)
+      .first<{ one: number }>()
+
+    if (held) continue
+    await env.NOTES.delete(versionKey(hash))
+    gone += 1
+  }
+
+  return gone
 }
 
 /** Every version of one note, newest first. */
@@ -134,7 +198,12 @@ export async function versionsOf(env: Env, noteId: string): Promise<Version[]> {
   return results
 }
 
-/** What one version said, or null for a moment this note has no version at. */
+/** What one version said, or null for a moment this note has no version at.
+ *
+ *  Null as well for a row whose body has gone, which is the same answer for the
+ *  same reason: there is nothing to show. Answering that with no words at all is
+ *  worse than answering nothing - the history sheet would draw an empty note, and
+ *  restoring it would write that emptiness over the words somebody still has. */
 export async function versionAt(env: Env, noteId: string, at: number): Promise<string | null> {
   const version = await env.DB.prepare(
     'select hash from note_versions where note_id = ? and at = ?',
@@ -145,7 +214,7 @@ export async function versionAt(env: Env, noteId: string, at: number): Promise<s
   if (!version) return null
 
   const object = await env.NOTES.get(versionKey(version.hash))
-  return object ? await object.text() : ''
+  return object ? await object.text() : null
 }
 
 /** What every note under a path said at a moment: the newest version at or
@@ -196,50 +265,37 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
 
   for (const row of old.results) freed.add(row.hash)
 
-  // And the thinning, for what is left beyond the first day.
-  const { results } = await env.DB.prepare(
-    'select note_id, at, hash from note_versions where at < ? order by note_id, at desc limit ?',
+  // And the thinning, for what is left beyond the first day: one statement per
+  // note rather than one per row.
+  //
+  // Which is the difference between a promise the sweep keeps and one it does
+  // not. A note written in all day is 288 rows, of which 264 are crowded, and a
+  // budget counted in rows spent the whole night's on a single note - so with two
+  // busy notes the month thinned to one an hour was simply not what the account
+  // held, and every night began the same distance behind. A statement a note is
+  // 400 notes a night instead, and a note is only ever behind by one run.
+  const { results: busy } = await env.DB.prepare(
+    'select distinct note_id from note_versions where at < ? limit ?',
   )
-    .bind(at - DAY, READ_AT_ONCE)
-    .all<{ note_id: string; at: number; hash: string }>()
+    .bind(at - DAY, AT_ONCE)
+    .all<{ note_id: string }>()
 
-  const crowded = tooClose(results)
-  for (const row of crowded.slice(0, AT_ONCE)) {
-    await env.DB.prepare('delete from note_versions where note_id = ? and at = ?')
-      .bind(row.note_id, row.at)
-      .run()
-    freed.add(row.hash)
+  for (const one of busy) {
+    const thinned = await env.DB.prepare(
+      `delete from note_versions
+        where note_id = ?1 and at < ?2
+          and at not in (select max(at) from note_versions
+                          where note_id = ?1 and at < ?2
+                          group by cast(at / ?3 as integer))
+        returning hash`,
+    )
+      .bind(one.note_id, at - DAY, HOUR)
+      .all<{ hash: string }>()
+
+    for (const row of thinned.results) freed.add(row.hash)
   }
 
-  let gone = 0
-  for (const hash of freed) {
-    const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
-      .bind(hash)
-      .first<{ one: number }>()
-
-    if (held) continue
-    await env.NOTES.delete(versionKey(hash))
-    gone += 1
-  }
-
-  return gone
-}
-
-/** Which of these rows an hour already has a newer version in. Given newest
- *  first per note, so the first row in each bucket is the one that stays. */
-export function tooClose(
-  rows: readonly { note_id: string; at: number; hash: string }[],
-): { note_id: string; at: number; hash: string }[] {
-  const kept = new Set<string>()
-  const crowded: { note_id: string; at: number; hash: string }[] = []
-
-  for (const row of rows) {
-    const bucket = `${row.note_id}:${Math.floor(row.at / HOUR)}`
-    if (kept.has(bucket)) crowded.push(row)
-    else kept.add(bucket)
-  }
-
-  return crowded
+  return await forgetBodies(env, freed)
 }
 
 /** Everything the account remembered one note saying, gone for good.
@@ -255,16 +311,8 @@ export async function forgetVersions(env: Env, noteId: string): Promise<number> 
     .bind(noteId)
     .all<{ hash: string }>()
 
-  let gone = 0
-  for (const hash of new Set(results.map((one) => one.hash))) {
-    const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
-      .bind(hash)
-      .first<{ one: number }>()
-
-    if (held) continue
-    await env.NOTES.delete(versionKey(hash))
-    gone += 1
-  }
-
-  return gone
+  return await forgetBodies(
+    env,
+    results.map((one) => one.hash),
+  )
 }

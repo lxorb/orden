@@ -152,6 +152,21 @@ export function mayTrySecond(env: Env, userId: string): Promise<boolean> {
   return within(env, 'second', userId, SECOND_TRIES_AN_HOUR, AN_HOUR)
 }
 
+/** And how many one machine may try, whoever they are about.
+ *
+ *  The ceiling above says nothing to a script working through a list of
+ *  addresses: twenty guesses each is as many as it likes, from one machine, so
+ *  long as it keeps moving on to the next account. This is the one that answers
+ *  that. Generous against the account ceiling, because a household or an office
+ *  behind one address is several people mistyping. */
+const SECOND_TRIES_FROM_ONE_MACHINE = 60
+
+/** Whether one more may be checked from this machine, counting this one. */
+export function mayTrySecondFrom(env: Env, machine: string | null): Promise<boolean> {
+  if (!machine) return Promise.resolve(true)
+  return within(env, 'second-from', machine, SECOND_TRIES_FROM_ONE_MACHINE, AN_HOUR)
+}
+
 /** Whether a message may go now, and what to say when it may not.
  *
  *  Null is the answer that means yes, so that a caller writes

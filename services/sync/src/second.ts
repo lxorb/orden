@@ -29,11 +29,13 @@ import { Hono } from 'hono'
 import { opened, sealed } from './ask/key'
 import { equals, now, randomBytes, randomToken, sha256 } from './crypto'
 import { readBody } from './body'
-import { mayTrySecond } from './limits'
+import { machineOf, mayTrySecond, mayTrySecondFrom } from './limits'
 import type { Env, User, Variables } from './types'
 
 /** This derivation, which is not the one the OpenAI key uses. */
 const SALT = 'nib/second-factor/v1'
+
+const encoder = new TextEncoder()
 
 /** Thirty seconds a step, six digits, SHA-1: what every authenticator app
  *  implements, and none of it is ours to choose. */
@@ -45,9 +47,24 @@ const DIGITS = 6
  *  seconds slow working and looking broken. */
 const DRIFT = 1
 
-/** How many one-shot codes are handed out, and how long each is. */
+/** How many one-shot codes are handed out, and how long each is.
+ *
+ *  Ten bytes rather than five. Five is forty bits, and forty bits behind one
+ *  round of SHA-256 is a table a graphics card walks in minutes: a leaked
+ *  database would have been a way past the factor on every account at once,
+ *  which is the one thing hashing them was there to prevent. */
 const RECOVERY_CODES = 10
-const RECOVERY_BYTES = 5
+const RECOVERY_BYTES = 10
+
+/** What a recovery code is at rest, and which scheme said so.
+ *
+ *  PBKDF2 rather than a single digest, salted with the account's own id, so one
+ *  table cannot serve two accounts and a shorter code than the ten bytes above
+ *  would still not be cheap to walk. Versioned for the reason the sealed key is
+ *  (see ask/key.ts): a row that cannot say which scheme wrote it is a row nobody
+ *  can migrate, and the bare digests written before this still have to work. */
+const RECOVERY_VERSION = '2'
+const ROUNDS = 100_000
 
 /** RFC 4648 base32, unpadded, which is the only way an authenticator app takes a
  *  secret. Written here because the codebase has no codec for it and it is
@@ -128,17 +145,48 @@ export async function codeAt(secretHex: string, step: number): Promise<string> {
   return String(value % 10 ** DIGITS).padStart(DIGITS, '0')
 }
 
-/** Whether a code is this secret's, now or one step either side. */
-export async function matches(secretHex: string, given: string, at = now()): Promise<boolean> {
+/** Which step a code is this secret's at, or null for one that is nobody's.
+ *
+ *  The step rather than a yes, because a code that has been answered with must
+ *  not be answered with again - RFC 6238 §5.2 - and the step is what can be
+ *  written down to say so. The code itself is not ours to keep. */
+export async function stepMatching(
+  secretHex: string,
+  given: string,
+  at = now(),
+): Promise<number | null> {
   const entered = given.replace(/\D/g, '')
-  if (entered.length !== DIGITS) return false
+  if (entered.length !== DIGITS) return null
 
   const step = Math.floor(at / STEP)
   for (let away = -DRIFT; away <= DRIFT; away += 1) {
-    if (equals(await codeAt(secretHex, step + away), entered)) return true
+    if (equals(await codeAt(secretHex, step + away), entered)) return step + away
   }
 
-  return false
+  return null
+}
+
+/** Whether a code is this secret's, now or one step either side. What the
+ *  enrolment asks, which is about the app holding the secret rather than about
+ *  letting anybody in, so it spends nothing. */
+export async function matches(secretHex: string, given: string, at = now()): Promise<boolean> {
+  return (await stepMatching(secretHex, given, at)) !== null
+}
+
+/** Spends one step, and says whether it was this account's to spend.
+ *
+ *  One conditional update rather than a read and a write, so two requests
+ *  holding the same code cannot both find it unspent. Every step at or below the
+ *  one written is spent with it, which is what keeps a code from the window
+ *  before this one from being replayed either. */
+async function spendStep(env: Env, userId: string, step: number): Promise<boolean> {
+  const written = await env.DB.prepare(
+    'update users set totp_step = ? where id = ? and (totp_step is null or totp_step < ?)',
+  )
+    .bind(step, userId, step)
+    .run()
+
+  return !!written.meta.changes
 }
 
 /** Ten one-shot codes, in the shape somebody can read off a screen and type. */
@@ -147,8 +195,48 @@ export function recoveryCodes(): string[] {
     [...randomBytes(RECOVERY_BYTES)]
       .map((byte) => byte.toString(16).padStart(2, '0'))
       .join('')
-      .replace(/(.{5})/, '$1-'),
+      .replace(/(.{5})(?=.)/g, '$1-'),
   )
+}
+
+/** One recovery code as it is stored: derived, not digested. See the constants
+ *  above for why, and for what the version in front of it is for. */
+async function recoveryHash(userId: string, code: string): Promise<string> {
+  const material = await crypto.subtle.importKey('raw', encoder.encode(code), 'PBKDF2', false, [
+    'deriveBits',
+  ])
+
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: 'SHA-256',
+      salt: encoder.encode(`${SALT}:${userId}`),
+      iterations: ROUNDS,
+    },
+    material,
+    256,
+  )
+
+  const digest = [...new Uint8Array(bits)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  return `${RECOVERY_VERSION}.${digest}`
+}
+
+/** Ten fresh codes, written down and handed back. The old ones go first: a list
+ *  somebody has replaced is a list that must stop working. */
+async function writeRecovery(env: Env, userId: string): Promise<string[]> {
+  const codes = recoveryCodes()
+
+  await env.DB.prepare('delete from recovery_codes where user_id = ?').bind(userId).run()
+
+  for (const code of codes) {
+    await env.DB.prepare(
+      'insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)',
+    )
+      .bind(userId, await recoveryHash(userId, code))
+      .run()
+  }
+
+  return codes
 }
 
 /** Whether this account has a second factor, and the secret when it has one.
@@ -177,22 +265,40 @@ export function asksForSecond(env: Env, userId: string): Promise<boolean> {
 
 /** One code, checked against the factor and then against the recovery codes.
  *
- *  A recovery code is spent the moment it works. Ceilinged per account: six
- *  digits is a million guesses and a script with an hour would otherwise walk
- *  them. */
-export async function accepted(env: Env, userId: string, given: string): Promise<boolean> {
+ *  Both kinds are spent the moment they work: a recovery code because it is
+ *  one-shot by definition, and an app's code because RFC 6238 says a verifier
+ *  must not take the same one twice - which is what stands between a code seen
+ *  over a shoulder or on a screen share and a second sign-in inside the ninety
+ *  seconds it stays in the window.
+ *
+ *  Ceilinged twice. Per account, because six digits is a million guesses and a
+ *  script with an afternoon would otherwise walk them; and per machine, because
+ *  the per-account ceiling says nothing at all to a script working through a
+ *  list of addresses twenty guesses at a time. */
+export async function accepted(
+  env: Env,
+  userId: string,
+  given: string,
+  machine: string | null = null,
+): Promise<boolean> {
+  if (!(await mayTrySecondFrom(env, machine))) return false
   if (!(await mayTrySecond(env, userId))) return false
 
   const secret = await secondFor(env, userId)
-  if (secret && (await matches(secret, given))) return true
+  if (secret) {
+    const step = await stepMatching(secret, given)
+    if (step !== null) return await spendStep(env, userId, step)
+  }
 
   const tidied = given.trim().toLowerCase().replace(/\s/g, '')
-  const hash = await sha256(tidied)
 
+  // Both shapes in one statement: what this build writes, and the bare digest
+  // rows written before it, so nobody's printed list stopped working overnight.
   const spent = await env.DB.prepare(
-    'update recovery_codes set used_at = ? where user_id = ? and code_hash = ? and used_at is null',
+    `update recovery_codes set used_at = ?1
+      where user_id = ?2 and code_hash in (?3, ?4) and used_at is null`,
   )
-    .bind(now(), userId, hash)
+    .bind(now(), userId, await recoveryHash(userId, tidied), await sha256(tidied))
     .run()
 
   return !!spent.meta.changes
@@ -204,23 +310,15 @@ export async function accepted(env: Env, userId: string, given: string): Promise
 async function turnOn(env: Env, userId: string, secretHex: string): Promise<string[]> {
   if (!env.OPENAI_KEY_SECRET) return []
 
-  const codes = recoveryCodes()
-
-  await env.DB.prepare('update users set totp_secret = ?, totp_at = ? where id = ?')
+  // And the step a code was last accepted at, which belonged to the secret being
+  // replaced: leaving it would refuse the new app's first several codes.
+  await env.DB.prepare(
+    'update users set totp_secret = ?, totp_at = ?, totp_step = null where id = ?',
+  )
     .bind(await sealed(env.OPENAI_KEY_SECRET, userId, secretHex, SALT), now(), userId)
     .run()
 
-  await env.DB.prepare('delete from recovery_codes where user_id = ?').bind(userId).run()
-
-  for (const code of codes) {
-    await env.DB.prepare(
-      'insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)',
-    )
-      .bind(userId, await sha256(code))
-      .run()
-  }
-
-  return codes
+  return await writeRecovery(env, userId)
 }
 
 export const second = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -317,11 +415,13 @@ second.delete('/', async (context) => {
   const code = body.text('code', 64) ?? ''
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  if (!(await accepted(context.env, user.id, code))) {
+  if (!(await accepted(context.env, user.id, code, machineOf(context.req)))) {
     return context.json({ error: 'that code is not right' }, 400)
   }
 
-  await context.env.DB.prepare('update users set totp_secret = null, totp_at = null where id = ?')
+  await context.env.DB.prepare(
+    'update users set totp_secret = null, totp_at = null, totp_step = null where id = ?',
+  )
     .bind(user.id)
     .run()
 
@@ -338,22 +438,11 @@ second.post('/recovery', async (context) => {
   const code = body.text('code', 64) ?? ''
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  if (!(await accepted(context.env, user.id, code))) {
+  if (!(await accepted(context.env, user.id, code, machineOf(context.req)))) {
     return context.json({ error: 'that code is not right' }, 400)
   }
 
-  const codes = recoveryCodes()
-  await context.env.DB.prepare('delete from recovery_codes where user_id = ?').bind(user.id).run()
-
-  for (const one of codes) {
-    await context.env.DB.prepare(
-      'insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)',
-    )
-      .bind(user.id, await sha256(one))
-      .run()
-  }
-
-  return context.json({ recovery: codes })
+  return context.json({ recovery: await writeRecovery(context.env, user.id) })
 })
 
 /** What a sign-in holds between the emailed code and the second one.
@@ -373,21 +462,42 @@ export async function halfWay(env: Env, user: User): Promise<string> {
   return token
 }
 
-/** Whose half-finished sign-in this is, and it is spent: a token that has been
- *  answered cannot be answered again. */
+/** Whose half-finished sign-in this is.
+ *
+ *  Reading it does not spend it; `spendHalf` below does, once a code has worked.
+ *  Spending it on a wrong code meant that one mistyped digit threw away the
+ *  emailed half as well, and the way back from that was another mail - which the
+ *  resend gap holds for thirty seconds and the daily ceiling may refuse
+ *  altogether. What bounds the guessing is the ceiling on the codes themselves,
+ *  which is where a guess is counted; see `accepted`. */
 export async function whoseHalf(env: Env, token: string): Promise<string | null> {
-  const hash = await sha256(token)
   const row = await env.DB.prepare(
     'select value from cached where scope = ? and key = ? and until > ?',
   )
-    .bind('second-half', hash, now())
+    .bind('second-half', await sha256(token), now())
     .first<{ value: string }>()
 
-  if (!row) return null
+  return row?.value ?? null
+}
 
+/** And the token gone, for a sign-in that has finished: one that has been
+ *  answered cannot be answered again. */
+export async function spendHalf(env: Env, token: string): Promise<void> {
   await env.DB.prepare('delete from cached where scope = ? and key = ?')
-    .bind('second-half', hash)
+    .bind('second-half', await sha256(token))
     .run()
+}
 
-  return row.value
+/** Everything half done that has run out of time, taken away by the nightly job.
+ *
+ *  The pending enrolment above is the one secret here kept in the clear - until a
+ *  code proves an app has it there is no account to bind it to - and nothing was
+ *  ever taking the row away. So an enrolment somebody closed the pane on left a
+ *  working authenticator secret in the table, ten minutes after it stopped being
+ *  usable and for as long as the database lived.
+ *
+ *  Every scope, because `cached` is shared and a row past its `until` says
+ *  nothing to anybody; see 0022. */
+export function forgetHalfDone(env: Env, at: number): Promise<unknown> {
+  return env.DB.prepare('delete from cached where until < ?').bind(at).run()
 }

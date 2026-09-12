@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, test } from 'vitest'
 
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { KEEP_FOR, sweepVersions, tooClose, versionKey } from '../src/versions'
+import { deviceIn, KEEP_FOR, MOST_KEPT, sweepVersions, versionKey } from '../src/versions'
 
 interface VersionView {
   versions?: { at: number; size: number; by: string }[]
@@ -172,7 +172,13 @@ describe('the account keeps what a note said', () => {
     const insert = env.db.prepare(
       'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
     )
-    const oldest = Date.now() - MOST_KEPT * 5 * 60 * 1000
+
+    // The one the note arrived with goes, so what is seeded below is the whole of
+    // its history and the newest of those is old enough for the five minute rule
+    // to let the save keep a version at all.
+    env.db.exec(`delete from note_versions where note_id = '${note}'`)
+
+    const oldest = Date.now() - (MOST_KEPT + 1) * 5 * 60 * 1000
     for (let at = 0; at < MOST_KEPT; at++) {
       insert.run(note, oldest + at * 5 * 60 * 1000, `seeded-${at}`, 5, '')
     }
@@ -215,10 +221,14 @@ describe('the account keeps what a note said', () => {
 
     await sweepVersions(env, Date.now())
 
-    // One an hour is what is left of a day of saves, for both notes.
+    // One an hour is what is left of a day of saves, for both notes. Twenty-five
+    // rather than twenty-four because the buckets are whole hours and a day of
+    // saves that does not begin on one straddles one more of them.
     for (const which of [note, second]) {
-      const kept = rows(env, which).filter((one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000)
-      expect(kept.length).toBeLessThanOrEqual(24)
+      const held = rows(env, which).filter(
+        (one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000,
+      )
+      expect(held.length).toBeLessThanOrEqual(25)
     }
   })
 })
@@ -398,22 +408,102 @@ describe('the sweep', () => {
 })
 
 describe('thinning to one an hour', () => {
-  test('keeps the newest in each hour and names the rest', () => {
-    const hour = 60 * 60 * 1000
-    const crowded = tooClose([
-      { note_id: 'a', at: 5 * hour + 600, hash: 'one' },
-      { note_id: 'a', at: 5 * hour + 300, hash: 'two' },
-      { note_id: 'a', at: 4 * hour + 100, hash: 'three' },
-      { note_id: 'b', at: 5 * hour + 500, hash: 'four' },
-    ])
+  let env: TestEnv
+  let token: string
+  let space: string
 
-    expect(crowded.map((one) => one.hash)).toEqual(['two'])
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+
+    const made = await call<VersionView>(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    space = made.json.space?.id ?? ''
   })
 
-  test('and nothing where every version is an hour apart', () => {
-    const hour = 60 * 60 * 1000
-    const rows = [1, 2, 3].map((at) => ({ note_id: 'a', at: at * hour, hash: String(at) }))
+  afterEach(() => env.close())
 
-    expect(tooClose(rows)).toEqual([])
+  /** A note, and rows for it at the moments given, so the sweep has something to
+   *  thin without a note having to be written in for a day first. */
+  async function noteWithVersionsAt(path: string, moments: readonly number[]): Promise<string> {
+    const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path, content: path },
+    })
+    const noteId = made.json.note?.id ?? ''
+
+    env.db.exec(`delete from note_versions where note_id = '${noteId}'`)
+
+    const insert = env.db.prepare(
+      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    )
+    for (const at of moments) insert.run(noteId, at, `h-${noteId}-${at}`, 5, '')
+
+    return noteId
+  }
+
+  function kept(noteId: string): number[] {
+    return (
+      env.db.prepare('select at from note_versions where note_id = ? order by at').all(noteId) as {
+        at: number
+      }[]
+    ).map((one) => one.at)
+  }
+
+  test('keeps the newest in each hour and takes the rest', async () => {
+    const hour = 60 * 60 * 1000
+    // Two days back, and on an hour, so which bucket a moment falls in is the
+    // arithmetic the sweep does and not the hour the test happens to run at.
+    const from = Math.floor((Date.now() - 2 * 24 * hour) / hour) * hour
+
+    const one = await noteWithVersionsAt('one.md', [from + 300, from + 600, from - hour + 100])
+    const two = await noteWithVersionsAt('two.md', [from + 500])
+
+    await sweepVersions(env, Date.now())
+
+    expect(kept(one)).toEqual([from - hour + 100, from + 600])
+    expect(kept(two)).toEqual([from + 500])
+  })
+
+  test('and nothing where every version is already an hour apart', async () => {
+    const hour = 60 * 60 * 1000
+    const from = Math.floor((Date.now() - 3 * 24 * hour) / hour) * hour
+    const moments = [1, 2, 3].map((at) => from + at * hour)
+
+    const note = await noteWithVersionsAt('spread.md', moments)
+    await sweepVersions(env, Date.now())
+
+    expect(kept(note)).toEqual(moments)
+  })
+
+  test('and leaves the first day of them exactly as it happened', async () => {
+    const moments = [1, 2, 3].map((at) => Date.now() - at * 60 * 1000)
+
+    const note = await noteWithVersionsAt('today.md', moments)
+    await sweepVersions(env, Date.now())
+
+    expect(kept(note)).toHaveLength(3)
+  })
+})
+
+describe('the name a device sends for itself', () => {
+  test('is words, bounded, and not layout', () => {
+    expect(deviceIn('the laptop')).toBe('the laptop')
+    expect(deviceIn(undefined)).toBe('')
+    // A newline was already taken out; the rest of the control characters are
+    // what somebody sends to make a name in the Account pane read as two.
+    expect(deviceIn('one\r\ntwo')).toBe('one two')
+    expect(deviceIn('a\u0000b\u001bc')).toBe('abc')
+    expect(deviceIn('x'.repeat(80))).toHaveLength(40)
+  })
+
+  test('and is never cut through the middle of a character', () => {
+    // Forty emoji is eighty units, and a bound counted in units left half of the
+    // fortieth in the column.
+    const cut = deviceIn('🙂'.repeat(60))
+
+    // Forty whole ones, which is eighty units: a bound counted in units kept
+    // forty units and left half of the twentieth behind.
+    expect([...cut]).toHaveLength(40)
+    expect(cut).toHaveLength(80)
   })
 })

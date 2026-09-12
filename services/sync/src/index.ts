@@ -9,7 +9,7 @@ import { cleanName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
-import { second } from './second'
+import { forgetHalfDone, second } from './second'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
@@ -259,10 +259,10 @@ app.all('*', async (context) => {
  *
  *  What has waited its 14 days in Recently deleted goes, and so does everything
  *  else here that nothing else would ever take away - a guest nobody let in, a
- *  request nobody answered, a client that registered and never came back - and
- *  the proof on every domain of somebody's own is read again. Each is its own
- *  statement in its own module and none of them can fail another, which is why
- *  they are five calls rather than one. */
+ *  request nobody answered, a client that registered and never came back, an
+ *  enrolment nobody finished - and the proof on every domain of somebody's own is
+ *  read again. Each is its own statement in its own module and none of them can
+ *  fail another, which is why they are a call each rather than one. */
 function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
 
@@ -272,6 +272,7 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(expireClients(env, at))
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
+  context.waitUntil(forgetHalfDone(env, at))
 }
 
 export default { fetch: app.fetch, scheduled }

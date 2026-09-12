@@ -82,7 +82,9 @@ describe('the codes themselves', () => {
 
     expect(codes).toHaveLength(10)
     expect(new Set(codes).size).toBe(10)
-    expect(codes[0]).toMatch(/^[0-9a-f]{5}-[0-9a-f]{5}$/)
+    // Ten bytes, in groups somebody can read off a screen without losing their
+    // place. Five was forty bits, which is a table rather than a secret.
+    expect(codes[0]).toMatch(/^[0-9a-f]{5}(-[0-9a-f]{5}){3}$/)
   })
 })
 
