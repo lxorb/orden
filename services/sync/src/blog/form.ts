@@ -39,9 +39,9 @@ const MOST_FIELDS = 20
 const LONGEST_ANSWER = 4000
 const LONGEST_LABEL = 120
 
-export type FieldKind = 'text' | 'email' | 'lines' | 'number' | 'choice'
+type FieldKind = 'text' | 'email' | 'lines' | 'number' | 'choice'
 
-export interface Field {
+interface Field {
   label: string
   kind: FieldKind
   required: boolean
@@ -129,7 +129,7 @@ export function formOf(code: string): Form | null {
 
 /** The name a field's answer arrives under. The label, folded, so the answers
  *  read as the question rather than as `field-3`. */
-export function nameOf(field: Field, at: number): string {
+function nameOf(field: Field, at: number): string {
   const said = field.label
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')

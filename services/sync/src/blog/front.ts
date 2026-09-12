@@ -270,7 +270,7 @@ export function readFront(raw: string | null): NoteFront {
 /** What a note's page is called: its own `title:`, the heading it opens with,
  *  or its file name. One answer, because the index, the navigation, the feed and
  *  the page itself all ask it and a site with two answers reads as two sites. */
-export function titleIn(path: string, front: NoteFront): string {
+function titleIn(path: string, front: NoteFront): string {
   return (
     front.title ??
     front.heading ??

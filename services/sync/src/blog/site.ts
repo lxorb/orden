@@ -76,7 +76,7 @@ export interface SitePassword {
  *  app's own. One of the themes the app itself renders in, by its name in the
  *  registry: the page's stylesheet is generated from the same tokens, so a theme
  *  is a set of colours on both surfaces rather than a second design. */
-export interface SiteAnalytics {
+interface SiteAnalytics {
   /** The script to load, which is the whole of what Plausible, Umami and
    *  GoatCounter are. */
   url: string

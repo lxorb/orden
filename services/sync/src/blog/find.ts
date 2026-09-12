@@ -25,7 +25,7 @@ import { escape } from './head'
 const MOST_HITS = 30
 
 /** How long a query may be. Past this it is not a query. */
-export const LONGEST_QUERY = 200
+const LONGEST_QUERY = 200
 
 /** What the reader typed, pulled apart. */
 export interface Asked {
@@ -175,7 +175,7 @@ export function answers(
     .join('')
 
   const said = [
-    `${found.length === 1 ? '1 page' : `${found.length} pages`}`,
+    found.length === 1 ? '1 page' : `${found.length} pages`,
     ...one.tags.map((tag) => `tagged ${escape(tag)}`),
     ...one.folders.map((folder) => `in ${escape(folder)}`),
   ].join(', ')
