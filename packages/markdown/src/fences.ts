@@ -47,8 +47,8 @@ export function closesFence(line: string, mark: string): boolean {
   if (!couldBeFence(line)) return false
 
   const found = FENCE.exec(line)
-  const run = found?.[1]
-  if (!run || !found) return false
+  if (!found) return false
 
-  return run[0] === mark[0] && run.length >= mark.length && !found[2]
+  const run = found[1] ?? ''
+  return run.startsWith(mark.charAt(0)) && run.length >= mark.length && !found[2]
 }

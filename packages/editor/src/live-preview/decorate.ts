@@ -683,7 +683,7 @@ class Decorator {
  *  where the loop goes wrong: the last line of a document has no newline after it
  *  to step over, so a loop that only watches `to` never finishes. */
 function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
-  for (let pos = from; pos <= to; ) {
+  for (let pos = from; pos <= to;) {
     const line = doc.lineAt(pos)
     yield line
     if (line.to >= doc.length) break

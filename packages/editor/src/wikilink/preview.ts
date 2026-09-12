@@ -33,5 +33,7 @@ export function renderNote(source: string, view: EditorView): string {
   const html = renderMarkdown(source, { footnotes: true, escapeHtml: true })
   const resolve = view.state.facet(imageResolver)
 
-  return mapSources(html, (src) => (REMOTE.test(src) ? null : attributeValue(resolve(written(src)))))
+  return mapSources(html, (src) =>
+    REMOTE.test(src) ? null : attributeValue(resolve(written(src))),
+  )
 }
