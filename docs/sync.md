@@ -41,6 +41,14 @@ own hash, so a note that flips between two states costs two objects however many
 times it flips, and two notes that say the same thing cost one. The row is a
 moment, a hash, a size, and the device that sent it.
 
+The device is blank where no single device is the answer, and that is most of a
+note being actively written in: a note that is open is in a room, and what the
+room writes back is what several people settled on. A note pushed by a pass, a
+note created, a space put back - those name the machine. Filling in the room's
+side of it means handing the room's own record of who is in it to the save it
+makes; the seam is there for it (`keepVersion`'s last argument) and the room is
+the one place that knows.
+
 **At most one every five minutes.** The same interval the device's own keeper
 defaults to. The newest state of a note is the note itself, so a version from
 thirty seconds ago says nothing the file does not.

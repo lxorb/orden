@@ -398,6 +398,8 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     })
   }
 
+  const asking = deviceIn(context.req.header('x-nib-device'))
+
   let written = 0
   for (const one of changed) {
     const note = await context.env.DB.prepare('select * from notes where id = ?')
@@ -409,7 +411,11 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     const object = await context.env.NOTES.get(versionKey(one.hash))
     if (!object) continue
 
-    const saved = await saveNote(context.env, note, await object.text(), note.path, 'rolled back')
+    // The device that asked, like any other write: a rollback is an edit, and the
+    // history saying which machine made it is the same answer to the same
+    // question. A word of our own here ("rolled back") would be one English
+    // phrase in a column of device names, shown untranslated to everybody.
+    const saved = await saveNote(context.env, note, await object.text(), note.path, asking)
     if (saved) written += 1
   }
 

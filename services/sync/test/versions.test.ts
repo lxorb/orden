@@ -227,6 +227,21 @@ describe('putting a space back to a moment', () => {
     expect(two.json.content).toBe('the other words')
   })
 
+  test('and the version it writes says which device asked', async () => {
+    // Far enough back that the five minute rule lets a version be kept at all:
+    // a rollback is a write like any other and is kept like any other.
+    agedBy(env, 6 * 60 * 1000)
+
+    const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 9 * 60 * 1000 },
+      headers: { 'x-nib-device': 'the laptop' },
+    })
+
+    expect(done.json.notes).toBe(2)
+    expect(rows(env, first).at(-1)?.by).toBe('the laptop')
+  })
+
   test('or only one folder of it', async () => {
     const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
       token,

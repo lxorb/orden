@@ -788,6 +788,7 @@ export const api = {
     request<{ notes: number; paths?: string[]; more?: boolean }>(`/v1/spaces/${spaceId}/rollback`, {
       token,
       body: { at, under, dry },
+      device: true,
     }),
 
   deleteNote: (token: string, id: string) =>

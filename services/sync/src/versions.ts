@@ -71,7 +71,13 @@ export function presentVersion(version: Version) {
   return { at: version.at, size: version.size, by: version.by }
 }
 
-/** The name a device sent for itself, as far as it is worth keeping. */
+/** The name a device sent for itself, as far as it is worth keeping.
+ *
+ *  Empty is a real answer and means no one device wrote those words: a note a
+ *  room settled between however many were in it, the note a new space arrives
+ *  with, or a connected app writing through the connector. The history sheet
+ *  shows the moment with no name beside it, which is what the device's own
+ *  snapshots look like. See docs/sync.md. */
 export function deviceIn(header: string | undefined): string {
   return (header ?? '')
     .replace(/[\r\n]/g, ' ')
