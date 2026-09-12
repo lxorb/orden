@@ -37,7 +37,7 @@ from playwright.sync_api import Browser, Page, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots"
+SHOTS = Path(__file__).resolve().parent / "shots" / "tree-create"
 
 # A port of this run's own, above the dev server's 1420 and clear of the ports
 # the other runs use.

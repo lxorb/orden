@@ -41,7 +41,7 @@ from playwright.sync_api import Browser, Page, sync_playwright
 ROOT = Path(__file__).resolve().parents[4]
 SERVICE = ROOT / "services" / "sync"
 APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots"
+SHOTS = Path(__file__).resolve().parent / "shots" / "collaborate"
 
 # A port of this test's own. Never 1420, which is the dev server's.
 PORT = 18844

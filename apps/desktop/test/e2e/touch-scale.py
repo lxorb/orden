@@ -35,7 +35,7 @@ from playwright.sync_api import Browser, Page, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
-SHOTS = Path(__file__).resolve().parent / "shots"
+SHOTS = Path(__file__).resolve().parent / "shots" / "touch-scale"
 
 # A port of this run's own. Never 1420, which is the dev server's, and not the
 # ones the other runs here use either.

@@ -53,7 +53,7 @@ from playwright.sync_api import Page, sync_playwright
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parent.parent
-SHOTS = HERE / "shots"
+SHOTS = HERE / "shots" / "pen-shapes"
 DIST = APP / "dist"
 
 # Its own port, above the dev server and above the other drives.

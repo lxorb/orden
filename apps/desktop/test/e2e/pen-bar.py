@@ -44,7 +44,7 @@ from playwright.sync_api import Page, sync_playwright
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parent.parent
-SHOTS = HERE / "shots"
+SHOTS = HERE / "shots" / "pen-bar"
 DIST = APP / "dist"
 
 # Its own port, and never 1420, which is the dev server somebody may be using.
