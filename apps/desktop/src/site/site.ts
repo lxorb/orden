@@ -97,11 +97,17 @@ function themeToggle() {
     if (held === 'system') document.documentElement.removeAttribute('data-theme')
     else document.documentElement.setAttribute('data-theme', held)
 
+    // The one write in the app that does not go through `keep` in stored.ts, and
+    // the reason is what this file is: a handful of lines bundled into the Worker
+    // and served to a stranger's browser. Importing that module here would pull
+    // the app's log into a public page to guard one write of a reader's own theme
+    // choice. So the guard is here, and it is the same guard: a browser with
+    // storage turned off still switches, it just forgets. See stored.test.ts.
     try {
       if (held === 'system') localStorage.removeItem(THEME_KEY)
       else localStorage.setItem(THEME_KEY, held)
     } catch {
-      // A browser with storage turned off still switches; it just forgets.
+      // Nothing to do and nobody to tell.
     }
 
     say(held)

@@ -20,7 +20,7 @@ import {
   SNAPSHOT_MINUTES,
   snapshotMinutes,
 } from './recovery'
-import { isRecord, stored } from './stored'
+import { isRecord, keep, stored } from './stored'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -161,7 +161,10 @@ class Recovery {
   }
 
   private persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ every: this.every, days: this.days }))
+    // Through `keep`, the one place that writes: what a refused write loses is
+    // the two numbers after a restart, and the keeper goes on keeping either
+    // way. See stored.ts.
+    keep(STORAGE_KEY, JSON.stringify({ every: this.every, days: this.days }))
   }
 }
 

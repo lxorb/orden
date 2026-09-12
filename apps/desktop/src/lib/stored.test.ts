@@ -97,10 +97,13 @@ const SOURCE = fileURLToPath(new URL('..', import.meta.url))
  *  rather than ignoring the folders they are in, so this list is a list of work
  *  left and gets shorter rather than older.
  *
- *  The site script is the odd one: its bundle is committed into the Worker
- *  (`services/sync/src/blog/script.ts`), so converting it means rebuilding that
- *  too. */
-const LEFT = ['lib/recovery.svelte.ts', 'lib/workspace/graph-settings.svelte.ts', 'site/site.ts']
+ *  One left, and it is the odd one. The site script is the handful of lines a
+ *  published page runs, bundled from these modules into the Worker
+ *  (`services/sync/src/blog/script.ts`): importing this module there would pull
+ *  the app's log into a public page to guard one write of the reader's own theme
+ *  choice, which is a worse trade than the guard is worth. It writes inside a try
+ *  of its own, and says so where it does. */
+const LEFT = ['site/site.ts']
 
 function sourceFiles(directory: string, found: string[] = []): string[] {
   for (const name of readdirSync(directory)) {
