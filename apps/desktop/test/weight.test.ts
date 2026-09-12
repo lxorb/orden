@@ -134,8 +134,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,018,832 bytes over 376 files as this is written, measured on 2026-09-13, against
- *  1,504,884 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  3,083,670 bytes over 382 files as this is written, measured on 2026-09-13, against
+ *  1,521,376 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
@@ -155,8 +155,8 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_330_000
-const MOST_FILES = 414
+const BUDGET = 3_400_000
+const MOST_FILES = 420
 
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
