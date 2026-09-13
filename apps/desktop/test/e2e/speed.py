@@ -21,11 +21,23 @@ their own so neither is what the machine was doing while the other was measured.
     reading         the big note as a page
     memory          the heap once the launch has settled
 
-Nothing here asserts. It prints numbers, and the numbers are medians of several
-rounds run turn and turn about, because this machine's own load moves by more than
-most of these changes do. The counted work behind each fix is asserted in the unit
-tests beside the code it is about; a clock says what the machine was doing and a
-count says what the code did.
+Nothing here asserts. It prints numbers taken over several rounds run turn and turn
+about, because this machine's own load moves by more than most of these changes do.
+A row in milliseconds is reported as its least disturbed round and not its median:
+noise only ever adds time, so the quietest round is the one that is about the code,
+and it is the only one that repeats. See `pick`. The counted work behind each fix is
+asserted in the unit tests beside the code it is about; a clock says what the machine
+was doing and a count says what the code did.
+
+Every run ends by reading each lane against the other and against what the row is
+worth to nobody - the two halves of the run asked the same question. Put the same
+build in both folders and every row must read `same`; a row that says `differs` then
+is a fault in this file. `--as-was` serves the way this file used to, which is how
+that check earns its keep: HTTP/1.0 with no caching headers made Chrome guess how
+long each asset was good for from the folder's own timestamp, so the same build in
+two folders written minutes apart was two different launches - 252 revalidation
+round-trips in one lane and none in the other, and sixty to ninety milliseconds on
+the file list and the editor for it.
 
 Two builds, each with the app's own handle on the page - a production build hides
 the stores this reads. From the repository root:
@@ -71,6 +83,7 @@ import statistics
 import threading
 from pathlib import Path
 
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -79,7 +92,7 @@ APP = ROOT / "apps" / "desktop"
 # Above 1425, and not any other drive's port. One per build and per space: two
 # builds cannot share one database, and a space of five thousand notes in the same
 # database as the empty one would make the empty launch a launch of both.
-PORTS = {("before", "big"): 18301, ("after", "big"): 18302, ("before", "empty"): 18303, ("after", "empty"): 18304}
+PORTS = {("before", "big"): 21901, ("after", "big"): 21902, ("before", "empty"): 21903, ("after", "empty"): 21904}
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -113,11 +126,96 @@ def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
 
+#: What each lane's server was asked for, by port: how many requests, how many of
+#: them were answered out of the folder rather than with a "you already have it",
+#: and how many bytes went down the socket. A lane that fetches its assets while
+#: the other lane reads them out of the browser's cache is not the same launch, and
+#: this is the counter that says so.
+SERVED: dict[int, dict[str, int]] = {}
+
+#: Served the way this file used to serve, for showing that the way it serves now is
+#: what fixed the lane bias: HTTP/1.0, no caching headers, and the build's own
+#: mtimes. `--as-was` sets it. Nothing but the proof should ever want it.
+AS_WAS = False
+
+
 class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The same server, without a line per asset."""
+    """The same server, told to behave like the one a build is really served by.
+
+    Three things, all of which were measuring the rig rather than the app.
+
+    HTTP/1.1, so the connection is kept between assets. The default is HTTP/1.0,
+    which closes after every response: a page of thirty assets was thirty TCP
+    connections and - because this is a `ThreadingHTTPServer` - thirty Python
+    threads, taking the interpreter's lock turn and turn about with the thread that
+    is driving the measurement.
+
+    A `Cache-Control` on everything, because without one Chrome has to guess how
+    long a file is good for, and what it guesses is a tenth of the file's own age.
+    The two lanes are two folders written at two different times, so the same build
+    served twice got two different freshness lifetimes: the older folder was served
+    out of the browser's cache and the newer one revalidated every asset over the
+    socket. That is the lane bias - it follows the folder's timestamp, not the code
+    in it, which is why it survived byte-identical builds.
+
+    And a fixed `Last-Modified`, so nothing downstream of this can tell the two
+    folders apart by their age either.
+    """
+
+    @property
+    def protocol_version(self) -> str:  # type: ignore[override]
+        """One connection for the whole page, as a real server keeps it."""
+        return "HTTP/1.0" if AS_WAS else "HTTP/1.1"
+
+    #: A kept connection holds a thread; this is how long an idle one keeps it.
+    timeout = 10
+
+    #: One date for every file in every lane. The build's own mtimes are what made
+    #: the two lanes different, and nothing here wants to know them.
+    STAMP = "Mon, 01 Jan 2024 00:00:00 GMT"
 
     def log_message(self, *args: object) -> None:  # noqa: D102
         return
+
+    def send_header(self, keyword: str, value: str) -> None:
+        """`Last-Modified` flattened on the way out, wherever it is sent from - and
+        the body's length counted where it is promised, which is the one place a
+        length is known and is not a race with the socket."""
+        if keyword == "Last-Modified" and not AS_WAS:
+            value = self.STAMP
+        if keyword == "Content-Length":
+            self.tally()["bytes"] += int(value)
+        super().send_header(keyword, value)
+
+    def end_headers(self) -> None:
+        """The caching a deploy of this actually sends, and the desktop build has by
+        being on the disk already: an asset under a hash of its content is good
+        forever, and the page that names them is checked every time so a rebuild is
+        never missed. Both lanes, identically."""
+        if not AS_WAS:
+            forever = self.path.startswith("/assets/") and "." in self.path.rsplit("/", 1)[-1]
+            super().send_header(
+                "Cache-Control",
+                "public, max-age=31536000, immutable" if forever else "no-cache",
+            )
+        super().end_headers()
+
+    def tally(self) -> dict[str, int]:
+        """This lane's counter."""
+        return SERVED.setdefault(
+            self.server.server_address[1], {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
+        )
+
+    def send_response(self, code: int, message: str | None = None) -> None:
+        """Counted here, where every answer passes and its code is known."""
+        held = self.tally()
+        held["asked"] += 1
+        if code == 200:
+            held["sent"] += 1
+        elif code == 304:
+            held["again"] += 1
+        super().send_response(code, message)
+
 
 
 # --------------------------------------------------------------------------- seed
@@ -535,9 +633,44 @@ WATCH_STOP = r"""
 """
 
 
-def median(rounds: list[dict[str, float]], key: str) -> float:
+def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
+    """One number out of several rounds, chosen by what the row is.
+
+    For anything in milliseconds: the smallest. Noise on a machine only ever adds
+    time - a round is slow because something else ran, never because the code got
+    faster - so the least disturbed round is the one that is about the code, and it
+    is the only one that repeats. The same build in both lanes agreed to within
+    seven milliseconds on every launch row by its minimum while its medians were a
+    hundred and fifty apart, because a median of eight rounds carries whatever the
+    machine did in four of them.
+
+    For frames a second: the largest, for the same reason the other way up. For a
+    count or a heap: the middle, because those do not drift, and a count that came
+    out low is a round that did less rather than a round that was left alone.
+    """
     found = [one[key] for one in rounds if key in one]
-    return statistics.median(found) if found else 0.0
+    if not found:
+        return 0.0
+    if unit == "ms":
+        return min(found)
+    if unit == "fps":
+        return max(found)
+    return statistics.median(found)
+
+
+def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
+    """How far this row would move if the whole run were done again.
+
+    The rounds split down the middle and the same number taken from each half: two
+    goes at the same question on the same machine, so the gap between them is what
+    this row is worth to nobody. A difference between two builds smaller than this
+    is not a difference.
+    """
+    found = [one[key] for one in rounds if key in one]
+    if len(found) < 4:
+        return 0.0
+    half = len(found) // 2
+    return abs(pick(rounds[:half], key, unit) - pick(rounds[half:], key, unit))
 
 
 def blame(entries: list[dict]) -> list[str]:
@@ -797,10 +930,20 @@ async () => {
   // answerable until the space has been scanned once.
   let panel = 0
   let tags = 0
+  let asked = started
   for (let spin = 0; spin < 900 && !(panel && tags); spin++) {
+    // Asked again where it did not take, and the clock started again with it. A
+    // window whose sitting was still being read back put the file list over the top
+    // of the panel this had just asked for, and a run that only waited waited its
+    // whole timeout and took the lane's numbers with it. Once a second is often
+    // enough to get past that and rare enough not to be what is measured.
+    if (!panel && spin && spin % 60 === 0 && ws.panel !== 'search') {
+      ws.showPanel('search')
+      asked = performance.now()
+    }
     const at = await window.__painted()
-    if (!panel && document.querySelector('[data-search]')) panel = at - started
-    if (!tags && ws.tags?.length) tags = at - started
+    if (!panel && document.querySelector('[data-search]')) panel = at - asked
+    if (!tags && ws.tags?.length) tags = at - asked
   }
 
   return {
@@ -1006,6 +1149,12 @@ def ready(page: Page, lane: Lane) -> None:
         page.goto(lane.origin, wait_until="domcontentloaded")
 
     page.wait_for_function(LAUNCHED, timeout=120000)
+    # A moment before anything is asked of the window. The app says it has a space
+    # and paints the file list part way through reading its sitting back, and the
+    # rest of that read writes the sidebar down again: a panel asked for inside that
+    # window is undone by `applyLayout`, which is why this drive used to lose a whole
+    # lane's search rounds to a panel that never opened.
+    page.wait_for_timeout(600)
     # Asked for rather than pressed: `showPanel` is what a key does and a key
     # toggles, so saying it on a window that already has the file list open is what
     # shuts it. See `showPanel` in workspace.svelte.ts.
@@ -1031,6 +1180,7 @@ class Lane:
         self.origin = f"http://127.0.0.1:{self.port}"
         self.root = "/Big" if space == "big" else "/Empty"
         self.rounds: dict[str, list[dict]] = {}
+        self.lost: dict[str, int] = {}
         self.profiles: dict[str, list[str]] = {}
         self.notes: list[str] = []
         self.page: Page | None = None
@@ -1130,7 +1280,18 @@ class Lane:
         if not page:
             return
 
-        found = PARTS[part](self, page)
+        try:
+            found = PARTS[part](self, page)
+        except PlaywrightError as wrong:
+            # One round that could not reach the thing it measures is one round
+            # missing, said out loud, and not forty minutes of driving thrown away.
+            # The rounds this does finish are still a number; a part that loses most
+            # of them is said again at the end, where it cannot be missed.
+            self.lost.setdefault(part, 0)
+            self.lost[part] += 1
+            self.note(f"{part} could not be reached: {str(wrong).splitlines()[0]}")
+            return
+
         if not found:
             return
 
@@ -1142,8 +1303,20 @@ class Lane:
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
             for key in rounds[0]:
-                out[key] = median(rounds, key)
+                out[key] = pick(rounds, key, UNIT.get(key, ""))
         return out
+
+    def floors(self) -> dict[str, float]:
+        """The same rows, as what each of them would be worth on another run."""
+        out: dict[str, float] = {}
+        for rounds in self.rounds.values():
+            for key in rounds[0]:
+                out[key] = floor(rounds, key, UNIT.get(key, ""))
+        return out
+
+    def served(self) -> dict[str, int]:
+        """What this lane's server was asked for over the whole run."""
+        return SERVED.get(self.port, {"asked": 0, "sent": 0, "again": 0, "bytes": 0})
 
 
 #: The numbers, in the order they are worth reading, and what each is in.
@@ -1190,6 +1363,56 @@ SAID = [
 ]
 
 
+#: What each row is in, so `pick` knows which way is better. One list of rows.
+UNIT = {key: unit for key, _, unit in SAID}
+
+
+def prove(
+    found: dict[str, dict[str, float]],
+    moved: dict[str, dict[str, float]],
+    names: list[str],
+) -> None:
+    """Whether a difference between two lanes is a difference at all.
+
+    A row is worth something to nobody whatever the code is; how much is `floor`,
+    which is the two halves of this run asked the same question. A gap between two
+    lanes smaller than the floor is the machine, not the build. With the same build
+    in both folders every row should read `same` - that is what makes this drive
+    worth reading, and a row that says `differs` with identical builds is a fault in
+    the rig rather than a number about the app.
+    """
+    if len(names) < 2:
+        return
+
+    print()
+    print("lane against lane, each gap read against what the row is worth to nobody:")
+    print(f"  {'':44} {'gap':>9} {'floor':>9}")
+
+    loud = []
+    for key, words, unit in SAID:
+        seen = [name for name in names if key in found[name]]
+        if len(seen) < 2:
+            continue
+
+        values = [found[name][key] for name in seen]
+        gap = max(values) - min(values)
+        sill = max(moved[name].get(key, 0.0) for name in seen)
+        # A row that never moves at all still gets a millisecond, or an integer count
+        # that is off by one reads as a difference.
+        how = "same" if gap <= max(sill, 1.0) else "differs"
+        if how == "differs":
+            loud.append(f"{words} ({gap:.0f}{unit} on a floor of {sill:.0f})")
+        print(f"  {words:44} {gap:8.0f}{unit:>4} {sill:8.0f}{unit:>4}  {how}")
+
+    print()
+    if loud:
+        say(f"{len(loud)} rows differ by more than they are worth to nobody:")
+        for words in loud:
+            say(f"  {words}")
+    else:
+        say("every row agrees within what it is worth to nobody")
+
+
 def main() -> int:
     ask = argparse.ArgumentParser(description=__doc__)
     ask.add_argument("parts", nargs="*", default=[], help=f"any of {', '.join(PARTS)}")
@@ -1200,7 +1423,17 @@ def main() -> int:
     # they are, and by lane rather than by turn. So a number that is about the launch
     # itself is taken one build at a time, and the two runs compared.
     ask.add_argument("--build", default="", help="before or after, for one of them alone")
+    ask.add_argument(
+        "--as-was",
+        action="store_true",
+        help="serve as this file used to, to show what the lane bias was",
+    )
     told = ask.parse_args()
+
+    global AS_WAS  # noqa: PLW0603
+    AS_WAS = told.as_was
+    if AS_WAS:
+        say("serving as this file used to: HTTP/1.0, no caching, the folders' own dates")
 
     parts = told.parts or list(PARTS)
     for part in parts:
@@ -1220,6 +1453,12 @@ def main() -> int:
         say("nothing built")
         return 1
 
+    # A whole number of rotations, so every lane goes first equally often; see the
+    # rotation in the loop below.
+    rounds = told.rounds + (-told.rounds % len(lanes))
+    if rounds != told.rounds:
+        say(f"{told.rounds} rounds over {len(lanes)} lanes is not a whole turn; {rounds} rounds")
+
     for lane in lanes:
         lane.start()
 
@@ -1237,14 +1476,23 @@ def main() -> int:
 
             # Turn and turn about, so whatever the machine is doing is done to all
             # of them, and one at a time, so none of them is what the machine is
-            # doing - and the order reversed every other round, because the lane
-            # that goes first pays for the browser waking up. Two identical builds
-            # driven one after the other differed by half on a single round, which
-            # is more than most changes worth making do; the reversal is what makes
-            # a median of several rounds mean the code rather than the order.
+            # doing - and in a different order every round, because the lane that
+            # goes first pays for the browser waking up. Two identical builds driven
+            # one after the other differed by half on a single round, which is more
+            # than most changes worth making do.
             for part in parts:
-                for turn_at in range(told.rounds):
-                    turn = lanes if turn_at % 2 == 0 else [*reversed(lanes)]
+                for turn_at in range(rounds):
+                    # Rotated, not reversed. Reversing gives two orders however many
+                    # lanes there are, so with four lanes the two on the ends took
+                    # every turn at going first and the two in the middle took none -
+                    # and going first is what pays for the browser waking up. Rotating
+                    # by one a round, over a round count that is a whole number of
+                    # rotations, puts every lane in every position the same number of
+                    # times. With two lanes and five rounds the old order gave one of
+                    # them three turns at going first and the other two, which is a
+                    # lane bias in the median of a row that never moved.
+                    at = turn_at % len(lanes)
+                    turn = [*lanes[at:], *lanes[:at]]
                     for lane in turn:
                         for other in lanes:
                             if other is not lane:
@@ -1263,10 +1511,14 @@ def main() -> int:
             lane.stop()
 
     found = {lane.name: lane.numbers() for lane in lanes}
+    moved = {lane.name: lane.floors() for lane in lanes}
     names = [lane.name for lane in lanes]
 
     print()
-    print(f"median of {told.rounds} rounds, {NOTES} notes, {LINES} lines, {STROKES} strokes:")
+    print(
+        f"{rounds} rounds, {NOTES} notes, {LINES} lines, {STROKES} strokes."
+        " A time is the least disturbed round, a rate the best, a count the middle:"
+    )
     print(f"  {'':44} {'  '.join(f'{name:>14}' for name in names)}")
     for key, words, unit in SAID:
         if not any(key in found[name] for name in names):
@@ -1280,6 +1532,28 @@ def main() -> int:
     for lane in lanes:
         for words in lane.notes:
             say(words)
+
+    print()
+    for lane in lanes:
+        for part, times in lane.lost.items():
+            if times * 2 >= rounds:
+                say(f"{lane.name}: {part} was reached {rounds - times} of {rounds} rounds")
+
+    print("what each lane's server was asked for, over the whole run:")
+    for lane in lanes:
+        held = lane.served()
+        say(
+            f"{lane.name}: {held['asked']} requests, {held['sent']} sent,"
+            f" {held['again']} already had, {held['bytes'] / 1e6:.1f}MB"
+        )
+    # Two lanes that fetched different amounts were not two launches of the same
+    # shape, whatever the code in them was; this is the first thing to read when a
+    # row looks like a change and is not one.
+    counts = {(one["asked"], one["sent"]) for one in (lane.served() for lane in lanes)}
+    if len(counts) > 1:
+        say("the lanes were not served alike; the launch rows are not comparable")
+
+    prove(found, moved, names)
 
     print()
     print("what the browser blamed for the long frames:")
