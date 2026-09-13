@@ -323,8 +323,9 @@ mod tests {
                 "Board.canvas",
                 "Idea.md",
                 "Journal.pages",
-                "Svelte docs.url",
-                "paper.pdf"
+                // After the paper, because the list folds case before it sorts.
+                "paper.pdf",
+                "Svelte docs.url"
             ]
         );
 
