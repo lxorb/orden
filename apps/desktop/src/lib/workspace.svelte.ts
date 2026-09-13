@@ -492,9 +492,15 @@ class Workspace {
       // The list is on screen before a body is read; see startup.svelte.ts.
       await startup.shown()
 
-      // A first visit opens what it was given rather than a blank page.
-      const first = this.files[0]
-      if (first) await this.openEntry(first.path)
+      // A first visit opens what it was given rather than a blank page - unless
+      // something is open already. The list goes out above this line and the window
+      // takes keys from then on, so a note somebody opened in that second is theirs
+      // and this is not the moment to put another one in front of it.
+      if (!this.tabs.length) {
+        const first = this.files[0]
+        if (first) await this.openEntry(first.path)
+      }
+
       if (!this.tabs.length) this.openBlank()
       return
     }
@@ -641,7 +647,6 @@ class Workspace {
    *  remembers only while nobody has chosen one. See `panelChosen`. */
   async applyLayout(layout: Layout, asked = true) {
     const open = pathsTo(this.documents)
-    const rescued = this.tabs.filter((tab) => tab.dirty)
     const shared = emptyMap<NoteDoc>()
     const showing = emptyMap<string | null>()
     const made: Tab[] = []
@@ -659,6 +664,19 @@ class Workspace {
       if (!made.some((tab) => tab.paneId === empty.id)) frame = withoutPane(frame, empty.id)
     }
 
+    // What is open, read here rather than at the top: every line above this reads a
+    // note, and the window has been up and taking keys the whole time.
+    //
+    // A layout somebody chose is what they want on screen, so it replaces what is
+    // open and only unsaved words are carried over. The session is not chosen - it
+    // arrives a second into a sitting that has already begun - so everything open is
+    // kept and whatever is in front stays in front. A note opened in that second
+    // used to be closed again a moment later, and a drive had to hold still for a
+    // second and a half to work around it; a note closed in it stays closed, which
+    // is why this is read now and not before.
+    const rescued = asked ? this.tabs.filter((tab) => tab.dirty) : [...this.tabs]
+    const inFront = asked ? null : this.active
+
     this.tabs = made
     this.panes.restore(frame, layout.focused)
     if (asked || !this.panelChosen) this.panel = layout.panel
@@ -671,7 +689,14 @@ class Workspace {
       this.tabs = [...this.tabs, tab]
     }
 
-    if (!this.tabs.length) this.openBlank()
+    // The document that was in front when the session arrived, put back in front -
+    // by its own tab, or by the arrangement's if that opened the same note.
+    const still =
+      inFront &&
+      (this.tabs.includes(inFront) ? inFront : this.tabs.find((one) => one.note === inFront.note))
+
+    if (still) this.activeTabId = still.id
+    else if (!this.tabs.length) this.openBlank()
     else if (!this.active) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
 
     // A phone and a tablet show one document at a time.

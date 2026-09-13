@@ -1980,6 +1980,74 @@ describe('a panel asked for while the session is still arriving', () => {
   })
 })
 
+/** The other half of the same second: a note opened while the session is still
+ *  being read. The arrangement used to replace what was open, so the note closed
+ *  itself again a moment after it opened - which is what find-bar.py had to hold
+ *  still for. */
+describe('a note opened while the session is still arriving', () => {
+  /** One pane holding one note, which is what a session is written as. */
+  function drafted(path: string) {
+    return {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: [
+            {
+              kind: 'note' as const,
+              path,
+              name: path.slice(path.lastIndexOf('/') + 1),
+              doc: '',
+              dirty: false,
+              cursor: 0,
+              scroll: 0,
+            },
+          ],
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    }
+  }
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  test('stays open, and stays the one in front', async () => {
+    await workspace.open('/space/b.md')
+    expect(workspace.active?.path).toBe('/space/b.md')
+
+    // The session, arriving by itself with another note in it.
+    await workspace.applyLayout(drafted('/space/a.md'), false)
+
+    expect(workspace.tabs.map((tab) => tab.path)).toContain('/space/b.md')
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('is not opened twice when the session holds it too', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.applyLayout(drafted('/space/a.md'), false)
+
+    expect(workspace.tabs.filter((tab) => tab.path === '/space/a.md')).toHaveLength(1)
+    expect(workspace.active?.path).toBe('/space/a.md')
+  })
+
+  /** And the caller that is a choice: a named arrangement is what somebody asked to
+   *  see, so it still replaces whatever was open. */
+  test('but an arrangement chosen by name still replaces what is open', async () => {
+    await workspace.open('/space/b.md')
+
+    await workspace.applyLayout(drafted('/space/a.md'))
+
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md'])
+  })
+})
+
 describe('what a document is called on screen', () => {
   beforeEach(() => {
     workspace.tabs = []

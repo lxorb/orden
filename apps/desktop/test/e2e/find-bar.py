@@ -108,32 +108,11 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     raise SystemExit(f"gave up waiting for {what}")
 
 
-#: How long a state has to hold before the drive believes it. See `holds`.
-HOLD = 1.5
-
-
-def holds(page: Page, script: str, what: str, hold: float = HOLD) -> None:
-    """Waits for something to be true and to stay true.
-
-    Once is not enough where the app is still starting. The sitting is read back
-    after the window says it has a space, and reading it back sets which tab is
-    active: a note made the active one before that lands is the active one until it
-    lands, and this drive walked the wrong note about one run in three - true when it
-    looked, false a moment later, before a single key was pressed.
-
-    `script` is expected to put the state back as well as report it, so what this
-    measures is a second and a half in which nothing moved it."""
-    until = time.monotonic() + PATIENCE
-    while time.monotonic() < until:
-        since = time.monotonic()
-        while page.evaluate(script):
-            if time.monotonic() - since >= hold:
-                return
-            page.wait_for_timeout(50)
-
-        page.wait_for_timeout(50)
-
-    raise SystemExit(f"gave up waiting for {what} to stay put")
+#: The app opens the space's first note by itself on a first visit, and the window is
+#: already taking keys while it does. Seeding before that lands is a race with the
+#: launch rather than anything to do with the find bar, so every scene waits for the
+#: launch's own note first and then writes its own over the top of it.
+LAUNCHED = "() => window.nibApp.workspace.tabs.length > 0"
 
 
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
@@ -305,9 +284,10 @@ def on_phone(browser: Browser) -> None:
     try:
         page.evaluate(AS_PHONE)
         page.wait_for_timeout(200)
+        wait_for(page, LAUNCHED, f"[{label}] the launch's own note")
         say(f"[{label}] wrote {page.evaluate(SEED, NOTE)}")
         wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
-        holds(page, SHOWING, f"[{label}] the note to be the document")
+        wait_for(page, SHOWING, f"[{label}] the note to be the document")
 
         page.locator(".cm-content").first.click()
         page.keyboard.press("Control+f")
@@ -340,15 +320,16 @@ def on_phone(browser: Browser) -> None:
 def drive(browser: Browser, label: str, scheme: str) -> None:
     page = fresh(browser, label, {"width": 1180, "height": 760}, scheme)
     try:
+        wait_for(page, LAUNCHED, f"[{label}] the launch's own note")
         say(f"[{label}] wrote {page.evaluate(SEED, NOTE)}")
         wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
-        # And the note itself in it, which is not the same thing. An editor exists
-        # before the note it is going to show arrives, so waiting for one and then
-        # sleeping is waiting for whichever document was there: the caret went to the
-        # second word of the wrong note, Ctrl+F opened on a word this note does not
-        # hold, and every check after it read as a bug in the find bar. One run in
-        # three. `windmill` is in this note and in nothing else in the space.
-        holds(page, SHOWING, f"[{label}] the note to be the document")
+        # And the note itself in it, which is not the same thing: an editor exists
+        # before the note it is going to show arrives, and the caret used to go to
+        # the second word of whichever document was there. `windmill` is in this note
+        # and in nothing else in the space. Waited for once, because the sitting
+        # being read back no longer takes the active tab off a note somebody opened
+        # while it was arriving; see applyLayout in workspace.svelte.ts.
+        wait_for(page, SHOWING, f"[{label}] the note to be the document")
 
         # ── Ctrl+F, with a word under the caret ──
         content = page.locator(".cm-content").first
