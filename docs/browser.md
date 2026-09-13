@@ -794,9 +794,9 @@ runtime:
 ```rust
 tauri::Builder::default()
     .runtime(Cef::default()
-        .cache_path(web_dir)
+        .root_cache_path(web_dir)
         .sandbox(SandboxPolicy::Required)
-        .profile_preferences(...))
+        .profile_preference_value("default_search_provider_data", ...))
 ```
 
 `SandboxPolicy::Required` and not `Auto`: a build that cannot sandbox its renderers
