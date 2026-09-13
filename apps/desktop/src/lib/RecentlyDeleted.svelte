@@ -4,6 +4,7 @@
    *  device otherwise; both when the device still holds older items. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { relativeStep } from './ago'
   import { i18n, plural, t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
@@ -25,14 +26,10 @@
    *  on this pane by a long way. */
   const relative = $derived(new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }))
 
-  /** "3 days ago", in the interface language. */
+  /** "3 days ago", in the interface language. Which unit that is, is ago.ts. */
   function ago(at: number): string {
-    const format = relative
-    const elapsed = Date.now() - at
-    if (elapsed < 60 * 60 * 1000)
-      return format.format(-Math.max(1, Math.round(elapsed / 60000)), 'minute')
-    if (elapsed < DAY) return format.format(-Math.round(elapsed / (60 * 60 * 1000)), 'hour')
-    return format.format(-Math.round(elapsed / DAY), 'day')
+    const step = relativeStep(Date.now() - at)
+    return relative.format(step.value, step.unit)
   }
 
   function daysLeft(item: TrashItem): number {
