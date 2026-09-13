@@ -20,7 +20,7 @@
   import type { StoreTheme } from './themes/registry'
   import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
   import { PAINT, store } from './themes/store.svelte'
-  import { dur } from './motion'
+  import { dur, LAYER } from './motion'
   import { trap } from './trap'
 
   const STYLE_ID = 'nib-theme-miniatures'
@@ -158,7 +158,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="nib-scrim scrim"
-    transition:fade={{ duration: dur(130) }}
+    transition:fade={{ duration: LAYER.fade }}
     onclick={() => store.close()}
   ></div>
 
@@ -170,7 +170,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={store.chosen?.name ?? t('Themes')}
-    transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- The head of a sheet, and not the head of the page: a bare `header` is the
          page's banner wherever it is not inside an article or a section, so this

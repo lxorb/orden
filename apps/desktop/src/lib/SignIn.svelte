@@ -7,7 +7,7 @@
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
   import { settleLocalNotes } from './settling'
-  import { dur } from './motion'
+  import { dur, LAYER } from './motion'
   import { trap } from './trap'
 
   const LENGTH = 6
@@ -110,7 +110,7 @@
 
 {#if account.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={close}></div>
 
   <div
     class="nib-screen panel"
@@ -118,7 +118,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={t('Sign in')}
-    transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- Somebody sent a link here, so say what it was before asking for an
          address: signing in is the whole of what it takes to open it. -->

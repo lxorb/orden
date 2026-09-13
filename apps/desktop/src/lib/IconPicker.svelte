@@ -33,7 +33,7 @@
   import { DEFAULT_SET, ICON_SETS } from './icon-sets'
   import { rankIcons, readIcon, sameIcon, writtenIcon } from './icons'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
   import { segmented } from './slide'
   import { trap } from './trap'
@@ -274,7 +274,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="nib-scrim scrim"
-    transition:fade={{ duration: dur(130) }}
+    transition:fade={{ duration: LAYER.fade }}
     onclick={() => iconChoice.close()}
   ></div>
 
@@ -285,7 +285,7 @@
     aria-modal="true"
     aria-label={t('Choose an icon')}
     style:--cell="{cell}px"
-    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <input
       class="nib-field"

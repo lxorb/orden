@@ -38,6 +38,12 @@ const sources = componentFiles(SOURCE)
 /** Every `duration:` and what it was given. */
 const DURATION = /duration:\s*([^,}\n]+)/g
 
+/** The two spellings that reach the setting: `dur(ms)`, and the pair of named
+ *  durations every layer the app puts up arrives with - `LAYER.fade` and
+ *  `LAYER.rise`, both of which are `dur` behind a name. That they really are is
+ *  held next door, in src/lib/motion.test.ts. */
+const THROUGH_DUR = /^(dur\(|LAYER\.(fade|rise)\b)/
+
 describe('the durations JavaScript hands out', () => {
   test('the scan finds them', () => {
     const found = sources.filter((one) => DURATION.test(one.text))
@@ -50,7 +56,7 @@ describe('the durations JavaScript hands out', () => {
     for (const one of sources) {
       for (const match of one.text.matchAll(DURATION)) {
         const value = (match[1] ?? '').trim()
-        if (value.startsWith('dur(')) continue
+        if (THROUGH_DUR.test(value)) continue
 
         const line = one.text.slice(0, match.index).split('\n').length
         offenders.push(`${one.name}:${line}: duration: ${value}`)
@@ -63,7 +69,8 @@ describe('the durations JavaScript hands out', () => {
   test('and every file that hands one out says where the rule lives', () => {
     const missing = sources
       .filter(
-        (one) => /duration:\s*dur\(/.test(one.text) && !/from '\.\.?\/*motion'/.test(one.text),
+        (one) =>
+          /duration:\s*(dur\(|LAYER\.)/.test(one.text) && !/from '\.\.?\/*motion'/.test(one.text),
       )
       .map((one) => one.name)
 

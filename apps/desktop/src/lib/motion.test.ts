@@ -63,3 +63,44 @@ describe('how long something moves for', () => {
     expect(asked).toEqual(['(prefers-reduced-motion: reduce)'])
   })
 })
+
+/** One set of numbers for every layer the app puts up, and the reason the guard in
+ *  test/motion.test.ts lets a component spell a duration this way: both of these
+ *  are `dur` behind a name. */
+describe('how a layer arrives', () => {
+  test('is the same two numbers wherever it is asked for', async () => {
+    const { LAYER } = await motion(false)
+
+    expect(LAYER.fade).toBe(130)
+    expect(LAYER.rise).toBe(190)
+    expect(LAYER.start).toBe(0.97)
+  })
+
+  test('and is nothing at all for a reader who asked for less movement', async () => {
+    const { LAYER } = await motion(true)
+
+    expect(LAYER.fade).toBe(0)
+    expect(LAYER.rise).toBe(0)
+  })
+
+  /** Read at the moment the transition starts rather than when the module loaded,
+   *  the way `dur` is: a reader who turns the setting on mid-session is answered by
+   *  the next thing that moves. */
+  test('and is read afresh each time it is asked', async () => {
+    let asked = false
+    vi.resetModules()
+    vi.stubGlobal('window', {
+      matchMedia: () => ({
+        get matches() {
+          return asked
+        },
+      }),
+    })
+
+    const { LAYER } = await import('./motion')
+    expect(LAYER.rise).toBe(190)
+
+    asked = true
+    expect(LAYER.rise).toBe(0)
+  })
+})

@@ -33,3 +33,26 @@ export function stillness(): boolean {
 export function dur(ms: number): number {
   return stillness() ? 0 : ms
 }
+
+/** How a layer arrives: the scrim fades, the surface rises into it.
+ *
+ *  One set of numbers for every layer the app puts up - a sheet, the palette, the
+ *  prompt, the sign-in panel, the invitation, the version list, the icon picker,
+ *  the theme store. Eight components each wrote their own, and by the time there
+ *  were eight there were three: 130/190 from a start of .97, 140/200 from .96, and
+ *  140/200 from .97. Nobody chose that, and a reader who opens two of them in a
+ *  row can feel it without being able to say what it was.
+ *
+ *  Read through `dur` at the moment a transition starts, like everything else
+ *  here, so a system asking for less movement gets none. */
+export const LAYER = {
+  /** The scrim, which is only an opacity. */
+  get fade(): number {
+    return dur(130)
+  },
+  /** The surface, which also grows the last three per cent. */
+  get rise(): number {
+    return dur(190)
+  },
+  start: 0.97,
+} as const

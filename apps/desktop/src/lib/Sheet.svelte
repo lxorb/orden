@@ -22,7 +22,7 @@
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
-  import { dur } from './motion'
+  import { LAYER } from './motion'
   import { trap } from './trap'
 
   const {
@@ -56,7 +56,7 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={onclose}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={onclose}></div>
 
   <div
     class="nib-screen sheet"
@@ -64,7 +64,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={title}
-    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- The subject, then the way out, which is where every window in the world
          keeps it. The scrim, Escape and back all close it too; nothing here is

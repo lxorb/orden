@@ -14,7 +14,7 @@
   import { cubicOut } from 'svelte/easing'
   import { invoke } from './tauri'
   import { type Tab, workspace } from './workspace.svelte'
-  import { dur } from './motion'
+  import { LAYER } from './motion'
   import { trap } from './trap'
 
   interface Snapshot {
@@ -241,14 +241,20 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="nib-scrim scrim"
-    transition:fade={{ duration: dur(140) }}
+    transition:fade={{ duration: LAYER.fade }}
     onclick={() => (open = false)}
   ></div>
 
+  <!-- Named and said to be a dialog, like every other layer: the keyboard was
+       already trapped in here, and a trap with nothing saying what it is trapped in
+       is a reader who cannot tell why Tab stopped going anywhere. -->
   <div
     class="sheet"
     use:trap
-    transition:scale={{ duration: dur(200), start: 0.97, easing: cubicOut }}
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Version history')}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if !workspace.active?.path}
       <p class="empty">{t('Save this note first; there is nothing to compare against yet.')}</p>

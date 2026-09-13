@@ -10,7 +10,7 @@
   import { selectAll } from './select-all'
   import Select from './Select.svelte'
   import SpaceMark from './SpaceMark.svelte'
-  import { dur } from './motion'
+  import { LAYER } from './motion'
   import { trap } from './trap'
 
   // Back answers the question with nothing, the same as tapping away.
@@ -66,7 +66,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="nib-scrim scrim"
-    transition:fade={{ duration: dur(130) }}
+    transition:fade={{ duration: LAYER.fade }}
     onclick={() => prompt.dismiss()}
   ></div>
 
@@ -79,7 +79,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={prompt.title}
-    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <form
       onsubmit={(event) => {

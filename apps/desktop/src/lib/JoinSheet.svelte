@@ -13,7 +13,7 @@
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, LAYER } from './motion'
   import { trap } from './trap'
 
   const invitation = $derived(joining.invitation)
@@ -32,7 +32,7 @@
 </script>
 
 {#if joining.step}
-  <div class="nib-scrim scrim" transition:fade={{ duration: dur(140) }}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }}></div>
 
   <div
     class="nib-screen panel"
@@ -40,7 +40,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={shared ?? t('Shared with you')}
-    transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if shared}
       <p class="shared">{shared}</p>

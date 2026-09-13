@@ -364,6 +364,9 @@
     class:phone={viewport.touch}
     style:height={pageHeight()}
     use:trap
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Settings')}
     transition:appear
   >
     {#if viewport.touch}

@@ -11,7 +11,7 @@
   import { overlays } from './overlays'
   import { trap } from './trap'
   import { workspace, type Entry } from './workspace.svelte'
-  import { dur } from './motion'
+  import { LAYER } from './motion'
 
   // eslint-disable-next-line prefer-const -- `open` is bindable, and a $props() pattern cannot be split
   let { open = $bindable(false), view }: { open?: boolean; view?: EditorView | undefined } =
@@ -123,7 +123,7 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={dismiss}></div>
 
   <div
     class="nib-screen palette"
@@ -131,7 +131,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={t('Search notes and commands')}
-    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+    transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- A box with a list under it is one control and not two: the keyboard never
          leaves the box, and the arrows move which row the box is pointing at. That
