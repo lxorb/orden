@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
-import { listIn, objectBody, objectIn } from '../src/body'
+import { listIn, MOST_BODY_BYTES, objectBody, objectIn } from '../src/body'
+import { MAX_NOTE_BYTES } from '../src/notes'
 
 /** What every route that reads its own fields does with a body, and what every
  *  reader does with a column.
@@ -174,6 +175,45 @@ describe('what the one reading answers', () => {
 
   test('and undefined where there was no body to parse', async () => {
     expect(await objectBody(sent(() => Promise.reject(new Error('no body'))))).toBeUndefined()
+  })
+
+  /** Parsing first and measuring afterwards is how a Worker with a hundred and
+   *  twenty-eight megabytes is asked to hold a hundred - and `/v1/auth/code` takes a
+   *  body from anybody at all. So the length a request declares is read first. */
+  test('and null for a body that says it is longer than one, without reading it', async () => {
+    let read = 0
+    const long = {
+      req: {
+        json: (() => {
+          read += 1
+          return Promise.resolve({ a: 1 })
+        }) as never,
+        header: (name: string) =>
+          name === 'content-length' ? String(MOST_BODY_BYTES + 1) : undefined,
+      },
+    }
+
+    expect(await objectBody(long)).toBeNull()
+    expect(read).toBe(0)
+  })
+
+  test('while a body the routes were built for is read as it always was', async () => {
+    const held = (length: number) => ({
+      req: {
+        json: (() => Promise.resolve({ a: 1 })) as never,
+        header: (name: string) => (name === 'content-length' ? String(length) : undefined),
+      },
+    })
+
+    expect(await objectBody(held(0))).toEqual({ a: 1 })
+    expect(await objectBody(held(MOST_BODY_BYTES))).toEqual({ a: 1 })
+  })
+
+  /** The longest field any body carries is a note, so the ceiling has to be above
+   *  it: the two are in different modules and a note could otherwise grow past the
+   *  body that has to hold it. */
+  test('and the ceiling leaves room for the longest note', () => {
+    expect(MOST_BODY_BYTES).toBeGreaterThan(MAX_NOTE_BYTES)
   })
 })
 

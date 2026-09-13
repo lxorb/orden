@@ -14,9 +14,30 @@
  *  The sentences are lowercase like every other message here, so the app can
  *  drop one into a line of its own text. */
 
-/** Only the body is read, so this takes the smallest thing that has one. */
+/** Only the body is read, so this takes the smallest thing that has one - and the
+ *  one header that says how long it is going to be. */
 interface HasJson {
-  req: { json: <T>() => Promise<T> }
+  req: { json: <T>() => Promise<T>; header?: (name: string) => string | undefined }
+}
+
+/** The longest body any route here reads.
+ *
+ *  The same reasoning as `textAtMost` below, in the other direction: parsing first
+ *  and measuring afterwards is how a Worker with a hundred and twenty-eight
+ *  megabytes of memory is asked to hold a hundred, and `/v1/auth/code` is a route
+ *  anybody can post to without being anybody. So the length a request declares is
+ *  read first, and a body that says it is longer than this is never parsed.
+ *
+ *  Twice the longest note, which is the largest field any body carries; see
+ *  `MAX_NOTE_BYTES` in notes.ts and the test in test/bodies.test.ts that holds the
+ *  two together. A body that arrives without saying how long it is falls to the
+ *  platform's own ceiling, as it always has. */
+export const MOST_BODY_BYTES = 8 * 1024 * 1024
+
+/** Whether the request has already said it is too long to read. */
+function overlong(source: HasJson): boolean {
+  const said = Number(source.req.header?.('content-length') ?? '')
+  return Number.isFinite(said) && said > MOST_BODY_BYTES
 }
 
 /** The object a request carried, for the routes that read their own fields out of
@@ -33,6 +54,11 @@ interface HasJson {
 export async function objectBody(
   source: HasJson,
 ): Promise<Record<string, unknown> | null | undefined> {
+  // A body too long to hold is not an object, and is not read to find out; see
+  // `MOST_BODY_BYTES`. Null rather than undefined, because it is a client's mistake
+  // rather than a request that carried nothing.
+  if (overlong(source)) return null
+
   const parsed = await source.req.json<unknown>().catch(() => undefined)
   if (parsed === undefined) return undefined
 
