@@ -13,7 +13,7 @@
  *  text writer's twin: the same path check, the same atomic write. */
 
 import { toBase64 } from '../bytes'
-import { keep } from '../stored'
+import { keep, storedText } from '../stored'
 import { folderOf, invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
 import { fileNameFor, freeName } from './naming'
 
@@ -33,16 +33,6 @@ const FOLDER_KEY = 'nib:export-folder'
 /** The folder inside the app's documents folder a phone writes exports into. */
 const EXPORTS = 'Exports'
 
-function rememberedFolder(): string | null {
-  try {
-    return localStorage.getItem(FOLDER_KEY)
-  } catch {
-    // A browser told to keep no site data still exports; it just starts wherever
-    // the dialog last was.
-    return null
-  }
-}
-
 function remember(target: string) {
   const folder = folderOf(target)
   // Worth nothing, and never worth failing an export over.
@@ -58,7 +48,8 @@ export async function chooseTarget(
 ): Promise<string | null> {
   const { save } = await import('@tauri-apps/plugin-dialog')
   const file = fileNameFor(name, extension)
-  const folder = rememberedFolder()
+  // A browser told to keep no site data starts wherever the dialog last was.
+  const folder = storedText(FOLDER_KEY)
 
   return save({
     defaultPath: folder ? joinPath(folder, file) : file,

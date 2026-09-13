@@ -1,4 +1,4 @@
-import { keep } from './stored'
+import { keep, storedText } from './stored'
 import { isDesktop } from './tauri'
 import { asChannel, type Channel, discard, stageUpdate } from './updater'
 
@@ -21,18 +21,6 @@ const TICK = 10 * 60 * 1000
  *  account: one machine can run the build of main while another stays on the
  *  releases, which is the whole point of the choice. */
 const CHANNEL_KEY = 'nib:channel'
-
-/** What was chosen here last, or the stable channel for a machine that has never
- *  chosen. Reading storage can throw outright - a browser told to keep no site
- *  data refuses the getter - and a machine that cannot remember still follows the
- *  releases, which is the default anyway. */
-function savedChannel(): Channel {
-  try {
-    return asChannel(localStorage.getItem(CHANNEL_KEY))
-  } catch {
-    return 'stable'
-  }
-}
 
 /** The choice, written down. It holds for this run whichever way that goes; a
  *  machine that cannot keep it follows the releases again after a restart. */
@@ -59,7 +47,9 @@ class Updates {
 
   /** Which stream of releases this machine follows; see updater.ts. Stable, until
    *  somebody asks for the other one on this machine. */
-  channel = $state<Channel>(savedChannel())
+  /** What was chosen here last, or the stable channel for a machine that has
+   *  never chosen - which is also what a machine that cannot remember follows. */
+  channel = $state<Channel>(asChannel(storedText(CHANNEL_KEY)))
 
   /** When the last look happened, so that however many things ask - the timer,
    *  the window being come back to, the menu - nothing looks twice inside one

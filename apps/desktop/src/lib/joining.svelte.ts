@@ -28,7 +28,7 @@ import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
 import { settleLocalNotes } from './settling'
 import { sharedWithYou } from './sharing.svelte'
-import { forget, keep } from './stored'
+import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -112,7 +112,7 @@ class Joining {
    *  back with the rest of the launch, so the only thing missing is the link,
    *  and asking again is how anybody finds out they were let in. */
   private async resume() {
-    const held = localStorage.getItem(WAITING_KEY)
+    const held = storedText(WAITING_KEY)
     if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) return
 
     this.token = held

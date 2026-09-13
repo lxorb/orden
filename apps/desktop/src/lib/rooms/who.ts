@@ -13,7 +13,7 @@
 import { platform } from '@tauri-apps/plugin-os'
 import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
-import { keep } from '../stored'
+import { keep, storedText } from '../stored'
 import { isNative } from '../tauri'
 import { browserName } from './browser'
 
@@ -52,7 +52,7 @@ export function personName(): string | undefined {
  *  they end up different, and a name or an id would put every Windows machine on
  *  the same colour. */
 export function deviceAccent(): string {
-  const held = localStorage.getItem(KEY)
+  const held = storedText(KEY)
   if (held && ACCENTS.some((accent) => accent.id === held)) return held
 
   const picked = ACCENTS[Math.floor(Math.random() * ACCENTS.length)]?.id ?? ACCENTS[0]?.id ?? ''

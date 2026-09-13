@@ -4,7 +4,7 @@
 import { api } from './api'
 import { account } from './account.svelte'
 import { message } from './i18n.svelte'
-import { isRecord, keep, stored } from './stored'
+import { isRecord, keep, stored, storedText } from './stored'
 
 const STORAGE_KEY = 'nib:llm'
 const CLIENT_KEY = 'nib:llm-client'
@@ -51,7 +51,7 @@ class Connectors {
     const saved = stored(STORAGE_KEY)
     this.readOnly = !isRecord(saved) || saved.readOnly !== false
 
-    const client = localStorage.getItem(CLIENT_KEY)
+    const client = storedText(CLIENT_KEY)
     if (client === 'claude' || client === 'chatgpt' || client === 'other') this.client = client
   }
 

@@ -24,15 +24,25 @@ export function parsed(text: string | null): unknown {
   }
 }
 
-/** What storage holds under `key`, parsed. Reading storage itself can throw -
- *  a browser told to allow no site data refuses the getter outright - so that
- *  is caught here too and reads as nothing written. */
-export function stored(key: string): unknown {
+/** What storage holds under `key`, as it was written. Reading storage itself can
+ *  throw - a browser told to allow no site data refuses the getter outright - so
+ *  that is caught here and reads as nothing written.
+ *
+ *  For the keys that hold a word rather than a shape: a language tag, a chosen
+ *  preset, `yes` or `no`. Seven modules had written this same try/catch, and
+ *  seven more had left it out and read the getter raw. */
+export function storedText(key: string): string | null {
   try {
-    return parsed(localStorage.getItem(key))
+    return localStorage.getItem(key)
   } catch {
     return null
   }
+}
+
+/** The same read, parsed. A missing entry and a corrupt one both come back
+ *  null. */
+export function stored(key: string): unknown {
+  return parsed(storedText(key))
 }
 
 /** Writes one value down. Answers whether storage took it, and never throws.

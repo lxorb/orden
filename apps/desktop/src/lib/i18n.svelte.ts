@@ -1,7 +1,7 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
 import { setChartLocale } from '@nib/markdown/chart'
 import { type Direction, directionOf, factorOf, isolated } from './direction'
-import { keep } from './stored'
+import { keep, storedText } from './stored'
 
 /** The English string is its own key. A language that has not translated
  *  something falls back to it, so nothing can ever come out blank.
@@ -301,7 +301,7 @@ class I18n {
   )
 
   restore() {
-    this.choice = localStorage.getItem(STORAGE_KEY) ?? 'system'
+    this.choice = storedText(STORAGE_KEY) ?? 'system'
     void this.load()
   }
 

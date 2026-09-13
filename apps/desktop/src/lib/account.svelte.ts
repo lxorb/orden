@@ -1,7 +1,7 @@
 import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api'
 import { arriving } from './arriving.svelte'
 import { called } from './person'
-import { forget, keep } from './stored'
+import { forget, keep, storedText } from './stored'
 
 const STORAGE_KEY = 'nib:session'
 
@@ -127,7 +127,7 @@ class Session {
     // Every store, together, rather than the page's own first: the page's own is
     // the one a packed plugin loses, so preferring it means preferring the empty
     // answer. The vault reads all of them and answers with whichever kept it.
-    const saved = (await this.vault?.read()) ?? localStorage.getItem(STORAGE_KEY)
+    const saved = (await this.vault?.read()) ?? storedText(STORAGE_KEY)
     if (!saved) return
 
     // Read back out of the other store: the page's own is what everything else

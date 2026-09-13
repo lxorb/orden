@@ -1,7 +1,7 @@
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
-import { forget, keep } from './stored'
+import { forget, keep, storedText } from './stored'
 import { invoke } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
 
@@ -166,7 +166,7 @@ class Themes {
 
     this.restoreChoice()
     this.offerTheContrastTheme()
-    this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
+    this.accent = storedText(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
   }
@@ -182,9 +182,9 @@ class Themes {
    *  Written back in the new spelling at once, so nothing further along has to
    *  know there was an old one. */
   private restoreChoice() {
-    const saved = localStorage.getItem(STORAGE_KEY) ?? ''
-    const chosen = localStorage.getItem(SCHEME_KEY)
-    const side = localStorage.getItem(SIDE_KEY)
+    const saved = storedText(STORAGE_KEY) ?? ''
+    const chosen = storedText(SCHEME_KEY)
+    const side = storedText(SIDE_KEY)
 
     this.scheme = isChoice(chosen)
       ? chosen
@@ -220,9 +220,9 @@ class Themes {
    *  however it is answered - and nothing here selects a theme, so a reader who
    *  walks past the store keeps exactly the look they had. */
   private offerTheContrastTheme() {
-    if (localStorage.getItem(OFFERED_KEY)) return
+    if (storedText(OFFERED_KEY)) return
 
-    const had = localStorage.getItem(CONTRAST_KEY)
+    const had = storedText(CONTRAST_KEY)
     // Read once. The switch is gone, and the key with it.
     if (had !== null) forget(CONTRAST_KEY)
 

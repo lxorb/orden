@@ -12,6 +12,7 @@ import {
   parsed,
   recordOf,
   stored,
+  storedText,
   stringList,
 } from './stored'
 
@@ -27,6 +28,26 @@ describe('parsing what storage holds', () => {
   test('answers null rather than throwing on a truncated entry', () => {
     expect(parsed('{"a":')).toBeNull()
     expect(parsed('')).toBeNull()
+  })
+})
+
+describe('reading a key as the word it was written as', () => {
+  test('comes back as it went in', () => {
+    const store = new Map([['k', 'yes']])
+    vi.stubGlobal('localStorage', { getItem: (key: string) => store.get(key) ?? null })
+
+    expect(storedText('k')).toBe('yes')
+    expect(storedText('missing')).toBeNull()
+  })
+
+  test('survives a browser that refuses storage outright', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('site data is blocked')
+      },
+    })
+
+    expect(storedText('k')).toBeNull()
   })
 })
 
@@ -133,6 +154,26 @@ function writesItself(): string[] {
 describe('who writes to storage', () => {
   test('is this module, and the few files still waiting on another pass', () => {
     expect(writesItself()).toEqual(LEFT)
+  })
+})
+
+/** Every file that reads storage itself, the same way round.
+ *
+ *  Reading throws one of the three ways writing does - a browser told to allow no
+ *  site data refuses the getter as well - and fourteen modules had either written
+ *  that try/catch out again or left it off. `storedText` is the one read, and this
+ *  is what keeps it the one read. */
+function readsItself(): string[] {
+  return sourceFiles(SOURCE)
+    .filter((path) => path !== HERE)
+    .filter((path) => readFileSync(path, 'utf8').includes('localStorage.getItem('))
+    .map((path) => path.slice(SOURCE.length).replace(/\\/g, '/'))
+    .sort()
+}
+
+describe('who reads storage', () => {
+  test('is this module, and the site script for the reason above', () => {
+    expect(readsItself()).toEqual(LEFT)
   })
 })
 

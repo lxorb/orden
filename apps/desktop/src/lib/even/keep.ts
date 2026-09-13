@@ -16,7 +16,7 @@
  *  Nothing in the plain web build reaches this file. */
 
 import type { Vault } from '../account.svelte'
-import { forget as forgetHere, keep as keepHere } from '../stored'
+import { forget as forgetHere, keep as keepHere, storedText } from '../stored'
 import { connectStore } from './sdk'
 
 /** One place a value can be kept. Every method answers rather than throws: a
@@ -46,9 +46,10 @@ function some(value: string | null | undefined): string | null {
 
 const page: Keep = {
   name: 'localStorage',
-  read: (key) => Promise.resolve(some(localStorage.getItem(key))),
-  // The setter throws where there is no room and where site data is blocked, and
-  // `keepHere` turns both into the answer this interface is for. See ../stored.ts.
+  // The getter throws where site data is blocked, and the setter throws there and
+  // where there is no room. `storedText` and `keepHere` turn all of that into the
+  // answers this interface is for. See ../stored.ts.
+  read: (key) => Promise.resolve(some(storedText(key))),
   write: (key, value) => Promise.resolve(keepHere(key, value)),
   clear(key) {
     forgetHere(key)

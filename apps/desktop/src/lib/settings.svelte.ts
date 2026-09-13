@@ -3,7 +3,7 @@ import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
-import { isRecord, isString, keep, stored } from './stored'
+import { isRecord, isString, keep, stored, storedText } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 
 const PAGE_KEY = 'nib:page'
@@ -77,10 +77,10 @@ class Settings {
 
     // Only a format this build knows how to fill in, so a value written by a
     // later one cannot leave every unique note sharing a name.
-    const format = localStorage.getItem(NOTE_ID_KEY)
+    const format = storedText(NOTE_ID_KEY)
     if (format && ID_FORMATS.includes(format)) this.noteIdFormat = format
 
-    const appearance = localStorage.getItem(APPEARANCE_KEY)
+    const appearance = storedText(APPEARANCE_KEY)
     if (appearance === 'light' || appearance === 'dark' || appearance === 'app') {
       this.exportAppearance = appearance
     }

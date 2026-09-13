@@ -12,7 +12,7 @@
  *  launch, the way it does for the session token. See even/keep.ts, and see
  *  welcome.ts for the whole of what went wrong. */
 
-import { keep } from './stored'
+import { keep, storedText } from './stored'
 
 const KEY = 'nib:seeded'
 
@@ -34,18 +34,9 @@ export function forgetSeedStore(): void {
   elsewhere = null
 }
 
-/** The page's own store, which is every browser and every desktop. Wrapped
- *  because a page with site data blocked throws rather than answering. */
-function here(): boolean {
-  try {
-    return localStorage.getItem(KEY) === 'yes'
-  } catch {
-    return false
-  }
-}
-
 export async function wasSeeded(): Promise<boolean> {
-  if (here()) return true
+  // The page's own store, which is every browser and every desktop.
+  if (storedText(KEY) === 'yes') return true
 
   try {
     return (await elsewhere?.read()) ?? false

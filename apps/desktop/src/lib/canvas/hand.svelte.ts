@@ -13,20 +13,16 @@
  *  makes, and the other is a switch in the pen's own row for the one hand in a
  *  hundred that wants it. */
 
-import { keep } from '../stored'
+import { keep, storedText } from '../stored'
 
 const SEEN = 'nib:pen-seen'
 const DRAWS = 'nib:finger-draws'
 
-/** What the store says, which is a string or nothing until it has been checked. */
+/** What the store says. A browser with site data turned off answers nothing,
+ *  which reads as a no: the pen still works, it is only forgotten between
+ *  sittings. */
 function saved(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === 'yes'
-  } catch {
-    // A browser with site data turned off. Nothing to remember and nothing to
-    // report: the pen still works, it is only forgotten between sittings.
-    return false
-  }
+  return storedText(key) === 'yes'
 }
 
 /** A yes or a no, as the word the store holds. */

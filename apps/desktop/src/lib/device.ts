@@ -10,7 +10,7 @@
  *  Kept once it has been worked out, so a phone that reports itself differently
  *  after an update does not become a second device in the list. */
 
-import { keep } from './stored'
+import { keep, storedText } from './stored'
 import { isMobile, isNative } from './tauri'
 
 const STORAGE_KEY = 'nib:device'
@@ -45,14 +45,11 @@ function worked(): string {
 export function deviceName(): string {
   if (held !== null) return held
 
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      held = saved.slice(0, LONGEST)
-      return held
-    }
-  } catch {
-    // A browser with storage turned off still syncs; it just says less.
+  // A browser with storage turned off still syncs; it just says less.
+  const saved = storedText(STORAGE_KEY)
+  if (saved) {
+    held = saved.slice(0, LONGEST)
+    return held
   }
 
   held = worked() || 'a device'

@@ -14,7 +14,7 @@
  *  and none of it is a preference anybody would go looking for in Settings. One
  *  key, read once when the module loads and written whenever something moves. */
 
-import { keep } from '../stored'
+import { keep, storedText } from '../stored'
 import { clampOpacity, type InkTool, isInkTool } from './format'
 import { INK_STYLES } from './ink'
 import { DEFAULT_INK } from './palette'
@@ -213,16 +213,6 @@ export function readPens(raw: string | null): Kept {
   }
 }
 
-function stored(): Kept {
-  try {
-    return readPens(localStorage.getItem(KEY))
-  } catch {
-    // A browser with site data turned off. The pens still work, they are only
-    // forgotten between sittings, which is not worth telling anybody about.
-    return blank()
-  }
-}
-
 class Pens {
   /** The three, in the order the bar shows them. Always three; see PEN_SLOTS. */
   list = $state<Nib[]>([])
@@ -247,7 +237,9 @@ class Pens {
   partly = $state(false)
 
   constructor() {
-    this.restore(stored())
+    // A browser with site data turned off reads nothing, and the pens start
+    // blank: they still work, they are only forgotten between sittings.
+    this.restore(readPens(storedText(KEY)))
   }
 
   /** The pen that is out. Never nothing: the row is never empty. */

@@ -29,7 +29,7 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { isRecord, keep, stored } from './stored'
+import { isRecord, keep, stored, storedText } from './stored'
 import { isNative } from './tauri'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
@@ -64,7 +64,8 @@ class Shortcuts {
     // An entry written before there were presets has no name for its map, and
     // a map with something in it is exactly what Custom means.
     this.preset =
-      knownPreset(storedPreset()) ?? (Object.keys(this.overrides).length ? 'custom' : 'default')
+      knownPreset(storedText(PRESET_KEY)) ??
+      (Object.keys(this.overrides).length ? 'custom' : 'default')
   }
 
   /** Hands the whole keyboard over to a preset. Modal editing is part of what
@@ -286,17 +287,6 @@ class Shortcuts {
     }
 
     return false
-  }
-}
-
-/** The name as it was written down, which is a word rather than JSON since a
- *  word is all it is. Reading storage can throw where a browser is told to
- *  allow no site data, and that reads as nothing written. */
-function storedPreset(): string | null {
-  try {
-    return localStorage.getItem(PRESET_KEY)
-  } catch {
-    return null
   }
 }
 
