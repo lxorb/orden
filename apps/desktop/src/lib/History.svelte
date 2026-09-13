@@ -7,6 +7,7 @@
   import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
+  import { readableSize } from './usage.svelte'
   import { sync } from './sync.svelte'
   import { i18n, t } from './i18n.svelte'
   import { fade, scale } from 'svelte/transition'
@@ -268,7 +269,7 @@
                 {#if version.by}
                   <em>{version.by}</em>
                 {/if}
-                <kbd>{Math.max(1, Math.round(version.size / 1024))} kB</kbd>
+                <kbd>{readableSize(version.size)}</kbd>
               </button>
             </li>
           {/if}

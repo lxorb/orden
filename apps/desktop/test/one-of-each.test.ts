@@ -486,3 +486,24 @@ describe('saying Copied for a moment', () => {
     expect(says).toEqual(['lib/CopyButton.svelte'])
   })
 })
+
+/** How many bytes something is, in words.
+ *
+ *  Three surfaces say it - the storage line, the pages a site would publish, and
+ *  every row of the version history - and each had written its own division. The
+ *  history's rounded to whole kilobytes with a floor of one, so every version of
+ *  every ordinary note read `1 kB`: a column that is there to tell two versions
+ *  apart and told nobody anything. Two of them spelled the unit `kB` and the
+ *  third `KB`.
+ *
+ *  So: `readableSize` in usage.svelte.ts, and nothing else divides by 1024 to put
+ *  a unit after it. */
+describe('bytes said as words', () => {
+  test('are said by one function, so a small note is not rounded up to a kilobyte', () => {
+    const own = components
+      .filter((one) => /\/ *\(?1024/.test(one.text))
+      .map((one) => one.name)
+
+    expect(own).toEqual([])
+  })
+})

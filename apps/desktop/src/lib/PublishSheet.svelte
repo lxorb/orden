@@ -18,6 +18,7 @@
   import { siteIcon } from './site-icon'
   import { isDesktop } from './tauri'
   import SpaceMark from './SpaceMark.svelte'
+  import { readableSize } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
@@ -76,14 +77,6 @@
   const SHOWN_ANSWERS = 20
 
   const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
-
-  /** How much the pages come to, said the way the storage line says it. */
-  const size = (bytes: number) =>
-    bytes < 1024
-      ? `${bytes} B`
-      : bytes < 1024 * 1024
-        ? `${Math.round(bytes / 1024)} kB`
-        : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 
   /** The answers as a file, saved where the reader says on a desktop and handed
    *  to the browser to save on the web. Written by the server; see
@@ -282,7 +275,7 @@
           <!-- What the site serves, against the account's own allowance: the
                pages are notes the account already holds, so publishing them
                takes no more room. See docs/publishing.md. -->
-          {#if changes.bytes}· {size(changes.bytes)}{/if}
+          {#if changes.bytes}· {readableSize(changes.bytes)}{/if}
         </p>
         {#if changes.adds.length || changes.removes.length}
           <ul class="changed">
