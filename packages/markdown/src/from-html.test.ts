@@ -172,13 +172,15 @@ describe('a page as markdown', () => {
    *  and a note's markup is rendered as the note's own. A clipped page is somebody
    *  else's, so the table becomes a table. */
   test('a table with no headings becomes a table rather than the page markup', () => {
-    const html = '<table class="layout"><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>'
+    const html =
+      '<table class="layout"><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>'
 
     expect(htmlToMarkdown(html)).toBe('|  |  |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |')
   })
 
   test('nothing of the page is kept as markup', () => {
-    const html = '<table><tr><td onmouseover="run()"><img src="x" onerror="run()"></td></tr></table>'
+    const html =
+      '<table><tr><td onmouseover="run()"><img src="x" onerror="run()"></td></tr></table>'
 
     expect(htmlToMarkdown(html)).not.toContain('onerror')
     expect(htmlToMarkdown(html)).not.toContain('<td')

@@ -108,16 +108,16 @@ const HEADING = /^H[1-6]$/
  *  anything else shares the block - the words before and after it, in the page's
  *  own tree. */
 function standsAlone(maths: Element): boolean {
-  const said = (maths.textContent ?? '').trim()
+  const said = maths.textContent.trim()
   let at: Element | null = maths.parentElement
 
   while (at && !OWNS_A_LINE.has(at.nodeName)) {
     if (HEADING.test(at.nodeName)) return false
-    if ((at.textContent ?? '').trim() !== said) return false
+    if (at.textContent.trim() !== said) return false
     at = at.parentElement
   }
 
-  return !!at && (at.textContent ?? '').trim() === said
+  return !!at && at.textContent.trim() === said
 }
 
 /** A fence long enough to hold the code, whatever backticks the code contains. */
@@ -136,10 +136,12 @@ function fenceFor(code: string): string {
  *  arrive as a fence with no language on it and no highlighting anywhere after. */
 function languageOf(pre: Element): string {
   const code = pre.querySelector('code')
-  const named = [pre, code].reduce((found, one) => {
-    return found || one?.getAttribute('data-language') || one?.getAttribute('data-lang') || ''
-  }, '')
-  if (named.trim()) return named.trim().split(/\s+/)[0] ?? ''
+
+  for (const one of [pre, code]) {
+    const named = one?.getAttribute('data-language') ?? one?.getAttribute('data-lang') ?? ''
+    const first = named.trim().split(/\s+/)[0]
+    if (first) return first
+  }
 
   const classes = `${pre.className} ${code?.className ?? ''}`
   return /(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? ''
@@ -406,7 +408,10 @@ function converter(options: FromHtmlOptions): TurndownService {
   service.addRule('cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
-      const said = content.replace(/\s*\n+\s*/g, ' ').replace(/\|/g, '\\|').trim()
+      const said = content
+        .replace(/\s*\n+\s*/g, ' ')
+        .replace(/\|/g, '\\|')
+        .trim()
       const first = (node as Element).previousElementSibling === null
 
       return `${first ? '| ' : ' '}${said} |`
@@ -449,13 +454,15 @@ function converter(options: FromHtmlOptions): TurndownService {
   //
   // Written by the rule rather than as text, because text is escaped: every `\`
   // in the formula would come back doubled and the note would draw nothing.
+  // Named through a function rather than as a tag, because `math` is MathML and
+  // turndown's own list of tags is HTML's.
   service.addRule('maths', {
-    filter: 'math',
+    filter: (node) => node.nodeName.toLowerCase() === 'math',
     replacement: (content, node) => {
-      const tex = texOf(node as Element)
+      const tex = texOf(node)
       if (!tex) return content
 
-      if (standsAlone(node as Element)) return `\n\n$$\n${tex}\n$$\n\n`
+      if (standsAlone(node)) return `\n\n$$\n${tex}\n$$\n\n`
 
       // A dollar inside the formula is the one thing that would close it early,
       // and `\$` is how TeX writes one anyway. One that the page had already

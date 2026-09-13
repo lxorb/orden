@@ -182,7 +182,7 @@ function unhide(element: Element): void {
  *  formula's coat. The picture beside it still goes, because the formula is about to
  *  be written as `$…$`, and saying it twice would upload a picture of what the note
  *  already holds. */
-export function keepMaths(root: ParentNode): void {
+function keepMaths(root: ParentNode): void {
   for (const formula of root.querySelectorAll('math')) {
     let at: Element | null = formula
 
