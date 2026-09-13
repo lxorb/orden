@@ -1189,9 +1189,10 @@ on main or on a pull request. That is deliberate and worth keeping: the moment a
 ### What it said
 
 CEF 152.0.6 / Chromium 152.0.7977.83, on GitHub's runners, 2026-09-13. **Every check
-green on Windows and on macOS, twice each.** Linux needed a fix to the job before it
-could answer at all, which is its own finding and is below the table. The reports and
-the screenshots are the run's artefacts.
+green on Windows and on macOS, four runs each.** Linux is below the table and did not
+answer through `spike/browser` at all - it answered through `spike/shell` instead,
+which is the better proof anyway. The reports and the screenshots are the run's
+artefacts.
 
 | | `windows-latest` | `macos-latest` (arm64) |
 | --- | --- | --- |
@@ -1228,15 +1229,25 @@ and not the engine. And it is exactly what batch 1 exists to re-measure on a rea
 machine. **If a real Mac still costs most of a second, that is the moment to take B′
 seriously** - and section 2 has the shape of the alternative ready.
 
-**Linux, and two findings that are both worth having.** The first run there never
-got a browser at all: Chromium blocked looking for a D-Bus session bus a runner does
-not have, printed *"Failed to connect to the bus"* several hundred times, and spent
-its whole timeout doing it. `dbus-run-session` beside `xvfb-run` is the fix, and it
-is the kind of thing a packaging batch would otherwise discover in front of a user
-on a minimal desktop. The second is the size: CEF's Linux distribution ships
-`libcef.so` **unstripped at 1362 MB**, so the staged tree weighed 1487 MB - a release
-must strip it before any Linux number in this document means anything, and the
-research says a stripped one lands in the same 285-350 MB band as the other two.
+**Linux, and three findings, none of which is about the engine.** `spike/browser`
+never got a browser there at all. The first run blocked looking for a D-Bus session
+bus a runner does not have and printed *"Failed to connect to the bus"* several
+hundred times; `dbus-run-session` beside `xvfb-run` fixed that, and the second run
+still hung inside `cef_initialize` without ever reaching `on_context_initialized`.
+
+The interesting part is that **`spike/shell` initialised CEF on the same runner in
+264 ms** - so it is not the engine, it is the host. CEF's own Linux sample calls
+`gdk_set_allowed_backends("x11")` and `gtk_init` *after* `CefInitialize`, with a
+comment that the sandbox needs a single thread during initialisation;
+`tauri-runtime-cef` does that work and a good deal more, and a hand-rolled host that
+skips it hangs. **Which is an argument for the recommendation rather than against
+it**: on Linux the platform glue is most of the job, and B is the option where
+somebody else maintains it.
+
+The third is the size: CEF's Linux distribution ships `libcef.so` **unstripped at
+1362 MB**, so the staged tree weighed 1487 MB. A release must strip it before any
+Linux number here means anything; the research says a stripped one lands in the same
+285-350 MB band as the other two.
 
 **The size rows are unpacked bytes, not an installer.** What a reader actually
 downloads is that tree compressed, and the spike does not build an installer, so the
@@ -1276,7 +1287,12 @@ exists to prevent, and it had been written there as a precaution; it is now a
 demonstrated requirement with a screenshot attached. **Batch 2 does not ship one
 profile.**
 
-Two smaller findings from the same run. The shell exited with a segmentation fault
+`spike/shell` did not build on macOS (the winit mismatch above) and, on Windows,
+`tauri-build` wants an `icons/icon.ico` the first version of the crate did not carry -
+fixed in the tree, not re-run, and said here rather than left as a green tick nobody
+earned.
+
+Two smaller findings from the Linux run. The shell exited with a segmentation fault
 *after* its work was done and `exit(0)` was called - a shutdown path in an unreleased
 runtime, worth reporting upstream rather than worrying about. And `--no-browser`
 there took 2.3 s to an initialised engine, because under this runtime there is no
