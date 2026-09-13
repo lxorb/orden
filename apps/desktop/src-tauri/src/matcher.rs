@@ -174,6 +174,56 @@ impl Facts<'_> {
     fn starts(&self) -> &[usize] {
         self.starts.get_or_init(|| line_starts(self.body))
     }
+
+    /// The regions one unit covers. A line is the line index read forward; see
+    /// `Units`.
+    fn units_of(&self, unit: Unit) -> Units<'_> {
+        if matches!(unit, Unit::Line) {
+            Units::Lines {
+                starts: self.starts(),
+                at: 0,
+                end: self.body.len(),
+            }
+        } else {
+            Units::Held(self.units[slot(unit)].iter())
+        }
+    }
+}
+
+/// Where each of a unit's regions is, as a group of terms walks them.
+///
+/// A line is read off the line index the note already has; every other unit is the
+/// list `facts` worked out once. Same shape either way, so the walk does not know
+/// which of the two it is being handed.
+enum Units<'a> {
+    Lines {
+        starts: &'a [usize],
+        at: usize,
+        end: usize,
+    },
+    Held(std::slice::Iter<'a, Region>),
+}
+
+impl Iterator for Units<'_> {
+    type Item = Region;
+
+    fn next(&mut self) -> Option<Region> {
+        match self {
+            Units::Lines { starts, at, end } => {
+                let from = *starts.get(*at)?;
+                // A line ends where the next one starts, its break not included, and
+                // the last of them ends where the note does. The same two rules
+                // `units_in` reads off this index.
+                let to = starts
+                    .get(*at + 1)
+                    .map_or(*end, |next| next.saturating_sub(1));
+                *at += 1;
+
+                Some(Region { from, to })
+            }
+            Units::Held(rest) => rest.next().copied(),
+        }
+    }
 }
 
 /// Which of the unit lists a group looks in.
@@ -296,8 +346,13 @@ fn is_heading(line: &str) -> bool {
     rest.chars().nth(hashes).is_none_or(char::is_whitespace)
 }
 
-/// The regions a group of terms looks inside: a line, a paragraph, a heading's
-/// section, or a task item.
+/// The regions a group of terms looks inside: a paragraph, a heading's section, or a
+/// task item.
+///
+/// Not a line, which `Units` reads off the line index instead: where a line starts
+/// and where the next one does is what that index already says, and a note of a
+/// million and a half lines is a million and a half regions written down to say it
+/// again - for every note of the space a `line:` group is asked about.
 fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
     let end_of = |index: usize| starts.get(index + 1).map_or(body.len(), |next| next - 1);
 
@@ -323,17 +378,6 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         }
 
         return found;
-    }
-
-    if matches!(unit, Unit::Line) {
-        return starts
-            .iter()
-            .enumerate()
-            .map(|(index, &from)| Region {
-                from,
-                to: end_of(index),
-            })
-            .collect();
     }
 
     let sectioned = matches!(unit, Unit::Section);
@@ -628,7 +672,8 @@ impl Matcher {
         };
 
         let unit_of = |unit: Unit| {
-            if self.needs.units[slot(unit)] {
+            // A line's regions are not among these: see `Units`.
+            if self.needs.units[slot(unit)] && !matches!(unit, Unit::Line) {
                 units_in(body, starts.get().map_or(&[][..], Vec::as_slice), unit)
             } else {
                 Vec::new()
@@ -740,8 +785,8 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             let mut out = Vec::new();
             let mut answered = false;
 
-            for one in &facts.units[slot(*unit)] {
-                let Some(within) = clip(*one, region) else {
+            for one in facts.units_of(*unit) {
+                let Some(within) = clip(one, region) else {
                     continue;
                 };
                 if let Some(mut found) = walk(of, note, facts, within) {
