@@ -10,7 +10,7 @@ use tauri::AppHandle;
 use crate::clock;
 use crate::paths::{
     cannot, in_spaces, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, space_root,
-    spaces_root, Seen, MAX_DEPTH,
+    spaces_dir, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -59,7 +59,7 @@ pub fn read_tree(
     root: String,
     options: Option<TreeOptions>,
 ) -> Result<Entry, String> {
-    let spaces = spaces_root(&app)?;
+    let spaces = spaces_dir(&app)?;
     let path = in_spaces(&app, &root)?;
     if !path.is_dir() {
         return Err("root is not a directory".into());

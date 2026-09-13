@@ -14,7 +14,7 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_root,
+    cannot, folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_dir,
     write_atomically, TRASH,
 };
 
@@ -58,7 +58,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
         return Err(format!("{kind} is not something Nib can delete"));
     }
 
-    let base = spaces_root(&app)?;
+    let base = spaces_dir(&app)?;
     // Refuses anything outside the notes folder, and the trash itself: what is
     // already deleted cannot be deleted again.
     let source = in_spaces(&app, &path)?;
@@ -132,7 +132,7 @@ pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
 /// old place unless that is taken by now.
 #[tauri::command(async)]
 pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
-    let base = spaces_root(&app)?;
+    let base = spaces_dir(&app)?;
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
@@ -212,9 +212,10 @@ pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
     Ok(u32::try_from(old.len()).unwrap_or(u32::MAX))
 }
 
-/// The trash folder, made if it is not there yet.
+/// The trash folder, made if it is not there yet. One `create_dir_all` for both:
+/// the folder above it is the spaces folder, and making a folder makes its parents.
 fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = spaces_root(app)?.join(TRASH);
+    let dir = spaces_dir(app)?.join(TRASH);
     made(&dir)?;
     Ok(dir)
 }

@@ -224,7 +224,7 @@ pub fn warm_search(app: AppHandle, root: String) -> Result<Warmth, String> {
         let mut warm = held();
         if warm.root.as_deref() != Some(dir.as_path()) {
             *warm = Warm::default();
-            warm.root = Some(dir.clone());
+            warm.root = Some(dir);
         }
         warm.of = paths.len();
         warm.whole = false;

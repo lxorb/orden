@@ -173,15 +173,28 @@ pub fn made(dir: &Path) -> Result<(), String> {
 /// `Documents/Nib`, so notes sit where a person would look for them rather than
 /// buried in application data. Falls back to the home folder on a system that
 /// has no documents folder of its own.
-pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
+///
+/// Where the folder is, and nothing more: judging a path is not a reason to make a
+/// folder, and judging one is what most of the callers are doing - `in_spaces`
+/// stands in front of every note, folder, tree, search and trash command, and a
+/// note being read asks whether it is inside. What wants the folder to be there
+/// says so, with `spaces_root`.
+pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
         .document_dir()
         .or_else(|_| app.path().home_dir())
         .map_err(|error| format!("could not find the documents folder: {error}"))?;
 
-    let dir = base.join("Nib");
+    Ok(base.join("Nib"))
+}
+
+/// The same folder, made if it is not there yet. What the commands that read or
+/// write the folder itself ask for: the list of spaces, a new space, the trash.
+pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = spaces_dir(app)?;
     made(&dir)?;
+
     Ok(dir)
 }
 
@@ -278,10 +291,15 @@ fn same_part(one: Component, other: Component) -> bool {
 /// The trash is inside that folder and still refused, because nothing but the
 /// trash commands has any business in it.
 pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
-    let root = spaces_root(app)?;
+    judged(&spaces_dir(app)?, path)
+}
+
+/// That gate, with the spaces folder passed in rather than asked for, so what it
+/// refuses can be said without an app around it.
+fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
-    if !inside(&root, &target) || inside(&root.join(TRASH), &target) {
+    if !inside(root, &target) || inside(&root.join(TRASH), &target) {
         return Err(format!("{path} is outside the notes folder"));
     }
 
@@ -292,12 +310,17 @@ pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 /// Renaming or deleting a space moves a whole tree, so the path is held to the
 /// stricter shape rather than to mere containment.
 pub fn a_space(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
-    let root = spaces_root(app)?;
+    judged_space(&spaces_dir(app)?, path)
+}
+
+/// That shape, with the spaces folder passed in, for the same reason `judged` takes
+/// one: a space is a shape a test can be about.
+fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
     let directly_inside = target
         .parent()
-        .is_some_and(|parent| inside(&root, parent) && inside(parent, &root));
+        .is_some_and(|parent| inside(root, parent) && inside(parent, root));
     let hidden = target
         .file_name()
         .and_then(OsStr::to_str)
@@ -330,7 +353,7 @@ pub fn chosen(path: &str) -> Result<PathBuf, String> {
 /// Whether a path lies outside the spaces folder. A documents folder that cannot
 /// even be resolved counts as outside, which is the cautious answer.
 pub fn outside_spaces(app: &AppHandle, path: &Path) -> bool {
-    spaces_root(app).map_or(true, |root| !inside(&root, path))
+    spaces_dir(app).map_or(true, |root| !inside(&root, path))
 }
 
 /// The folders notes were opened from outside the spaces folder. Pictures sit
@@ -379,7 +402,7 @@ pub fn note_from_outside(app: &AppHandle, path: &Path) {
 pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
-    if let Ok(root) = spaces_root(app) {
+    if let Ok(root) = spaces_dir(app) {
         if inside(&root, &target) && !inside(&root.join(TRASH), &target) {
             return Ok(target);
         }
@@ -624,8 +647,8 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
-        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, link_to,
-        move_highlights, space_root, write_atomically,
+        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged,
+        judged_space, link_to, move_highlights, space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -669,6 +692,94 @@ mod tests {
     #[test]
     fn nothing_is_inside_a_folder_with_no_name() {
         assert!(!inside(Path::new(""), &path(&["a"])));
+    }
+
+    /// The gate every note, folder, tree, search and trash command goes through,
+    /// on the strings a caller can hand it. The window's own side judges a path
+    /// before it sends one - see `insideOnly` in automation/inside.ts - and this is
+    /// the half that does not take the window's word for it.
+    #[test]
+    fn the_gate_takes_a_path_inside_the_spaces_folder_and_nothing_else() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
+
+        let note = ["Documents", "Nib", "Work", "a.md"];
+        assert_eq!(said(&note), Ok(path(&note)));
+        // The folder itself is inside itself, which is what a tree read of a whole
+        // space asks about.
+        assert!(said(&["Documents", "Nib"]).is_ok());
+        // A name outside it, a name that merely starts the same way, and the folder
+        // above it.
+        assert!(said(&["Documents", "Secrets", "a.md"]).is_err());
+        assert!(said(&["Documents", "Nibble", "a.md"]).is_err());
+        assert!(said(&["Documents"]).is_err());
+        assert!(judged(&root, "").is_err());
+    }
+
+    /// A path that climbs. `folded` collapses the `..` rather than refusing it, so
+    /// what is judged is where the path points: out of the folder is refused, and
+    /// back into it is not.
+    #[test]
+    fn the_gate_refuses_a_path_that_climbs_out_of_the_spaces_folder() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
+
+        assert!(said(&["Documents", "Nib", "..", "secret.md"]).is_err());
+        assert!(said(&["Documents", "Nib", "Work", "..", "..", "..", "secret.md"]).is_err());
+        assert!(said(&["Documents", "Nib", "Work", "..", "Home", "a.md"]).is_ok());
+    }
+
+    /// The trash is inside the spaces folder and refused all the same: it is the one
+    /// folder in there that is not a space, and only the trash commands may touch
+    /// it. A note called `.trashy` is not the trash.
+    #[test]
+    fn the_gate_refuses_the_trash_it_stands_beside() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
+
+        assert!(said(&[".trash"]).is_err());
+        assert!(said(&["Documents", "Nib", ".trash"]).is_err());
+        assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"]).is_err());
+        assert!(said(&["Documents", "Nib", ".trashy.md"]).is_ok());
+    }
+
+    /// A space is a folder directly inside the spaces folder, which is the stricter
+    /// shape: renaming or deleting one moves a whole tree.
+    #[test]
+    fn a_space_is_a_folder_directly_inside_the_spaces_folder() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |one: &[&str]| judged_space(&root, &path(one).to_string_lossy());
+
+        assert!(said(&["Documents", "Nib", "Work"]).is_ok());
+        // Deeper than a space, the spaces folder itself, and the folder above it.
+        assert!(said(&["Documents", "Nib", "Work", "2026"]).is_err());
+        assert!(said(&["Documents", "Nib"]).is_err());
+        assert!(said(&["Documents"]).is_err());
+        // The app's own folders in there are not spaces to rename or delete.
+        assert!(said(&["Documents", "Nib", ".trash"]).is_err());
+    }
+
+    /// A space named in somebody's own language is a space, and the gate is about
+    /// where a path points rather than which letters it is written in.
+    #[test]
+    fn a_space_outside_ascii_is_a_space_like_any_other() {
+        let root = path(&["Documents", "Nib"]);
+
+        assert!(judged(
+            &root,
+            &path(&["Documents", "Nib", "メモ", "考え.md"]).to_string_lossy()
+        )
+        .is_ok());
+        assert!(judged_space(
+            &root,
+            &path(&["Documents", "Nib", "Ideen über alles"]).to_string_lossy()
+        )
+        .is_ok());
+        assert!(judged(
+            &root,
+            &path(&["Documents", "メモ", "考え.md"]).to_string_lossy()
+        )
+        .is_err());
     }
 
     /// Opening a note hands its whole folder to the picture readers and to the

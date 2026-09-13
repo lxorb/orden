@@ -284,7 +284,7 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     // protocol, which has a scope of its own. The spaces folder is in it from the
     // start; the folder a note was opened from elsewhere is added when that
     // happens, and nothing else is ever readable this way.
-    if let Ok(root) = paths::spaces_root(handle) {
+    if let Ok(root) = paths::spaces_dir(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
     trace::mark("asset scope");

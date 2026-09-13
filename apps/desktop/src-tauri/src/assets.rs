@@ -12,7 +12,7 @@ use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
 use crate::paths::{
-    beside_a_note, cannot, folded, free_spot, inside, made, space_root, spaces_root,
+    beside_a_note, cannot, folded, free_spot, inside, made, space_root, spaces_dir,
 };
 
 /// Bigger than any picture belongs in a document, and small enough that turning
@@ -112,7 +112,7 @@ pub fn save_asset(
 
     // How far a picture may be put from the note: anywhere in the space, or, for
     // a note opened from elsewhere on the disk, its own folder and no further.
-    let limit = spaces_root(&app)
+    let limit = spaces_dir(&app)
         .ok()
         .and_then(|spaces| space_root(&spaces, note_folder))
         .unwrap_or_else(|| note_folder.to_path_buf());
