@@ -313,6 +313,22 @@ fn allowed(url: &Url) -> bool {
     )
 }
 
+/// What the system is asked to open for a window the page asked for, or `None`
+/// for a window it does not get.
+///
+/// The same rule the tab itself is held to, because the request is the page's
+/// either way: `window.open` is a scheme of the page's choosing, and the system
+/// opens whatever is registered for one. So `nib://` would be a site driving this
+/// app through its own links, `smb://` would be a site asking this machine to
+/// authenticate somewhere, and a scheme another program registered is a site
+/// starting that program - none of which the tab may do by navigating, and none
+/// of which it may do by asking for a window either. A page is handed over and
+/// everything else is dropped, which is what the engine would have done with it
+/// had nothing here been listening.
+fn handed_over(url: &Url) -> Option<String> {
+    allowed(url).then(|| url.to_string())
+}
+
 /// The address, read and judged, or a reason it is not one.
 fn address(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|error| format!("that is not an address: {error}"))?;
@@ -445,7 +461,9 @@ pub async fn web_open(
         // A window the page asks for leaves the app the way every other link
         // does: the system browser. A second webview over the pane would be a
         // window with no way to close it.
-        let _ = opening.opener().open_url(url.to_string(), None::<&str>);
+        if let Some(address) = handed_over(&url) {
+            let _ = opening.opener().open_url(address, None::<&str>);
+        }
         NewWindowResponse::Deny
     });
 
@@ -644,7 +662,7 @@ fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed, guard, reader, Trail, WebTabs};
+    use super::{allowed, guard, handed_over, reader, Trail, WebTabs};
     use tauri::Url;
 
     fn at(url: &str) -> Url {
@@ -666,6 +684,24 @@ mod tests {
         assert!(!allowed(&at("https://TAURI.localhost/")));
         assert!(!allowed(&at("http://ipc.localhost/notes")));
         assert!(!allowed(&at("http://asset.localhost/a.png")));
+    }
+
+    #[test]
+    fn a_window_the_page_asked_for_is_a_page_or_is_nothing() {
+        assert_eq!(
+            handed_over(&at("https://example.com/a")),
+            Some("https://example.com/a".to_string())
+        );
+
+        // The app's own scheme: a site asking for a window is a site asking this
+        // app to do something, and the system would hand it straight over.
+        assert!(handed_over(&at("nib://command?id=record")).is_none());
+        // And the rest of what a machine has registered.
+        assert!(handed_over(&at("file:///C:/notes/Idea.md")).is_none());
+        assert!(handed_over(&at("smb://example.com/share")).is_none());
+        assert!(handed_over(&at("ms-officecmd:x")).is_none());
+        // The app's own origins, which are refused for the tab and here.
+        assert!(handed_over(&at("http://tauri.localhost/index.html")).is_none());
     }
 
     #[test]

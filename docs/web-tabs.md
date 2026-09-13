@@ -416,7 +416,12 @@ machine, a scheme the system knows would hand the page to another application, a
 `tauri://localhost` would put nib inside a tab with the site's script beside it.
 The rule is in the crate as well as in the app, because it is what every link
 inside the page is judged by, not only what somebody types. A window the page asks
-for leaves the app the way every other link does: the system browser.
+for leaves the app the way every other link does: the system browser - and it is
+judged by the same rule first, because `window.open` names a scheme of the page's
+choosing and the system opens whatever is registered for one. A page is handed
+over; `nib://`, `file:`, `smb:` and whatever else a machine has registered are
+dropped, or a site could drive this app through its own links by asking for a
+window it was never going to get.
 
 **No collaboration.** A website holds no words, so it is never in a room and the
 service never has a document for it. Said twice over, at both ends of the file:
