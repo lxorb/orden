@@ -14,7 +14,6 @@
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
-  import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
@@ -90,18 +89,6 @@
       { section: 'sync', label: t('What synced'), text: [] },
       { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
       { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
-      {
-        section: 'export',
-        label: t('Page'),
-        text: [
-          t('Paper'),
-          t('Orientation'),
-          t('Margin'),
-          t('Header'),
-          t('Footer'),
-          t('Appearance'),
-        ],
-      },
       { section: 'editor', label: t('Reset to defaults'), text: [] },
       // Modal editing sits with the keyboard rather than with the editor, so
       // this is where searching for it lands.
@@ -566,6 +553,9 @@
          a field that is already there rather than a button beside it. -->
     <label class="nib-setting setting">
       {@render named(field, where)}
+      <!-- `live` writes as it is typed; see the kind in preferences.ts. The other
+           kind waits for the field to be left, because half a word is a phrase
+           that matches nothing. -->
       <input
         class="inline"
         type="text"
@@ -574,7 +564,8 @@
         spellcheck="false"
         autocapitalize="off"
         autocomplete="off"
-        onchange={(event) => field.set(event.currentTarget.value)}
+        oninput={field.live ? (event) => field.set(event.currentTarget.value) : undefined}
+        onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
       />
     </label>
   {:else}
@@ -660,6 +651,10 @@
         {/if}
       {/if}
     {/each}
+
+    {#if settings.section === 'export'}
+      {@render exportExtras()}
+    {/if}
 
     {#if settings.section === 'appearance'}
       {@render appearanceExtras()}
@@ -799,93 +794,21 @@
     <McpSetup />
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
-  {:else if settings.section === 'export'}
-    <h3>{t('Page')}</h3>
-    <div class="card">
-      <div class="nib-setting setting">
-        <span class="name">{t('Paper')}</span>
-        <div class="pick">
-          <Select
-            value={settings.page.paper}
-            options={PAPER_SIZES.map((size) => ({ value: size, label: size }))}
-            onchange={(value) => settings.setPage({ paper: value as never })}
-            label={t('Paper')}
-            plain={viewport.touch}
-          />
-        </div>
-      </div>
-      <div class="nib-setting setting">
-        <span class="name">{t('Orientation')}</span>
-        <div class="pick">
-          <Select
-            value={settings.page.orientation}
-            options={ORIENTATIONS.map((option) => ({ value: option, label: t(option) }))}
-            onchange={(value) => settings.setPage({ orientation: value as never })}
-            label={t('Orientation')}
-            plain={viewport.touch}
-          />
-        </div>
-      </div>
-      <label class="nib-setting setting">
-        <span class="name">{t('Margin')}</span>
-        <input
-          class="inline"
-          value={settings.page.margin}
-          oninput={(event) => settings.setPage({ margin: event.currentTarget.value })}
-          spellcheck="false"
-        />
-      </label>
-      <!-- Running text on every sheet. `${title}`, `${date}` and `${year}`
-           are filled in; the hint shows the shape. -->
-      <label class="nib-setting setting">
-        <span class="name">{t('Header')}</span>
-        <input
-          class="inline"
-          value={settings.page.header}
-          placeholder="&#36;{'{'}title}"
-          oninput={(event) => settings.setPage({ header: event.currentTarget.value })}
-          spellcheck="false"
-        />
-      </label>
-      <label class="nib-setting setting">
-        <span class="name">{t('Footer')}</span>
-        <input
-          class="inline"
-          value={settings.page.footer}
-          placeholder="&#36;{'{'}date}"
-          oninput={(event) => settings.setPage({ footer: event.currentTarget.value })}
-          spellcheck="false"
-        />
-      </label>
-      <div class="nib-setting setting">
-        <span class="name">{t('Appearance')}</span>
-        <div class="pick">
-          <Select
-            value={settings.exportAppearance}
-            options={[
-              { value: 'light', label: t('Light') },
-              { value: 'dark', label: t('Dark') },
-              { value: 'app', label: t('Match the app') },
-            ]}
-            onchange={(value) => settings.setExportAppearance(value as never)}
-            label={t('Appearance')}
-            plain={viewport.touch}
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- The settings above only matter once something is exported, so the
-         ways of doing it belong here rather than in the palette. -->
-    <h3>{t('This note')}</h3>
-    <div class="card">
-      {#each exportActions() as action (action.id)}
-        <button class="action" disabled={action.disabled} onclick={action.run}>
-          {action.label}
-        </button>
-      {/each}
-    </div>
   {/if}
+{/snippet}
+
+<!-- The settings on this pane only matter once something is exported, so the ways
+     of doing it belong here rather than in the palette. Commands rather than
+     settings, which is why they are not fields. -->
+{#snippet exportExtras()}
+  <h3>{t('This note')}</h3>
+  <div class="card">
+    {#each exportActions() as action (action.id)}
+      <button class="action" disabled={action.disabled} onclick={action.run}>
+        {action.label}
+      </button>
+    {/each}
+  </div>
 {/snippet}
 
 <!-- Every shortcut there is, grouped the way the menus group the same

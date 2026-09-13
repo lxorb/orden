@@ -5,6 +5,7 @@ import { CATALOGUES_URL, i18n, LANGUAGES, plural, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { isPlugin } from './plugin'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
+import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './page-setup'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
@@ -64,12 +65,21 @@ export type Field = Common &
         set(value: string): void
       }
     /** A line somebody types. Only where nothing else will do - a spoken command's
-     *  own phrase - and never on the glasses, which have nothing to type with. */
+     *  own phrase, a page's margin - and never on the glasses, which have nothing to
+     *  type with. */
     | {
         kind: 'text'
         /** What it says with nobody having typed anything, which for a phrase is the
          *  phrase the app already answers to. An empty field is that put back. */
         placeholder: string
+        /** Written as it is typed rather than when the field is left.
+         *
+         *  The page setup is the one that wants this: the margin and the running text
+         *  are read by an export the reader may start from the row of buttons under
+         *  the very same card, without the field ever losing focus. A phrase the app
+         *  answers to is the other way round - half a word is a phrase that matches
+         *  nothing, so it waits. */
+        live?: boolean
         initial?: string
         get(): string
         set(value: string): void
@@ -113,7 +123,7 @@ function asChoice(value: string): SchemeChoice {
 
 /** The panes that are only about settings. The account and the LLM connector are
  *  their own thing and stay written out by hand. */
-type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses'
+type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses' | 'export'
 
 export interface Pane {
   id: PaneId
@@ -559,6 +569,75 @@ export function preferences(view?: EditorView): Pane[] {
           },
         ] satisfies Pane[])
       : []),
+    {
+      // The page an export is laid out on. The ways of exporting are beside it on
+      // the pane and are commands rather than settings; see `exportExtras` in
+      // SettingsPanel.svelte.
+      //
+      // None of these says what it started as, so the pane offers no reset: a
+      // margin somebody typed is a decision about their printer, and one button
+      // that quietly replaced six of those is not worth having.
+      id: 'export',
+      label: t('Export'),
+      groups: [
+        {
+          title: t('Page'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('Paper'),
+              options: PAPER_SIZES.map((size) => ({ value: size, label: size })),
+              get: () => settings.page.paper,
+              set: (value) => settings.setPage({ paper: value as never }),
+            },
+            {
+              kind: 'select',
+              label: t('Orientation'),
+              options: ORIENTATIONS.map((one) => ({ value: one, label: t(one) })),
+              get: () => settings.page.orientation,
+              set: (value) => settings.setPage({ orientation: value as never }),
+            },
+            {
+              kind: 'text',
+              label: t('Margin'),
+              placeholder: DEFAULT_PAGE_SETUP.margin,
+              live: true,
+              get: () => settings.page.margin,
+              set: (value) => settings.setPage({ margin: value }),
+            },
+            // Running text on every sheet. `${title}`, `${date}` and `${year}` are
+            // filled in; the placeholder shows the shape.
+            {
+              kind: 'text',
+              label: t('Header'),
+              placeholder: '${title}',
+              live: true,
+              get: () => settings.page.header,
+              set: (value) => settings.setPage({ header: value }),
+            },
+            {
+              kind: 'text',
+              label: t('Footer'),
+              placeholder: '${date}',
+              live: true,
+              get: () => settings.page.footer,
+              set: (value) => settings.setPage({ footer: value }),
+            },
+            {
+              kind: 'select',
+              label: t('Appearance'),
+              options: [
+                { value: 'light', label: t('Light') },
+                { value: 'dark', label: t('Dark') },
+                { value: 'app', label: t('Match the app') },
+              ],
+              get: () => settings.exportAppearance,
+              set: (value) => settings.setExportAppearance(value as never),
+            },
+          ],
+        },
+      ],
+    },
   ]
 }
 
