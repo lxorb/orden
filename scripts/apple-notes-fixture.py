@@ -98,11 +98,12 @@ def attachment(identifier: str, uti: str) -> bytes:
 
 
 def note_data(text: str, runs: list[bytes]) -> bytes:
-    """A whole note's `ZDATA`: a `Document` holding a `Note`, gzipped."""
+    """A whole note's `ZDATA`: a `NoteStoreProto` holding a `Document` holding a
+    `Note`, gzipped, which is the shape Notes writes on the row."""
     inner = block(2, text.encode()) + b"".join(runs)
     # mtime zero, so the same notes give the same bytes every run and the
     # committed fixture only changes when what it says changes.
-    return gzip.compress(block(3, inner), mtime=0)
+    return gzip.compress(block(2, block(3, inner)), mtime=0)
 
 
 def png() -> bytes:

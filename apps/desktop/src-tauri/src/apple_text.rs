@@ -11,8 +11,9 @@
 //! the format, MIT as well.
 //!
 //! Nothing here opens a database or a file, which is the point: a Mac is the only
-//! machine that has the database, and this way the decoding is compiled and
-//! tested on every platform the app is built for.
+//! machine that has the database, and the reading of what is on a row is pure
+//! enough to be tested without one. The module itself is built on a Mac only, so
+//! the runner that proves a change here is the macOS one; see `lib.rs`.
 //!
 //! What a run becomes is nib's own markdown rather than Obsidian's: `==marked==`
 //! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
@@ -56,6 +57,17 @@ const SUB: i32 = -1;
 /// markdown writes: the width of `- `, so a nested line lines up under the words
 /// above it.
 const STEP: &str = "  ";
+
+/// How deep a line may say it sits. The depth is a number out of the blob and
+/// `prefix` writes a step for each of it, so a line claiming four billion levels
+/// is eight gigabytes of indent - which is not a deeply nested note but an import
+/// that runs the machine out of memory. Deeper than anybody nests a list.
+const DEEPEST: u32 = 32;
+
+/// The most one row may inflate to. A few megabytes of gzip can name gigabytes of
+/// nothing, and what comes of reading that is not an error but the import taking
+/// the machine with it. Far more words than Notes lets one note hold.
+const MOST_BYTES: u64 = 64 * 1024 * 1024;
 
 /// What Notes says about one stretch of a note's text.
 struct Run {
@@ -130,18 +142,25 @@ pub trait Parts {
 /// note: a row Notes left empty, or one written by a version this cannot read.
 pub fn decode(data: &[u8]) -> Option<Body> {
     let bytes = inflate(data)?;
+    let note = held(&bytes, 2).and_then(|document| held(document, 3));
 
-    // `Document` holds the note under field 3. What is inside it is the note's
-    // text and the runs over it.
-    for (number, value) in Fields::new(&bytes) {
-        if number == 3 {
-            if let Value::Bytes(note) = value {
-                return Some(note_of(note));
-            }
-        }
-    }
+    // A `NoteStoreProto` holds a `Document` under field 2, which holds the `Note`
+    // under field 3, and the note is the text and the runs over it. A row that is
+    // a `Document` already is read as one as well: the two are told apart by which
+    // field is there, and a reader that insisted on the wrapper would answer
+    // nothing at all for a row written without it.
+    let note = note.or_else(|| held(&bytes, 3))?;
 
-    None
+    Some(note_of(note))
+}
+
+/// The bytes of one length-delimited field of a message, or None where the message
+/// has no such field or holds something else under it.
+fn held(bytes: &[u8], number: u32) -> Option<&[u8]> {
+    Fields::new(bytes).find_map(|(held, value)| match value {
+        Value::Bytes(inside) if held == number => Some(inside),
+        _ => None,
+    })
 }
 
 /// The note's own first line, which is the title Notes shows in its list. The
@@ -168,7 +187,11 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
 
     for line in lines_of(body) {
         let run = line.run().unwrap_or(&DEFAULT);
-        let code = run.style == CODE;
+        // A line with nothing on it carries no run of its own, so what it is is
+        // what it sits in: a blank line between two monospaced paragraphs is part
+        // of the code, and closing the fence over it and opening another would cut
+        // one block of code into two.
+        let code = line.run().map_or(fenced, |one| one.style == CODE);
 
         // A fence is opened once for however many monospaced paragraphs follow
         // each other, which is what they were on screen: one block of code.
@@ -177,11 +200,15 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             fenced = code;
         }
 
-        if run.style == NUMBERED && counting == (NUMBERED, run.indent) {
-            counted += 1;
-        } else {
-            counted = 1;
-            counting = (run.style, run.indent);
+        // The second half of a paragraph is the same item: it carries no number of
+        // its own, so it does not take the next one either.
+        if !line.soft {
+            if run.style == NUMBERED && counting == (NUMBERED, run.indent) {
+                counted += 1;
+            } else {
+                counted = 1;
+                counting = (run.style, run.indent);
+            }
         }
 
         let words = inline(&line, parts);
@@ -279,6 +306,14 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
                 soft: said.ends_with(SOFT),
             });
         }
+    }
+
+    // A note ending on a break leaves a line with nothing on it, and that is not a
+    // line of the note: the words end where the last of them are. Dropped here
+    // rather than trimmed afterwards, because a note ending in a block of code
+    // would otherwise hold its fence open over it.
+    if lines.last().is_some_and(|line| line.pieces.is_empty()) {
+        lines.pop();
     }
 
     lines
@@ -552,7 +587,9 @@ fn paragraph_of(bytes: &[u8], run: &mut Run) {
     for (number, value) in Fields::new(bytes) {
         match (number, value) {
             (1, Value::Number(said)) => run.style = signed(said),
-            (4, Value::Number(said)) => run.indent = u32::try_from(said).unwrap_or(0),
+            (4, Value::Number(said)) => {
+                run.indent = u32::try_from(said).unwrap_or(0).min(DEEPEST);
+            }
             (5, Value::Bytes(said)) => run.done = Some(ticked(said)),
             (8, Value::Number(said)) => run.quote = said != 0,
             _ => {}
@@ -595,14 +632,30 @@ fn attachment_of(bytes: &[u8]) -> Option<(String, String)> {
 }
 
 /// The bytes under the gzip, or under the zlib wrapper where a row has one.
+///
+/// Held to `MOST_BYTES`, because how much is under a gzip is whatever the gzip
+/// says: a row that names more than a note can hold is a row this reads nothing
+/// out of rather than a reason for the import to run out of memory.
 fn inflate(data: &[u8]) -> Option<Vec<u8>> {
     let mut out = Vec::new();
 
-    match data.first().copied() {
-        Some(0x1f) => GzDecoder::new(data).read_to_end(&mut out).ok()?,
-        Some(0x78) => ZlibDecoder::new(data).read_to_end(&mut out).ok()?,
+    let read = match data.first().copied() {
+        Some(0x1f) => GzDecoder::new(data)
+            .take(MOST_BYTES)
+            .read_to_end(&mut out)
+            .ok()?,
+        Some(0x78) => ZlibDecoder::new(data)
+            .take(MOST_BYTES)
+            .read_to_end(&mut out)
+            .ok()?,
         _ => return None,
     };
+
+    // Filled to the brim is a row that holds more than the cap, and half a note is
+    // not a note.
+    if u64::try_from(read).ok()? >= MOST_BYTES {
+        return None;
+    }
 
     Some(out)
 }
@@ -680,17 +733,21 @@ mod tests {
         bytes(5, &body)
     }
 
-    /// A whole note's row: a `Document` holding a `Note`, gzipped.
+    /// A whole note's row: a `NoteStoreProto` holding a `Document` holding a
+    /// `Note`, gzipped, which is the shape Notes writes on the row.
     fn note(text: &str, runs: &[Vec<u8>]) -> Vec<u8> {
         let mut inner = bytes(2, text.as_bytes());
         for one in runs {
             inner.extend_from_slice(one);
         }
 
-        let document = bytes(3, &inner);
+        zipped(&bytes(2, &bytes(3, &inner)))
+    }
 
+    /// The same bytes under a gzip, which is how a row carries any of this.
+    fn zipped(said: &[u8]) -> Vec<u8> {
         let mut gzipped = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
-        std::io::Write::write_all(&mut gzipped, &document).expect("gzip");
+        std::io::Write::write_all(&mut gzipped, said).expect("gzip");
         gzipped.finish().expect("gzip")
     }
 
@@ -833,6 +890,70 @@ mod tests {
     #[test]
     fn bytes_that_are_not_a_note_are_not_read_as_one() {
         assert!(decode(b"not gzip at all").is_none());
+    }
+
+    /// The row carries a `NoteStoreProto` around a `Document` around the note, so
+    /// the note is two hops in rather than one: a reader that looked one hop in
+    /// found nothing in any note anybody has. A `Document` on its own is read as
+    /// well, so a row written without the wrapper is still a note.
+    #[test]
+    fn a_note_is_found_through_the_wrapper_it_arrives_in() {
+        let inner = bytes(2, "Words".as_bytes());
+
+        let wrapped = decode(&zipped(&bytes(2, &bytes(3, &inner)))).expect("the row Notes writes");
+        assert_eq!(title(&wrapped).as_deref(), Some("Words"));
+
+        let bare = decode(&zipped(&bytes(3, &inner))).expect("a document on its own");
+        assert_eq!(title(&bare).as_deref(), Some("Words"));
+
+        // And a message holding neither is not a note.
+        assert!(decode(&zipped(&bytes(9, &inner))).is_none());
+    }
+
+    /// A blank line between two monospaced paragraphs is part of the code: it
+    /// carries no run of its own, and closing the fence over it and opening another
+    /// would cut one block of code into two.
+    #[test]
+    fn a_blank_line_does_not_cut_a_block_of_code_in_two() {
+        let said = as_markdown(
+            "one\n\ntwo\n",
+            &[
+                run(4, &[bytes(2, &style(4, 0, None))]),
+                run(1, &[]),
+                run(4, &[bytes(2, &style(4, 0, None))]),
+            ],
+        );
+
+        assert_eq!(said, "```\none\n\ntwo\n```");
+    }
+
+    /// The second half of an item is the same item, so the item after it takes the
+    /// next number rather than the one after that.
+    #[test]
+    fn a_return_held_with_shift_does_not_take_the_next_number() {
+        let said = as_markdown(
+            "One\u{2028}still one\nTwo\n",
+            &[
+                run(13, &[bytes(2, &style(102, 0, None))]),
+                run(4, &[bytes(2, &style(102, 0, None))]),
+            ],
+        );
+
+        assert_eq!(said, "1. One\n  still one\n2. Two");
+    }
+
+    /// A depth is a number out of the blob and `prefix` writes a step for each of
+    /// it, so a line saying it sits four billion levels in is eight gigabytes of
+    /// indent. Held to a depth a note can have, it is an item like any other.
+    #[test]
+    fn a_depth_nobody_wrote_is_held_to_one_a_note_can_have() {
+        let said = as_markdown(
+            "deep\n",
+            &[run(5, &[bytes(2, &style(101, u64::from(u32::MAX), None))])],
+        );
+
+        assert!(said.len() < 200, "{} characters of indent", said.len());
+        assert!(said.trim_start().starts_with("- "), "{said}");
     }
 
     fn attachment(id: &str, uti: &str) -> Vec<u8> {
