@@ -7,6 +7,7 @@ import {
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { label } from '../labels'
+import { pressedByKey } from '../press'
 import { NibWidget } from '../live-preview/widget'
 import type { RunLine } from './protocol'
 
@@ -246,9 +247,7 @@ class RunPanelWidget extends NibWidget {
       stop.className = 'nib-run-stop'
       stop.type = 'button'
       stop.textContent = label('stop')
-      stop.addEventListener('mousedown', (event) => {
-        event.preventDefault()
-        event.stopPropagation()
+      const halt = () =>
         view.dispatch({
           effects: closeRun.of({
             run: panel.run,
@@ -256,7 +255,12 @@ class RunPanelWidget extends NibWidget {
             elapsed: Date.now() - panel.startedAt,
           }),
         })
+      stop.addEventListener('mousedown', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        halt()
       })
+      pressedByKey(stop, halt)
       bar.append(stop)
     }
 
@@ -266,11 +270,13 @@ class RunPanelWidget extends NibWidget {
     dismiss.title = label('dismiss')
     dismiss.setAttribute('aria-label', label('dismiss'))
     dismiss.append(cross())
+    const drop = () => view.dispatch({ effects: dropRun.of(panel.run) })
     dismiss.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      view.dispatch({ effects: dropRun.of(panel.run) })
+      drop()
     })
+    pressedByKey(dismiss, drop)
     bar.append(dismiss)
 
     const output = document.createElement('div')

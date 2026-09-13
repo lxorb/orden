@@ -1,5 +1,6 @@
 import type { EditorView } from '@codemirror/view'
 import { label, type LabelKey } from '../labels'
+import { pressedByKey } from '../press'
 import { selectionIn } from './caret'
 import { renderInline } from './inline'
 import type { CellAddress, Side } from './navigation'
@@ -79,10 +80,12 @@ export function button(className: string, key: LabelKey, path: string, onPress: 
   node.setAttribute('aria-label', label(key))
   node.append(icon(path))
   // On mousedown, and with the default stopped, so the caret stays in
-  // whichever cell holds it while the button acts.
+  // whichever cell holds it while the button acts. And on Enter or Space, since
+  // the button is in the tab order and says its name; see press.ts.
   node.addEventListener('mousedown', (event) => {
     event.preventDefault()
     onPress()
   })
+  pressedByKey(node, onPress)
   return node
 }

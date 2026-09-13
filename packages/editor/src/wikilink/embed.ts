@@ -5,6 +5,7 @@ import { embedKind, embedSize, linkTarget, parseWikilink, sectionOf } from '@nib
 import { iconElement } from '../icon'
 import { imageResolver } from '../images'
 import { label } from '../labels'
+import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { NibWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
@@ -100,12 +101,16 @@ export class EmbedWidget extends NibWidget {
     caption.className = 'nib-embed-name'
     caption.type = 'button'
     caption.textContent = this.link.alias ?? linkTarget(this.link)
+    const open = () => {
+      const state = view.state
+      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+    }
     caption.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      const state = view.state
-      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+      open()
     })
+    pressedByKey(caption, open)
     frame.append(caption)
 
     const missing = () => {
@@ -329,12 +334,16 @@ export class EmbedFileWidget extends NibWidget {
     name.textContent = this.link.alias ?? linkTarget(this.link)
     card.append(name)
 
+    const open = () => {
+      const state = view.state
+      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+    }
     card.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      const state = view.state
-      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+      open()
     })
+    pressedByKey(card, open)
 
     return card
   }

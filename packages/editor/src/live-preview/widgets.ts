@@ -5,6 +5,7 @@ import { EditorView } from '@codemirror/view'
 import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
 import { label as uiLabel } from '../labels'
+import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/run'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
@@ -199,11 +200,13 @@ export class FenceHeaderWidget extends NibWidget {
     label.textContent = this.language || 'plain'
     if (!this.language) label.classList.add('nib-fence-unset')
 
+    const edit = () => this.editLanguage(view, label)
     label.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      this.editLanguage(view, label)
+      edit()
     })
+    pressedByKey(label, edit)
 
     controls.append(label)
 
@@ -237,10 +240,7 @@ export class FenceHeaderWidget extends NibWidget {
 
     draw(SHEETS)
 
-    copy.addEventListener('mousedown', (event) => {
-      event.preventDefault()
-      event.stopPropagation()
-
+    const take = () => {
       navigator.clipboard
         .writeText(fenceCodeAt(view.state, this.blockFrom))
         .then(() => {
@@ -259,7 +259,14 @@ export class FenceHeaderWidget extends NibWidget {
         // happen. Caught rather than dropped: an unhandled rejection is a
         // console full of noise, and in a webview sometimes worse.
         .catch(() => undefined)
+    }
+
+    copy.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      take()
     })
+    pressedByKey(copy, take)
 
     controls.append(copy)
 
@@ -323,6 +330,7 @@ export class FenceHeaderWidget extends NibWidget {
       event.stopPropagation()
       press()
     })
+    pressedByKey(button, press)
 
     return button
   }

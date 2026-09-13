@@ -20,6 +20,7 @@ import { EditorSelection } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { propertiesTable, readProperties } from '@nib/markdown/properties'
 import { label } from '../labels'
+import { pressedByKey } from '../press'
 import { NibWidget } from './widget'
 
 export class PropertiesWidget extends NibWidget {
@@ -81,10 +82,12 @@ function adder(view: EditorView, count: number): HTMLElement {
   button.type = 'button'
   button.textContent = label('addProperty')
 
+  const add = () => addProperty(view, count)
   button.addEventListener('mousedown', (event) => {
     event.preventDefault()
-    addProperty(view, count)
+    add()
   })
+  pressedByKey(button, add)
 
   return button
 }
