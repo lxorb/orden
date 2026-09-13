@@ -119,8 +119,12 @@ describe('a write whose document has moved on', () => {
     const { saving, note, tab } = open('/elsewhere/a.md', { kept: false })
     const said = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    let letGo = () => undefined
-    holding = new Promise<void>((go) => (letGo = () => go()))
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
 
     const writing = saving.save(tab)
     expect(saving.of(tab)).toBe('saving')

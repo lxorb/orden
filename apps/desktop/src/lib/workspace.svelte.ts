@@ -11,7 +11,6 @@ import {
 } from '@nib/markdown/links'
 import { blankPages } from '@nib/markdown/pages'
 import { freePath } from '@nib/markdown/paths'
-import { taskAt } from '@nib/markdown/tasks'
 import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
@@ -26,7 +25,6 @@ import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import type { Change } from './search/apply'
-import { lineStarts } from './search/match'
 import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
@@ -61,9 +59,10 @@ import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-t
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
+import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { undoLastFileAction } from './workspace/undoing'
-import { type FileAction, FileActions } from './workspace/undo.svelte'
+import { FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
@@ -2436,138 +2435,31 @@ class Workspace {
     if (line !== null) this.goto = { path, line }
   }
 
-  /** Every `#tag` in the space, most used first. */
-  /** The space's tags, for the tree above the search field.
-   *
-   *  From the link index rather than from the space. Both know the answer, and only
-   *  one of them knows it already: the scan that reads every note for its links
-   *  writes down its tags on the way past, while asking the space read every body
-   *  again - twenty-two megabytes of strings on the thread the panel was opening on.
-   *  See `spaceTags` in link-index.svelte.ts, which is the one answer to what a
-   *  space is tagged with and the one place what a number beside a tag means is
-   *  written down - the editor's `#` popup is handed the same list.
-   *
-   *  A panel opened while the space is still being read shows what the index has so
-   *  far and the rest of it when the scan lands, which is what the wait below is
-   *  for: asking the disk used to answer whatever the scan was doing, and a tag tree
-   *  that stayed empty until something else happened to ask again would be worse
-   *  than the read it replaced. */
+  /** The space's tags, for the tree above the search field; see
+   *  workspace/note-text. */
   async loadTags() {
-    const root = this.activeSpace?.root
-    if (!root) return
-
-    this.tags = links.spaceTags
-    if (!links.scanning) return
-
-    await links.scanned()
-    if (this.activeSpace.root === root) this.tags = links.spaceTags
+    await text.loadTags(this)
   }
 
-  /** Renames a tag, and everything under it, in every note of the space.
-   *
-   *  Silently and as one thing to undo, the way renaming a note rewrites every
-   *  link to it: a tag is a name for a set of notes, and nobody who renames one
-   *  wants to be asked about each of them. Answers how many notes were touched.
-   *
-   *  `to` is the path the node becomes, or null to take the tag away. */
+  /** Renames a tag, and everything under it, in every note of the space. */
   async retagNotes(from: string, to: string | null): Promise<number> {
-    const { tagChanges } = await import('./tag-edits')
-
-    const changes = await tagChanges(
-      this.notes.map((one) => one.path),
-      from,
-      to,
-      (path) => this.noteText(path),
-    )
-
-    await this.replaceInNotes(changes)
-    // The tree the tags are drawn as is now a tree of the tags that were.
-    await this.loadTags()
-    return changes.length
+    return text.retagNotes(this, from, to)
   }
 
   /** A note's words as they stand: what is on screen when it is open, and what
-   *  is on disk otherwise. A replacement reads through here so it never writes
-   *  over work that has not been saved yet. */
+   *  is on disk otherwise. */
   async noteText(path: string): Promise<string | null> {
-    this.flush()
-
-    const open = this.documents.find((one) => one.path === path)
-    if (open) return open.text
-
-    return invoke<string>('read_note', { path }).catch(() => null)
+    return text.noteText(this, path)
   }
 
-  /** Ticks or clears the box on one line of a note, without opening it.
-   *
-   *  What a task in a row of search results is for: a list of everything still to
-   *  do is only a tool if it can be done from. Written through the same path a
-   *  replacement takes - a snapshot, the words that changed rather than the whole
-   *  note so no caret in a pane moves, and one thing to undo - because it is the
-   *  same kind of write, of one character.
-   *
-   *  Answers whether there was a box: the line is read again here rather than
-   *  trusted from the row, so a note edited since the list was drawn is ticked
-   *  where it says a task is now, or not at all. */
+  /** Ticks or clears the box on one line of a note, without opening it. */
   async toggleTaskAt(path: string, line: number): Promise<boolean> {
-    const before = await this.noteText(path)
-    if (before === null) return false
-
-    const starts = lineStarts(before)
-    const from = starts[line]
-    if (from === undefined) return false
-
-    const next = starts[line + 1]
-    const task = taskAt(before.slice(from, next === undefined ? before.length : next - 1))
-    if (!task) return false
-
-    const at = from + task.box + 1
-    const insert = task.done ? ' ' : 'x'
-
-    await this.replaceInNotes([
-      {
-        path,
-        before,
-        after: before.slice(0, at) + insert + before.slice(at + 1),
-        edits: [{ from: at, to: at + 1, insert }],
-        back: [{ from: at, to: at + 1, insert: before.slice(at, at + 1) }],
-      },
-    ])
-
-    return true
+    return text.toggleTaskAt(this, path, line)
   }
 
-  /** Writes a replacement across the space. Every note keeps a snapshot of
-   *  what it said before it is written, a note open in a pane takes the change
-   *  as the words that changed so no caret moves, and however many notes were
-   *  touched it is one thing to undo. */
+  /** Writes a replacement across the space, as one thing to undo. */
   async replaceInNotes(changes: readonly Change[]) {
-    if (!changes.length) return
-
-    const done: Extract<FileAction, { kind: 'replace' }>['notes'] = []
-
-    for (const change of changes) {
-      // Keeping the version about to be replaced, the same way saving does.
-      await invoke('snapshot_note', {
-        path: change.path,
-        content: change.before,
-      }).catch(() => undefined)
-
-      await invoke('write_note', { path: change.path, content: change.after })
-
-      done.push({ path: change.path, content: change.before, edits: change.back })
-      links.noteSaved(change.path, change.after)
-      this.documents.find((one) => one.path === change.path)?.edited(change.edits, change.after)
-    }
-
-    this.undone.record({ kind: 'replace', notes: done })
-    await this.loadTree()
-    this.persist()
-
-    // Imported here rather than at the top: syncing reads the workspace, and
-    // the two would import each other. Same as `write` above.
-    const { sync } = await import('./sync.svelte')
-    sync.nudge()
+    await text.replaceInNotes(this, changes)
   }
 
   /** Makes a note in a folder.
