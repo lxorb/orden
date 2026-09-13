@@ -150,7 +150,7 @@
       { label: t('New canvas'), run: () => void makeCanvas() },
       ...(viewport.device === 'phone'
         ? []
-        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
+        : [{ label: t('New web note'), run: () => void makeWebsite() }]),
     ]
   }
 
@@ -164,6 +164,11 @@
   function makeCanvas() {
     workspace.focusPane(paneId)
     return workspace.createCanvas()
+  }
+
+  function makeWebsite() {
+    workspace.focusPane(paneId)
+    return workspace.createWebsite()
   }
 
   /** A held finger is the right click a touch screen has, and the menu key is
