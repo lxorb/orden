@@ -71,7 +71,14 @@ function editorClass(name: string): Extension {
  *  `codeLanguages` is the lookup rather than the list, which `markdown()` takes
  *  either way: the list of a hundred and forty-three is fetched when a fence first
  *  names a language, and a function is what can answer before it is here. See
- *  languages.ts. */
+ *  languages.ts.
+ *
+ *  The other nested parser is HTML, for a raw block or an inline tag, and it arrives
+ *  the same way without being asked for here: what `@codemirror/lang-markdown` gets
+ *  when it asks for `@codemirror/lang-html` is nib's own door, said once in the root
+ *  manifest. The grammar behind it - and the CSS and JavaScript grammars nested inside
+ *  it, for `<style>` and `<script>` - comes with the first note that has a tag in it
+ *  instead of before the window has drawn anything. See packages/lang-html. */
 const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,

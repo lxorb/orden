@@ -34,6 +34,10 @@
       "esbuild",
       "workerd"
     ],
+    "overrides": {
+      "@codemirror/lang-markdown>@codemirror/lang-html": "workspace:@nib/lang-html@*"
+    },
+    "overrides-comment": "The markdown language asks for the HTML grammar in a static import, and that grammar brings the CSS and JavaScript ones with it: a hundred and forty kilobytes in front of the first paint for the notes that have a tag in them. What it gets instead fetches the real grammar when a note turns out to have one - see packages/lang-html, which is the whole of the reasoning. Scoped to that one package, so a ```html fence and the editor's own door still reach the real thing.",
     "comment": "workerd ships no win32-arm64 binary; pull the x64 one so wrangler runs under emulation.",
     "supportedArchitectures": {
       "os": [
