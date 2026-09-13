@@ -721,6 +721,11 @@ mod mac {
                 })
                 .ok()?;
 
+            // Each of the three is a name rather than a path, whatever the row
+            // says; see `segment`.
+            let (folder, name, generation) =
+                (segment(&folder), segment(&name), segment(&generation));
+
             if name.is_empty() || folder.is_empty() {
                 return None;
             }
@@ -776,6 +781,43 @@ mod mac {
         format!("[{name}]({path})")
     }
 
+    /// What no file may be called on Windows, which is the strictest of the three
+    /// systems and so the list a name has to pass everywhere. The same list
+    /// `packages/markdown/src/paths.ts` holds a note's own name to.
+    const FORBIDDEN: [char; 9] = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
+
+    /// One name out of the database, as the name of a file and nothing else.
+    ///
+    /// Every name in this module comes out of the store being read, and that store
+    /// is a file somebody was handed - an export, a backup, a folder off somebody
+    /// else's disk. A row of one written by hand can say its attachment is called
+    /// `../../../.ssh/authorized_keys`, or that its bytes sit at `C:\Windows\win.ini`,
+    /// and both ends of the read join what the row says onto a folder: the name goes
+    /// under the space's `assets/`, and the folder and the name together are read
+    /// from under `Media/`. `Path::join` with an absolute path throws away the root
+    /// it was joined onto, so the second is how a crafted store reads any file on
+    /// the machine into a note.
+    ///
+    /// So a name is the last segment of whatever was written, with the separators,
+    /// the colon a drive letter needs and the control characters taken out, and the
+    /// dots that would leave `..` trimmed off either end. Empty is a row the caller
+    /// steps over.
+    fn segment(name: &str) -> String {
+        let last = name.rsplit(['/', '\\']).next().unwrap_or(name);
+        let said: String = last
+            .chars()
+            .map(|one| {
+                if FORBIDDEN.contains(&one) || one.is_control() {
+                    ' '
+                } else {
+                    one
+                }
+            })
+            .collect();
+
+        said.trim().trim_matches('.').trim().to_string()
+    }
+
     /// A file name nothing else in this read has taken.
     fn free(name: &str, taken: &mut HashSet<String>) -> String {
         let (stem, extension) = match name.rsplit_once('.') {
@@ -796,8 +838,31 @@ mod mac {
 
     #[cfg(test)]
     mod tests {
-        use super::read_from;
+        use super::{read_from, segment};
         use std::path::Path;
+
+        /// The store is a file somebody was handed, and every name in it is a name
+        /// it chose: the one on the way out is joined onto the space's `assets/`,
+        /// and the ones on the way in are joined onto `Media/`, where an absolute
+        /// path would replace the folder rather than sit under it.
+        #[test]
+        fn a_name_in_the_store_is_a_name_and_not_a_path() {
+            assert_eq!(segment("photo.png"), "photo.png");
+            assert_eq!(segment("Some paper (2).pdf"), "Some paper (2).pdf");
+
+            assert_eq!(segment("../../../.ssh/authorized_keys"), "authorized_keys");
+            assert_eq!(segment(r"..\..\Windows\win.ini"), "win.ini");
+            assert_eq!(segment("/etc/passwd"), "passwd");
+            assert_eq!(segment(r"C:\Windows\win.ini"), "win.ini");
+            assert_eq!(segment("C:/Windows/win.ini"), "win.ini");
+            assert_eq!(segment("a\nb.png"), "a b.png");
+
+            // Nothing left is a row the caller steps over.
+            assert_eq!(segment(".."), "");
+            assert_eq!(segment("..."), "");
+            assert_eq!(segment("/"), "");
+            assert_eq!(segment(""), "");
+        }
 
         /// The database under `tests/apple-notes`, which is Notes' own schema with
         /// four notes in it. Built by `scripts/apple-notes-fixture.py`, which says
