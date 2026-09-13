@@ -12,7 +12,7 @@ import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
-import { startHanded } from './mobile/handed'
+import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
 import { settleUp } from './parting'
 import { warmDoors } from './surfaces.svelte'
@@ -112,7 +112,16 @@ export function start(): () => void {
       }
       // After the space is open, because a share becomes a note in it, a widget
       // row names one, and the widget's own rows are read out of its file list.
-      stopHanded = startHanded()
+      //
+      // And only on the phone that can hand anything over: `onTheActivity` asks the
+      // object MainActivity hangs on the page before the first script runs, so a
+      // desktop and a browser answer no to it for ever and never fetch what a share
+      // becomes - the import writer, the picture writer, the widget's rows. A capability
+      // rather than a build, so one bundle still runs everywhere. See mobile/bridge.ts.
+      if (onTheActivity()) {
+        const { startHanded } = await import('./mobile/handed')
+        stopHanded = startHanded()
+      }
     })
     // Nothing else can put this right, and the strip is already showing
     // whatever did come back; the log is where a launch failure belongs, so it

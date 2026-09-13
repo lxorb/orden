@@ -567,7 +567,7 @@ const BLOCKS: Block[] = [
     id: 'dictate',
     label: () => (dictating() ? t('Stop') : t('Dictate')),
     apply: (view) => {
-      if (view) toggleDictation(view)
+      if (view) void toggleDictation(view)
     },
     ready: (view) => canDictate(view),
   },

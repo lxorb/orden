@@ -359,6 +359,18 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/keys.ts', 'where a key is kept'],
     ['/lib/ai/rewriting.svelte.ts', 'the four rewrites'],
     ['/lib/RewriteSheet.svelte', 'the sheet they are read in'],
+    // The phone's own three ways in - something another app shared, a quick settings
+    // tile, a widget row - and the recogniser behind Dictate. Gated on the capability
+    // rather than on the build, so one bundle still runs everywhere: `onTheActivity`
+    // and `speechRecogniser` are property reads, and a desktop answers no to both for
+    // ever. Which also takes the import writer with them, since a share was the only
+    // thing in the first paint that wrote one. See start.ts and mobile/dictation.ts.
+    ['/lib/mobile/handed.ts', 'what the activity hands over'],
+    ['/lib/mobile/shared.ts', 'what a share becomes'],
+    ['/lib/mobile/widgets.svelte.ts', 'the rows the home screen draws'],
+    ['/lib/mobile/dictating.ts', 'the two recognisers'],
+    ['/lib/import/apply.ts', 'the import writer'],
+    ['/lib/import/names.ts', 'the names it gives'],
     // And the pages engine, which a window that opens on a note has no stack of paper
     // to read. The canvas reader under it is not here and cannot be: the link index
     // scans a plane's cards for links and the sync mirror merges two versions of one,
@@ -390,6 +402,8 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
+    ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
+    ['/lib/mobile/dictation.ts', 'whether anything can hear'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
