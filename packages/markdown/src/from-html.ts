@@ -66,6 +66,31 @@ function texOf(maths: Element): string {
   return said.replace(/\s+/g, ' ').trim()
 }
 
+/** Whether the first row of a table is its headings, which is what the GFM rules
+ *  ask before they will convert one at all: a row in a `thead`, or the table's own
+ *  first row with nothing but `th` in it. Asked here as well, because the answer
+ *  decides whether the table needs a heading row written for it. */
+function headed(table: HTMLTableElement): boolean {
+  const first = table.rows[0]
+  if (!first) return false
+
+  const parent = first.parentElement?.nodeName
+  const cells = [...first.cells]
+
+  return (
+    parent === 'THEAD' ||
+    (first.previousElementSibling === null && cells.every((one) => one.nodeName === 'TH'))
+  )
+}
+
+/** The heading row markdown writes for a table that has none: as many empty cells
+ *  as the table has columns, and the line of dashes under them. */
+function emptyHeading(table: HTMLTableElement): string {
+  const across = table.rows[0]?.cells.length ?? 0
+
+  return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
+}
+
 /** The elements a formula can have a line of its own inside. Turndown's own list
  *  of what a blank line goes around, narrowed to the ones a page's prose nests a
  *  formula in; a heading is deliberately not among them, because a formula in a
@@ -371,6 +396,35 @@ function converter(options: FromHtmlOptions): TurndownService {
       const holds = !content.includes(marker) && !/^\s|\s$/.test(content)
 
       return holds ? `${marker}${content}${marker}` : `<${tag}>${content}</${tag}>`
+    },
+  })
+
+  // A cell, and one line of it. Markdown has no way to write a newline inside a
+  // cell, so a cell holding a paragraph, a list or a table of its own ended the
+  // table where the newline was and left the rows after it as loose pipes; and a
+  // cell whose own words contain a pipe used to split itself in two.
+  service.addRule('cell', {
+    filter: ['th', 'td'],
+    replacement: (content, node) => {
+      const said = content.replace(/\s*\n+\s*/g, ' ').replace(/\|/g, '\\|').trim()
+      const first = (node as Element).previousElementSibling === null
+
+      return `${first ? '| ' : ' '}${said} |`
+    },
+  })
+
+  // A table with no headings, which the GFM rules hand back as the page's own raw
+  // HTML: its classes, its styles, its attributes and whatever is nested inside
+  // them, straight into the note, which the app then renders as the note's own
+  // markup. A clipped page is somebody else's and none of it is kept verbatim - so
+  // the table becomes a table, with the empty heading row markdown writes for one.
+  service.addRule('table', {
+    filter: (node) => node.nodeName === 'TABLE' && !headed(node as HTMLTableElement),
+    replacement: (content, node) => {
+      const rows = content.replace(/^\n+/, '').trimEnd()
+      if (!rows) return ''
+
+      return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`
     },
   })
 
