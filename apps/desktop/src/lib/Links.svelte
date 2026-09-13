@@ -129,24 +129,19 @@
   {/await}
 {:else}
   <!-- Backlinks first: what points here is what the panel is opened for. -->
-  <p class="nib-section">{t('Backlinks')}<span>{backlinks.length}</span></p>
+  {@render heading(t('Backlinks'), backlinks.length)}
   {#if backlinks.length}
-    <ul use:roving={WALK}>
-      {#each backlinks as reference, index (`${reference.path}:${reference.line}:${index}`)}
-        <li>
-          <button class="nib-row hit" onclick={() => openAt(reference)}>
-            <span class="hit-note">{reference.name}</span>
-            <span class="hit-line">{reference.text}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
+    {@render hits(backlinks)}
   {:else}
     <p class="empty-text">{t('Nothing links here yet')}</p>
   {/if}
 
-  <p class="nib-section">{t('Links out')}<span>{outgoing.length}</span></p>
+  {@render heading(t('Links out'), outgoing.length)}
   {#if outgoing.length}
+    <!-- Its own block, and the one that is not the others: a link out is the only
+         row that can point at a note the space has not got, and that row goes to the
+         line in this note instead. The link is what is wrong, so the link is what it
+         shows you. -->
     <ul use:roving={WALK}>
       {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
         <li>
@@ -166,23 +161,35 @@
   {/if}
 
   {#if mentions.length}
-    <p class="nib-section">{t('Mentions')}<span>{mentions.length}</span></p>
-    <ul use:roving={WALK}>
-      {#each mentions as reference, index (`${reference.path}:${reference.line}:${index}`)}
-        <li>
-          <button class="nib-row hit" onclick={() => openAt(reference)}>
-            <span class="hit-note">{reference.name}</span>
-            <span class="hit-line">{reference.text}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
+    {@render heading(t('Mentions'), mentions.length)}
+    {@render hits(mentions)}
   {/if}
 
   {#if links.scanning}
     <p class="empty-text">{t('Reading the space…')}</p>
   {/if}
 {/if}
+
+<!-- One word and a count over each of the three lists. -->
+{#snippet heading(word: string, count: number)}
+  <p class="nib-section">{word}<span>{count}</span></p>
+{/snippet}
+
+<!-- A list of lines: which note, and what it says on the line the name is written
+     on. What the backlinks and the mentions both are, character for character, and
+     the reason they are one snippet is that they were. -->
+{#snippet hits(rows: readonly Reference[])}
+  <ul use:roving={WALK}>
+    {#each rows as reference, index (`${reference.path}:${reference.line}:${index}`)}
+      <li>
+        <button class="nib-row hit" onclick={() => openAt(reference)}>
+          <span class="hit-note">{reference.name}</span>
+          <span class="hit-line">{reference.text}</span>
+        </button>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
 
 <style>
   ul {
