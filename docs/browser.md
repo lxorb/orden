@@ -1172,8 +1172,9 @@ on main or on a pull request. That is deliberate and worth keeping: the moment a
 ### What it said
 
 CEF 152.0.6 / Chromium 152.0.7977.83, on GitHub's runners, 2026-09-13. **Every check
-green on both platforms that finished.** The reports and the screenshots are the
-run's artefacts.
+green on Windows and on macOS, twice each.** Linux needed a fix to the job before it
+could answer at all, which is its own finding and is below the table. The reports and
+the screenshots are the run's artefacts.
 
 | | `windows-latest` | `macos-latest` (arm64) |
 | --- | --- | --- |
