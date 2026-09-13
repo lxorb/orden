@@ -194,7 +194,7 @@ fn push(step: &str, at: Duration) {
 /// the webview started loading the page - some way into the launch on this side.
 /// `origin` says where that was on the wall clock, so the difference against this
 /// side's own zero is what turns one into the other.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
     if !on() {
         return;

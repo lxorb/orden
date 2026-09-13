@@ -21,7 +21,9 @@ const MAX_MESSAGE: usize = 2000;
 const MAX_FIELD: usize = 40;
 
 /// Where the log file is, so the window can offer to open it.
-#[tauri::command]
+///
+/// The folder is made if it is not there yet, so this waits for the disk.
+#[tauri::command(async)]
 pub fn log_dir(app: AppHandle) -> Result<String, String> {
     Ok(log_file(&app)?.to_string_lossy().to_string())
 }

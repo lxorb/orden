@@ -45,8 +45,9 @@ pub struct ThemeFile {
     path: String,
 }
 
-/// Where themes live, so the window can offer to open the folder.
-#[tauri::command]
+/// Where themes live, so the window can offer to open the folder. The folder is
+/// made if it is not there yet, so this waits for the disk.
+#[tauri::command(async)]
 pub fn theme_dir(app: AppHandle) -> Result<String, String> {
     Ok(themes_root(&app)?.to_string_lossy().to_string())
 }
@@ -154,7 +155,7 @@ pub fn remove_theme(app: AppHandle, id: String) -> Result<(), String> {
 
 /// Where `custom.css` is, making it first if this is the first time it is asked
 /// for, so the window has something to open either way.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
     let path = custom_css_file(&app)?;
     seed(&path, CUSTOM_CSS)?;
@@ -173,7 +174,7 @@ pub fn read_custom_css(app: AppHandle) -> String {
 /// Where `snippets.json` is, making it first if it is not there. Abbreviations the
 /// editor offers while typing, stored as plain JSON so they can be edited in Nib
 /// itself.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn snippets_path(app: AppHandle) -> Result<String, String> {
     let path = snippets_file(&app)?;
     seed(&path, SNIPPETS)?;

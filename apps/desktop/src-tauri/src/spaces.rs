@@ -26,8 +26,9 @@ pub struct Space {
     path: String,
 }
 
-/// The folder every space lives in, as a string the window can hand back.
-#[tauri::command]
+/// The folder every space lives in, as a string the window can hand back. Made
+/// if it is not there yet, so this waits for the disk.
+#[tauri::command(async)]
 pub fn spaces_root(app: AppHandle) -> Result<String, String> {
     Ok(paths::spaces_root(&app)?.to_string_lossy().to_string())
 }

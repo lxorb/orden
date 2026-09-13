@@ -345,3 +345,222 @@ fn remember(app: &AppHandle, files: &[String]) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{HashMap, HashSet};
+    use std::fs;
+
+    /// The commands that run on the thread that called them although they reach a
+    /// file, a subprocess or the registry, and the reason each may. The note at the
+    /// top of this file is where they are explained; this is that list, held to.
+    ///
+    /// `write_log` appends its lines in the order they were written, which two of
+    /// them in the air at once would not be. The other two reach Windows through the
+    /// registry, and a key is opened and closed inside one call.
+    const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
+
+    /// What a body that waits says itself, whichever module it is in: the
+    /// filesystem, a subprocess, and the machine's own keychain.
+    const WAITS: [&str; 8] = [
+        "fs::",
+        "File::",
+        "OpenOptions",
+        "Command::new",
+        "get_password",
+        "set_password",
+        "delete_credential",
+        "canonicalize",
+    ];
+
+    /// One function of the crate: the name it is called by, and the body it runs.
+    struct Function {
+        name: String,
+        body: String,
+    }
+
+    /// Every function in one module, however deeply it is nested, by where the
+    /// signature is indented: rustfmt closes a body at the column its `fn` began at.
+    fn functions(source: &str) -> Vec<Function> {
+        let mut found = Vec::new();
+        let lines: Vec<&str> = source.lines().collect();
+
+        for (at, line) in lines.iter().enumerate() {
+            let Some((indent, name)) = signature(line) else {
+                continue;
+            };
+
+            let closes = format!("{}}}", " ".repeat(indent));
+            let body = lines[at + 1..]
+                .iter()
+                .take_while(|held| **held != closes)
+                .fold(String::new(), |mut body, held| {
+                    body.push_str(held);
+                    body.push('\n');
+                    body
+                });
+
+            found.push(Function { name, body });
+        }
+
+        found
+    }
+
+    /// How far a signature is indented and what it names, or nothing where the line
+    /// is not one.
+    fn signature(line: &str) -> Option<(usize, String)> {
+        let indent = line.len() - line.trim_start().len();
+        let mut rest = line.trim_start();
+        for said in ["pub(crate) ", "pub ", "async "] {
+            rest = rest.strip_prefix(said).unwrap_or(rest);
+        }
+
+        let name = rest
+            .strip_prefix("fn ")?
+            .split(['(', '<'])
+            .next()?
+            .to_owned();
+        Some((indent, name))
+    }
+
+    /// Every name a body calls. A name after a dot is a method on something else and
+    /// not one of ours.
+    fn calls(body: &str) -> HashSet<String> {
+        let mut found = HashSet::new();
+        let letters: Vec<char> = body.chars().collect();
+        let mut at = 0;
+
+        while at < letters.len() {
+            if !letters[at].is_alphanumeric() && letters[at] != '_' {
+                at += 1;
+                continue;
+            }
+
+            let from = at;
+            while at < letters.len() && (letters[at].is_alphanumeric() || letters[at] == '_') {
+                at += 1;
+            }
+
+            let after_a_dot = from > 0 && letters[from - 1] == '.';
+            if !after_a_dot && letters.get(at) == Some(&'(') {
+                found.insert(letters[from..at].iter().collect());
+            }
+        }
+
+        found
+    }
+
+    /// Every function that waits, by name: the ones that say so themselves, and then
+    /// every one that calls one of those, to the end of the chain.
+    fn waiting(functions: &[Function]) -> HashSet<String> {
+        let mut waits: HashSet<String> = HashSet::new();
+        let mut made_by: HashMap<String, HashSet<String>> = HashMap::new();
+
+        for function in functions {
+            if WAITS.iter().any(|said| function.body.contains(said)) {
+                waits.insert(function.name.clone());
+            }
+            made_by
+                .entry(function.name.clone())
+                .or_default()
+                .extend(calls(&function.body));
+        }
+
+        loop {
+            let found: Vec<String> = made_by
+                .iter()
+                .filter(|(name, called)| {
+                    !waits.contains(*name) && called.iter().any(|one| waits.contains(one))
+                })
+                .map(|(name, _)| name.clone())
+                .collect();
+            if found.is_empty() {
+                return waits;
+            }
+            waits.extend(found);
+        }
+    }
+
+    /// The name of every command that runs on the thread that called it, which is
+    /// `#[tauri::command]` on a function that is not itself `async`.
+    /// `#[tauri::command(async)]` and `async fn` both answer from a thread of the
+    /// runtime's, and saying one of the two is what the rule below asks for.
+    fn on_the_calling_thread(source: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        let mut lines = source.lines();
+
+        while let Some(line) = lines.next() {
+            if line.trim() != "#[tauri::command]" {
+                continue;
+            }
+            // Past anything written between the attribute and the signature.
+            let Some(line) = lines.find(|one| one.contains("fn ")) else {
+                break;
+            };
+            if line.contains("async fn ") {
+                continue;
+            }
+            if let Some((_indent, name)) = signature(line) {
+                found.push(name);
+            }
+        }
+
+        found
+    }
+
+    /// The rule the top of this file states, held to. A command that is not `async`
+    /// runs its body on the thread the message loop is on, so one that waits for a
+    /// file there stops the window painting for as long as the disk takes - and how
+    /// long the disk takes is the one thing nobody can predict. Followed through the
+    /// crate's own helpers, because a command that waits usually does it one call
+    /// down rather than in its own three lines.
+    #[test]
+    fn a_command_that_waits_says_async() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut sources = Vec::new();
+
+        for file in fs::read_dir(src).expect("the crate's own source").flatten() {
+            let path = file.path();
+            if path.extension().is_some_and(|one| one == "rs") {
+                sources.push(fs::read_to_string(&path).expect("one module"));
+            }
+        }
+        // The walk itself, in case the source ever stops being where this looks.
+        assert!(
+            sources.len() > 20,
+            "only {} modules were read",
+            sources.len()
+        );
+
+        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
+        let waits = waiting(&functions);
+
+        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
+            assert!(
+                !waits.contains(&name) || EXCEPTED.contains(&name.as_str()),
+                "{name} waits without saying async",
+            );
+        }
+    }
+
+    /// The three shapes the reader has to tell apart, and the chain it follows.
+    #[test]
+    fn a_command_waits_when_what_it_calls_waits() {
+        let source = concat!(
+            "#[tauri::command]\npub fn here() -> bool {\n    asked()\n}\n\n",
+            "fn asked() -> bool {\n    deeper()\n}\n\n",
+            "fn deeper() -> bool {\n    fs::metadata(one).is_ok()\n}\n\n",
+            "#[tauri::command(async)]\npub fn elsewhere() {\n    fs::read(two);\n}\n\n",
+            "#[tauri::command]\npub async fn waited() {\n    fs::read(three);\n}\n",
+        );
+
+        assert_eq!(on_the_calling_thread(source), vec!["here".to_owned()]);
+
+        let waits = waiting(&functions(source));
+        assert!(waits.contains("here"), "the chain was not followed");
+        assert!(waits.contains("deeper"));
+        // A name read off a method call is not one of ours.
+        assert!(!calls("one.read(two)").contains("read"));
+        assert!(calls("read(two)").contains("read"));
+    }
+}

@@ -87,7 +87,7 @@ pub fn read_apple_notes() -> Result<Read, String> {
 /// Opens the setting that would let the app read that database. Said as its own
 /// command because a sheet that asks for a permission and leaves the reader to
 /// find the pane themselves has asked them to do the work twice.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn open_full_disk_access() -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
