@@ -56,10 +56,20 @@ static ON: LazyLock<bool> = LazyLock::new(|| {
     std::env::var_os(SWITCH).is_some_and(|value| !value.is_empty() && value != "0")
 });
 
-/// The zero of this side's axis, and the same moment on the wall clock. Taken
-/// together and once, because the window's marks are placed against the second of
-/// them and a second reading would be a second zero.
+/// Our own first line, and the same moment on the wall clock. Taken together and
+/// once, because the window's marks are placed against the second of them and a
+/// second reading would be a second zero.
 static STARTED: LazyLock<(Instant, u64)> = LazyLock::new(|| (Instant::now(), clock::now()));
+
+/// How long the machine spent on this process before that: loading the image,
+/// mapping the webview runtime and letting whatever scans a new binary read it.
+///
+/// The zero of the axis, rather than a row on an axis of its own. Somebody waited
+/// through this as surely as through the rest, so every step below is placed after
+/// it - which is also what makes the column that says how long each step took read
+/// as what it says: an axis starting at our first line puts the machine's own row
+/// in the middle of the page and takes its time out of the step that follows it.
+static BEFORE: LazyLock<Duration> = LazyLock::new(|| before_main().unwrap_or(Duration::ZERO));
 
 /// Every step so far, in the order it happened.
 static MARKS: Mutex<Vec<Mark>> = Mutex::new(Vec::new());
@@ -91,8 +101,8 @@ pub fn begin() {
     }
 
     let _ = *STARTED;
-    if let Some(before) = before_main() {
-        push("windows, before our first line", before);
+    if *BEFORE > Duration::ZERO {
+        push("windows, before our first line", *BEFORE);
     }
     mark("app starting");
 }
@@ -109,8 +119,13 @@ pub fn mark(step: &str) {
         return;
     }
 
-    let at = STARTED.0.elapsed();
-    push(step, at);
+    push(step, along());
+}
+
+/// Where now is on the axis: what the machine did before our first line, and then
+/// how long since it. See `BEFORE`.
+fn along() -> Duration {
+    BEFORE.saturating_add(STARTED.0.elapsed())
 }
 
 /// The file, as the trace stands. Written at every step that could be the last
@@ -197,7 +212,10 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
     let shift = offset(origin);
     for said in steps {
         let at = Duration::from_secs_f64(said.at.max(0.0) / 1000.0);
-        push(&format!("window: {}", said.step), at.saturating_add(shift));
+        // On the same axis as this side's own steps, which starts before our first
+        // line rather than at it; see `BEFORE`.
+        let at = at.saturating_add(shift).saturating_add(*BEFORE);
+        push(&format!("window: {}", said.step), at);
     }
 
     write(&app);
