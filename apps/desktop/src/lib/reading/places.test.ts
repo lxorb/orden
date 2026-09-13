@@ -1,94 +1,70 @@
 import { describe, expect, test } from 'vitest'
-import { type Anchor, headingOffsets, positionAt, topFor } from './places'
+import { headingOffsets, positionOf, type Section, sectionAt } from './places'
 
-/** A note of four sections, with the headings at the places a page of it would
- *  put them: 0, 200, 500 and 900 pixels down, over a page 1200 tall. */
-const ANCHORS: Anchor[] = [
-  { position: 0, top: 0 },
-  { position: 0, top: 0 },
-  { position: 100, top: 200 },
-  { position: 260, top: 500 },
-  { position: 470, top: 900 },
-  { position: 600, top: 1200 },
-]
+/** A note of four sections, by the offset each heading starts at. */
+const OFFSETS = [0, 100, 260, 470]
+/** And how long the note is, which is where the last section ends. */
+const END = 600
 
-describe('from the editor to the page', () => {
-  test('a heading goes to its heading', () => {
-    expect(topFor(100, ANCHORS)).toBe(200)
-    expect(topFor(260, ANCHORS)).toBe(500)
-    expect(topFor(470, ANCHORS)).toBe(900)
+describe('which section a place is in', () => {
+  test('a heading is the start of its own section', () => {
+    expect(sectionAt(0, OFFSETS, END)).toEqual({ index: 0, fraction: 0 })
+    expect(sectionAt(100, OFFSETS, END)).toEqual({ index: 1, fraction: 0 })
+    expect(sectionAt(260, OFFSETS, END)).toEqual({ index: 2, fraction: 0 })
+    expect(sectionAt(470, OFFSETS, END)).toEqual({ index: 3, fraction: 0 })
   })
 
-  test('a paragraph between two goes the same fraction of the way', () => {
-    // Halfway from the second heading to the third in the text is halfway down
-    // between them on the page.
-    expect(topFor(180, ANCHORS)).toBe(350)
+  test('a paragraph between two is that far through the one above it', () => {
+    expect(sectionAt(180, OFFSETS, END)).toEqual({ index: 1, fraction: 0.5 })
+    expect(sectionAt(365, OFFSETS, END)).toEqual({ index: 2, fraction: 0.5 })
   })
 
-  test('the top is the top and the end is the end', () => {
-    expect(topFor(0, ANCHORS)).toBe(0)
-    expect(topFor(600, ANCHORS)).toBe(1200)
+  test('before the first heading is no section at all', () => {
+    expect(sectionAt(-40, [40, 100], 600)).toEqual({ index: -1, fraction: 0 })
   })
 
-  test('past either end is that end', () => {
-    expect(topFor(-40, ANCHORS)).toBe(0)
-    expect(topFor(9000, ANCHORS)).toBe(1200)
+  test('and a note with no headings is one long section', () => {
+    expect(sectionAt(250, [], 1000)).toEqual({ index: -1, fraction: 0.25 })
   })
 })
 
-describe('from the page to the editor', () => {
-  test('a heading comes back as its heading', () => {
-    expect(positionAt(200, ANCHORS)).toBe(100)
-    expect(positionAt(500, ANCHORS)).toBe(260)
-    expect(positionAt(900, ANCHORS)).toBe(470)
+describe('and back again', () => {
+  test('a section with no fraction is its heading', () => {
+    for (const [index, offset] of OFFSETS.entries()) {
+      expect(positionOf({ index, fraction: 0 }, OFFSETS, END)).toBe(offset)
+    }
   })
 
-  test('between two, the same fraction back', () => {
-    expect(positionAt(350, ANCHORS)).toBe(180)
+  test('a fraction is that far towards the next heading', () => {
+    expect(positionOf({ index: 1, fraction: 0.5 }, OFFSETS, END)).toBe(180)
+    // The last section runs to the end of the note rather than to a heading.
+    expect(positionOf({ index: 3, fraction: 0.5 }, OFFSETS, END)).toBe(535)
   })
 
-  test('past either end is that end', () => {
-    expect(positionAt(-100, ANCHORS)).toBe(0)
-    expect(positionAt(99999, ANCHORS)).toBe(600)
+  test('a fraction outside nought and one is held to them', () => {
+    expect(positionOf({ index: 1, fraction: -3 }, OFFSETS, END)).toBe(100)
+    expect(positionOf({ index: 1, fraction: 9 }, OFFSETS, END)).toBe(260)
+  })
+
+  test('no section at all is the top of the note', () => {
+    expect(positionOf({ index: -1, fraction: 0 }, OFFSETS, END)).toBe(0)
   })
 })
 
 describe('the two directions are one mapping', () => {
-  test('a place survives the round trip, and so does an offset', () => {
+  test('a place survives the round trip', () => {
+    // Which is what makes switching a note between writing and reading and back
+    // again land where it began, and it is the whole reason these are a pair.
     for (const position of [0, 40, 100, 173, 260, 399, 470, 522, 600]) {
-      expect(positionAt(topFor(position, ANCHORS), ANCHORS)).toBe(position)
-    }
-
-    // A place in the text is a whole number of characters, and a character is a
-    // pixel or two of page, so an offset comes back to within that much.
-    for (const top of [0, 120, 200, 333, 500, 712, 900, 1050, 1200]) {
-      expect(Math.abs(topFor(positionAt(top, ANCHORS), ANCHORS) - top)).toBeLessThanOrEqual(2)
+      const section: Section = sectionAt(position, OFFSETS, END)
+      expect(positionOf(section, OFFSETS, END)).toBe(position)
     }
   })
-})
 
-describe('a note with nothing to anchor to', () => {
-  const ends: Anchor[] = [
-    { position: 0, top: 0 },
-    { position: 1000, top: 4000 },
-  ]
-
-  test('is read as one long stretch', () => {
-    expect(topFor(250, ends)).toBe(1000)
-    expect(positionAt(1000, ends)).toBe(250)
-  })
-
-  test('and an empty one is the top', () => {
-    expect(topFor(10, [])).toBe(0)
-    expect(positionAt(10, [])).toBe(0)
-  })
-
-  test('and one whose page has no height is still the top', () => {
-    const flat: Anchor[] = [
-      { position: 0, top: 0 },
-      { position: 500, top: 0 },
-    ]
-    expect(topFor(250, flat)).toBe(0)
+  test('even where the note has one heading and a long tail', () => {
+    for (const position of [0, 10, 250, 999, 1000]) {
+      expect(positionOf(sectionAt(position, [0], 1000), [0], 1000)).toBe(position)
+    }
   })
 })
 

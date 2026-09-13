@@ -19,7 +19,7 @@
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
-  import { type Anchor, headingOffsets, positionAt, topFor } from './reading/places'
+  import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
   import { readingHtml } from './reading/render'
   import { trustsHtmlIn } from './sharing.svelte'
   import { scrollbar } from './scrollbar'
@@ -71,7 +71,6 @@
 
     html = next
     words = null
-    at = -1
 
     // The page is measured only once the browser has laid it out.
     await tick()
@@ -128,58 +127,112 @@
   // note that is written right to left is read right to left.
   const direction = $derived(modes.rtl ? 'rtl' : 'ltr')
 
-  /** Where the headings are, in the source and on the page. Taken again whenever
-   *  the page has changed height, which is what a picture arriving, a wider
-   *  column or a re-render all come down to. */
-  let anchors: Anchor[] = []
-  let at = -1
-
-  function places(): Anchor[] {
+  /** The headings of the page and the offsets in the source that match them, where
+   *  the two agree about how many there are.
+   *
+   *  They disagree over an underlined heading the renderer read differently, or one
+   *  indented into code. Where they do, there is nothing to line up and both
+   *  directions fall back to the top of the note, which is honest rather than
+   *  wrong by a screen. */
+  function headings(): { elements: HTMLElement[]; offsets: number[] } {
     const page = surface
-    if (!page) return []
+    const offsets = page ? headingOffsets(tab.doc) : []
+    if (!page) return { elements: [], offsets: [] }
 
-    const height = page.offsetHeight
-    if (height === at) return anchors
-
-    at = height
-    anchors = measure(page)
-    return anchors
-  }
-
-  function measure(page: HTMLElement): Anchor[] {
-    const offsets = headingOffsets(tab.doc)
     // The renderer's own headings, which are the ones with an id. A heading inside
     // an embedded note has none, and is no place in this note anyway.
-    const headings = [...page.children].filter(
+    const elements = [...page.children].filter(
       (child): child is HTMLElement =>
         child instanceof HTMLElement && /^H[1-6]$/.test(child.tagName) && !!child.id,
     )
 
-    const ends: Anchor[] = [
-      { position: 0, top: 0 },
-      { position: tab.doc.length, top: page.offsetTop + page.offsetHeight },
-    ]
-
-    // A page whose headings do not line up with the note's is one this cannot
-    // read: an underlined heading, a heading indented into code, a note the
-    // renderer read differently. The two ends still hold, and they are honest.
-    if (!offsets.length || offsets.length !== headings.length) return ends
-
-    const between = headings.flatMap((heading, index) => {
-      const position = offsets[index]
-      return position === undefined ? [] : [{ position, top: heading.offsetTop }]
-    })
-
-    return [ends[0], ...between, ends[1]].filter((one): one is Anchor => one !== undefined)
+    return elements.length === offsets.length
+      ? { elements, offsets }
+      : { elements: [], offsets: [] }
   }
 
-  /** Puts the source at `position` at the top of the page. */
+  /** Puts the source at `position` at the top of the page.
+   *
+   *  The heading it is under is asked to bring itself into view, which is the one
+   *  thing that lands exactly on a page whose blocks are laid out only as they are
+   *  reached: the browser renders whatever it has to in order to put that element
+   *  where it was asked for. Pixels worked out over blocks that have not been laid
+   *  out are pixels worked out over estimates, and the heading that used to be
+   *  reached to the pixel came out fifty-seven thousand of them adrift.
+   *
+   *  Then the rest of the way, for a place that is part-way through a section: that
+   *  distance is between two headings the scroll has just been through, so it is
+   *  measured rather than estimated. */
   function show(position: number) {
     const box = scroller
+    const { elements, offsets } = headings()
     if (!box) return
 
-    const top = topFor(position, places())
-    box.scrollTop = Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight))
+    const { index, fraction } = sectionAt(position, offsets, tab.doc.length)
+    const target = elements[index]
+    if (!target) {
+      box.scrollTop = 0
+      return
+    }
+
+    target.scrollIntoView({ block: 'start' })
+    if (!fraction) return
+
+    const next = elements[index + 1]
+    if (!next) return
+
+    const from = target.getBoundingClientRect().top
+    const to = next.getBoundingClientRect().top
+    box.scrollTop = Math.max(
+      0,
+      Math.min(box.scrollTop + (to - from) * fraction, box.scrollHeight - box.clientHeight),
+    )
+  }
+
+  /** Which place in the note is at the top of the page, as a section and a fraction
+   *  of it.
+   *
+   *  Read off the block that is actually up there rather than off the scroll
+   *  position, for the reason `show` scrolls an element rather than a number of
+   *  pixels: the blocks above it may never have been laid out, so how far down the
+   *  page this is says nothing about how far into the note it is. The block at the
+   *  top is on screen by definition, and so is the heading over it wherever that
+   *  heading is still in view. */
+  function placeNow(): { section: Section; offsets: number[] } {
+    const box = scroller
+    const page = surface
+    const { elements, offsets } = headings()
+    if (!box || !page || !elements.length) return { section: { index: -1, fraction: 0 }, offsets }
+
+    const edge = box.getBoundingClientRect()
+    const found = document.elementFromPoint(edge.left + edge.width / 2, edge.top + 1)
+
+    let block = found instanceof HTMLElement ? found : null
+    while (block && block.parentElement !== page) block = block.parentElement
+    if (!block) return { section: { index: -1, fraction: 0 }, offsets }
+
+    // Which heading that block is under: the last one at or before it among the
+    // page's own children, which is a walk of the headings and not of the blocks.
+    const blocks = [...page.children]
+    const where = blocks.indexOf(block)
+    let index = -1
+    for (let one = 0; one < elements.length; one++) {
+      const element = elements[one]
+      if (!element || blocks.indexOf(element) > where) break
+      index = one
+    }
+
+    const target = elements[index]
+    const next = elements[index + 1]
+    if (!target || !next) return { section: { index, fraction: 0 }, offsets }
+
+    // How far between the two, in the pixels of a stretch the reader is looking at.
+    const from = target.getBoundingClientRect().top
+    const to = next.getBoundingClientRect().top
+    const span = to - from
+    const fraction = span > 0 ? Math.min(1, Math.max(0, (edge.top - from) / span)) : 0
+
+    return { section: { index, fraction }, offsets }
   }
 
   /** Where the page is, as a place in the note, recorded as it moves: the editor
@@ -195,7 +248,8 @@
       const box = scroller
       if (!box) return
 
-      workspace.notePlace(tab.id, box.scrollTop, positionAt(box.scrollTop, places()))
+      const { section, offsets } = placeNow()
+      workspace.notePlace(tab.id, box.scrollTop, positionOf(section, offsets, tab.doc.length))
     })
   }
 
@@ -506,6 +560,46 @@
      as one note turning over instead of two notes swapping. */
   .page {
     animation: settle var(--dur-base) var(--ease-out);
+  }
+
+  /* A block nobody can see is not laid out.
+
+     A note of twenty thousand lines is four thousand blocks, and the browser was
+     laying out every one of them before the first was on screen: a hundred to
+     three hundred milliseconds of the switch, and the part of it that came and
+     went - the same note read 103ms one time and 283 the next, because what it
+     costs depends on what else the machine had in its caches. Skipping what is off
+     screen makes that frame 17 to 21 milliseconds, every time.
+
+     `auto` is what keeps the scrollbar honest: a block that has been rendered once
+     keeps its real size for ever after, so the page height is exact everywhere the
+     reader has been and an estimate only ahead of them. The estimate is the middle
+     block of a long note measured on this machine - a paragraph of two or three
+     lines - so the bar is about right before they have been anywhere.
+
+     Only here. An export and a published page are documents somebody prints or
+     scrolls end to end, and neither wants a height that settles as it goes. */
+  :global(.page > *) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 110px;
+  }
+
+  /* Containment is part of skipping a block, and containment stops the first and
+     last item's margins escaping the list they are in - which made every list on
+     the page 0.6em taller than it is in the editor, in an export, and on a
+     published page. So the two margins that used to escape are taken off inside,
+     which is what they were worth outside: they collapsed into the neighbouring
+     block's own margin, which is larger. Every block on a 1.26 MB note comes out
+     at the pixel it was at before; see reading-proof.py.
+
+     Written with the id as well as the class because `#write li` in the themes
+     package carries one, and a rule about the same margins has to outrank it. */
+  :global(#write.page > :is(ul, ol) > li:first-child) {
+    margin-top: 0;
+  }
+
+  :global(#write.page > :is(ul, ol) > li:last-child) {
+    margin-bottom: 0;
   }
 
   @keyframes settle {

@@ -7,68 +7,71 @@
  *  both directions can be tested without a browser.
  *
  *  Both directions go through the same anchors: the headings, which are the one
- *  thing the two faces of a note certainly agree on. Between two anchors the
- *  place is a fraction of the way from one to the next - by characters in the
- *  source, by pixels on the page - so the paragraph at the top stays the
- *  paragraph at the top. A note with no headings is one long anchor from its
- *  first character to its last, which is as close as a guess can get. */
+ *  thing the two faces of a note certainly agree on. Between two headings the
+ *  place is a fraction of the way from one to the next, and a note with no headings
+ *  is one long section from its first character to its last, which is as close as a
+ *  guess can get.
+ *
+ *  What is *not* here any more is the page's side of it. This used to hold both
+ *  halves - a position turned into a pixel and back - and the page's half stopped
+ *  being arithmetic when the reading view stopped laying out the blocks nobody can
+ *  see: a pixel measured over a thousand blocks that have an estimated height is a
+ *  pixel measured over estimates. So the page's half is a `scrollIntoView` on the
+ *  heading itself, in Reading.svelte, where the elements are. */
 
-/** One place both faces know: how far into the source it is, and how far down the
- *  page. In order, and rising in both. */
-export interface Anchor {
-  position: number
-  top: number
+/** A place in the note as the two faces both understand it: which heading it is
+ *  under, and how far from that heading to the next.
+ *
+ *  Which heading rather than how many pixels, because the page no longer lays out
+ *  the blocks nobody can see - see the `content-visibility` rule in Reading.svelte -
+ *  and a block that has not been laid out has an estimated height rather than a
+ *  real one. Pixels measured over a thousand estimates land nowhere near: the same
+ *  heading that used to be reached exactly was fifty-seven thousand pixels out. An
+ *  element, on the other hand, can be asked to bring itself into view, and the
+ *  browser renders whatever it must to do it exactly.
+ *
+ *  So the pixels live in the page and only the arithmetic lives here, which is
+ *  still the half worth testing without a browser. */
+export interface Section {
+  /** Which heading, counting from zero. -1 for a place above the first one. */
+  index: number
+  /** How far from that heading to the next, from 0 to 1. */
+  fraction: number
 }
 
-/** Where to scroll so that the source at `position` is at the top of the page. */
-export function topFor(position: number, anchors: readonly Anchor[]): number {
-  return along(
-    position,
-    anchors,
-    (anchor) => anchor.position,
-    (anchor) => anchor.top,
-  )
-}
-
-/** Which place in the source is at the top when the page is scrolled to `top`. */
-export function positionAt(top: number, anchors: readonly Anchor[]): number {
-  return Math.round(
-    along(
-      top,
-      anchors,
-      (anchor) => anchor.top,
-      (anchor) => anchor.position,
-    ),
-  )
-}
-
-/** The same interpolation both ways round: which pair of anchors `value` falls
- *  between when read one way, and how far between them that is when written the
- *  other. Beyond either end it is the end, since there is nothing to interpolate
- *  towards. */
-function along(
-  value: number,
-  anchors: readonly Anchor[],
-  read: (anchor: Anchor) => number,
-  write: (anchor: Anchor) => number,
-): number {
-  let at = 0
-  while (at + 1 < anchors.length) {
-    const next = anchors[at + 1]
-    if (!next || read(next) > value) break
-    at++
+/** Which heading a position sits under, and how far through it.
+ *
+ *  `offsets` is `headingOffsets`, which rises, and `end` is the length of the note,
+ *  which is where the last section stops. A position before the first heading is
+ *  section -1, and a note with no headings at all is one section from its first
+ *  character to its last - which is as close as a guess can get, and the same guess
+ *  the anchors used to make. */
+export function sectionAt(position: number, offsets: readonly number[], end: number): Section {
+  let index = -1
+  for (let one = 0; one < offsets.length; one++) {
+    const at = offsets[one]
+    if (at === undefined || at > position) break
+    index = one
   }
 
-  const one = anchors[at]
-  if (!one) return 0
+  const from = index < 0 ? 0 : (offsets[index] ?? 0)
+  const next = offsets[index + 1] ?? end
+  const span = next - from
+  const fraction = span > 0 ? Math.min(1, Math.max(0, (position - from) / span)) : 0
 
-  const next = anchors[at + 1]
-  if (!next) return write(one)
+  return { index, fraction }
+}
 
-  const span = read(next) - read(one)
-  const fraction = span > 0 ? Math.min(1, Math.max(0, (value - read(one)) / span)) : 0
+/** And back: where in the source a section and a fraction of it fall. The inverse
+ *  of `sectionAt`, so a place that goes one way and comes back is the place it
+ *  started at - which is what makes switching between the two faces of a note and
+ *  back again land where it began. */
+export function positionOf(section: Section, offsets: readonly number[], end: number): number {
+  const { index, fraction } = section
+  const from = index < 0 ? 0 : (offsets[index] ?? 0)
+  const next = offsets[index + 1] ?? end
 
-  return write(one) + fraction * (write(next) - write(one))
+  return Math.round(from + Math.min(1, Math.max(0, fraction)) * Math.max(0, next - from))
 }
 
 /** Just past a note's front matter, or the start of the note when it has none. */
