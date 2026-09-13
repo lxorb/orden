@@ -1106,6 +1106,80 @@ describe('the first pass, which somebody is waiting on', () => {
     }
   })
 
+  /** A nudge exists to bring a pass forward, and it used to re-plan one for its own
+   *  delay whatever was already planned - so a note written in the first instant of
+   *  a launch pushed the pass that was due at once two seconds out, and a hand that
+   *  kept typing kept pushing it. Every write goes through one; see
+   *  workspace/saving.svelte.ts. */
+  test('is not postponed by something saved in the same instant', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+
+    const real = fake.api.listSpaces
+    let asked = 0
+    fake.api.listSpaces = () => {
+      asked++
+      return real()
+    }
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      account.settled()
+      sync.start()
+      sync.nudge()
+
+      await vi.advanceTimersByTimeAsync(0)
+      expect(asked).toBe(1)
+    } finally {
+      fake.api.listSpaces = real
+      stoppedAgain()
+    }
+  })
+
+  /** And the half a nudge is for: a loop whose next pass is twenty seconds out asks
+   *  again within the nudge's own delay instead. */
+  test('still hurries a pass that was further off than its own delay', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+
+    startedWithTheTickHeld()
+    try {
+      account.settled()
+      // The first pass, run to the end, after which the loop plans the next one an
+      // interval away. Counted out in milliseconds rather than waited for: what is
+      // left of a pass is promises, and this is what flushes them.
+      await vi.advanceTimersByTimeAsync(0)
+      for (let at = 0; at < 30 && sync.status !== 'idle'; at++) {
+        await vi.advanceTimersByTimeAsync(1)
+      }
+      expect(sync.status).toBe('idle')
+
+      const { NUDGE_DELAY } = await import('./backoff')
+      const real = fake.api.changes
+      let asked = 0
+      fake.api.changes = (token: string, spaceId: string, since: number) => {
+        asked++
+        return real(token, spaceId, since)
+      }
+
+      try {
+        // Nothing is due for another interval, so nothing happens on its own.
+        await vi.advanceTimersByTimeAsync(NUDGE_DELAY)
+        expect(asked).toBe(0)
+
+        sync.nudge()
+        await vi.advanceTimersByTimeAsync(NUDGE_DELAY)
+        expect(asked).toBeGreaterThan(0)
+      } finally {
+        fake.api.changes = real
+      }
+    } finally {
+      stoppedAgain()
+    }
+  })
+
   test('says so the moment the code is accepted, before anything has been asked', async () => {
     await machineWithNotes()
     accountWithNotes()

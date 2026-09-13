@@ -36,6 +36,9 @@ class Sync {
    *  and a proxy on that path would cost every note in the space. */
   private mirrors = $state.raw<Record<string, Mirror>>({})
   private timer: ReturnType<typeof setTimeout> | null = null
+  /** When the pass that timer is for comes due, so a nudge can tell whether its
+   *  own delay would be sooner than what is already planned; see `nudge`. */
+  private dueAt = 0
   private running = false
   /** Passes in a row that found nothing. Each one waits longer than the last. */
   private quiet = 0
@@ -185,12 +188,19 @@ class Sync {
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
-   *  interval the loop had settled into. */
+   *  interval the loop had settled into.
+   *
+   *  Sooner, never later. The pass already planned may be due before the nudge's
+   *  own delay - at a launch it is due at once - and re-planning it for later
+   *  would postpone the very sync this exists to hurry: a note saved in the first
+   *  instant of a launch pushed the first pass two seconds out, and a hand that
+   *  kept typing kept pushing it. So the nudge takes whichever moment is nearer,
+   *  which for a loop that had settled into its long interval is still its own. */
   nudge() {
     if (!this.timer) return
 
     this.quiet = 0
-    this.schedule(NUDGE_DELAY)
+    this.schedule(Math.min(NUDGE_DELAY, Math.max(0, this.dueAt - Date.now())))
   }
 
   /** Hiding the window re-plans the pending pass at the longer interval;
@@ -213,6 +223,7 @@ class Sync {
 
   private schedule(delay = this.delay()) {
     if (this.timer) clearTimeout(this.timer)
+    this.dueAt = Date.now() + delay
     this.timer = setTimeout(() => void this.tick(), delay)
   }
 
