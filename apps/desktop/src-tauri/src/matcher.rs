@@ -480,9 +480,11 @@ fn literals(hay: &str, needle: &str, region: Region) -> Option<Vec<Span>> {
 /// searched, so `^` and `$` mean the start and the end of a line inside
 /// `line:(…)` and the start and the end of the note outside it.
 ///
-/// The pattern reads characters, so the region is turned into some, and the
-/// places it names are turned back into bytes. Only a query that holds a
-/// pattern pays for that.
+/// The pattern reads the region itself and names what it matched in bytes, which is
+/// what a span is. It used to read a copy of the region as characters - four bytes a
+/// letter, plus an eight-byte table to put the answers back into bytes - built for
+/// every region a pattern was asked about, which under a `line:` group is every line
+/// of every note in the space.
 fn patterned(
     pattern: &Pattern,
     body: &str,
@@ -490,76 +492,42 @@ fn patterned(
     budget: &Cell<usize>,
 ) -> Option<Vec<Span>> {
     let slice = body.get(region.from..region.to)?;
-    let letters: Vec<char> = slice.chars().collect();
 
-    // Asked before anything is counted up, because most notes in a space answer
-    // no and paying for a second reading of each of them is what makes a pattern
+    // Asked before anything is counted up, because most notes in a space answer no
+    // and paying for a second reading of each of them is what makes a pattern
     // search feel like one.
-    let mut found = pattern.find_within(&letters, 0, budget)?;
-    let mut ahead = Ahead::new(&letters);
+    let mut found = pattern.find_within(slice, 0, budget)?;
     let mut out = Vec::new();
 
     loop {
-        // A pattern that can match nothing would sit on the same place for
-        // ever, and an empty match is not a place to show.
         let at = if found.to == found.from {
-            found.from + 1
-        } else {
-            let (Some(from), Some(to)) = (ahead.byte(found.from), ahead.byte(found.to)) else {
-                break;
-            };
+            // A pattern that can match nothing would sit on the same place for
+            // ever, and an empty match is not a place to show. On by a letter,
+            // because a place inside one begins nothing.
+            let letter = slice
+                .get(found.from..)
+                .and_then(|rest| rest.chars().next())
+                .map_or(1, char::len_utf8);
 
+            found.from + letter
+        } else {
             out.push(Span {
-                from: region.from + from,
-                to: region.from + to,
+                from: region.from + found.from,
+                to: region.from + found.to,
             });
             found.to
         };
 
-        if at > letters.len() {
+        if at > slice.len() {
             break;
         }
-        let Some(next) = pattern.find_within(&letters, at, budget) else {
+        let Some(next) = pattern.find_within(slice, at, budget) else {
             break;
         };
         found = next;
     }
 
     (!out.is_empty()).then_some(out)
-}
-
-/// Where a character sits in the bytes of a region, counted forward from the last
-/// one asked about.
-///
-/// The matches come out in order and neither end of one lies before the end of the
-/// one before it, so one walk over the region answers every offset they need. The
-/// table this replaces was eight bytes a character of the region, built for every
-/// region a pattern was asked about - which under a `line:` group is every line of
-/// every note in the space.
-struct Ahead<'a> {
-    letters: &'a [char],
-    index: usize,
-    byte: usize,
-}
-
-impl<'a> Ahead<'a> {
-    fn new(letters: &'a [char]) -> Self {
-        Self {
-            letters,
-            index: 0,
-            byte: 0,
-        }
-    }
-
-    /// The byte offset of the character at `index`, or None for one behind the
-    /// walk or past the end, neither of which a match names.
-    fn byte(&mut self, index: usize) -> Option<usize> {
-        let passed = self.letters.get(self.index..index)?;
-        self.byte += passed.iter().map(|one| one.len_utf8()).sum::<usize>();
-        self.index = index;
-
-        Some(self.byte)
-    }
 }
 
 /// The two regions overlapping, or None when they do not.

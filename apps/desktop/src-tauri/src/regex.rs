@@ -69,7 +69,8 @@ const UNSET: usize = usize::MAX;
 /// this the test stops being a way of skipping work and becomes work of its own.
 const FIRST_LIMIT: usize = 64;
 
-/// One place a pattern matched, as char indices into the text it was given.
+/// One place a pattern matched, in bytes of the text it was given, the way the rest
+/// of the search counts.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Match {
     /// Where the match starts.
@@ -163,7 +164,7 @@ struct Resume {
 /// One attempt at one starting point: where it is in the program and in the
 /// text, what its cells hold, and what it can still fall back on.
 struct Run<'a> {
-    text: &'a [char],
+    text: &'a str,
     cells: Vec<usize>,
     /// Every cell written and what it held before, so that falling back can put
     /// the cells back as they were.
@@ -296,7 +297,7 @@ impl Pattern {
     /// of that note answers no, which is the same answer the pattern was about to
     /// spend a minute failing to improve on.
     #[must_use]
-    pub fn find_within(&self, text: &[char], at: usize, budget: &Cell<usize>) -> Option<Match> {
+    pub fn find_within(&self, text: &str, at: usize, budget: &Cell<usize>) -> Option<Match> {
         let mut start = at;
 
         while start <= text.len() {
@@ -314,7 +315,11 @@ impl Pattern {
                 return None;
             }
 
-            start = start.checked_add(1)?;
+            // On to the next letter rather than the next byte: a place inside one
+            // begins nothing, and asking about it would answer no for the wrong
+            // reason.
+            let step = letter_at(text, start).map_or(1, char::len_utf8);
+            start = start.checked_add(step)?;
         }
 
         None
@@ -323,7 +328,7 @@ impl Pattern {
     /// The next place at or after `from` where a match could begin, or `None`
     /// when the text holds no such place. A pattern that gave no first character
     /// away answers `from` itself, which is the search this had before.
-    fn next_start(&self, text: &[char], from: usize) -> Option<usize> {
+    fn next_start(&self, text: &str, from: usize) -> Option<usize> {
         let Some(first) = &self.first else {
             return Some(from);
         };
@@ -331,7 +336,11 @@ impl Pattern {
         // A pattern with a known first character needs a character to read, so
         // the end of the text begins nothing either.
         let rest = text.get(from..)?;
-        let step = rest.iter().position(|&c| first.holds(c, self.fold))?;
+        let step = rest
+            .char_indices()
+            .find(|&(_, c)| first.holds(c, self.fold))
+            .map(|(at, _)| at)?;
+
         from.checked_add(step)
     }
 
@@ -339,7 +348,7 @@ impl Pattern {
     /// behind until one path reaches the end or none is left. `None` covers both
     /// no match and a budget that ran out, which the caller tells apart by
     /// looking at what is left of the budget.
-    fn attempt(&self, text: &[char], start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
+    fn attempt(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
         let mut run = Run {
             text,
             cells: vec![UNSET; self.program.cells],
@@ -372,14 +381,16 @@ impl Pattern {
 
             match step {
                 Step::Char(_) | Step::Any | Step::Class(_) => {
-                    if !run
-                        .text
-                        .get(run.pos)
-                        .is_some_and(|&c| self.accepts(step, c))
-                    {
+                    let Some(letter) = letter_at(run.text, run.pos) else {
+                        return Some(false);
+                    };
+                    if !self.accepts(step, letter) {
                         return Some(false);
                     }
-                    run.pos += 1;
+
+                    // Along by the letter's own length, so every position the run
+                    // holds is the start of a letter.
+                    run.pos += letter.len_utf8();
                     run.pc += 1;
                 }
                 Step::Start | Step::End | Step::Boundary(_) => {
@@ -458,14 +469,14 @@ impl Pattern {
 
     /// Reads a finished run's cells as a match. A group whose cells were never
     /// written took part in no match, and comes back as an empty string.
-    fn take(&self, text: &[char], cells: &[usize], start: usize) -> Match {
+    fn take(&self, text: &str, cells: &[usize], start: usize) -> Match {
         let (from, to) = span(cells, 0).unwrap_or((start, start));
         let mut groups = Vec::with_capacity(self.groups);
 
         for group in 1..=self.groups {
             let caught = span(cells, group)
                 .and_then(|(open, close)| text.get(open..close))
-                .map_or_else(String::new, |seen| seen.iter().collect());
+                .map_or_else(String::new, str::to_owned);
             groups.push(caught);
         }
 
@@ -497,16 +508,28 @@ impl Run<'_> {
     }
 }
 
+/// The letter at a byte offset, or None past the end of the text - and None inside
+/// a letter, which no position the engine holds ever is: every one of them is a
+/// start the prefilter found or a position advanced by the length of a letter.
+fn letter_at(text: &str, at: usize) -> Option<char> {
+    text.get(at..).and_then(|rest| rest.chars().next())
+}
+
+/// The letter before a byte offset, or None at the very start.
+fn letter_before(text: &str, at: usize) -> Option<char> {
+    text.get(..at).and_then(|head| head.chars().next_back())
+}
+
 /// Whether an assertion holds where the run stands. Neither `^` nor `$` is given
 /// the multiline reading, so they are the two ends of the text the caller passed
 /// and nothing else.
-fn asserts(step: Step, text: &[char], pos: usize) -> bool {
+fn asserts(step: Step, text: &str, pos: usize) -> bool {
     match step {
         Step::Start => pos == 0,
         Step::End => pos == text.len(),
         Step::Boundary(wanted) => {
-            let before = pos.checked_sub(1).and_then(|i| text.get(i));
-            (wordish(before) != wordish(text.get(pos))) == wanted
+            let before = letter_before(text, pos);
+            (wordish(before) != wordish(letter_at(text, pos))) == wanted
         }
         _ => false,
     }
@@ -529,8 +552,8 @@ fn span(cells: &[usize], group: usize) -> Option<(usize, usize)> {
 /// Whether the character on one side of a position counts towards `\b`. The text
 /// running out is not a word character, which is what makes the start and the end
 /// of the text boundaries.
-fn wordish(c: Option<&char>) -> bool {
-    c.is_some_and(|&c| is_word(c))
+fn wordish(c: Option<char>) -> bool {
+    c.is_some_and(is_word)
 }
 
 /// The `\w` set, which JavaScript keeps to ASCII whatever the text holds.
@@ -1375,40 +1398,37 @@ mod tests {
     /// One search on a budget of its own, which is what a case here is: the engine
     /// shares one budget over a whole note, and every case below is one subject
     /// asked about once. See `find_within`.
-    fn find(pattern: &Pattern, text: &[char], at: usize) -> Option<Match> {
+    fn find(pattern: &Pattern, text: &str, at: usize) -> Option<Match> {
         pattern.find_within(text, at, &Cell::new(BUDGET))
     }
 
-    /// The first match a pattern makes in a subject, with the text it was found
-    /// in, since a match names positions rather than carrying the characters.
-    fn run(source: &str, subject: &str, fold: bool, from: usize) -> Option<(Match, Vec<char>)> {
-        let text: Vec<char> = subject.chars().collect();
-        let found = find(&Pattern::compile(source, fold)?, &text, from)?;
-        Some((found, text))
+    /// The first match a pattern makes in a subject. A match names where it sits
+    /// rather than carrying the letters, and it names it in the subject's own bytes.
+    fn run(source: &str, subject: &str, fold: bool, from: usize) -> Option<Match> {
+        find(&Pattern::compile(source, fold)?, subject, from)
     }
 
     /// What the first match covers.
     fn first(source: &str, subject: &str) -> Option<String> {
-        let (found, text) = run(source, subject, false, 0)?;
-        Some(text.get(found.from..found.to)?.iter().collect())
+        let found = run(source, subject, false, 0)?;
+        Some(subject.get(found.from..found.to)?.to_owned())
     }
 
     /// The same for a pattern that ignores case.
     fn folding(source: &str, subject: &str) -> Option<String> {
-        let (found, text) = run(source, subject, true, 0)?;
-        Some(text.get(found.from..found.to)?.iter().collect())
+        let found = run(source, subject, true, 0)?;
+        Some(subject.get(found.from..found.to)?.to_owned())
     }
 
-    /// Where the first match at or after `from` sits.
+    /// Where the first match at or after `from` sits, in bytes.
     fn spans(source: &str, subject: &str, from: usize) -> Option<(usize, usize)> {
-        let (found, _) = run(source, subject, false, from)?;
+        let found = run(source, subject, false, from)?;
         Some((found.from, found.to))
     }
 
     /// What the capturing groups caught.
     fn caught(source: &str, subject: &str) -> Option<Vec<String>> {
-        let (found, _) = run(source, subject, false, 0)?;
-        Some(found.groups)
+        Some(run(source, subject, false, 0)?.groups)
     }
 
     /// An answer spelled as a list of words, which is how the groups of a match
@@ -1473,14 +1493,17 @@ mod tests {
     }
 
     #[test]
-    fn a_match_counts_in_characters_rather_than_bytes() {
-        let text: Vec<char> = "äöü42".chars().collect();
-        let found = Pattern::compile(r"\d+", false).and_then(|p| find(&p, &text, 0));
+    /// A match names where it sits in the bytes of the subject, which is what the
+    /// rest of the search counts in: a span in a note, a range in a line. Three
+    /// two-byte letters and then the digits, so the digits start at the sixth byte
+    /// and not at the third letter.
+    fn a_match_counts_in_bytes_the_way_a_span_does() {
+        let found = Pattern::compile(r"\d+", false).and_then(|p| find(&p, "äöü42", 0));
         assert_eq!(
             found,
             Some(Match {
-                from: 3,
-                to: 5,
+                from: 6,
+                to: 8,
                 groups: Vec::new(),
             })
         );
@@ -1760,12 +1783,11 @@ mod tests {
     #[test]
     fn a_pattern_that_cannot_finish_gives_up_rather_than_hang() {
         let subject = "a".repeat(32);
-        let text: Vec<char> = subject.chars().collect();
         let pattern = Pattern::compile("(a+)+b", false);
         assert!(pattern.is_some(), "the pattern itself is a fine one");
 
         let started = std::time::Instant::now();
-        assert_eq!(pattern.and_then(|p| find(&p, &text, 0)), None);
+        assert_eq!(pattern.and_then(|p| find(&p, &subject, 0)), None);
         assert!(
             started.elapsed().as_secs() < 5,
             "the step budget should have stopped this long before now"
@@ -1874,7 +1896,6 @@ mod tests {
 
         for (source, subject) in cases {
             for fold in [false, true] {
-                let text: Vec<char> = subject.chars().collect();
                 let both = Pattern::compile(source, fold).zip(Pattern::compile(source, fold));
                 assert!(both.is_some(), "{source} should compile");
 
@@ -1883,10 +1904,14 @@ mod tests {
                 };
                 let plain = without_filter(plain);
 
-                for at in 0..=text.len() {
+                for at in 0..=subject.len() {
+                    // A place inside a letter is not a place a search begins.
+                    if !subject.is_char_boundary(at) {
+                        continue;
+                    }
                     assert_eq!(
-                        find(&quick, &text, at),
-                        find(&plain, &text, at),
+                        find(&quick, subject, at),
+                        find(&plain, subject, at),
                         "{source} over {subject:?} from {at}, with fold {fold}"
                     );
                 }
@@ -1941,11 +1966,13 @@ mod tests {
             };
 
             let plain = without_filter(plain);
-            let text: Vec<char> = subject.chars().collect();
-            for at in 0..=text.len() {
+            for at in 0..=subject.len() {
+                if !subject.is_char_boundary(at) {
+                    continue;
+                }
                 assert_eq!(
-                    find(&quick, &text, at),
-                    find(&plain, &text, at),
+                    find(&quick, subject, at),
+                    find(&plain, subject, at),
                     "{source} over {subject:?} from {at}, with fold {fold}"
                 );
             }
@@ -1958,9 +1985,9 @@ mod tests {
 
     #[test]
     fn a_query_of_the_shape_search_sends_reads_the_line_it_is_given() {
-        let line: Vec<char> = "  ## A heading, and a #tag".chars().collect();
+        let line = "  ## A heading, and a #tag";
         let pattern = Pattern::compile(r"^\s*(#+)\s+(.+)$", false);
-        let found = pattern.and_then(|p| find(&p, &line, 0));
+        let found = pattern.and_then(|p| find(&p, line, 0));
         assert_eq!(
             found,
             Some(Match {
