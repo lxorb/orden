@@ -457,14 +457,19 @@ CEF cannot be initialised on the first web tab; the maintainer's answer is
 unambiguous. So every launch starts Chromium, and somebody who never opens a web
 tab pays for one.
 
-The spike measured exactly this, three ways, on a macOS runner: **0 ms** for the same
-program with no Chromium linked in, **276 ms** for one that links it and never
-initialises it, and **1006 ms** to an initialised engine. Under B nib's own interface
-is a CEF webview, so that last number is the floor before anything is on screen -
-about a second added to every launch, on CI hardware. Section 9 has the caveats and
-they are real (a runner has no GPU), but the shape of the cost is now known rather
-than guessed, and **it is the thing to re-measure first in batch 1.** If a real
-machine still costs half a second, that is the moment to take B′ seriously.
+The spike measured exactly this, three ways, on two platforms, and the answer differs
+enough between them to matter. On **Windows**: 0 ms for the same program with no
+Chromium linked in, **1 ms** for one that links it and never initialises it - CEF
+delay-loads `libcef.dll`, so a launch with no web tab never maps it - and **170 ms**
+to an initialised engine. On **macOS**: 0, **276** and **1006 ms**. Under B nib's own
+interface is a CEF webview, so the last figure is the floor before anything is on
+screen.
+
+170 ms is a price worth paying. A second is not, and section 9 has the caveats - a CI
+runner with no GPU, and Windows doing the same work six times faster on the same class
+of machine, which says the gap is the platform rather than the engine. **Re-measuring
+this on real hardware is the first thing batch 1 does.** If a real Mac still costs
+most of a second, that is the moment to take B′ seriously.
 
 **Two ship gates, and nib does not ship a browser until both are shut.**
 
@@ -1144,36 +1149,55 @@ on main or on a pull request. That is deliberate and worth keeping: the moment a
 
 ### What it said
 
-`macos-latest`, an arm64 runner, CEF 152.0.6 / Chromium 152.0.7977.83, 2026-09-13.
-Every check green. The full report and the screenshots are the run's artefacts.
+CEF 152.0.6 / Chromium 152.0.7977.83, on GitHub's runners, 2026-09-13. **Every check
+green on both platforms that finished.** The reports and the screenshots are the
+run's artefacts.
 
-| | |
-| --- | --- |
-| **browser processes for two tabs** | **1.** The tree was one browser, one GPU, two utilities and five renderers |
-| Chrome style | confirmed at `BrowserHost::runtime_style` |
-| `chrome://settings`, `extensions`, `history`, `downloads`, `version` | all five loaded. The screenshots are Chromium's real settings UI in a window with no Chrome toolbar and no Chrome tab strip |
-| an unpacked MV3 extension | loaded, injected, and its content script ran |
-| DevTools, print preview, find, zoom | all four |
-| what it ships | **319.3 MB** in 244 files. `Chromium Embedded Framework` alone is 218.8 MB; `resources.pak` 17.7; swiftshader 15.8; `icudtl.dat` 10.4; the locale packs the rest |
-| memory, two tabs, DevTools open | **892 MB** resident across the whole tree |
-| **launch, with no web tab** | **276 ms** to the binary's own first line, against **0 ms** for the same program with no Chromium linked in |
-| **CEF initialised** | **1006 ms** from process start |
-| first load finished | 2426 ms |
+| | `windows-latest` | `macos-latest` (arm64) |
+| --- | --- | --- |
+| **browser processes for two tabs** | **1** | **1** |
+| the rest of the tree | 1 GPU, 2 utility, 5 renderers | the same |
+| Chrome style | confirmed | confirmed |
+| `chrome://settings`, `extensions`, `history`, `downloads`, `version` | all five loaded | all five loaded |
+| an unpacked MV3 extension | loaded, injected, ran | loaded, injected, ran |
+| DevTools, print preview, find, zoom | all four | all four |
+| **what a release ships** | **429 MB**, 945 files. `libcef.dll` 271.7, `dxcompiler.dll` 24.6, `resources.pak` 20.7, `icudtl.dat` 10.4 - and 19 MB of `CREDITS.html`, which a release would not carry | **319 MB**, 244 files. The framework binary alone is 218.8 |
+| memory, two tabs, DevTools open | **565 MB** | **892 MB** |
+| **launch with no web tab** | **1 ms** | **276 ms** |
+| the same with no Chromium linked at all | 0 ms | 0 ms |
+| **CEF initialised** | **170 ms** | **1006 ms** |
+| first load finished | 1037 ms | 2426 ms |
 
-**Read the launch row carefully, because it is the price of the decision.** 276 ms is
-what it costs merely to *load* the framework, before CEF is initialised at all; the
-engine is not usable until 1006 ms. Under B nib's own interface is a CEF webview, so
-nothing can be drawn before that - **a launch that is a second slower, for everybody,
-whether or not they ever open a web tab.** That is a great deal to pay in an editor
-whose philosophy has "fast" in it.
+**The headline is the first row.** Two browsers, one browser process, on both
+platforms - which is the question Emil asked first, answered with a process list
+rather than a paragraph. And the settings screenshots are Chromium's own settings UI
+inside a window with no Chrome toolbar and no Chrome tab strip, which is the
+configuration this whole design depends on being possible.
 
-Two things to hold against it before it decides anything. A CI runner is the worst
-hardware this will ever run on, with no GPU and a software rasteriser, so the figure
-is an upper bound rather than an estimate - Chrome itself cold-starts in a fraction
-of it on a real machine. And it is exactly what batch 1 exists to measure properly.
-**If a real machine still costs half a second, that is the moment to take B′
-seriously**, because half a second on every launch buys a feature most launches do
-not use, and section 2 has the shape of the alternative ready.
+**The second headline is the launch row, and it is better than feared.** On Windows
+linking Chromium costs **1 ms** - CEF's own link flags delay-load `libcef.dll`, so a
+launch that never opens a web tab never maps it - and an initialised engine costs
+**170 ms**. That is a price worth paying for what it buys. macOS is six times worse
+at **1006 ms**, of which 276 ms is just `dlopen` on a 219 MB framework, and that is
+the number to be nervous about.
+
+Three things to hold against the macOS figure before it decides anything. A CI runner
+is the worst hardware this will ever run on, with no GPU and a software rasteriser.
+Windows, on the same class of runner, did it in 170 ms, so the gap is the platform
+and not the engine. And it is exactly what batch 1 exists to re-measure on a real
+machine. **If a real Mac still costs most of a second, that is the moment to take B′
+seriously** - and section 2 has the shape of the alternative ready.
+
+**Every number above was taken with `--no-sandbox`**, because a CI runner cannot give
+Linux's `chrome-sandbox` the setuid bit and Windows has no sandbox on this path at
+all. That is stated rather than buried: a sandboxed build spends a little more at
+startup and a little more per renderer, so the launch figures are if anything
+optimistic, and a shipping build must have the sandbox on - which is ship gate 1.
+
+One honest note about the screenshots: the spike makes two *top-level* windows, so
+they overlap and a picture shows whichever is in front. The checks are what fail the
+job; the pictures corroborate. Putting one browser inside the other's window is
+`spike/shell`'s business, and that is the shape the recommendation takes anyway.
 
 ---
 
