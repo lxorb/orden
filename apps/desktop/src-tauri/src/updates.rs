@@ -32,6 +32,54 @@ const UNSTABLE: &str = "unstable";
 /// could drift from it.
 const EDGE: &str = "https://github.com/lxorb/nibeditor/releases/download/edge/latest.json";
 
+/// Where this project's own release files are served from. Every bundle and every
+/// signature beside it is under this; see `scripts/update-manifest.mjs`, which is
+/// what writes the addresses a manifest holds.
+const RELEASES: &str = "https://github.com/lxorb/nibeditor/releases/download/";
+
+/// Whether an update a manifest offered is one this channel may install.
+///
+/// Tauri signs the bundle and not the manifest, so the manifest's words are the
+/// part of an update nobody signed: the version it claims and the address it
+/// points at are the server's, and the server is a release page, a CDN and
+/// whatever sits between them and this machine. The signature still settles the
+/// bytes - nothing but this project's key can hand the app a binary it will run -
+/// but it does not say *which* of this project's binaries, and the plugin's only
+/// other check is that the claimed version is higher than the installed one. A
+/// manifest claiming `99.0.0` over the genuine signed installer of an old release
+/// therefore verifies, and walks the reader back into whatever that release
+/// shipped; and then goes on doing it, because the installed version is older
+/// every time and the claim never changes.
+///
+/// So the two are held to each other. The address has to be a file on this
+/// project's own release pages, and the file's name has to carry the version the
+/// manifest claimed - a bundle is named `Nib-<version>-<platform>`; see
+/// `scripts/name-assets.mjs`. Between them, the only thing a manifest can offer as
+/// `99.0.0` is a file this project published as `99.0.0`.
+///
+/// And a version with a pre-release part on it is a build of main, which only the
+/// rolling channel follows: `0.8.1-421` sits above `0.8.0` in semver, so the edge
+/// manifest served at the releases' endpoint would otherwise hand a stable install
+/// an untested build of main. See `scripts/build-version.sh`.
+fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
+    let Some(file) = download
+        .strip_prefix(RELEASES)
+        .and_then(|rest| rest.rsplit('/').next())
+    else {
+        return Err(format!("that version is not served from {RELEASES}"));
+    };
+
+    if version.is_empty() || !file.contains(version) {
+        return Err(format!("{file} is not version {version}"));
+    }
+
+    if channel != UNSTABLE && version.contains('-') {
+        return Err(format!("{version} is a build of main, not a release"));
+    }
+
+    Ok(())
+}
+
 /// What the window is told about a new version: the fields the updater plugin's
 /// own `Update` is built from on that side.
 ///
@@ -101,6 +149,11 @@ pub async fn check_update<R: Runtime>(
         return Ok(None);
     };
 
+    // A manifest that says one thing and points at another is not an update; see
+    // `offered`. Nothing is downloaded and nothing is handed to the window, so the
+    // look answers the way a look that found nothing does.
+    offered(&channel, &update.version, update.download_url.as_str())?;
+
     Ok(Some(Found {
         current_version: update.current_version.clone(),
         version: update.version.clone(),
@@ -112,8 +165,55 @@ pub async fn check_update<R: Runtime>(
 
 #[cfg(test)]
 mod tests {
-    use super::{endpoints, EDGE, UNSTABLE};
+    use super::{endpoints, offered, EDGE, RELEASES, UNSTABLE};
     use tauri::Url;
+
+    /// The address of one bundle on a release page, as the manifest writes it.
+    fn bundle(version: &str) -> String {
+        format!("{RELEASES}v{version}/Nib-{version}-windows-x64-setup.exe")
+    }
+
+    #[test]
+    fn a_release_that_says_what_it_serves_is_installed() {
+        assert_eq!(offered("stable", "0.9.0", &bundle("0.9.0")), Ok(()));
+    }
+
+    #[test]
+    fn a_build_of_main_is_installed_on_the_channel_that_follows_main() {
+        assert_eq!(offered(UNSTABLE, "0.8.1-421", &bundle("0.8.1-421")), Ok(()));
+        // And is not an update for an install that follows the releases, however
+        // high semver puts it: a manifest served at the wrong endpoint is a
+        // manifest anybody between here and the release page can serve.
+        assert!(offered("stable", "0.8.1-421", &bundle("0.8.1-421")).is_err());
+    }
+
+    /// The whole of the rollback: a real signature over a real old bundle, under a
+    /// version number nothing ever signed.
+    #[test]
+    fn a_version_the_file_is_not_is_no_update() {
+        assert!(offered("stable", "99.0.0", &bundle("0.5.0")).is_err());
+        assert!(offered(UNSTABLE, "99.0.0", &bundle("0.5.0")).is_err());
+    }
+
+    #[test]
+    fn a_file_from_anywhere_else_is_no_update() {
+        for address in [
+            "https://evil.example/Nib-99.0.0-windows-x64-setup.exe",
+            "http://github.com/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://github.com/someone/else/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://github.com.evil.example/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+        ] {
+            assert!(
+                offered("stable", "99.0.0", address).is_err(),
+                "{address} should not be an update"
+            );
+        }
+    }
+
+    #[test]
+    fn a_manifest_that_names_no_version_is_no_update() {
+        assert!(offered("stable", "", &bundle("0.9.0")).is_err());
+    }
 
     #[test]
     fn the_unstable_channel_follows_the_rolling_build_of_main() {
