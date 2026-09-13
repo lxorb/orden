@@ -34,6 +34,16 @@ import { describe, expect, test } from 'vitest'
  *  holds those five packages out is inside a dependency, where no walk of our own
  *  source can see it.
  *
+ *  Batch 119 took 1.35 megabytes to 1.29, and this time none of it was a library at
+ *  all: it was the shell itself - what the window carries in order to draw a note and
+ *  a file list. The Search panel and the engine that ranks for it, the find bar, the
+ *  reading view, the rows of the app menu, the publish sheet's store, the import
+ *  sheet's store and the whole recorder were in front of the first paint for a window
+ *  that shows none of them. Each is one edge below, and each of them is asked for
+ *  rather than carried now: four of them at the last turn of the launch order, so that
+ *  a key which can open one at any moment never waits for it; see `warmDoors` in
+ *  src/lib/surfaces.svelte.ts.
+ *
  *  Each of those is one edge in this graph, and any of them can come back by
  *  accident: a barrel import instead of a file, a type that was not imported as a
  *  type, a helper moved into a module that happens to sit behind a library. So the
@@ -145,8 +155,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,084,181 bytes over 382 files as this is written, measured on 2026-09-13, against
- *  1,354,371 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,913,386 bytes over 366 files as this is written, measured on 2026-09-13, against
+ *  1,289,847 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
@@ -170,8 +180,8 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_400_000
-const MOST_FILES = 420
+const BUDGET = 3_200_000
+const MOST_FILES = 402
 
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
@@ -263,7 +273,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/eager.ts', "the Worker's pair of engines"],
     ['/glasses/src/mark.ts', "the glasses' text engine"],
     // The sheets App.svelte used to mount for a window that shows none of them. Each
-    // is latched there and fetched the first time something opens it; see surfaces.ts.
+    // is latched there and fetched the first time something opens it; see surfaces.svelte.ts.
     ['/lib/History.svelte', 'the version list'],
     ['/lib/ShareSheet.svelte', 'the share sheet'],
     ['/lib/PublishSheet.svelte', 'the publish sheet'],
@@ -280,6 +290,44 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/mermaid.ts', "the diagram fence's tokenizer"],
     // And the converter a pasted page goes through.
     ['/markdown/src/from-html.ts', 'the HTML converter'],
+    // Batch 119's: the shell's own, each of them a part of the window that is not on
+    // screen when the window opens.
+    //
+    // The Search panel, with the field that understands operators, the tag tree under
+    // it and the engine that ranks a loose match - which is what the panel is, and one
+    // of five panels the sidebar has. Fetched when the tab is chosen, and at the last
+    // turn of the launch either way; see Sidebar.svelte.
+    ['/lib/SearchPanel.svelte', 'the Search panel'],
+    ['/lib/search/fuzzy.ts', 'the ranking engine'],
+    ['/lib/search/suggest.ts', 'the operator values it offers'],
+    ['/lib/TagTree.svelte', "the panel's tag tree"],
+    // The bar a note is searched through, which three panes draw and none has until a
+    // key asks; see Pane.svelte.
+    ['/lib/FindBar.svelte', 'the find bar'],
+    // The note through the renderer, which is a face a tab wears rather than a window
+    // the app opens on. The same bargain the five surfaces above are.
+    ['/lib/Reading.svelte', 'the reading view'],
+    ['/lib/reading/render.ts', 'what it draws with'],
+    // The app menu's rows: every command in the app, named, asked whether it may run,
+    // with the export list and the shortcut hints beside them. The menu itself stays -
+    // it is the button in the title bar - and what it builds does not; see
+    // AppMenu.svelte.
+    ['/lib/app-menu.ts', "the app menu's rows"],
+    // The two sheets whose stores the shell used to carry in order to know whether to
+    // mount them. Each knocks on its own door as it is shown instead, so neither half
+    // is here; see publishing.svelte.ts and importing.svelte.ts.
+    ['/lib/publishing.svelte.ts', "the publish sheet's store"],
+    ['/lib/importing.svelte.ts', "the import sheet's store"],
+    ['/lib/import/read.ts', 'the readers behind it'],
+    // And the recorder: the microphone, the container it writes, the WAV pieces, the
+    // live transcript, the summary, and the pill that is the whole of what the window
+    // says about an open microphone. What is left in the shell is the two rows' own
+    // question - whether this device can record at all - and what they are called; see
+    // recorder/commands.ts.
+    ['/lib/recorder/recording.svelte.ts', 'the recorder'],
+    ['/lib/recorder/microphone.ts', 'the microphone'],
+    ['/lib/recorder/transcript.ts', "the transcript's markdown"],
+    ['/lib/RecordingPill.svelte', 'the pill'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -296,10 +344,15 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
     // The doors of the four above, which are the other half of each claim: a boundary
     // nothing reaches is a subsystem somebody deleted rather than one somebody moved.
-    ['/lib/surfaces.ts', 'the doors the sheets come through'],
+    ['/lib/surfaces.svelte.ts', 'the doors the sheets come through'],
     ['/lib/rooms.svelte.ts', 'the store that joins a room'],
     ['/editor/src/languages.ts', "the fence languages' door"],
     ['/editor/src/paste.ts', 'the paste that asks for the converter'],
+    // And batch 119's doors, for the same reason: what is left of each subsystem when
+    // the subsystem itself has gone behind one.
+    ['/lib/menu-item.ts', 'what a menu row is, which the app menu walks without it'],
+    ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
+    ['/lib/recorder/container.ts', 'whether this device can record at all'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
