@@ -29,6 +29,7 @@
  *    markup can read. `ask()` is called from a command, a gesture or an effect -
  *    never from the markup, which would be a write during a render. */
 
+import { loadFind } from '@nib/editor'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
@@ -153,10 +154,17 @@ export const slidesStage = held(() => import('./Slides.svelte'))
  *
  *  Fetching late is about the first paint and about nothing else: what a reader can ask
  *  for with one keystroke has to be there when they ask. So the find bar, the Search
- *  panel, the app menu's rows and the reading view are fetched at the last turn of the
- *  launch order - after the file list, the link index, the search index, the icon sets
- *  and the rooms - where the fetch costs the reader nothing and saves them a frame
- *  later. See startup.svelte.ts for the order.
+ *  panel, the app menu's rows, the reading view and the editor's own search engine are
+ *  fetched at the last turn of the launch order - after the file list, the link index,
+ *  the search index, the icon sets and the rooms - where the fetch costs the reader
+ *  nothing and saves them a frame later. See startup.svelte.ts for the order.
+ *
+ *  The engine is in that list rather than behind the first Control+F because one thing
+ *  it carries happens without anybody asking: the faint marks under the other
+ *  occurrences of whatever is selected. A double-click is not a request for a search
+ *  engine, so it is here before any hand could have double-clicked. The keys are bound
+ *  from the first frame either way, and a Control+F in front of this opens the bar and
+ *  is looked for as the engine lands; see find.ts in @nib/editor.
  *
  *  The five surfaces above are not here, and deliberately: a canvas, a PDF, a deck of
  *  pages, the graph and a website are each hundreds of kilobytes and each is a kind of
@@ -165,5 +173,5 @@ export const slidesStage = held(() => import('./Slides.svelte'))
  *  the frame its fetch happens in. */
 export async function warmDoors(): Promise<void> {
   await startup.turn('doors')
-  await Promise.all([findBar(), searchPanel(), appMenuRows(), readingSurface()])
+  await Promise.all([findBar(), searchPanel(), appMenuRows(), readingSurface(), loadFind()])
 }

@@ -36,6 +36,7 @@ export {
   type FindSpec,
   findTally,
   type FindTally,
+  loadFind,
   NO_FIND,
   NO_TALLY,
   openFind,

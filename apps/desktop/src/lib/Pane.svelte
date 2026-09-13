@@ -123,13 +123,21 @@
   )
 
   /** The document, told what to look for, and then asked how many there are.
-   *  One call, because every change to the bar is the same two steps. */
-  function look(next: FindSpec) {
+   *  One call, because every change to the bar is the same two steps.
+   *
+   *  Awaited, because the search engine is fetched rather than carried: the bar can go
+   *  up in the frame before it lands, and a count read in front of it would be a count
+   *  of nothing. Only the first call of a session waits, and only for a fetch from
+   *  beside the page; see find.ts in @nib/editor. */
+  async function look(next: FindSpec) {
     spec = next
-    if (!view) return
+    // Held, because the await below is a frame the pane could have been given another
+    // note in: the editor this was asked about is the one to count in.
+    const asked = view
+    if (!asked) return
 
-    setFind(view, next)
-    tally = findTally(view.state)
+    await setFind(asked, next)
+    tally = findTally(asked.state)
   }
 
   function openFinding(ask: FindAsk) {
@@ -137,7 +145,9 @@
     // A word under the caret is what somebody pressed the key about; an empty
     // selection leaves whatever was last looked for, which is still in the
     // field and still selected.
-    look(ask.seed ? { ...spec, query: ask.seed } : spec)
+    void look(ask.seed ? { ...spec, query: ask.seed } : spec)
+    // The bar goes up now rather than when the count comes back: the key was pressed,
+    // and a bar that waited on a fetch would be a key that did nothing for a frame.
     finding = true
   }
 
@@ -373,18 +383,18 @@
         current={tally.current}
         capped={tally.capped}
         flags={spec}
-        onflags={(flags: FindFlags) => look({ ...spec, ...flags })}
+        onflags={(flags: FindFlags) => void look({ ...spec, ...flags })}
         {replacing}
         replacement={spec.replace}
         onreplacing={(open: boolean) => {
           replacing = open
         }}
-        onreplacement={(typed: string) => look({ ...spec, replace: typed })}
+        onreplacement={(typed: string) => void look({ ...spec, replace: typed })}
         onreplace={canReplace ? replaceOne : undefined}
         onreplaceall={canReplace ? replaceEvery : undefined}
         onstep={stepFinding}
         onclose={shutFinding}
-        onquery={(typed: string) => look({ ...spec, query: typed })}
+        onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
     {/await}
   {/if}

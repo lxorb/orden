@@ -56,6 +56,20 @@ import { describe, expect, test } from 'vitest'
  *  fetched at a stage: a share arrives on the device that can receive one, a model on
  *  the press that asks, a plane on the first plane, and the popup with the first editor.
  *
+ *  Batch 121 took 1.23 megabytes to 1.21, and it was one package with one edge in the
+ *  most careful file in the editor: `keymap.ts` read `@codemirror/search` in order to
+ *  adopt Find, its two steps and goto-line off the library's own keymap, and reading
+ *  that array is importing the engine - fifteen kilobytes of query, cursor and
+ *  replacement for a bar nobody has opened. The four keys are declared by hand now and
+ *  run nib's own commands through a door, the library's keymap is not spread underneath
+ *  them any more (every one of its seven keys was already adopted, claimed or dead, and
+ *  `unclaimedKeymap` says which is which), and the engine arrives in a compartment at
+ *  the launch's last turn - because one thing it carries happens unasked, the faint
+ *  marks under the other occurrences of a selected word. The keys are bound from the
+ *  first frame throughout: a Control+F in front of the fetch opens the bar, once, and
+ *  what was typed into it is looked for as the engine lands. See
+ *  packages/editor/src/find.ts, and find-keys.test.ts for the cold press.
+ *
  *  Each of those is one edge in this graph, and any of them can come back by
  *  accident: a barrel import instead of a file, a type that was not imported as a
  *  type, a helper moved into a module that happens to sit behind a library. So the
@@ -180,8 +194,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  2,779,666 bytes over 351 files as this is written, measured on 2026-09-13, against
- *  1,226,177 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,783,997 bytes over 351 files as this is written, measured on 2026-09-13, against
+ *  1,206,912 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
@@ -287,6 +301,11 @@ describe('what the app evaluates before it draws anything', () => {
     // see the two tests at the foot of this file, and completion.ts for what fetches
     // the real thing as the first editor is built.
     ['@codemirror/autocomplete', 'the completion popup'],
+    // Batch 121's, and the last CodeMirror package in front of the first paint that is
+    // not the editor itself: the query, the cursor that walks it and what a `$1` in a
+    // replacement means. Held there by the keymap until the four keys it carried were
+    // declared by hand; see `unclaimedKeymap` in packages/editor/src/keymap.ts.
+    ['@codemirror/search', 'the search engine'],
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
@@ -328,6 +347,7 @@ describe('what the app evaluates before it draws anything', () => {
     // editor is built, which is a frame after the note is on screen rather than before
     // it. What every editor carries is the compartment; see editor/src/completion.ts.
     ['/editor/src/completing.ts', 'what the popup is built out of'],
+    ['/editor/src/finding.ts', 'what a search is made of'],
     // And the converter a pasted page goes through.
     ['/markdown/src/from-html.ts', 'the HTML converter'],
     // Batch 119's: the shell's own, each of them a part of the window that is not on
@@ -429,6 +449,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/languages.ts', "the fence languages' door"],
     ['/editor/src/paste.ts', 'the paste that asks for the converter'],
     ['/editor/src/completion.ts', 'the door the popup comes through'],
+    ['/editor/src/find.ts', 'the door a search comes through, and the bar’s own seam'],
     ['/editor/src/open-views.ts', 'the editors a late arrival has to reach'],
     // And batch 119's doors, for the same reason: what is left of each subsystem when
     // the subsystem itself has gone behind one.

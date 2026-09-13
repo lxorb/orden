@@ -1,7 +1,6 @@
 import { history } from '@codemirror/commands'
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
-import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
 import {
   crosshairCursor,
@@ -135,7 +134,6 @@ export function editorState(options: StateOptions): EditorState {
       indentOnInput(),
       bracketMatching(),
       highlightActiveLine(),
-      highlightSelectionMatches(),
       // Finding words, with the app drawing the bar: the library's engine and
       // nib's surface. See find.ts.
       findExtensions(options.onFind),

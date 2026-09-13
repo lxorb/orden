@@ -1,8 +1,16 @@
 import { selectSelectionMatches } from '@codemirror/search'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
-import { describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 import { editorState } from './editor'
+import { loadFind } from './find'
 import { nibKeymap, selectWord, unclaimedKeymap } from './keymap'
+
+// The library's "select the next one like it" is the search engine's, and the engine is
+// fetched rather than carried: awaited once here, where the second press is read in the
+// same breath as the first. See find.ts.
+beforeAll(async () => {
+  await loadFind()
+})
 
 /** A state with several ranges in it, which is only possible once the editor
  *  says it is. */

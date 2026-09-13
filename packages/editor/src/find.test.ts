@@ -1,7 +1,7 @@
 import { getSearchQuery, SearchQuery, setSearchQuery } from '@codemirror/search'
 import { EditorSelection, EditorState } from '@codemirror/state'
-import { describe, expect, test } from 'vitest'
-import { findExtensions, findTally, NO_FIND, termAt } from './find'
+import { beforeAll, describe, expect, test } from 'vitest'
+import { findExtensions, findTally, loadFind, NO_FIND, termAt } from './find'
 
 /** The two answers the find bar needs that CodeMirror does not give it.
  *
@@ -14,9 +14,17 @@ import { findExtensions, findTally, NO_FIND, termAt } from './find'
  *  package has no DOM for; those are driven in
  *  apps/desktop/test/e2e/find-bar.py. */
 
+// The engine is fetched rather than carried, so the field `setSearchQuery` writes into
+// arrives when it lands. In the app that is the launch's last turn, long before a hand
+// is on the keyboard; here it is awaited once. What the keys do in front of it is
+// find-keys.test.ts.
+beforeAll(async () => {
+  await loadFind()
+})
+
 /** A state with the search field in it, which is what `setSearchQuery` needs:
  *  the effect does nothing at all where the field is absent, and the field
- *  arrives with `search()` inside `findExtensions`. */
+ *  arrives with `search()` inside `findExtensions` once the engine is here. */
 function stateOf(doc: string, selection?: { anchor: number; head: number }): EditorState {
   return EditorState.create({
     doc,

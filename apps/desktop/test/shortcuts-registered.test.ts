@@ -52,6 +52,27 @@ describe('the editor package', () => {
     expect(installers).toEqual(['completing.ts', 'editor.ts'])
   })
 
+  /** And nothing but the engine's own module names the search library.
+   *
+   *  This is the edge that keeps fifteen kilobytes out of the first paint, and the
+   *  keymap is where it was: `keymap.ts` used to read `searchKeymap` in order to adopt
+   *  Find, the two steps and goto-line off it, and reading that array is importing the
+   *  engine. Those four are declared by hand now and the keys run nib's own commands
+   *  through a door; see find.ts. One import of the package anywhere else in this
+   *  package - a helper reaching for `getSearchQuery`, a keymap adopting a binding
+   *  again - and the engine is back in front of the window.
+   *
+   *  The other half of this claim is in weight.test.ts, which says the package is not
+   *  in the graph the first paint walks. This one says where it may be named at all,
+   *  because that is the mistake somebody makes. */
+  test('name the search engine in one module only', () => {
+    const named = files
+      .filter((one) => one.text.includes("from '@codemirror/search'"))
+      .map((one) => one.name)
+
+    expect(named).toEqual(['finding.ts'])
+  })
+
   test('builds every other keymap from bindings that have a name', () => {
     const named = files.filter((one) => one.text.includes('boundKeymap(')).map((one) => one.name)
 

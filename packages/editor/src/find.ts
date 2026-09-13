@@ -13,42 +13,32 @@
  *  different shape again from the bar the reading view and a PDF already shared.
  *  So the panel is gone and the app draws the bar; see FindBar.svelte.
  *
- *  Which leaves this file as the seam between the two, and it has three jobs:
+ *  Which leaves this file as the seam between the two, and it has four jobs:
  *
  *  1. Ask the app to put the bar up. A command cannot reach a component, so the
  *     keys dispatch an effect and the app is told through `onFind`.
- *  2. Say where the matches are. The library's own highlighter draws nothing
- *     unless the library's own panel is open, which it never is now, so the
- *     marks are drawn here instead - the same two classes, so the stylesheet
- *     that coloured them still does.
- *  3. Count them, which the library does not offer at all and a bar saying
- *     "1 of 5" needs. */
+ *  2. Say whether the bar is up, which is what the marks follow.
+ *  3. Say what the caret was on, so the bar opens on the word somebody was
+ *     looking at.
+ *  4. Be the door the engine comes through.
+ *
+ *  The fourth is why the first three are here rather than next door. The engine is
+ *  fifteen kilobytes of built JavaScript that a window has no use for until somebody
+ *  presses Control+F or selects a word, so it is fetched at the last turn of the launch
+ *  order - see `warmDoors` in the app - and a key pressed before it lands has to put
+ *  the bar up all the same. So every one of these is a property read or an effect, and
+ *  nothing here names the library. What does is finding.ts. */
 
 import {
-  findNext as libraryNext,
-  findPrevious as libraryPrevious,
-  getSearchQuery,
-  replaceAll as libraryReplaceAll,
-  replaceNext as libraryReplaceNext,
-  search,
-  SearchQuery,
-  setSearchQuery,
-} from '@codemirror/search'
-import {
+  Compartment,
   type EditorState,
   type Extension,
-  RangeSetBuilder,
   StateEffect,
   StateField,
+  type StateCommand,
 } from '@codemirror/state'
-import {
-  type Command,
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { type Command, EditorView } from '@codemirror/view'
+import { enrolled, openViews } from './open-views'
 
 /** What the bar is asking of the document. The four the library's query has,
  *  under the names the bar says them in. */
@@ -81,9 +71,10 @@ export interface FindAsk {
 
 const findAsked = StateEffect.define<FindAsk | null>()
 
-/** Whether the app's bar is up. What the marks below follow: the matches are
- *  shown while somebody is looking for them and not a moment longer. */
-const findShown = StateField.define<boolean>({
+/** Whether the app's bar is up. What the marks follow: the matches are shown while
+ *  somebody is looking for them and not a moment longer. Read by finding.ts, which
+ *  draws them. */
+export const findShown = StateField.define<boolean>({
   create: () => false,
   update(up, transaction) {
     for (const effect of transaction.effects) {
@@ -114,7 +105,7 @@ export function termAt(state: EditorState): string {
  *  and a regular expression over a long one can match on nearly every
  *  character: the bar says "300+" rather than spending a frame being exact
  *  about a number nobody reads. */
-const MOST_COUNTED = 300
+export const MOST_COUNTED = 300
 
 export interface FindTally {
   /** How many matches there are, or `MOST_COUNTED` when there are more. */
@@ -127,103 +118,39 @@ export interface FindTally {
 
 export const NO_TALLY: FindTally = { count: 0, current: -1, capped: false }
 
-/** Every match, up to the cap, and which of them the selection is sitting on.
+const engine = new Compartment()
+
+/** The engine, once it is here. */
+let loaded: typeof import('./finding') | null = null
+let loading: Promise<typeof import('./finding')> | null = null
+
+/** Fetches the engine, and puts it into whatever is open when it arrives. Idempotent,
+ *  and the promise is kept: a note of twenty words is one fetch.
  *
- *  One pass, because the two answers come from the same walk. A zero-width
- *  match - `a*` over a line of b's - would otherwise be walked forever, so the
- *  cursor's own end is what stops it and a match that does not advance is
- *  counted once and left. */
-export function findTally(state: EditorState): FindTally {
-  const query = getSearchQuery(state)
-  if (!query.valid) return NO_TALLY
+ *  Exported because two callers wait on it. The launch asks for it at its last turn, so
+ *  that the marks under a selected word are there before any hand could have selected
+ *  one; and `setFind` awaits it, so the first thing typed into the bar is looked for
+ *  even if the bar went up in the first frame. */
+export function loadFind(): Promise<typeof import('./finding')> {
+  loading ??= import('./finding').then((module) => {
+    loaded = module
+    for (const view of openViews())
+      view.dispatch({ effects: engine.reconfigure(module.searching()) })
 
-  const { from, to } = state.selection.main
-  const cursor = query.getCursor(state)
-  let count = 0
-  let current = -1
+    return module
+  })
 
-  for (let step = cursor.next(); !step.done; step = cursor.next()) {
-    if (step.value.from === from && step.value.to === to) current = count
-    count += 1
-    if (count >= MOST_COUNTED) return { count, current, capped: true }
-  }
-
-  return { count, current, capped: false }
+  return loading
 }
 
-/** The marks under the matches: the library's own two class names, so the
- *  colours in the editor's theme are the ones that were already there.
- *
- *  Only the visible stretch is walked, the way the library's own does, and only
- *  while the bar is up. */
-const findMarks = Decoration.mark({ class: 'cm-searchMatch' })
-const findHere = Decoration.mark({ class: 'cm-searchMatch cm-searchMatch-selected' })
-
-function marksIn(view: EditorView): DecorationSet {
-  if (!view.state.field(findShown, false)) return Decoration.none
-
-  const query = getSearchQuery(view.state)
-  if (!query.valid) return Decoration.none
-
-  const built = new RangeSetBuilder<Decoration>()
-  for (const range of view.visibleRanges) {
-    const cursor = query.getCursor(view.state, range.from, range.to)
-    let seen = 0
-    for (let step = cursor.next(); !step.done; step = cursor.next()) {
-      const { from, to } = step.value
-      if (to > from) {
-        const here = view.state.selection.ranges.some((one) => one.from === from && one.to === to)
-        built.add(from, to, here ? findHere : findMarks)
-      }
-      if (++seen >= MOST_COUNTED) break
-    }
-  }
-
-  return built.finish()
-}
-
-const findHighlighter = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet
-
-    constructor(view: EditorView) {
-      this.decorations = marksIn(view)
-    }
-
-    update(update: ViewUpdate) {
-      const was = update.startState.field(findShown, false)
-      const now = update.state.field(findShown, false)
-      const query = getSearchQuery(update.state)
-      const before = getSearchQuery(update.startState)
-
-      if (
-        was !== now ||
-        update.docChanged ||
-        update.selectionSet ||
-        update.viewportChanged ||
-        query.search !== before.search ||
-        query.caseSensitive !== before.caseSensitive ||
-        query.regexp !== before.regexp ||
-        query.wholeWord !== before.wholeWord
-      ) {
-        this.decorations = marksIn(update.view)
-      }
-    }
-  },
-  { decorations: (plugin) => plugin.decorations },
-)
-
-/** Everything the editor needs to be searchable, with the app drawing the bar.
- *
- *  `search()` is included outright rather than left to arrive with the library's
- *  panel: the query has to be a field from the first frame, because the bar sets
- *  it before anything has opened a panel and `setSearchQuery` does nothing
- *  without one. */
+/** Everything the editor carries in order to be searchable: the field that says the
+ *  bar is up, the seam the app hears it through, and the compartment the engine lands
+ *  in. */
 export function findExtensions(onFind?: (ask: FindAsk | null) => void): Extension {
   return [
-    search(),
     findShown,
-    findHighlighter,
+    engine.of(loaded ? loaded.searching() : []),
+    enrolled,
     ...(onFind
       ? [
           EditorView.updateListener.of((update) => {
@@ -239,10 +166,17 @@ export function findExtensions(onFind?: (ask: FindAsk | null) => void): Extensio
 }
 
 /** Asks for the bar. Both keys land here; which row the keyboard goes to is the
- *  bar's business, and `replace` is what says which it should be. */
+ *  bar's business, and `replace` is what says which it should be.
+ *
+ *  One ask per press, whether or not the engine is here: this is an effect on the
+ *  document, so a key held down asks again and the app answers the same way it did the
+ *  first time. The fetch is started beside it, because somebody who has pressed
+ *  Control+F is about to type. */
 function asks(replace: boolean): Command {
   return (view) => {
+    if (!loaded) void loadFind()
     view.dispatch({ effects: findAsked.of({ replace, seed: termAt(view.state) }) })
+
     return true
   }
 }
@@ -257,44 +191,89 @@ export function closeFind(view: EditorView) {
 }
 
 /** What the bar is looking for. Written as one effect on every keystroke, which
- *  is the whole of how the bar talks to the document. */
-export function setFind(view: EditorView, spec: FindSpec) {
-  view.dispatch({
-    effects: setSearchQuery.of(
-      new SearchQuery({
-        search: spec.query,
-        replace: spec.replace,
-        caseSensitive: spec.caseSensitive,
-        regexp: spec.regexp,
-        wholeWord: spec.wholeWord,
-      }),
-    ),
-  })
+ *  is the whole of how the bar talks to the document.
+ *
+ *  Answers when the document has been told, which is a promise rather than nothing
+ *  only on the first call of a session: the bar can go up in the frame before the
+ *  engine lands, and a caller that read the tally straight afterwards would read a
+ *  count of nothing. Awaited by the pane; see Pane.svelte. */
+export async function setFind(view: EditorView, spec: FindSpec): Promise<void> {
+  const found = loaded ?? (await loadFind())
+  found.setQuery(view, spec)
+}
+
+/** Every match, and which of them the selection is on. Nothing before the engine is
+ *  here, which is the honest answer: nothing can have been looked for yet. */
+export function findTally(state: EditorState): FindTally {
+  return loaded ? loaded.tally(state) : NO_TALLY
 }
 
 /** A step through the matches, or the bar if there is nothing to step through.
  *
  *  The guard is the point. The library pairs every one of these with "and open
  *  the search panel if the query is empty", which would put the panel nib just
- *  replaced back on the screen the first time somebody pressed F3. */
-function steps(move: Command): Command {
+ *  replaced back on the screen the first time somebody pressed F3.
+ *
+ *  With the engine still on its way there is certainly nothing to step through -
+ *  nothing can have set a query without it - so the answer is the same as the empty
+ *  one, and the fetch goes with it. */
+function steps(move: (found: typeof import('./finding')) => Command): Command {
   return (view) => {
-    if (!getSearchQuery(view.state).valid) return openFind(view)
-    return move(view)
+    const found = loaded
+    if (!found?.asked(view.state)) return openFind(view)
+
+    return move(found)(view)
   }
 }
 
-export const findNext = steps(libraryNext)
-export const findPrevious = steps(libraryPrevious)
+export const findNext = steps((found) => found.next)
+export const findPrevious = steps((found) => found.previous)
 
 /** The match the caret is on, replaced, and then the one after it. False where
  *  there is nothing to replace or the note cannot be written in. */
 export function replaceHere(view: EditorView): boolean {
-  if (!getSearchQuery(view.state).valid) return false
-  return libraryReplaceNext(view)
+  if (!loaded?.asked(view.state)) return false
+
+  return loaded.replaceOne(view)
 }
 
 export function replaceEverywhere(view: EditorView): boolean {
-  if (!getSearchQuery(view.state).valid) return false
-  return libraryReplaceAll(view)
+  if (!loaded?.asked(view.state)) return false
+
+  return loaded.replaceEvery(view)
 }
+
+/** One of the library's own commands, run through the door.
+ *
+ *  The key is bound from the first frame and spends the press whether the engine is
+ *  here or not: pressed before it, the command runs as soon as it lands, which is the
+ *  next few milliseconds. A key that returned false would fall through to whatever is
+ *  bound under it, which is how a chord comes to do two things. */
+function lazily(pick: (found: typeof import('./finding')) => Command): Command {
+  return (view) => {
+    if (loaded) return pick(loaded)(view)
+    void loadFind().then((found) => pick(found)(view))
+
+    return true
+  }
+}
+
+/** The same for a command that acts on a state rather than a view: what `selectWord`
+ *  falls through to on its second press, and the row that selects every occurrence. */
+function lazilyOnState(pick: (found: typeof import('./finding')) => StateCommand): StateCommand {
+  return (target) => {
+    if (loaded) return pick(loaded)(target)
+    void loadFind().then((found) => pick(found)(target))
+
+    return true
+  }
+}
+
+/** The line somebody typed a number for. The library's own dialog, which is the one
+ *  surface of its own nib still uses; see keymap.ts. */
+export const gotoLine = lazily((found) => found.gotoLine)
+
+/** The next occurrence of what is selected, and every occurrence of it. Both are the
+ *  library's, named by nib and bound to nib's own keys. */
+export const selectNextOccurrence = lazilyOnState((found) => found.selectNextOccurrence)
+export const selectSelectionMatches = lazilyOnState((found) => found.selectSelectionMatches)

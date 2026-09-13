@@ -8,7 +8,6 @@ import {
   indentWithTab,
   selectLine,
 } from '@codemirror/commands'
-import { searchKeymap, selectNextOccurrence, selectSelectionMatches } from '@codemirror/search'
 import {
   EditorSelection,
   type EditorState,
@@ -37,7 +36,15 @@ import {
   toggleTaskList,
   toggleWrap,
 } from './commands'
-import { findNext, findPrevious, openFind, openReplace } from './find'
+import {
+  findNext,
+  findPrevious,
+  gotoLine,
+  openFind,
+  openReplace,
+  selectNextOccurrence,
+  selectSelectionMatches,
+} from './find'
 import { foldHeadings, foldLess, foldMore, toggleFold, unfoldEverything } from './fold'
 import { highlightSelection } from './highlight'
 import { copyMarkdown } from './copy'
@@ -280,26 +287,6 @@ function adopt(
  *  something other than the library's own command answers to it. */
 type Extra = Pick<Partial<BindingSpec>, 'alias' | 'run'>
 
-/** The same binding without the library's Shift partner. */
-function unpaired(spec: BindingSpec): BindingSpec {
-  const alone = { ...spec }
-  delete alone.shift
-  return alone
-}
-
-/** The same binding without the library's scope.
- *
- *  The library scoped its Find keys to `editor search-panel` so they kept
- *  working while the keyboard was inside its own panel. That panel is nib's bar
- *  now - a row of the pane rather than a CodeMirror panel - and the bar answers
- *  its own keys, so a scope naming a panel that does not exist is a scope that
- *  means nothing. See find.ts. */
-function unscoped(spec: BindingSpec): BindingSpec {
-  const loose = { ...spec }
-  delete loose.scope
-  return loose
-}
-
 /** Takes one of the library's bindings over by name, or fails loudly. A key
  *  the library no longer binds would otherwise become a named shortcut with no
  *  command behind it, which reads in the settings as a key that simply does
@@ -345,9 +332,13 @@ claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment 
  *  every match under the sidebar's key, and Ctrl+Alt+Up added a cursor while
  *  Ctrl+Alt+Down was quietly shadowed by the pane split. A key that does
  *  something nobody can find in the list is exactly what the specs exist to
- *  prevent, so the commands are named above and the library's entries go. */
-claim(searchKeymap, (binding) => binding.key === 'Mod-d', 'the library select-next')
-claim(searchKeymap, (binding) => binding.key === 'Mod-Shift-l', 'the library select-matches')
+ *  prevent, so the commands are named above and the library's entries go.
+ *
+ *  Two of the four were the search keymap's, and that keymap is not read here any
+ *  more - see `unclaimedKeymap` below for why, and for what happened to each of its
+ *  seven keys. The two are claimed by name instead of by entry: they are the keys nib
+ *  binds `edit.select-word` and `edit.select-all-occurrences` to, and what they must
+ *  not be is bound twice. */
 claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowUp', 'the library cursor above')
 claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowDown', 'the library cursor below')
 
@@ -382,20 +373,32 @@ export const standardBindings: BindingSpec[] = [
     alias: true,
   },
   adopt('edit.select-all', defaultKeymap, 'Mod-a'),
-  // The library's keys, on nib's own commands. Its Find opens its own panel and
-  // its steps fall back to opening it whenever the query is empty, which would
-  // put the panel nib replaced back on the screen at the first press of F3; see
-  // find.ts. Adopted rather than declared so the key is still the library's and
-  // still comes off its keymap when a reader rebinds it.
-  unscoped(adopt('edit.find', searchKeymap, 'Mod-f', { run: openFind })),
+  // The library's four search keys, on nib's own commands, declared rather than
+  // adopted - which is the one place in this file where a library key is spelled out
+  // by hand, and the reason is what the key does rather than what it is called.
+  //
+  // The search engine is fetched at the launch's last turn rather than carried into
+  // the first paint: fifteen kilobytes for a query nobody has typed. So the package
+  // cannot be read here at all, and there is nothing to adopt from - `adopt` takes a
+  // binding off the library's own array, and reading that array is the import. What
+  // is kept is everything adoption was for: the same chords, the same ids, the same
+  // `preventDefault`, and each one still comes off the keymap underneath when a reader
+  // rebinds it, because `unclaimedKeymap` no longer carries any of them at all.
+  //
+  // The commands are nib's either way. Find opens nib's bar rather than the library's
+  // panel, and the steps fall back to opening the bar rather than the panel whenever
+  // the query is empty - which is also the honest answer while the engine is still on
+  // its way, since nothing can have been looked for yet. See find.ts.
+  { id: 'edit.find', key: 'Mod-f', run: openFind, preventDefault: true },
   // Unpaired: the library carries Find previous on these two as a Shift handler,
   // and a key that quietly runs a second command is a key nobody can rebind.
   // Find previous has entries of its own in nibBindings above.
-  unscoped(unpaired(adopt('edit.find-next', searchKeymap, 'Mod-g', { run: findNext }))),
-  unscoped(
-    unpaired(adopt('edit.find-next.alt', searchKeymap, 'F3', { alias: true, run: findNext })),
-  ),
-  adopt('edit.goto-line', searchKeymap, 'Mod-Alt-g'),
+  { id: 'edit.find-next', key: 'Mod-g', run: findNext, preventDefault: true },
+  { id: 'edit.find-next.alt', key: 'F3', run: findNext, preventDefault: true, alias: true },
+  // The library's own dialog, which is the one surface of its own nib still uses. Run
+  // through the door, so the key is spent on the press and the dialog opens as the
+  // engine lands; see `gotoLine` in find.ts.
+  { id: 'edit.goto-line', key: 'Mod-Alt-g', run: gotoLine },
   adopt('edit.move-line-up', defaultKeymap, 'Alt-ArrowUp'),
   adopt('edit.move-line-down', defaultKeymap, 'Alt-ArrowDown'),
   adopt('edit.copy-line-up', defaultKeymap, 'Shift-Alt-ArrowUp'),
@@ -404,11 +407,29 @@ export const standardBindings: BindingSpec[] = [
 
 /** Everything CodeMirror binds that nothing here has taken over: the keys
  *  that make a text editor a text editor, left exactly as the library has
- *  them and installed underneath the named ones. */
+ *  them and installed underneath the named ones.
+ *
+ *  The search keymap is not in it, and not because anything was taken away: reading
+ *  that array is importing the engine, and the engine is fetched at the launch's last
+ *  turn rather than carried into the first paint. It holds seven keys, and not one of
+ *  them would have reached this list:
+ *
+ *  - `Mod-f` opens the library's panel, which nib replaced with its own bar. Named
+ *    above as `edit.find`, on nib's own command.
+ *  - `Mod-g` and `F3` step through the matches, and are named above as
+ *    `edit.find-next` and its alias, on nib's own steps - which fall back to opening
+ *    the bar rather than the library's panel.
+ *  - `Mod-Alt-g` is the goto-line dialog, named above as `edit.goto-line`.
+ *  - `Mod-d` and `Mod-Shift-l` were both firing underneath nib's own Ctrl+D and the
+ *    sidebar's Ctrl+Shift+L; they are `edit.select-word` and
+ *    `edit.select-all-occurrences` above, on the library's commands run through the
+ *    door.
+ *  - `Escape` closes the library's panel. There is no panel: the bar is a row of the
+ *    pane and answers its own Escape, and what closes the layers over a note is the
+ *    app's own stack. So it is dead, and was already dead before this. */
 export const unclaimedKeymap: KeyBinding[] = [
   ...defaultKeymap,
   ...historyKeymap,
-  ...searchKeymap,
   indentWithTab,
 ].filter((binding) => !adopted.has(binding))
 

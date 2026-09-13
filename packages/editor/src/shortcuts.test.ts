@@ -109,6 +109,45 @@ describe('a state built with them', () => {
     expect(keys).not.toContain('Alt-ArrowUp')
   })
 
+  /** And each of the search keys is installed once, which is the other half of the
+   *  same promise.
+   *
+   *  A key bound in two places fires two commands, and the second is one nobody can
+   *  find in the settings or take off - the failure every `claim` in keymap.ts exists
+   *  to prevent, and the one Ctrl+F used to be: nib's own binding on top of the
+   *  library's own entry underneath.
+   *
+   *  These six by name rather than every chord, because layering is deliberate
+   *  elsewhere: an arrow key is bound by the table keymap, the picture keymap and the
+   *  library in turn, and each answers false to let the next one have it. What is not
+   *  deliberate is two commands on a chord that means one thing.
+   *
+   *  It is these six because the search keymap is no longer read at all - the engine
+   *  behind it is fetched at the launch's last turn rather than carried into the first
+   *  paint, so the four keys it carried are declared by hand in keymap.ts and the two
+   *  it duplicated are nib's own. Declaring a key by hand is how one comes to be bound
+   *  twice, so each is counted. */
+  test('and installs each of the search keys once', () => {
+    const installed = EditorState.create({
+      extensions: [shortcutExtensions(), boundKeymap(ALL), keymap.of(unclaimedKeymap)],
+    })
+
+    const counted = new Map<string, number>()
+    for (const chord of keysIn(installed)) counted.set(chord, (counted.get(chord) ?? 0) + 1)
+
+    // Find, the two steps, goto-line, and the one the library bound underneath nib's
+    // own Ctrl+D.
+    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g', 'Mod-d']) {
+      expect(counted.get(chord), chord).toBe(1)
+    }
+
+    // And the sixth is bound by nothing at all, which is the same promise from the
+    // other side: Ctrl+Shift+L is the sidebar's key in the app, `edit.select-all-
+    // occurrences` is offered with no key of its own, and the library's own entry on
+    // that chord went with its keymap. A reader who binds the row gets one command.
+    expect(counted.get('Mod-Shift-l')).toBeUndefined()
+  })
+
   /** The bug: Ctrl+/ is source mode, read off the window, and the library binds
    *  its own comment toggle to the same chord underneath. Both fired, so turning
    *  source mode on wrapped whatever line the caret was on in `<!--` and `-->`. */
