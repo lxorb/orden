@@ -107,7 +107,11 @@ THEME = """
   --selection: rgb(58 37 201 / 0.24);
 
   --danger: #b3121b;
-  --success: #0a7a4e;
+  /* 7.75:1 on the white above. It was #0a7a4e, which cleared the registry's own
+     4.5 bar and was still under the 5.73:1 the app's built-in light theme has for
+     the same token: More contrast made one colour worse, which is what the
+     comparison below catches. Published as contrast 2.0.1. */
+  --success: #065f3c;
 
   --syntax-number: #8a4b00;
   --syntax-function: #0b4fbe;
