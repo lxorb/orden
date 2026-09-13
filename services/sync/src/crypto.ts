@@ -67,8 +67,16 @@ export const NAME_LIMIT = 60
  *  because a name is words and not layout, and so do the control characters,
  *  which nothing can show and which would only ever arrive by accident or on
  *  purpose. One function, because an account and a guest are both a person with
- *  a name and there is no reason for the two to be cleaned differently. */
-export function cleanName(given: string): string {
+ *  a name and there is no reason for the two to be cleaned differently.
+ *
+ *  A person's name, and not the other two the service cleans. A space's keeps its
+ *  inner whitespace and runs to 80, because it is also a folder on somebody's disk
+ *  and the two have to match - see `spaceName` in spaces/index.ts. A client's comes
+ *  out of a document somebody else serves - see `clientName` in oauth/clients.ts.
+ *  All three were called `cleanName`, which is how two of them nearly became one.
+ *  Not `personName`, which is taken by the one that says what to *call* somebody;
+ *  see spaces/share.ts. This one cleans what they typed. */
+export function cleanPersonName(given: string): string {
   return given
     .replace(/\s+/g, ' ')
     .replace(/\p{Cc}/gu, '')

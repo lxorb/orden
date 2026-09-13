@@ -33,12 +33,19 @@ import {
   withoutSetup,
 } from './space'
 
-const NAME_LIMIT = 80
+/** How long a space's name may be. Longer than a person's, which is 60: a space is
+ *  named after what is in it, and a folder on disk holds more than a person does. */
+const SPACE_NAME_LIMIT = 80
 
-/** A space's name as it is stored. Control characters go: nothing can show
- *  them, and the name travels into a mail's subject, a published page and a
- *  folder on somebody's disk, where a newline in one is not part of a name. */
-function cleanName(given: string): string {
+/** A space's name as it is stored. Control characters go: nothing can show them,
+ *  and the name travels into a mail's subject, a published page and a folder on
+ *  somebody's disk, where a newline in one is not part of a name.
+ *
+ *  Inner whitespace stays, which is the one thing this does not share with a
+ *  person's name - see `personName` in crypto.ts. `My  Notes` is the name of a
+ *  folder on somebody's disk, and a service that quietly made it `My Notes` would
+ *  be naming a space the app then could not find. */
+function spaceName(given: string): string {
   return given.replace(/\p{Cc}/gu, '').trim()
 }
 /** An id is a UUID; the length is all this needs to know. */
@@ -137,10 +144,10 @@ spaces.get('/', async (context) => {
 spaces.post('/', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
-  const name = body.text('name', NAME_LIMIT)
+  const name = body.text('name', SPACE_NAME_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const label = cleanName(name ?? '')
+  const label = spaceName(name ?? '')
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   const space = await addSpace(context.env, user.id, label)
@@ -192,12 +199,12 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   const body = await readBody(context)
-  const name = body.text('name', NAME_LIMIT)
+  const name = body.text('name', SPACE_NAME_LIMIT)
   const chosen = body.nullableText('icon', ID_LIMIT)
   const painted = body.nullableText('tint', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const label = name === undefined ? space.name : cleanName(name)
+  const label = name === undefined ? space.name : spaceName(name)
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   // An icon is a value out of one of the sets the app ships, read the same way a

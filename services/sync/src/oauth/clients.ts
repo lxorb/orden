@@ -40,7 +40,10 @@ const UNUSED_FOR = 30 * 24 * 60 * 60 * 1000
 /** A description document is small. Anything larger is not one. */
 const LONGEST_DOCUMENT = 64_000
 
-function cleanName(value: unknown): string {
+/** What a client calls itself, out of the document it serves or the body it
+ *  registered with - so it may be anything at all, including not a string. Its own
+ *  rule: see `personName` in crypto.ts and `spaceName` in spaces/index.ts. */
+function clientName(value: unknown): string {
   return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
 }
 
@@ -98,7 +101,7 @@ async function clientFromDocument(id: string): Promise<Client | null> {
 
     return {
       id,
-      name: cleanName(document.client_name) || url.hostname,
+      name: clientName(document.client_name) || url.hostname,
       redirectUris,
       secretHash: null,
     }
@@ -162,7 +165,7 @@ registration.post('/register', async (context) => {
 
   const method = body.token_endpoint_auth_method
   const wantsSecret = typeof method === 'string' && method !== 'none'
-  const name = cleanName(body.client_name) || fallbackName(redirectUris[0])
+  const name = clientName(body.client_name) || fallbackName(redirectUris[0])
   const uris = JSON.stringify(redirectUris)
 
   // Some clients register anew on every connection. Two public clients that

@@ -33,7 +33,7 @@
  *  against the account's own gigabyte - that is Emil's to decide - so this is the
  *  only thing holding them. */
 
-import { cleanName, now } from './crypto'
+import { cleanPersonName, now } from './crypto'
 import type { Env, Note } from './types'
 
 /** How long the account keeps a version, in days: a month, or a year. The two
@@ -129,7 +129,7 @@ export function deviceIn(header: string | undefined): string {
   // somebody's client chose, shown in the history sheet and beside a session in
   // the Account pane. A newline was already taken out; the rest of the control
   // characters were not, and a name is words and not layout either way.
-  const name = cleanName(header ?? '')
+  const name = cleanPersonName(header ?? '')
   if (name.length <= DEVICE_LIMIT) return name
 
   // Cut by what a reader would call a character rather than by UTF-16 unit, so a

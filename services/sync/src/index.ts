@@ -5,7 +5,7 @@ import { accountById, auth, presentUser, requireWhoever, sessions } from './auth
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
-import { cleanName, NAME_LIMIT } from './crypto'
+import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
@@ -169,7 +169,7 @@ app.patch('/v1/me', async (context) => {
   const given = body.text('name', NAME_LIMIT * 8)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const name = cleanName(given ?? '')
+  const name = cleanPersonName(given ?? '')
   if (name.length > NAME_LIMIT) {
     return context.json({ error: `use at most ${NAME_LIMIT} characters` }, 400)
   }

@@ -27,7 +27,7 @@
 import { Hono, type Context } from 'hono'
 import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
 import { readBody } from '../body'
-import { cleanName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
+import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { claimGuest, newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
@@ -530,7 +530,7 @@ async function asNobody(context: Reply, found: Leads) {
 
   // One field, and either half of it will do: the owner has to have something
   // to accept, and a name is as much as a link that asks first can ask for.
-  const named = cleanName(said ?? '').slice(0, NAME_LIMIT)
+  const named = cleanPersonName(said ?? '').slice(0, NAME_LIMIT)
   const gave = normaliseEmail(address ?? '')
   if (!named && !isEmail(gave)) return context.json({ error: 'say who you are' }, 400)
 

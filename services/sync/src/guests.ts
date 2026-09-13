@@ -16,7 +16,7 @@
  *  whatever the guest was in, and so does proving the address a guest said it
  *  was at; see `claimGuest`. */
 
-import { cleanName, NAME_LIMIT, newId, now, randomToken, sha256 } from './crypto'
+import { cleanPersonName, NAME_LIMIT, newId, now, randomToken, sha256 } from './crypto'
 import type { Env, Guest, User } from './types'
 
 /** How long a guest session lasts. The same as an account's: a guest bound to a
@@ -82,7 +82,7 @@ export async function newGuest(
   named: string | null,
   email: string | null,
 ): Promise<{ guest: Guest; token: string }> {
-  const chosen = cleanName(named ?? '').slice(0, NAME_LIMIT)
+  const chosen = cleanPersonName(named ?? '').slice(0, NAME_LIMIT)
   const guest: Guest = {
     id: newId(),
     name: chosen || guestName(hint),
