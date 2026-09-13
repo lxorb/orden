@@ -104,14 +104,17 @@ const BOUNDARY: [char; 20] = [
     '"', '\'',
 ];
 
-/// How much of a line is worth scoring. A line longer than this is a paragraph
-/// nobody wrapped, and the letters at its far end are not what the reader is
-/// pointing at. The panel cuts its preview at `SHOWN` for the same reason; this
+/// How many of a line's letters are worth scoring. A line longer than this is a
+/// paragraph nobody wrapped, and the letters at its far end are not what the reader
+/// is pointing at. The panel cuts its preview at `SHOWN` for the same reason; this
 /// is wider, so a match just past the preview is still found.
+///
+/// Letters rather than bytes, which is why the unit is said out loud: `SHOWN` is
+/// letters, so a cut counted in bytes is only as wide as it claims in ASCII.
 const SCORED: usize = 400;
 
-/// How much of a matching line a row shows. The same cut the exact side makes, so
-/// two rows of one list are trimmed the same way.
+/// How many of a matching line's letters a row shows. The same cut the exact side
+/// makes, so two rows of one list are trimmed the same way.
 const SHOWN: usize = 200;
 
 /// One term, folded, as the walk reads it.
@@ -209,24 +212,25 @@ fn find_within(folded: &str, letter: char, at: usize, to: usize) -> Option<usize
         .map(|found| at + found)
 }
 
-/// How far into a line is worth scoring: `SCORED` bytes, and then on to the end of
-/// whatever letter that landed inside, so a cut never falls between the bytes of
-/// one letter.
+/// Where the scored part of a line ends: `SCORED` letters along it, or the end of
+/// the line when it holds fewer than that.
 ///
-/// Up rather than down, because the letter the cut lands in is a letter a term may
-/// still start on: rounding the other way would take a match away from a line
-/// outside ASCII that a line of ASCII keeps.
+/// Letters, because `SHOWN` is letters. The part scored has to reach at least as far
+/// as the part the row goes on to show, or a match a reader can see in front of them
+/// is a match nothing found - and counted in bytes it reached four hundred letters
+/// of English and a hundred and thirty-three of Japanese, so on a CJK line the
+/// scoring stopped well inside the preview.
+///
+/// A line no longer in bytes than the cut is no longer in letters either, which is
+/// nearly every line of every note and is answered without counting anything.
 fn cut(body: &str, from: usize, end: usize) -> usize {
     if end.saturating_sub(from) <= SCORED {
         return end;
     }
 
-    let mut to = from + SCORED;
-    while to < end && !body.is_char_boundary(to) {
-        to += 1;
-    }
-
-    to
+    body.get(from..end)
+        .and_then(|line| line.char_indices().nth(SCORED))
+        .map_or(end, |(at, _)| from + at)
 }
 
 /// Where `word`'s letters sit in `folded`, starting at `at` and staying inside
@@ -759,12 +763,7 @@ mod tests {
         let head = *letters.first()?;
         let word = Word { letters, head };
 
-        let mut cut = line.len().min(SCORED);
-        while !line.is_char_boundary(cut) {
-            cut -= 1;
-        }
-
-        let cropped = line.get(..cut)?;
+        let cropped = line.get(..super::cut(line, 0, line.len()))?;
         let folded = super::fold(cropped);
         let first = folded.find(head)?;
 
@@ -1109,7 +1108,21 @@ mod tests {
         let body = format!("{line}\n");
 
         assert_eq!(super::cut(&body, 0, body.len() - 1) % "の".len(), 0);
-        // The letters a term wants are inside the first `SCORED` bytes of it.
+        // The letters a term wants are inside the first `SCORED` of them.
         assert!(best(&text("のの"), &body).is_some());
+    }
+
+    /// How far a line is scored is counted the way how far it is shown is, so the
+    /// scored part reaches at least as far as the row does. In bytes it did not: a
+    /// line of Japanese was scored for a third of what the row went on to show, and
+    /// a match a reader could see in front of them was a match nothing had found.
+    #[test]
+    fn a_long_line_is_scored_as_far_as_it_is_shown() {
+        // The term sits past the four hundredth byte of the line and well inside its
+        // two hundredth letter, which is where the row is cut.
+        let line = format!("{}めも{}", "の".repeat(150), "の".repeat(300));
+
+        let found = best(&text("めも"), &line).expect("the letters are on the line");
+        assert!(found.text.contains('め'), "{}", found.text);
     }
 }
