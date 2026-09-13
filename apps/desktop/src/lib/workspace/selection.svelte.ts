@@ -7,14 +7,26 @@
  *  children are only between anything while the folder is open. */
 
 export class Selection {
-  /** The picked rows, as paths. */
+  /** The picked rows, as paths. In the order the rows are shown, because that is
+   *  the order a move or a deletion walks them in. */
   paths = $state<string[]>([])
+
+  /** The same rows to look one up in.
+   *
+   *  Every drawn row asks `has` on every render, and Ctrl+A in a space of three
+   *  thousand notes picks three thousand rows: walking the list per row made
+   *  scrolling a selected space cost a hundred thousand string comparisons a
+   *  frame. Built once per change to the selection instead. */
+  // A plain Set: never mutated, since a change to the selection builds it again,
+  // which is what makes it derived.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- see above
+  private readonly held = $derived(new Set(this.paths))
 
   /** Where a Shift range starts: the last row clicked without Shift. */
   private anchor: string | null = null
 
   has(path: string): boolean {
-    return this.paths.includes(path)
+    return this.held.has(path)
   }
 
   /** A plain click: that row alone. */
@@ -64,10 +76,29 @@ export class Selection {
   }
 }
 
+/** Every path a row could sit inside: the part of it before each separator.
+ *
+ *  Which is every path `one` for which `path` starts with `${one}/` - so asking
+ *  about these is the same question as asking about every other row, and there are
+ *  as many of them as the row is folders deep rather than as many as the list is
+ *  long. */
+function couldHold(path: string): string[] {
+  const out: string[] = []
+
+  for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+    out.push(path.slice(0, at))
+  }
+
+  return out
+}
+
 /** The rows that are not inside another row of the same list: a folder takes
- *  what is in it along, so those need no move or deletion of their own. */
+ *  what is in it along, so those need no move or deletion of their own.
+ *
+ *  Asked of the whole selection, which Ctrl+A makes as long as the space is, so
+ *  every row is looked up rather than compared with every other row. */
 export function outermost(paths: string[]): string[] {
-  return paths.filter(
-    (path) => !paths.some((other) => other !== path && path.startsWith(`${other}/`)),
-  )
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call
+  const held = new Set(paths)
+  return paths.filter((path) => !couldHold(path).some((one) => held.has(one)))
 }
