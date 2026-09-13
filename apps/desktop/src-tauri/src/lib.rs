@@ -33,9 +33,18 @@
 
 #[cfg(desktop)]
 mod apple_notes;
-// The words of a note are read where the database holding them is, and that is a
-// Mac: SQLite, a gzipped protobuf and a group container no other system has.
-#[cfg(target_os = "macos")]
+// Where the database holding the notes is, that is a Mac: SQLite, a group
+// container and a permission no other system has, all of which is `apple_notes`.
+// What is *on* a row is a gzipped protobuf, and unpacking one is arithmetic over
+// bytes - so it is built everywhere, and every runner compiles and tests it. A
+// thousand lines only one runner checked is a thousand lines nothing checked.
+#[cfg_attr(
+    not(target_os = "macos"),
+    allow(
+        dead_code,
+        reason = "only the Mac's own store reader asks for any of this; it is built elsewhere to be checked, not to be called"
+    )
+)]
 mod apple_text;
 mod assets;
 mod clock;

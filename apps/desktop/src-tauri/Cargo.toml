@@ -62,6 +62,12 @@ serde_json = "1"
 # picture, and JSON digits would cost six characters a byte. Already in the lock
 # file as something tauri builds with, so this adds nothing to the build.
 base64 = "0.22"
+# A note's body on one of Apple Notes' rows is a gzipped protobuf, and unpacking it
+# is `apple_text.rs`. Every platform, although only a Mac has the database: the
+# decoding is `std` and this, so keeping it out of the other builds only meant that
+# no runner but one compiled a thousand lines of it. The pure-Rust backend, so it
+# needs no C compiler and cross-compiles to a phone like anything else.
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # Desktop only: a second launch should hand its file to the running window, the
 # app installs its own updates, and files are chosen and saved in a dialog. A
@@ -98,9 +104,6 @@ getrandom = "0.3"
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
-# A note's body on one of that database's rows is a gzipped protobuf. The
-# pure-Rust backend, so the read needs no C compiler of its own.
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

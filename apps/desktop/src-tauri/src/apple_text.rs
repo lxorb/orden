@@ -11,9 +11,9 @@
 //! the format, MIT as well.
 //!
 //! Nothing here opens a database or a file, which is the point: a Mac is the only
-//! machine that has the database, and the reading of what is on a row is pure
-//! enough to be tested without one. The module itself is built on a Mac only, so
-//! the runner that proves a change here is the macOS one; see `lib.rs`.
+//! machine that has the database, and the reading of what is on a row is bytes and
+//! arithmetic. So this is built and tested on every platform the app is built for,
+//! and only the store reader beside it is a Mac's own; see `lib.rs`.
 //!
 //! What a run becomes is nib's own markdown rather than Obsidian's: `==marked==`
 //! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
