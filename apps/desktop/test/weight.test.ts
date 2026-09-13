@@ -155,8 +155,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  2,931,291 bytes over 367 files as this is written, measured on 2026-09-13, against
- *  1,294,326 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,919,533 bytes over 366 files as this is written, measured on 2026-09-13, against
+ *  1,290,951 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
@@ -328,6 +328,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/microphone.ts', 'the microphone'],
     ['/lib/recorder/transcript.ts', "the transcript's markdown"],
     ['/lib/RecordingPill.svelte', 'the pill'],
+    // And the pages engine, which a window that opens on a note has no stack of paper
+    // to read. The canvas reader under it is not here and cannot be: the link index
+    // scans a plane's cards for links and the sync mirror merges two versions of one,
+    // so both reach it before anything is drawn. See workspace.createPages.
+    ['/markdown/src/pages.ts', 'the pages engine'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
