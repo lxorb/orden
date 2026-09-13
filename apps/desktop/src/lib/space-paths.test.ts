@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { folderOf, insideAnyOf, nameOf, noteName, relativePath, relativeTo } from './space-paths'
+import {
+  folderOf,
+  insideAnyOf,
+  insideItsSpace,
+  nameOf,
+  noteName,
+  relativePath,
+  relativeTo,
+} from './space-paths'
 
 describe('a path as the space speaks of it', () => {
   test('drops the root and the platform separators', () => {
@@ -101,5 +109,29 @@ describe('an absolute path from somewhere else', () => {
   test('what comes back is built from the root, not from what arrived', () => {
     expect(insideAnyOf(roots, '/notes/work//ideas/./Plan.md')).toBe('/notes/work/ideas/Plan.md')
     expect(insideAnyOf(roots, '  /notes/work/Plan.md  ')).toBe('/notes/work/Plan.md')
+  })
+})
+
+/** What a store keyed by path will keep, which is the same reading the service
+ *  does; see `staysInside` in services/sync/src/spaces/paths.ts. A column the
+ *  service takes is a column this app resolves against a folder, so the two answer
+ *  alike or a path arrives that cannot be resolved. */
+describe('a path a store may keep', () => {
+  test('is one inside the space it belongs to', () => {
+    expect(insideItsSpace('Read me.md')).toBe(true)
+    expect(insideItsSpace('a/b/Read me.md')).toBe(true)
+  })
+
+  test('and never one that starts at the root of somebody’s disk', () => {
+    for (const path of ['/etc/passwd', 'C:/Windows/x.pdf', 'c:/x.pdf', 'C:\\Windows\\x.pdf']) {
+      expect(insideItsSpace(path), path).toBe(false)
+    }
+  })
+
+  test('nor one that climbs out of it, or is nothing, or is two names', () => {
+    expect(insideItsSpace('../out.md')).toBe(false)
+    expect(insideItsSpace('a/../../out.md')).toBe(false)
+    expect(insideItsSpace('')).toBe(false)
+    expect(insideItsSpace('a\nb.md')).toBe(false)
   })
 })

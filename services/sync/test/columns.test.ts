@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 import { fits, MOST_BYTES } from '../src/spaces/columns'
+import { staysInside } from '../src/spaces/paths'
 
 /** The six columns a client writes whole: what each may hold, and that writing one
  *  says the space changed.
@@ -149,5 +150,39 @@ describe('what each column may hold', () => {
     expect(fits('', 'graph')).toBe(true)
     expect(fits('x'.repeat(MOST_BYTES.graph), 'graph')).toBe(true)
     expect(fits('x'.repeat(MOST_BYTES.graph + 1), 'graph')).toBe(false)
+  })
+})
+
+/** The one reading four columns judge a path by; see src/spaces/paths.ts. The app
+ *  holds itself to the same three answers - `insideItsSpace` - because a column the
+ *  service takes is a column the app resolves against a folder. */
+describe('a path a column may hold', () => {
+  test('is one every machine resolves in the same place', () => {
+    for (const path of ['Read me.md', 'a/b/Read me.md', 'Notes/Deep idea.md', '..hidden/x.md']) {
+      expect(staysInside(path), path).toBe(true)
+    }
+  })
+
+  test('and never one that starts at the root of somebody’s disk', () => {
+    for (const path of [
+      '/etc/passwd',
+      'C:/Windows/System32/x.pdf',
+      'c:/x.pdf',
+      'C:\\Windows\\x.pdf',
+      '\\\\server\\share\\x.pdf',
+    ]) {
+      expect(staysInside(path), path).toBe(false)
+    }
+  })
+
+  test('nor one that climbs out of the space', () => {
+    for (const path of ['../out.md', 'a/../../out.md', '..', 'a/..']) {
+      expect(staysInside(path), path).toBe(false)
+    }
+  })
+
+  test('nor a name that is two names to whatever reads it next', () => {
+    expect(staysInside('a\nb.md')).toBe(false)
+    expect(staysInside('a\u0000b.md')).toBe(false)
   })
 })

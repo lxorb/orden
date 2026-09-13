@@ -63,6 +63,12 @@ export function insideItsSpace(path: string): boolean {
     path.length <= LONGEST_PATH &&
     !path.startsWith('/') &&
     !path.includes('\\') &&
+    // A drive letter is the other way a path starts at the root of somebody's
+    // disk, and `C:/Users/…` carries no backslash to be caught by the line above.
+    !/^[A-Za-z]:/.test(path) &&
+    // A path is a name, and a name with a control character in it is two names to
+    // whatever reads it next.
+    !/\p{Cc}/u.test(path) &&
     !path.split('/').includes('..')
   )
 }
