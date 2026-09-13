@@ -982,7 +982,13 @@ def ready(page: Page, lane: Lane) -> None:
         page.goto(lane.origin, wait_until="domcontentloaded")
 
     page.wait_for_function(LAUNCHED, timeout=120000)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    # Asked for rather than pressed: `showPanel` is what a key does and a key
+    # toggles, so saying it on a window that already has the file list open is what
+    # shuts it. See `showPanel` in workspace.svelte.ts.
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace;"
+        " if (ws.panel !== 'tree') ws.showPanel('tree') }"
+    )
     page.wait_for_selector("aside .row", timeout=60000)
 
 
