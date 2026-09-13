@@ -43,9 +43,17 @@ the end.
 
     python scripts/web-freeze-probe.py --exe path/to/Nib.exe
 
-The exe comes from CI: this machine does not compile the crate. Build it with an
-identifier of its own so the run cannot walk over the session of an installed app,
-and pass the same identifier here; see .github/workflows/ci-check-webfreeze.yml.
+The exe comes from wherever the crate is built; the machine this was written on does
+not compile it at all, so it came out of a throwaway CI job on a `windows-11-arm`
+runner:
+
+    pnpm --filter @nib/desktop exec tauri build --no-bundle \
+      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+
+An identifier of its own matters. The probe wipes that identifier's settings folder
+and webview profile at the start of every run, and refuses to wipe one whose name
+does not say `probe`, so a run can never walk over the session of an installed app.
+Pass the same identifier here if you build it under another.
 """
 
 from __future__ import annotations
