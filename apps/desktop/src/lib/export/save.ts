@@ -14,7 +14,8 @@
 
 import { toBase64 } from '../bytes'
 import { keep, storedText } from '../stored'
-import { folderOf, invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
+import { folderOf } from '../space-paths'
+import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
 import { fileNameFor, freeName } from './naming'
 
 /** What a converter produced. Text where the format is text, so a note that is

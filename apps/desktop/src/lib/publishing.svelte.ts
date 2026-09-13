@@ -28,6 +28,7 @@ import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { log } from './log'
 import { ownsRemotely } from './sharing.svelte'
+import { relativeTo as relativeIn } from './space-paths'
 import { sync } from './sync.svelte'
 import { afterQuiet } from './timing'
 import type { Space } from './workspace.svelte'
@@ -289,11 +290,7 @@ class Publish {
   /** The path the server knows a note by: relative to the space being
    *  published, forward slashed, whatever separator the machine writes. */
   relativeTo(path: string): string {
-    const root = this.space?.root ?? ''
-    return path
-      .slice(root.length)
-      .replace(/^[\\/]+/, '')
-      .replace(/\\/g, '/')
+    return relativeIn(this.space?.root ?? '', path)
   }
 
   /** Only the characters a subdomain may hold, and the availability check a

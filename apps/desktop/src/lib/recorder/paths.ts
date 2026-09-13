@@ -7,8 +7,7 @@
  *  See note.ts, which is the only caller, and link-index.svelte.ts, which is what the
  *  answer is handed to. */
 
-import { relativeTo } from '../space-paths'
-import { folderOf } from '../tauri'
+import { folderOf, relativeTo } from '../space-paths'
 
 /** `save_asset` answers with a path relative to the *note's own folder* - `assets/x`
  *  for a note at the top of the space, `../assets/x` for one a folder down - and the

@@ -27,8 +27,8 @@
  *  Pure, and the whole rule: the tree, the drop zones, the Move sheet, the icon a
  *  row wears and the way back out all ask here. See folder-notes.test.ts. */
 
-import { isMarkdownPath, withoutExtension } from './space-paths'
-import { folderOf, joinPath } from './tauri'
+import { folderOf, isMarkdownPath, nameOf, withoutExtension } from './space-paths'
+import { joinPath } from './tauri'
 import { entryAt } from './tree-edits'
 import type { Entry } from './workspace.svelte'
 
@@ -161,9 +161,4 @@ export function renameSteps(note: string, typed: string): { path: string; name: 
     { path: note, name: name + extension },
     { path: folder, name },
   ]
-}
-
-/** The last part of a path, whichever separator the platform wrote. */
-function nameOf(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path
 }

@@ -11,6 +11,7 @@ import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
 import { sync } from './sync.svelte'
+import { folderOf } from './space-paths'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -37,11 +38,6 @@ interface DeviceEntry {
   name: string
   from: string
   trashedAt: number
-}
-
-function folderOf(path: string): string {
-  const slash = path.lastIndexOf('/')
-  return slash > 0 ? path.slice(0, slash) : ''
 }
 
 function kindOf(kind: string): TrashItem['kind'] {

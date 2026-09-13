@@ -1,5 +1,6 @@
 import { frontMatter } from '@nib/markdown'
-import { assetUrl, folderOf, joinPath } from './tauri'
+import { folderOf } from './space-paths'
+import { assetUrl, joinPath } from './tauri'
 
 /** True for anything the browser can already fetch on its own. */
 function isRemote(src: string): boolean {

@@ -27,7 +27,7 @@ import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
 import { reverse } from './search/replace'
 import { settings } from './settings.svelte'
-import { folderOf } from './tauri'
+import { folderOf } from './space-paths'
 import { workspace } from './workspace.svelte'
 
 /** Writes the icon a note or a canvas wears, or takes it away when `value` is null.

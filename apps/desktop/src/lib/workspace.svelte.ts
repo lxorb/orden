@@ -23,13 +23,7 @@ import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
-import {
-  folderOf as folderIn,
-  insideSpace,
-  isMarkdownPath,
-  noteName,
-  relativeTo,
-} from './space-paths'
+import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
 import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
@@ -80,7 +74,7 @@ import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
-import { folderOf, invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
+import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { webNote, webTitleOf, webUrlOf } from './web-tab/note'
 import { pages } from './web-tab/pages.svelte'
@@ -157,10 +151,6 @@ const SESSION_DELAY = 400
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
-function basename(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path
-}
 
 /** Which line of a note a followed link lands on: the heading it names, or the
  *  line the block name sits on. Null when the note holds neither, which leaves
@@ -1008,7 +998,7 @@ class Workspace {
       const file = this.document({
         kind: 'pdf',
         path,
-        name: basename(path),
+        name: nameOf(path),
         text: '',
         dirty: false,
       })
@@ -1046,7 +1036,7 @@ class Workspace {
     const file = this.document({
       kind: 'canvas',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text,
       dirty: false,
     })
@@ -1104,7 +1094,7 @@ class Workspace {
     const file = this.document({
       kind: 'web',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text,
       dirty: false,
     })
@@ -1196,7 +1186,7 @@ class Workspace {
       if (path === null) return
 
       tab.note.path = path
-      tab.note.name = basename(path)
+      tab.note.name = nameOf(path)
       tab.note.replace(text, false)
       this.remember(path)
       this.persist()
@@ -1228,7 +1218,7 @@ class Workspace {
     const file = this.document({
       kind: 'pages',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text,
       dirty: false,
     })
@@ -1263,7 +1253,7 @@ class Workspace {
     const file = this.document({
       kind: 'pages',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text: content,
       dirty: false,
     })
@@ -1680,7 +1670,7 @@ class Workspace {
 
   /** Moves a note or folder into another folder. */
   async move(from: string, intoFolder: string) {
-    const name = basename(from)
+    const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
     if (target === from || intoFolder.startsWith(from)) return
@@ -1798,7 +1788,7 @@ class Workspace {
       const waiting = this.document({
         kind: 'note',
         path,
-        name: basename(path),
+        name: nameOf(path),
         text: '',
         dirty: false,
       })
@@ -1835,7 +1825,7 @@ class Workspace {
       )
 
     if (reusable) {
-      reusable.note.adopt({ path, name: basename(path), text: doc })
+      reusable.note.adopt({ path, name: nameOf(path), text: doc })
       this.walked(reusable, path)
       this.placeAt(reusable, path)
       // A note arriving in the preview tab is a note opening, and a note opens
@@ -1854,7 +1844,7 @@ class Workspace {
     const note = this.document({
       kind: 'note',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text: doc,
       dirty: false,
     })
@@ -1945,7 +1935,7 @@ class Workspace {
       return
     }
 
-    tab.note.adopt({ path, name: basename(path), text: doc })
+    tab.note.adopt({ path, name: nameOf(path), text: doc })
     tab.at = to
     this.placeAt(tab, path)
     tab.reading = false
@@ -2387,7 +2377,7 @@ class Workspace {
       throw error
     }
 
-    note.written(path, basename(path), revision)
+    note.written(path, nameOf(path), revision)
     this.markSaved(note)
 
     // The one file that changed, read again from what was written. This is the
@@ -2580,7 +2570,7 @@ class Workspace {
   private freshEntry(path: string, isFolder: boolean): Entry {
     const at = Date.now()
     return {
-      name: basename(path),
+      name: nameOf(path),
       path,
       is_dir: isFolder,
       modified: at,
@@ -2842,7 +2832,7 @@ class Workspace {
     const note = this.document({
       kind: 'note',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text: content,
       dirty: false,
     })
@@ -2898,7 +2888,7 @@ class Workspace {
     const file = this.document({
       kind: 'canvas',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text: content,
       dirty: false,
     })
@@ -3088,14 +3078,14 @@ class Workspace {
       // A new note is written with its own name as the heading, so renaming it
       // straight afterwards would otherwise leave `# Untitled` at the top. Only
       // while the heading still is the old name; an edited one is the author's.
-      const was = `# ${basename(path).replace(MARKDOWN, '')}`
+      const was = `# ${nameOf(path).replace(MARKDOWN, '')}`
       if (note.text === was || note.text.startsWith(was + '\n')) {
         // Nobody typed this, so it goes in the way any other outside edit does.
         note.replace(`# ${clean.replace(MARKDOWN, '')}${note.text.slice(was.length)}`, note.dirty)
       }
 
       note.path = target
-      note.name = basename(target)
+      note.name = nameOf(target)
     }
 
     await this.loadTree()
@@ -3264,7 +3254,7 @@ class Workspace {
 
     for (const note of this.documents.filter((entry) => entry.path === action.to)) {
       note.path = action.from
-      note.name = basename(action.from)
+      note.name = nameOf(action.from)
     }
 
     // The rename rewrote every link that pointed at the note; putting the name
@@ -3422,7 +3412,7 @@ class Workspace {
     const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
-    const here = this.active?.path ? folderIn(relativeTo(root, this.active.path)) : ''
+    const here = this.active?.path ? folderOf(relativeTo(root, this.active.path)) : ''
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
 
     // What a link says is somebody's prose. A note out of a shared space, a room,
@@ -3554,7 +3544,7 @@ class Workspace {
     const note = this.document({
       kind: 'note',
       path,
-      name: basename(path),
+      name: nameOf(path),
       text: content,
       dirty: false,
     })
@@ -3582,7 +3572,7 @@ class Workspace {
 
   async duplicate(path: string) {
     const content = await invoke<string>('read_note', { path })
-    const name = basename(path).replace(/(\.[^.]+)$/, ' copy$1')
+    const name = nameOf(path).replace(/(\.[^.]+)$/, ' copy$1')
 
     await invoke('write_note', { path: joinPath(folderOf(path), name), content })
     await this.loadTree()

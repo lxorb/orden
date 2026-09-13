@@ -19,7 +19,7 @@
  *  sheet; see move-targets.test.ts. */
 
 import { folderFor, folderNote } from './folder-notes'
-import { isMarkdownPath } from './space-paths'
+import { folderOf, isMarkdownPath } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
 export interface MoveTarget {
@@ -43,12 +43,6 @@ export interface Space {
   root: string
 }
 
-/** The folder a path sits in, by the separator it uses. */
-function parentOf(path: string): string {
-  const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
-  return at <= 0 ? path : path.slice(0, at)
-}
-
 /** Whether `path` is `folder` or sits anywhere inside it. */
 function under(folder: string, path: string): boolean {
   const one = folder.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -68,7 +62,7 @@ function under(folder: string, path: string): boolean {
  *  being dragged until the drop - so what is coming is this window's own note of
  *  it; see `carried` in drag-paths.ts. */
 export function movesInto(paths: readonly string[], folder: string): boolean {
-  return paths.some((path) => parentOf(path) !== folder && !under(path, folder))
+  return paths.some((path) => folderOf(path) !== folder && !under(path, folder))
 }
 
 /** One place a row can land: the folder it moves into, and what that folder is

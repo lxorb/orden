@@ -54,7 +54,7 @@
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
-  import { folderOf } from './tauri'
+  import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
   import { treeStep, TREE_MOVES } from './tree-keys'

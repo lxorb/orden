@@ -165,10 +165,6 @@ export function assetPath(url: string): string | null {
   }
 }
 
-export function folderOf(path: string): string {
-  return path.replace(/[\\/][^\\/]*$/, '')
-}
-
 export function joinPath(dir: string, relative: string): string {
   const separator = dir.includes('\\') ? '\\' : '/'
   return `${dir}${separator}${relative.split('/').join(separator)}`

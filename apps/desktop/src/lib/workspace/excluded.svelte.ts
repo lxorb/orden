@@ -16,7 +16,7 @@
  *  `nib:folder-icons` is this store's twin in every respect, down to remembering
  *  which account a space's list has been folded into. */
 
-import { relativeTo } from '../space-paths'
+import { insideItsSpace, relativeTo } from '../space-paths'
 import { isRecord, isString, keep, stored } from '../stored'
 import { without } from '../records'
 
@@ -26,22 +26,6 @@ export const STORAGE_KEY = 'nib:excluded'
  *  hand; the service holds a space to the same number, so a list that fits here
  *  fits there. */
 export const MOST_EXCLUDED = 200
-
-/** How long a path may be. The service's limit, so nothing is kept here that
- *  would be refused there. */
-const LONGEST_PATH = 300
-
-/** Whether a path names something inside its own space. The same reading the
- *  service does. */
-function insideSpace(path: string): boolean {
-  return (
-    !!path &&
-    path.length <= LONGEST_PATH &&
-    !path.startsWith('/') &&
-    !path.includes('\\') &&
-    !path.split('/').includes('..')
-  )
-}
 
 /** The list in an unknown, with whatever is not a path inside a space left out.
  *  Written by a newer build, by an older one, or by hand: what reads as a path is
@@ -55,7 +39,7 @@ export function excludedPaths(value: unknown): string[] {
   // way.
   for (const one of value) {
     if (out.length >= MOST_EXCLUDED) break
-    if (isString(one) && insideSpace(one) && !out.includes(one)) out.push(one)
+    if (isString(one) && insideItsSpace(one) && !out.includes(one)) out.push(one)
   }
 
   return out
@@ -166,7 +150,7 @@ export class Excluded {
     if (root === null) return
 
     const at = relativeTo(root, path)
-    if (!insideSpace(at)) return
+    if (!insideItsSpace(at)) return
 
     const held = this.of(root)
     if (held.includes(at)) {

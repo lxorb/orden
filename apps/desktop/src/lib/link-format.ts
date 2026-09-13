@@ -19,7 +19,7 @@
 
 import { slugify } from '@nib/markdown/links'
 import { encodeTarget } from './link-rewrite'
-import { folderOf, relativePath } from './space-paths'
+import { folderOf, nameOf, relativePath } from './space-paths'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
 
@@ -98,7 +98,7 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
 function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): string {
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  if (format === 'shortest') return withExtension(nameOfPath(path))
+  if (format === 'shortest') return withExtension(nameOf(path))
   // A note that does not know where it is being written cannot say "from here",
   // so the path from the top of the space is the closest true answer.
   return target.from ? relativePath(folderOf(target.from), path) : path
@@ -108,10 +108,6 @@ const EXTENSION = /\.[^./]+$/
 
 function withExtension(name: string): string {
   return EXTENSION.test(name) ? name : `${name}.md`
-}
-
-function nameOfPath(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1)
 }
 
 /** A wikilink's part after the `#`, as a markdown link writes it.

@@ -19,6 +19,32 @@ describe('a path as the space speaks of it', () => {
     expect(noteName('ideas/Plan.markdown')).toBe('Plan')
     expect(noteName('ideas/notes.txt')).toBe('notes.txt')
   })
+
+  /** The same pair serves a path on disk, which is the whole reason there is one
+   *  pair: the tree, the undo stack, the trash and the icons all hold the path the
+   *  platform wrote, and eight modules had each worked out how to split it. */
+  test('the same pair splits a path the platform wrote', () => {
+    expect(folderOf('C:\\Notes\\ideas\\Plan.md')).toBe('C:\\Notes\\ideas')
+    expect(nameOf('C:\\Notes\\ideas\\Plan.md')).toBe('Plan.md')
+    expect(folderOf('/notes/ideas/Plan.md')).toBe('/notes/ideas')
+    expect(nameOf('/notes/ideas/Plan.md')).toBe('Plan.md')
+  })
+
+  test('a name with no path at all sits at the top', () => {
+    expect(folderOf('Plan.md')).toBe('')
+    expect(nameOf('Plan.md')).toBe('Plan.md')
+    expect(folderOf('/Plan.md')).toBe('')
+    expect(nameOf('/Plan.md')).toBe('Plan.md')
+  })
+
+  test('a folder is split like anything else, trailing separator and all', () => {
+    expect(folderOf('ideas/deep')).toBe('ideas')
+    expect(nameOf('ideas/deep')).toBe('deep')
+    // A path written with the separator on the end names nothing; the folder it
+    // sits in is still the folder it sits in. No caller writes one.
+    expect(folderOf('ideas/deep/')).toBe('ideas/deep')
+    expect(nameOf('ideas/deep/')).toBe('')
+  })
 })
 
 describe('how a markdown link writes its way to a note', () => {

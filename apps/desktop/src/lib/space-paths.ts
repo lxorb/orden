@@ -45,6 +45,28 @@ export function insideSpace(root: string, relative: string): string {
   return joinPath(root, relative)
 }
 
+/** How long a path a store may keep. The service's limit, so nothing is kept
+ *  here that would be refused there. */
+const LONGEST_PATH = 300
+
+/** Whether a path names something inside its own space, which is what a store
+ *  keyed by path will keep.
+ *
+ *  The same reading the service does: a path on this disk, or one that climbs out
+ *  of the space, is not something any machine could resolve, so it is not
+ *  something to write down. Here rather than beside each store, because two of
+ *  them had the same five clauses word for word; see
+ *  services/sync/src/spaces/excluded.ts for the other end of it. */
+export function insideItsSpace(path: string): boolean {
+  return (
+    !!path &&
+    path.length <= LONGEST_PATH &&
+    !path.startsWith('/') &&
+    !path.includes('\\') &&
+    !path.split('/').includes('..')
+  )
+}
+
 /** An absolute path that arrived from outside the app, as a path inside one of
  *  these spaces - or null for one that is inside none of them.
  *
@@ -81,15 +103,29 @@ export function insideAnyOf(roots: readonly string[], said: string): string | nu
   return null
 }
 
-/** The folder a path sits in, or the empty string for one at the top. */
-export function folderOf(relative: string): string {
-  const at = relative.lastIndexOf('/')
-  return at === -1 ? '' : relative.slice(0, at)
+/** Where the last part of a path starts, counting either separator.
+ *
+ *  Both, so that the two halves of a path split the same way: a path inside a
+ *  space is written with slashes, and the same path on disk is written with
+ *  whatever the platform writes, which on Windows is backslashes. Asking about
+ *  only one of them gave a Windows row the whole path as its name.
+ *
+ *  Eight modules had written one of the pair below out again - four of them
+ *  word for word, and four of them with a different answer at the top of the
+ *  tree. */
+function cut(path: string): number {
+  return Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
 }
 
-/** The last part of a path. */
-export function nameOf(relative: string): string {
-  return relative.split('/').pop() ?? relative
+/** The folder a path sits in, or the empty string for one at the top - which is
+ *  the space's own root, said the way a relative path says it. */
+export function folderOf(path: string): string {
+  return path.slice(0, Math.max(0, cut(path)))
+}
+
+/** The last part of a path: a file's name, or a folder's. */
+export function nameOf(path: string): string {
+  return path.slice(cut(path) + 1)
 }
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i

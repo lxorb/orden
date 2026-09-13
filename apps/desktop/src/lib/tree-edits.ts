@@ -13,23 +13,8 @@
  *  filesystem: they are what the tree would look like if the operation
  *  succeeded, which it usually does. */
 
+import { folderOf, nameOf } from './space-paths'
 import type { Entry, SortKey, TreeOptions } from './workspace.svelte'
-
-/** Where the last part of a path starts. Either separator: a row's path is the
- *  disk's own, and on Windows that is backslashes, while the browser build's is
- *  slashes. Asking about only one of them gave a Windows row the whole path as its
- *  name. */
-function cut(path: string): number {
-  return Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
-}
-
-function basename(path: string): string {
-  return path.slice(cut(path) + 1)
-}
-
-function folderOf(path: string): string {
-  return path.slice(0, Math.max(0, cut(path)))
-}
 
 /** Whether `path` names something inside the folder at `base`, at any depth. */
 function under(base: string, path: string): boolean {
@@ -105,7 +90,7 @@ function rebased(entry: Entry, from: string, to: string): Entry {
   return {
     ...entry,
     path,
-    name: basename(path),
+    name: nameOf(path),
     children: entry.children.map((child) => rebased(child, from, to)),
   }
 }
@@ -148,7 +133,7 @@ function withFolders(tree: Entry, path: string, options: TreeOptions): Entry {
 
 function blank(path: string, isFolder: boolean): Entry {
   return {
-    name: basename(path),
+    name: nameOf(path),
     path,
     is_dir: isFolder,
     modified: 0,

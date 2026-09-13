@@ -22,7 +22,8 @@ import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
-import { invoke } from '../tauri'
+import { relativeTo } from '../space-paths'
+import { invoke, joinPath } from '../tauri'
 import { isUntouchedWelcome } from '../welcome'
 import { type Clash, type ConflictRule, conflictPath, DEFAULT_RULE } from './conflicts'
 import type { Entry } from '../workspace.svelte'
@@ -72,18 +73,6 @@ function hex(digest: ArrayBuffer): string {
 
 async function sha256(text: string): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))
-}
-
-function join(root: string, path: string): string {
-  const separator = root.includes('\\') ? '\\' : '/'
-  return `${root}${separator}${path.split('/').join(separator)}`
-}
-
-function relative(root: string, absolute: string): string {
-  return absolute
-    .slice(root.length)
-    .replace(/^[\\/]+/, '')
-    .replace(/\\/g, '/')
 }
 
 /** A file's path as the account names it - relative to the space's folder, with
@@ -277,7 +266,7 @@ export async function pull(
     waiting?.listed?.(
       page.notes
         .filter((one) => !one.deleted && placeable(one.path))
-        .map((one) => join(root, one.path)),
+        .map((one) => joinPath(root, one.path)),
     )
 
     for (const remote of ordered(page.notes, waiting?.wanted)) {
@@ -285,7 +274,7 @@ export async function pull(
       // `placeable`.
       if (!placeable(remote.path)) continue
 
-      const target = join(root, remote.path)
+      const target = joinPath(root, remote.path)
 
       if (remote.deleted) {
         if (mirror.notes[remote.path]) {
@@ -437,7 +426,7 @@ export async function push(
   if (await pushFiles(mirror, root, listed, token)) moved = true
 
   for (const file of listed.filter((one) => !isPdfTarget(one.name))) {
-    const path = relative(root, file.path)
+    const path = relativeTo(root, file.path)
     seen.add(path)
 
     // A note whose two copies are still waiting for an answer stays where it is,
@@ -512,7 +501,7 @@ async function pushFiles(
   const manifest: SpaceFile[] = []
 
   for (const file of listed) {
-    const path = relative(root, file.path)
+    const path = relativeTo(root, file.path)
     if (!isPdfTarget(file.name) && !dressesTheSite(path)) continue
 
     const tracked = mirror.files[path]
@@ -538,7 +527,7 @@ async function pushFiles(
       if (!wanted.has(file.hash)) continue
 
       const bytes = await invoke<ArrayBuffer>('read_file', {
-        path: join(root, file.path),
+        path: joinPath(root, file.path),
       }).catch(() => null)
       if (bytes) await api.putBlob(token, file.hash, contentTypeOf(file.path), bytes)
     }
@@ -647,7 +636,7 @@ async function keepBoth(
   const theirs = isRecord(server.note) ? server.note : null
   if (typeof theirs?.version !== 'number') return
 
-  const here = join(mirror.root, path)
+  const here = joinPath(mirror.root, path)
   const sent = isString(server.content) ? server.content : ''
   const ours = await invoke<string>('read_note', { path: here })
 

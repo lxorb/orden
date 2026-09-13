@@ -21,6 +21,7 @@ import { sourcesFrom, tooMuch, type Picked, type Source } from './import/sources
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
+import { relativeTo } from './space-paths'
 import { invoke, isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -229,7 +230,7 @@ class Importing {
       (one) => into === one.root || into.startsWith(`${one.root}/`),
     )
     this.root = space?.root ?? this.root
-    this.under = space && into !== space.root ? relativeFolder(space.root, into) : ''
+    this.under = space && into !== space.root ? relativeTo(space.root, into) : ''
   }
 
   /** Writes it. */
@@ -333,13 +334,6 @@ function stemOf(picked: Picked): string {
   const first = path.split('/').find(Boolean) ?? ''
 
   return first.replace(/\.[^.]+$/, '')
-}
-
-function relativeFolder(root: string, path: string): string {
-  return path
-    .slice(root.length)
-    .replace(/^[\\/]+/, '')
-    .replace(/\\/g, '/')
 }
 
 export const importing = new Importing()

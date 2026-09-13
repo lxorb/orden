@@ -13,7 +13,7 @@
 
 import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
-import { folderOf } from './tauri'
+import { folderOf } from './space-paths'
 import { workspace } from './workspace.svelte'
 
 /** Which key the space's map is asked under. For `A/A.md` that is `A/`, because

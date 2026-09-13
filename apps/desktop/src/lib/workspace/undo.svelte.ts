@@ -36,13 +36,11 @@ export type FileAction =
    *  snapshot kept of it. */
   | { kind: 'import'; paths: string[] }
 
+import { nameOf } from '../space-paths'
+
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
 const KEPT = 20
-
-function basename(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path
-}
 
 export class FileActions {
   /** Newest last. Read by the tree's menu and by the trash, which drops an
@@ -84,17 +82,17 @@ export class FileActions {
 
     switch (action.kind) {
       case 'move':
-        return t('Undo moving {name}', { name: basename(action.to) })
+        return t('Undo moving {name}', { name: nameOf(action.to) })
       case 'rename':
-        return t('Undo renaming {name}', { name: basename(action.to) })
+        return t('Undo renaming {name}', { name: nameOf(action.to) })
       case 'delete':
-        return t('Undo deleting {name}', { name: basename(action.path) })
+        return t('Undo deleting {name}', { name: nameOf(action.path) })
       case 'merge':
-        return t('Undo merging {name}', { name: basename(action.from) })
+        return t('Undo merging {name}', { name: nameOf(action.from) })
       case 'split':
-        return t('Undo splitting {name}', { name: basename(action.from) })
+        return t('Undo splitting {name}', { name: nameOf(action.from) })
       case 'extract':
-        return t('Undo extracting from {name}', { name: basename(action.from) })
+        return t('Undo extracting from {name}', { name: nameOf(action.from) })
       case 'replace':
         return t('Undo the replacement')
       case 'import':

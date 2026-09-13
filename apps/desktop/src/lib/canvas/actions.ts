@@ -49,7 +49,7 @@ import { storeImage } from '../assets'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
-import { insideSpace, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, relativeTo } from '../space-paths'
 import { openExternal } from '../tauri'
 import { workspace } from '../workspace.svelte'
 
@@ -334,7 +334,7 @@ export const run = {
     if (node?.type !== 'text' || !node.text.trim()) return
 
     const root = workspace.activeSpace?.root
-    const folder = canvasPath === null ? root : folderOfPath(canvasPath)
+    const folder = canvasPath === null ? root : folderOf(canvasPath)
     const path = await workspace.noteFrom(node.text, folder ?? undefined)
     if (!path || !root) return
 
@@ -468,11 +468,6 @@ export interface KeyView {
   name: string
   palette: Palette
   onfind: () => void
-}
-
-function folderOfPath(path: string): string {
-  const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
-  return at > 0 ? path.slice(0, at) : path
 }
 
 function spanOf(canvas: Canvas) {

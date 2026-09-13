@@ -26,7 +26,7 @@
  *  Windows. `nib:bookmarks` is this store's twin in every respect, down to
  *  remembering which account a space's map has been folded into. */
 
-import { relativeTo } from '../space-paths'
+import { insideItsSpace, relativeTo } from '../space-paths'
 import { isRecord, isString, keep, stored } from '../stored'
 import { without, withOrWithout } from '../records'
 
@@ -40,9 +40,8 @@ export const STORAGE_KEY = 'nib:folder-icons'
  *  there. */
 export const MOST_FOLDER_ICONS = 400
 
-/** How long a folder's path and an icon's name may be. The service's limits, so
- *  nothing is kept here that would be refused there. */
-const LONGEST_PATH = 300
+/** How long an icon's name may be. The service's limit, so nothing is kept here
+ *  that would be refused there; the path's own limit is `insideItsSpace`. */
 const LONGEST_NAME = 64
 
 /** How long after the last choice the account is told, in milliseconds. The number
@@ -54,19 +53,6 @@ const LONGEST_NAME = 64
  *  it. */
 const SETTLING = 700
 
-/** Whether a key names a folder inside its own space. The same reading the
- *  service does: a path on this disk, or one that climbs out of the space, is not
- *  something any machine could resolve. */
-function insideSpace(path: string): boolean {
-  return (
-    !!path &&
-    path.length <= LONGEST_PATH &&
-    !path.startsWith('/') &&
-    !path.includes('\\') &&
-    !path.split('/').includes('..')
-  )
-}
-
 /** The map in an unknown, with whatever is not a folder and an icon left out.
  *  Written by a newer build, by an older one, or by hand: what reads as a pair is
  *  kept and the rest is dropped, the way every other store here reads itself. */
@@ -76,7 +62,7 @@ export function folderIconMap(value: unknown): Record<string, string> {
   const out: Record<string, string> = {}
   for (const [path, name] of Object.entries(value)) {
     if (Object.keys(out).length >= MOST_FOLDER_ICONS) break
-    if (!insideSpace(path) || !isString(name)) continue
+    if (!insideItsSpace(path) || !isString(name)) continue
 
     const said = name.trim()
     if (said && said.length <= LONGEST_NAME) out[path] = said
@@ -206,7 +192,7 @@ export class FolderIcons {
     if (root === null) return
 
     const at = relativeTo(root, path)
-    if (!insideSpace(at)) return
+    if (!insideItsSpace(at)) return
 
     const held = this.of(root)
     const colour = name === null ? null : tint

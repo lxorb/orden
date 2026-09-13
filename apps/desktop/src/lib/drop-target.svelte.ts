@@ -15,8 +15,7 @@
  *  that is the space below the last row; see Sidebar.svelte. */
 
 import { folderFor } from './folder-notes'
-import { isMarkdownPath } from './space-paths'
-import { folderOf } from './tauri'
+import { folderOf, isMarkdownPath } from './space-paths'
 
 /** The folder a row stands for: a folder is itself, a note is the folder it would
  *  become, and any other file is the folder it sits in.
