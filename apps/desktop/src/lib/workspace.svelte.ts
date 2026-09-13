@@ -17,7 +17,6 @@ import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
-import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
@@ -29,7 +28,7 @@ import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
-import { isUntouchedWelcome, WELCOME_PATH } from './welcome'
+import { WELCOME_PATH } from './welcome'
 import {
   type Draft,
   frameDraft,
@@ -59,6 +58,7 @@ import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import * as composing from './workspace/composing'
+import * as spaces from './workspace/spaces'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { undoLastFileAction } from './workspace/undoing'
@@ -116,7 +116,15 @@ export type PanelSide = 'left' | 'right'
  *  No folder among them. A note that holds notes is how a space is organised, so
  *  the folders on disk are made by nesting and by nothing else; see
  *  folder-notes.ts and docs/tree.md. */
-type NewKind = 'note' | 'canvas' | 'pages'
+export type NewKind = 'note' | 'canvas' | 'pages'
+
+/** A row of the file list waiting for a name, or a space's own name in the header
+ *  being typed. One at a time, whichever it is; see `startNaming`. */
+export interface Naming {
+  path: string
+  appending: boolean
+  making: NewKind | null
+}
 
 /** What a row of each kind is called while it has no name: never shown, since
  *  the field it arrives in is empty, but the row is in the tree and the tree is
@@ -243,7 +251,7 @@ class Workspace {
    *
    *  The space's name in the header takes the same field, held under the space's
    *  root, because it is the same gesture on the same kind of name. */
-  naming = $state<{ path: string; appending: boolean; making: NewKind | null } | null>(null)
+  naming = $state<Naming | null>(null)
   treeOptions = $state<TreeOptions>(readTreeOptions())
   /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
@@ -1311,261 +1319,59 @@ class Workspace {
     }
   }
 
-  /** Reads the spaces folder. It is the source of truth, so a space added or
-   *  removed outside the app simply shows up that way. */
+  /** Reads the spaces folder, which is the truth about which spaces exist; see
+   *  workspace/spaces. */
   async loadSpaces() {
-    const found = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => [])
-
-    // Ids are kept across a reload so the selected space survives one.
-    const byRoot = new Map(this.spaces.map((space) => [space.root, space]))
-
-    // The folder decides which spaces exist; the account decides the order they
-    // appear in. Without this, a listing that comes back alphabetical would
-    // undo every move on the next reload.
-    const rank = new Map(this.spaces.map((space, index) => [space.root, index]))
-    const at = (root: string) => rank.get(root) ?? Number.MAX_SAFE_INTEGER
-
-    this.spaces = found
-      .map((entry, index) => ({ entry, index }))
-      .sort((a, b) => at(a.entry.path) - at(b.entry.path) || a.index - b.index)
-      .map(
-        ({ entry }) =>
-          byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path },
-      )
-
-    if (!this.spaces.some((space) => space.id === this.activeSpaceId)) {
-      this.activeSpaceId = this.spaces[0]?.id ?? null
-    }
-
-    // Pins became bookmarks, and a pin is a path this machine wrote down, so
-    // the spaces have to be known before it can be said which space it was in.
-    // Runs itself once and then has nothing left to read.
-    this.bookmarks.migrate(this.spaces.map((space) => space.root))
+    await spaces.loadSpaces(this)
   }
 
-  /** Creates a space folder under the one the app owns. The name is the only
-   *  thing asked for; where it lives is not a decision worth making. */
-  /** A space the account has that this machine does not. Makes the folder and
-   *  lists it, but does not switch to it: adopting someone else's space in the
-   *  background should not move what is on screen out from under the writer.
-   *  Unless nothing is on screen - a machine that has just erased its notes,
-   *  or never had any, would otherwise list the account's spaces and show
-   *  none of them. */
+  /** A space the account has that this machine does not. */
   async adoptSpace(name: string, fresh = false): Promise<string | null> {
-    // `fresh` is a space that must have a folder of its own even though one of
-    // that name is already here: two spaces can be called the same thing once
-    // one of them is somebody else's. The folder is then numbered, which is
-    // what create_space does with a name that is taken.
-    const existing = fresh ? undefined : this.spaces.find((space) => space.name === name)
-    if (existing) return existing.root
-
-    const created = await invoke<{ name: string; path: string }>('create_space', {
-      name: name.trim(),
-    }).catch(() => null)
-
-    if (!created) return null
-
-    if (!this.spaces.some((space) => space.root === created.path)) {
-      const space: Space = { id: identifier(), name: created.name, root: created.path }
-      this.spaces = [...this.spaces, space]
-
-      if (this.activeSpaceId) this.persist()
-      else await this.selectSpace(space.id)
-    }
-
-    return created.path
+    return spaces.adoptSpace(this, name, fresh)
   }
 
+  /** Creates a space folder under the one the app owns, and opens it. */
   async addSpace(name: string) {
-    if (!name.trim()) return
-
-    const created = await invoke<{ name: string; path: string }>('create_space', {
-      name: name.trim(),
-    }).catch(() => null)
-
-    if (!created) return
-
-    const space: Space = { id: identifier(), name: created.name, root: created.path }
-    this.spaces = [...this.spaces, space]
-    await this.selectSpace(space.id)
-    return space
+    return spaces.addSpace(this, name)
   }
 
   async renameSpace(id: string, name: string) {
-    const space = this.spaces.find((entry) => entry.id === id)
-    if (!space || !name.trim()) return
-
-    // The field in the header is done with, whatever the folder answers: it is
-    // held under the root, and the root is what is about to change.
-    this.naming = null
-
-    const renamed = await invoke<{ name: string; path: string }>('rename_space', {
-      from: space.root,
-      name: name.trim(),
-    }).catch(() => null)
-
-    if (!renamed) return
-
-    // Open notes point into the old folder, so move them with it.
-    for (const note of this.documents) {
-      if (note.path?.startsWith(space.root)) {
-        note.path = renamed.path + note.path.slice(space.root.length)
-      }
-    }
-
-    // The icon is keyed by folder, so it has to follow the folder - and the
-    // folder icons inside it are kept under the root, so they follow it too.
-    this.device.moveIcon(space.root, renamed.path)
-    this.folderIcons.spaceMoved(space.root, renamed.path)
-    this.graphSettings.spaceMoved(space.root, renamed.path)
-    this.excluded.spaceMoved(space.root, renamed.path)
-
-    space.name = renamed.name
-    space.root = renamed.path
-    if (this.activeSpaceId === id) await this.loadTree()
-    this.persist()
+    await spaces.renameSpace(this, id, name)
   }
 
   /** Drops the dragged space in front of `beforeId`, or at the end for null.
-   *  Returns whether anything actually moved, so a drag onto itself is quiet. */
+   *  Answers whether anything actually moved, so a drag onto itself is quiet. */
   moveSpace(id: string, beforeId: string | null): boolean {
-    const moving = this.spaces.find((space) => space.id === id)
-    if (!moving || id === beforeId) return false
-
-    const rest = this.spaces.filter((space) => space.id !== id)
-    const at = beforeId ? rest.findIndex((space) => space.id === beforeId) : rest.length
-    if (at < 0) return false
-
-    const next = [...rest.slice(0, at), moving, ...rest.slice(at)]
-    if (this.sameOrder(next)) return false
-
-    this.spaces = next
-    this.persist()
-    return true
+    return spaces.moveSpace(this, id, beforeId)
   }
 
-  /** Whether a proposed order is the one already on show, so a drag that ends
-   *  where it started, or an account order that matches, stays quiet. */
-  private sameOrder(next: readonly Space[]): boolean {
-    return next.every((space, index) => space.id === this.spaces[index]?.id)
-  }
-
-  /** Takes the account's order, which is the one the other machines see.
-   *  A space this machine has but the account does not keeps its place. */
+  /** Takes the account's order, which is the one the other machines see. */
   applySpaceOrder(names: string[]): boolean {
-    const rank = new Map(names.map((name, index) => [name, index]))
-    const at = (name: string) => rank.get(name) ?? Number.MAX_SAFE_INTEGER
-
-    const next = this.spaces
-      .map((space, index) => ({ space, index }))
-      .sort((a, b) => at(a.space.name) - at(b.space.name) || a.index - b.index)
-      .map((entry) => entry.space)
-
-    if (this.sameOrder(next)) return false
-
-    this.spaces = next
-    this.persist()
-    return true
+    return spaces.applySpaceOrder(this, names)
   }
 
   async selectSpace(id: string) {
-    this.activeSpaceId = id
-    this.clearSelection()
-    await this.loadTree()
-    this.persist()
+    await spaces.selectSpace(this, id)
   }
 
-  /** The switcher's way in. Picking a space with the sidebar closed showed
-   *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it. */
+  /** The switcher's way in: the space, and the sidebar it is read in. */
   async showSpace(id: string) {
-    this.panel ??= 'tree'
-    await this.selectSpace(id)
+    await spaces.showSpace(this, id)
   }
 
-  /** True as soon as one note on this machine has something written in it.
-   *  Stops at the first, so a large space costs no more than a small one. */
+  /** True as soon as one note on this machine has something written in it. */
   async hasLocalContent(): Promise<boolean> {
-    for (const note of this.notes) {
-      const doc = await invoke<string>('read_note', { path: note.path }).catch(() => '')
-      if (!doc.trim()) continue
-
-      // The welcome note exactly as the app wrote it is not writing, and the
-      // question this answers is about writing: syncing already refuses to carry
-      // an untouched seed up (sync/mirror.ts), so keeping it joins nothing to the
-      // account and erasing it throws away nothing anybody wrote. Asked, it would
-      // be the first thing a new reader ever sees - a warning that cannot be
-      // undone, about the only note on screen. See welcome.ts and settling.ts.
-      if (isUntouchedWelcome(note.path, doc)) continue
-
-      return true
-    }
-
-    return false
+    return spaces.hasLocalContent(this)
   }
 
-  /** Removes every space on this machine. Only ever called with an explicit
-   *  yes, since nothing here can be undone. */
+  /** Removes every space on this machine. Only ever called with an explicit yes. */
   async eraseLocalSpaces() {
-    for (const space of [...this.spaces]) {
-      await invoke('delete_space', { path: space.root }).catch(() => undefined)
-    }
-
-    for (const tab of [...this.tabs]) this.close(tab.id)
-
-    this.tree = null
-    // `loadSpaces` settles which space is open from what the folder still
-    // holds: none, once they have all gone, or one another window made
-    // meanwhile. It does not need to be cleared here first.
-    await this.loadSpaces()
-    if (this.activeSpaceId) await this.loadTree()
-
-    // What the account holds lands in the tree, so the tree is brought up to
-    // show it arriving. A blank page with no sign of anything on its way
-    // reads as the notes being gone for good.
-    this.panel = 'tree'
-    this.persist()
+    await spaces.eraseLocalSpaces(this)
   }
 
-  /** Deletes the space's folder. The app owns that folder, so dropping it from
-   *  the list alone would only bring it back on the next launch. */
-  /** `keep` puts the folder in this device's trash instead of deleting it, for
-   *  a space that is in nobody's Recently deleted to be put back from - which
-   *  is what a space somebody stopped sharing is. */
+  /** Deletes the space's folder, or puts it in this device's trash. */
   async deleteSpace(id: string, keep = false) {
-    const space = this.spaces.find((entry) => entry.id === id)
-    if (!space) return
-
-    {
-      // The account keeps a deleted space for 14 days; signed out, this device
-      // keeps it in its trash folder instead (see trash.svelte.ts).
-      const gone = await (
-        account.signedIn && !keep
-          ? invoke('delete_space', { path: space.root })
-          : invoke('trash_item', { path: space.root, kind: 'space' })
-      )
-        .then(() => true)
-        .catch(() => false)
-
-      if (!gone) return
-    }
-
-    for (const tab of this.tabs.filter((tab) => tab.path?.startsWith(space.root))) {
-      this.close(tab.id)
-    }
-
-    this.folderIcons.forget(space.root)
-    this.graphSettings.forget(space.root)
-    this.excluded.forget(space.root)
-    this.spaces = this.spaces.filter((entry) => entry.id !== id)
-    if (this.activeSpaceId !== id) {
-      this.persist()
-      return
-    }
-
-    this.activeSpaceId = this.spaces[0]?.id ?? null
-    this.tree = null
-    if (this.activeSpaceId) await this.selectSpace(this.activeSpaceId)
-    else this.persist()
+    await spaces.deleteSpace(this, id, keep)
   }
 
   async loadTree() {
