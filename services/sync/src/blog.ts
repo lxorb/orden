@@ -1030,11 +1030,40 @@ async function takeAnswer(
   return back(`${where}?sent=${encodeURIComponent(note.id)}`)
 }
 
+/** A published space, served.
+ *
+ *  The site is read here rather than inside, because one question about it is
+ *  asked of every answer rather than of one: a site behind a password is nobody's
+ *  to keep. Every page of one is `private, no-store`, whatever the page it came
+ *  from said - the gate itself already said so, and the pages behind it are the
+ *  ones worth protecting. Said once, out here, because a page that forgot it would
+ *  be a page a shared cache hands to the next reader with no password at all: a
+ *  proxy, a cache rule on the zone, a browser profile two people use. `Vary:
+ *  Cookie` would be the other half of the same thing; `no-store` needs no half.
+ *
+ *  A site with no password - which is every site until somebody sets one - is
+ *  served exactly as it was, cached for a minute at the edge. */
 export async function serveBlog(
   env: Env,
   space: Space,
   url: URL,
   request: Request,
+): Promise<Response> {
+  const site = readSite(space.site)
+  const answer = await served(env, space, url, request, site)
+  if (!site.password) return answer
+
+  const headers = new Headers(answer.headers)
+  headers.set('cache-control', 'private, no-store')
+  return new Response(answer.body, { status: answer.status, headers })
+}
+
+async function served(
+  env: Env,
+  space: Space,
+  url: URL,
+  request: Request,
+  site: Site,
 ): Promise<Response> {
   // The stylesheets and the script, first of all: they are the same bytes
   // whatever the space, they are asked for by every page of every blog, and
@@ -1049,7 +1078,6 @@ export async function serveBlog(
   const wanted = MATH_FONTS[url.pathname]
   if (wanted) return face(wanted)
 
-  const site = readSite(space.site)
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
   /** Whether the reader asked for the note as a talk rather than as a page. */

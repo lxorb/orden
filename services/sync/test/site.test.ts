@@ -455,6 +455,26 @@ describe('a site behind a password', () => {
     const read = await page('/plan', { headers: { cookie: ticket } })
     expect(read.status).toBe(200)
     expect(read.text).toContain('Words.')
+
+    // And the page behind the password is that reader's own to hold: a shared
+    // cache that kept it would hand it to the next reader with no password at all.
+    expect(read.headers.get('cache-control')).toBe('private, no-store')
+  })
+
+  /** Every answer on a site behind a password, not only the gate: the feed and the
+   *  sitemap are the site's words too. */
+  test('and nothing a site behind a password answers is a shared cache’s', async () => {
+    const answer = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+
+    for (const path of ['/', '/plan', '/feed.xml', '/sitemap.xml', '/search?q=words']) {
+      const read = await page(path, { headers: { cookie: ticket } })
+      expect(read.headers.get('cache-control'), path).toBe('private, no-store')
+    }
   })
 
   test('a ticket somebody made up opens nothing', async () => {

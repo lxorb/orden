@@ -292,7 +292,10 @@ because whoever sent the address said that. It is the one page in nib that may
 post anything anywhere, and the policy says so in as many words:
 `form-action 'self'` on that page and `'none'` on every other. It carries
 `noindex`, and nothing behind it is ever cached by anything but the reader's own
-browser.
+browser: `private, no-store` on every answer a site with a password gives - the
+pages, the feed, the sitemap, a search - set once in `serveBlog` rather than by
+each page, because a page that forgot it would be a page a shared cache hands to
+the next reader with no password at all.
 
 See `blog/gate.ts`.
 
