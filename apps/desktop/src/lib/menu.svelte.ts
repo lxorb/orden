@@ -1,4 +1,5 @@
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -8,18 +9,10 @@ import { isMarkdownPath } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
-export interface MenuItem {
-  label: string
-  /** Undefined where the entry has no key bound to it. */
-  hint?: string | undefined
-  danger?: boolean
-  disabled?: boolean
-  run: () => void
-}
-
-/** A separator between groups. */
-export const DIVIDER = null
-export type MenuEntry = MenuItem | typeof DIVIDER
+// What a row is, and the rule between groups, are the app's own rather than this
+// menu's; see menu-item.ts. Re-exported because every caller of this store reaches
+// for them in the same breath as `menu`.
+export { DIVIDER, type MenuEntry, type MenuItem } from './menu-item'
 
 /** How a phone shows the menu. A desktop ignores both: there it is always a
  *  popover at the pointer. */

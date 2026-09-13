@@ -2,7 +2,8 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT, walkableRows } from './app-menu'
+  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, walkableRows } from './app-menu'
+  import { DIVIDER } from './menu-item'
   import { closeOnBack } from './backstack.svelte'
   import { steppedKey } from './direction'
   import { overlays } from './overlays'
@@ -99,7 +100,7 @@
     const label = into
     into = null
 
-    const led = rows.findIndex((row) => row !== SPLIT && isSubmenu(row) && row.label === label)
+    const led = rows.findIndex((row) => row !== DIVIDER && isSubmenu(row) && row.label === label)
     const found = walkable.indexOf(led)
     at = found < 0 ? null : found
   }
@@ -122,7 +123,7 @@
     }
 
     const row = rows[cursor]
-    if (row === undefined || row === SPLIT) return
+    if (row === undefined || row === DIVIDER) return
     if (isSubmenu(row)) {
       enter(row.label, true)
       return
@@ -290,8 +291,8 @@
       {#each rows as row, index (index)}
         <!-- Named apart so each branch has the shape it draws: the markup cannot
              read a type guard's other half. -->
-        {@const leads = row !== SPLIT && isSubmenu(row) ? row : null}
-        {@const action = row !== SPLIT && !isSubmenu(row) ? row : null}
+        {@const leads = row !== DIVIDER && isSubmenu(row) ? row : null}
+        {@const action = row !== DIVIDER && !isSubmenu(row) ? row : null}
 
         {#if leads}
           <li>

@@ -37,6 +37,7 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
+import type { MenuItem } from './menu-item'
 import type { Exportable } from './export/formats'
 import { look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
@@ -301,19 +302,12 @@ async function openThemesFolder() {
   await theme.reload()
 }
 
-export interface Command {
+/** A row of the palette: a menu row with a name of its own, which is what a
+ *  shortcut is bound to and what the toolbar remembers. Everything else about it -
+ *  the label, the hint, the tick, the greying out - is what a row is anywhere; see
+ *  menu-item.ts, which is why the app menu can pass one straight through. */
+export interface Command extends MenuItem {
   id: string
-  label: string
-  /** The key that runs it, when it has one. `shortcuts.hint` answers
-   *  undefined for an unbound command, so undefined is a real value here. */
-  hint?: string | undefined
-  /** Whether this row is the one already in force: the theme in use, the accent
-   *  it is drawn in. A tick, the same one the menu rows carry. */
-  checked?: boolean
-  disabled?: boolean
-  // A property rather than a method, so a caller may hand the function on -
-  // the app menu passes an export row straight through as a row of its own.
-  run: () => void
 }
 
 /** Splitting, moving between panes, and closing one. Left out entirely on a

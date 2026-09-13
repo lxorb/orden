@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { MenuAction, MenuGroup, MenuRow } from './app-menu'
+import type { MenuGroup, MenuRow } from './app-menu'
+import type { MenuItem } from './menu-item'
 import { de } from '../locales/de'
 
 /** The stores write to the browser's storage and ask the browser what kind of
@@ -43,8 +44,8 @@ function rows(id: string): MenuRow[] {
   return group(id).rows.filter((row) => row !== null)
 }
 
-function actions(id: string): MenuAction[] {
-  return rows(id).filter((row): row is MenuAction => row !== null && !isSubmenu(row))
+function actions(id: string): MenuItem[] {
+  return rows(id).filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
 
 const labels = (id: string): string[] => actions(id).map((row) => row.label)
@@ -273,7 +274,7 @@ describe('the palette in another language', () => {
 })
 
 describe('where a key may stand in a menu', () => {
-  const act = (label: string, disabled = false): MenuAction => ({
+  const act = (label: string, disabled = false): MenuItem => ({
     label,
     disabled,
     run: () => undefined,

@@ -29,6 +29,7 @@ import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
+import { DIVIDER, type MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
@@ -50,15 +51,6 @@ export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
 export const ISSUES_URL = `${SOURCE_URL}/issues`
 export const RELEASES_URL = `${SOURCE_URL}/releases`
 
-export interface MenuAction {
-  label: string
-  /** Undefined where the action has no key bound to it. */
-  hint?: string | undefined
-  checked?: boolean
-  disabled?: boolean
-  run: () => void
-}
-
 /** A row that opens rows of its own: Export under File, whose list is a dozen
  *  formats and belongs behind one word rather than in front of it. */
 export interface MenuSubmenu {
@@ -67,13 +59,14 @@ export interface MenuSubmenu {
   rows: MenuRow[]
 }
 
-/** A rule between groups of actions. */
-export const SPLIT = null
-export type MenuRow = MenuAction | MenuSubmenu | typeof SPLIT
+/** A row of this menu: one of the app's own rows, one that leads to more, or the
+ *  rule between groups. What a row is, is menu-item.ts - the same shape a row's own
+ *  menu and the palette are lists of. */
+export type MenuRow = MenuItem | MenuSubmenu | typeof DIVIDER
 
 /** Whether a row leads to more rows. */
 export function isSubmenu(row: MenuRow): row is MenuSubmenu {
-  return row !== SPLIT && 'rows' in row
+  return row !== DIVIDER && 'rows' in row
 }
 
 /** Which of a list's rows a key may stand on, as places in the list.
@@ -85,7 +78,7 @@ export function isSubmenu(row: MenuRow): row is MenuSubmenu {
 export function walkableRows(rows: readonly MenuRow[]): number[] {
   const out: number[] = []
   for (const [index, row] of rows.entries()) {
-    if (row !== SPLIT && !row.disabled) out.push(index)
+    if (row !== DIVIDER && !row.disabled) out.push(index)
   }
 
   return out
@@ -119,7 +112,7 @@ function exportRows(): MenuRow[] {
 
   for (const command of exportCommands()) {
     const kind = formats.has(command.id) ? 'format' : variants.has(command.id) ? 'variant' : 'rest'
-    if (last !== null && kind !== last) rows.push(SPLIT)
+    if (last !== null && kind !== last) rows.push(DIVIDER)
     last = kind
 
     rows.push({
@@ -161,7 +154,7 @@ export function appMenu(context: Context): MenuGroup[] {
 
   /** A row that edits the note, named by the shortcut it carries so the key and
    *  the row can never say different things. */
-  const edit = (id: string, label: string, command: StateCommand): MenuAction => ({
+  const edit = (id: string, label: string, command: StateCommand): MenuItem => ({
     label,
     hint: shortcuts.hint(id),
     disabled: !writable,
@@ -175,10 +168,10 @@ export function appMenu(context: Context): MenuGroup[] {
   }
 
   /** Rows for the blocks named, in the order they are named, out of the one list
-   *  the palette and the editor's `/` menu read too. A `Command` is a `MenuAction`
+   *  the palette and the editor's `/` menu read too. A `Command` is a `MenuItem`
    *  with an id on it, so only the id comes off. */
   const written = blockCommands(view)
-  const blocks = (...ids: string[]): MenuAction[] =>
+  const blocks = (...ids: string[]): MenuItem[] =>
     ids.flatMap((id) => {
       const found = written.find((one) => one.id === id)
       if (!found) return []
@@ -217,7 +210,7 @@ export function appMenu(context: Context): MenuGroup[] {
               },
             ]
           : []),
-        SPLIT,
+        DIVIDER,
         {
           label: t('Save'),
           hint: shortcuts.hint('app.save'),
@@ -233,7 +226,7 @@ export function appMenu(context: Context): MenuGroup[] {
             if (path) workspace.startRenaming(path)
           },
         },
-        SPLIT,
+        DIVIDER,
         // Export is one word here and a dozen rows behind it. It used to be a
         // menu of its own beside File, which put the formats a note goes out as
         // in the same strip as File, Edit and View - and a person looking for
@@ -251,10 +244,10 @@ export function appMenu(context: Context): MenuGroup[] {
               },
             ]
           : []),
-        SPLIT,
+        DIVIDER,
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
         { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Close note'),
           hint: shortcuts.hint('app.close'),
@@ -286,7 +279,7 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: () => view && redoEdit(view),
         },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Cut'),
           hint: shortcuts.hint('fixed.cut'),
@@ -314,14 +307,14 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: onView(pastePlain),
         },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Select all'),
           hint: shortcuts.hint('edit.select-all'),
           disabled: !view,
           run: () => view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
         },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Find'),
           hint: shortcuts.hint('edit.find'),
@@ -352,7 +345,7 @@ export function appMenu(context: Context): MenuGroup[] {
         ...blocks('paragraph.heading-1', 'paragraph.heading-2', 'paragraph.heading-3'),
         ...blocks('paragraph.heading-4', 'paragraph.heading-5', 'paragraph.heading-6'),
         ...blocks('paragraph.body', 'paragraph.heading-up', 'paragraph.heading-down'),
-        SPLIT,
+        DIVIDER,
         ...blocks(
           'paragraph.table',
           'paragraph.code-block',
@@ -360,9 +353,9 @@ export function appMenu(context: Context): MenuGroup[] {
           'paragraph.math-block',
           'paragraph.callout',
         ),
-        SPLIT,
+        DIVIDER,
         ...blocks('paragraph.bullet-list', 'paragraph.ordered-list', 'paragraph.task-list'),
-        SPLIT,
+        DIVIDER,
         ...blocks(
           'picture',
           // The microphone, beside the picture: both put something of the reader's own
@@ -373,7 +366,7 @@ export function appMenu(context: Context): MenuGroup[] {
           'paragraph.toc',
           'paragraph.front-matter',
         ),
-        SPLIT,
+        DIVIDER,
         // A new slide is a rule with a blank line above it, which is what breaks
         // a deck into its next one; see packages/markdown/src/slides.ts.
         ...blocks('paragraph.rule', 'slide-break', 'page-break'),
@@ -426,7 +419,7 @@ export function appMenu(context: Context): MenuGroup[] {
             },
           })),
         },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Code'),
           hint: shortcuts.hint('format.code'),
@@ -436,7 +429,7 @@ export function appMenu(context: Context): MenuGroup[] {
         { label: t('Inline math'), disabled: !writable, run: () => run(view, toggleWrap('$')) },
         { label: t('Superscript'), disabled: !writable, run: () => run(view, toggleWrap('^')) },
         { label: t('Subscript'), disabled: !writable, run: () => run(view, toggleWrap('~')) },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Link'),
           hint: shortcuts.hint('format.link'),
@@ -444,7 +437,7 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => run(view, insertLink),
         },
         edit('format.comment', t('Comment'), insertComment),
-        SPLIT,
+        DIVIDER,
         {
           label: t('Clear formatting'),
           hint: shortcuts.hint('format.clear'),
@@ -463,7 +456,7 @@ export function appMenu(context: Context): MenuGroup[] {
           hint: shortcuts.hint('app.palette'),
           run: () => context.onpalette(),
         },
-        SPLIT,
+        DIVIDER,
         {
           label: t('Reading'),
           hint: shortcuts.hint('app.reading'),
@@ -521,7 +514,7 @@ export function appMenu(context: Context): MenuGroup[] {
               },
             ]
           : []),
-        SPLIT,
+        DIVIDER,
         // The panes. Left out on a phone, which shows one note at a time.
         ...(viewport.touch
           ? []
@@ -544,7 +537,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 disabled: workspace.panes.count < 2,
                 run: () => workspace.panes.focusNext(),
               },
-              SPLIT,
+              DIVIDER,
             ]),
         {
           label: t('Show sidebar'),
@@ -558,7 +551,7 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
-        SPLIT,
+        DIVIDER,
         // Folding is a view operation, so these rows stand whether the note can
         // be written in or not.
         { label: t('Fold'), hint: shortcuts.hint('view.fold'), run: () => run(view, toggleFold) },
@@ -582,7 +575,7 @@ export function appMenu(context: Context): MenuGroup[] {
           hint: shortcuts.hint('view.unfold-all'),
           run: () => run(view, unfoldEverything),
         },
-        SPLIT,
+        DIVIDER,
         { label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
         {
           label: t('Zoom out'),
@@ -605,7 +598,7 @@ export function appMenu(context: Context): MenuGroup[] {
           label: account.user ? t('Sign out') : t('Sign in'),
           run: () => (account.user ? void account.signOut() : (account.open = true)),
         },
-        SPLIT,
+        DIVIDER,
         // Through the store, so what it finds is offered rather than downloaded
         // in silence; see updates.svelte.ts.
         ...(isDesktop ? [{ label: t('Check for updates'), run: () => void updates.check() }] : []),

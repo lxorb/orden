@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { MenuAction } from '../app-menu'
+import type { MenuItem } from '../menu-item'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 import {
   EXPORT_EXTRAS,
@@ -169,7 +169,7 @@ const { appMenu, isSubmenu } = await import('../app-menu')
 const { SHORTCUTS } = await import('../shortcuts/registry')
 
 /** Every row of Export, which is a submenu of File: rule rows left out. */
-function menuRows(): MenuAction[] {
+function menuRows(): MenuItem[] {
   const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
     (one) => one.id === 'file',
   )
@@ -177,7 +177,7 @@ function menuRows(): MenuAction[] {
   const submenu = file?.rows.find((row) => row !== null && isSubmenu(row))
   if (!submenu || !isSubmenu(submenu)) throw new Error('Export is not a submenu of File')
 
-  return submenu.rows.filter((row): row is MenuAction => row !== null && !isSubmenu(row))
+  return submenu.rows.filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
 
 /** The same rows as labels. */
