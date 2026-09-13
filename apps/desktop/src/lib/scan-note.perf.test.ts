@@ -50,18 +50,26 @@ function linked(lines: number): string {
  *  the scan. Put back afterwards whatever happens, so a failure here does not
  *  leave a patched prototype behind for the rest of the file. */
 function looks<T>(run: () => T): { counted: number; got: T } {
-  const real = String.prototype.indexOf
+  // Taken and put back as a property rather than as a method, so what is held here
+  // is a descriptor and not a function separated from the object it belongs to.
+  const was = Object.getOwnPropertyDescriptor(String.prototype, 'indexOf')
+  if (!was) throw new Error('no indexOf to count')
+
+  const real = was.value as (this: string, needle: string, from?: number) => number
   let counted = 0
 
-  String.prototype.indexOf = function (this: string, needle: string, from?: number) {
-    if (needle === '\n') counted++
-    return real.call(this, needle, from)
-  } as typeof String.prototype.indexOf
+  Object.defineProperty(String.prototype, 'indexOf', {
+    ...was,
+    value(this: string, needle: string, from?: number) {
+      if (needle === '\n') counted++
+      return real.call(this, needle, from)
+    },
+  })
 
   try {
     return { got: run(), counted }
   } finally {
-    String.prototype.indexOf = real
+    Object.defineProperty(String.prototype, 'indexOf', was)
   }
 }
 
