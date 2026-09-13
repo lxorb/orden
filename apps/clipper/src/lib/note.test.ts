@@ -182,6 +182,9 @@ describe('the note itself', () => {
     expect(note.split('\n').filter((line) => line === '---')).toHaveLength(2)
     expect([...note.matchAll(/^# /gm)]).toHaveLength(1)
     expect(note.endsWith('The body.\n')).toBe(true)
+    // And the heading is the page's words rather than the page's markup: a note of
+    // the reader's own has its HTML rendered.
+    expect(note).toContain('# Fine --- \\<img src=x onerror=alert(1)>')
   })
 
   test('shortens a title a page wrote a paragraph into', () => {

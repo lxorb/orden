@@ -82,6 +82,18 @@ describe('the note a clip is', () => {
     expect(note).toContain('\n# Untitled\n')
   })
 
+  /** A page names itself, and the name becomes the note's heading: a note of the
+   *  reader's own has its markup rendered, so a title cannot carry a tag. */
+  test('a title that names a tag says the words rather than the tag', async () => {
+    const note = await clipNote(
+      { url: 'https://example.com/a', title: 'Fine <img src=x onerror=alert(1)>', html: '<p>x</p>' },
+      WHEN,
+    )
+
+    expect(note).toContain('# Fine \\<img src=x onerror=alert(1)>')
+    expect(note).not.toContain('# Fine <img')
+  })
+
   test('a title that is a paragraph is cut to a line', async () => {
     const note = await clipNote(
       { url: 'https://example.com/a', title: 'One\nTwo', html: '<p>x</p>' },

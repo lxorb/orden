@@ -23,6 +23,7 @@ import {
   stripFrontMatter,
   writeFrontMatter,
 } from '@nib/markdown/front-matter'
+import { asWords } from '@nib/markdown/words'
 import { isWebAddress } from './address'
 
 /** The key that made a note a website. */
@@ -112,5 +113,8 @@ export async function clipNote(
     ['date', when.toISOString()],
   ])
 
-  return `${block}\n\n# ${title}\n\n${words || `<${page.url}>`}\n`
+  // The heading is the page's own words, and a page names itself: the front matter
+  // quotes what it holds, but a heading is markdown and a note's markup is markup.
+  // See `asWords`, which is what the converter escapes a page's prose with.
+  return `${block}\n\n# ${asWords(title)}\n\n${words || `<${page.url}>`}\n`
 }

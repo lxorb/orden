@@ -19,6 +19,7 @@
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
+import { asWords } from './words'
 
 /** What a note never contains.
  *
@@ -269,17 +270,6 @@ function altOf(image: Element): string {
     .trim()
 }
 
-/** A `<` the note would read as the start of a tag, a closing tag, a comment or
- *  a processing instruction: the four things CommonMark lets raw HTML begin
- *  with. `a < b` is not one of them and keeps its bracket.
- *
- *  Anything else is markup, and a page's words are words. A page showing what a
- *  tag looks like is the commonest thing anybody copies, and the note that came
- *  out of it held a tag its writer never wrote - which the reading view, an
- *  export and a canvas card all render, because a note's own HTML is the note's.
- *  So the bracket is escaped, which is how markdown writes a literal one. */
-const OPENS_MARKUP = /<(?=[A-Za-z/!?])/g
-
 /** Everything markdown reads inside a destination: the brackets that end one,
  *  the angle brackets that open and close the other spelling of one, the
  *  backslash that escapes any of them, the quote that opens a title, and the
@@ -347,12 +337,13 @@ function converter(options: FromHtmlOptions): TurndownService {
   service.use(gfm)
 
   // Turndown escapes the markdown a page's text would otherwise read as; a `<`
-  // is the one it leaves, and the one that matters most here. Wrapped rather
-  // than replaced, and hung on the instance because that is where turndown looks
-  // it up - and it looks it up only for text that is not inside code, which is
-  // what keeps a fence's own brackets intact.
+  // is the one it leaves, and the one that matters most here - see `asWords`,
+  // which is the same rule the strings that never reach a converter go through.
+  // Wrapped rather than replaced, and hung on the instance because that is where
+  // turndown looks it up - and it looks it up only for text that is not inside
+  // code, which is what keeps a fence's own brackets intact.
   const escapeMarkdown = service.escape.bind(service)
-  service.escape = (text: string) => escapeMarkdown(text).replace(OPENS_MARKUP, '\\<')
+  service.escape = (text: string) => asWords(escapeMarkdown(text))
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
   // the list is one. For the clipper this is a second line of defence behind its

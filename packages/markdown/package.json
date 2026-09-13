@@ -30,7 +30,8 @@
     "./slides": "./src/slides.ts",
     "./sources": "./src/sources.ts",
     "./tasks": "./src/tasks.ts",
-    "./web-embed": "./src/web-embed.ts"
+    "./web-embed": "./src/web-embed.ts",
+    "./words": "./src/words.ts"
   },
   "scripts": {
     "test": "vitest run",

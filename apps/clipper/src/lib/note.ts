@@ -7,6 +7,7 @@
 
 import { type FrontMatterRow, oneLine, writeFrontMatter } from '@nib/markdown/front-matter'
 import { withoutForbidden } from '@nib/markdown/paths'
+import { asWords } from '@nib/markdown/words'
 
 import type { Origin } from './extract'
 import type { Filled } from './interpret/values'
@@ -145,5 +146,8 @@ export function noteFor(
 
   const body = titled.kind === 'link' ? `<${titled.url}>` : withoutRepeatedTitle(markdown, title)
 
-  return `${frontMatter(titled, clipped, filled)}\n\n# ${title}\n\n${body}\n`
+  // The heading is the page's own words, and a page names itself: the front matter
+  // quotes what it holds and the file name takes out what a filesystem refuses,
+  // but a heading is markdown, and a note's markup is markup. See `asWords`.
+  return `${frontMatter(titled, clipped, filled)}\n\n# ${asWords(title)}\n\n${body}\n`
 }
