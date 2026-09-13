@@ -148,6 +148,25 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** What the highlighters write now. Shiki puts the language in an attribute and
+   *  in no class at all, and the docs of half the tools anybody clips are built
+   *  with it, so the fence used to come out bare. */
+  test('the attribute the highlighters name the language in reads as well', () => {
+    expect(
+      htmlToMarkdown('<pre data-language="js" class="shiki"><code>let x = 1</code></pre>'),
+    ).toBe('```js\nlet x = 1\n```')
+
+    expect(htmlToMarkdown('<pre><code data-lang="rust">let x = 1;</code></pre>')).toBe(
+      '```rust\nlet x = 1;\n```',
+    )
+  })
+
+  test('an attribute holding nothing leaves the class to say it', () => {
+    expect(
+      htmlToMarkdown('<pre data-language="" class="language-go"><code>x := 1</code></pre>'),
+    ).toBe('```go\nx := 1\n```')
+  })
+
   test('a block holding nothing is nothing to fence', () => {
     expect(htmlToMarkdown('<pre>  </pre>')).toBe('')
   })

@@ -59,11 +59,21 @@ function fenceFor(code: string): string {
   return '`'.repeat(Math.max(3, longest + 1))
 }
 
-/** The language a code block names, from the class either half of it carries.
- *  `language-ts` is the convention; `lang-ts` is the older spelling, and both
- *  turn up on the same sites. */
+/** The language a code block names, from the class or the attribute either half
+ *  of it carries.
+ *
+ *  `language-ts` is the convention and `lang-ts` the older spelling, and both
+ *  turn up on the same sites. `data-language` is what the highlighters now write
+ *  instead: Shiki names it there and nowhere else, and Shiki is what the docs of
+ *  half the tools a note is about are built with, so a clipped snippet used to
+ *  arrive as a fence with no language on it and no highlighting anywhere after. */
 function languageOf(pre: Element): string {
   const code = pre.querySelector('code')
+  const named = [pre, code].reduce((found, one) => {
+    return found || one?.getAttribute('data-language') || one?.getAttribute('data-lang') || ''
+  }, '')
+  if (named.trim()) return named.trim().split(/\s+/)[0] ?? ''
+
   const classes = `${pre.className} ${code?.className ?? ''}`
   return /(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? ''
 }
