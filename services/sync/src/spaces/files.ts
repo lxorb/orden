@@ -138,9 +138,7 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   // column and a writer's client knows nothing about these: what it left out is
   // kept below the way the owner's PDFs are.
   const asked =
-    space.role === 'owner'
-      ? stated
-      : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
+    space.role === 'owner' ? stated : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
 
   // A row pointing at a blob nobody in this space keeps would serve nothing, so
   // an entry is kept when this account holds its bytes or when the space is

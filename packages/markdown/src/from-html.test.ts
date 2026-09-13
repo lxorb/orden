@@ -278,7 +278,8 @@ describe('a page as markdown', () => {
    *  says is the one string on a clipped page that nothing else looks at - and a
    *  tag in a note of the reader's own is markup the app renders. */
   test('a tag inside a formula is written as TeX rather than as a tag', () => {
-    const html = '<p>see <math alttext="<a href=javascript:run()>click</a> \\"><mi>q</mi></math> ok</p>'
+    const html =
+      '<p>see <math alttext="<a href=javascript:run()>click</a> \\"><mi>q</mi></math> ok</p>'
     const markdown = htmlToMarkdown(html)
 
     expect(markdown).not.toContain('<a')

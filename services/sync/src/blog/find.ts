@@ -39,7 +39,7 @@ const UNMARKED = '\u0002'
 
 /** One snippet as the page may carry it: the note's words as words, and the
  *  index's own marks as the one tag they stand for. */
-export function highlighted(words: string): string {
+function highlighted(words: string): string {
   return escape(words).replaceAll(MARKED, '<mark>').replaceAll(UNMARKED, '</mark>')
 }
 

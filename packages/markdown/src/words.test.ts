@@ -3,9 +3,7 @@ import { asWords } from './words'
 
 describe('somebody else’s words in a note', () => {
   test('cannot open a tag', () => {
-    expect(asWords('Fine <img src=x onerror=alert(1)>')).toBe(
-      'Fine \\<img src=x onerror=alert(1)>',
-    )
+    expect(asWords('Fine <img src=x onerror=alert(1)>')).toBe('Fine \\<img src=x onerror=alert(1)>')
     expect(asWords('</div>')).toBe('\\</div>')
     expect(asWords('<!-- hidden -->')).toBe('\\<!-- hidden -->')
     expect(asWords('<?php')).toBe('\\<?php')

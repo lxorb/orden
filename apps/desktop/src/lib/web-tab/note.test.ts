@@ -86,7 +86,11 @@ describe('the note a clip is', () => {
    *  reader's own has its markup rendered, so a title cannot carry a tag. */
   test('a title that names a tag says the words rather than the tag', async () => {
     const note = await clipNote(
-      { url: 'https://example.com/a', title: 'Fine <img src=x onerror=alert(1)>', html: '<p>x</p>' },
+      {
+        url: 'https://example.com/a',
+        title: 'Fine <img src=x onerror=alert(1)>',
+        html: '<p>x</p>',
+      },
       WHEN,
     )
 

@@ -27,9 +27,10 @@ vi.stubGlobal('fetch', (url: string) => {
 
 const { complete, listModels } = await import('./complete')
 
-const HOSTED = { id: 'openai', kind: 'openai' as const, model: 'gpt-5' }
+const HOSTED = { id: 'openai', name: 'OpenAI', kind: 'openai' as const, model: 'gpt-5' }
 const OWN = {
   id: 'compatible-1',
+  name: 'On this machine',
   kind: 'compatible' as const,
   model: 'llama',
   baseUrl: 'http://localhost:11434',

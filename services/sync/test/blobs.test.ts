@@ -123,7 +123,7 @@ describe('serving what a site is dressed in', () => {
   /** A space of this account's, published at `field.nibeditor.com`. */
   async function published(): Promise<string> {
     const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
-    const space = created.json.space.id as string
+    const space: string = created.json.space.id
 
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
