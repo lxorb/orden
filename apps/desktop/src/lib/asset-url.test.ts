@@ -27,7 +27,13 @@ async function inBrowser(): Promise<Tauri> {
 
 async function inApp(convertFileSrc: (path: string) => string): Promise<Tauri> {
   vi.resetModules()
-  ;(globalThis as { window?: unknown }).window = { __TAURI_INTERNALS__: { convertFileSrc } }
+  // The os plugin's global as well as the crate's, because that is what a Tauri page
+  // has: a page with the one and not the other is the failure tauri.test.ts is about,
+  // and it says so in the console rather than answering quietly.
+  ;(globalThis as { window?: unknown }).window = {
+    __TAURI_INTERNALS__: { convertFileSrc },
+    __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' },
+  }
   return import('./tauri')
 }
 

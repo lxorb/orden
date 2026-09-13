@@ -21,14 +21,29 @@ export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' i
  *  before the first script runs. Imported, it would bring the plugin's other eight
  *  functions and the IPC core all of them are built on into the first paint, for a
  *  build that may never invoke anything. The plugin stays registered on the Rust
- *  side, which is what writes the global; see src-tauri/src/lib.rs. */
+ *  side, which is what writes the global; see src-tauri/src/lib.rs.
+ *
+ *  Which is the one thing a global read can get wrong quietly, so it is not quiet.
+ *  Inside the app that global is always there; if it ever is not - the plugin dropped
+ *  from the crate, or Tauri renaming what it writes - a phone would become a desktop
+ *  without a word said: no share arriving, no dictation row, no widget, and nothing on
+ *  screen to say why. So an empty answer on a Tauri page is written to the console,
+ *  where every drive in test/e2e reads page errors and turns red on it. A browser has
+ *  no such plugin and no such global, and says nothing. */
 export function platform(): string {
   if (typeof window === 'undefined') return ''
 
   const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } })
     .__TAURI_OS_PLUGIN_INTERNALS__
+  const found = os?.platform ?? ''
 
-  return os?.platform ?? ''
+  if (!found && isNative) {
+    console.error(
+      'nib cannot tell which operating system it is on: window.__TAURI_OS_PLUGIN_INTERNALS__.platform is not there, and the os plugin registered in src-tauri/src/lib.rs is what writes it.',
+    )
+  }
+
+  return found
 }
 
 /** The phone app. Known without waiting for anything, since the line above is a
