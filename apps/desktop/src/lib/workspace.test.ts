@@ -1894,6 +1894,92 @@ describe('a canvas that comes back after a restart', () => {
   })
 })
 
+/** A launch paints the frame and opens the session behind it, on purpose: the
+ *  window is up and taking keys while the notes are still being read. So the
+ *  arrangement lands a second into a sitting somebody has already started. */
+describe('a panel asked for while the session is still arriving', () => {
+  /** One pane, one note, and a sidebar the arrangement wants. */
+  function drafted(panel: 'tree' | 'search' | null) {
+    return {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: [
+            {
+              kind: 'note' as const,
+              path: '/space/a.md',
+              name: 'a.md',
+              doc: '',
+              dirty: false,
+              cursor: 0,
+              scroll: 0,
+            },
+          ],
+        },
+      },
+      focused: 'p1',
+      panel,
+    }
+  }
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.panel = null
+  })
+
+  afterEach(() => {
+    holding.read = null
+    holding.readPath = ''
+  })
+
+  test('is what stays, rather than what the arrangement said', async () => {
+    workspace.panel = 'tree'
+
+    // The note's own read, caught in the middle: this is the second the window is
+    // already up in.
+    let release: () => void = () => undefined
+    holding.readPath = '/space/a.md'
+    holding.read = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    // The session arriving, which is the caller nobody asked.
+    const arriving = workspace.applyLayout(drafted('tree'), false)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    // The search key, pressed while the notes are still coming.
+    workspace.showPanel('search')
+
+    release()
+    await arriving
+
+    expect(workspace.panel).toBe('search')
+  })
+
+  test('and an arrangement nobody interrupted still opens its own', async () => {
+    await workspace.applyLayout(drafted('tree'), false)
+
+    expect(workspace.panel).toBe('tree')
+  })
+
+  /** The other caller: an arrangement somebody chose by name brings its own
+   *  sidebar, whatever they had open before they chose it. */
+  test('an arrangement chosen by name brings its own sidebar', async () => {
+    workspace.showPanel('search')
+    expect(workspace.panel).toBe('search')
+
+    await workspace.applyLayout(drafted('tree'))
+
+    expect(workspace.panel).toBe('tree')
+  })
+})
+
 describe('what a document is called on screen', () => {
   beforeEach(() => {
     workspace.tabs = []

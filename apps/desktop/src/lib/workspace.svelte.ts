@@ -238,6 +238,22 @@ class Workspace {
   readonly layouts = new Layouts()
   // Hidden until asked for, the way Typora starts.
   panel = $state<Panel | null>(null)
+  /** Whether somebody has chosen a sidebar since this window opened.
+   *
+   *  A launch paints the frame and reads the session behind it, on purpose, so the
+   *  window is up and taking keys while the notes are still being read. The session
+   *  landing a moment later used to write its own sidebar over the one the reader
+   *  had just asked for: pressing the search key in the first second left the file
+   *  list on screen. So a session opens the sidebar it remembers only while nobody
+   *  has said otherwise; see `restore` and `applyLayout`.
+   *
+   *  Read while the session is arriving and cleared by the arrangement that lands,
+   *  because that is the moment the question is settled: what happens afterwards is
+   *  a sitting, and a sitting's sidebar is whatever it was last told.
+   *
+   *  Not `$state`: nothing on screen reads it, and the session's own writes would
+   *  otherwise be a dependency of everything that draws a panel. */
+  private panelChosen = false
   /** Which panels this window keeps on the right, in the order they were moved
    *  there, and which of them is open.
    *
@@ -488,8 +504,10 @@ class Workspace {
     this.spaces = state.spaces
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
-    // The sidebar comes back the way it was left, on both sides.
-    this.panel = state.panel
+    // The sidebar comes back the way it was left, on both sides - unless somebody
+    // has already asked for one in the second the window has been up; see
+    // `panelChosen`.
+    if (!this.panelChosen) this.panel = state.panel
     this.right = state.right ?? []
     this.rightPanel = state.rightPanel ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
@@ -508,7 +526,8 @@ class Workspace {
     // startup.svelte.ts, which also starts the queue behind this.
     await startup.shown()
 
-    if (state.layout) await this.applyLayout(state.layout)
+    // Nobody asked for this one: it is the sitting that was, arriving.
+    if (state.layout) await this.applyLayout(state.layout, false)
     else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
     else {
       for (const path of state.openPaths ?? []) {
@@ -615,8 +634,14 @@ class Workspace {
    *
    *  A note with unsaved words that the arrangement says nothing about is not
    *  thrown away: it lands in the pane that ends up with the focus. Arranging
-   *  what is open is never a reason to lose what somebody wrote. */
-  async applyLayout(layout: Layout) {
+   *  what is open is never a reason to lose what somebody wrote.
+   *
+   *  Nor is it a reason to undo what somebody asked for. Reading the notes takes a
+   *  file each, and the window is up and taking keys while that happens. `asked`
+   *  is which of the two callers this is: an arrangement somebody chose brings its
+   *  own sidebar, and the session, which arrives by itself, opens the sidebar it
+   *  remembers only while nobody has chosen one. See `panelChosen`. */
+  async applyLayout(layout: Layout, asked = true) {
     const open = pathsTo(this.documents)
     const rescued = this.tabs.filter((tab) => tab.dirty)
     const shared = emptyMap<NoteDoc>()
@@ -638,7 +663,8 @@ class Workspace {
 
     this.tabs = made
     this.panes.restore(frame, layout.focused)
-    this.panel = layout.panel
+    if (asked || !this.panelChosen) this.panel = layout.panel
+    this.panelChosen = false
 
     for (const tab of rescued) {
       if (made.some((one) => one.note === tab.note)) continue
@@ -3017,6 +3043,9 @@ class Workspace {
     this.panel = next.panel
     this.rightPanel = next.rightPanel
     this.right = next.right
+    // Every deliberate showing, shutting and moving of a panel comes through here,
+    // which is what makes this the one place a choice is noted; see `panelChosen`.
+    this.panelChosen = true
     this.persist()
   }
 
@@ -3055,6 +3084,7 @@ class Workspace {
 
   toggleSidebar() {
     this.panel = this.panel ? null : 'tree'
+    this.panelChosen = true
     this.persist()
   }
 
