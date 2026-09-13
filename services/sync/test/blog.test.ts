@@ -1117,6 +1117,32 @@ describe('a published note read as slides', () => {
   })
 })
 
+/** A canvas and a page note are the same bytes under two extensions: JSON Canvas,
+ *  which is a drawing rather than a page. Published, one would say its ink's
+ *  coordinates and its cards' words to anybody who guessed the slug. */
+describe('a drawing in a published space', () => {
+  const DRAWING = '{"nodes":[{"id":"a","type":"text","text":"the private bit"}],"edges":[]}'
+
+  test('is not a page, whichever of its two extensions it carries', async () => {
+    await addNote('Board.canvas', DRAWING)
+    await addNote('Lecture 4.pages', DRAWING)
+    await publish({ subdomain: 'field' })
+
+    for (const slug of ['/board', '/lecture-4']) {
+      const response = await call(env, slug, { host: 'field.nibeditor.com' })
+      expect(response.status, slug).toBe(404)
+      expect(response.text, slug).not.toContain('the private bit')
+    }
+
+    // Nor in the index, the feed or the sitemap.
+    for (const path of ['/', '/feed.xml', '/sitemap.xml']) {
+      const listing = await call(env, path, { host: 'field.nibeditor.com' })
+      expect(listing.text, path).not.toContain('lecture-4')
+      expect(listing.text, path).not.toContain('board')
+    }
+  })
+})
+
 /** A snippet is the note's own prose with the index's marks in it, and the words
  *  were indexed with the markup stripped rather than escaped. */
 describe('searching a site', () => {

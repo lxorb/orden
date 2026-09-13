@@ -15,7 +15,7 @@ import { objectIn } from './body'
 // is gone, so waiting for either would be waiting per request. See
 // @nib/markdown/engines.
 import '@nib/markdown/eager'
-import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'
 import { feed, type FeedPage, newestFirst, robots, sitemap } from './blog/feed'
@@ -630,7 +630,12 @@ function titleOf(page: Page): string {
  *
  *  A canvas is left out. It syncs as a note because it is text somebody edits on
  *  two machines, but it is a drawing rather than a page, and published it would
- *  come out as the JSON it is made of. */
+ *  come out as the JSON it is made of. So is a page note, which is the same bytes
+ *  under a second extension: pages of paper written on with a pen. Published, one
+ *  said its ink's coordinates, its cards' words and the address of every file it
+ *  embedded, to anybody who guessed the slug - the thing the sentence above exists
+ *  to prevent, missing only because the reading asked about one extension of the
+ *  two. See `isPagesTarget` in @nib/markdown/links. */
 async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
   const listing = await env.DB.prepare(
     'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
@@ -640,7 +645,7 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
 
   const listed: Page[] = []
   for (const note of listing.results) {
-    if (isCanvasTarget(note.path)) continue
+    if (isCanvasTarget(note.path) || isPagesTarget(note.path)) continue
 
     const front = readFront(note.front)
     if (!publishes(site.rules, note.path, front)) continue

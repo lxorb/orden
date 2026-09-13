@@ -151,7 +151,11 @@ Publishing a space used to publish every note in it. That is the right default
 for a space somebody made to be a blog, and the wrong one for the space somebody
 already writes in, which is most spaces.
 
-So there are two places a decision can live, and they are not equals.
+So there are two places a decision can live, and they are not equals. Neither is
+asked about a drawing: a `.canvas` and a `.pages` note are JSON Canvas rather than
+prose, and a published one would be its own source - the ink's coordinates, the
+cards' words, the address of every file it embeds. Both extensions are left out of
+the page list whatever the rules or the front matter say.
 
 **The note decides for itself.** `publish: true` or `publish: false` in its front
 matter, which is Obsidian Publish's own key, so a vault that already has them
