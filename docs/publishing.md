@@ -45,6 +45,12 @@ out of the same renderer and were already the same markup.
 - **One renderer.** `serveBlog` asks for what the reading view asks for:
   `footnotes`, `toc`, `escapeHtml`, a `code` fence renderer, and resolvers for
   links and embeds. The structural difference between the two is zero; see below.
+  Both kinds of link are resolved here, and they have to be: a page is HTML and
+  nothing else, so there is no click to read a path at. A `[[wikilink]]` names a
+  note and `linkResolver` finds it; a `[words](../Other note.md)` names a path,
+  which `noteHrefResolver` reads against the note it was written in and then
+  looks up the same way. Either one naming a note the site does not publish comes
+  out as the words rather than as a link into a 404.
 - **One stylesheet for a page.** `scripts/blog-css.ts` builds it from
   `packages/themes/src/{tokens,base,document}.css` plus
   `services/sync/src/blog/page.css`, strips the comments, and writes

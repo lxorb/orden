@@ -257,6 +257,62 @@ function linkResolver(listed: readonly Page[], files: readonly SpaceFile[]) {
   })
 }
 
+/** Where a plain `[words](../Other note.md)` on one page points.
+ *
+ *  A wikilink names a note and `linkResolver` above finds it by name; a markdown
+ *  link names a path, written relative to the note it sits in. In the app that
+ *  path is read at the moment the link is clicked, against that note - see
+ *  Reading.svelte - and a published page has no such moment: the HTML is the whole
+ *  of what a stranger gets. Left alone, a link that said `../Public/Two.md`
+ *  answered 404 on a site that serves the same note at `/public/two`.
+ *
+ *  So the path is resolved against the note it was written in and then looked up
+ *  the way a wikilink is, through the very same two maps. A note this site does
+ *  not publish answers null, and the renderer writes the words rather than a link
+ *  into nothing - which is exactly what an unresolved wikilink does. */
+function noteHrefResolver(from: string, listed: readonly Page[], files: readonly SpaceFile[]) {
+  const byName = pages(listed)
+  const byFile = fileUrls(files)
+
+  return (target: string) => {
+    const written = decoded(target)
+    if (!written) return null
+
+    const path = against(from, written)
+    if (isPdfTarget(path)) return byFile.get(path.toLowerCase()) ?? null
+
+    // The resolved path first, then the target as it was written: a link may name
+    // a note by a tail of its path rather than by a road from here, and `pages`
+    // holds every tail of every name.
+    return byName.get(nameOf(path)) ?? byName.get(nameOf(written)) ?? null
+  }
+}
+
+/** A target as it was written, with any percent-encoding taken off. Null for one
+ *  that is not a path at all: a half-written escape is not a note. */
+function decoded(target: string): string | null {
+  try {
+    return decodeURIComponent(target.trim()) || null
+  } catch {
+    return null
+  }
+}
+
+/** One path resolved against the note it was written in: the folder that note is
+ *  in, plus the road the link takes out of it, with `.` and `..` walked. */
+function against(from: string, target: string): string {
+  const here = from.replace(/\\/g, '/').split('/').slice(0, -1)
+  const out: string[] = [...here]
+
+  for (const step of target.replace(/\\/g, '/').split('/')) {
+    if (step === '' || step === '.') continue
+    if (step === '..') out.pop()
+    else out.push(step)
+  }
+
+  return out.join('/')
+}
+
 /** The notes the embeds on one page name, by the name each embed used, so the
  *  renderer can ask for them without waiting on storage. */
 async function embedded(
@@ -1105,6 +1161,7 @@ export async function serveBlog(
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
       resolveLink: linkResolver([], files),
+      resolveNoteHref: noteHrefResolver(only.path, [], files),
       resolveEmbed: await embedded(env, space, [only], source),
     }
 
@@ -1287,6 +1344,7 @@ export async function serveBlog(
     breaks,
     locale: PAGE_LANGUAGE,
     resolveLink: linkResolver(pageList, files),
+    resolveNoteHref: noteHrefResolver(note.path, pageList, files),
     resolveEmbed: await embedded(
       env,
       space,

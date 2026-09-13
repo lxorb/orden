@@ -349,6 +349,12 @@ describe('a published note cannot script the reader', () => {
   })
 })
 
+/** Two notes in one folder, where the first points at the second the way a
+ *  markdown link does: a path, relative to where it was written. */
+const ONE = '# One\n\nsee [the other](../Public/Two.md)\n'
+const TWO = '# Two\n\nthe other one\n'
+const DEEP = '# Deep idea\n\n## The middle\n\nText.\n'
+
 describe('links between notes on a published page', () => {
   test('point at where the other note is published', async () => {
     await addNote('Notes/Deep idea.md', '# Deep idea\n\nSomething.\n')
@@ -376,6 +382,51 @@ describe('links between notes on a published page', () => {
 
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('href="/notes/deep-idea"')
+  })
+
+  /** The other half of the same question. A wikilink names a note; a markdown
+   *  link names a path, written relative to the note it sits in - and that path
+   *  is not where the site serves anything. It used to be published exactly as
+   *  written, so `[the other](../Public/Two.md)` on a page at `/public/one`
+   *  pointed at `/Public/Two.md`, which answered 404 for every reader who
+   *  followed it. In the app there is a click to read the path at; on a page
+   *  there is not. */
+  test('and so does a plain markdown link that names one', async () => {
+    await addNote('Public/One.md', ONE)
+    await addNote('Public/Two.md', TWO)
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/public/one', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('<a href="/public/two">the other</a>')
+    expect(response.text).not.toContain('../Public/Two.md')
+  })
+
+  test('a markdown link reaches a heading and a name with a space in it', async () => {
+    await addNote('Notes/Deep idea.md', DEEP)
+    await addNote('linking.md', 'see [there](Notes/Deep%20idea.md#the-middle)')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('href="/notes/deep-idea#the-middle"')
+  })
+
+  test('a markdown link to a note nobody published is words too', async () => {
+    await addNote('Drafts/Three.md', '# Three')
+    await addNote('linking.md', 'see [a draft](Drafts/Three.md) now')
+    await publish({ subdomain: 'field', rules: { otherwise: 'all', exclude: ['Drafts'] } })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('see a draft now')
+    expect(response.text).not.toContain('Drafts/Three.md')
+  })
+
+  test('and a link out at the web is left exactly as it was written', async () => {
+    await addNote('linking.md', 'see [out](https://example.org/a.md) and [up](/somewhere)')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('href="https://example.org/a.md"')
+    expect(response.text).toContain('href="/somewhere"')
   })
 
   test('a note the space has not got is words, not a link to nowhere', async () => {

@@ -7,7 +7,7 @@ import { withoutComments } from './comments'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard } from './html-block'
-import { slugify, withoutBlockIds } from './links'
+import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { iframeCard, isIframeTag, webCard } from './web-embed'
 import {
@@ -51,6 +51,20 @@ export interface RenderOptions {
    *  as the words it showed, which is what an export wants: a document has no
    *  space around it to point into. */
   resolveLink?: LinkResolver
+  /** Where a plain `[words](../Other note.md)` points, for a surface that can
+   *  say - which is one that serves the notes at addresses of its own.
+   *
+   *  A wikilink names a note and the caller resolves it; a markdown link names a
+   *  path, and in the app that path is read at the moment the link is clicked,
+   *  against the note it was written in. A published page has no such moment: the
+   *  HTML is the whole of what a stranger gets, and a link that still said
+   *  `../Public/Two.md` answered 404 where the site serves `/public/two`.
+   *
+   *  Given the target as it was written, without any `#fragment`, and answering
+   *  the address to put in its place or null for a note this surface does not
+   *  serve - which renders as the words, exactly as an unresolved wikilink does.
+   *  Without it every markdown link is left as it was written. */
+  resolveNoteHref?: (target: string) => string | null
   /** What a `![[wikilink]]` shows: the markdown of the note it names. Without it
    *  an embed reads as a link. One level deep - a `![[…]]` inside an embedded
    *  note is rendered without this, so it comes out as a link of its own. */
@@ -167,6 +181,32 @@ const toc = {
   renderer: () => `${TOC_MARK}\n`,
 }
 
+/** A markdown link that names a note in the same space, split into the target as
+ *  it was written and the `#fragment` after it - or null for everything else.
+ *
+ *  Everything else is most links: an address with a scheme, one that starts at
+ *  the root, a bare `#heading` on this page, and a path naming a picture or
+ *  anything that is not a note. Only a relative path ending in a note's own
+ *  extension is a link into the space, which is the one kind a surface serving
+ *  the space can point somewhere better; see `resolveNoteHref`. */
+function noteLink(href: string): { target: string; fragment: string } | null {
+  const written = href.trim()
+  if (!written || written.startsWith('/') || written.startsWith('#')) return null
+  if (!isNoteTarget(written)) return null
+
+  const hash = written.indexOf('#')
+  const target = hash === -1 ? written : written.slice(0, hash)
+  if (!target || !NOTE_LINK.test(target)) return null
+
+  return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
+}
+
+/** What a markdown link has to end in to be naming a note: the markdown
+ *  extensions the app writes, plus the three files a tab opens. The same list
+ *  `isTabFile` and the markdown readers keep, said here as one expression because
+ *  this is a question about a path rather than about a target. */
+const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
+
 /** One renderer, shared by export and the published blog, so a note looks the
  *  same wherever it is read. The headings list is filled in while rendering,
  *  which is why a renderer that numbers them is built per document. */
@@ -205,6 +245,21 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  URL it cannot encode. */
       link(token: Tokens.Link) {
         const body = this.parser.parseInline(token.tokens)
+
+        // A link naming a note in the same space, where the surface can say where
+        // that note is served from. Answered before the target is encoded,
+        // because what comes back is an address of the surface's own rather than
+        // the path that was written; see `resolveNoteHref`.
+        const resolve = options.resolveNoteHref
+        const written = resolve ? noteLink(token.href) : null
+        if (resolve && written) {
+          const found = resolve(written.target)
+          // The words, the way an unresolved wikilink is: a page nobody can
+          // navigate should not offer something that looks navigable.
+          if (found === null || !safeHref(found)) return body
+          return `<a href="${attributeUrl(found)}${written.fragment}">${body}</a>`
+        }
+
         const href = safeHref(token.href) ? attributeUrl(token.href) : ''
         if (!href) return body
 
@@ -376,6 +431,7 @@ function needsOwn(options: RenderOptions): boolean {
     options.toc === true ||
     options.code !== undefined ||
     options.resolveLink !== undefined ||
+    options.resolveNoteHref !== undefined ||
     options.resolveEmbed !== undefined ||
     // A caller that wants the headings wants them from its own parse: the two
     // shared renderers hand theirs to an array nobody is holding.

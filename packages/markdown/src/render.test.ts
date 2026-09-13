@@ -144,6 +144,55 @@ describe('GitHub-flavoured basics', () => {
   })
 })
 
+/** Where a plain `[words](../Other note.md)` points, on a surface that knows.
+ *
+ *  A wikilink has always been resolved by the caller, because only the caller
+ *  knows where a note lives. A markdown link naming a note in the same space was
+ *  left exactly as written - which is right in the app, where a click is read at
+ *  the moment it happens, and wrong on a published page, where the HTML is all a
+ *  stranger gets: the site serves `/public/two` and the link said
+ *  `../Public/Two.md`, so following one answered 404.
+ *
+ *  So: a surface that can say where a note is published says so through
+ *  `resolveNoteHref`, and a surface that cannot passes nothing and the link is
+ *  left as it was written. */
+describe('a markdown link that names a note', () => {
+  const resolveNoteHref = (target: string) =>
+    target.toLowerCase().endsWith('two.md') ? '/public/two' : null
+
+  test('is left exactly as written where nobody can resolve it', () => {
+    const html = renderMarkdown('see [the other](../Public/Two.md)')
+    expect(html).toContain('<a href="../Public/Two.md">the other</a>')
+  })
+
+  test('points where the note is published where somebody can', () => {
+    const html = renderMarkdown('see [the other](../Public/Two.md)', { resolveNoteHref })
+    expect(html).toContain('<a href="/public/two">the other</a>')
+  })
+
+  test('keeps the heading the link named', () => {
+    const html = renderMarkdown('see [there](../Public/Two.md#some-heading)', { resolveNoteHref })
+    expect(html).toContain('<a href="/public/two#some-heading">there</a>')
+  })
+
+  test('and a note nobody published is words, the way an unresolved wikilink is', () => {
+    const html = renderMarkdown('see [a draft](../Drafts/Three.md)', { resolveNoteHref })
+    expect(html).toContain('a draft')
+    expect(html).not.toContain('<a href="../Drafts/Three.md"')
+  })
+
+  test('leaves everything that is not a note alone', () => {
+    const html = renderMarkdown(
+      'see [out](https://example.org/a.md) and [up](/already/there) and [it](#here)',
+      { resolveNoteHref },
+    )
+
+    expect(html).toContain('href="https://example.org/a.md"')
+    expect(html).toContain('href="/already/there"')
+    expect(html).toContain('href="#here"')
+  })
+})
+
 describe('headings and the table of contents', () => {
   const SOURCE =
     '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
