@@ -356,6 +356,24 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content) => (content ? `<u>${content}</u>` : ''),
   })
 
+  // Raised and lowered text, which this editor has markers for and a page says in
+  // tags. Neither was kept, and what was lost was not styling but the number:
+  // `x²` arrived as `x2`, `H₂O` as `H2O` and `10⁶` as `106`, each of them a
+  // different quantity from the one the page stated. A body the marker cannot hold
+  // - one with the marker's own character in it - keeps the tag, as underline does.
+  service.addRule('scripts', {
+    filter: ['sup', 'sub'],
+    replacement: (content, node) => {
+      if (!content) return ''
+
+      const tag = node.nodeName.toLowerCase()
+      const marker = tag === 'sup' ? '^' : '~'
+      const holds = !content.includes(marker) && !/^\s|\s$/.test(content)
+
+      return holds ? `${marker}${content}${marker}` : `<${tag}>${content}</${tag}>`
+    },
+  })
+
   // One rule for every preformatted block, whether or not it wraps a `code`.
   // Turndown's own fenced rule wants the pair, and a bare `pre` would otherwise
   // come out as a paragraph with its indentation collapsed.

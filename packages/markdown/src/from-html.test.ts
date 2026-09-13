@@ -167,6 +167,23 @@ describe('a page as markdown', () => {
     ).toBe('```go\nx := 1\n```')
   })
 
+  /** Not styling lost but the number: every one of these said a different quantity
+   *  from the one the page stated. */
+  test('raised and lowered text keep their markers', () => {
+    expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
+  })
+
+  test('a body the marker cannot hold keeps the tag instead', () => {
+    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b^c</sup>')
+    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b~c</sub>')
+  })
+
+  test('a raised footnote mark keeps the link it wraps', () => {
+    expect(htmlToMarkdown('<p>said<sup><a href="https://x.dev#n1">[1]</a></sup></p>')).toBe(
+      'said^[\\[1\\]](https://x.dev#n1)^',
+    )
+  })
+
   /** MathML says what a formula means and markdown cannot write that down, but the
    *  TeX it was built from travels inside it. Without this a formula arrived as the
    *  letters it happened to be made of, or as nothing at all. */
