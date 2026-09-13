@@ -29,6 +29,7 @@
     open,
     title,
     mark,
+    foot,
     onclose,
     children,
   }: {
@@ -38,6 +39,12 @@
     /** The badge in front of the title: the space's own mark, so the sheet says
      *  which space it is about the way the switcher does. */
     mark?: Snippet
+    /** What stays under the body rather than scrolling away with it: the one
+     *  button the sheet exists for. A sheet with a long form in it - publishing a
+     *  space is the long one - drew its Publish under the last card, and a body
+     *  that scrolls ends with a clean edge: the sheet read as finished, with the
+     *  only thing it is for out of sight below the fold. */
+    foot?: Snippet
     onclose: () => void
     children: Snippet
   } = $props()
@@ -80,6 +87,10 @@
     <div class="body" data-scrolls use:scrollbar>
       {@render children()}
     </div>
+
+    {#if foot}
+      <div class="foot">{@render foot()}</div>
+    {/if}
   </div>
 {/if}
 
@@ -144,6 +155,17 @@
     gap: var(--space-3);
     overflow-y: auto;
     padding: 0 var(--space-2) var(--space-3);
+  }
+
+  /* The row that does not scroll, under the body. A line above it, because the
+     body ends wherever it happens to end and the button under it has to read as
+     the sheet's own rather than as the last thing in the form. */
+  .foot {
+    flex: none;
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    border-top: 1px solid var(--line);
   }
 
   /* ── The shapes inside ───────────────────────────────────────────

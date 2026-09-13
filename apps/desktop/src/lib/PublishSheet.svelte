@@ -179,6 +179,20 @@
     <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
   {/snippet}
 
+  <!-- The one thing this sheet is for, under the body rather than at the end of
+       it. The form is long enough to scroll on both sizes, and a body that
+       scrolls ends with a clean edge: with the button as the last card's
+       neighbour the sheet read as finished with no way to publish in sight. -->
+  {#snippet foot()}
+    <button
+      class="primary go"
+      disabled={!publish.confirmed || !publish.ready}
+      onclick={() => void publish.publish(siteIcon(markBox))}
+    >
+      {published ? t('Update') : t('Publish')}
+    </button>
+  {/snippet}
+
   {#if publish.error}
     <p class="wrong">{t(publish.error)}</p>
   {/if}
@@ -510,14 +524,6 @@
         </button>
       {/if}
     </div>
-
-    <button
-      class="primary go"
-      disabled={!publish.ready}
-      onclick={() => void publish.publish(siteIcon(markBox))}
-    >
-      {published ? t('Update') : t('Publish')}
-    </button>
   </fieldset>
 
   {#if published && liveAt}
@@ -743,9 +749,11 @@
     font-weight: var(--weight-strong);
   }
 
-  /* The one thing the sheet is for sits under the form rather than beside it. */
+  /* The one thing the sheet is for, in the sheet's own foot; see Sheet.svelte.
+     Pushed to the end of that row, which is the corner every dialog keeps its
+     confirming button in. */
   .go {
-    align-self: flex-start;
+    margin-inline-start: auto;
   }
 
   :global([data-touch]) .danger-check {
@@ -769,8 +777,9 @@
     font-size: var(--text-base);
   }
 
+  /* A thumb gets the whole width of the row. */
   :global([data-touch]) .go {
-    align-self: stretch;
+    flex: 1;
     justify-content: center;
   }
 </style>

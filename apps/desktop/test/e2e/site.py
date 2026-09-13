@@ -401,6 +401,29 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] and shows {said} {rows}")
     shot("sheet")
 
+    # The one button the sheet exists for, in view rather than under the fold. The
+    # form is longer than the sheet on every screen, and it used to sit at the end
+    # of the body that scrolls: the sheet ended with a clean edge and nothing said
+    # there was a Publish below it. It is in the sheet's own foot now; see
+    # Sheet.svelte.
+    where = page.evaluate(
+        """() => {
+          const sheet = document.querySelector('[role=dialog]')
+          const go = document.querySelector('button.go')
+          if (!sheet || !go) return null
+          const box = go.getBoundingClientRect()
+          const frame = sheet.getBoundingClientRect()
+          return {
+            inSheet: box.top >= frame.top - 1 && box.bottom <= frame.bottom + 1,
+            inWindow: box.bottom <= innerHeight + 1 && box.top >= 0,
+            height: Math.round(box.height),
+          }
+        }"""
+    )
+    say(f"[{name}] the Publish button sits at {where}")
+    if not where or not where["inSheet"] or not where["inWindow"] or where["height"] < 20:
+        say(f"FAILED: [{name}] the Publish button is not in view: {where}")
+
     page.evaluate("() => window.nibApp.publish.description = 'Notes from the field.'")
     # The button rather than the store, because the icon the site wears is read
     # off the mark the sheet has drawn; see site-icon.ts.
