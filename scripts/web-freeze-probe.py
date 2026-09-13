@@ -113,27 +113,43 @@ def bind_names() -> None:
     user32.GetWindowTextLengthW.restype = ctypes.c_int
     user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
     user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+    user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    user32.GetWindowRect.restype = wintypes.BOOL
 
 
 def windows_of(pid: int) -> list[int]:
-    """Every visible top level window the process owns. A Tauri window is one of
-    these; a webview's own window is not top level, and the browser process that
-    draws a page is not this pid."""
+    """The windows worth measuring, widest first.
+
+    A Tauri window is a visible top level window with a title; a webview's own window
+    is not top level, and the browser process that draws a page is not this pid. Two
+    other windows of this process are, though, and neither is the app: the single
+    instance plugin keeps a 13 by 13 listener with a title of its own, and there is
+    an unnamed one beside it. They are on threads of their own, so measuring one of
+    those would be measuring a pump nobody is looking at - which is why size decides
+    here, exactly as it does in capture-window.ps1."""
 
     assert user32 is not None
-    found: list[int] = []
+    found: list[tuple[int, int]] = []
     kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
 
     def each(hwnd: int, _lparam: int) -> bool:
         owner = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-        if owner.value == pid and user32.IsWindowVisible(hwnd):
-            if user32.GetWindowTextLengthW(hwnd) > 0:
-                found.append(hwnd)
+        if owner.value != pid or not user32.IsWindowVisible(hwnd):
+            return True
+        if user32.GetWindowTextLengthW(hwnd) == 0:
+            return True
+
+        box = wintypes.RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(box))
+        wide = box.right - box.left
+        tall = box.bottom - box.top
+        if wide > 200 and tall > 200:
+            found.append((wide, hwnd))
         return True
 
     user32.EnumWindows(kind(each), 0)
-    return found
+    return [hwnd for _wide, hwnd in sorted(found, reverse=True)]
 
 
 def ask(hwnd: int) -> tuple[bool, float]:

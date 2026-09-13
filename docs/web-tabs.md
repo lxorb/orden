@@ -167,12 +167,14 @@ command the window sends afterwards queues behind it for ever.
 measurement to find. A nested pump is still a pump: the window answers `WM_NULL` in
 half a millisecond, `IsHungAppWindow` says no, Explorer never draws "Not
 Responding", and the pixels are all there. Everything that needs the app to answer
-is dead. Measured, before and after, in `scripts/web-freeze-probe.py`:
+is dead. So the probe asks the app itself as well, over its own automation endpoint,
+one cheap verb a second. Measured on this machine, before and after, by
+`scripts/web-freeze-probe.py`:
 
 | | before | after |
 | --- | --- | --- |
-| the message pump, worst reply | 264 ms, never dead | 0.6 ms |
-| the window's own answers while a tab opens | 4 of 7 asks unanswered; by hand, two verbs timed out at 30 s each, minutes later | 0 of 22 unanswered, worst 31 ms |
+| the message pump, worst reply | 0.55 ms, and never once dead | 2.4 ms, never dead |
+| the window's own answers while a tab opens | **4 of 8 asks unanswered**; by hand, two trivial verbs timed out at 30 s each, minutes after the tab was opened | **0 of 24 unanswered**, 31 ms at worst |
 | the page itself | never appeared: a bar over an empty pane | the page, in the pane |
 
 So `web_open` is `async`, which takes it off that callback and onto the async
