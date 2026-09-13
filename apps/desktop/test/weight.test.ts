@@ -44,6 +44,18 @@ import { describe, expect, test } from 'vitest'
  *  a key which can open one at any moment never waits for it; see `warmDoors` in
  *  src/lib/surfaces.svelte.ts.
  *
+ *  Batch 120 took 1.29 megabytes to 1.23, over five edges of five different kinds, and
+ *  the largest of them was a dependency's again: `@codemirror/lang-markdown` imports the
+ *  completion library at the top of its module, for the tag names a `<` offers through a
+ *  source nib never asks, and that held the whole popup - thirty-five kilobytes - in
+ *  front of the first paint. The others were the crate's own IPC, held there by one line
+ *  of JavaScript asking for the platform's name; everything the app knows about talking
+ *  to a model, for a glyph nobody had pressed; the phone's share intent and its speech
+ *  recogniser, on a desktop that has neither; and JSON Canvas, for a window with no
+ *  plane in it. Four of the five are capability or gesture gated now rather than
+ *  fetched at a stage: a share arrives on the device that can receive one, a model on
+ *  the press that asks, a plane on the first plane, and the popup with the first editor.
+ *
  *  Each of those is one edge in this graph, and any of them can come back by
  *  accident: a barrel import instead of a file, a type that was not imported as a
  *  type, a helper moved into a module that happens to sit behind a library. So the
@@ -168,8 +180,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  2,924,437 bytes over 366 files as this is written, measured on 2026-09-13, against
- *  1,294,581 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,779,666 bytes over 351 files as this is written, measured on 2026-09-13, against
+ *  1,226,177 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
@@ -193,8 +205,8 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_200_000
-const MOST_FILES = 402
+const BUDGET = 3_050_000
+const MOST_FILES = 386
 
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
