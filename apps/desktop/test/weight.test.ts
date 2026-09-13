@@ -371,6 +371,16 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/mobile/dictating.ts', 'the two recognisers'],
     ['/lib/import/apply.ts', 'the import writer'],
     ['/lib/import/names.ts', 'the names it gives'],
+    // JSON Canvas: the reader, the writer, the merge, and the scan that reads a plane
+    // into the link index. A window that opens on a note has no plane to read, and four
+    // one-line edges were holding the whole format in front of the first paint - an
+    // empty plane's text, a plane's icon, the index's scan of one, and the mirror's
+    // merge of two. Each is fetched by the first plane that needs it; see
+    // scan-canvas.ts, workspace.createCanvas, file-icon.ts and sync/mirror.ts.
+    ['/lib/scan-canvas.ts', 'a plane, read into the index'],
+    ['/lib/canvas/format.ts', "the app's side of the format"],
+    ['/markdown/src/canvas.ts', 'the format itself'],
+    ['/markdown/src/canvas-merge.ts', 'the merge two devices settle on'],
     // And the pages engine, which a window that opens on a note has no stack of paper
     // to read. The canvas reader under it is not here and cannot be: the link index
     // scans a plane's cards for links and the sync mirror merges two versions of one,

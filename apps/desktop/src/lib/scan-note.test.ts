@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { scanCanvas, scanNote } from './scan-note'
+import { scanCanvas } from './scan-canvas'
+import { scanNote } from './scan-note'
 
 describe('reading a note for the index', () => {
   test('finds its headings, its blocks and its links', () => {

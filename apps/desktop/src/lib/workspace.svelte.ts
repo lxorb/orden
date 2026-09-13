@@ -9,7 +9,6 @@ import {
   isTabFile,
   isWebTarget,
 } from '@nib/markdown/links'
-import { blankCanvas } from './canvas/format'
 import { freePath } from '@nib/markdown/paths'
 import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
@@ -1393,8 +1392,7 @@ class Workspace {
     // What an empty stack of paper says, fetched with the first one asked for. The
     // pages engine is a surface's worth of code, and a window that opens on a note has
     // no stack of paper to read; see surfaces.svelte.ts, where the surface itself comes
-    // through. The canvas reader under it stays, because the link index scans a plane's
-    // cards for links and the sync mirror merges two versions of one.
+    // through.
     const { blankPages } = await import('@nib/markdown/pages')
 
     const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.pages))
@@ -2549,6 +2547,12 @@ class Workspace {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return
     if (named === undefined && this.startNaming('canvas', dir)) return
+
+    // What an empty plane says, fetched with the first one asked for: the reader and
+    // writer for JSON Canvas are a surface's worth of code, and a window that opens on
+    // a note has no plane to read. The surface itself comes through surfaces.svelte.ts,
+    // and the index reads a plane through scan-canvas.ts, which is fetched the same way.
+    const { blankCanvas } = await import('./canvas/format')
 
     const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.canvas))
     const content = blankCanvas()

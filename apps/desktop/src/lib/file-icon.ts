@@ -19,7 +19,6 @@
  *  drawn from, the version before it is snapshotted, and one undo puts it back.
  *  See tag-edits.ts, which is the same shape of change. */
 
-import { canvasIconEdit } from '@nib/markdown/canvas'
 import { frontMatterEdits } from '@nib/markdown/front-matter'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { isFolderNote } from './folder-notes'
@@ -65,9 +64,14 @@ export async function setFileIcon(
 
   // A page note keeps its icon where a canvas keeps one, because it is the same
   // JSON: `nib.icon`, written by the same edit.
+  //
+  // The reader that makes the canvas edit is fetched rather than imported: it is the
+  // whole of JSON Canvas, and this one line was the last thing holding it in front of
+  // the first paint. Asked for here, where somebody has chosen an icon for a plane, and
+  // never for a note; see scan-canvas.ts, which is fetched the same way.
   const edit =
     isCanvasTarget(path) || isPagesTarget(path)
-      ? canvasIconEdit(before, value, colour)
+      ? (await import('@nib/markdown/canvas')).canvasIconEdit(before, value, colour)
       : frontMatterEdits(before, [
           [ICON_KEY, value],
           [ICON_COLOUR_KEY, colour],

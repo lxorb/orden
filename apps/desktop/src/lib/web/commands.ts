@@ -3,7 +3,8 @@
 
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
-import { scanCanvas, scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
+import { scanCanvas } from '../scan-canvas'
+import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {

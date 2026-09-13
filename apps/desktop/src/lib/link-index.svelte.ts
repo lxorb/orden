@@ -41,7 +41,7 @@ import { pressRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
-import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
+import { type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
 import { startup } from './startup.svelte'
 import { mark } from './trace'
 import {
@@ -374,7 +374,7 @@ class Links {
     // A page note too: its pages are file nodes naming the PDF behind them, which
     // is a link out of it exactly as a canvas's cards are.
     if (isCanvasTarget(relative) || isPagesTarget(relative)) {
-      this.put(scanCanvas(relative, content))
+      this.putCanvas(relative, content)
       return
     }
 
@@ -396,7 +396,18 @@ class Links {
     const relative = this.relative(path)
     if (!relative || !(isCanvasTarget(relative) || isPagesTarget(relative))) return
 
-    this.put(scanCanvas(relative, content))
+    this.putCanvas(relative, content)
+  }
+
+  /** A plane into the index, through the reader that is fetched with the first one.
+   *
+   *  Reading a canvas means the whole JSON Canvas format, and a window that opens on a
+   *  note has no plane to read: so it is asked for here rather than carried, and the
+   *  index takes the file's links a moment later than it takes a note's. Nothing waits
+   *  on it - the panel that shows them is drawn from the index as it changes - and
+   *  there is nothing to wait for on the second plane. See scan-canvas.ts. */
+  private putCanvas(relative: string, content: string) {
+    void import('./scan-canvas').then(({ scanCanvas }) => this.put(scanCanvas(relative, content)))
   }
 
   /** One scanned file into the index, replacing whatever was there under its

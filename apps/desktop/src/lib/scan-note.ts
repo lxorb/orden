@@ -8,7 +8,6 @@
 
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
-import { readCanvas } from './canvas/format'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { tagsIn } from './search/tags'
 
@@ -135,48 +134,6 @@ export function scanShortcut(path: string): ScannedNote {
     // converting; a shortcut is already one. See web-tab/shortcut.ts.
     url: null,
     links: [],
-  }
-}
-
-export function scanCanvas(path: string, content: string): ScannedNote {
-  const canvas = readCanvas(content)
-
-  return {
-    path,
-    // The extension is part of a canvas's name, the way it is for a PDF: a link
-    // to one is written `[[Board.canvas]]`.
-    name: path.split('/').pop() ?? path,
-    headings: [],
-    blocks: [],
-    // A drawing carries no tags: `#work` written on a card is a word on the plane
-    // rather than a tag the space is filed under.
-    tags: [],
-    // Under the `nib` key that already carries the ink, since a JSON file has no
-    // front matter: the same value a note keeps under `icon:`, read by the same
-    // icons.ts. See canvas.ts for why it lives in the file rather than beside it.
-    icon: canvas.icon ?? null,
-    iconColor: canvas.iconColor ?? null,
-    // No other name for itself, though: an alias is something a link is written
-    // with, and nothing writes `[[Board]]` for a canvas.
-    aliases: [],
-    // And a plane of cards is never a website: there is no front matter in JSON to
-    // say so, and JSON Canvas has no key for one.
-    url: null,
-    links: canvas.nodes
-      .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
-      .map((node) => ({
-        kind: 'wikilink' as const,
-        target: node.file,
-        // A file node's subpath is a heading or a block, written with the `#` a
-        // wikilink writes it with; a link into neither has null for both.
-        heading: node.subpath?.startsWith('#^') === false ? node.subpath.slice(1) : null,
-        block: node.subpath?.startsWith('#^') === true ? node.subpath.slice(2) : null,
-        alias: null,
-        embed: false,
-        // A canvas has no lines, so every row reads as the card it came from.
-        line: 0,
-        text: node.file,
-      })),
   }
 }
 
