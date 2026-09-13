@@ -5,9 +5,10 @@
  *  only thing that shrinks when the keyboard opens.
  *
  *  The device is settled here, once, and written on the document as well: every
- *  rule that used to key off a width now keys off `html[data-device]` and
- *  `html[data-layout]`, so the markup and the stylesheet cannot come to
- *  different conclusions about the same screen.
+ *  rule that used to key off a width now keys off `html[data-device]`, and off
+ *  `data-touch`, `data-drawer` and `data-narrow` beside it, so the markup and the
+ *  stylesheet cannot come to different conclusions about the same screen. Those
+ *  four and no others; see `shape`.
  *
  *  It is settled from the machine rather than from the width; see `deviceFor`.
  *  A window is not a device, and the width is only ever asked which handheld
