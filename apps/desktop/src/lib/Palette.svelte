@@ -123,7 +123,7 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
-  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
 
   <div
     class="nib-screen palette"
@@ -208,12 +208,9 @@
 {/if}
 
 <style>
+  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--bg) 62%, transparent);
-    backdrop-filter: blur(3px);
-    z-index: 20;
+    --scrim-z: 20;
   }
 
   /* The shape is `.nib-screen` in the themes package - the surface, the corner,

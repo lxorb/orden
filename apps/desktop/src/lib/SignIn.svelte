@@ -110,7 +110,7 @@
 
 {#if account.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
 
   <div
     class="nib-screen panel"
@@ -241,12 +241,9 @@
 {/if}
 
 <style>
+  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--bg) 62%, transparent);
-    backdrop-filter: blur(3px);
-    z-index: 30;
+    --scrim-z: 30;
   }
 
   /* What the link was about, above the address it asks for. */

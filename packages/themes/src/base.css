@@ -360,6 +360,34 @@ select option {
 
 /* ── Layers over the app ───────────────────── */
 
+/* What a layer is put up over: the app, dimmed and softened, so the surface in
+   front of it reads as the thing being answered. Twelve components had written
+   the same five lines out, and by then three of them had drifted to a different
+   ink and a softer blur, so two sheets opened over two different greys.
+
+   Where it sits in the stack is the caller's, as `--scrim-z`, because that is the
+   one thing each of them genuinely means differently: a dropdown's scrim is over
+   the sheet that opened it, and a sign-in's is under the palette. `--scrim-ink`
+   and `--scrim-blur` are there for the three that still spend less of both - the
+   store, a dropdown and a menu on a phone, each of which covers a surface that
+   has to stay readable behind it.
+
+   `is-clear` is the scrim that only catches: a menu's, on a desktop, where the
+   note it was opened from must not dim. It takes the tap and the scroll and
+   paints nothing. */
+.nib-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--scrim-z, 50);
+  background: color-mix(in srgb, var(--bg) var(--scrim-ink, 62%), transparent);
+  backdrop-filter: blur(var(--scrim-blur, 3px));
+}
+
+.nib-scrim.is-clear {
+  background: none;
+  backdrop-filter: none;
+}
+
 /* Level 3 of the elevation model, at the corner a thing that *floats* takes: a
    context menu, the app menu, the list of spaces, the suggestions under a
    `[[`, a dropdown. Five components had the same four lines of it and two had

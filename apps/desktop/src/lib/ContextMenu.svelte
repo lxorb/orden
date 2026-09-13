@@ -179,8 +179,8 @@
          selection that has to stay readable. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
-      class="scrim"
-      class:dim={sheet}
+      class="nib-scrim scrim"
+      class:is-clear={!sheet}
       transition:fade={{ duration: dur(130) }}
       onclick={() => menu.hide()}
     ></div>
@@ -277,17 +277,15 @@
 
   /* ── On a phone ────────────────────────────────────────────────── */
 
+  /* The layer behind it; see .nib-scrim in packages/themes. Clear under a
+     callout, which sits beside a selection that has to stay readable, and dimmed
+     under a sheet, which is a layer over the app. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
+    --scrim-z: 60;
+    --scrim-ink: 55%;
+    --scrim-blur: 2px;
     /* A finger on it neither scrolls nor pinches what is underneath. */
     touch-action: none;
-  }
-
-  .scrim.dim {
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    backdrop-filter: blur(2px);
   }
 
   .touch {

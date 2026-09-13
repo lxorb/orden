@@ -221,7 +221,11 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => (open = false)}></div>
+  <div
+    class="nib-scrim scrim is-clear"
+    transition:fade={{ duration: dur(130) }}
+    onclick={() => (open = false)}
+  ></div>
 
   <!-- The keyboard lands on the menu itself and the cursor is a row it names,
        rather than the focus walking from button to button: a menu is one thing
@@ -361,10 +365,12 @@
     stroke: none;
   }
 
+  /* The layer behind it; see .nib-scrim in packages/themes. Clear here, where
+     the menu is a popover beside a button. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 44;
+    --scrim-z: 44;
+    --scrim-ink: 55%;
+    --scrim-blur: 2px;
   }
 
   /* Under the bars it opens from, which are at the left end of the title bar -
@@ -478,11 +484,12 @@
     height: var(--touch-icon);
   }
 
-  /* Dimmed here, where the sheet is a layer over the app rather than a
-     popover beside a button. */
-  :global([data-touch]) .scrim {
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    backdrop-filter: blur(2px);
+  /* And dimmed here, where the sheet is a layer over the app rather than a
+     popover beside a button. Beats `.nib-scrim.is-clear`, which is what the
+     desktop's is. */
+  :global([data-touch]) .scrim.is-clear {
+    background: color-mix(in srgb, var(--bg) var(--scrim-ink), transparent);
+    backdrop-filter: blur(var(--scrim-blur));
   }
 
   /* Anchored to the bottom, the full width, and tall enough for the longest

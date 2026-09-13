@@ -273,7 +273,7 @@
 {#if target}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="scrim"
+    class="nib-scrim scrim"
     transition:fade={{ duration: dur(130) }}
     onclick={() => iconChoice.close()}
   ></div>
@@ -412,14 +412,6 @@
 {/if}
 
 <style>
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--bg) 62%, transparent);
-    backdrop-filter: blur(3px);
-    z-index: 50;
-  }
-
   .sheet {
     position: fixed;
     top: 14vh;

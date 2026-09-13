@@ -156,7 +156,11 @@
 
 {#if store.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => store.close()}></div>
+  <div
+    class="nib-scrim scrim"
+    transition:fade={{ duration: dur(130) }}
+    onclick={() => store.close()}
+  ></div>
 
   <!-- Named by whatever heads it, which is the theme being looked at or the
        store itself: the same words, once. -->
@@ -375,12 +379,10 @@
 {/snippet}
 
 <style>
+  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    backdrop-filter: blur(3px);
-    z-index: 44;
+    --scrim-z: 44;
+    --scrim-ink: 55%;
   }
 
   /* A little inside the settings sheet it sits on, so the one underneath is

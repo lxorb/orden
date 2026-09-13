@@ -32,7 +32,7 @@
 </script>
 
 {#if joining.step}
-  <div class="scrim" transition:fade={{ duration: dur(140) }}></div>
+  <div class="nib-scrim scrim" transition:fade={{ duration: dur(140) }}></div>
 
   <div
     class="nib-screen panel"
@@ -101,12 +101,9 @@
 {/if}
 
 <style>
+  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--bg) 62%, transparent);
-    backdrop-filter: blur(3px);
-    z-index: 30;
+    --scrim-z: 30;
   }
 
   /* `.nib-screen` in the themes package; see Palette.svelte. */

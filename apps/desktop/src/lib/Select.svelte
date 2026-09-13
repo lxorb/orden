@@ -167,7 +167,7 @@
 
   {#if open && viewport.touch}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
+    <div class="nib-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
 
     <div class="sheet" transition:fly={{ y: 32, duration: dur(220), easing: cubicOut }}>
       {#if label}<p class="heading">{label}</p>{/if}
@@ -413,12 +413,11 @@
 
   /* ── The sheet, on a phone ─────────────────────────────────────── */
 
+  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    backdrop-filter: blur(2px);
+    --scrim-z: 60;
+    --scrim-ink: 55%;
+    --scrim-blur: 2px;
   }
 
   .sheet {
