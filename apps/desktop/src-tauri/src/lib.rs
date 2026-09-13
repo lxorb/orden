@@ -187,7 +187,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
+            // The window, not the webview window, which a window holding a page in
+            // a tab is not; see web_tabs.rs.
+            if let Some(window) = app.get_window("main") {
                 let _ = window.unminimize();
                 let _ = window.set_focus();
             }
@@ -318,7 +320,8 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     trace::mark("launch arguments");
 
     // Built hidden, so nobody watches the window paint itself.
-    if let Some(window) = app.get_webview_window("main") {
+    // The window, not the webview window; see web_tabs.rs.
+    if let Some(window) = app.get_window("main") {
         window.show()?;
     }
 

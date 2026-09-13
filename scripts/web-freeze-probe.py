@@ -5,17 +5,25 @@ window, and the platform builds one of those asynchronously: the answer arrives 
 the same message loop that asked for it. So whether the app is still alive while a
 page opens is a question about that loop, and this asks it directly.
 
-A window can be dead in two ways, and the probe watches for both:
+A window can be dead in three ways, and the probe watches for all three. The
+middle one is the freeze this file was written for, and the reason a screenshot
+and a pump reading are both worth nothing on their own:
 
 * **the pump has stopped.** `SendMessageTimeout(hwnd, WM_NULL, ...)` sends the
   window a message that does nothing and times the answer. A loop that is running
-  answers in under a millisecond; a loop inside a nested wait answers when the wait
-  ends, and never if it does not. `IsHungAppWindow` is the shell's own second
+  answers in under a millisecond. `IsHungAppWindow` is the shell's own second
   opinion - it is what Explorer draws "Not Responding" from.
-* **the window threw.** The pump runs, the pixels are there, and nothing answers a
-  press, because an error while Svelte was flushing left the page drawn and no
-  longer reactive. Nothing outside can see that in a screenshot, so the probe reads
-  the app's own log, where every uncaught error is written; see lib/log.ts.
+* **the pump runs and the window answers nothing.** The app goes on repainting,
+  the mouse still changes the cursor, and every button is dead. That is what
+  building a webview on the thread the window's requests arrive on does: the wait
+  for the platform is itself a message loop, so messages keep being dispatched
+  while the request handler that started it never returns - and every command the
+  window sends afterwards queues behind it forever. Nothing outside the app can
+  see that, so the probe asks the app itself, over its own automation endpoint:
+  one cheap verb a second, timed. A window that stops answering those has frozen.
+* **the window threw.** An error while Svelte was flushing leaves the page drawn
+  and no longer reactive. The probe reads the app's own log, where every uncaught
+  error in the window is written; see lib/log.ts.
 
 Four phases, one app:
 
@@ -257,16 +265,20 @@ def wipe(identifier: str) -> None:
         shutil.rmtree(one, ignore_errors=True)
 
 
-def endpoint(identifier: str, seconds: float) -> tuple[int, str]:
+def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     """The port and the secret this launch is listening behind, once it has written
-    them down. The app's own handshake file; see src-tauri/src/endpoint.rs."""
+    them down. The app's own handshake file; see src-tauri/src/endpoint.rs.
+
+    `unlike` is the port the launch before it had: the file is rewritten on every
+    launch because the system hands out a new port each time, so a run that has just
+    restarted the app waits for a number that is not the one it already knows."""
 
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
         try:
             said = json.loads(path.read_text(encoding="utf-8"))
-            if said.get("port") and said.get("secret"):
+            if said.get("port") and said.get("secret") and int(said["port"]) != unlike:
                 return int(said["port"]), str(said["secret"])
         except (OSError, ValueError):
             pass
@@ -274,7 +286,9 @@ def endpoint(identifier: str, seconds: float) -> tuple[int, str]:
     raise SystemExit(f"the app never wrote {path}")
 
 
-def act(port: int, secret: str, verb: str, args: dict[str, object]) -> str:
+def act(
+    port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 60
+) -> str:
     """One request to the running app, the way `nib` makes one."""
 
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
@@ -284,12 +298,57 @@ def act(port: int, secret: str, verb: str, args: dict[str, object]) -> str:
         headers={"authorization": f"Bearer {secret}", "content-type": "application/json"},
     )
     try:
-        with urllib.request.urlopen(request, timeout=60) as answer:
+        with urllib.request.urlopen(request, timeout=seconds) as answer:
             return answer.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as refused:
         return f"the app answered {refused.code}: {refused.read().decode('utf-8', 'replace')}"
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return f"no answer: {error}"
+
+
+class Heartbeat:
+    """Asks the window itself, once a second, whether it is still answering.
+
+    One cheap verb - `window`, which reads where the window is and touches nothing -
+    over the app's own endpoint. The answer comes back through the window's own IPC,
+    which is exactly what a page built on the wrong thread wedges, so this is the
+    one reading that catches the freeze. A timeout is an answer: it means no."""
+
+    def __init__(self, port: int, secret: str) -> None:
+        self.port = port
+        self.secret = secret
+        self.beats: list[tuple[float, bool, float]] = []
+        self.going = True
+        self.since = time.perf_counter()
+        self.refused: list[str] = []
+        self.thread = threading.Thread(target=self.run, daemon=True)
+
+    def start(self, since: float) -> None:
+        self.since = since
+        self.thread.start()
+
+    def run(self) -> None:
+        while self.going:
+            began = time.perf_counter()
+            said = act(self.port, self.secret, "window", {}, seconds=4)
+            cost = (time.perf_counter() - began) * 1000
+            answered = said.startswith('{"ok":true')
+            if not answered:
+                self.refused.append(said[:160])
+            self.beats.append((began - self.since, answered, cost))
+            time.sleep(1.0)
+
+    def stop(self) -> None:
+        self.going = False
+
+    def missed(self, after: float) -> int:
+        return sum(1 for at, ok, _ in self.beats if at >= after and not ok)
+
+    def answered(self, after: float) -> int:
+        return sum(1 for at, _, _ in self.beats if at >= after)
+
+    def worst(self, after: float) -> float:
+        return max((cost for at, ok, cost in self.beats if at >= after and ok), default=0.0)
 
 
 def log_lines(identifier: str) -> list[str]:
@@ -425,6 +484,12 @@ def main() -> int:
     print("\nopen: the website, through the app's own endpoint")
     where, secret = endpoint(args.identifier, 20)
     said: list[str] = []
+    # From here on the window is asked once a second whether it is still answering
+    # anything at all, because that - and not the pump, and not a photograph - is
+    # what this freeze takes away.
+    beating = Heartbeat(where, secret)
+    beating.start(began)
+    from_here = time.perf_counter() - began
 
     def open_it() -> None:
         # Twice, and the first one is only the space. A website is a website because
@@ -447,15 +512,24 @@ def main() -> int:
     onto_the_screen(hwnd)
     picture(shots / "web-freeze-open.png")
 
+    beating.stop()
+
     print("\nrestart: the app again, on the session it was left with")
     app.kill()
     app.wait(timeout=15)
     app = subprocess.Popen([str(exe)], cwd=str(exe.parent))
     again = time.perf_counter()
     hwnd = wait_for_window(app, 40)
+    beats: Heartbeat | None = None
+    since = 0.0
     if hwnd:
         print(f"window 0x{hwnd:X} after {time.perf_counter() - again:.2f}s")
+        where, secret = endpoint(args.identifier, 20, unlike=where)
+        beats = Heartbeat(where, secret)
+        beats.start(began)
+        since = time.perf_counter() - began
         measure(hwnd, args.watch, began, restored)
+        beats.stop()
         onto_the_screen(hwnd)
         picture(shots / "web-freeze-restored.png")
     else:
@@ -463,10 +537,26 @@ def main() -> int:
 
     wrong = [one for one in log_lines(args.identifier) if " ERROR " in one]
 
+    missed = beating.missed(from_here) + (beats.missed(since) if beats else 0)
+    asked = beating.answered(from_here) + (beats.answered(since) if beats else 0)
+
     print("\nverdict")
-    print(f"  launch   worst {worst(launch):8.2f} ms  dead {dead(launch)}/{len(launch)}")
-    print(f"  open     worst {worst(opened):8.2f} ms  dead {dead(opened)}/{len(opened)}")
-    print(f"  restart  worst {worst(restored):8.2f} ms  dead {dead(restored)}/{len(restored)}")
+    print("  the window's message pump")
+    print(f"    launch   worst {worst(launch):8.2f} ms  dead {dead(launch)}/{len(launch)}")
+    print(f"    open     worst {worst(opened):8.2f} ms  dead {dead(opened)}/{len(opened)}")
+    print(f"    restart  worst {worst(restored):8.2f} ms  dead {dead(restored)}/{len(restored)}")
+    print("  the window's own answers, over its endpoint")
+    print(
+        f"    open     worst {beating.worst(from_here):8.2f} ms  "
+        f"unanswered {beating.missed(from_here)}/{beating.answered(from_here)}"
+    )
+    if beats:
+        print(
+            f"    restart  worst {beats.worst(since):8.2f} ms  "
+            f"unanswered {beats.missed(since)}/{beats.answered(since)}"
+        )
+    for one in (beating.refused + (beats.refused if beats else []))[:4]:
+        print(f"    an ask came back: {one}")
     print(f"  the app's own log holds {len(wrong)} error lines")
     for one in wrong[-8:]:
         print(f"    {one}")
@@ -478,16 +568,19 @@ def main() -> int:
     httpd.shutdown()
 
     if dead(launch):
-        print("\nthe window was not answering before a web tab was even opened")
+        print("\nthe window's pump had stopped before a web tab was even opened")
         return 2
     if dead(opened) or dead(restored):
-        print("\nthe window stopped answering while a web tab opened")
+        print("\nthe window's pump stopped while a web tab opened")
+        return 1
+    if missed:
+        print(f"\nthe window stopped answering: {missed} of {asked} asks went nowhere")
         return 1
     if wrong:
         print("\nthe window went on answering and something in it threw: the lines above")
         return 1
 
-    print("\nthe window answered every message, and nothing in it threw")
+    print("\nthe window answered every message and every ask, and nothing threw")
     return 0
 
 

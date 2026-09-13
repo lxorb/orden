@@ -14,6 +14,17 @@
 //! for a clip, and close it. The window says where the pane is; nothing here
 //! knows what a pane is.
 //!
+//! **What a page in a window costs the rest of the crate.** Tauri's
+//! `get_webview_window` only answers for a window whose webviews are all itself -
+//! `Window::is_webview_window` is that test - so from the moment a web tab puts a
+//! second webview in the window, `get_webview_window("main")` answers nothing at
+//! all. Anything that asked that way stopped working while a website was open: the
+//! command line said the app had no window, a `nib://` link never raised it, and a
+//! second launch handed its file over to a window that was never brought forward.
+//! So nothing in this crate asks for the window that way. `get_window` is the call,
+//! because a window is what all of them wanted; `get_webview` is for a webview by
+//! label, which is how this module finds a page.
+//!
 //! The site gets nothing of the app. It is granted no command, because the
 //! capabilities name the app's own webviews rather than the windows they sit in
 //! and because a remote origin matches no capability here (see
@@ -226,8 +237,7 @@ impl WebTabs {
     fn claim(&self, tab: &str) -> bool {
         self.opening
             .lock()
-            .map(|mut busy| busy.insert(tab.to_string()))
-            .unwrap_or(false)
+            .is_ok_and(|mut busy| busy.insert(tab.to_string()))
     }
 
     /// Gives it back, whether the page arrived or not.
@@ -373,7 +383,7 @@ const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 /// halves are the fix for a freeze that took the whole app with it, and both are
 /// needed:
 ///
-/// A command that is not `async` runs inline inside the callback WebView2 hands the
+/// A command that is not `async` runs inline inside the callback `WebView2` hands the
 /// app its IPC in. Building a child webview from in there is a deadlock, not a
 /// stall: the platform creates a `WebView2` controller asynchronously, wry waits for
 /// it by running a nested message loop (`webview2_com::wait_with_pump`), and the
@@ -541,7 +551,7 @@ fn say(
 /// engine and the engine takes them nowhere else: bounds, visibility, an address, a
 /// line of script, a controller closed. None of them waits for the platform to
 /// answer, so none of them runs a nested message loop, which is the one thing that
-/// cannot be done from inside WebView2's own callback. `web_open` is the one that
+/// cannot be done from inside `WebView2`'s own callback. `web_open` is the one that
 /// waits, and it is the one that had to move; see the note above it. A placement is
 /// also asked for on every drag of a pane divider, where a hop onto the async
 /// runtime and back would be two hops for one `SetBounds`.

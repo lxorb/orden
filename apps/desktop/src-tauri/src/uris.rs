@@ -47,7 +47,9 @@ pub fn watch(app: &AppHandle) {
         // A link is somebody asking for this app, so the window comes forward.
         // A phone has one window and the system has already brought it up.
         #[cfg(desktop)]
-        if let Some(window) = opened.get_webview_window("main") {
+        // The window, not the webview window, which a window with a page in a tab
+        // is not; see web_tabs.rs.
+        if let Some(window) = opened.get_window("main") {
             let _ = window.unminimize();
             let _ = window.set_focus();
         }

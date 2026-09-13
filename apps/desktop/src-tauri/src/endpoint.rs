@@ -297,7 +297,10 @@ fn answer(
 
 /// Hands the request to the window and waits for its answer.
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
-    if app.get_webview_window(WINDOW).is_none() {
+    // The window, not the webview window: a window with a page in a tab is not one
+    // of those, and every request would be refused for as long as a website was
+    // open. See web_tabs.rs.
+    if app.get_window(WINDOW).is_none() {
         return Err("the app has no window open to ask".to_owned());
     }
 

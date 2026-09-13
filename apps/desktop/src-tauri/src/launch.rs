@@ -66,7 +66,10 @@ pub fn new_window(app: AppHandle) -> Result<(), String> {
 fn free_label(app: &AppHandle) -> String {
     loop {
         let label = format!("nib-{}", WINDOWS.fetch_add(1, Ordering::Relaxed) + 2);
-        if app.get_webview_window(&label).is_none() {
+        // The window, not the webview window: a window that holds a page in a tab
+        // is not one, and a label it holds would be handed out again. See
+        // web_tabs.rs.
+        if app.get_window(&label).is_none() {
             return label;
         }
     }
