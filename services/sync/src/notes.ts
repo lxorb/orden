@@ -2,6 +2,7 @@ import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
+import { conflictPath, numbered } from '@nib/markdown/paths'
 import { readBody } from './body'
 import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
@@ -171,6 +172,56 @@ function noteAt(env: Env, spaceId: string, path: string): Promise<Note | null> {
   return env.DB.prepare('select * from notes where space_id = ? and path = ? and deleted = 0')
     .bind(spaceId, path)
     .first<Note>()
+}
+
+/** A second copy of a note, kept beside it under the name every copy takes.
+ *
+ *  What it is for is the one write on this side that can drop somebody's words: a
+ *  room settling its own document over a note that something which could not reach
+ *  the room had written. The room cannot merge those two - it has no history for
+ *  words it never saw - and the answer the app gives for exactly the same question is
+ *  to keep the other copy beside the note. So does this, under the same name, so a
+ *  reader who has seen one has seen both; see `conflictPath` in @nib/markdown/paths
+ *  and `keptBeside` in rooms/room.ts.
+ *
+ *  Null when there is nowhere free to put it, which is twenty copies of one note in
+ *  one day. Neither the quota nor the role is asked: the words are already in the
+ *  account, this is where they are moved to rather than something new arriving, and
+ *  refusing it is the loss it is there to prevent. */
+export async function noteBeside(
+  env: Env,
+  note: Note,
+  content: string,
+  by = '',
+): Promise<Note | null> {
+  // Already kept. A device that cannot reach a note's room offers the same words
+  // again on every pass until somebody looks at it, and a second copy of a copy
+  // says nothing the first did not - so the words are looked for by their hash
+  // before a name is found for them, and the note that holds them is the answer.
+  //
+  // Every note but this one. These are the words this note holds as the caller
+  // reads it and is about to stop holding, which is the whole reason it is being
+  // copied: finding them here would be finding the copy in the thing being
+  // overwritten.
+  const hash = await sha256(content)
+  const kept = await env.DB.prepare(
+    'select * from notes where space_id = ? and hash = ? and id != ? and deleted = 0',
+  )
+    .bind(note.space_id, hash, note.id)
+    .first<Note>()
+
+  if (kept) return kept
+
+  const beside = conflictPath(note.path)
+
+  for (let counter = 1; counter <= 20; counter += 1) {
+    const path = numbered(beside, counter)
+    if (await noteAt(env, note.space_id, path)) continue
+
+    return await addNote(env, note.space_id, path, content, by)
+  }
+
+  return null
 }
 
 /** Puts a note's new contents in the store: the bytes in R2, the row in D1, with

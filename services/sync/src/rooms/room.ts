@@ -40,7 +40,7 @@ import {
 } from '@nib/rooms'
 import { byteLength } from '../crypto'
 import { note as noted } from '../failed'
-import { MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
+import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
 import { deviceIn } from '../versions'
@@ -74,6 +74,16 @@ export interface Held {
   noteId: string
   spaceId: string
   kind: RoomKind
+  /** The note's version this room's document is level with: the one it was seeded
+   *  from, or the one its last settle wrote. What it is for is noticing that
+   *  something else has written the note since - a device whose socket is down
+   *  pushing the file it holds, the connector, a rollback - because the settle is a
+   *  whole-file write and the words in a version the room never saw are not the
+   *  room's to drop. See `keptBeside`.
+   *
+   *  Absent for a room written down before there was a reason to keep it, which is
+   *  read as "level with whatever is there": one settle later it says so. */
+  version?: number
 }
 
 /** What a socket has announced, kept on the socket so that a room which was
@@ -108,7 +118,12 @@ function heldIn(value: unknown): Held | null {
   const held = value as Partial<Held>
   if (typeof held.noteId !== 'string' || typeof held.spaceId !== 'string') return null
 
-  return { noteId: held.noteId, spaceId: held.spaceId, kind: kindOf(held.kind) }
+  return {
+    noteId: held.noteId,
+    spaceId: held.spaceId,
+    kind: kindOf(held.kind),
+    ...(typeof held.version === 'number' ? { version: held.version } : {}),
+  }
 }
 
 function attachedTo(socket: WebSocket): Partial<Attached> | null {
@@ -478,6 +493,20 @@ export class NoteRoom implements DurableObject {
         const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
         const file = object ? await object.text() : ''
         await this.state.seed((doc) => fill(held.kind, doc, file))
+
+        // And which version those words were, so that a settle can tell a note
+        // nothing has touched since from one that something wrote while the room held
+        // it; see `keptBeside`. Read after the bytes rather than before: a version
+        // that moved in between then reads as one the room never saw, which is the
+        // safe way round to be wrong.
+        const row = await this.env.DB.prepare('select version from notes where id = ?')
+          .bind(held.noteId)
+          .first<{ version: number }>()
+
+        if (row) {
+          held.version = row.version
+          await this.ctx.storage.put('note', held)
+        }
       }
 
       // Sockets that were already here mean this object was asleep rather than
@@ -659,15 +688,61 @@ export class NoteRoom implements DurableObject {
     // still holding the words, so the answer is to come round again and write
     // them on top of what landed rather than to write over it from a row that
     // was already stale.
-    if (!(await saveNote(this.env, file, settled, file.path, this.settling))) {
+    // Something that is not this room wrote the note while the room held it. The
+    // settle below is a whole-file write, so every word in that version which the
+    // room does not have would go with it - and those words are not the room's to
+    // drop. What happens instead is what the app does with the same question, which
+    // is to keep the other copy beside the note; see `keptBeside`.
+    if (held.version !== undefined && file.version !== held.version) {
+      await this.keptBeside(file, settled)
+    }
+
+    const saved = await saveNote(this.env, file, settled, file.path, this.settling)
+    if (!saved) {
       await this.settleSoon()
       return false
     }
+
+    // Which version the room is level with now, so the next settle asks the same
+    // question against this one rather than against the one before it.
+    held.version = saved.version
+    await this.ctx.storage.put('note', held)
 
     // Said once. Whoever types next is whose the next version is, and a settle that
     // writes nothing new must not put this name on it.
     this.settling = ''
     return true
+  }
+
+  /** The note as it stands, kept as a second note beside it, because the settle is
+   *  about to write over it and the room never saw what it says.
+   *
+   *  A room merges keystroke by keystroke and can only do that for keystrokes it saw.
+   *  A device whose socket is down pushes the whole file it holds instead, and the
+   *  account takes it: the push names the version it read, so nothing on that side is
+   *  wrong. But the room is still holding words of its own, and one of the two has to
+   *  be written second. So neither is thrown away - the one that loses the note keeps
+   *  the name every other copy of a note takes, and both devices are handed it by the
+   *  next pass. Which is the same answer, under the same name, that a pass gives when
+   *  it finds two copies of a note; see sync/conflicts.ts in the app.
+   *
+   *  Nothing is kept when the two say the same thing, which is the ordinary case: the
+   *  version moved because something renamed the note or wrote the very words the
+   *  room is about to write. Best effort past that - a copy that could not be made is
+   *  said out loud and the settle carries on, because a note that cannot be saved at
+   *  all is worse than one whose second copy is only in the version history. */
+  private async keptBeside(file: Note, settling: string) {
+    try {
+      const object = await this.env.NOTES.get(noteKey(file.space_id, file.id))
+      const wrote = object ? await object.text() : ''
+      if (!wrote || wrote === settling) return
+
+      if (!(await noteBeside(this.env, file, wrote))) {
+        throw new Error('there was nowhere free to keep it')
+      }
+    } catch (wrong) {
+      noted(`room ${file.id}`, wrong instanceof Error ? wrong : new Error(String(wrong)), null)
+    }
   }
 }
 
