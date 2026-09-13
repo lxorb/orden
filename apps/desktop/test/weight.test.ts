@@ -144,6 +144,19 @@ function eagerGraph(entry: string): { files: string[]; packages: Set<string>; by
   return { files, packages, bytes }
 }
 
+/** Every file of ours under a folder, for the tests that ask a question of the whole
+ *  source rather than of the graph. */
+function everySource(folder: string): string[] {
+  const out: string[] = []
+  for (const entry of readdirSync(folder, { withFileTypes: true })) {
+    const full = join(folder, entry.name)
+    if (entry.isDirectory()) out.push(...everySource(full))
+    else if (/\.(?:ts|svelte)$/.test(entry.name)) out.push(full)
+  }
+
+  return out
+}
+
 const graph = eagerGraph(ENTRY)
 const names = new Set(graph.files.map((one) => one.replace(/\\/g, '/')))
 
@@ -225,6 +238,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['emojilib', "the emoji table's own names"],
     ['unicode-emoji-json', 'the emoji index'],
     ['lucide-static', "Lucide's tags"],
+    // The crate's IPC, and the one line of JavaScript that used to drag it in: the os
+    // plugin, asked for the platform's name. Both are behind src/lib/native.ts and a
+    // property read now; see the two tests at the foot of this file.
+    ['@tauri-apps/api/core', "the crate's own IPC"],
+    ['@tauri-apps/plugin-os', "the platform's name, asked for the long way"],
     // Batch 110's four. The collaboration engine, which is what a room costs and is
     // of no use until somebody signs in: it comes with the account now, because a
     // room is only ever joined for a file the account holds. See rooms.svelte.ts.
@@ -417,6 +435,38 @@ describe('what the app evaluates before it draws anything', () => {
   test('and the door asks for the grammar rather than importing it', () => {
     expect(asked(DOOR)).not.toContain('@codemirror/lang-html')
     expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
+  })
+
+  /** And the crate's own IPC, which is the same shape of edge inside a different
+   *  dependency.
+   *
+   *  `@tauri-apps/api/core` is what the window, the events, the images and the webview
+   *  are all built on, so five modules of that package import it outright: a dynamic
+   *  `import('@tauri-apps/api/core')` cannot move it anywhere, and the bundler said so
+   *  on every build. It was in front of the first paint besides, because
+   *  `@tauri-apps/plugin-os` - one line of JavaScript over a global, asked for the
+   *  platform's name - imports it too.
+   *
+   *  So there is a door of nib's own again: src/lib/native.ts names the package and
+   *  nothing else does, the platform's name is read off the page where the plugin's
+   *  Rust half writes it, and a browser build fetches neither. */
+  const CRATE = join(ROOT, 'apps/desktop/src/lib/native.ts')
+
+  test('and the crate comes through nib’s own door', () => {
+    expect(existsSync(CRATE)).toBe(true)
+    expect(readFileSync(CRATE, 'utf8')).toContain("from '@tauri-apps/api/core'")
+  })
+
+  test('which nothing asks for dynamically, since nothing could move it', () => {
+    // The comments go first, because the door's own prose names the specifier it is
+    // there to keep out of everybody else's hands.
+    const named = everySource(join(ROOT, 'apps/desktop/src')).filter((one) =>
+      /import\(\s*['"]@tauri-apps\/api\/core['"]/.test(
+        readFileSync(one, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? ''),
+      ),
+    )
+
+    expect(named).toEqual([])
   })
 })
 

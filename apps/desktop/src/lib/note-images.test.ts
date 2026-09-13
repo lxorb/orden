@@ -4,8 +4,6 @@
 
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('@tauri-apps/plugin-os', () => ({ platform: () => 'windows' }))
-
 /** The space, and the one file in it the index can find by name. */
 const found: Record<string, string> = {
   'shot.png': 'assets/shot.png',

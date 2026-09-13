@@ -10,11 +10,10 @@
  *  The colour is the device's own and is kept, so the phone is the same colour
  *  every morning and two machines of the same make are still told apart. */
 
-import { platform } from '@tauri-apps/plugin-os'
 import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
 import { keep, storedText } from '../stored'
-import { isNative } from '../tauri'
+import { isNative, platform } from '../tauri'
 import { browserName } from './browser'
 
 const KEY = 'nib:device-colour'

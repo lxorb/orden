@@ -2,7 +2,6 @@
  *  browser. Everything platform-specific funnels through here so the interface
  *  never branches. */
 
-import { platform } from '@tauri-apps/plugin-os'
 import { assetRoute, assetStorePath } from './web/asset-route'
 
 /** The two platforms that are a phone app rather than a desktop one. */
@@ -14,14 +13,38 @@ const PHONES = new Set<string>(['android', 'ios'])
  *  there are real files behind the notes and the page is nobody's tab. */
 export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-/** The phone app. `platform()` reads what the os plugin left in the page before
- *  the first script ran, so this is known without waiting for anything. */
+/** Which operating system this is: `'windows'`, `'macos'`, `'linux'`, `'android'`,
+ *  `'ios'`, and the empty string where there is no Tauri to say.
+ *
+ *  Read off the page rather than asked for, and that is the whole of what the os
+ *  plugin's own `platform()` does - one line over a global its Rust half writes
+ *  before the first script runs. Imported, it would bring the plugin's other eight
+ *  functions and the IPC core all of them are built on into the first paint, for a
+ *  build that may never invoke anything. The plugin stays registered on the Rust
+ *  side, which is what writes the global; see src-tauri/src/lib.rs. */
+export function platform(): string {
+  if (typeof window === 'undefined') return ''
+
+  const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } })
+    .__TAURI_OS_PLUGIN_INTERNALS__
+
+  return os?.platform ?? ''
+}
+
+/** The phone app. Known without waiting for anything, since the line above is a
+ *  property read. */
 export const isMobile = isNative && PHONES.has(platform())
 
 /** The desktop app, which is the only build with a window of its own to
  *  minimise, a second window to present from, a file dialog, a shell around it
  *  and an installer to update itself with. */
 export const isDesktop = isNative && !isMobile
+
+// The crate's door, set going as this module loads rather than waited for at the
+// first question: on the desktop the launch asks one before it has drawn anything,
+// and a fetch already in flight is not a fetch anybody waits through. Nothing in a
+// browser, where there is no crate to talk to. See native.ts.
+if (isNative) void import('./native')
 
 /** The browser build answers the same commands from its own storage, so every
  *  call site reads the same on all three. */
@@ -31,7 +54,7 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
     return webInvoke<T>(command, args)
   }
 
-  const { invoke } = await import('@tauri-apps/api/core')
+  const { invoke } = await import('./native')
   return invoke<T>(command, args)
 }
 

@@ -12,9 +12,6 @@
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-// Read at load time by `isMobile`, and there is no Tauri here to read it from.
-vi.mock('@tauri-apps/plugin-os', () => ({ platform: () => 'windows' }))
-
 type Tauri = typeof import('./tauri')
 
 /** How Tauri hands out a file: a host under http where the platform will not give

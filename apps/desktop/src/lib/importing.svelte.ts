@@ -11,8 +11,6 @@
  *  zip of six thousand notes takes a moment, and a sheet that is closed and
  *  opened again should not read it twice. */
 
-import { platform } from '@tauri-apps/plugin-os'
-
 import { message, t } from './i18n.svelte'
 import { applyImport } from './import/apply'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
@@ -23,7 +21,7 @@ import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
 import { relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, platform } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** What the sheet is doing, which is what it draws. */
