@@ -1002,8 +1002,10 @@ export const fa: Dictionary = {
   'The colours a note had are not kept': 'رنگ‌هایی که یادداشت داشت نگه داشته نمی‌شوند',
   '{count} block references were written out as the words they pointed at':
     '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} نمای ذخیره‌شده کنار گذاشته شد و هر سطر در جدول است',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} نمای ذخیره‌شده کنار گذاشته شد و هر سطر در جدول است',
+    other: '{count} نمای ذخیره‌شده کنار گذاشته شد و هر سطر در جدول است',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} صفحه به شکل HTML آمد، پس واژه‌هایشان می‌مانند و نمایشان نه',
   'There are no rows in this file.': 'در این پرونده سطری نیست.',

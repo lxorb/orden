@@ -1013,8 +1013,10 @@ export const ta: Dictionary = {
   'The colours a note had are not kept': 'குறிப்புக்கு இருந்த நிறங்கள் வைக்கப்படவில்லை',
   '{count} block references were written out as the words they pointed at':
     '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} சேமித்த காட்சிகள் விடப்பட்டன, எல்லா வரிசைகளும் அட்டவணையில் உள்ளன',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} சேமித்த காட்சிகள் விடப்பட்டன, எல்லா வரிசைகளும் அட்டவணையில் உள்ளன',
+    other: '{count} சேமித்த காட்சிகள் விடப்பட்டன, எல்லா வரிசைகளும் அட்டவணையில் உள்ளன',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} பக்கங்கள் HTML ஆக வந்தன, எனவே சொற்கள் வைக்கப்பட்டன, தோற்றம் இல்லை',
   'There are no rows in this file.': 'இந்தக் கோப்பில் வரிசைகள் இல்லை.',

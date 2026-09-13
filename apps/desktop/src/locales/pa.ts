@@ -1009,8 +1009,10 @@ export const pa: Dictionary = {
   'The colours a note had are not kept': 'ਨੋਟ ਦੇ ਰੰਗ ਨਹੀਂ ਰੱਖੇ ਜਾਂਦੇ',
   '{count} block references were written out as the words they pointed at':
     '{count} ਬਲਾਕ ਹਵਾਲੇ ਉਨ੍ਹਾਂ ਸ਼ਬਦਾਂ ਵਜੋਂ ਲਿਖੇ ਗਏ ਜਿਨ੍ਹਾਂ ਵੱਲ ਉਹ ਇਸ਼ਾਰਾ ਕਰਦੇ ਸਨ',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} ਸਾਂਭੇ ਦ੍ਰਿਸ਼ ਛੱਡ ਦਿੱਤੇ ਗਏ, ਤੇ ਹਰ ਕਤਾਰ ਸਾਰਨੀ ਵਿੱਚ ਹੈ',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} ਸਾਂਭੇ ਦ੍ਰਿਸ਼ ਛੱਡ ਦਿੱਤੇ ਗਏ, ਤੇ ਹਰ ਕਤਾਰ ਸਾਰਨੀ ਵਿੱਚ ਹੈ',
+    other: '{count} ਸਾਂਭੇ ਦ੍ਰਿਸ਼ ਛੱਡ ਦਿੱਤੇ ਗਏ, ਤੇ ਹਰ ਕਤਾਰ ਸਾਰਨੀ ਵਿੱਚ ਹੈ',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} ਸਫ਼ੇ HTML ਵਜੋਂ ਆਏ, ਇਸ ਲਈ ਸ਼ਬਦ ਰਹਿੰਦੇ ਹਨ ਤੇ ਦਿੱਖ ਨਹੀਂ',
   'There are no rows in this file.': 'ਇਸ ਫ਼ਾਈਲ ਵਿੱਚ ਕਤਾਰਾਂ ਨਹੀਂ।',

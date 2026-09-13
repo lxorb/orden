@@ -1042,8 +1042,12 @@ export const ru: Dictionary = {
   'The colours a note had are not kept': 'Цвета заметок не сохраняются',
   '{count} block references were written out as the words they pointed at':
     'Ссылок на блоки: {count}, они записаны словами, на которые указывали',
-  '{count} saved views are left out, and every row is in the table':
-    'Сохранённых представлений: {count}, они пропущены, в таблице все строки',
+  '{count} saved views are left out, and every row is in the table': {
+    few: 'Сохранённых представлений: {count}, они пропущены, в таблице все строки',
+    many: 'Сохранённых представлений: {count}, они пропущены, в таблице все строки',
+    one: 'Сохранённых представлений: {count}, они пропущены, в таблице все строки',
+    other: 'Сохранённых представлений: {count}, они пропущены, в таблице все строки',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'Страниц в HTML: {count}, их слова сохранены, а вид нет',
   'There are no rows in this file.': 'В этом файле нет строк.',

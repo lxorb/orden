@@ -1011,8 +1011,10 @@ export const sw: Dictionary = {
   'The colours a note had are not kept': 'Rangi ambazo dokezo lilikuwa nazo hazihifadhiwi',
   '{count} block references were written out as the words they pointed at':
     'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
-  '{count} saved views are left out, and every row is in the table':
-    'mionekano {count} iliyohifadhiwa imeachwa, na kila mstari upo kwenye jedwali',
+  '{count} saved views are left out, and every row is in the table': {
+    one: 'mionekano {count} iliyohifadhiwa imeachwa, na kila mstari upo kwenye jedwali',
+    other: 'mionekano {count} iliyohifadhiwa imeachwa, na kila mstari upo kwenye jedwali',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'kurasa {count} zilifika kama HTML, kwa hivyo maneno yao yanahifadhiwa na muonekano hapana',
   'There are no rows in this file.': 'Hakuna mistari katika faili hii.',

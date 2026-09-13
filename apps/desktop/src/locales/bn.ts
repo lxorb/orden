@@ -1002,8 +1002,10 @@ export const bn: Dictionary = {
   'The colours a note had are not kept': 'নোটের রং রাখা হয় না',
   '{count} block references were written out as the words they pointed at':
     '{count}টি ব্লক রেফারেন্স যে শব্দ দেখাত, সেই শব্দ হিসেবেই লেখা হয়েছে',
-  '{count} saved views are left out, and every row is in the table':
-    '{count}টি সেভ করা ভিউ বাদ পড়েছে, টেবিলে প্রতিটি সারি আছে',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count}টি সেভ করা ভিউ বাদ পড়েছে, টেবিলে প্রতিটি সারি আছে',
+    other: '{count}টি সেভ করা ভিউ বাদ পড়েছে, টেবিলে প্রতিটি সারি আছে',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count}টি পাতা HTML হিসেবে এসেছে, তাই তাদের শব্দ রাখা হয়েছে, চেহারা নয়',
   'There are no rows in this file.': 'এই ফাইলে কোনো সারি নেই।',

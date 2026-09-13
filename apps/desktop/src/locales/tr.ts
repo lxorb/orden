@@ -1004,8 +1004,10 @@ export const tr: Dictionary = {
   'The colours a note had are not kept': 'Bir notun renkleri korunmaz',
   '{count} block references were written out as the words they pointed at':
     '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} kayıtlı görünüm dışarıda kaldı ve her satır tabloda',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} kayıtlı görünüm dışarıda kaldı ve her satır tabloda',
+    other: '{count} kayıtlı görünüm dışarıda kaldı ve her satır tabloda',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} sayfa HTML olarak geldi, sözcükleri korunur, görünümleri korunmaz',
   'There are no rows in this file.': 'Bu dosyada satır yok.',

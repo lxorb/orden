@@ -49,7 +49,13 @@ export type Planned =
  *  that went through `t()` here would be in whatever language the app was in
  *  when the file was read. */
 export interface Lost {
+  /** The row as it is filed: the English sentence, which is also the `other` form
+   *  where the line counts something. */
   text: string
+  /** The form a count of one takes, for a line that counts something. Without it
+   *  a line that says "{count} views" reads as "1 views" the first time somebody
+   *  hits the one case, in every language that has a singular. */
+  one?: string
   values?: Record<string, string | number>
 }
 

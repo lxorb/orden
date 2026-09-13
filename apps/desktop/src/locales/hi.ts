@@ -1002,8 +1002,10 @@ export const hi: Dictionary = {
   'The colours a note had are not kept': 'नोट के रंग नहीं रखे जाते',
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ उन शब्दों के रूप में लिखे गए जिन पर वे इशारा करते थे',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} सहेजे दृश्य छोड़ दिए गए, और हर पंक्ति तालिका में है',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} सहेजे दृश्य छोड़ दिए गए, और हर पंक्ति तालिका में है',
+    other: '{count} सहेजे दृश्य छोड़ दिए गए, और हर पंक्ति तालिका में है',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} पेज HTML में आए, इसलिए उनके शब्द रखे गए और दिखावट नहीं',
   'There are no rows in this file.': 'इस फ़ाइल में कोई पंक्ति नहीं है।',

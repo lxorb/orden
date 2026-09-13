@@ -1051,8 +1051,14 @@ export const ar: Dictionary = {
   'The colours a note had are not kept': 'ألوان الملاحظة لا تُحفظ',
   '{count} block references were written out as the words they pointed at':
     'كُتب {count} مرجع كتلة كالكلمات التي تشير إليها',
-  '{count} saved views are left out, and every row is in the table':
-    'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+  '{count} saved views are left out, and every row is in the table': {
+    few: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+    many: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+    one: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+    other: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+    two: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+    zero: 'يُستثنى {count} عرض محفوظ، وكل الصفوف في الجدول',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'وصلت {count} صفحة كـ HTML، فحُفظت كلماتها لا شكلها',
   'There are no rows in this file.': 'لا صفوف في هذا الملف.',

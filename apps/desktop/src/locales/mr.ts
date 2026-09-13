@@ -1001,8 +1001,10 @@ export const mr: Dictionary = {
   'The colours a note had are not kept': 'नोंदीचे रंग ठेवले जात नाहीत',
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ ज्या शब्दांकडे निर्देश करत होते त्या शब्दांत लिहिले',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} जतन केलेले दृश्य वगळले, आणि प्रत्येक ओळ तक्त्यात आहे',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} जतन केलेले दृश्य वगळले, आणि प्रत्येक ओळ तक्त्यात आहे',
+    other: '{count} जतन केलेले दृश्य वगळले, आणि प्रत्येक ओळ तक्त्यात आहे',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} पाने HTML म्हणून आली, म्हणून त्यांचे शब्द ठेवले आणि रूप नाही',
   'There are no rows in this file.': 'या फाइलमध्ये ओळी नाहीत.',

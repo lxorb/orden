@@ -1013,8 +1013,10 @@ export const ha: Dictionary = {
   'The colours a note had are not kept': 'Ba a riƙe launukan da bayanin kula yake da su',
   '{count} block references were written out as the words they pointed at':
     'an rubuta nassoshin sassa {count} a matsayin kalmomin da suka nuna',
-  '{count} saved views are left out, and every row is in the table':
-    "an bar ra'ayoyi {count} da aka ajiye, kuma kowane layi yana cikin teburin",
+  '{count} saved views are left out, and every row is in the table': {
+    one: "an bar ra'ayoyi {count} da aka ajiye, kuma kowane layi yana cikin teburin",
+    other: "an bar ra'ayoyi {count} da aka ajiye, kuma kowane layi yana cikin teburin",
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'shafuka {count} sun zo a matsayin HTML, don haka ana riƙe kalmominsu ba kamanninsu',
   'There are no rows in this file.': 'Babu layuka a wannan fayil.',

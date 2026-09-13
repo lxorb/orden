@@ -1042,8 +1042,12 @@ export const uk: Dictionary = {
   'The colours a note had are not kept': 'Кольори нотаток не зберігаються',
   '{count} block references were written out as the words they pointed at':
     'Посилань на блоки: {count}, вони записані словами, на які вказували',
-  '{count} saved views are left out, and every row is in the table':
-    'Збережених подань: {count}, вони пропущені, у таблиці всі рядки',
+  '{count} saved views are left out, and every row is in the table': {
+    few: 'Збережених подань: {count}, вони пропущені, у таблиці всі рядки',
+    many: 'Збережених подань: {count}, вони пропущені, у таблиці всі рядки',
+    one: 'Збережених подань: {count}, вони пропущені, у таблиці всі рядки',
+    other: 'Збережених подань: {count}, вони пропущені, у таблиці всі рядки',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'Сторінок у HTML: {count}, їхні слова збережено, а вигляд ні',
   'There are no rows in this file.': 'У цьому файлі немає рядків.',

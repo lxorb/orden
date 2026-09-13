@@ -96,6 +96,9 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
   if (views) {
     plan.lost.push({
       text: key('{count} saved views are left out, and every row is in the table'),
+      // Not a row of its own: a count is filed under its `other` form, and the
+      // forms a language wants sit in the catalogue under it. See i18n.svelte.ts.
+      one: '{count} saved view is left out, and every row is in the table',
       values: { count: views },
     })
   }

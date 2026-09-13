@@ -1005,8 +1005,10 @@ export const te: Dictionary = {
   'The colours a note had are not kept': 'నోట్‌కు ఉన్న రంగులు ఉంచబడవు',
   '{count} block references were written out as the words they pointed at':
     '{count} బ్లాక్ సూచనలు అవి చూపిన పదాలుగానే రాయబడ్డాయి',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} సేవ్ చేసిన వ్యూలు వదిలివేయబడ్డాయి, అన్ని వరుసలు పట్టికలో ఉన్నాయి',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} సేవ్ చేసిన వ్యూలు వదిలివేయబడ్డాయి, అన్ని వరుసలు పట్టికలో ఉన్నాయి',
+    other: '{count} సేవ్ చేసిన వ్యూలు వదిలివేయబడ్డాయి, అన్ని వరుసలు పట్టికలో ఉన్నాయి',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} పేజీలు HTMLగా వచ్చాయి, అందుకే పదాలు ఉంచబడ్డాయి, రూపం ఉంచబడలేదు',
   'There are no rows in this file.': 'ఈ ఫైల్‌లో వరుసలు లేవు.',

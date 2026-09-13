@@ -990,8 +990,10 @@ export const am: Dictionary = {
   'The colours a note had are not kept': 'ማስታወሻው የነበሩት ቀለሞች አይቀመጡም',
   '{count} block references were written out as the words they pointed at':
     '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} የተቀመጡ እይታዎች ተትተዋል፣ እና እያንዳንዱ ረድፍ በሰንጠረዡ ውስጥ ነው',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} የተቀመጡ እይታዎች ተትተዋል፣ እና እያንዳንዱ ረድፍ በሰንጠረዡ ውስጥ ነው',
+    other: '{count} የተቀመጡ እይታዎች ተትተዋል፣ እና እያንዳንዱ ረድፍ በሰንጠረዡ ውስጥ ነው',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} ገጾች እንደ HTML መጡ፣ ስለዚህ ቃላቶቻቸው ይቀመጣሉ መልካቸው ግን አይቀመጥም',
   'There are no rows in this file.': 'በዚህ ፋይል ውስጥ ረድፍ የለም።',

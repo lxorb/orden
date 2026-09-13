@@ -1002,8 +1002,10 @@ export const ps: Dictionary = {
   'The colours a note had are not kept': 'هغه رنګونه چې يادښت لرله نه ساتل کېږي',
   '{count} block references were written out as the words they pointed at':
     '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} خوندي شوې ليدلورې پرېښودل شوې، او هره کرښه په جدول کې ده',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} خوندي شوې ليدلورې پرېښودل شوې، او هره کرښه په جدول کې ده',
+    other: '{count} خوندي شوې ليدلورې پرېښودل شوې، او هره کرښه په جدول کې ده',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} مخونه لکه HTML راغلل، نو کلمې يې ساتل کېږي او بڼه يې نه',
   'There are no rows in this file.': 'په دې دوتنه کې کرښې نشته.',

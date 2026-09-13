@@ -1006,8 +1006,10 @@ export const gsw: Dictionary = {
   'The colours a note had are not kept': 'D Farbe vo de Notize werded nöd übernoh',
   '{count} block references were written out as the words they pointed at':
     '{count} Blockverwiis sind as de Text gschribe worde, wo si zeigt hend',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} gspeicherti Aasichte fähled; i de Tabelle sind alli Ziile',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} gspeicherti Aasicht fählt; i de Tabelle sind alli Ziile',
+    other: '{count} gspeicherti Aasichte fähled; i de Tabelle sind alli Ziile',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} Siite sind as HTML cho: de Text bliibt, s Ussehe nöd',
   'There are no rows in this file.': 'I dere Datei git s kei Ziile.',

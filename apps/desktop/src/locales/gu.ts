@@ -999,8 +999,10 @@ export const gu: Dictionary = {
   'The colours a note had are not kept': 'નોંધ પાસે જે રંગ હતા તે રખાતા નથી',
   '{count} block references were written out as the words they pointed at':
     '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} સાચવેલા દેખાવ છોડી દેવાયા, અને દરેક હાર કોષ્ટકમાં છે',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} સાચવેલા દેખાવ છોડી દેવાયા, અને દરેક હાર કોષ્ટકમાં છે',
+    other: '{count} સાચવેલા દેખાવ છોડી દેવાયા, અને દરેક હાર કોષ્ટકમાં છે',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} પાનાં HTML તરીકે આવ્યાં, તેથી શબ્દો રખાય છે અને દેખાવ નહીં',
   'There are no rows in this file.': 'આ ફાઇલમાં હાર નથી.',

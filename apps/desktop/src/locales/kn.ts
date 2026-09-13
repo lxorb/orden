@@ -1009,8 +1009,10 @@ export const kn: Dictionary = {
   'The colours a note had are not kept': 'ಟಿಪ್ಪಣಿಗೆ ಇದ್ದ ಬಣ್ಣಗಳನ್ನು ಇಡಲಾಗುವುದಿಲ್ಲ',
   '{count} block references were written out as the words they pointed at':
     '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} ಉಳಿಸಿದ ವೀಕ್ಷಣೆಗಳನ್ನು ಬಿಡಲಾಗಿದೆ, ಎಲ್ಲ ಸಾಲುಗಳು ಕೋಷ್ಟಕದಲ್ಲಿವೆ',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} ಉಳಿಸಿದ ವೀಕ್ಷಣೆಗಳನ್ನು ಬಿಡಲಾಗಿದೆ, ಎಲ್ಲ ಸಾಲುಗಳು ಕೋಷ್ಟಕದಲ್ಲಿವೆ',
+    other: '{count} ಉಳಿಸಿದ ವೀಕ್ಷಣೆಗಳನ್ನು ಬಿಡಲಾಗಿದೆ, ಎಲ್ಲ ಸಾಲುಗಳು ಕೋಷ್ಟಕದಲ್ಲಿವೆ',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} ಪುಟಗಳು HTML ಆಗಿ ಬಂದವು, ಹಾಗಾಗಿ ಪದಗಳನ್ನು ಇಡಲಾಗಿದೆ, ರೂಪವನ್ನು ಇಲ್ಲ',
   'There are no rows in this file.': 'ಈ ಫೈಲ್‌ನಲ್ಲಿ ಸಾಲುಗಳಿಲ್ಲ.',

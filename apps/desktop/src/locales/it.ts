@@ -1028,8 +1028,11 @@ export const it: Dictionary = {
   'The colours a note had are not kept': 'I colori di una nota non vengono mantenuti',
   '{count} block references were written out as the words they pointed at':
     '{count} riferimenti a blocchi sono stati scritti come il testo a cui puntavano',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} viste salvate sono escluse e la tabella contiene tutte le righe',
+  '{count} saved views are left out, and every row is in the table': {
+    many: '{count} viste salvate sono escluse e la tabella contiene tutte le righe',
+    one: '{count} vista salvata è esclusa e la tabella contiene tutte le righe',
+    other: '{count} viste salvate sono escluse e la tabella contiene tutte le righe',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} pagine sono arrivate in HTML: resta il testo, non l’aspetto',
   'There are no rows in this file.': 'Questo file non ha righe.',

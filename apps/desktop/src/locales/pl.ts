@@ -1040,8 +1040,12 @@ export const pl: Dictionary = {
   'The colours a note had are not kept': 'Kolory notatki nie zostają zachowane',
   '{count} block references were written out as the words they pointed at':
     'Odwołań do bloków: {count} - zapisano je jako tekst, na który wskazywały',
-  '{count} saved views are left out, and every row is in the table':
-    'Zapisanych widoków: {count} - pominięto je, a w tabeli są wszystkie wiersze',
+  '{count} saved views are left out, and every row is in the table': {
+    few: 'Zapisanych widoków: {count} - pominięto je, a w tabeli są wszystkie wiersze',
+    many: 'Zapisanych widoków: {count} - pominięto je, a w tabeli są wszystkie wiersze',
+    one: 'Zapisanych widoków: {count} - pominięto je, a w tabeli są wszystkie wiersze',
+    other: 'Zapisanych widoków: {count} - pominięto je, a w tabeli są wszystkie wiersze',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'Stron w HTML: {count} - tekst zostaje, wygląd nie',
   'There are no rows in this file.': 'W tym pliku nie ma wierszy.',

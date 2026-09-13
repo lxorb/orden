@@ -1014,8 +1014,10 @@ export const fil: Dictionary = {
   'The colours a note had are not kept': 'Hindi itinatago ang kulay na nasa tala',
   '{count} block references were written out as the words they pointed at':
     'Isinulat ang {count} block reference bilang mga salitang tinutukoy nito',
-  '{count} saved views are left out, and every row is in the table':
-    'Hindi isinama ang {count} naka-save na view, at nasa talahanayan ang bawat hanay',
+  '{count} saved views are left out, and every row is in the table': {
+    one: 'Hindi isinama ang {count} naka-save na view, at nasa talahanayan ang bawat hanay',
+    other: 'Hindi isinama ang {count} naka-save na view, at nasa talahanayan ang bawat hanay',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     'Dumating bilang HTML ang {count} pahina, kaya nanatili ang salita at hindi ang anyo',
   'There are no rows in this file.': 'Walang hanay sa file na ito.',

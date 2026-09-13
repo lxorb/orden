@@ -1014,8 +1014,10 @@ export const de: Dictionary = {
   'The colours a note had are not kept': 'Die Farben einer Notiz werden nicht übernommen',
   '{count} block references were written out as the words they pointed at':
     '{count} Blockverweise wurden als der Text geschrieben, auf den sie zeigten',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} gespeicherte Ansichten fehlen; die Tabelle enthält alle Zeilen',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} gespeicherte Ansicht fehlt; die Tabelle enthält alle Zeilen',
+    other: '{count} gespeicherte Ansichten fehlen; die Tabelle enthält alle Zeilen',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} Seiten kamen als HTML: der Text bleibt, das Aussehen nicht',
   'There are no rows in this file.': 'In dieser Datei gibt es keine Zeilen.',

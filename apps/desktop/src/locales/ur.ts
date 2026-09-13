@@ -1003,8 +1003,10 @@ export const ur: Dictionary = {
   'The colours a note had are not kept': 'نوٹ کے رنگ محفوظ نہیں رہتے',
   '{count} block references were written out as the words they pointed at':
     '{count} بلاک حوالے ان الفاظ کے طور پر لکھے گئے جن کی طرف وہ اشارہ کرتے تھے',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} محفوظ مناظر چھوڑ دیے گئے، اور ہر قطار جدول میں ہے',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} محفوظ مناظر چھوڑ دیے گئے، اور ہر قطار جدول میں ہے',
+    other: '{count} محفوظ مناظر چھوڑ دیے گئے، اور ہر قطار جدول میں ہے',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} صفحے HTML میں آئے، سو ان کے الفاظ رہے اور شکل نہیں',
   'There are no rows in this file.': 'اس فائل میں کوئی قطار نہیں۔',

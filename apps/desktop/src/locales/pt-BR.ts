@@ -1018,8 +1018,11 @@ export const ptBR: Dictionary = {
   'The colours a note had are not kept': 'As cores que uma nota tinha não ficam',
   '{count} block references were written out as the words they pointed at':
     '{count} referências de bloco foram escritas como as palavras a que apontavam',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} visões salvas ficam de fora, e a tabela tem todas as linhas',
+  '{count} saved views are left out, and every row is in the table': {
+    many: '{count} visões salvas ficam de fora, e a tabela tem todas as linhas',
+    one: '{count} visão salva fica de fora, e a tabela tem todas as linhas',
+    other: '{count} visões salvas ficam de fora, e a tabela tem todas as linhas',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} páginas vieram como HTML: as palavras ficam, a aparência não',
   'There are no rows in this file.': 'Este arquivo não tem linhas.',

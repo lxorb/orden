@@ -1014,8 +1014,10 @@ export const ml: Dictionary = {
   'The colours a note had are not kept': 'കുറിപ്പിനുണ്ടായിരുന്ന നിറങ്ങൾ സൂക്ഷിക്കില്ല',
   '{count} block references were written out as the words they pointed at':
     '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
-  '{count} saved views are left out, and every row is in the table':
-    '{count} സേവ് ചെയ്ത വ്യൂകൾ ഒഴിവാക്കി, എല്ലാ വരികളും പട്ടികയിലുണ്ട്',
+  '{count} saved views are left out, and every row is in the table': {
+    one: '{count} സേവ് ചെയ്ത വ്യൂകൾ ഒഴിവാക്കി, എല്ലാ വരികളും പട്ടികയിലുണ്ട്',
+    other: '{count} സേവ് ചെയ്ത വ്യൂകൾ ഒഴിവാക്കി, എല്ലാ വരികളും പട്ടികയിലുണ്ട്',
+  },
   '{count} pages came as HTML, so their words are kept and their look is not':
     '{count} പേജുകൾ HTML ആയി വന്നു, അതിനാൽ വാക്കുകൾ സൂക്ഷിച്ചു, രൂപം സൂക്ഷിച്ചില്ല',
   'There are no rows in this file.': 'ഈ ഫയലിൽ വരികളില്ല.',
