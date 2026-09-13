@@ -34,8 +34,11 @@
     if (account.open && account.step === 'email') emailField?.focus()
   })
 
+  // Emptied on the way into either half: the second asks for six digits of its
+  // own, and the emailed code sitting in the boxes is neither an answer nor
+  // something to clear by hand.
   $effect(() => {
-    if (account.step === 'code') {
+    if (account.step === 'code' || account.step === 'second') {
       digits = blank()
       submitted = ''
       setTimeout(() => boxes[0]?.focus(), 60)
@@ -48,7 +51,9 @@
     if (entered.length !== LENGTH || entered === submitted) return
 
     submitted = entered
-    void account.verify(entered).then((accepted) => {
+    // Which half of the sign-in these six are is the store's to know: the emailed
+    // code, or the one out of the app. See `code` in account.svelte.ts.
+    void account.code(entered).then((accepted) => {
       if (accepted) {
         // The notes already on this machine are dealt with first, and only then
         // is the link walked through: the answer to that question can be to

@@ -23,6 +23,11 @@ const server = vi.hoisted(() => ({
   handedOver: null as string | null | undefined,
   /** How many codes were asked for, so a double press can be counted. */
   codes: 0,
+  /** Set to make the account answer the emailed code with half a sign-in: one
+   *  that asks for the code out of an authenticator app. */
+  asksForSecond: false,
+  /** Which road the six digits took, so a test can say which call was made. */
+  asked: [] as string[],
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -37,6 +42,22 @@ vi.mock('./api', async (importOriginal) => {
       },
       verifyCode: (_email: string, _code: string, guest?: string) => {
         server.handedOver = guest ?? null
+        server.asked.push('verifyCode')
+        if (server.refuse) {
+          return Promise.reject(new original.ApiError(400, 'that code is not right'))
+        }
+
+        // Half a sign-in: the account has a second factor, and what comes back
+        // is the handle the code out of the app is checked against.
+        if (server.asksForSecond) return Promise.resolve({ second: true, holding: 'held' })
+
+        return Promise.resolve({
+          token: 'session',
+          user: { id: 'u1', email: 'me@example.com', name: null },
+        })
+      },
+      verifySecond: (holding: string, _code: string) => {
+        server.asked.push(`verifySecond ${holding}`)
         return server.refuse
           ? Promise.reject(new original.ApiError(400, 'that code is not right'))
           : Promise.resolve({
@@ -122,6 +143,8 @@ beforeEach(async () => {
   server.meIsAGuest = false
   server.handedOver = undefined
   server.codes = 0
+  server.asksForSecond = false
+  server.asked.length = 0
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
@@ -251,6 +274,54 @@ describe('a code that is accepted', () => {
  *  a launch that began before the network did threw the session away and asked
  *  for an emailed code instead. On a phone, where the plugin starts while the
  *  WebView is still finding its feet, that was every launch. */
+/** Six digits typed into the row of boxes, on either half of a sign-in.
+ *
+ *  An account with a second factor signs in twice: the code that was emailed,
+ *  and then the one an authenticator app is showing. The sheet draws one row of
+ *  six boxes for both - "what is typed into them is six digits either way" - and
+ *  what it did with them was always `verify`, the emailed half. So an account
+ *  with the factor turned on could not be signed in on a new device at all: the
+ *  app's code went to the wrong road, the server answered 400, and the boxes
+ *  cleared themselves for another go at the same wall. The recovery code beside
+ *  them went to the right one, which is what made the miss hard to see.
+ *
+ *  So the store says which half it is on, and the sheet asks the store. */
+describe('six digits, on whichever half of the sign-in', () => {
+  test('are the emailed code while that is what is being asked for', async () => {
+    expect(account.step).toBe('email')
+    expect(await account.code('123456')).toBe(true)
+
+    expect(server.asked).toEqual(['verifyCode'])
+    expect(account.signedIn).toBe(true)
+  })
+
+  test('and the code out of the app once the account has asked for one', async () => {
+    server.asksForSecond = true
+    expect(await account.code('123456')).toBe(false)
+    expect(account.step).toBe('second')
+    expect(account.signedIn).toBe(false)
+
+    server.asksForSecond = false
+    expect(await account.code('654321')).toBe(true)
+
+    expect(server.asked).toEqual(['verifyCode', 'verifySecond held'])
+    expect(account.signedIn).toBe(true)
+  })
+
+  test('and a refused one leaves the second half where it was, to try again', async () => {
+    server.asksForSecond = true
+    await account.code('123456')
+
+    server.asksForSecond = false
+    server.refuse = true
+    expect(await account.code('000000')).toBe(false)
+
+    expect(account.step).toBe('second')
+    expect(account.signedIn).toBe(false)
+    expect(server.asked).toEqual(['verifyCode', 'verifySecond held'])
+  })
+})
+
 describe('restoring a session', () => {
   /** Runs the whole retry ladder without waiting for it. */
   async function restore(): Promise<void> {

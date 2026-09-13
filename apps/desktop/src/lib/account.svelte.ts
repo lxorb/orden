@@ -183,6 +183,18 @@ class Session {
     }
   }
 
+  /** Six digits from the row of boxes, on whichever half of the sign-in it is.
+   *
+   *  One row serves both halves - the code that was emailed, and then the code an
+   *  authenticator app is showing - because six digits are six digits and a second
+   *  row of boxes would say otherwise. Which half they are is this store's own
+   *  business rather than the sheet's, and it was the sheet's: it always asked
+   *  `verify`, so an account with a second factor could not be signed in on a new
+   *  device at all. See SignIn.svelte and account.test.ts. */
+  async code(digits: string): Promise<boolean> {
+    return this.step === 'second' ? this.second(digits) : this.verify(digits)
+  }
+
   /** Resolves true when the code was accepted, so the caller can reset the form. */
   async verify(code: string): Promise<boolean> {
     this.busy = true
