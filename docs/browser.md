@@ -508,8 +508,13 @@ Linux with thirty, all from one cause. `tauri` takes `dpi` from crates.io while
 of its own, so `platform/mod.rs` hands a `winit::dpi::PhysicalPosition<i32>` to
 something that wants `tauri::PhysicalPosition<i32>` and the compiler says in as many
 words that there are *"multiple different versions of crate `dpi` in the dependency
-graph"*. A one-line `[patch.crates-io]` unifying the two is the obvious repair and
-the spike tries it.
+graph"*.
+
+**One line repairs it**, and the spike proves that too: a `[patch.crates-io]` pointing
+`dpi` at the fork's copy unifies the two and the branch compiles. That is worth
+sending upstream - it is a dependency the branch should be declaring for itself
+rather than a thing every consumer discovers - and it is the shape of the risk in
+batch 1: real, cheap to fix, and found only by building.
 
 That is what an unreleased branch is like, and it is the argument for the shape of
 batch 1: **a gate, not a migration.** Build nib against a pinned revision behind a
