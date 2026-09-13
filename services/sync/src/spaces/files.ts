@@ -122,10 +122,25 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
 
   // Written from the fields that were checked rather than from what arrived, so
   // nothing else a client sent along ends up in the column.
-  const asked = (sent as SpaceFile[]).map(({ path, hash }) => ({
+  const stated = (sent as SpaceFile[]).map(({ path, hash }) => ({
     path,
     hash: hash.toLowerCase(),
   }))
+
+  // The dressing is the owner's alone. Everything else a space keeps beside its
+  // notes is a file a reader opens on purpose; these two are served on every page
+  // of the site, and `publish.js` runs there - so a writer naming one would be a
+  // collaborator putting their own script on somebody else's public pages, and a
+  // stylesheet can rewrite a page into a different page. Publishing at all is
+  // `atLeast('owner')` and so is every other setting of a site; see ./site.ts.
+  //
+  // Dropped from the list rather than refused, because a client states the whole
+  // column and a writer's client knows nothing about these: what it left out is
+  // kept below the way the owner's PDFs are.
+  const asked =
+    space.role === 'owner'
+      ? stated
+      : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
 
   // A row pointing at a blob nobody in this space keeps would serve nothing, so
   // an entry is kept when this account holds its bytes or when the space is

@@ -437,6 +437,12 @@ and it is their own page it runs on: `script-src 'self'`, which covers the site'
 own script and theirs, and nothing inline but the one hashed line above. A script
 from anywhere else is still refused by the policy.
 
+Both names are the owner's alone. Everything else a space keeps beside its notes
+is a file a reader opens on purpose and a writer may add, but these two are served
+on every page of the site - so a collaborator naming either is ignored, and what
+the owner put there stays. Whether a folder of notes is on the internet at all is
+already the owner's; so is how it looks once it is. See `src/spaces/files.ts`.
+
 The publish sheet says when the space carries either, so a name typed wrong shows
 up as "no dressing" rather than as silence.
 

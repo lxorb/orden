@@ -316,6 +316,45 @@ describe('a space two people write in', () => {
     expect(readSpaceFiles(column())).toEqual([{ path: 'paper.pdf', hash: THIRD }])
   })
 
+  /** The script a site is dressed in runs on every page of it, and the pages are
+   *  the owner's; see the reasoning in src/spaces/files.ts. */
+  test('and does not let a writer dress the owner’s site', async () => {
+    const writer = await writerIn('writer@b.dev')
+    await call(env, `/v1/blobs/${THIRD}`, {
+      method: 'PUT',
+      token: writer,
+      raw: new Uint8Array(32),
+      headers: { 'content-type': 'text/javascript' },
+    })
+
+    await record([{ path: 'publish.js', hash: THIRD }], writer)
+    expect(readSpaceFiles(column())).toEqual([])
+
+    // Nor over one the owner put there.
+    await call(env, `/v1/blobs/${PAPER}`, {
+      method: 'PUT',
+      token,
+      raw: new Uint8Array(32),
+      headers: { 'content-type': 'text/javascript' },
+    })
+    await record([{ path: 'publish.js', hash: PAPER }])
+    await record([{ path: 'publish.js', hash: THIRD }], writer)
+
+    expect(readSpaceFiles(column())).toEqual([{ path: 'publish.js', hash: PAPER }])
+  })
+
+  test('while the owner dresses their own site', async () => {
+    await call(env, `/v1/blobs/${PAPER}`, {
+      method: 'PUT',
+      token,
+      raw: new Uint8Array(32),
+      headers: { 'content-type': 'text/css' },
+    })
+
+    await record([{ path: 'publish.css', hash: PAPER }])
+    expect(readSpaceFiles(column())).toEqual([{ path: 'publish.css', hash: PAPER }])
+  })
+
   test('drops nothing at all for a guest, who keeps no bytes anywhere', async () => {
     await put(PAPER, token, 'owner.pdf')
     const guest = await guestIn()
