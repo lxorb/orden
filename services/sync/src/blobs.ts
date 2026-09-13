@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import { OUT_OF_SPACE } from './refused'
+import { spaceForHost } from './blog'
+import { readSite } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { fits } from './storage'
@@ -176,6 +178,32 @@ const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
  *  column and then read properly: the column is a JSON list rather than a table,
  *  so there is nothing to index, and this runs for a PDF rather than for a
  *  picture - which is what keeps it off the path that carries the requests. */
+/** What dresses a site rather than sitting inside a note: the stylesheet a theme
+ *  was installed from, the author's own sheet, and the author's own script.
+ *
+ *  These are the two types a browser does something with rather than shows, and
+ *  every published site is a host under the one shared domain - so a script served
+ *  to every one of them is a script inside every one of their origins, which is
+ *  what `script-src 'self'` on a page here would then be granting to whoever
+ *  uploaded it. A picture cannot be checked that way and the header above says why;
+ *  these can, because a page writes their address only for the site that declares
+ *  them. */
+const DRESSING = new Set(['text/css', 'text/javascript'])
+
+/** Whether the site being asked is a site that dresses itself in this file: its
+ *  theme's stylesheet, or a `publish.css` or `publish.js` it keeps beside its
+ *  notes. Asked of the host the request names, so one account's script is not a
+ *  file inside another account's origin - nor inside the app's. */
+async function dressesThisSite(env: Env, host: string, hash: string): Promise<boolean> {
+  const space = await spaceForHost(env, host)
+  if (!space) return false
+
+  const site = readSite(space.site)
+  if (site.theme?.hash === hash) return true
+
+  return readSpaceFiles(space.files).some((one) => one.hash === hash)
+}
+
 async function publishedAnywhere(env: Env, hash: string): Promise<boolean> {
   const { results } = await env.DB.prepare(
     `select files from spaces
@@ -203,6 +231,13 @@ publicBlobs.get('/:name', async (context) => {
   // anybody who has not been given the file that is what it is.
   if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash))) {
     return context.notFound()
+  }
+
+  // And a sheet or a script only on the site whose pages ask for it; see
+  // `dressesThisSite`.
+  if (DRESSING.has(type)) {
+    const host = new URL(context.req.url).host
+    if (!(await dressesThisSite(context.env, host, hash))) return context.notFound()
   }
 
   return new Response(object.body, {

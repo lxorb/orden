@@ -115,6 +115,59 @@ describe('serving an image', () => {
   })
 })
 
+/** A stylesheet and a script are the two types a browser does something with, and
+ *  every published site is a host under one shared domain: a script served on all
+ *  of them is a script inside all of their origins. So each is served only on the
+ *  site whose own pages ask for it. */
+describe('serving what a site is dressed in', () => {
+  /** A space of this account's, published at `field.nibeditor.com`. */
+  async function published(): Promise<string> {
+    const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
+    const space = created.json.space.id as string
+
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Hello.md', content: '# Hello\n' },
+    })
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
+
+    return space
+  }
+
+  test('only on the site that keeps it beside its notes', async () => {
+    const space = await published()
+    await upload(HASH, 64, { type: 'text/javascript' })
+    await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: { files: [{ path: 'publish.js', hash: HASH }] },
+    })
+
+    expect((await call(env, `/i/${HASH}.js`, { host: 'field.nibeditor.com' })).status).toBe(200)
+    // Not on anybody else's site, and not on the app's own origin.
+    expect((await call(env, `/i/${HASH}.js`, { host: 'other.nibeditor.com' })).status).toBe(404)
+    expect((await call(env, `/i/${HASH}.js`, { host: 'nibeditor.com' })).status).toBe(404)
+    expect((await call(env, `/i/${HASH}.js`)).status).toBe(404)
+  })
+
+  test('and a theme stylesheet on the site that installed it', async () => {
+    const space = await published()
+    await upload(HASH, 64, { type: 'text/css' })
+    await call(env, `/v1/spaces/${space}/site`, {
+      method: 'PUT',
+      token,
+      body: { theme: { name: 'Paper', hash: HASH } },
+    })
+
+    expect((await call(env, `/i/${HASH}.css`, { host: 'field.nibeditor.com' })).status).toBe(200)
+    expect((await call(env, `/i/${HASH}.css`, { host: 'other.nibeditor.com' })).status).toBe(404)
+  })
+})
+
 describe('giving an image back', () => {
   test('stops it counting', async () => {
     await upload(HASH, 2048)

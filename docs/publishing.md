@@ -437,6 +437,13 @@ and it is their own page it runs on: `script-src 'self'`, which covers the site'
 own script and theirs, and nothing inline but the one hashed line above. A script
 from anywhere else is still refused by the policy.
 
+The bytes are served from `/i/<hash>` like a paper's, and a stylesheet or a script
+there answers only on the site whose own pages ask for it - its theme's sheet, its
+`publish.css`, its `publish.js`. Every published site is a host under one shared
+domain, so a script served on all of them would be a script inside all of their
+origins, and `script-src 'self'` would mean "whatever anybody has uploaded". A
+picture cannot be checked that way, and src/blobs.ts says why.
+
 Both names are the owner's alone. Everything else a space keeps beside its notes
 is a file a reader opens on purpose and a writer may add, but these two are served
 on every page of the site - so a collaborator naming either is ignored, and what
