@@ -661,16 +661,36 @@ def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
 def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
     """How far this row would move if the whole run were done again.
 
+    Two ways of asking, and the larger answer, because each catches what the other
+    misses.
+
     The rounds split down the middle and the same number taken from each half: two
     goes at the same question on the same machine, so the gap between them is what
-    this row is worth to nobody. A difference between two builds smaller than this
-    is not a difference.
+    this row is worth to nobody.
+
+    And how far the round that was picked sits from the one that nearly matched it -
+    the second smallest of a time, the second largest of a rate. A row read as its
+    best round is only worth what its next best round agrees it is worth: four
+    rounds split two and two can happen to agree closely while every round is ten
+    per cent from the last, and that read as a floor of one millisecond called four
+    rows on this machine a difference when the two folders held the same build.
     """
     found = [one[key] for one in rounds if key in one]
     if len(found) < 4:
         return 0.0
+
     half = len(found) // 2
-    return abs(pick(rounds[:half], key, unit) - pick(rounds[half:], key, unit))
+    halves = abs(pick(rounds[:half], key, unit) - pick(rounds[half:], key, unit))
+
+    ordered = sorted(found)
+    if unit == "ms":
+        nearly = ordered[1] - ordered[0]
+    elif unit == "fps":
+        nearly = ordered[-1] - ordered[-2]
+    else:
+        nearly = 0.0
+
+    return max(halves, nearly)
 
 
 def blame(entries: list[dict]) -> list[str]:
