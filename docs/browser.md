@@ -16,7 +16,7 @@ are upstream changes. For now keep the Chromium settings within Chromium
 
 So the 150 MB and the update channel are the price now, and this document is
 about paying it once and properly. It is a design and a measurement, not a
-build: the code that exists is `spike/browser`, which is a proof and is not
+build: the code that exists is under `spike/`, which is a proof and is not
 wired into the app.
 
 The short version. **nib's desktop app becomes a Chromium app: one CEF engine in
