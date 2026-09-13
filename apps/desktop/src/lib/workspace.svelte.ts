@@ -3537,11 +3537,11 @@ class Workspace {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return
 
-    const taken = new Set(this.notes.map((note) => note.path))
-    const stem = noteId(format)
-    let name = `${stem}.md`
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `${stem}-${counter++}.md`
+    // Two notes made in the same minute is the one way a moment can be taken, and
+    // it steps aside the way every other name in the app does - `Name 2.md`,
+    // through `freePath`. Its own numbering said `Name-2.md`, a spelling nothing
+    // else in the app writes.
+    const name = this.freeName(dir, `${noteId(format)}.md`)
 
     // Opens with an empty heading and the caret in it: the name is settled, so
     // the only thing left to do is say what the note is about.

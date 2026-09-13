@@ -113,6 +113,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
+const { noteId } = await import('./note-id')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -2088,6 +2089,24 @@ describe('a new file stepping aside from a name the folder already has', () => {
   test('and a folder with a dot in its name keeps its own', async () => {
     workspace.tree = row('/space', [row('/space/v1.2', [row('/space/v1.2/Note')])])
     expect(await madeIn('/space/v1.2', 'Note')).toBe('/space/v1.2/Note 2')
+  })
+
+  /** A note named after the moment it was made steps aside the same way. Two of
+   *  them in one minute is the only way the moment is taken, and this used to be the
+   *  one name in the app spelled `202609130412-2.md` - a numbering nothing else
+   *  writes and nothing else would predict. */
+  test('and a note named after the moment reads the same rule', async () => {
+    // The year rather than the minute, so the name the store will reach for is
+    // known here without racing the clock for it.
+    const taken = `${noteId('YYYY')}.md`
+    workspace.tree = row('/space', [row(`/space/${taken}`)])
+
+    sent.length = 0
+    await workspace.createUniqueNote('YYYY', '/space')
+
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe(
+      `/space/${noteId('YYYY')} 2.md`,
+    )
   })
 })
 
