@@ -751,11 +751,19 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
     page.keyboard.press("Control+End")
     page.wait_for_timeout(400)
 
-    typed = page.evaluate(TYPING_READY)
-    del typed
-    for _ in range(12):
+    page.evaluate(TYPING_READY)
+    # One key at a time, each waited for: a key pressed while the frame of the last
+    # one is still being laid out is a key whose wait is the one before it as well,
+    # and twelve of those measure the queue rather than the keystroke. A key that
+    # never lands at all is given up on after a second and the rest still go.
+    for at in range(12):
         page.keyboard.press("x")
-        page.wait_for_timeout(90)
+        try:
+            page.wait_for_function(
+                "(had) => (window.__keys?.length ?? 0) > had", arg=at, timeout=2000
+            )
+        except PlaywrightError:
+            break
 
     latency = page.evaluate(TYPING)
     lane.profile("typing at the end of the big note", latency.pop("loaf"))
@@ -781,11 +789,37 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
 TYPING_READY = r"""
 () => {
   window.__keys = []
+
+  // The key going down, and the second frame after it: the first callback runs
+  // before the paint it was scheduled for, so the second is the first moment the
+  // letter is on screen. The same two frames everything else here calls painted.
+  //
+  // Not the Event Timing entry, which is what this used to read. That API will not
+  // report an event whose duration is under sixteen milliseconds however low
+  // `durationThreshold` is set - the spec floors it - so a keystroke that landed in
+  // its own frame produced no entry at all, and a round of twelve fast keystrokes
+  // looked like a round where the keys went nowhere and was thrown away. What was
+  // left was the median of the keystrokes slow enough to be reported, which is a
+  // number that can only ever look bad and cannot show an improvement: the same
+  // build read 432ms in one lane and 560 in the other off one or two rounds each.
+  // The entry is still read for the handler time beside it, which is the one thing
+  // a clock around the frame cannot see.
+  addEventListener('keydown', () => {
+    const down = performance.now()
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => window.__keys.push({ ms: performance.now() - down })),
+    )
+  }, { capture: true })
+
+  window.__handlers = []
   new PerformanceObserver((list) => {
     for (const one of list.getEntries()) {
-      if (one.name === 'keydown') window.__keys.push({ ms: one.duration, handler: one.processingEnd - one.processingStart })
+      if (one.name === 'keydown') {
+        window.__handlers.push(one.processingEnd - one.processingStart)
+      }
     }
-  }).observe({ type: 'event', durationThreshold: 0 })
+  }).observe({ type: 'event', durationThreshold: 16 })
+
   window.__since()
   return true
 }
@@ -794,13 +828,13 @@ TYPING_READY = r"""
 TYPING = r"""
 () => {
   const keys = window.__keys ?? []
-  const by = (pick) => {
-    const sorted = keys.map(pick).sort((a, b) => a - b)
+  const middle = (list) => {
+    const sorted = [...list].sort((a, b) => a - b)
     return { middle: sorted[Math.floor(sorted.length / 2)] ?? 0, worst: sorted.at(-1) ?? 0 }
   }
 
-  const paint = by((one) => one.ms)
-  const handler = by((one) => one.handler)
+  const paint = middle(keys.map((one) => one.ms))
+  const handler = middle(window.__handlers ?? [])
   return {
     // How many keystrokes were actually seen, so a round where the keys went
     // somewhere else is a round with nothing in it rather than a nought: a nought
