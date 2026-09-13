@@ -902,7 +902,7 @@ class Modes {
     const words = remote.spellWords
     if (Array.isArray(words) && unheard) {
       const kept = words.filter(isSpellWord).slice(0, MOST_SPELL_WORDS)
-      if (kept.join(' ') !== this.spellWords.join(' ')) {
+      if (kept.join('\0') !== this.spellWords.join('\0')) {
         this.spellWords = kept
         this.each(undefined, (one) => setSpellWords(one, kept))
         this.persist()

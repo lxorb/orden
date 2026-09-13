@@ -13,7 +13,7 @@ export type Step = 'email' | 'code' | 'second'
 
 /** A second place to keep the token, for a host whose storage does not outlive a
  *  launch. The Even plugin registers one; nothing else has one, and the plain web
- *  build never loads the code that would. See lib/even/vault.ts. */
+ *  build never loads the code that would. See `everywhere` in lib/even/keep.ts. */
 export interface Vault {
   read(): Promise<string | null>
   write(token: string): Promise<void>
