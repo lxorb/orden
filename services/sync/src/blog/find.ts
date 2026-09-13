@@ -24,6 +24,25 @@ import { escape } from './head'
  *  the thirtieth answer to a three-word query is nobody's. */
 const MOST_HITS = 30
 
+/** What the index puts around the words that matched, and what the page turns
+ *  those into once everything else about the snippet has been escaped.
+ *
+ *  Not the tag itself, which is what was asked for here before. A snippet is the
+ *  note's own prose: FTS5 hands back the column's text with these two strings
+ *  inserted and escapes nothing, and the words were indexed with the markup
+ *  stripped rather than escaped - so `<script src=…` with no bracket after it
+ *  survives indexing, and the page's own `</span>` would have closed the tag for
+ *  it. Two characters no prose holds, escaped along with the rest, and swapped for
+ *  the tag afterwards. */
+const MARKED = '\u0001'
+const UNMARKED = '\u0002'
+
+/** One snippet as the page may carry it: the note's words as words, and the
+ *  index's own marks as the one tag they stand for. */
+export function highlighted(words: string): string {
+  return escape(words).replaceAll(MARKED, '<mark>').replaceAll(UNMARKED, '</mark>')
+}
+
 /** How long a query may be. Past this it is not a query. */
 const LONGEST_QUERY = 200
 
@@ -131,7 +150,7 @@ export async function matching(
 
   const { results } = await env.DB.prepare(
     `select note_id as noteId,
-            snippet(note_search, 4, '<mark>', '</mark>', '…', 14) as words
+            snippet(note_search, 4, '${MARKED}', '${UNMARKED}', '…', 14) as words
        from note_search
       where space_id = ? and note_search match ?
       order by rank
@@ -155,8 +174,8 @@ export function searchBox(query: string): string {
 </form>`
 }
 
-/** What a page of answers says. The words are the index's own snippet, which is
- *  why they are written as markup rather than escaped again. */
+/** What a page of answers says. The words are the note's own, so they go through
+ *  `highlighted` rather than into the page as they are. */
 export function answers(
   found: readonly { slug: string; title: string; words: string }[],
   one: Asked,
@@ -170,7 +189,7 @@ export function answers(
     .map(
       (hit) =>
         `<li><a href="/${escape(hit.slug)}"><span class="what">${escape(hit.title)}</span>` +
-        `<span class="where">${hit.words}</span></a></li>`,
+        `<span class="where">${highlighted(hit.words)}</span></a></li>`,
     )
     .join('')
 

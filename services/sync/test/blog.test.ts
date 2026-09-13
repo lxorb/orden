@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { slugFor } from '../src/blog'
+import { asIsland, slugFor } from '../src/blog'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -1114,5 +1114,57 @@ describe('a published note read as slides', () => {
 
     const deck = await call(env, '/?slides', { host: 'me.nibeditor.com' })
     expect(deck.text.match(/<div class="stage">/g)).toHaveLength(3)
+  })
+})
+
+/** A snippet is the note's own prose with the index's marks in it, and the words
+ *  were indexed with the markup stripped rather than escaped. */
+describe('searching a site', () => {
+  test('marks what matched and says the rest as words', async () => {
+    await addNote('found.md', '# Found\n\nA paragraph about hedgehogs.\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
+
+    expect(response.text).toContain('<mark>hedgehogs</mark>')
+    expect(response.text).toContain('href="/found"')
+  })
+
+  test('and a tag a note only half wrote is still words', async () => {
+    // Half a tag, because the index strips whole ones: the page's own `</span>`
+    // after it was what used to close this one.
+    await addNote('sneaky.md', '# Sneaky\n\nhedgehogs <script src=/i/x.js\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
+
+    expect(response.text).toContain('&lt;script')
+    expect(response.text).not.toContain('<script src')
+    // The site's own script and the one inline line, and nothing the note added.
+    expect(response.text.match(/<script/g)).toHaveLength(2)
+  })
+})
+
+/** The graph's data travels as a JSON island, and a title is somebody's words:
+ *  nothing inside a `<script>` element is escaped by the parser, so the island's
+ *  own escaping is the whole of what keeps a title from closing it. */
+describe('the graph the site draws', () => {
+  test('writes a title that would close the island as JSON rather than as a tag', async () => {
+    await addNote(
+      'sneaky.md',
+      '---\ntitle: \'</script><script src="/i/x.js"></script>\'\n---\n\n# One\n\n[[Hello world]]\n',
+    )
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/graph', { host: 'field.nibeditor.com' })
+    const island = /<script type="application\/json">([\s\S]*?)<\/script>/.exec(response.text)
+
+    expect(island?.[1]).toContain('\\u003c/script')
+    expect(island?.[1]).not.toContain('</script')
+  })
+
+  test('and says the same data once it is read back', () => {
+    const read: unknown = JSON.parse(asIsland(JSON.stringify({ name: '</script><b>' })))
+    expect(read).toEqual({ name: '</script><b>' })
   })
 })

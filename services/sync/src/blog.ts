@@ -808,6 +808,22 @@ function graphOf(pages: readonly Page[], only?: Set<string>): string {
   })
 }
 
+/** JSON as a `<script>` element may carry it.
+ *
+ *  Nothing inside a script element is escaped by the HTML parser: the element ends
+ *  at the first `</script` in it, whatever it is part of. So a note whose title is
+ *  `</script><script src=…>` would close the island early and open a tag of its
+ *  own - and a title is somebody's words, on a domain shared with every other
+ *  site here. A `<` escape is how JSON writes a `<`, and `JSON.parse` on the
+ *  other side reads it back as one, so the data is the same data and no tag can
+ *  begin inside it.
+ *
+ *  Exported for test/blog.test.ts, which holds an island to it. What was here
+ *  replaced `<` with the character `<`, and escaped nothing at all. */
+export function asIsland(json: string): string {
+  return json.replace(/</g, '\\u003c')
+}
+
 /** The picture, and the same pages as words under it.
  *
  *  A canvas is not a list: a reader with scripting off, a reader on a screen
@@ -823,7 +839,7 @@ function graphBody(pages: readonly Page[], here: string, only?: Set<string>): st
 
   return (
     `<div class="graph" data-here="${escape(here)}">` +
-    `<script type="application/json">${graphOf(pages, only).replace(/</g, String.raw`<`)}</script>` +
+    `<script type="application/json">${asIsland(graphOf(pages, only))}</script>` +
     `</div><ul class="index">${rows}</ul>`
   )
 }
