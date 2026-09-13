@@ -994,10 +994,10 @@ API's own, read off the error it answers an invalid one with.
 
 | File | What it is |
 | --- | --- |
-| `packages/glasses/firmware.ts` | the firmware's font: what it can draw, and what everything else becomes |
-| `packages/glasses/mark.ts` | a note as the lines the firmware will set |
-| `packages/glasses/pages.ts` | those lines as pages, cut at a heading |
-| `packages/glasses/panel.ts` | the bands, in pixels, which both ends agree on |
+| `packages/glasses/src/firmware.ts` | the firmware's font: what it can draw, and what everything else becomes |
+| `packages/glasses/src/mark.ts` | a note as the lines the firmware will set |
+| `packages/glasses/src/pages.ts` | those lines as pages, cut at a heading |
+| `packages/glasses/src/panel.ts` | the bands, in pixels, which both ends agree on |
 | `even/sdk.ts` | the Even Hub bridge, read field by field at the boundary |
 | `even/screen.ts` | the five containers, and how a view reaches them |
 | `even/session.ts` | which note, which page, and the scroll binding |

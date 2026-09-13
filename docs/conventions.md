@@ -34,6 +34,87 @@ same commands on every push to `main`.
 One file, one responsibility. A file that has to explain two jobs in its
 header comment is two files.
 
+### One way to do each thing
+
+Where to look before writing a helper. Each of these is the only one of its
+kind; a second copy is the bug the file's own header describes.
+
+| The question | Where it is answered |
+| --- | --- |
+| What did an earlier run write down? | `apps/desktop/src/lib/stored.ts`. `storedText` for a word, `stored` for a shape, `keep` and `forget` to write. Never `localStorage` in a store of its own; two guards in `stored.test.ts` hold both directions. |
+| How long should this wait? | `apps/desktop/src/lib/backoff.ts`: `pollDelay`, `roomDelay`, `NUDGE_DELAY`. Numbers, tested on their own. |
+| Wait, then. | `apps/desktop/src/lib/timing.ts`: `waited` for a pause, `afterQuiet` for after the typing stops, `onceAFrame` for work that reads the layout. `breathe.ts` is the other half - handing the thread back inside a long pass. |
+| How long may it move for? | `apps/desktop/src/lib/motion.ts`: `dur`, and `LAYER` for every layer the app puts up. A bare number is a transition that ignores a reader who asked for less movement; `test/motion.test.ts` forbids one. |
+| Where does this path point? | `apps/desktop/src/lib/space-paths.ts`. `nameOf` and `folderOf` split a path whichever separator wrote it; `relativeTo`, `withinSpace`, `insideSpace` and `insideAnyOf` convert; `insideItsSpace` judges what a store may keep. |
+| What is a row of a menu? | `apps/desktop/src/lib/menu-item.ts`: `MenuItem` and `DIVIDER`, for a row's own menu, the app menu and the palette alike. What a row *draws* stays each list's own - a hint is a `kbd` in one and a word in another. |
+| Dropping a key from a map? | `apps/desktop/src/lib/records.ts`: `without`, `withOrWithout`. |
+
+### The workspace store
+
+`apps/desktop/src/lib/workspace.svelte.ts` is the app's centre: the spaces, the
+tree, the tabs and the panes. What has a rule of its own lives in
+`apps/desktop/src/lib/workspace/`, and the store hands its own calls through, so
+`workspace.save()` and the rest mean what they always did.
+
+| Module | What it owns |
+| --- | --- |
+| `saving.svelte.ts` | Writing what is open down, and the dot beside a name. Its state is its own. |
+| `note-text.ts` | The words in a space's notes, read and written without opening them: a replacement, a tag renamed, a task ticked. |
+| `composing.ts` | One note out of another, and two into one. |
+| `spaces.ts` | The list of spaces: which exist, in what order, which is open. |
+| `undoing.ts` | What each kind of file operation means going back. `undo.svelte.ts` is the stack it reads. |
+| `panels.ts` | Which side a panel sits on. Pure: it answers what the three fields would be, and the store writes them. |
+| the rest | One store each: `bookmarks`, `closed`, `device`, `documents`, `excluded`, `folder-icons`, `graph-settings`, `layouts`, `pane-tree`, `panes`, `positions`, `selection`, `session`, `zones`. |
+
+Seven members of the class are not `private` because those modules read them:
+`documents`, `positions`, `reload`, `retarget`, `persist`, `scheduleSession`,
+`freeName`. They are the store's own rather than the app's - nothing outside
+`lib/workspace` touches them.
+
+Two clusters stayed in the class on purpose. **Naming and creating** -
+`createNote`, `startRenaming`, `rename`, `remove` - needs fourteen of the
+class's internals, because a row appears in the tree before the file exists;
+that is the same responsibility as putting a tab on screen, not a separate one.
+**Opening** - `openEntry`, `openPdf`, `openCanvas`, `openWeb`, `openPages` - is
+the routing every kind of document shares. Separating either is a design change
+rather than a move.
+
+### The theme package is the vocabulary
+
+`packages/themes/src/base.css` holds the shapes more than one component wears:
+`.nib-scrim` behind a layer, `.nib-layer` for a thing that floats, `.nib-screen`
+for one that replaces part of the screen, `.nib-row` for a row somebody presses,
+`.nib-setting` for a row they read. A scrim's place in the stack and its ink come
+in as `--scrim-z`, `--scrim-ink` and `--scrim-blur`, and `.is-clear` is the one
+that only catches a tap.
+
+The rule: **a shared shape lives there, per-sheet geometry stays scoped.** Svelte
+scopes a component's CSS, so a rule in one component cannot reach an element
+rendered by another - which is why the sheets share their scrim, their motion and
+their dialog contract but each still owns its own width, top and padding, and why
+`Sheet.svelte` is not a shell every sheet renders through.
+
+### The Worker
+
+`services/sync/src` after the same pass:
+
+| Module | What it owns |
+| --- | --- |
+| `body.ts` | Nothing parsed is trusted, whichever direction it arrived from. `readBody` for a route that asks field by field, `objectBody` for one that reads its own, `listIn` and `objectIn` for a stored column, `textAtMost` for somebody else's server. |
+| `spaces/columns.ts` | The columns a client writes whole: what each may hold (`MOST_BYTES`, `fits`) and the one write that says the space changed (`writeColumn`). |
+| `spaces/paths.ts` | What a path in one of those columns may be: `LONGEST_PATH`, `staysInside`. |
+| `refused.ts` | The sentences more than one module refuses with. Wire text: the app shows them, so the bytes are the contract. A sentence one route sends stays beside that route. |
+
+Three name rules, and they are three because merging any two breaks something:
+
+- **a person's** - `cleanPersonName` and `NAME_LIMIT` (60) in `services/sync/src/crypto.ts`. Inner whitespace collapses.
+- **a space's** - `spaceName` and `SPACE_NAME_LIMIT` (80) in `services/sync/src/spaces/index.ts`. Whitespace stays: the name is also a folder on somebody's disk, and the app matches a space by it.
+- **a client's** - `clientName` in `services/sync/src/oauth/clients.ts`, out of a document somebody else serves, so it may not be a string at all.
+
+`personName` in `services/sync/src/spaces/share.ts` is a fourth thing: what to
+*call* somebody in a sentence. `services/sync/test/names.test.ts` says which is
+which on the two inputs that tell them apart.
+
 ## Security
 
 A note is a file, and a file can come from anywhere: a download, a repository,
@@ -197,6 +278,34 @@ the API, so the runner makes the shared build again after each of them.
 A drive whose port something else already holds is reported `blocked` rather
 than failed, because that is not the app being wrong.
 
+### Proving a change moved nothing
+
+A refactor that is meant to change nothing on screen is proved by the pixels
+being the same pixels: build, drive, change, drive again, compare.
+`apps/desktop/test/e2e/compare.py` does the comparing - bytes first, and where
+two shots differ it counts the pixels and the worst channel between them.
+
+**Measure the floor first.** These drives are not byte-stable: run one twice
+against the same build and `shell.py` differs in about four of its 83 shots and
+`access.py` in about fourteen of its 70 - a caret that blinks, a transition
+caught a frame either side, and at least one shot whose bytes differ with zero
+pixels changed. So a comparison is only ever against a same-build baseline:
+
+```sh
+python apps/desktop/test/e2e/shell.py before     # then again, unchanged
+python apps/desktop/test/e2e/shell.py before2
+python apps/desktop/test/e2e/compare.py shell-before shell-before2   # the floor
+# make the change, rebuild, then
+python apps/desktop/test/e2e/shell.py after
+python apps/desktop/test/e2e/compare.py shell-before shell-after
+```
+
+A shot that differs by the same file and the same magnitude as the floor is the
+floor. A scrim painted a different grey is every pixel over a note, and looks
+nothing like it. `access.py` also writes `axe.json` per run, which is compared by
+reading: a count that went up is a regression, one that went down is worth
+saying in the commit message.
+
 ## The launch
 
 A slow launch can only be measured on the machine that has one: the disk, the
@@ -237,14 +346,14 @@ Values crossing a boundary (`invoke`, `JSON.parse`, `fetch`, `localStorage`,
 `postMessage`) are unknown until checked. Validate them once, at the
 boundary, into a typed shape; the rest of the code trusts the type.
 
-Storage is written through one place as well: `keep` and `forget` in
-`apps/desktop/src/lib/stored.ts`, never `localStorage.setItem` in a store of
-its own. A setter throws three ways - site data blocked, a private window with
-no quota, a storage that is full - and none of them is a reason for a method to
-throw: what a failed write loses is a cache, never the state, which is in
-memory and true. The failure is in the log once a run.
-`apps/desktop/src/lib/stored.test.ts` holds the rule and names the few files
-still to be converted.
+Storage goes through one place in both directions: `keep` and `forget` to write,
+`storedText` and `stored` to read, all in `apps/desktop/src/lib/stored.ts`, and
+never `localStorage` in a store of its own. A setter throws three ways - site
+data blocked, a private window with no quota, a storage that is full - and the
+getter throws the first of them; none is a reason for a method to throw. What a
+failed write loses is a cache, never the state, which is in memory and true. The
+failure is in the log once a run. `apps/desktop/src/lib/stored.test.ts` holds
+both halves of the rule and names the one file still to be converted.
 
 ## Lint
 

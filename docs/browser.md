@@ -1177,9 +1177,9 @@ that nothing above rests on a plausible sentence.
 | `spike/browser` | a CEF application on cef-rs: two browsers in one process, Chromium's own pages one after another, an unpacked MV3 extension whose content script renames the page title so the program can tell it ran, DevTools, print, find and zoom. `src/mac.rs` is the `NSApplication` requirement written as an assertion |
 | `spike/shell` | a Tauri window on `tauri-runtime-cef` with nib's own webview and two web tabs beside it, one of them on `chrome://settings`. The shape section 2 recommends, reduced to one file |
 | `spike/nocef` | the control: the same program with no Chromium linked into it, so the cost of linking can be subtracted rather than guessed |
-| `scripts/fetch-cef.py` | resolves a pin or the newest true stable out of `index.json`, verifies the sha1, unpacks. The version-not-date sort and the percent-encoded `+` are both bugs it had first |
-| `scripts/measure.py` | counts the processes by their `--type=` switch, sums the tree's resident set, weighs the staged tree file by file, photographs the screen, and fails the job if more than one browser process served two tabs |
-| `scripts/stage.py` | the layout a release needs, including the macOS app bundle with its framework and five helper bundles - the part of shipping CEF that has nothing to do with Rust |
+| `spike/browser/scripts/fetch-cef.py` | resolves a pin or the newest true stable out of `index.json`, verifies the sha1, unpacks. The version-not-date sort and the percent-encoded `+` are both bugs it had first |
+| `spike/browser/scripts/measure.py` | counts the processes by their `--type=` switch, sums the tree's resident set, weighs the staged tree file by file, photographs the screen, and fails the job if more than one browser process served two tabs |
+| `spike/browser/scripts/stage.py` | the layout a release needs, including the macOS app bundle with its framework and five helper bundles - the part of shipping CEF that has nothing to do with Rust |
 
 `spike/` is outside the app's Cargo workspace, outside `pnpm-workspace.yaml`,
 ignored by `eslint.config.js` and by `knip.json`, and built by no workflow that runs
