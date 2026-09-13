@@ -36,6 +36,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+const { freePath } = await import('@nib/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
 const { FileActions } = await import('./undo.svelte')
 type Composes = import('./composing').Composes
@@ -52,7 +53,6 @@ function space(notes: Record<string, string>, openAt?: string) {
   const ws = {
     active: tab,
     tabs: tab ? [tab] : [],
-    notes: Object.keys(notes).map((path) => ({ path })),
     undone: new FileActions(),
     flush: () => undefined,
     close: (id: string) => void told.push(`closed ${id}`),
@@ -65,6 +65,10 @@ function space(notes: Record<string, string>, openAt?: string) {
       told.push(`opened ${path}`)
       return Promise.resolve()
     },
+    // The store's own numbering, which is `freePath` over everything the space
+    // holds; see `freeName` in workspace.svelte.ts.
+    freeName: (dir: string, wanted: string) =>
+      freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`)),
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
   }

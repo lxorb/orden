@@ -14,7 +14,6 @@ import { extracted, merged, splitAt } from '../composer'
 import { links } from '../link-index.svelte'
 import { folderOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
-import type { Entry } from '../workspace.svelte'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
 
@@ -22,13 +21,13 @@ import type { FileActions } from './undo.svelte'
 export interface Composes {
   readonly active: Tab | null
   readonly tabs: Tab[]
-  readonly notes: Entry[]
   readonly undone: FileActions
   flush(): void
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
   open(path: string): Promise<void>
+  freeName(dir: string, wanted: string): string
   loadTree(): Promise<void>
   persist(): void
 }
@@ -99,13 +98,11 @@ async function carve(
   carved: { kept: string; taken: string; name: string },
   kind: 'split' | 'extract',
 ) {
+  // Stepped aside the way every other new name in the app is, through the store's
+  // own `freeName`: a copy of the numbering lived here, and it counted only the
+  // files, so a carved note could be handed the name of a folder.
   const folder = folderOf(path)
-  const taken = new Set(ws.notes.map((note) => note.path))
-
-  let name = `${carved.name}.md`
-  let counter = 2
-  while (taken.has(joinPath(folder, name))) name = `${carved.name} ${counter++}.md`
-  const created = joinPath(folder, name)
+  const created = joinPath(folder, ws.freeName(folder, `${carved.name}.md`))
 
   await invoke('write_note', { path: created, content: carved.taken })
   links.noteSaved(created, carved.taken)

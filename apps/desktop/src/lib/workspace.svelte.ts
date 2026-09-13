@@ -2592,7 +2592,7 @@ class Workspace {
    *  import, an export and a note coming back out of Recently deleted all read it.
    *  Its own copy took the last dot of the name for an extension however little was
    *  in front of it, so `.hidden` came back as ` 2.hidden`. */
-  private freeName(dir: string, wanted: string): string {
+  freeName(dir: string, wanted: string): string {
     const taken = this.everyPath()
     return freePath(wanted, (candidate) => taken.has(joinPath(dir, candidate)))
   }
