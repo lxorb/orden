@@ -285,19 +285,40 @@ being the same pixels: build, drive, change, drive again, compare.
 `apps/desktop/test/e2e/compare.py` does the comparing - bytes first, and where
 two shots differ it counts the pixels and the worst channel between them.
 
-**Measure the floor first.** These drives are not byte-stable: run one twice
-against the same build and `shell.py` differs in about four of its 83 shots and
-`access.py` in about fourteen of its 70 - a caret that blinks, a transition
-caught a frame either side, and at least one shot whose bytes differ with zero
-pixels changed. So a comparison is only ever against a same-build baseline:
+**`shell.py` has no floor: two runs of one build are byte-identical, all 83
+shots.** It gets there by settling rather than by sleeping, and a drive that
+wants the same has to do the same four things:
+
+- **Motion off.** The context is made with `reduced_motion="reduce"`. A sheet
+  caught half way through its slide differs from the same sheet by more than half
+  the pixels on the screen, which is what one of these shots used to do. What the
+  motion itself looks like is `touch-move.py` and `motion.test.ts`.
+- **Wait for the thing the shot is about.** Not for a number of milliseconds. A
+  step that presses a key and sleeps photographs whatever was there when the sleep
+  ended, which on a busy machine is the surface underneath - and it does it
+  silently, so the shot looks like a design regression rather than a drive that
+  missed. Every layer this drive opens is waited for by selector, and `dismiss`
+  waits to see the layer go before the next step clicks anything.
+- **Ask the browser whether it has stopped.** `document.fonts.status`,
+  `document.getAnimations()`, and the overlay scrollbar's own `is-lit` class,
+  which dims on a timer of its own - so whether the bar is in the picture used to
+  depend on how long the step before took.
+- **Two matching frames.** Every shot is taken twice and kept only when the two
+  match byte for byte, which catches what the page never declared: a face that
+  arrived in between, an image decoding, a shadow settling. The caret cannot be
+  caught that way because both of its states are still, so it is hidden outright.
+
+`access.py` has not had this done to it and still differs in about fourteen of
+its 70 shots, including one whose bytes differ with zero pixels changed. Until it
+has, a comparison against it is only ever against a same-build baseline:
 
 ```sh
-python apps/desktop/test/e2e/shell.py before     # then again, unchanged
-python apps/desktop/test/e2e/shell.py before2
-python apps/desktop/test/e2e/compare.py shell-before shell-before2   # the floor
+python apps/desktop/test/e2e/access.py before     # then again, unchanged
+python apps/desktop/test/e2e/access.py before2
+python apps/desktop/test/e2e/compare.py access/before access/before2  # the floor
 # make the change, rebuild, then
-python apps/desktop/test/e2e/shell.py after
-python apps/desktop/test/e2e/compare.py shell-before shell-after
+python apps/desktop/test/e2e/access.py after
+python apps/desktop/test/e2e/compare.py access/before access/after
 ```
 
 A shot that differs by the same file and the same magnitude as the floor is the
@@ -305,6 +326,15 @@ floor. A scrim painted a different grey is every pixel over a note, and looks
 nothing like it. `access.py` also writes `axe.json` per run, which is compared by
 reading: a count that went up is a regression, one that went down is worth
 saying in the commit message.
+
+A drive that checks rather than photographs settles the same way, and for the
+same reason: `find-bar.py` failed about one run in three, and all three causes
+were the drive believing something without asking. It opened its note without
+activating it, so the pane went on showing whichever note the space opened on; it
+read the document through `window.nib`, which is whichever editor was made last
+rather than the focused one; and it left other tabs open, so `.cm-content` picked
+by document order was another pane's editor. The keys then walked a note nobody
+was looking at and every check after that read as a bug in the find bar.
 
 ## The launch
 
