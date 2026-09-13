@@ -68,6 +68,7 @@ import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-t
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
+import { undoLastFileAction } from './workspace/undoing'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
@@ -336,7 +337,7 @@ class Workspace {
   private readonly waiting = new Set<NoteDoc>()
 
   /** Where each note was last being read; see workspace/positions.ts. */
-  private positions = new Positions()
+  positions = new Positions()
 
   readonly activeSpace = $derived(
     this.spaces.find((space) => space.id === this.activeSpaceId) ?? null,
@@ -365,8 +366,12 @@ class Workspace {
     return this.tabs.filter((tab) => tab.paneId === paneId)
   }
 
-  /** Every open document, once each however many panes are showing it. */
-  private get documents(): NoteDoc[] {
+  /** Every open document, once each however many panes are showing it.
+   *
+   *  The five members below this comment are the store's own rather than the app's:
+   *  nothing outside lib/workspace reads them, and the modules beside this one -
+   *  workspace/undoing.ts and its neighbours - are what they are not private for. */
+  get documents(): NoteDoc[] {
     const seen: NoteDoc[] = []
     for (const tab of this.tabs) if (!seen.includes(tab.note)) seen.push(tab.note)
     return seen
@@ -740,7 +745,7 @@ class Workspace {
     }
   }
 
-  private persist() {
+  persist() {
     this.session.cancel()
 
     const state: Session = {
@@ -3155,157 +3160,12 @@ class Workspace {
     await this.unnest(folderOf(path))
   }
 
-  /** Puts the last file operation back; see workspace/undo. */
+  /** Puts the last file operation back; what each kind means going back is
+   *  workspace/undoing.ts, and what is on the stack is workspace/undo.svelte.ts. */
   async undoFileAction() {
-    const action = this.undone.last
-    if (!action) return
-
-    try {
-      switch (action.kind) {
-        case 'delete':
-          await this.putBack(action)
-          break
-        case 'merge':
-          await this.unmerge(action)
-          break
-        case 'split':
-        case 'extract':
-          await this.uncarve(action)
-          break
-        case 'move':
-        case 'rename':
-          await this.putName(action)
-          break
-        case 'replace':
-          await this.putWordsBack(action)
-          break
-        case 'import':
-          await this.unimport(action)
-          break
-      }
-    } catch {
-      // Something else has since changed the file; leave what is there alone.
-      // The action stays on the stack, so the same undo can be tried again
-      // once whatever is in the way has been dealt with.
-      return
-    }
-
-    this.undone.drop()
-    await this.loadTree()
-    this.persist()
+    await undoLastFileAction(this)
   }
 
-  /** An import taken back: the files it wrote, gone again.
-   *
-   *  Outright rather than into the trash. What an import wrote was never a note
-   *  anybody kept, and putting three thousand rows into Recently deleted would
-   *  bury whatever is actually in there. A tab that is open on one of them is
-   *  closed, the way a deleted note's is.
-   *
-   *  A file that will not go is stepped over rather than stopping the undo: the
-   *  rest of the import still goes, and what is left is what somebody has since
-   *  taken an interest in. */
-  private async unimport(action: Extract<FileAction, { kind: 'import' }>) {
-    for (const path of action.paths) {
-      const gone = await invoke('delete_note', { path })
-        .then(() => true)
-        .catch(() => false)
-      if (!gone) continue
-
-      for (const tab of this.tabs.filter((entry) => entry.path === path)) this.close(tab.id)
-      links.noteGone(path)
-    }
-  }
-
-  /** A deleted note back where it was. Out of the device's trash when it went
-   *  there, and from the snapshot taken on the way out otherwise.
-   *
-   *  The trash can refuse: the sweep runs daily and clears anything past its
-   *  fourteen days, and Recently deleted can purge an entry by hand. The
-   *  snapshot is still here either way, so it stands in rather than leaving
-   *  the note gone with nothing said. */
-  private async putBack(action: Extract<FileAction, { kind: 'delete' }>) {
-    if (!action.trashId) {
-      // Nothing kept and nothing in the trash, which is what a PDF deleted while
-      // signed in looks like. Writing nothing would leave an empty file where the
-      // paper was, so this says so instead.
-      if (!action.content) throw new Error('there is nothing to put back')
-
-      await invoke('write_note', { path: action.path, content: action.content })
-      return
-    }
-
-    const restored = await invoke('restore_trash', { id: action.trashId })
-      .then(() => true)
-      .catch(() => false)
-
-    if (restored) return
-    if (!action.content) throw new Error('the deleted note is no longer in the trash')
-
-    await invoke('write_note', { path: action.path, content: action.content })
-  }
-
-  /** Puts a replacement back: every note that was touched says what it said,
-   *  and a note open in a pane takes its old words as the words that changed,
-   *  so undoing costs nobody their caret either. */
-  private async putWordsBack(action: Extract<FileAction, { kind: 'replace' }>) {
-    for (const note of action.notes) {
-      await invoke('write_note', { path: note.path, content: note.content })
-      links.noteSaved(note.path, note.content)
-      this.documents.find((one) => one.path === note.path)?.edited(note.edits, note.content)
-    }
-  }
-
-  /** Puts a rename or a move back: the file where it was, and the links that
-   *  followed it pointed at the old name again. */
-  private async putName(action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
-    await invoke('rename_note', { from: action.to, to: action.from })
-    this.positions.move(action.to, action.from)
-
-    for (const note of this.documents.filter((entry) => entry.path === action.to)) {
-      note.path = action.from
-      note.name = nameOf(action.from)
-    }
-
-    // The rename rewrote every link that pointed at the note; putting the name
-    // back has to put those back too, which is the same rewrite the other way
-    // round - and, again, before the index is told the note moved.
-    if (action.rewrote) await this.retarget(action.to, action.from)
-    links.notesMoved(action.to, action.from)
-    paperMoved(action.to, action.from)
-    this.folderIcons.moved(action.to, action.from)
-    this.excluded.moved(action.to, action.from)
-  }
-
-  /** Puts a merge back: both notes as they were, and the note that was folded
-   *  in written again where it was. */
-  private async unmerge(action: Extract<FileAction, { kind: 'merge' }>) {
-    await invoke('write_note', { path: action.into, content: action.intoContent })
-    await invoke('write_note', { path: action.from, content: action.fromContent })
-
-    links.noteSaved(action.into, action.intoContent)
-    links.noteSaved(action.from, action.fromContent)
-    this.reload(action.into, action.intoContent)
-
-    // Links to the note that went away were pointed at the note it went into.
-    await this.retarget(action.into, action.from)
-  }
-
-  /** Puts a split or an extraction back: the note whole again, and the note that
-   *  was carved out of it gone. */
-  private async uncarve(action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
-    await invoke('write_note', { path: action.from, content: action.fromContent })
-    await invoke('delete_note', { path: action.created }).catch(() => undefined)
-
-    links.noteSaved(action.from, action.fromContent)
-    links.noteGone(action.created)
-
-    for (const tab of this.tabs.filter((one) => one.path === action.created)) this.close(tab.id)
-    this.reload(action.from, action.fromContent)
-  }
-
-  /** Text written to a note from outside the editor, put into the document if it
-   *  is open, which puts it into every pane showing it. */
   /** A note the first pass has just written, by the path it landed at.
    *
    *  A tab that was holding its place takes the words and becomes an ordinary
@@ -3323,14 +3183,16 @@ class Workspace {
     for (const tab of waiting) tab.coming = false
   }
 
-  private reload(path: string, content: string) {
+  /** Text written to a note from outside the editor, put into the document if it
+   *  is open, which puts it into every pane showing it. */
+  reload(path: string, content: string) {
     this.documents.find((one) => one.path === path)?.replace(content, false)
   }
 
   /** Rewrites every link in the space that points at `from` so it points at `to`.
    *  Answers how many notes were touched, so a caller can record whether there is
    *  anything to put back. */
-  private async retarget(from: string, to: string): Promise<number> {
+  async retarget(from: string, to: string): Promise<number> {
     const root = this.activeSpace?.root
     if (!root) return 0
 
