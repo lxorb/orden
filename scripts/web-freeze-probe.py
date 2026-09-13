@@ -555,8 +555,11 @@ def main() -> int:
             f"    restart  worst {beats.worst(since):8.2f} ms  "
             f"unanswered {beats.missed(since)}/{beats.answered(since)}"
         )
-    for one in (beating.refused + (beats.refused if beats else []))[:4]:
-        print(f"    an ask came back: {one}")
+    # Only where one of the counted asks went nowhere. An ask that was still in
+    # the air when the app was killed for the restart is the run's own doing.
+    if missed:
+        for one in (beating.refused + (beats.refused if beats else []))[:4]:
+            print(f"    an ask came back: {one}")
     print(f"  the app's own log holds {len(wrong)} error lines")
     for one in wrong[-8:]:
         print(f"    {one}")
