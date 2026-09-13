@@ -36,8 +36,8 @@ OUT = ROOT / "target" / "web-tab-e2e"
 
 CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 
-# The ports this agent's drives are allowed to bind.
-PORTS = range(20100, 20200)
+# Where a drive of this repository may listen; see docs/conventions.md.
+PORTS = range(21500, 21600)
 
 FRAMED = "/drive/framed.html"
 REFUSED = "/drive/refused.html"
@@ -63,11 +63,29 @@ NOTE = "/Notes/Idea.md"
 # The space a browser build starts with; see `WELCOME_PATH` in lib/welcome.ts.
 NOTE_TEXT = "# Idea\n\nAn ordinary note, for the mark beside it.\n"
 
-WEB_NOTE = "/Notes/A page that frames.md"
-REFUSED_NOTE = "/Notes/A page that refuses.md"
+WEB_NOTE = "/Notes/A page that frames.url"
+REFUSED_NOTE = "/Notes/A page that refuses.url"
+# A website written the way they used to be, so the drive sees the conversion too:
+# opening it writes the shortcut and the row comes back as one.
+OLD_NOTE = "/Notes/A page written as a note.md"
+
+
+def shortcut(url: str, title: str) -> str:
+    """A website as a file: the Windows Internet Shortcut, which is what the app
+    writes now. See apps/desktop/src/lib/web-tab/shortcut.ts."""
+
+    return (
+        "[InternetShortcut]\r\n"
+        f"URL={url}\r\n"
+        f"Title={title}\r\n"
+        "Nib-Added=2026-09-12T08:00:00.000Z\r\n"
+    )
 
 
 def web_note(url: str, title: str) -> str:
+    """A website as a note, which is what one was until 2026-09-13. Seeded so the
+    drive walks the conversion a space full of them gets on the first open."""
+
     return (
         f"---\nurl: {url}\ntitle: {title}\ndate: 2026-09-12T08:00:00.000Z\n---\n\n"
         f"# {title}\n\n<{url}>\n"
@@ -235,7 +253,23 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
         failures.append(f"{scheme}: the website wears the same mark as a note")
     shots.append(shoot(page, "sidebar", scheme, "aside"))
 
-    # 2. Opening it: the bar, and the card that asks before it frames anything.
+    # 2. A website written when a website was a note. Opening it writes the shortcut
+    #    beside it and takes the note away, and what opens is the shortcut: a space
+    #    that came from an older nib converts itself a row at a time. See
+    #    docs/web-tabs.md.
+    open_row(page, "A page written as a note")
+    page.wait_for_timeout(1500)
+    held = dict(page.evaluate(FILES))
+    became = OLD_NOTE.replace(".md", ".url")
+    report[f"{scheme}: the note that was a website"] = (
+        "a shortcut" if became in held else "still a note"
+    )
+    if became not in held:
+        failures.append(f"{scheme}: a website written as a note did not become a shortcut")
+    if OLD_NOTE in held:
+        failures.append(f"{scheme}: the note that was converted is still where it was")
+
+    # 3. Opening one: the bar, and the card that asks before it frames anything.
     open_row(page, "A page that frames")
     if not page.locator(".webbar").count():
         failures.append(f"{scheme}: no bar over the page")
@@ -267,7 +301,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
         failures.append(f"{scheme}: pressing Show it here framed nothing")
     shots.append(shoot(page, "tab-framed", scheme))
 
-    # 3. Ctrl+L, which is the address itself rather than the resting face.
+    # 4. Ctrl+L, which is the address itself rather than the resting face.
     page.keyboard.press("Control+l")
     page.wait_for_timeout(300)
     typed = address(page)
@@ -276,7 +310,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
         failures.append(f"{scheme}: Ctrl+L left {typed!r} in the field")
     shots.append(shoot(page, "address-focused", scheme, ".webbar"))
 
-    # 4. Typing another address: the frame follows, because the reader has already
+    # 5. Typing another address: the frame follows, because the reader has already
     #    said yes to a frame in this tab. A site that refuses one is the browser's
     #    own grey apology inside it, and there is nothing here that can tell the two
     #    apart - which is why the card asked in the first place; see frame.ts.
@@ -288,7 +322,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     )
     shots.append(shoot(page, "tab-refused", scheme))
 
-    # 5. Back to a page that frames, and clip it. In a browser the frame's words
+    # 6. Back to a page that frames, and clip it. In a browser the frame's words
     #    belong to the site, so the clip is the link - which is what the glyph said.
     page.fill(".webbar input.address", f"{url.rstrip('/')}{FRAMED}")
     page.keyboard.press("Enter")
@@ -317,7 +351,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     if not clipped:
         failures.append(f"{scheme}: nothing was clipped into the space")
 
-    # 6. The dots: what a browser keeps in the same place, including what this site
+    # 7. The dots: what a browser keeps in the same place, including what this site
     #    is allowed - which is nothing.
     page.click('.webbar button[aria-label="More"]')
     page.wait_for_timeout(400)
@@ -345,8 +379,9 @@ def main() -> int:
 
     seed = [
         [NOTE, NOTE_TEXT],
-        [WEB_NOTE, web_note(f"{url.rstrip('/')}{FRAMED}", "A page that frames")],
-        [REFUSED_NOTE, web_note(f"{url.rstrip('/')}{REFUSED}", "A page that refuses")],
+        [WEB_NOTE, shortcut(f"{url.rstrip('/')}{FRAMED}", "A page that frames")],
+        [REFUSED_NOTE, shortcut(f"{url.rstrip('/')}{REFUSED}", "A page that refuses")],
+        [OLD_NOTE, web_note(f"{url.rstrip('/')}{FRAMED}", "A page written as a note")],
     ]
 
     report: dict[str, object] = {"served on": url}

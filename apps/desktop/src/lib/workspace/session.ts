@@ -14,7 +14,7 @@
  *  fields it does have. */
 
 import type { FoldLines } from '@nib/editor'
-import { isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget, isWebTarget } from '@nib/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
 import { isNumber, isRecord, isString, keep, stringList } from '../stored'
@@ -155,6 +155,11 @@ const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'pages'
 function tabKind(value: unknown, path: unknown): TabKind {
   const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'
   if (typeof path !== 'string') return said
+
+  // A website first of all, because its name is the whole of what it is: a shortcut
+  // opened as a note would put three lines of INI in front of somebody in an editor,
+  // and a session written before websites had a name of their own says `note` for it.
+  if (isWebTarget(path)) return 'web'
 
   // The two planes are one room and two surfaces, so the extension is asked twice:
   // once for the shape of the document, which `roomKind` answers, and once for who

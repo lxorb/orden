@@ -20,7 +20,7 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 
 | | |
 | --- | --- |
-| the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a note that is a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. The globe is the one mark a name cannot earn - a website is a note whose front matter says `url:`, so the row asks the link index; see docs/web-tabs.md |
+| the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. Every mark comes off the name, the globe included: a website is a shortcut file, `Svelte docs.url`, which is the format Explorer and every browser write. It used to be a note with `url:` in its front matter, and the row had to ask the link index what the file said; see docs/web-tabs.md |
 | the name | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place |
 | a click | opens what the row is |
 | the twist at the far end | shows what the row holds, and only appears when it holds something |
@@ -28,6 +28,15 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests |
 | its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
+
+**What the list itself makes** is under the panel's own menu, wherever in it you
+ask: New note, New canvas and New web note - and a recording or a meeting on a
+phone, where that menu is the plus. Each one puts a row in the tree waiting to be
+named and writes nothing until it has a name, which is what Finder, Explorer and VS
+Code all do. A website is named the same way, and what it is named is its title;
+the address is asked for in the tab's bar afterwards. See docs/web-tabs.md. A
+folder is not on that menu, because a note that holds notes is how a space is
+organised; see below.
 
 Clicking opens and the twist discloses, for every row without exception. That is
 Notion's rule, and it is the one nib already had for a note that holds notes: the

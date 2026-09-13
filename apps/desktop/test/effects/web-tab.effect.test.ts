@@ -30,12 +30,20 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 // for one to follow the hole it leaves for the page; here it never fires, which is
 // the honest stand-in for a window nobody has resized.
 class NoLayout {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe() {
+    // Nothing ever moves in jsdom, so nothing is ever reported.
+  }
+
+  unobserve() {
+    // Said above.
+  }
+
+  disconnect() {
+    // Said above.
+  }
 }
 
-globalThis.ResizeObserver ??= NoLayout as unknown as typeof ResizeObserver
+globalThis.ResizeObserver = NoLayout
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')

@@ -19,56 +19,104 @@ Safari behaves.
 
 ## The file
 
-**A website in the space is a note whose front matter says `url:`.** Not a `.web`
-file of its own.
+**A website in the space is a shortcut file: `Svelte docs.url`.**
 
-```markdown
----
-url: https://svelte.dev/docs
-title: Svelte docs
-date: 2026-09-12T08:30:00.000Z
----
-
-# Svelte docs
-
-<https://svelte.dev/docs>
+```ini
+[InternetShortcut]
+URL=https://svelte.dev/docs
+Title=Svelte docs
+Nib-Added=2026-09-12T08:30:00.000Z
 ```
 
-The decision was between that and `Svelte docs.web` holding the same two lines as
-YAML, and Obsidian settles it. A vault shows the extensions Obsidian knows and
-hides every other one unless somebody has found "Detect all file extensions" in
-the settings and turned it on. So a `.web` file would be **invisible** in the same
-vault opened next door, unopenable there, outside its search, and absent from its
-graph - a document in nib's space that is not a document in the vault the space
-is. Everything else follows from the same fact:
+The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
+what Explorer writes when a page is dragged out of a browser onto the desktop, and
+double-clicking one opens that page in the reader's own browser on a machine that
+has never heard of nib. It is an INI file, so a reader for it is twenty lines, and
+every program that reads one steps over a key it has no use for - which is why nib's
+own two keys sit in the same block rather than in a section of their own.
 
-| | `Name.web` | `Name.md` with `url:` |
-| --- | --- | --- |
-| in Obsidian | hidden by default, and "unsupported" when shown | a note, which opens and reads |
-| `[[Name]]` | needs the extension, like `[[Board.canvas]]` | resolves, with no extension in the link |
-| searched by title and address | only by nib, which would have to index a new kind of file | by anybody: the words are in the file |
-| in the graph, the backlinks, the tags | a new kind for six readers to learn | already a note |
-| synced, versioned, put in the trash and back | a new extension in `tree.rs`, in the sync's file list and in the link grammar | nothing to change |
-| a mark in the file list | from the name | from the file, through the link index |
+Three keys is the whole file. `URL` is the format's own and the only one it
+requires. `Title` is here rather than taken from the file name because a name on
+disk cannot hold `?`, `:` or `/` and a page's title often does. `Nib-Added` is the
+day, which is what `date:` was. Nothing else: a favicon would be a picture inside a
+text file, and `IconFile` in this format names an `.ico` on this machine, which is
+not a thing that travels.
 
-Only the last row costs anything. A name cannot say a note is a website, so the
-kind is read out of the front matter - by the same pass over the space that
-already reads `icon:`, `icon-color:` and `aliases:` off every note, and out of the
-same map every row already asks for its chosen icon. No list reads a file twice
-and nothing new walks the disk. See `apps/desktop/src/lib/web-tab/note.ts`,
-`links.rs`, `scan-note.ts` and `FileMark.svelte`.
+**`.webloc` is read too, and never written.** That is the same idea on macOS - a
+plist with a `URL` string in it - and it is what Safari makes when a page is dragged
+into a folder. A space that has one in it opens it as a website rather than as a
+file nib has no use for. Only the XML kind: a binary plist is a format this app has
+no business carrying a parser for, and Safari writes XML.
 
-**The file is written the moment the page says what it is called.** A website in a
-space keeps itself, exactly as a note in a space does: there is no Save, and the
-file is named after the title the way every note this app writes is. Until the
-page has answered there is a tab and no file, because a website nobody has chosen
-yet has no name to be written under, and a folder of `Untitled` is what asking for
-the name first would leave behind.
+### What it was, and why it changed
 
-**Following a link inside the page does not rewrite the file.** The file says
-where the document points; where the reader has got to is the tab's, kept in the
-session so a restart comes back on the page they were reading. A file that moved
-under every click would be a file no link could point at.
+A website used to be a note: `Svelte docs.md`, with `url:` in its front matter. The
+argument for it was Obsidian, which lists the extensions it knows and hides every
+other one, so a website written any other way is a row that is simply not there in
+the same vault opened next door.
+
+That argument still holds, and the answer is still the same - a `.url` file **is**
+invisible in Obsidian - and it lost anyway, because the cost on this side was every
+other thing a note is. A website was in the note count, in the graph as a note,
+among the notes a link could be made against, in the words a search read, and one
+front-matter line away from being prose. The mark in the file list could not come
+off the name, so every list that drew one had to ask the link index what the file
+said, and a row opened before that pass had finished opened as a note. And the file
+itself was a heading and a link, written so that it would read as something in a
+vault.
+
+A shortcut is a document of a kind, the way a canvas and a PDF are. Its name says
+what it is, so nothing reads it to draw a row; it is not a note anywhere; and it is
+a file two dozen other programs already know. What Obsidian shows for it is a row
+that is not there - which is what Obsidian shows for a `.canvas` file in a vault
+where nobody has turned the setting on, and nib has lived with that for as long as
+it has had canvases.
+
+Everything else about a website in the space is unchanged, and the name is what
+carries it: the globe in the file list (`file-mark.ts`), open, rename, bookmark,
+`[[Svelte docs]]` with or without the extension (`links.ts`, `wikilink/notes.ts`),
+the sync and the versions (`services/sync/src/notes.ts`), the trash, and the search
+- which reads a shortcut as the small text file it is, so a site is found by its
+address as well as by its name (`search.rs`).
+
+### A note that is still a website
+
+**A `url:` note converts on the first open.** Opening one writes `Svelte docs.url`
+beside it and puts the note in Recently deleted; the tab that opens is the
+shortcut's. A palette row - **Convert website notes** - does the whole space at
+once, and it is only offered while a space still holds one.
+
+**A note somebody had written in stays a note.** What the old format wrote under the
+front matter was a heading and the address as a link, and a file holding only those
+two is the shortcut said twice over. Anything else in it is somebody's writing: that
+note stays where it is, with the `url:` line taken out, beside the shortcut that now
+carries the address. So one file can become two, which is exactly what was in it.
+
+### Making one
+
+Two gestures, because there are two ways somebody arrives at a website.
+
+**New web note** - in the file list's menu, the tab strip's plus, the File menu and
+the palette - is the file list's own gesture and works the way a new note's does: a
+row goes into the tree waiting to be named, the name it is given is the title, and
+the shortcut is written the moment there is one. The address is what the bar asks
+for next. The row is in the list from that first moment, which is the whole point of
+naming a thing before making it.
+
+**Open a website** is the other way round, for somebody who has an address and no
+name in mind: a tab with an address field and no file yet. The file is written the
+moment the page says what it is called, named after the title, the way every note in
+a space keeps itself. No file first, because a folder of `Untitled` shortcuts is
+what asking for the name first would leave behind here.
+
+Neither is offered on a phone, which has no bar to type an address into; see "A
+phone" below.
+
+**Following a link inside the page does not rewrite the file.** The file says where
+the document points; where the reader has got to is the tab's, kept in the session
+so a restart comes back on the page they were reading. A file that moved under every
+click would be a file no link could point at. An address **typed into the bar** does
+rewrite it, because that is somebody saying where the document points.
 
 ## The tab, per platform
 
@@ -98,6 +146,58 @@ comment in `Cargo.toml`.
 
 What the window may ask for is deliberately small: make a page, move it, show it,
 hide it, send it to an address, step its history, read it for a clip, close it.
+
+#### Where a page may be built, which is not where the request arrived
+
+This is the one thing in this file that shipped wrong, and what it cost was the
+whole app. Emil, 2026-09-13: *"When I open one, nib just freezes and all the
+buttons don't do anything anymore."*
+
+A `#[tauri::command]` that is not `async` runs **inline inside the callback
+WebView2 hands the app its IPC in** - on the window's own thread, inside one of the
+engine's own event handlers. Building a child webview from in there is a deadlock
+rather than a stall: the platform creates a `CoreWebView2Controller`
+asynchronously, wry waits for it by running a *nested message loop*
+(`webview2_com::wait_with_pump`), and the engine will not deliver that completion
+callback to a thread that is already inside one of its handlers. So the pump spins,
+the handler never returns, the request that started it is never answered, and every
+command the window sends afterwards queues behind it for ever.
+
+**The window looks perfectly alive while that happens**, which is why it took a
+measurement to find. A nested pump is still a pump: the window answers `WM_NULL` in
+half a millisecond, `IsHungAppWindow` says no, Explorer never draws "Not
+Responding", and the pixels are all there. Everything that needs the app to answer
+is dead. Measured, before and after, in `scripts/web-freeze-probe.py`:
+
+| | before | after |
+| --- | --- | --- |
+| the message pump, worst reply | 264 ms, never dead | 0.6 ms |
+| the window's own answers while a tab opens | 4 of 7 asks unanswered; by hand, two verbs timed out at 30 s each, minutes later | 0 of 22 unanswered, worst 31 ms |
+| the page itself | never appeared: a bar over an empty pane | the page, in the pane |
+
+So `web_open` is `async`, which takes it off that callback and onto the async
+runtime, and the build itself is posted to the event loop with
+`app.run_on_main_thread`, which answers over a channel once the controller exists.
+Both halves are needed: the nested wait has to happen where the engine is not
+inside a handler, and the window still has to be told whether there is a page to
+place. The other four commands stay on the window's thread on purpose - each is one
+call into the engine and none of them waits for the platform, so none runs a nested
+loop - and `web_open` is the one that had to move.
+
+Two things follow from the page being built somewhere else. A placement that
+arrives while a page is on its way is kept and applied when it lands, because the
+pane can be dragged, switched away from or closed in that time; and one tab builds
+one page at a time, claimed in the crate as well as in the window, because two
+webviews under one label is not a thing that can exist.
+
+**A window with a page in it is not a `WebviewWindow`.** Tauri's
+`get_webview_window` only answers for a window whose webviews are all itself, so
+from the moment a web tab puts a second webview in the window it answers nothing at
+all - and everything that asked that way stopped working while a website was open:
+the `nib` command line said the app had no window, a `nib://` link never raised it,
+and a second launch handed its file over to a window that was never brought
+forward. Nothing in the crate asks that way now; `get_window` is the call, because a
+window is what all of them wanted.
 
 **Following the pane.** A resize observer on the hole for a pane being dragged,
 the window's own resize, and a look after any press - and the crate is only told
@@ -180,9 +280,11 @@ one column. And Tauri has no child webviews on a phone at all - `add_child` is
 desktop only - so the in-app option there would be a frame, which most sites
 refuse.
 
-The file is still theirs in the space: the note is a bookmark on a phone, which is
-what a website on a phone is worth being. A tablet gets the frame and the card,
-because it has the room.
+The file is still theirs in the space: the shortcut is a bookmark on a phone, which
+is what a website on a phone is worth being - and a `.url` is a bookmark to the
+phone's own system too. Making one is not offered there, because the address is
+asked for in a bar and there is no bar; a tablet gets both, and the frame and the
+card, because it has the room.
 
 ## The bar
 
@@ -310,30 +412,42 @@ The rule is in the crate as well as in the app, because it is what every link
 inside the page is judged by, not only what somebody types. A window the page asks
 for leaves the app the way every other link does: the system browser.
 
-**No collaboration.** A web tab holds no words, so it is never in a room and the
-sync never has a document for it - not a switch that could be turned on by mistake
-but a consequence of `holdsWords`, which is what decides whether a file's words are
-a document at all. The file syncs like every other note.
+**No collaboration.** A website holds no words, so it is never in a room and the
+service never has a document for it. Said twice over, at both ends of the file:
+`holdsWords` answers no for a web tab, and `rooms/kind.ts` answers *no room at all*
+for a `.url` path, which is the end both machines can see. Not a switch that could
+be turned on by mistake, then, but two consequences of what the file is. It syncs,
+versions and goes to the trash like every other document.
 
 ## Where the code is
 
 | | |
 | --- | --- |
-| `apps/desktop/src-tauri/src/web_tabs.rs` | the child webview: make, place, show, navigate, step, read, close. The guard script, the trail, the address rule. Unit tested |
-| `apps/desktop/src-tauri/src/links.rs` | `url:` off every note, on the pass that already reads the icon |
+| `apps/desktop/src-tauri/src/web_tabs.rs` | the child webview: make, place, show, navigate, step, read, close. Where a page may be built, the guard script, the trail, the address rule. Unit tested |
+| `apps/desktop/src-tauri/src/paths.rs` | `is_shortcut`, beside the other three kinds |
+| `apps/desktop/src-tauri/src/tree.rs` | the four kinds the file list shows |
+| `apps/desktop/src-tauri/src/search.rs` | a shortcut is searched as the text it is, so a site is found by its address |
+| `apps/desktop/src-tauri/src/links.rs` | a website as a node in the index, and `url:` off every note, which now means a note that wants converting |
 | `apps/desktop/src-tauri/capabilities/default.json` | webviews, not windows |
-| `apps/desktop/src/lib/web-tab/note.ts` | what the file says, and what a clip says. Pure, tested |
+| `apps/desktop/src/lib/web-tab/shortcut.ts` | the file: written, read, and `.webloc` read. Pure, tested |
+| `apps/desktop/src/lib/web-tab/note.ts` | what a clip says, and what the old format said. Pure, tested |
 | `apps/desktop/src/lib/web-tab/address.ts` | what somebody typed, and the origin plainly. Pure, tested |
 | `apps/desktop/src/lib/web-tab/frame.ts` | what a frame may do, and the measurements behind asking first |
-| `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, the five-minute sleep |
+| `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, the five-minute sleep. Tested |
 | `apps/desktop/src/lib/web-tab/permissions.svelte.ts` | what each site is allowed, which is nothing |
 | `apps/desktop/src/lib/web-tab/clip.ts` | where the HTML comes from |
 | `apps/desktop/src/lib/web-tab/WebTab.svelte` | the pane: the hole, the frame, the card |
 | `apps/desktop/src/lib/web-tab/WebBar.svelte` | the bar |
 | `apps/desktop/src/lib/web-tab/menu.ts` | the dots |
-| `apps/desktop/src/lib/file-mark.ts` | the globe, and the kinds a row can be |
-| `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `openWebsite`, `keepWeb`, and the routing in `openEntry` |
+| `apps/desktop/src/lib/file-mark.ts` | the globe, off the name like every other mark |
+| `packages/markdown/src/links.ts` | `isWebTarget`, and a website among the files a link resolves through |
+| `packages/editor/src/wikilink/notes.ts` | `[[Svelte docs]]` with the extension left out |
+| `apps/desktop/src/lib/rooms/kind.ts` | no room for a website, said at the file's end |
+| `services/sync/src/notes.ts` | the extensions the account carries |
+| `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `createWebsite`, `openWebsite`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry` |
 | `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
+| `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
+| `apps/desktop/test/effects/web-tab.effect.test.ts` | the pane, mounted, which is where a website used to take the window down with it |
 
 ## What is left
 

@@ -977,14 +977,19 @@ Features Typora does not have, which are the reason this exists.
       a note tab walks its own trail with. The page is hidden when its tab is not
       showing and taken down after five minutes of nobody looking, so a window left
       open overnight holds no browsers
-- [x] A website is a document in the space, not a bookmark in a list: a note whose
-      front matter says `url:`, so it is a row in the file list with a globe in front
-      of it, renamable, bookmarkable, `[[linked]]`, searchable by its title and its
-      address, and carried by the sync like any other note - and still a note in the
-      same vault opened in Obsidian, which a `.web` file would not have been. It
-      writes itself the moment the page says what it is called, the way every note in
-      a space keeps itself. No room and no collaboration: there are no words in it to
-      share
+- [x] A website is a document in the space, not a bookmark in a list: a shortcut
+      file, `Svelte docs.url`, which is the Windows Internet Shortcut format that
+      Explorer and every browser already write and that every system already opens.
+      So it is a row in the file list with a globe in front of it, renamable,
+      bookmarkable, `[[linked]]` with or without its extension, searchable by its
+      title and its address, and carried by the sync, the versions and the trash like
+      any other document. `New web note` names it first and asks for the address in
+      the bar; `Open a website` starts with the address and writes the file the moment
+      the page says what it is called. macOS `.webloc` files are read too and never
+      written. Websites written when a website was a note - `url:` in the front matter
+      - convert on the first open, or all at once from the palette, and a note that
+      had words of its own beyond the link stays a note beside its shortcut. No room
+      and no collaboration: there are no words in it to share
 - [x] Clip the page a tab is showing into the space, through the same converter the
       browser extension uses: the selection, or the article, as markdown under
       `source:` and `date:`. On a desktop the page is read in the document as the

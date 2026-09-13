@@ -126,6 +126,33 @@ describe('reading one tab', () => {
     ).toMatchObject({ kind: 'note' })
   })
 
+  /** A website is a shortcut file and its name is the whole of what it is. A session
+   *  written before websites had a name of their own says `note` for one, and a
+   *  shortcut restored as a note would put three lines of INI in front of somebody in
+   *  an editor. */
+  test('a website comes back as one, whatever the entry claims', () => {
+    for (const claimed of [undefined, 'note', 'canvas', 'nonsense']) {
+      expect(
+        readDraft({
+          kind: claimed,
+          path: '/Notes/Svelte docs.url',
+          name: 'Svelte docs.url',
+          doc: '',
+        }),
+        JSON.stringify(claimed ?? null),
+      ).toMatchObject({ kind: 'web' })
+    }
+
+    expect(
+      readDraft({
+        kind: 'note',
+        path: '/Notes/Safari page.webloc',
+        name: 'Safari page.webloc',
+        doc: '',
+      }),
+    ).toMatchObject({ kind: 'web' })
+  })
+
   test('leaves a tab no file names alone, which is the graph', () => {
     expect(readDraft({ kind: 'graph', path: null, name: 'Graph', doc: '' })).toMatchObject({
       kind: 'graph',
