@@ -18,6 +18,7 @@
 import { documentTitle } from '@nib/markdown'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
 import { findLinks } from '@nib/markdown/links'
+import { objectIn } from '../body'
 
 /** Long enough for a sentence somebody wrote as a description, short enough that
  *  the column cannot be used as storage. */
@@ -224,17 +225,8 @@ export function frontOf(source: string): NoteFront | null {
  *  version may hold a key this one has never heard of, so every field is checked
  *  on the way out rather than trusted. */
 export function readFront(raw: string | null): NoteFront {
-  if (!raw) return {}
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return {}
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-  const held = parsed as Record<string, unknown>
+  const held = objectIn(raw)
+  if (!held) return {}
   const front: NoteFront = {}
 
   if (typeof held.publish === 'boolean') front.publish = held.publish

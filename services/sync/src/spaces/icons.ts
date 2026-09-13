@@ -21,8 +21,10 @@
  *  as the two keys a note keeps: `icon:` and `icon-color:` beside it. */
 
 import { Hono } from 'hono'
-import { now } from '../crypto'
+import { objectBody, objectIn } from '../body'
+import { byteLength, now } from '../crypto'
 import type { Env, Variables } from '../types'
+import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
 
 /** How many folders of one space may wear an icon. Far more than the sixty
@@ -33,7 +35,6 @@ import { atLeast, spaceOf } from './space'
  *  there fits here; see workspace/folder-icons.svelte.ts. */
 const MOST = 400
 /** A path inside a space, which is a few folder names. */
-const LONGEST_PATH = 300
 /** What the two columns may grow to between them. Every entry is bounded on its
  *  own; this is the other end of the same guard, so a map of legal entries still
  *  cannot make the space listing heavy for every device that reads it. Four times
@@ -106,13 +107,10 @@ export function isTint(value: string): boolean {
   return TINT.test(value)
 }
 
-/** Whether this key names a folder in the space rather than somewhere else. A
- *  path climbing out of the space is not a place in it: the app already sends a
- *  path the space speaks, and this is so the column can never hold one that a
- *  client would then resolve against its own disk. */
+/** Whether this key names a folder in the space rather than somewhere else; see
+ *  ./paths. A folder has a name, so an empty key is not one. */
 function inside(path: string): boolean {
-  if (!path || path.length > LONGEST_PATH) return false
-  return !path.startsWith('/') && !path.includes('\\') && !path.split('/').includes('..')
+  return !!path && path.length <= LONGEST_PATH && staysInside(path)
 }
 
 /** What is wrong with the map that arrived, as one sentence the app can show, or
@@ -146,15 +144,8 @@ function mapOf(value: object, said: (value: string) => boolean): Record<string, 
  *  value on it is left out: the column is written whole by clients, and a newer one
  *  may keep an icon this version has never heard of. */
 function read(raw: string, said: (value: string) => boolean): Record<string, string> {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return {}
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-  return mapOf(parsed, said)
+  const held = objectIn(raw)
+  return held ? mapOf(held, said) : {}
 }
 
 export function readIcons(raw: string): Record<string, string> {
@@ -185,16 +176,14 @@ export const folderIcons = new Hono<{ Bindings: Env; Variables: Variables }>()
 folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = (body as Record<string, unknown>).icons
+  const sent = body.icons
   const problem = wrong(sent, 'icons')
   if (problem) return context.json({ error: problem }, 400)
 
-  const sentTints = (body as Record<string, unknown>).tints
+  const sentTints = body.tints
   const tintProblem = sentTints === undefined ? null : wrong(sentTints, 'tints')
   if (tintProblem) return context.json({ error: tintProblem }, 400)
 
@@ -204,8 +193,7 @@ folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   const tints = sentTints === undefined ? null : mapOf(sentTints as object, isTint)
   const written = JSON.stringify(kept)
   const writtenTints = tints === null ? null : JSON.stringify(tints)
-  const bytes = new TextEncoder()
-  if (bytes.encode(written).length + bytes.encode(writtenTints ?? '').length > MOST_BYTES) {
+  if (byteLength(written) + byteLength(writtenTints ?? '') > MOST_BYTES) {
     return context.json({ error: 'that is more folder icons than a space holds' }, 413)
   }
 

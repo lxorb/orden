@@ -11,6 +11,7 @@ import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@nib/markdown/
 // The formula engine and the emoji table, imported outright rather than loaded when a
 // note turns out to want one. The app does the opposite, because it has a first paint
 // to make and a session to spread the loading over; an isolate answers one request and
+import { objectIn } from './body'
 // is gone, so waiting for either would be waiting per request. See
 // @nib/markdown/engines.
 import '@nib/markdown/eager'
@@ -605,14 +606,7 @@ function publishedDeck(source: string, options: Parameters<typeof renderMarkdown
  *  never said: off is CommonMark, which is what every other reader of the same file
  *  does with it. */
 function hardBreaksIn(raw: string | null | undefined): boolean {
-  try {
-    const value: unknown = JSON.parse(raw ?? '{}')
-    return (
-      !!value && typeof value === 'object' && (value as Record<string, unknown>).hardBreaks === true
-    )
-  } catch {
-    return false
-  }
+  return objectIn(raw)?.hardBreaks === true
 }
 
 /** How many notes an index lists. Well past any blog anyone writes, and a

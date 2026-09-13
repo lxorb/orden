@@ -9,15 +9,16 @@
  *  which reordering is a single request. */
 
 import { Hono } from 'hono'
-import { now } from '../crypto'
+import { listIn, objectBody } from '../body'
+import { byteLength, now } from '../crypto'
 import type { Env, Variables } from '../types'
+import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
 
 /** More than anyone keeps above a file list, and the same number the app holds
  *  itself to. */
 const MOST = 60
 /** A path inside a space, which is a few folder names and a file name. */
-const LONGEST_PATH = 300
 /** A heading, or the words of a search. */
 const LONGEST_TEXT = 200
 /** What the column may grow to. Every bookmark is bounded on its own; this is
@@ -78,12 +79,8 @@ function wrong(value: unknown): string | null {
     if (view !== undefined && (typeof view !== 'string' || view.length > LONGEST_VIEW)) {
       return `a bookmarked view must be text of at most ${LONGEST_VIEW} characters`
     }
-    // A path climbing out of the space is not a place in it. The app already
-    // sends a path the space speaks; this is so the column can never hold one
-    // that a client would then resolve against its own disk.
-    if (path.startsWith('/') || path.includes('\\') || path.split('/').includes('..')) {
-      return 'a bookmark points inside its own space'
-    }
+    // A path climbing out of the space is not a place in it; see ./paths.
+    if (!staysInside(path)) return 'a bookmark points inside its own space'
   }
 
   return null
@@ -93,15 +90,10 @@ function wrong(value: unknown): string | null {
  *  is left out: the column is written whole by clients, and a newer one may
  *  keep a kind this version has never heard of. */
 export function readBookmarks(raw: string): Bookmark[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return []
-  }
+  const held = listIn(raw)
+  if (!held) return []
 
-  if (!Array.isArray(parsed)) return []
-  return parsed.filter((one): one is Bookmark => wrong([one]) === null).slice(0, MOST)
+  return held.filter((one): one is Bookmark => wrong([one]) === null).slice(0, MOST)
 }
 
 export const bookmarks = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -114,12 +106,10 @@ export const bookmarks = new Hono<{ Bindings: Env; Variables: Variables }>()
 bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = (body as Record<string, unknown>).bookmarks
+  const sent = body.bookmarks
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -133,7 +123,7 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
     ...(view ? { view } : {}),
   }))
   const written = JSON.stringify(kept)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more bookmarks than a space holds' }, 413)
   }
 

@@ -18,6 +18,7 @@
  *  This used to run in the plugin, with the key on the phone. It is here now
  *  because the key is here now and nowhere else. */
 
+import { listIn } from '../body'
 import { now } from '../crypto'
 import type { Env } from '../types'
 
@@ -78,12 +79,10 @@ async function kept(env: Env, userId: string): Promise<string[] | null> {
     .first<{ value: string }>()
   if (!row) return null
 
-  try {
-    const value: unknown = JSON.parse(row.value)
-    return Array.isArray(value) && value.every((one) => typeof one === 'string') ? value : null
-  } catch {
-    return null
-  }
+  const held = listIn(row.value)
+  if (!held) return null
+
+  return held.every((one): one is string => typeof one === 'string') ? held : null
 }
 
 async function keep(env: Env, userId: string, models: string[]): Promise<void> {

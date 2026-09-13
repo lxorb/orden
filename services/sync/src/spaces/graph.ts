@@ -17,7 +17,8 @@
  *  with it. See spaces/icons.ts, whose shape this is. */
 
 import { Hono } from 'hono'
-import { now } from '../crypto'
+import { objectBody, objectIn } from '../body'
+import { byteLength, now } from '../crypto'
 import type { Env, Variables } from '../types'
 import { atLeast, spaceOf } from './space'
 
@@ -144,15 +145,8 @@ function settingsOf(value: object): GraphSettings {
  *  left out: the column is written whole by clients, and a newer one may keep a
  *  setting this version has never heard of. */
 export function readGraph(raw: string): GraphSettings {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return {}
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-  return settingsOf(parsed)
+  const held = objectIn(raw)
+  return held ? settingsOf(held) : {}
 }
 
 export const spaceGraph = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -165,12 +159,10 @@ export const spaceGraph = new Hono<{ Bindings: Env; Variables: Variables }>()
 spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = (body as Record<string, unknown>).graph
+  const sent = body.graph
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -178,7 +170,7 @@ spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   // nothing else a client sent along ends up in the column.
   const kept = settingsOf(sent as object)
   const written = JSON.stringify(kept)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more than a space keeps about its graph' }, 413)
   }
 

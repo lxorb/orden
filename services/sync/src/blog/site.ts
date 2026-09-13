@@ -23,6 +23,7 @@
  *  writes it is spaces/site.ts. Two files because the space listing reads this
  *  and the route writes through the listing, and one module cannot be both. */
 
+import { objectIn } from '../body'
 import type { NoteFront } from './front'
 import { PASSWORD_LIMIT } from './gate'
 
@@ -141,18 +142,9 @@ export function words(value: unknown, longest = LONGEST_TEXT): string | undefine
  *  app, and read field by field here, so a newer client's extra key is ignored
  *  rather than trusted. */
 export function readSite(raw: string | null | undefined): Site {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw ?? '{}')
-  } catch {
-    return { rules: DEFAULT_RULES }
-  }
+  const held = objectIn(raw)
+  if (!held) return { rules: DEFAULT_RULES }
 
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return { rules: DEFAULT_RULES }
-  }
-
-  const held = parsed as Record<string, unknown>
   const given = (held.rules ?? {}) as Record<string, unknown>
   const site: Site = {
     rules: {

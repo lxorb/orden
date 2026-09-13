@@ -7,7 +7,8 @@
  *  gives; see spaces/publish.ts. */
 
 import { Hono } from 'hono'
-import { now } from '../crypto'
+import { objectBody } from '../body'
+import { byteLength, now } from '../crypto'
 import type { Env, Space, Variables } from '../types'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { fillFronts } from '../blog/fill'
@@ -52,12 +53,10 @@ const MOST_LISTED = 2000
 site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = body as Record<string, unknown>
+  const sent = body
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -133,12 +132,10 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
 site.put('/:id/site', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = body as Record<string, unknown>
+  const sent = body
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -204,7 +201,7 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   }
 
   const written = JSON.stringify(kept)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more than a site keeps' }, 413)
   }
 

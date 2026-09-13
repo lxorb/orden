@@ -14,16 +14,17 @@
  *  PDF is sent once rather than on every pass. */
 
 import { Hono } from 'hono'
+import { listIn, objectBody } from '../body'
 import { askInChunks, places } from '../bound'
-import { now } from '../crypto'
+import { byteLength, now } from '../crypto'
 import type { Env, Variables } from '../types'
+import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
 
 /** More files than a space of notes keeps beside them, and a bound on the one
  *  statement below that grows with what was sent. */
 const MOST = 200
 /** A path inside a space, which is a few folder names and a file name. */
-const LONGEST_PATH = 300
 /** What the column may grow to. Every entry is bounded on its own; this is the
  *  other end of the same guard. */
 const MOST_BYTES = 32 * 1024
@@ -66,10 +67,8 @@ function wrong(value: unknown): string | null {
       return "a file's hash must be the hash of its contents"
     }
     // A path climbing out of the space is not a place in it, and a path the
-    // column holds is one a published page turns into a URL.
-    if (path.startsWith('/') || path.includes('\\') || path.split('/').includes('..')) {
-      return 'a file sits inside its own space'
-    }
+    // column holds is one a published page turns into a URL; see ./paths.
+    if (!staysInside(path)) return 'a file sits inside its own space'
     if (!KEPT.test(path) && !DRESSING.has(path.toLowerCase())) {
       return 'only PDFs, publish.css and publish.js are kept beside the notes'
     }
@@ -82,16 +81,10 @@ function wrong(value: unknown): string | null {
  *  file is left out: the column is written whole by clients, and a newer one may
  *  keep something this version has never heard of. */
 export function readSpaceFiles(raw: string): SpaceFile[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return []
-  }
+  const held = listIn(raw)
+  if (!held) return []
 
-  if (!Array.isArray(parsed)) return []
-
-  return parsed
+  return held
     .filter((one): one is SpaceFile => wrong([one]) === null)
     .map((one) => ({ path: one.path, hash: one.hash.toLowerCase() }))
     .slice(0, MOST)
@@ -122,12 +115,10 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   const who = context.get('who')
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = (body as Record<string, unknown>).files
+  const sent = body.files
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -171,7 +162,7 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
 
   const files = [...kept, ...others]
   const written = JSON.stringify(files)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more files than a space keeps' }, 413)
   }
 

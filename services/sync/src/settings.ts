@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import { objectBody, objectIn } from './body'
+import { byteLength } from './crypto'
 import { EFFORTS } from './ask/asking'
 import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
@@ -357,14 +359,7 @@ async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
 }
 
 function parse(raw: string | undefined): AccountSettings {
-  try {
-    const value: unknown = JSON.parse(raw ?? '{}')
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as AccountSettings)
-      : {}
-  } catch {
-    return {}
-  }
+  return objectIn(raw) ?? {}
 }
 
 export const settings = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -385,12 +380,10 @@ settings.get('/', async (context) => {
 /** Changes what is sent and leaves the rest as it was. */
 settings.patch('/', async (context) => {
   const user = context.get('user')
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  for (const [name, value] of Object.entries(body as Record<string, unknown>)) {
+  for (const [name, value] of Object.entries(body)) {
     // Asked of the map itself, never through it: `KNOWN['__proto__']` reaches
     // Object's own and would be called as though it were a check.
     const check = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined
@@ -404,7 +397,7 @@ settings.patch('/', async (context) => {
   const written = JSON.stringify(merged)
   // Measured on what would be stored rather than on what arrived: a patch
   // small enough on its own can still be the one that tips the column over.
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more settings than an account holds' }, 413)
   }
 

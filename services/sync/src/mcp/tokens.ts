@@ -4,6 +4,7 @@
  *  database cannot be used to read anyone's notes. */
 
 import { Hono } from 'hono'
+import { objectBody } from '../body'
 import { tokenIn } from '../auth'
 import { now, randomToken, sha256 } from '../crypto'
 import { grantForToken } from '../oauth'
@@ -104,14 +105,15 @@ mcpAdmin.get('/token', async (context) => {
 })
 
 mcpAdmin.post('/token', async (context) => {
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (body !== null && (typeof body !== 'object' || Array.isArray(body))) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  // A body that says nothing is a body: asking for a token without one means a
+  // read-only token, so `undefined` - no body at all - is let through, while a body
+  // that parsed to a list or a number is a client's mistake. See objectBody.
+  const body = await objectBody(context)
+  if (body === null) return context.json({ error: 'send an object' }, 400)
 
   // Read-only unless writing is asked for in as many words, so a request that
   // says nothing cannot hand out more than the person meant.
-  const asked = (body as { readOnly?: unknown } | null)?.readOnly
+  const asked = body?.readOnly
   if (asked !== undefined && typeof asked !== 'boolean') {
     return context.json({ error: 'readOnly must be true or false' }, 400)
   }

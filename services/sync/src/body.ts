@@ -19,6 +19,59 @@ interface HasJson {
   req: { json: <T>() => Promise<T> }
 }
 
+/** The object a request carried, for the routes that read their own fields out of
+ *  it rather than asking for them one at a time.
+ *
+ *  Three answers, because one route turns on the difference between the last two:
+ *  the object where a body was one, `null` where it parsed to something else - a
+ *  list, a number, a string - and `undefined` where there was no body, or none that
+ *  parsed. `POST /v1/mcp/token` takes an empty body to mean "read-only", and must
+ *  keep doing so, while a body that says `[1, 2]` is a client's mistake.
+ *
+ *  Eight routes had written this parse out, and each of them answers with its own
+ *  sentence, so the sentence stays theirs; what is here is the reading. */
+export async function objectBody(
+  source: HasJson,
+): Promise<Record<string, unknown> | null | undefined> {
+  const parsed = await source.req.json<unknown>().catch(() => undefined)
+  if (parsed === undefined) return undefined
+
+  const object = !!parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+  return object ? (parsed as Record<string, unknown>) : null
+}
+
+/** The list a stored column holds, or null where it holds anything else.
+ *
+ *  A column of this database is written whole by whichever client wrote it last,
+ *  which may be a newer build than this one or an older, and `JSON.parse` hands
+ *  back whatever it finds without an opinion about it. So a reader asks for the
+ *  shape it wants and takes nothing else - the same bargain a request's body gets,
+ *  which is why it lives here. Eight readers had each written the try/catch out.
+ *
+ *  Nothing is repaired and nothing throws: a column nobody can read answers the
+ *  same as one that was never written, which is the only sensible answer to both. */
+export function listIn(raw: string | null | undefined): unknown[] | null {
+  const parsed = parsedOr(raw)
+  return Array.isArray(parsed) ? parsed : null
+}
+
+/** The object a stored column holds, or null where it holds anything else. */
+export function objectIn(raw: string | null | undefined): Record<string, unknown> | null {
+  const parsed = parsedOr(raw)
+  const object = !!parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+  return object ? (parsed as Record<string, unknown>) : null
+}
+
+function parsedOr(raw: string | null | undefined): unknown {
+  if (raw === null || raw === undefined) return null
+
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
 /** What a fetched document says, up to a limit, or null when it is longer than
  *  that. Answers the same question about somebody else's server as everything
  *  below does about a client, which is why it lives here: a body is untrusted
@@ -82,11 +135,10 @@ export interface Body {
 }
 
 export async function readBody(source: HasJson): Promise<Body> {
-  const parsed = await source.req.json<unknown>().catch(() => null)
-  const object = !!parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-  const fields = object ? (parsed as Record<string, unknown>) : {}
+  const sent = await objectBody(source)
+  const fields = sent ?? {}
 
-  let problem: string | null = object ? null : 'send a JSON object'
+  let problem: string | null = sent ? null : 'send a JSON object'
 
   /** The first complaint is the one reported: a reader that kept going would
    *  end up describing a field the client has not got to yet. */

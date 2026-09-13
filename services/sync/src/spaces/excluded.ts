@@ -13,8 +13,10 @@
  *  See spaces/bookmarks.ts, whose shape this is. */
 
 import { Hono } from 'hono'
-import { now } from '../crypto'
+import { listIn, objectBody } from '../body'
+import { byteLength, now } from '../crypto'
 import type { Env, Variables } from '../types'
+import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
 
 /** How many paths one space may leave out. Far more than anybody excludes by
@@ -22,23 +24,16 @@ import { atLeast, spaceOf } from './space'
  *  fits here. */
 const MOST = 200
 /** A path inside a space, which is a few folder names and a file name. */
-const LONGEST_PATH = 300
 /** What the column may grow to. Every path is bounded on its own; this is the
  *  other end of the same guard, so a list of legal paths still cannot make the
  *  space listing heavy for every device that reads it. */
 const MOST_BYTES = 16 * 1024
 
-/** Whether a path names something inside its own space. The same reading the app
- *  does: a path on somebody's disk, or one that climbs out of the space, is not
- *  something any machine could resolve. */
+/** Whether a path names something inside its own space; see ./paths. A path left
+ *  out has to be a path, so an empty one is not one. */
 function inside(path: unknown): path is string {
   return (
-    typeof path === 'string' &&
-    path.length > 0 &&
-    path.length <= LONGEST_PATH &&
-    !path.startsWith('/') &&
-    !path.includes('\\') &&
-    !path.split('/').includes('..')
+    typeof path === 'string' && path.length > 0 && path.length <= LONGEST_PATH && staysInside(path)
   )
 }
 
@@ -72,14 +67,8 @@ function pathsOf(value: readonly unknown[]): string[] {
  *  the space is left out: the column is written whole by clients, and a newer one
  *  may keep something this version has never heard of. */
 export function readExcluded(raw: string): string[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return []
-  }
-
-  return Array.isArray(parsed) ? pathsOf(parsed) : []
+  const held = listIn(raw)
+  return held ? pathsOf(held) : []
 }
 
 export const spaceExcluded = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -92,12 +81,10 @@ export const spaceExcluded = new Hono<{ Bindings: Env; Variables: Variables }>()
 spaceExcluded.put('/:id/excluded', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
-  const body = await context.req.json<unknown>().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return context.json({ error: 'send an object' }, 400)
-  }
+  const body = await objectBody(context)
+  if (!body) return context.json({ error: 'send an object' }, 400)
 
-  const sent = (body as Record<string, unknown>).excluded
+  const sent = body.excluded
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
@@ -105,7 +92,7 @@ spaceExcluded.put('/:id/excluded', atLeast('write'), async (context) => {
   // nothing else a client sent along ends up in the column.
   const kept = pathsOf(sent as readonly unknown[])
   const written = JSON.stringify(kept)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  if (byteLength(written) > MOST_BYTES) {
     return context.json({ error: 'that is more paths than a space leaves out' }, 413)
   }
 

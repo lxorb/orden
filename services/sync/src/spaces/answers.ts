@@ -11,6 +11,7 @@
  *  a column is called is decided once; see blog/form.ts. */
 
 import { Hono } from 'hono'
+import { objectIn } from '../body'
 import { asCsv } from '../blog/form'
 import type { Env, Variables } from '../types'
 import { atLeast, spaceOf } from './space'
@@ -32,20 +33,13 @@ interface Row {
  *  handed on, because the column is written by this service and read by the app.
  */
 function present(row: Row) {
-  let answers: Record<string, string> = {}
-  try {
-    const parsed: unknown = JSON.parse(row.answers)
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      answers = Object.fromEntries(
-        Object.entries(parsed as Record<string, unknown>).flatMap(([key, value]) =>
-          typeof value === 'string' ? [[key, value]] : [],
-        ),
-      )
-    }
-  } catch {
-    // A row nobody can read says nothing, which is what an empty object is.
-  }
-
+  const held = objectIn(row.answers)
+  const answers: Record<string, string> = Object.fromEntries(
+    Object.entries(held ?? {}).flatMap(([key, value]) =>
+      typeof value === 'string' ? [[key, value]] : [],
+    ),
+  )
+  // A row nobody can read says nothing, which is what an empty object is.
   return { id: row.id, note: row.note_id, path: row.path, at: row.at, answers }
 }
 
