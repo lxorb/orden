@@ -58,7 +58,7 @@ fn main() {
         engine = engine.command_line_arg("load-extension", Some(path));
     }
     if let Ok(path) = std::env::var("NIB_SPIKE_CACHE") {
-        engine = engine.cache_path(std::path::PathBuf::from(path));
+        engine = engine.root_cache_path(path);
     }
 
     let no_browser = std::env::args().any(|arg| arg == "--no-browser");

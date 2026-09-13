@@ -19,13 +19,25 @@ about paying it once and properly. It is a design and a measurement, not a
 build: the code that exists is `spike/browser`, which is a proof and is not
 wired into the app.
 
-The short version. **nib ships Chromium through CEF, in a process of its own that
-starts the first time somebody opens a web tab.** Every web tab is a view in that
-one browser process, exactly as every tab in Chrome is. Chromium keeps everything
-Chromium is good at, `chrome://settings` and `chrome://extensions` included, and
-nib keeps the account, the files and the shell. Windows, macOS and Linux get the
-same engine and therefore the same product; a phone gets the phone's browser, as
-it did before.
+The short version. **nib's desktop app becomes a Chromium app: one CEF engine in
+nib's own process, through Tauri's own `tauri-runtime-cef`, with nib's interface and
+every web tab as webviews in it.** Every web tab is a view in one browser process,
+exactly as every tab in Chrome is. Chromium keeps everything Chromium is good at,
+`chrome://settings` and `chrome://extensions` included, and nib keeps the account,
+the files and the shell. Windows, macOS and Linux get the same engine and therefore -
+for the first time, including for nib's own editor - the same product. A phone gets
+the phone's browser, as it did before.
+
+Two things in that sentence are not what this design set out to write, and both are
+argued rather than assumed in section 2. **The engine cannot start lazily on the
+first web tab** - CEF refuses to be initialised late, and the maintainer says so in
+as many words - so it starts when nib does, and the spike measures what that costs.
+And **the engine goes in nib's own process rather than a helper beside it**, because
+the alternative means nib owning a cross-process window embedding on three platforms
+forever, which is the opposite of *"integrate Chromium properly"*.
+
+There are also **two gates this cannot ship through yet**, both in section 2 and both
+upstream: Chromium's sandbox on Windows, and H.264.
 
 ---
 
