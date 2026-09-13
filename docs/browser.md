@@ -492,6 +492,14 @@ most of a second, that is the moment to take B′ seriously.
    operating system's own decoders can be used. A browser that cannot play half the
    web's video is not a browser somebody will keep using.
 
+**Linux changes toolkit, and that is its own piece of work.** `tauri-runtime-cef` is
+GTK 4 through `winit-gtk4`, where wry is GTK 3, and the two cannot share a process.
+nib's Linux build is not only wry: the tray is `libayatana-appindicator3`, and the
+crate pulls `libxdo` and `librsvg` beside it. Every one of those is a GTK 3 library
+that either has a GTK 4 counterpart or has to go. None of it is hard; all of it is
+work nobody has costed, and it belongs in batch 1's answer rather than in batch 7's
+surprise.
+
 **And `tauri-runtime-cef` is unpublished, and today it does not build - on any of the
 three.** This is measured, not guessed: `spike/shell` was pointed at revision
 `c8c75b1` and the branch failed to compile on macOS with eleven type errors and on
