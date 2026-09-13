@@ -174,7 +174,7 @@ jobs:
             # looking for one - the first Linux run spent its whole timeout
             # printing "Failed to connect to the bus" and never got as far as
             # creating a browser.
-            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' \n              dbus-run-session -- "${run[@]}"
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
           else
             "${run[@]}"
           fi
@@ -239,7 +239,7 @@ jobs:
             --binary "spike/shell/target/release/nib-spike-shell${{ runner.os == 'Windows' && '.exe' || '' }}"
             --out spike-out/shell)
           if [ "${{ runner.os }}" = "Linux" ]; then
-            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' \n              dbus-run-session -- "${run[@]}"
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
           else
             "${run[@]}"
           fi
