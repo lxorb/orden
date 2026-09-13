@@ -443,8 +443,16 @@
     color: var(--muted);
   }
 
+  /* The width is held whether or not there is a tick in it, so the labels line up
+     down the list.
+
+     A whole em, not 0.9 of one: U+2713 is drawn by whatever font has it, and on a
+     page whose lang is Japanese that is a CJK face, where every glyph is full width.
+     Nine tenths of an em cut two pixels off the tick's right arm. The same fix the
+     palette's rows carry, for the same glyph in the same slot; see Palette.svelte
+     and scripts/locale-e2e.py, which is what reported it. */
   .tick {
-    width: 0.9em;
+    width: 1em;
     flex: none;
     color: var(--accent);
   }
@@ -580,10 +588,11 @@
   }
 
   /* The way back keeps its chevron in front of the words, where a back button
-     belongs whatever the machine. */
+     belongs whatever the machine. The width is the one above, put back after the
+     rule before this took it away: one slot, one measure, wherever a row is drawn. */
   :global([data-touch]) .phone .back .tick {
     order: 0;
-    width: 0.9em;
+    width: 1em;
     margin-inline-start: 0;
   }
 
