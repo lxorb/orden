@@ -109,8 +109,12 @@ moment the page says what it is called, named after the title, the way every not
 a space keeps itself. No file first, because a folder of `Untitled` shortcuts is
 what asking for the name first would leave behind here.
 
-Neither is offered on a phone, which has no bar to type an address into; see "A
-phone" below.
+Neither is offered on a phone, and neither is in the editor's `/` menu. A phone has
+no bar to type an address into and no tab to put a page in - the row would make a
+file nobody there could finish; see "A phone" below. And `/` is the menu for what
+goes **in** the note being written: every row of it puts a block on the page, and a
+website is a file beside the note rather than something in it. The two menus that
+make files - the file list's and the tab strip's - are where it belongs.
 
 **Following a link inside the page does not rewrite the file.** The file says where
 the document points; where the reader has got to is the tab's, kept in the session

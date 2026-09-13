@@ -249,9 +249,13 @@ describe('what the plus in the tab strip offers', () => {
     tabs.indexOf('</button>', tabs.indexOf('class="new"')),
   )
 
-  test('the two kinds a tab can hold, in the words the other menus use', () => {
+  test('the kinds a tab can hold, in the words the other menus use', () => {
     expect(entries).toContain("t('New note')")
     expect(entries).toContain("t('New canvas')")
+    // A website is the third, and not on a phone: there is no bar there to type an
+    // address into. See docs/web-tabs.md.
+    expect(entries).toContain("t('New web note')")
+    expect(entries).toContain("viewport.device === 'phone'")
   })
 
   test('a plain click still makes a note, so the menu is never in the way', () => {
