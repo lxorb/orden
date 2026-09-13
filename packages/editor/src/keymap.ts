@@ -8,7 +8,6 @@ import {
   indentWithTab,
   selectLine,
 } from '@codemirror/commands'
-import { closeBracketsKeymap } from '@codemirror/autocomplete'
 import { searchKeymap, selectNextOccurrence, selectSelectionMatches } from '@codemirror/search'
 import {
   EditorSelection,
@@ -407,7 +406,6 @@ export const standardBindings: BindingSpec[] = [
  *  that make a text editor a text editor, left exactly as the library has
  *  them and installed underneath the named ones. */
 export const unclaimedKeymap: KeyBinding[] = [
-  ...closeBracketsKeymap,
   ...defaultKeymap,
   ...historyKeymap,
   ...searchKeymap,

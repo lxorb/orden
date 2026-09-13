@@ -27,10 +27,15 @@
  *  whether or not anybody uses the mode. The library is not - it is vim-mode.ts,
  *  loaded the first time modal editing is asked for, because it is 324 kilobytes for
  *  a mode that is off unless somebody turned it on and the alternative is paying for
- *  it before the window is on screen. */
+ *  it before the window is on screen.
+ *
+ *  Which is the shape every lazy extension in this package has: an empty compartment, a
+ *  fetch, and a transaction per open editor when it lands. The list of open editors is
+ *  open-views.ts, shared with the completion menus. */
 
 import { Compartment, type StateEffect } from '@codemirror/state'
-import { EditorView, ViewPlugin } from '@codemirror/view'
+import type { EditorView } from '@codemirror/view'
+import { enrolled, openViews } from './open-views'
 import { flushTableEdits } from './table/widget'
 
 export type VimMode = 'normal' | 'insert' | 'visual' | 'replace'
@@ -92,19 +97,6 @@ let loading: Promise<void> | null = null
  *  still want it. */
 let wanted = false
 
-/** Every open editor, so the library arriving can be put into the ones already on
- *  screen. Kept by the extension every editor carries; see `vimExtensions`. */
-const views = new Set<EditorView>()
-
-const enrolled = ViewPlugin.define((view: EditorView) => {
-  views.add(view)
-  return {
-    destroy() {
-      views.delete(view)
-    },
-  }
-})
-
 /** Fetches the library, and turns the mode on in whatever is open if it is still
  *  wanted by the time it arrives. Idempotent.
  *
@@ -117,7 +109,7 @@ export function loadVim(): Promise<void> {
     loaded = await import('./vim-mode')
     if (!wanted) return
 
-    for (const view of views) view.dispatch({ effects: vimEffect(true) })
+    for (const view of openViews()) view.dispatch({ effects: vimEffect(true) })
   })()
 
   return loading

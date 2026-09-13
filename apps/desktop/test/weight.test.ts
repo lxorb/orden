@@ -269,6 +269,12 @@ describe('what the app evaluates before it draws anything', () => {
     ['@lezer/css', "CSS's own"],
     ['@lezer/javascript', "JavaScript's own"],
     ['@lezer/lr', 'the parser runtime under all three'],
+    // Batch 120's: the popup and the bracket pairs, which is everything that happens
+    // after a keystroke rather than in order to draw a note. Held in the first paint by
+    // the markdown language's own import of it until the manifest substituted a door;
+    // see the two tests at the foot of this file, and completion.ts for what fetches
+    // the real thing as the first editor is built.
+    ['@codemirror/autocomplete', 'the completion popup'],
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
@@ -306,6 +312,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/language-spellings.ts', "the fence languages' vocabulary"],
     ['/editor/src/language-modes.ts', 'the languages nobody ported'],
     ['/editor/src/mermaid.ts', "the diagram fence's tokenizer"],
+    // The popup's own side of the same bargain: the library is fetched as the first
+    // editor is built, which is a frame after the note is on screen rather than before
+    // it. What every editor carries is the compartment; see editor/src/completion.ts.
+    ['/editor/src/completing.ts', 'what the popup is built out of'],
     // And the converter a pasted page goes through.
     ['/markdown/src/from-html.ts', 'the HTML converter'],
     // Batch 119's: the shell's own, each of them a part of the window that is not on
@@ -406,6 +416,8 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/rooms.svelte.ts', 'the store that joins a room'],
     ['/editor/src/languages.ts', "the fence languages' door"],
     ['/editor/src/paste.ts', 'the paste that asks for the converter'],
+    ['/editor/src/completion.ts', 'the door the popup comes through'],
+    ['/editor/src/open-views.ts', 'the editors a late arrival has to reach'],
     // And batch 119's doors, for the same reason: what is left of each subsystem when
     // the subsystem itself has gone behind one.
     ['/lib/menu-item.ts', 'what a menu row is, which the app menu walks without it'],
@@ -468,6 +480,32 @@ describe('what the app evaluates before it draws anything', () => {
 
     expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@nib/lang-html@*')
     expect(existsSync(DOOR)).toBe(true)
+  })
+
+  /** And the second substitution inside the same dependency, for the same reason.
+   *
+   *  `@codemirror/lang-markdown` also imports the completion library outright - one
+   *  class, to build a context with, in order to offer the names of HTML tags when a `<`
+   *  is typed. That source is registered in the language's own data and nib never asks
+   *  it: the popup is built with `override`, which is the whole list of sources rather
+   *  than an addition to one. So thirty-five kilobytes of popup were evaluated before
+   *  the window had drawn anything, for a source nothing reaches.
+   *
+   *  What that package gets instead carries the three things a context is made of and
+   *  imports nothing; see packages/autocomplete. The popup the app does use imports the
+   *  real library by name and is fetched as the first editor is built; see
+   *  packages/editor/src/completion.ts. */
+  const POPUP = '@codemirror/lang-markdown>@codemirror/autocomplete'
+  const POPUP_DOOR = join(ROOT, 'packages/autocomplete/src/index.ts')
+
+  test('and the completion library the same way, said in the same manifest', () => {
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+      pnpm?: { overrides?: Record<string, string> }
+    }
+
+    expect(manifest.pnpm?.overrides?.[POPUP]).toBe('workspace:@nib/autocomplete@*')
+    expect(existsSync(POPUP_DOOR)).toBe(true)
+    expect(asked(POPUP_DOOR)).not.toContain('@codemirror/autocomplete')
   })
 
   test('and the door asks for the grammar rather than importing it', () => {

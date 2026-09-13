@@ -12,7 +12,7 @@ import {
   rectangularSelection,
 } from '@codemirror/view'
 import { remoteCarets } from './carets'
-import { editorCompletion } from './emoji'
+import { completionExtensions } from './completion'
 import { external } from './external'
 import { blockHandles } from './block/handle'
 import { landing } from './landing'
@@ -149,7 +149,7 @@ export function editorState(options: StateOptions): EditorState {
       // without the language rather than having it taken away a transaction later;
       // see `modeExtensions`.
       modeExtensions(text.length),
-      editorCompletion(),
+      completionExtensions(),
       // Images are checked first, so a screenshot beats the HTML around it.
       ...(onImage ? [imageHandling(onImage)] : []),
       richPaste(),

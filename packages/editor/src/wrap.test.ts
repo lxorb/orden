@@ -1,10 +1,18 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
+import { completionExtensions, loadCompletion } from './completion'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { modeExtensions } from './modes'
 import { parsed } from '../test/parsed'
+
+// The library's own `closeBrackets` is what wraps a selection in a bracket, and it is
+// fetched rather than carried now: an editor on screen has it a frame after it is
+// built, and a state built here has it once this has resolved. See completion.ts.
+beforeAll(async () => {
+  await loadCompletion()
+})
 
 /** Types one character the way the editor does: every input handler in turn,
  *  and the plain insertion when nobody claimed it. All of the modes are on, so
@@ -21,6 +29,7 @@ function type(
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         modeExtensions(),
+        completionExtensions(),
       ],
     }),
   )

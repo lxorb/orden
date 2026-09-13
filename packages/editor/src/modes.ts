@@ -22,13 +22,13 @@ import { noReveal } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { enclosing } from './nodes'
-import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
 import { ligatures, type LigatureScope } from './ligatures'
 import { knownWords, spellingWords } from './spelling'
 import { once } from './once'
+import { completionEffect } from './completion'
 import { wrapSelection } from './wrap'
 import { vimEffect, vimExtensions } from './vim'
 
@@ -388,8 +388,13 @@ const codeLineNumbersFor = once((on: boolean): Extension =>
 
 /** Brackets and quotes close themselves, and a mark typed over a selection goes
  *  around it. One switch, because both are the same promise: what you type
- *  lands around what you meant rather than over it. */
-const bracketsFor = once((on: boolean): Extension => (on ? [closeBrackets(), wrapSelection()] : []))
+ *  lands around what you meant rather than over it.
+ *
+ *  Only nib's own half is here. The library's `closeBrackets` lives in the compartment
+ *  the completion menus come through, because it is the same package as they are and it
+ *  is fetched with them; every caller below says the switch to both. See
+ *  completion.ts. */
+const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : []))
 
 /** A note whose rules break it into slides. Only a class, because that is all
  *  the difference is: the rules are already decorated, and the stylesheet shows
@@ -492,6 +497,9 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
     spellWords.reconfigure(spellWordsFor(joined(settings.words))),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
+    // The library's own half of the same switch, which arrives with the popup it shares
+    // a package with; see completion.ts.
+    completionEffect(settings.closeBrackets),
     glyphs.reconfigure(ligaturesFor(settings.ligatures)),
     headingNumbers.reconfigure(headingNumbersFor(settings.numbers)),
     codeLineNumbers.reconfigure(codeLineNumbersFor(settings.lineNumbers)),
@@ -621,7 +629,7 @@ export function setSpellWords(view: EditorView, words: readonly string[]) {
 }
 
 export function setCloseBrackets(view: EditorView, on: boolean) {
-  view.dispatch({ effects: brackets.reconfigure(bracketsFor(on)) })
+  view.dispatch({ effects: [brackets.reconfigure(bracketsFor(on)), completionEffect(on)] })
 }
 
 export function setRightToLeft(view: EditorView, on: boolean) {

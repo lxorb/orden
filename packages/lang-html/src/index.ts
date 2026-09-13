@@ -137,9 +137,11 @@ const data = defineLanguageFacet({
  *  holds is three completion sources - HTML's own, and JavaScript's and CSS's for what
  *  is nested inside it - and none of the three has ever run in nib or can: the popup is
  *  built with `override`, which is the whole list of sources rather than an addition to
- *  it, so a source offered through language data is never asked. See `editorCompletion`
- *  in packages/editor/src/emoji.ts. The same goes for the tag completion `markdown()`
- *  adds beside them, which is what `htmlCompletionSource` below is for. */
+ *  it, so a source offered through language data is never asked. See `completing` in
+ *  packages/editor/src/completing.ts. The same goes for the tag completion `markdown()`
+ *  adds beside them, which is what `htmlCompletionSource` below is for - and which is
+ *  also why the completion library itself is not in the first paint; see
+ *  packages/autocomplete. */
 export function html(config: HtmlConfig = {}): LanguageSupport {
   return new LanguageSupport(new Language(data, new LazyParser(config), [], 'html'), [closeTags])
 }
@@ -166,16 +168,23 @@ const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, i
   closers.some((close) => close(view, from, to, text, insert)),
 )
 
-/** The completions offered inside a tag, once the grammar is here.
+/** The completions offered inside a tag: none, ever.
  *
  *  `markdown()` asks for these once, through a source of its own, to offer tag names
  *  when a `<` is typed in a note. Nothing in nib ever reaches it - see the note on
- *  `html` above - and it is answered honestly all the same: nothing while the grammar
- *  is on its way, and whatever the grammar says once it is here.
+ *  `html` above - and there are two reasons it answers nothing rather than delegating
+ *  to the real grammar when the grammar is here.
  *
- *  It is not what fetches the grammar. A reader who has typed a `<` has not asked for a
- *  hundred and sixty-seven kilobytes, and the parse that finds a tag in the note is
- *  already asking. */
-export function htmlCompletionSource(context: CompletionContext): CompletionResult | null {
-  return here ? here.htmlCompletionSource(context) : null
+ *  The first is what a context is now. `markdown()` builds one to ask this with, and
+ *  the class it builds is nib's own: that package's static import of the completion
+ *  library held thirty-five kilobytes of popup in front of the first paint, so it gets
+ *  packages/autocomplete instead, which carries the three things a context is made of
+ *  and nothing else. Handing that to the real grammar's source would be a lie, and the
+ *  one caller is a source nothing asks.
+ *
+ *  The second is that it is not what fetches the grammar. A reader who has typed a `<`
+ *  has not asked for a hundred and sixty-seven kilobytes, and the parse that finds a tag
+ *  in the note is already asking. */
+export function htmlCompletionSource(_context: CompletionContext): CompletionResult | null {
+  return null
 }

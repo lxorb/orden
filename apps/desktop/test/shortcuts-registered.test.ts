@@ -41,7 +41,15 @@ describe('the editor package', () => {
     // opening a line under a block that ends the note, and the library's own keys
     // underneath every named one. The settings list says as much of the arrows and
     // of Enter; see FIXED_ENTRIES in the registry.
-    expect(installers).toEqual(['editor.ts'])
+    //
+    // completing.ts holds one more, and it is the same kind of key: the library's own
+    // Backspace, which takes both halves of a bracket pair out at once. It used to be
+    // in `unclaimedKeymap` with the rest of the library's keys, and it moved because
+    // the package it comes from is fetched rather than carried - thirty-five kilobytes
+    // of popup that nothing needs before somebody types; see
+    // packages/editor/src/completion.ts. It is bound only while the pairs are being
+    // made, which is what it is about, and it is still nobody's to rebind.
+    expect(installers).toEqual(['completing.ts', 'editor.ts'])
   })
 
   test('builds every other keymap from bindings that have a name', () => {

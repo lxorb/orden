@@ -1,14 +1,5 @@
-import {
-  autocompletion,
-  type CompletionContext,
-  type CompletionResult,
-} from '@codemirror/autocomplete'
-import type { Extension } from '@codemirror/state'
+import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { emojiTable, loadEmoji } from '@nib/markdown/engines'
-import { slashCompletions } from './slash'
-import { snippetCompletions } from './snippets'
-import { tagCompletions } from './tags'
-import { wikilinkCompletions } from './wikilink/complete'
 
 /** `:smile:` → 😄, or null when the name is not one - and null while the table is
  *  still on its way, which reads the same: the shortcode stays as the characters it
@@ -30,7 +21,9 @@ export function emojiFor(shortcode: string): string | null {
  *  names, which nothing before this moment needed. Async, which is what a completion
  *  source is allowed to be, so the popup opens with the names in it rather than
  *  empty. */
-async function completions(context: CompletionContext): Promise<CompletionResult | null> {
+export async function emojiCompletions(
+  context: CompletionContext,
+): Promise<CompletionResult | null> {
   const typed = context.matchBefore(/:[a-z0-9_+-]{2,}/i)
   if (!typed || (typed.from === typed.to && !context.explicit)) return null
 
@@ -51,25 +44,4 @@ async function completions(context: CompletionContext): Promise<CompletionResult
       type: 'text',
     })),
   }
-}
-
-/** The blocks a `/` offers, emoji shortcodes, user snippets, the notes a `[[`
- *  link can name and the tags a `#` opens all share one popup: each source
- *  answers for the characters that open it, so only one of them ever has anything
- *  to say.
- *
- *  The slash comes first because it is the only one whose opening character the
- *  others could also be sitting on: a `/` is not a word, and a source that has
- *  something to say about one has the first word. */
-export function editorCompletion(): Extension {
-  return autocompletion({
-    override: [
-      slashCompletions,
-      completions,
-      snippetCompletions,
-      wikilinkCompletions,
-      tagCompletions,
-    ],
-    icons: false,
-  })
 }

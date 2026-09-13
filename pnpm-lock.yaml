@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@codemirror/lang-markdown>@codemirror/lang-html': workspace:@nib/lang-html@*
+  '@codemirror/lang-markdown>@codemirror/autocomplete': workspace:@nib/autocomplete@*
 
 importers:
 
@@ -201,6 +202,19 @@ importers:
       vite:
         specifier: ^8.2.2
         version: 8.2.2(@types/node@26.4.1)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)
+      vitest:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/node@26.4.1)(@vitest/coverage-v8@5.0.0)(jsdom@28.1.0)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  packages/autocomplete:
+    dependencies:
+      '@codemirror/state':
+        specifier: ^6.7.2
+        version: 6.7.2
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^5.0.0
         version: 5.0.0(@types/node@26.4.1)(@vitest/coverage-v8@5.0.0)(jsdom@28.1.0)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
@@ -3592,7 +3606,7 @@ snapshots:
 
   '@codemirror/lang-markdown@6.5.2':
     dependencies:
-      '@codemirror/autocomplete': 6.20.3
+      '@codemirror/autocomplete': link:packages/autocomplete
       '@codemirror/lang-html': link:packages/lang-html
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.2
