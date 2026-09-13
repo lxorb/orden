@@ -19,7 +19,7 @@ import { search } from '../search.svelte'
 import { folderOf, insideSpace, nameOf, relativeTo } from '../space-paths'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { said, type Said, words, yes } from './args'
+import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
 import { waited } from '../timing'
 import { insidePath, noteFor, relativeIn, spaceFor } from './space'
@@ -235,14 +235,23 @@ export async function searchSpace(args: Said): Promise<unknown> {
  *  The row itself, with its own `run`, so this cannot come to a different answer
  *  from the palette about what a command does or whether it can run at all. A row
  *  that is greyed out is refused here too, and says so: a command that cannot run
- *  and silently does nothing is the worst of the three answers. */
-export function runCommand(args: Said): unknown {
+ *  and silently does nothing is the worst of the three answers.
+ *
+ *  And a row may say it is only for somebody at the keyboard. This is the one verb
+ *  a link may ask for that is a whole list rather than one act, and a few of those
+ *  rows turn on a microphone, open a camera or sign the machine out - which a page
+ *  on the web is not going to do by handing the system an address. The row says so
+ *  itself; see `byHand` in commands.ts. */
+export function runCommand(args: Said, road: Road = 'here'): unknown {
   const id = said(args, 'id')
   if (!id) throw new Error('say which command')
 
   const found = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Error(`there is no command called ${id}`)
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)
+  if (found.byHand === true && road === 'link') {
+    throw new Error(`${id} is not something a link may run`)
+  }
 
   found.run()
   return { id, label: found.label }

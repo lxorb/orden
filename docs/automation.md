@@ -29,7 +29,13 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://search?query=tag:%23work` | opens the search panel on that query |
 | `nib://command?id=save` | runs one command out of the registry |
 
-`nib://command` takes any id the palette knows. `nib commands list` prints them.
+`nib://command` takes the ids the palette knows, minus the handful only somebody at
+the keyboard may press: **Record**, **Meeting**, **Dictate**, **Photo** and **Sign
+out**. A link is written by anybody and followed by a click, so a microphone, a
+camera and who this machine is signed in as are not things a page on the web gets
+to reach by handing the system an address. The row itself says so - `byHand` in
+commands.ts - and the command line, which is behind this installation's own secret,
+runs all of them. `nib commands list` prints the lot.
 
 Written by hand, a path with a space or an ampersand in it has to be
 percent-encoded, and `+` means a space. **Copy link to this note** in the palette

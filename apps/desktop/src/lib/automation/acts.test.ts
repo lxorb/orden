@@ -68,6 +68,7 @@ vi.mock('../workspace.svelte', () => ({
     activeSpaceId: space.id,
     active: null,
     files: [],
+    panes: { focusedId: null },
     tabs: [{ path: '/Work/notes/Plan.md' }],
     flush: () => undefined,
     showSpace: () => Promise.resolve(),
@@ -78,7 +79,19 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-const { openNote } = await import('./acts')
+/** The rows the registry answers with, and which of them were run. A row that says
+ *  `byHand` is one only somebody at the keyboard may press; see commands.ts. */
+const rows = [
+  { id: 'files', label: 'File list', run: () => ran.push('files') },
+  { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },
+  { id: 'shut', label: 'Shut', disabled: true, run: () => ran.push('shut') },
+]
+const ran: string[] = []
+
+vi.mock('../commands', () => ({ appCommands: () => rows }))
+vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
+
+const { openNote, runCommand } = await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -159,5 +172,38 @@ describe('a note named rather than pathed', () => {
       block: null,
     })
     expect(opened).toEqual(['/Work/notes/Plan.md'])
+  })
+})
+
+/** `nib://command?id=…` is the one action a link may ask for that is a whole list
+ *  rather than one act, and a few of those rows reach for a microphone or a camera
+ *  or sign the machine out. A link is written by anybody and followed by a click. */
+describe('a row of the palette', () => {
+  test('runs for the command line and for a link alike', () => {
+    ran.length = 0
+
+    expect(runCommand({ id: 'files' }, 'link')).toEqual({ id: 'files', label: 'File list' })
+    expect(runCommand({ id: 'files' }, 'here')).toEqual({ id: 'files', label: 'File list' })
+    expect(ran).toEqual(['files', 'files'])
+  })
+
+  test('unless it is one only somebody at the keyboard may press', () => {
+    ran.length = 0
+
+    expect(() => runCommand({ id: 'record' }, 'link')).toThrow(/not something a link may run/)
+    expect(ran).toEqual([])
+
+    // The command line is this machine, behind a secret only this user can read.
+    expect(runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
+    expect(ran).toEqual(['record'])
+  })
+
+  test('and a row that cannot run just now says so rather than doing nothing', () => {
+    ran.length = 0
+
+    expect(() => runCommand({ id: 'shut' }, 'here')).toThrow(/cannot run just now/)
+    expect(() => runCommand({ id: 'nothing' }, 'here')).toThrow(/there is no command/)
+    expect(() => runCommand({}, 'here')).toThrow(/say which command/)
+    expect(ran).toEqual([])
   })
 })

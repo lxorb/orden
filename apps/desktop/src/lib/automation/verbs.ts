@@ -53,7 +53,7 @@ import {
   syncStatus,
   windowRect,
 } from './answers'
-import { said as wordsOf, type Said, yes } from './args'
+import { said as wordsOf, type Road, type Said, yes } from './args'
 
 /** One verb, whole. */
 interface Verb {
@@ -64,8 +64,12 @@ interface Verb {
   /** Whether it has to be confirmed before it runs. */
   confirms?: boolean
   /** What it answers. A verb that has nothing to wait for is written without a
-   *  promise, and `dispatch` awaits whatever comes back either way. */
-  run: (args: Said) => unknown
+   *  promise, and `dispatch` awaits whatever comes back either way.
+   *
+   *  The road is handed to every verb and read by one: a command's row may say it
+   *  is only for somebody at the keyboard. It is a parameter rather than an
+   *  argument because an argument is something a link can write. */
+  run: (args: Said, road: Road) => unknown
 }
 
 const VERBS: Record<string, Verb> = {
@@ -155,6 +159,7 @@ export async function dispatch(
   verb: string,
   args: Said,
   rest: readonly string[] = [],
+  road: Road = 'here',
 ): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
   const [name, words] = twoWords(verb, rest)
 
@@ -168,7 +173,7 @@ export async function dispatch(
   }
 
   try {
-    return { ok: true, value: await found.run(said) }
+    return { ok: true, value: await found.run(said, road) }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }

@@ -143,7 +143,9 @@ async function follow(uri: string, depth = 0): Promise<void> {
     return
   }
 
-  const result = await dispatch(verb, link.args)
+  // Said to be a link, because that is what decides whether a row of the palette
+  // may run: see `runCommand`. Never an argument - a link writes its own.
+  const result = await dispatch(verb, link.args, [], 'link')
   if (!result.ok) {
     await went(link.callbacks.error, depth, { error: result.error })
     refuse(uri, result.error)

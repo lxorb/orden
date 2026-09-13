@@ -10,6 +10,15 @@
 /** The arguments as they arrived. */
 export type Said = Record<string, unknown>
 
+/** Where a request came from, which is not an argument and can never be one: a
+ *  link says everything in a query string, so anything a link could set is
+ *  something a link could claim.
+ *
+ *  `link` is a `nib://` address, which anybody can write and send to anybody.
+ *  `here` is this machine: the `nib` command, behind a secret only this user can
+ *  read; see src-tauri/src/endpoint.rs. Verbs that do not care take neither. */
+export type Road = 'link' | 'here'
+
 /** One argument as words, or null when it was not said at all. A number or a
  *  boolean counts as words: a link writes both as text and a caller should not
  *  have to know which side it came from.

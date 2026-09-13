@@ -308,6 +308,17 @@ async function openThemesFolder() {
  *  menu-item.ts, which is why the app menu can pass one straight through. */
 export interface Command extends MenuItem {
   id: string
+  /** Whether only somebody at the keyboard may run it: the palette, a key, a menu
+   *  row, the command line on this machine - and never a `nib://` link.
+   *
+   *  A link can be written by anybody and sent to anybody, and following one is a
+   *  click. So what a link may ask for is what a person clicking about in the app
+   *  could undo in a moment; see automation/verbs.ts, which is where the four
+   *  actions a link may name are settled. This is the exception inside the one
+   *  action that is a whole list: `nib://command?id=…` reaches the palette, and a
+   *  handful of those rows turn on a microphone, open a camera or sign somebody
+   *  out - none of which is a thing to hand a page on the web. */
+  byHand?: boolean
 }
 
 /** Splitting, moving between panes, and closing one. Left out entirely on a
@@ -483,6 +494,10 @@ interface Block {
   /** Whether a view can take it. A block writes, so the default is a view that
    *  is not read-only. */
   ready?: (view: EditorView | undefined) => boolean
+  /** Whether a link may never ask for it; see `Command.byHand`. Every row here
+   *  writes in the note and needs none - except the three that reach for a
+   *  microphone or a camera. */
+  byHand?: boolean
 }
 
 /** A state command as something to do to a view. */
@@ -559,6 +574,7 @@ const BLOCKS: Block[] = [
       if (view) void takePhoto(view)
     },
     ready: (view) => canTakePhoto(view),
+    byHand: true,
   },
   // Saying it instead of typing it. One row for both states, because there is one
   // thing to press and the line across the top is what says which; see
@@ -570,6 +586,7 @@ const BLOCKS: Block[] = [
       if (view) void toggleDictation(view)
     },
     ready: (view) => canDictate(view),
+    byHand: true,
   },
   // And the microphone kept as sound, as two rows beside the picture: the same kind
   // of thing, which is something of the reader's own put into the note rather than
@@ -577,8 +594,14 @@ const BLOCKS: Block[] = [
   // starts and the next stops; neither needs a note open, because either will make
   // one. See recorder/commands.ts, which is what the quick settings tile on Android
   // calls by these very ids.
-  { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord },
-  { id: 'meeting', label: meetingLabel, apply: () => void meeting(), ready: canTakeMeetingNotes },
+  { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord, byHand: true },
+  {
+    id: 'meeting',
+    label: meetingLabel,
+    apply: () => void meeting(),
+    ready: canTakeMeetingNotes,
+    byHand: true,
+  },
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),
   block('paragraph.toc', () => t('Table of contents'), insertToc),
@@ -600,6 +623,7 @@ export function blockCommands(view?: EditorView): Command[] {
       id: one.id,
       label: one.label(),
       ...(hint === undefined ? {} : { hint }),
+      ...(one.byHand === true ? { byHand: true } : {}),
       disabled: !ready,
       // The view as it was, absent and all: a row that needs one does nothing
       // without it and says so by being greyed out, and a row that acts on the
@@ -910,6 +934,8 @@ export function appCommands(view?: EditorView): Command[] {
       ? {
           id: 'signout',
           label: `${t('Sign out')} ${account.user.email}`.trim(),
+          // Who this machine is signed in as is not a link's business.
+          byHand: true,
           run: () => void account.signOut(),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },
