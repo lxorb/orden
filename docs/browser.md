@@ -39,6 +39,15 @@ forever, which is the opposite of *"integrate Chromium properly"*.
 There are also **two gates this cannot ship through yet**, both in section 2 and both
 upstream: Chromium's sandbox on Windows, and H.264.
 
+The spike in `spike/` is what turns the paragraph above from a plan into a
+measurement. On Windows and macOS runners it opened two browsers, counted **one
+browser process** between them, loaded `chrome://settings`, `chrome://extensions`,
+`chrome://history`, `chrome://downloads` and `chrome://version`, ran an unpacked
+Manifest V3 extension, and opened DevTools, the print preview and the find bar - all
+of it inside a window with no Chrome toolbar and no Chrome tab strip. Section 9 has
+the numbers, including the one that could still change the answer: an initialised
+engine costs **170 ms** on Windows and **1006 ms** on a macOS runner.
+
 ---
 
 ## 1. What the engines can actually do
