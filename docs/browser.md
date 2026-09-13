@@ -1101,6 +1101,17 @@ Batches 1 and 7 are the ones that can say no. Everything between them is ordinar
 work on a foundation those two either give or withhold, and sequencing it any other
 way would mean discovering in batch 7 that batch 2 was built on sand.
 
+**And if batch 1 stays shut.** The honest contingency, because an unreleased branch
+can stay unreleased. Batch 2 is the only batch whose shape depends on where the
+engine lives; batches 3 to 6 and 8 are the same work either way, because they are
+about `chrome://` pages, an extension list, a new tab page and a set of menu rows,
+none of which cares which process Chromium is in. So if the gate does not open,
+**B′ replaces batch 2** - a `nib-browser` helper, built as the DLL `bootstrap.exe`
+hosts on Windows, with its views parented into nib's window - and the plan is one
+batch longer and one engine less consistent. That is a worse product, which is why B
+is the recommendation; it is not a dead end, which is why waiting on the gate is
+safe.
+
 ---
 
 ## 9. What the spike measured

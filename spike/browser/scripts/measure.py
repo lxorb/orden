@@ -23,9 +23,11 @@ import argparse
 import json
 import os
 import platform
+import queue
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -208,8 +210,35 @@ def run(binary: Path, extra: list[str], out_dir: Path, timeout: int) -> dict:
     log: list[str] = []
     snapshots: list[dict] = []
     assert process.stdout is not None
-    for line in process.stdout:
-        line = line.rstrip('\n')
+
+    # The reading happens on a thread and the deadline is checked on this one.
+    # Iterating the pipe directly - which is what this did first - only checks the
+    # clock when a line arrives, so a spike that hangs *silently* is a spike that
+    # runs until the ninety-minute job timeout and uploads nothing. A browser that
+    # hangs is exactly the failure worth having a number for.
+    lines: queue.Queue[str | None] = queue.Queue()
+
+    def read() -> None:
+        assert process.stdout is not None
+        for raw in process.stdout:
+            lines.put(raw)
+        lines.put(None)
+
+    threading.Thread(target=read, daemon=True).start()
+
+    while True:
+        if time.monotonic() - started > timeout:
+            process.kill()
+            log.append('*** the spike outran its timeout and was killed')
+            break
+        try:
+            raw = lines.get(timeout=1)
+        except queue.Empty:
+            continue
+        if raw is None:
+            break
+
+        line = raw.rstrip('\n')
         log.append(line)
         print(f'  | {line}', flush=True)
         if line.startswith('{'):
@@ -240,12 +269,13 @@ def run(binary: Path, extra: list[str], out_dir: Path, timeout: int) -> dict:
                 shot = screenshot(out_dir / 'shots', name[len('shot:') :])
                 if shot:
                     print(f'  | screenshot {shot.name}')
-        if time.monotonic() - started > timeout:
-            process.kill()
-            log.append('*** the spike outran its timeout and was killed')
-            break
 
-    code = process.wait(timeout=60)
+    try:
+        code = process.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        code = process.wait(timeout=60)
+        log.append('*** the spike would not exit and was killed')
     return {
         'argv': [binary.name, *extra],
         'exit': code,
