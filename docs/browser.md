@@ -1197,6 +1197,15 @@ and not the engine. And it is exactly what batch 1 exists to re-measure on a rea
 machine. **If a real Mac still costs most of a second, that is the moment to take B′
 seriously** - and section 2 has the shape of the alternative ready.
 
+**The size rows are unpacked bytes, not an installer.** What a reader actually
+downloads is that tree compressed, and the spike does not build an installer, so the
+honest thing is an estimate with its basis: CEF's own `minimal` archive is 164 MB of
+bzip2 over roughly 404 MB of Windows `Release` and `Resources`, a ratio near 2.5 to
+1, and NSIS's LZMA does at least as well - so **expect the installer to grow by
+something like 150-170 MB on Windows and 120-140 MB on macOS.** Against an installer
+that is a few tens of megabytes today, that is the single biggest thing a reader will
+notice about this change, and pinning it down is batch 1's, not a guess's.
+
 **Every number above was taken with `--no-sandbox`**, because a CI runner cannot give
 Linux's `chrome-sandbox` the setuid bit and Windows has no sandbox on this path at
 all. That is stated rather than buried: a sandboxed build spends a little more at
