@@ -128,11 +128,29 @@ class Pages:
         self.server.shutdown()
 
 
+#: Everything this drive opens over the note, so a step can say "and now there is
+#: nothing over it" rather than hoping.
+LAYERS = "[role=menu], .palette, .nib-screen.sheet"
+
+
 def dismiss(page) -> None:
-    """Escape, and then whatever scrim did not take it."""
-    page.keyboard.press("Escape")
-    page.wait_for_timeout(300)
-    for _ in range(3):
+    """Escape, and then whatever scrim did not take it - and waits to see it go.
+
+    The waiting is the point. This used to press Escape, sleep, and carry on; the
+    step after it then clicked a button with a layer still over it, which on a
+    handheld is a click the layer took and a menu that never opened. A layer that is
+    gone is a state the page can be asked about, so it is asked."""
+    for _ in range(4):
+        if not page.locator(LAYERS).count():
+            return
+
+        page.keyboard.press("Escape")
+        try:
+            page.wait_for_selector(LAYERS, state="detached", timeout=1500)
+            return
+        except Exception:
+            pass
+
         scrim = page.locator(".scrim:visible").last
         if not scrim.count():
             return
@@ -140,15 +158,78 @@ def dismiss(page) -> None:
             scrim.click(force=True, position={"x": 4, "y": 4}, timeout=2000)
         except Exception:
             return
-        page.wait_for_timeout(300)
+
+    if page.locator(LAYERS).count():
+        say("a layer would not go")
+
+
+#: What a page has to have stopped doing before its picture is worth keeping.
+#:
+#: The faces first: a shot taken while a face is still arriving is a shot of the
+#: fallback, and the two differ by every glyph on the screen. Then the animations,
+#: asked of the browser itself rather than guessed at with a sleep - `getAnimations`
+#: knows about every transition and keyframe on the page, including the ones a
+#: component started a moment ago. A sheet that is still sliding is the whole
+#: difference between the two runs that disagreed by more than half their pixels.
+#:
+#: And the overlay scrollbar, which is lit while a surface is being scrolled and
+#: dims on a timer of its own afterwards - so whether it is in the picture depends
+#: on how long the step before took. Both states are still, which is why two
+#: matching frames do not catch it: one run had it dim before the first frame and
+#: the next had it dim after the second. It is a class, so it can be waited for.
+STILL = """
+() => document.fonts.status === 'loaded'
+  && document.getAnimations().every((one) => one.playState !== 'running')
+  && !document.querySelector('.nib-scrollbar.is-lit, .nib-scrollbar.is-settling')
+"""
+
+#: And the one thing on the page that is never still: the caret. It blinks, so the
+#: picture of it depends on the millisecond it was taken at and nothing else. Both
+#: spellings - the browser's own caret in a field, and the editor's, which is an
+#: element with a blink of its own.
+NO_CARET = """
+  *, *::before, *::after { caret-color: transparent !important }
+  .cm-cursor, .cm-cursorLayer, .cm-dropCursor { visibility: hidden !important }
+"""
+
+
+def quiet(page) -> None:
+    """Waits until nothing on the page is still moving."""
+    try:
+        page.wait_for_function(STILL, timeout=6000)
+    except Exception:
+        # A page with an animation that never ends - a spinner - is photographed as
+        # it is rather than waited on for ever; the shot says so by being unsteady.
+        pass
 
 
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
 
+    def steady(take, tries: int = 8) -> bytes:
+        """The same picture twice running, which is a surface that has stopped.
+
+        `getAnimations` covers what the page declares, and this covers everything
+        else: a face that arrived between the two, a scrollbar fading, an image
+        decoding, a shadow settling. Two shots that match byte for byte are a page
+        that did not move between them, whatever it was doing. Eight tries, and then
+        whatever it is doing it is doing for ever."""
+        quiet(page)
+        last = take()
+        for _ in range(tries):
+            page.wait_for_timeout(60)
+            now = take()
+            if now == last:
+                return now
+            last = now
+
+        say(f"[{name}] never held still")
+        return last
+
     def shot(tag: str) -> None:
-        page.screenshot(path=str(shots / f"{name}-{tag}.png"))
+        picture = steady(lambda: page.screenshot())
+        (shots / f"{name}-{tag}.png").write_bytes(picture)
         say(f"shot {name}-{tag}.png")
 
     def strip(tag: str, selector: str, pad: int = 8) -> None:
@@ -163,15 +244,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] {selector} has no box")
             return
 
-        page.screenshot(
-            path=str(shots / f"{name}-{tag}.png"),
-            clip={
-                "x": max(0, box["x"] - pad),
-                "y": max(0, box["y"] - pad),
-                "width": min(width, box["width"] + pad * 2),
-                "height": box["height"] + pad * 2,
-            },
-        )
+        clip = {
+            "x": max(0, box["x"] - pad),
+            "y": max(0, box["y"] - pad),
+            "width": min(width, box["width"] + pad * 2),
+            "height": box["height"] + pad * 2,
+        }
+        picture = steady(lambda: page.screenshot(clip=clip))
+        (shots / f"{name}-{tag}.png").write_bytes(picture)
         say(f"shot {name}-{tag}.png")
 
     context = browser.new_context(
@@ -181,8 +261,22 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         is_mobile=finger,
         color_scheme=scheme,
         device_scale_factor=2,
+        # This drive is about where things are and what colour they are, not about
+        # how they arrive. Motion is the one thing a picture cannot hold still, and a
+        # sheet caught half way through its slide differs from the same sheet by more
+        # than half the pixels on the screen. What the motion itself looks like is
+        # touch-move.py and motion.test.ts, which are about exactly that.
+        reduced_motion="reduce",
     )
     page = context.new_page()
+    # A statement rather than a function: an init script is run as a script, so an
+    # arrow expression on its own is an arrow expression nobody called.
+    page.add_init_script(
+        "document.addEventListener('DOMContentLoaded', function () {"
+        " var style = document.createElement('style');"
+        f" style.textContent = {NO_CARET!r};"
+        " document.head.appendChild(style) })"
+    )
     # A scratch drive should say what it could not reach rather than sit on it.
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
@@ -233,7 +327,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     if switcher.count():
         try:
             switcher.click(force=True)
-            page.wait_for_timeout(400)
+            # The menu itself, not four hundred milliseconds. A shot taken on a
+            # sleep is a shot of whatever was there when the sleep ended, which on a
+            # busy machine is the panel underneath.
+            page.wait_for_selector("[role=menu]", state="visible", timeout=8000)
             shot("spaces")
         except Exception as why:
             say(f"[{name}] no switcher: {why}")
@@ -244,7 +341,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     if rows.count():
         try:
             rows.nth(2).click(button="right", force=True)
-            page.wait_for_timeout(400)
+            page.wait_for_selector("[role=menu]", state="visible", timeout=8000)
             shot("rowmenu")
         except Exception as why:
             say(f"[{name}] no row menu: {why}")
@@ -273,30 +370,49 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(500)
 
     # The layers over the note.
-    page.keyboard.press("Control+KeyP" if not finger else "Control+KeyP")
-    page.wait_for_timeout(500)
-    if page.locator(".palette").count():
+    page.keyboard.press("Control+KeyP")
+    try:
+        page.wait_for_selector(".palette", state="visible", timeout=8000)
         shot("palette")
-        dismiss(page)
+    except Exception as why:
+        say(f"[{name}] no palette: {why}")
+    dismiss(page)
 
     # The app's own menu: the bars at the left of the title bar on a desktop, the
     # three dots at the right of it on a handheld.
+    # With the panel shut first, because on a handheld in portrait the panel is a
+    # drawer over the note and the title bar is under it: a forced click then lands
+    # on the drawer, and the menu never opens. Which is what used to happen on two
+    # of the six devices - and the sleep after it meant the shot was taken anyway,
+    # of the drawer.
+    if finger:
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
+
     trigger = (
-        page.locator("header button[aria-label]").last
+        page.locator("header button.dots")
         if finger
         else page.locator("header button[aria-label]").first
     )
     if trigger.count():
         try:
-            trigger.click(force=True)
-            page.wait_for_timeout(500)
+            # Not forced: a click Playwright had to wait to make is a click the
+            # thing it was aimed at received.
+            trigger.click()
+            page.wait_for_selector("[role=menu]", state="visible", timeout=8000)
             shot("menu")
         except Exception as why:
             say(f"[{name}] no menu: {why}")
         dismiss(page)
 
+    if finger:
+        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+
     page.evaluate("() => window.nibApp.settings.show()")
-    page.wait_for_timeout(800)
+    # The sheet, waited for rather than slept past: this is the shot that differed by
+    # more than half its pixels between two runs of one build, because eight hundred
+    # milliseconds is sometimes enough for a sheet to finish arriving and sometimes
+    # not. With motion reduced it is there at once, and this says so.
+    page.wait_for_selector(".nib-screen.sheet, .sheet", state="visible", timeout=8000)
     shot("settings")
 
     # Appearance, because it is the pane with the segmented controls in it: the
@@ -305,7 +421,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate(
         "() => { window.nibApp.settings.section = 'appearance'; window.nibApp.settings.listing = false }"
     )
-    page.wait_for_timeout(700)
+    page.wait_for_selector(".sheet .segmented, .sheet", state="visible", timeout=8000)
     shot("settings-appearance")
     page.evaluate("() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)")
     page.wait_for_timeout(400)
