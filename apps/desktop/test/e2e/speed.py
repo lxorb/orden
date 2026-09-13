@@ -785,7 +785,10 @@ PANEL = r"""
 async () => {
   const ws = window.nibApp.workspace
   const started = window.__since()
-  ws.showPanel('search')
+  // Asked for rather than pressed. `showPanel` is what a key does and a key toggles:
+  // said about the panel that is already open it shuts the sidebar, and what this
+  // measures is the panel opening. See `showPanel` in workspace.svelte.ts.
+  if (ws.panel !== 'search') ws.showPanel('search')
 
   // Two moments, because they are two questions. The panel is on screen when the
   // field is there to type in; the tag tree above it says what the space is tagged
