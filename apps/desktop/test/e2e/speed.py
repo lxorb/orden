@@ -282,6 +282,12 @@ async (plan) => {
       `Filed under marker-${String(at).padStart(4, '0')}.`,
       '',
       `See [[note-${String(to).padStart(4, '0')}]] and [the plan](Work/Q3/plan.md).`,
+      // Every fifth note points at one note, so the space holds a note a thousand
+      // others link to. A space where every note has exactly one link in is a space
+      // where the Links panel is never asked a hard question, and the hard question
+      // is the one somebody with a hub note - an index, a person, a project - asks
+      // every time they open it. See `part_links`.
+      ...(at % 5 === 0 ? [`Filed under [[hub]].`, ''] : []),
       '',
       '- [ ] Pressure on the pen',
       '- [x] Slides out of a note',
@@ -313,6 +319,10 @@ async (plan) => {
 
   // One small note, so every space has an editor to reach - the empty one too.
   add(`${space}/first.md`, '# First\n\nA short note, opened at launch.\n', notes + 1)
+
+  // The note a fifth of the space points at. Short itself: what is being measured
+  // when it is opened is the panel finding what points here, not the editor.
+  add(`${space}/hub.md`, '# Hub\n\nThe note everything is filed under.\n', notes + 5)
   add(`${space}/second.md`, '# Second\n\nThe other tab.\n', notes + 2)
 
   // The big note: twenty thousand lines with headings, links, tasks and tags
@@ -1177,11 +1187,67 @@ def draw(lane: Lane, page: Page, box: dict) -> dict:
     return found
 
 
+def part_links(lane: Lane, page: Page) -> dict[str, object]:
+    """The note a thousand others point at, and the panel that says who."""
+    if lane.space == "empty":
+        return {}
+
+    ready(page, lane)
+    # The index has to have read the space before what points here is answerable,
+    # and that read is part of the launch rather than part of this.
+    settled(page)
+
+    found = page.evaluate(LINKS, f"{lane.root}/hub.md")
+    lane.profile("the links panel on a note a thousand notes point at", found.pop("loaf"))
+    lane.note(f"hub: {found['links-rows']} rows over {found.pop('sections')} sections")
+
+    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('tree') }")
+    page.wait_for_timeout(200)
+    return found
+
+
+# The note opened and the panel asked for, timed to the frame the rows are on.
+#
+# What points here is answered off the index, so this is that answer and the rows it
+# comes to. What merely *mentions* the name is a search of every note in the space
+# and lands later; it is not timed here, because the only thing on the page saying it
+# has landed is a heading in whatever language the window is in.
+LINKS = r"""
+async (path) => {
+  const ws = window.nibApp.workspace
+  await ws.open(path)
+  for (let spin = 0; spin < 240; spin++) {
+    await window.__painted()
+    if (ws.active?.path === path) break
+  }
+
+  const started = window.__since()
+  if (ws.panel !== 'links') ws.showPanel('links')
+
+  let shown = 0
+  for (let spin = 0; spin < 900 && !shown; spin++) {
+    if (spin && spin % 60 === 0 && ws.panel !== 'links') ws.showPanel('links')
+    const at = await window.__painted()
+    if (document.querySelector('.hit')) shown = at - started
+  }
+
+  const rows = document.querySelectorAll('.hit').length
+  return {
+    'links-panel': shown,
+    'links-rows': rows,
+    sections: document.querySelectorAll('.nib-section').length,
+    loaf: window.__marks.loaf.filter((one) => one.ms >= 50),
+  }
+}
+"""
+
+
 PARTS = {
     "launch": part_launch,
     "note": part_note,
     "shell": part_shell,
     "search": part_search,
+    "links": part_links,
     "graph": part_graph,
     "canvas": part_canvas,
 }
@@ -1421,6 +1487,8 @@ SAID = [
     ("q-tag-read", "search: rows read for it", ""),
     ("q-task", "search: a task", "ms"),
     ("q-task-read", "search: rows read for it", ""),
+    ("links-panel", "links: what points here, on screen", "ms"),
+    ("links-rows", "links: rows in the panel", ""),
     ("graph-open", "graph: opened", "ms"),
     ("graph-fps", "graph: frames a second, panned", "fps"),
     ("graph-worst", "graph: worst frame", "ms"),
