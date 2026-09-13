@@ -194,6 +194,41 @@ fn find_from(folded: &str, letter: char, at: usize) -> Option<usize> {
         .map(|found| at + found)
 }
 
+/// The next place `letter` sits in `folded` between `at` and `to`.
+///
+/// Bounded rather than reaching to the end of the note, and that is the whole
+/// point: `to` is the end of the line being scored, and a letter further down the
+/// note is not on this line whatever finding it would cost. Looking for it there
+/// is a pass over the rest of the note per line of it, so a note whose second
+/// letter is nowhere in it costs its own length squared - which for a megabyte of
+/// short lines is a keystroke that does not come back.
+fn find_within(folded: &str, letter: char, at: usize, to: usize) -> Option<usize> {
+    folded
+        .get(at..to)
+        .and_then(|region| region.find(letter))
+        .map(|found| at + found)
+}
+
+/// How far into a line is worth scoring: `SCORED` bytes, and then on to the end of
+/// whatever letter that landed inside, so a cut never falls between the bytes of
+/// one letter.
+///
+/// Up rather than down, because the letter the cut lands in is a letter a term may
+/// still start on: rounding the other way would take a match away from a line
+/// outside ASCII that a line of ASCII keeps.
+fn cut(body: &str, from: usize, end: usize) -> usize {
+    if end.saturating_sub(from) <= SCORED {
+        return end;
+    }
+
+    let mut to = from + SCORED;
+    while to < end && !body.is_char_boundary(to) {
+        to += 1;
+    }
+
+    to
+}
+
 /// Where `word`'s letters sit in `folded`, starting at `at` and staying inside
 /// `to`: each letter at the first place it sits after the last. False when one of
 /// them is not there, and `out` is scratch either way.
@@ -207,12 +242,11 @@ fn walk(word: &Word, folded: &str, at: usize, to: usize, out: &mut Vec<usize>) -
     let mut cursor = at + word.head.len_utf8();
 
     for &letter in word.letters.iter().skip(1) {
-        let Some(found) = find_from(folded, letter, cursor) else {
+        // Inside the region only. A letter the rest of the note holds somewhere is
+        // not a letter on this line; see `find_within`.
+        let Some(found) = find_within(folded, letter, cursor, to) else {
             return false;
         };
-        if found >= to {
-            return false;
-        }
 
         out.push(found);
         cursor = found + letter.len_utf8();
@@ -518,11 +552,7 @@ impl Fuzzy {
             let end = broke.unwrap_or(body.len());
 
             if end > from {
-                let to = if end - from > SCORED {
-                    from + SCORED
-                } else {
-                    end
-                };
+                let to = cut(body, from, end);
                 positions.clear();
                 let mut score = 0;
                 let mut all = true;
@@ -1045,5 +1075,41 @@ mod tests {
             ),
             ["/yes.md"]
         );
+    }
+
+    /// A term whose first letter is on every line and whose second is nowhere in
+    /// the note at all. Each line looks for that second letter, and looking for it
+    /// past the line is a pass over the rest of the note per line of it: a
+    /// megabyte of short lines is half a million passes, which is a keystroke that
+    /// never comes back. Bounded to the line, this note is one memchr per line.
+    ///
+    /// Timed rather than counted, because what went wrong was the work and not the
+    /// answer: the same `None` came back either way. The bound is a hundred times
+    /// what a warm run costs here and a fraction of what it cost before, so the
+    /// slowest runner still passes and the shape that failed still fails.
+    #[test]
+    fn a_letter_the_note_has_not_got_is_looked_for_on_the_line_only() {
+        let body = "a\n".repeat(400_000);
+        let fuzzy = Fuzzy::new(&terms(&text("az")));
+
+        let started = std::time::Instant::now();
+        let found = fuzzy.best(&note("/long.md", &body));
+        let spent = started.elapsed();
+
+        assert!(found.is_none(), "no line holds the term");
+        assert!(spent.as_secs() < 5, "{spent:?} for 800 KB of lines");
+    }
+
+    /// The cut into a long line falls between letters and not inside one. A line
+    /// of nothing but three-byte letters puts a letter across every offset that is
+    /// not a multiple of three, `SCORED` among them.
+    #[test]
+    fn a_long_line_outside_ascii_is_still_scored() {
+        let line = "の".repeat(SCORED);
+        let body = format!("{line}\n");
+
+        assert_eq!(super::cut(&body, 0, body.len() - 1) % "の".len(), 0);
+        // The letters a term wants are inside the first `SCORED` bytes of it.
+        assert!(best(&text("のの"), &body).is_some());
     }
 }
