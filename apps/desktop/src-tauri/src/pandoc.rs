@@ -43,6 +43,28 @@ pub fn has_pandoc() -> bool {
         .is_ok_and(|status| status.success())
 }
 
+/// What one import is run with: the options, then `--`, then the file.
+///
+/// The marker is the whole point of the function. `chosen` judges a path and
+/// deliberately allows any file the app can reach, so what arrives is the reader's
+/// own - a file picked in the dialog, one named on the command line, one the shell
+/// handed over - and a name that opens with a dash is a name pandoc reads as an
+/// option instead. `--lua-filter=…` names a script pandoc runs, which is the same
+/// road `is_format` below closes for a writer's name. `--` is where pandoc stops
+/// reading options, so everything after it is a file however it is spelled.
+fn reading(source: &str) -> [&str; 8] {
+    [
+        "--to",
+        READ_AS,
+        "--wrap",
+        "none",
+        "--extract-media",
+        ".",
+        "--",
+        source,
+    ]
+}
+
 /// Converts a document into markdown with pandoc. The format comes from the
 /// file's extension, which is what pandoc infers from anyway.
 ///
@@ -63,15 +85,7 @@ pub fn import_document(path: String) -> Result<String, String> {
 
     let result = command("pandoc")
         .current_dir(&beside)
-        .args([
-            "--to",
-            READ_AS,
-            "--wrap",
-            "none",
-            "--extract-media",
-            ".",
-            &source,
-        ])
+        .args(reading(&source))
         .output()
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
 
@@ -164,7 +178,20 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{complaint, is_format};
+    use super::{complaint, is_format, reading};
+
+    /// A path is the reader's own, and pandoc reads a leading dash as an option.
+    #[test]
+    fn the_file_is_read_as_a_file_whatever_it_is_called() {
+        let args = reading("-lua-filter=evil.lua");
+
+        assert_eq!(args.last(), Some(&"-lua-filter=evil.lua"));
+        // The marker sits immediately in front of it, so nothing between the
+        // options and the file can be read as one.
+        assert_eq!(args[args.len() - 2], "--");
+        // And it is said once: a second `--` would be a file called `--`.
+        assert_eq!(args.iter().filter(|one| **one == "--").count(), 1);
+    }
 
     /// Every format the window offers; see `src/lib/export-formats.ts`.
     #[test]
