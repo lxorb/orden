@@ -145,6 +145,122 @@ describe('a room', () => {
     expect(one.words).toBe(back.words)
   })
 
+  describe('a note something wrote without going through the room', () => {
+    /** The exact sequence that lost somebody's paragraph, as requests.
+     *
+     *  Two devices with one note open. The first can reach the account but not its
+     *  room - every network that allows HTTPS and blocks WebSockets - so the file is
+     *  the only way its words travel, and it pushes the whole file naming the version
+     *  it read. Nothing about that push is wrong: the account takes it. But the room
+     *  is still holding words of its own, and its settle is a whole-file write too. It
+     *  used to write straight over the push, and every word in it that the room did
+     *  not have went with it - out of the account, and then out of the pushing
+     *  device's own disk on its next pass, with nothing said and no copy anywhere.
+     *
+     *  So the settle keeps what it is about to stop holding, under the same name the
+     *  app gives such a copy; see `keptBeside` in src/rooms/room.ts. */
+    async function overwritten() {
+      const { room: made, state } = room(env)
+      const inside = await arrive(made, state, { id: noteId, spaceId })
+
+      // Somebody in the room types, and the room settles it: version 2.
+      await say(made, state, inside.socket, inside.type(11, 'from the room\n'))
+      await made.alarm()
+
+      const held = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(held.json.note.version).toBe(2)
+
+      // The device that cannot reach the room pushes the file it holds, naming the
+      // version it last read. Its own line, and not the room's, because it never
+      // heard the room.
+      const pushed = await call(env, `/v1/notes/${noteId}`, {
+        token,
+        method: 'PUT',
+        body: {
+          path: 'together.md',
+          content: '# Together\nfrom the other device\n',
+          baseVersion: 2,
+        },
+      })
+      expect(pushed.status).toBe(200)
+      expect(pushed.json.note.version).toBe(3)
+
+      // And the person in the room carries on typing, which is the settle that used
+      // to write over it.
+      await say(made, state, inside.socket, inside.type(inside.words.length, 'and more\n'))
+      await made.alarm()
+
+      return { made, state, inside }
+    }
+
+    test('is kept beside the note when the room settles over it', async () => {
+      await overwritten()
+
+      const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
+      const notes = (page.json.notes as { id: string; path: string }[]).filter(
+        (one) => one.path !== 'together.md',
+      )
+
+      expect(notes).toHaveLength(1)
+      expect(notes[0]?.path).toMatch(/^together \(from another device \d{4}-\d\d-\d\d\)\.md$/)
+
+      const beside = await call(env, `/v1/notes/${notes[0]?.id}`, { token })
+      expect(beside.json.content).toBe('# Together\nfrom the other device\n')
+    })
+
+    test('and the room&apos;s own words are what the note ends up holding', async () => {
+      await overwritten()
+
+      const read = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(read.json.content).toBe('# Together\nfrom the room\nand more\n')
+    })
+
+    test('is copied once however many times the same words are offered again', async () => {
+      const { made, state, inside } = await overwritten()
+
+      // A device whose room it cannot reach offers the same file on every pass until
+      // somebody looks at it. A second copy of a copy says nothing the first did not.
+      for (const line of ['once more\n', 'and again\n']) {
+        await call(env, `/v1/notes/${noteId}`, {
+          token,
+          method: 'PUT',
+          body: {
+            path: 'together.md',
+            content: '# Together\nfrom the other device\n',
+            baseVersion: (await call(env, `/v1/notes/${noteId}`, { token })).json.note.version,
+          },
+        })
+
+        await say(made, state, inside.socket, inside.type(inside.words.length, line))
+        await made.alarm()
+      }
+
+      const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
+      const notes = (page.json.notes as { path: string; deleted?: boolean }[]).filter(
+        (one) => !one.deleted && one.path !== 'together.md',
+      )
+
+      expect(notes).toHaveLength(1)
+    })
+
+    test('settles as it always did when nothing else has written the note', async () => {
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id: noteId, spaceId })
+
+      await say(made, state, one.socket, one.type(11, 'one\n'))
+      await made.alarm()
+      await say(made, state, one.socket, one.type(one.words.length, 'two\n'))
+      await made.alarm()
+
+      const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
+      expect(page.json.notes).toHaveLength(1)
+
+      const read = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(read.json.content).toBe('# Together\none\ntwo\n')
+      expect(read.json.note.version).toBe(3)
+    })
+  })
+
   test('writes the words into the note store when the typing stops', async () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })

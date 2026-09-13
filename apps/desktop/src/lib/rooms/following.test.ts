@@ -92,9 +92,10 @@ vi.mock('./who', () => ({
 }))
 vi.mock('../account.svelte', () => ({ account: { token: 'session', name: null } }))
 vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))
-vi.mock('../i18n.svelte', () => ({ t: (text: string) => text }))
+vi.mock('../i18n.svelte', () => ({ t: (text: string) => text, key: (text: string) => text }))
 
 const { rooms } = await import('../rooms.svelte')
+const { record } = await import('../sync/record.svelte')
 const { NoteDoc } = await import('../workspace/documents.svelte')
 
 type Doc = InstanceType<typeof NoteDoc>
@@ -181,10 +182,20 @@ function words(note: Doc): string {
   return note.text
 }
 
+/** The account's hash of a text, worked out the way the store works it out, so the
+ *  copy the account last handed this device can really be recognised. A string that
+ *  is not a digest is never either side's copy, which reads as both of them having
+ *  moved on; see `Base` in join.ts. */
+async function digestOf(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 /** One open file, followed, and its room caught up with it. The hash handed over is
- *  the file itself, so the note reads as untouched: nothing of its own to offer. */
-async function following(note: Doc, server: Server, hash = words(note)) {
-  rooms.follow([{ key: note.key, noteId: 'note-1', note, hash }])
+ *  the file's own, so the note reads as untouched: nothing of its own to offer. */
+async function following(note: Doc, server: Server, held = words(note)) {
+  const hash = await digestOf(held)
+  rooms.follow([{ key: note.key, noteId: 'note-1', note, hash, version: 1 }])
 
   const socket = latest()
   socket.arrive()
@@ -227,7 +238,7 @@ describe('a space renamed while one of its notes is open in a room', () => {
     // Every open note's path rewritten under the space's new name, and the store
     // told what is open again - the same document, the same id, another path.
     note.path = '/Renamed/a.md'
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 1 }])
 
     note.live.replace('# A\nafter the rename\n')
     note.flush()
@@ -242,7 +253,7 @@ describe('a space renamed while one of its notes is open in a room', () => {
     const socket = await following(note, server)
 
     note.path = '/Renamed/a.md'
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 1 }])
 
     server.elsewhere(3, ' from the phone', socket)
 
@@ -256,7 +267,7 @@ describe('a space renamed while one of its notes is open in a room', () => {
 
     const before = sockets.opened.length
     note.path = '/Renamed/a.md'
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# A\n', version: 1 }])
 
     // The same socket, because it is the same file: nothing was rejoined.
     expect(sockets.opened.length).toBe(before)
@@ -273,14 +284,14 @@ describe('which shape of room a file joins', () => {
     // a session written before there were canvases restores. It must not be given a
     // note's room, because the service serves that file as a plane.
     const note = documentOn('/Notes/Board.canvas', '{}', 'note')
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}', version: 1 }])
 
     expect(sockets.opened).toHaveLength(0)
   })
 
   test('waits for the plane a canvas is about, and then joins it', async () => {
     const note = documentOn('/Notes/Board.canvas', '{}', 'canvas')
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}', version: 1 }])
     expect(sockets.opened).toHaveLength(0)
 
     rooms.drawing(note.key, surface())
@@ -296,7 +307,7 @@ describe('which shape of room a file joins', () => {
     // Renamed into a canvas, and the tab now has a plane to draw.
     note.path = '/Notes/plan.canvas'
     rooms.drawing(note.key, surface())
-    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# Plan\n' }])
+    rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '# Plan\n', version: 1 }])
 
     // The words room was left and a plane's room joined in its place: a second
     // socket, and the first one stopped.
@@ -347,6 +358,60 @@ describe('a room the service threw away and will build again', () => {
 
     expect(rebuilt.file).toBe('# A\ntyped while it was away\n')
     expect(words(note)).toBe('# A\ntyped while it was away\n')
+  })
+
+  test('stays out of its room while a reader is being asked, and rejoins after', async () => {
+    // The rule that asks. The device wrote while it was away and so did the room, so
+    // neither copy may be written over: the note waits, out of its room, and the file
+    // sync carries it. See rooms/apart.ts.
+    const { modes } = await import('../modes.svelte')
+    modes.conflicts = 'ask'
+
+    try {
+      const note = documentOn('/Notes/a.md', '# A\n')
+      const server = new Server('# A\n')
+      const socket = await following(note, server)
+
+      socket.went(1012)
+      note.live.replace('# A\ntyped while it was away\n')
+      note.flush()
+
+      // The room the service built out of the file has moved on too.
+      const rebuilt = new Server('# A\nand something from the phone\n')
+      const back = latest()
+      back.arrive()
+      carry(back, rebuilt)
+      await until(() => !!record.clashes.length, 'the clash to reach the pane')
+      carry(back, rebuilt)
+
+      // Both copies exactly as they were, and the note out of its room - which is what
+      // keeps a pass from pushing one over the other.
+      expect(words(note)).toBe('# A\ntyped while it was away\n')
+      expect(rebuilt.file).toBe('# A\nand something from the phone\n')
+      expect(rooms.joined.has('note-1')).toBe(false)
+      expect(record.clashes.map((one) => one.theirs)).toEqual([
+        '# A\nand something from the phone\n',
+      ])
+
+      // Somebody answers, which settles the files and moves the account's copy on. That
+      // is what says so out here, and the note joins its room again rather than waiting
+      // for its tab to be closed.
+      const opened = sockets.opened.length
+      rooms.follow([
+        {
+          key: note.key,
+          noteId: 'note-1',
+          note,
+          hash: await digestOf('# A\nsettled by hand\n'),
+          version: 2,
+        },
+      ])
+
+      expect(sockets.opened.length).toBe(opened + 1)
+    } finally {
+      modes.conflicts = 'both'
+      record.forgetEverything()
+    }
   })
 
   test('does not count as being in a room while it is gone', async () => {

@@ -262,6 +262,17 @@ const fake = vi.hoisted(() => {
     })
   }
 
+  /** The account's copy of a note, written again the way another device's push or a
+   *  room's settle writes it: new words, and the version and the cursor moved on. */
+  function writeRemoteNote(spaceId: string, path: string, content: string) {
+    const found = remote.notes.find((one) => one.spaceId === spaceId && one.path === path)
+    if (!found) throw new Error(`no note at ${path}`)
+
+    found.content = content
+    found.version += 1
+    found.seq = ++remote.seq
+  }
+
   function reset() {
     disk.clear()
     remote.spaces = []
@@ -271,7 +282,7 @@ const fake = vi.hoisted(() => {
     remote.seq = 0
   }
 
-  return { disk, remote, invoke, api, addRemoteNote, reset }
+  return { disk, remote, invoke, api, addRemoteNote, writeRemoteNote, reset }
 })
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -471,6 +482,45 @@ describe('what arrives from the account', () => {
     await sync.pass()
 
     expect(workspace.tree?.children.map((entry) => entry.name)).toEqual(['Hello.md', 'Later.md'])
+  })
+
+  /** An account with one note, brought down and opened, so the next pass writes a
+   *  file that a tab is showing. */
+  async function readingWhatTheAccountSent() {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+    await workspace.open('/Account/Hello.md')
+
+    expect(workspace.active?.doc).toBe('# Hello from the account')
+  }
+
+  test('is put into the tab showing it, rather than left stale on screen', async () => {
+    await readingWhatTheAccountSent()
+
+    // Another device wrote the note. A space's notes are not watched - nothing else
+    // writes them - so a pass was the one thing that rewrote a file under an open tab
+    // and said nothing: the words on screen stayed as they were, and the next save
+    // wrote them back over what had arrived. Which for a device that cannot reach the
+    // note's room is the same words offered again on every pass, and the account
+    // keeping a copy of what it replaced every time.
+    fake.writeRemoteNote('s-Account', 'Hello.md', '# Hello from somewhere else')
+    await sync.pass()
+
+    expect(workspace.active?.doc).toBe('# Hello from somewhere else')
+  })
+
+  test('leaves a tab with unsaved words in it exactly as it is', async () => {
+    await readingWhatTheAccountSent()
+
+    // Those words are somebody's writing, and what happens to them is the conflict
+    // rule's to say rather than a reload's; see sync/conflicts.ts.
+    workspace.replace('# Hello, and something I am still typing')
+    fake.writeRemoteNote('s-Account', 'Hello.md', '# Hello from somewhere else')
+    await sync.pass()
+
+    expect(workspace.active?.doc).toBe('# Hello, and something I am still typing')
   })
 })
 
@@ -745,7 +795,7 @@ describe('the mirrors this machine remembers', () => {
         landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
         sync.reread()
 
-        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', version: 3, hash: 'aaa' })
         expect(sync.remoteIdFor('/Notes')).toBe('s-Notes')
       } finally {
         stopped()
@@ -773,7 +823,7 @@ describe('the mirrors this machine remembers', () => {
         // Both. What a pass settled is newer than anything storage is only now
         // getting round to mentioning, and what storage had is news to this.
         expect(sync.tracked('/Notes/two.md')).not.toBeNull()
-        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', version: 3, hash: 'aaa' })
       } finally {
         stopped()
       }
@@ -793,8 +843,8 @@ describe('the mirrors this machine remembers', () => {
         // Both, because the mirror is added to where it stands. That is what makes
         // this safe to call during a pass: a pass writes into these very objects,
         // and one swapped for another would leave it writing into nothing.
-        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
-        expect(sync.tracked('/Notes/two.md')).toEqual({ id: 'n2', hash: 'bbb' })
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', version: 3, hash: 'aaa' })
+        expect(sync.tracked('/Notes/two.md')).toEqual({ id: 'n2', version: 4, hash: 'bbb' })
       } finally {
         stopped()
       }
@@ -827,6 +877,7 @@ describe('the mirrors this machine remembers', () => {
         for (let at = 0; at < 20; at++) {
           expect(sync.tracked(`/Notes/note ${String(at)}.md`), `note ${String(at)}`).toEqual({
             id: `n${String(at)}`,
+            version: at + 1,
             hash: 'f'.repeat(64),
           })
         }

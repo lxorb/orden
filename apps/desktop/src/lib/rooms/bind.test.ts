@@ -3,7 +3,7 @@ import { EditorState, SharedDoc, type Text } from '@nib/editor'
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { bind, replace, replacements } from './bind'
-import { meeting } from './join'
+import { type Base, meeting } from './join'
 
 /** What the binding did, counted: the characters a change set covered, the calls
  *  the shared text took with the characters they carried, and the number of times
@@ -43,21 +43,23 @@ class Device {
   static opening(file: string): Device {
     const device = new Device(file)
     device.doc.transact(() => device.text.insert(0, file), 'room')
-    device.arrive(file, true)
+    device.arrive(file, { mine: true, theirs: true })
     return device
   }
 
   /** A device joining a room that already holds words, with `file` on its own disk.
-   *  `untouched` is whether that file is still what the account last handed it. */
-  static joining(room: Device, file: string, untouched = true): Device {
+   *  `base` is which of the two is still the copy the account handed this device;
+   *  the default is the ordinary one, where the file is and the room has moved on. */
+  static joining(room: Device, file: string, base: Base = { mine: true, theirs: false }): Device {
     const device = new Device(file)
     Y.applyUpdate(device.doc, Y.encodeStateAsUpdate(room.doc), 'room')
-    device.arrive(file, untouched)
+    device.arrive(file, base)
     return device
   }
 
-  private arrive(file: string, untouched: boolean) {
-    const met = meeting(file, this.text.toJSON(), untouched)
+  private arrive(file: string, base: Base) {
+    const met = meeting(file, this.text.toJSON(), base)
+    if (met.kind === 'apart') throw new Error('this device and the room are apart')
 
     if (met.kind === 'take') this.note.arrived([met.change])
     else if (met.kind === 'offer') this.doc.transact(() => replace(this.text, met.change), 'here')
@@ -290,8 +292,12 @@ describe('a note bound to a room', () => {
     const one = Device.opening('# Journal\nmonday\n')
 
     // The other device was away and its file says something else. Its hash no
-    // longer matches what the account handed it, so it has words to offer.
-    const two = Device.joining(one, '# Journal\nmonday\ntuesday\n', false)
+    // longer matches what the account handed it, and the room still holds exactly
+    // what the account handed it, so it has words to offer and takes nothing away.
+    const two = Device.joining(one, '# Journal\nmonday\ntuesday\n', {
+      mine: false,
+      theirs: true,
+    })
 
     expect(two.shared).toBe('# Journal\nmonday\ntuesday\n')
     one.hear(two.updateFor(one))
@@ -381,20 +387,27 @@ describe('a keystroke in a note that is in a room', () => {
 })
 
 describe('a device meeting the room it joined', () => {
+  /** The file here is still the copy the account handed it; the room has moved on. */
+  const roomAhead: Base = { mine: true, theirs: false }
+  /** The room still holds that copy; this device wrote while it was away. */
+  const deviceAhead: Base = { mine: false, theirs: true }
+  /** Neither is that copy any more, which is both of them having written. */
+  const apart: Base = { mine: false, theirs: false }
+
   test('has nothing to do when the two agree', () => {
-    expect(meeting('same', 'same', true)).toEqual({ kind: 'agreed' })
-    expect(meeting('same', 'same', false)).toEqual({ kind: 'agreed' })
+    expect(meeting('same', 'same', roomAhead)).toEqual({ kind: 'agreed' })
+    expect(meeting('same', 'same', apart)).toEqual({ kind: 'agreed' })
   })
 
   test('takes the room&apos;s words when the file is untouched', () => {
-    expect(meeting('one\n', 'one\ntwo\n', true)).toEqual({
+    expect(meeting('one\n', 'one\ntwo\n', roomAhead)).toEqual({
       kind: 'take',
       change: { from: 4, to: 4, insert: 'two\n' },
     })
   })
 
-  test('offers its own when the file has been written in', () => {
-    expect(meeting('one\ntwo\n', 'one\n', false)).toEqual({
+  test('offers its own when the file has been written in and the room has not', () => {
+    expect(meeting('one\ntwo\n', 'one\n', deviceAhead)).toEqual({
       kind: 'offer',
       change: { from: 4, to: 4, insert: 'two\n' },
     })
@@ -403,10 +416,36 @@ describe('a device meeting the room it joined', () => {
   test('never empties a file for a room that holds nothing', () => {
     // A room with no words is one that has not been given the note yet, not one
     // where somebody deleted everything.
-    expect(meeting('words\n', '', true)).toEqual({
+    expect(meeting('words\n', '', roomAhead)).toEqual({
       kind: 'offer',
       change: { from: 0, to: 0, insert: 'words\n' },
     })
+  })
+
+  test('never empties a room for a document that holds nothing', () => {
+    // The other way round is a tab that has not been filled in yet, and offering
+    // its nothing would delete the note out of every pane in the room.
+    expect(meeting('', 'words\n', apart)).toEqual({
+      kind: 'take',
+      change: { from: 0, to: 0, insert: 'words\n' },
+    })
+  })
+
+  test('takes the room&apos;s words for a file the account never handed over', () => {
+    // Somebody shared this one file: there is no copy of it on this machine to
+    // compare against, and the room is the whole of how its words travel.
+    expect(meeting('one\n', 'one\ntwo\n', null)).toEqual({
+      kind: 'take',
+      change: { from: 4, to: 4, insert: 'two\n' },
+    })
+  })
+
+  test('writes over neither when both have moved since the words they shared', () => {
+    // The one answer this used to be missing. Read as "this device is ahead", the
+    // replacement that makes the room say `mine` deletes the other device's line
+    // out of the shared document, and out of every screen and every disk in the
+    // room, with nothing said. See join.ts.
+    expect(meeting('shared\nmine\n', 'shared\ntheirs\n', apart)).toEqual({ kind: 'apart' })
   })
 })
 

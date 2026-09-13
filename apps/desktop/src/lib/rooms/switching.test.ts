@@ -189,6 +189,7 @@ function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: strin
     // moves a note, it does not make it another one. See `join` in rooms.svelte.ts.
     holds: () => note.arrivals === arrivals,
     gone: () => undefined,
+    apart: () => Promise.resolve('take' as const),
   })
 
   return { room, socket: socketOf() }
