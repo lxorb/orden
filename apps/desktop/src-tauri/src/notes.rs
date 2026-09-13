@@ -45,7 +45,7 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
 pub fn write_note(path: String, content: String) -> Result<(), String> {
     let target = chosen(&path)?;
     let body = as_written(&target, &content);
-    write_file(&path, body.as_bytes())
+    write_file(&target, &path, body.as_bytes())
 }
 
 /// The text with the line endings the file on disk already uses.
@@ -115,21 +115,24 @@ pub fn write_bytes(path: String, base64: String) -> Result<(), String> {
         .decode(base64.as_bytes())
         .map_err(|error| format!("{path} was handed something that is not base64: {error}"))?;
 
-    write_file(&path, &bytes)
+    write_file(&chosen(&path)?, &path, &bytes)
 }
 
 /// What both writers do once they have the bytes: make the folder, then write
 /// the file whole. Atomic, so a crash mid-write can never truncate the file that
 /// was already there; and the missing folders are made, which is what lets sync
 /// land a note at a path that is new on this machine.
-fn write_file(path: &str, bytes: &[u8]) -> Result<(), String> {
-    let target = chosen(path)?;
+///
+/// The target is judged by the caller rather than here, because the text writer has
+/// to read the file before it knows what to write; `shown` is the path as that
+/// caller spelled it, which is what a refusal names.
+fn write_file(target: &Path, shown: &str, bytes: &[u8]) -> Result<(), String> {
     let parent = target
         .parent()
-        .ok_or_else(|| format!("{path} has no folder to write into"))?;
+        .ok_or_else(|| format!("{shown} has no folder to write into"))?;
 
     made(parent)?;
-    write_atomically(&target, bytes)
+    write_atomically(target, bytes)
 }
 
 /// Deletes a note outright. The window sends almost everything to the trash
