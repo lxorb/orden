@@ -52,11 +52,13 @@ jobs:
       - id: gate
         env:
           MANIFEST: apps/desktop/even.app.json
-          # Each on its own, because either one missing is a publish that would
-          # get as far as the sign in and stop there. Neither is ever printed;
-          # what the script tests is whether the string is empty.
-          EMAIL: ${{ secrets.EVENHUB_EMAIL }}
-          PASSWORD: ${{ secrets.EVENHUB_PASSWORD }}
+          # Whether both are set, tested where the expression is evaluated rather
+          # than by putting them in this job's environment: either one missing is a
+          # publish that would get as far as the sign in and stop there, and that is
+          # the whole of what this job needs to know. The account's own password
+          # belongs in the one step that signs in with it - this job has the
+          # repository checked out. `publish-linux.yml` does the same with its key.
+          HAS_CREDENTIALS: ${{ secrets.EVENHUB_EMAIL != '' && secrets.EVENHUB_PASSWORD != '' }}
           # Through the environment rather than interpolated into the script: a
           # commit message is somebody's prose, and a `${{ }}` of it would be
           # pasted in as shell.
@@ -86,7 +88,7 @@ jobs:
           changelog=$(printf '%s' "${MESSAGE:-}" | head -1 | cut -c1-500)
           echo "changelog=${changelog:-$version}" >> "$GITHUB_OUTPUT"
 
-          if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
+          if [ "$HAS_CREDENTIALS" != 'true' ]; then
             echo '::notice::EVENHUB_EMAIL and EVENHUB_PASSWORD are not both set - skipping the publish.'
             echo 'publish=false' >> "$GITHUB_OUTPUT"
             exit 0
