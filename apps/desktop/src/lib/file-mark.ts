@@ -10,7 +10,13 @@
  *  on an entry: a hit in a search and a tab in a strip both know a name and
  *  little else. `FileMark.svelte` draws what it answers. */
 
-import { isCanvasTarget, isImageTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
+import {
+  isCanvasTarget,
+  isImageTarget,
+  isPagesTarget,
+  isPdfTarget,
+  isWebTarget,
+} from '@nib/markdown/links'
 import type { IconNode } from 'lucide'
 // One file per shape rather than seven names off the library's index, because the
 // index re-exports every icon there is: a static import from it puts the whole set
@@ -42,11 +48,11 @@ import type { TabKind } from './workspace/documents.svelte'
  *  `src-tauri/src/tree.rs` and, for the browser, in `web/commands.ts`. They are
  *  here so the first list that does show another kind has its mark already.
  *
- *  `web` is the one mark a name cannot earn. A website in the space is a note whose
- *  front matter says `url:`, so the file is called `Svelte docs.md` like any other
- *  and only the line inside it tells them apart; the index is asked for that, once,
- *  by the component that draws the mark. See web-tab/note.ts, which says why the
- *  file is a note rather than an extension of its own, and `FileMark.svelte`. */
+ *  `web` is a website: a shortcut file, `Svelte docs.url`, which is the Windows
+ *  Internet Shortcut format that Explorer and every browser already write. It used
+ *  to be the one mark a name could not earn - a website was a note with `url:` in
+ *  its front matter, and the row had to ask the link index what the file said - and
+ *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
 export type FileMark = 'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' | 'web'
 
 /** The mark a file's name earns it.
@@ -57,6 +63,7 @@ export type FileMark = 'note' | 'canvas' | 'pages' | 'pdf' | 'picture' | 'file' 
  *  one either. Both are files, and the plain sheet says so.
  */
 export function fileMark(name: string): FileMark {
+  if (isWebTarget(name)) return 'web'
   if (isCanvasTarget(name)) return 'canvas'
   if (isPagesTarget(name)) return 'pages'
   if (isPdfTarget(name)) return 'pdf'

@@ -8,6 +8,7 @@ export const fa: Dictionary = {
   'New note inside': 'یادداشت تازه در آن',
   'New canvas': 'بوم تازه',
   'New page note': 'یادداشت صفحه‌ای تازه',
+  'New web note': 'یادداشت وب تازه',
   'Add a page': 'افزودن صفحه',
   'Add a page after this': 'افزودن صفحه پس از این',
   'Delete this page': 'حذف این صفحه',
@@ -1224,6 +1225,7 @@ export const fa: Dictionary = {
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
   'Open a website': 'گشودن وب‌گاه',
+  'Convert website notes': 'تبدیل یادداشت‌های وب',
   // Recording, meetings and what a model wrote
   Record: 'ضبط',
   Recording: 'ضبط',

@@ -1,53 +1,32 @@
-/** A website as a file in the space.
+/** The two notes a web tab has anything to do with.
  *
- *  It is a note: a `.md` file whose front matter says `url:`. Not a `.web` file of
- *  its own, and the reason is Obsidian. A vault shows the extensions it knows and
- *  hides the rest unless somebody has turned "Detect all file extensions" on, so a
- *  `.web` file would be invisible there, unopenable, outside its search and absent
- *  from its graph - a document in nib's space that is not a document in the same
- *  vault read next door. A note with a line of front matter is a note in both: it
- *  shows in the list, `[[Svelte docs]]` resolves to it without an extension in the
- *  link, its title and its address are words in a file and so are found by anybody's
- *  search, and the sync carries it because it carries every note.
+ *  **A clip**, which is a note this app composes out of a page: the page's words,
+ *  under front matter that says `source:` and `date:`, exactly as the clipper
+ *  extension writes one. A clip is the words as they were rather than a window on the
+ *  site, so it is a note and always will be. See clip.ts.
  *
- *  What makes it a web tab rather than prose is the one line, read through the link
- *  index - the same pass that already reads `icon:` and `aliases:` off every note,
- *  so no list pays for a second reading. See file-mark.ts for the mark it wears and
- *  workspace.openEntry for what a click on it does.
+ *  **A website, as it used to be written**: a `.md` file whose front matter said
+ *  `url:`. A website is a shortcut file now - `Svelte docs.url`, which is the format
+ *  Explorer and every browser already write; see shortcut.ts, which says why. What
+ *  is left here is the reading half, because spaces are full of the old ones: a note
+ *  that says `url:` is converted the first time anybody opens it, and the three
+ *  functions below are what the conversion reads it with.
  *
- *  Three keys, always the three: where it points, what it calls itself, and when it
- *  was written down. The body says the address again as a link, so the file is worth
- *  opening in an app that knows nothing about web tabs - which is exactly what
- *  Obsidian is.
- *
- *  A clip is the other file a web tab writes, and it is here for the same reason: it
- *  is a note this app composes out of a page, front matter first. That one is an
- *  ordinary note with the page's words in it - `source:` rather than `url:` - because
- *  a clip is the words as they were, not a window on the site. See clip.ts. */
+ *  They go when the last space has been converted, which is not a day this code can
+ *  know about. Until then they cost one front-matter read on a pass that was reading
+ *  the file anyway. */
 
-import { frontMatterValue, oneLine, writeFrontMatter } from '@nib/markdown/front-matter'
+import {
+  frontMatterEdit,
+  frontMatterValue,
+  oneLine,
+  stripFrontMatter,
+  writeFrontMatter,
+} from '@nib/markdown/front-matter'
 import { isWebAddress } from './address'
 
-/** The key that makes a note a website. */
+/** The key that made a note a website. */
 const URL_KEY = 'url'
-
-/** The file a web tab keeps itself as.
- *
- *  The title is the heading as well as the front matter, because the heading is
- *  what names the file: `workspace.noteFrom` reads it off the top the way it does
- *  for every other note it writes, so a page called "Svelte docs" lands in
- *  `Svelte docs.md` without this having to know anything about paths. */
-export function webNote(url: string, title: string, when: Date): string {
-  const named = title.trim() || url
-
-  const block = writeFrontMatter([
-    [URL_KEY, url],
-    ['title', named],
-    ['date', when.toISOString()],
-  ])
-
-  return `${block}\n\n# ${named}\n\n<${url}>\n`
-}
 
 /** The address a note points at, or null for a note that is prose.
  *
@@ -66,6 +45,31 @@ export function webUrlOf(text: string | null | undefined): string | null {
 export function webTitleOf(text: string | null | undefined): string | null {
   const said = frontMatterValue(text ?? '', 'title')?.trim()
   return said === undefined || said.length === 0 ? null : said
+}
+
+/** What a note that was a website had to say beyond being one, or null when it had
+ *  nothing to say at all.
+ *
+ *  What the old format wrote under the front matter is a heading and the address as
+ *  a link, and a file holding only those two is the shortcut beside it said twice.
+ *  Anything else in it is somebody's writing, and that stays a note - with `url:`
+ *  taken out, because the shortcut written beside it is what that line now means.
+ *
+ *  Used once, by the conversion; see `workspace.asShortcut`. */
+export function keptBody(text: string): string | null {
+  const written = stripFrontMatter(text)
+    .split('\n')
+    .filter((line) => {
+      const said = line.trim()
+      // A heading, the address as an autolink, and the blank lines between them:
+      // the whole of what the old writer put in the body.
+      return said.length > 0 && !said.startsWith('#') && !/^<https?:\/\/[^>]*>$/i.test(said)
+    })
+
+  if (written.length === 0) return null
+
+  const edit = frontMatterEdit(text, URL_KEY, null)
+  return edit === null ? text : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
 }
 
 /** The longest a page may name itself. A title is a line above an article, and a

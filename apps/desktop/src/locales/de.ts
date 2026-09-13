@@ -8,6 +8,7 @@ export const de: Dictionary = {
   'New note inside': 'Neue Notiz darin',
   'New canvas': 'Neue Leinwand',
   'New page note': 'Neue Seitennotiz',
+  'New web note': 'Neue Webnotiz',
   'Add a page': 'Seite hinzufügen',
   'Add a page after this': 'Seite danach hinzufügen',
   'Delete this page': 'Diese Seite löschen',
@@ -1244,6 +1245,7 @@ export const de: Dictionary = {
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
+  'Convert website notes': 'Webnotizen umwandeln',
   // Recording, meetings and what a model wrote
   Record: 'Aufnehmen',
   Recording: 'Aufnahme',

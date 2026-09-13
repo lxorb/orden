@@ -13,6 +13,7 @@ import {
   isPdfTarget,
   isTabFile,
   isVideoTarget,
+  isWebTarget,
   linkTarget,
   pageFragment,
   parseWikilink,
@@ -238,10 +239,27 @@ describe('the size an embed asks for', () => {
   })
 })
 
+describe('which targets name a website', () => {
+  test('a shortcut written by either system, in either case', () => {
+    expect(isWebTarget('Svelte docs.url')).toBe(true)
+    expect(isWebTarget('reading/Svelte docs.URL')).toBe(true)
+    expect(isWebTarget('Svelte docs.webloc')).toBe(true)
+    expect(isWebTarget('  Svelte docs.url  ')).toBe(true)
+  })
+
+  test('and nothing else', () => {
+    expect(isWebTarget('Svelte docs')).toBe(false)
+    expect(isWebTarget('Svelte docs.url.md')).toBe(false)
+    expect(isWebTarget('url')).toBe(false)
+    expect(isWebTarget('')).toBe(false)
+  })
+})
+
 describe('which targets open in a tab of their own', () => {
-  test('a PDF and a canvas, and no other file', () => {
+  test('a PDF, a canvas and a website, and no other file', () => {
     expect(isTabFile('paper.pdf')).toBe(true)
     expect(isTabFile('Board.canvas')).toBe(true)
+    expect(isTabFile('Svelte docs.url')).toBe(true)
     expect(isTabFile('Note.md')).toBe(false)
     expect(isTabFile('shot.png')).toBe(false)
     expect(isTabFile('')).toBe(false)

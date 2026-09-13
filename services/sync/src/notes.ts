@@ -51,8 +51,14 @@ export const PATH_LIMIT = 400
  *  (`roomKind` answers `plane` for one; see rooms/kind.ts). It was left out of
  *  this list, and since the mirror sends every file that is not a PDF here, that
  *  meant every page note anybody wrote was refused - on every pass, silently,
- *  for ever - and never reached a second device. */
-const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages)$/i
+ *  for ever - and never reached a second device.
+ *
+ *  A website is here for the same reason and is smaller still: a shortcut file is
+ *  three lines of text with an address in one of them, and it is a document of the
+ *  space like any other - it goes up, comes back down, keeps its versions and can be
+ *  put in the trash and taken out again. It is never in a room, which is the one way
+ *  it differs from the two planes; see rooms/kind.ts. */
+const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc)$/i
 
 /** Paths are relative, forward-slashed and named like a note. Nothing escapes
  *  the space.

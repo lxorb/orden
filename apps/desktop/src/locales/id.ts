@@ -8,6 +8,7 @@ export const id: Dictionary = {
   'New note inside': 'Catatan baru di dalam',
   'New canvas': 'Kanvas baru',
   'New page note': 'Catatan halaman baru',
+  'New web note': 'Catatan web baru',
   'Add a page': 'Tambah halaman',
   'Add a page after this': 'Tambah halaman setelah ini',
   'Delete this page': 'Hapus halaman ini',
@@ -1215,6 +1216,7 @@ export const id: Dictionary = {
   'Show it here': 'Tampilkan di sini',
   Website: 'Situs web',
   'Open a website': 'Buka situs web',
+  'Convert website notes': 'Ubah catatan situs web',
   // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',

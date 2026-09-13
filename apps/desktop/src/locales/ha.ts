@@ -8,6 +8,7 @@ export const ha: Dictionary = {
   'New note inside': 'Sabon bayanin kula a ciki',
   'New canvas': 'Sabon kanbas',
   'New page note': 'Sabon bayanin kula na shafuka',
+  'New web note': 'Sabon bayanin yanar gizo',
   'Add a page': 'Ƙara shafi',
   'Add a page after this': 'Ƙara shafi bayan wannan',
   'Delete this page': 'Share wannan shafi',
@@ -1243,6 +1244,7 @@ export const ha: Dictionary = {
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',
+  'Convert website notes': 'Juya bayanan yanar gizo',
   // Recording, meetings and what a model wrote
   Record: 'Yi rikodi',
   Recording: 'Rikodi',

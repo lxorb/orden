@@ -8,6 +8,7 @@ export const ps: Dictionary = {
   'New note inside': 'په دې کې نوې يادښت',
   'New canvas': 'نوی تخته',
   'New page note': 'نوې د مخونو يادښت',
+  'New web note': 'نوی ویب يادښت',
   'Add a page': 'مخ ورزياتول',
   'Add a page after this': 'له دې وروسته مخ ورزياتول',
   'Delete this page': 'دا مخ ړنګول',
@@ -1225,6 +1226,7 @@ export const ps: Dictionary = {
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',
+  'Convert website notes': 'د ټاټوبي يادښتونه اړول',
   // Recording, meetings and what a model wrote
   Record: 'ثبتول',
   Recording: 'ثبت',

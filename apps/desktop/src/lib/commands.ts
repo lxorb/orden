@@ -37,6 +37,7 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
+import { links } from './link-index.svelte'
 import type { MenuItem } from './menu-item'
 import type { Exportable } from './export/formats'
 import { look, openTarget, renderOptions } from './export/context'
@@ -746,15 +747,37 @@ export function appCommands(view?: EditorView): Command[] {
       ? []
       : [
           {
-            // A tab with an address field and nothing in it yet. The file is written
-            // as soon as the page says what it is called, the way every note in a
-            // space keeps itself; see workspace.keepWeb and docs/web-tabs.md. A phone
-            // has no web tab at all - there the system browser is the answer.
+            // A row in the file list, named before it has an address: the name is the
+            // title, and the bar asks where it points next. The file is a shortcut -
+            // `Svelte docs.url` - which is what Explorer and every browser write; see
+            // web-tab/shortcut.ts and docs/web-tabs.md.
+            id: 'new-web-note',
+            label: t('New web note'),
+            run: () => void workspace.createWebsite(),
+          },
+          {
+            // The other way round: a tab with an address field and nothing in it yet,
+            // for somebody who has the address and no name in mind. The file is
+            // written as soon as the page says what it is called, the way every note
+            // in a space keeps itself; see workspace.keepWeb. A phone has no web tab
+            // at all - there the system browser is the answer.
             id: 'new-website',
             label: t('Open a website'),
             run: () => workspace.openWebsite(),
           },
         ]),
+    // Only where there is something to convert, which is a space that was written in
+    // an older nib: a row that did nothing would be a row that read as broken. See
+    // workspace.convertWebsites.
+    ...(links.websiteNotes
+      ? [
+          {
+            id: 'convert-website-notes',
+            label: t('Convert website notes'),
+            run: () => void workspace.convertWebsites(),
+          },
+        ]
+      : []),
     {
       id: 'open',
       label: t('Open file'),

@@ -1,42 +1,30 @@
 import { describe, expect, test } from 'vitest'
 import { frontMatterValue } from '@nib/markdown/front-matter'
-import { clipNote, webNote, webTitleOf, webUrlOf } from './note'
+import { clipNote, keptBody, webTitleOf, webUrlOf } from './note'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
-describe('the file a website is', () => {
-  const written = webNote('https://svelte.dev/docs', 'Svelte docs', WHEN)
+/** What the old writer wrote: front matter, the title as a heading, and the address
+ *  again as a link. Kept here as a string because nothing writes one any more - a
+ *  website is a shortcut file now - and what is left is the reading of the ones that
+ *  are already in people's spaces. */
+const WAS = `---
+url: https://svelte.dev/docs
+title: Svelte docs
+date: 2026-09-12T08:30:00.000Z
+---
 
-  test('says where it points, what it is called and when', () => {
-    expect(frontMatterValue(written, 'url')).toBe('https://svelte.dev/docs')
-    expect(frontMatterValue(written, 'title')).toBe('Svelte docs')
-    expect(frontMatterValue(written, 'date')).toBe('2026-09-12T08:30:00.000Z')
-  })
+# Svelte docs
 
-  /** The heading is what names the file: `workspace.noteFrom` reads it off the top
-   *  the way it does for every other note this app writes. */
-  test('states the title as its heading, so the file is named after it', () => {
-    expect(written).toContain('\n# Svelte docs\n')
-  })
-
-  /** Read next door in Obsidian, which knows nothing about web tabs, the file is a
-   *  note with a link in it. */
-  test('says the address again as a link somebody can follow', () => {
-    expect(written).toContain('<https://svelte.dev/docs>')
-  })
-
-  test('falls back to the address when the page has no title', () => {
-    const bare = webNote('https://example.com/a', '   ', WHEN)
-    expect(frontMatterValue(bare, 'title')).toBe('https://example.com/a')
-  })
-
-  test('reads back what it wrote', () => {
-    expect(webUrlOf(written)).toBe('https://svelte.dev/docs')
-    expect(webTitleOf(written)).toBe('Svelte docs')
-  })
-})
+<https://svelte.dev/docs>
+`
 
 describe('which notes are websites', () => {
+  test('a note the old writer wrote reads back', () => {
+    expect(webUrlOf(WAS)).toBe('https://svelte.dev/docs')
+    expect(webTitleOf(WAS)).toBe('Svelte docs')
+  })
+
   test('a note with no url is prose', () => {
     expect(webUrlOf('# Idea\n\nSome words.\n')).toBeNull()
     expect(webUrlOf('---\ntitle: Idea\n---\n\n# Idea\n')).toBeNull()
@@ -100,5 +88,33 @@ describe('the note a clip is', () => {
       WHEN,
     )
     expect(frontMatterValue(note, 'title')).toBe('One Two')
+  })
+})
+
+describe('what a converted note leaves behind', () => {
+  test('nothing, when the note said only that it was a website', () => {
+    expect(keptBody(WAS)).toBeNull()
+  })
+
+  test('and nothing for one whose body somebody emptied', () => {
+    expect(keptBody('---\nurl: https://a.example/\n---\n\n')).toBeNull()
+  })
+
+  /** Somebody wrote in it. That is a note, and it stays one - without the line that
+   *  made it a website, because the shortcut written beside it is what that line
+   *  means now. */
+  test('the note itself, when somebody had written in it', () => {
+    const said = keptBody(`${WAS}
+Why this page is worth keeping.
+`)
+    expect(said).not.toBeNull()
+    expect(said).toContain('Why this page is worth keeping.')
+    expect(said).toContain('title: Svelte docs')
+    expect(webUrlOf(said)).toBeNull()
+  })
+
+  test('and the words, where the note had no front matter left to keep', () => {
+    const said = keptBody('---\nurl: https://a.example/\n---\n\nJust words.\n')
+    expect(said).toBe('Just words.\n')
   })
 })

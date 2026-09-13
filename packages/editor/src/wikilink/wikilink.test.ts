@@ -276,6 +276,22 @@ describe('which note a name means', () => {
     expect(resolveNote(SPACE, '   ')).toBeNull()
   })
 
+  /** A website is a shortcut file, and it is a document of the space like a note:
+   *  `[[Svelte docs]]` points at it without the extension, the way `[[Plan]]` points
+   *  at `Plan.md`, and with the extension as well for anyone who writes it that way.
+   *  See `OWN` in notes.ts. */
+  test('a website answers to its name, with the extension or without', () => {
+    const space = index([note('Svelte docs.url'), note('Plan.md')])
+    expect(resolveNote(space, 'Svelte docs')?.path).toBe('Svelte docs.url')
+    expect(resolveNote(space, 'Svelte docs.url')?.path).toBe('Svelte docs.url')
+    expect(resolveNote(space, 'svelte DOCS')?.path).toBe('Svelte docs.url')
+  })
+
+  test('and a note of the same name wins, because a note is the older meaning', () => {
+    const space = index([note('Plan.url'), note('Plan.md')])
+    expect(resolveNote(space, 'Plan')?.path).toBe('Plan.md')
+  })
+
   test('a relative markdown target folds against the note it was written in', () => {
     const here = index([note('ideas/Spark.md'), note('Plan.md')], 'ideas/Deep/Note.md')
     expect(resolveRelative(here, '../Spark.md')?.path).toBe('ideas/Spark.md')

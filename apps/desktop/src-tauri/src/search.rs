@@ -39,7 +39,7 @@ use tauri::{AppHandle, Emitter};
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
 use crate::notes::{stamp_of, Stamp};
-use crate::paths::{files_in, in_spaces, relative_to};
+use crate::paths::{files_in, in_spaces, is_shortcut, relative_to};
 use crate::query::Query;
 use crate::tags::tags_in;
 
@@ -461,7 +461,15 @@ fn left_out(relative: &str, excluded: &HashSet<&str>) -> bool {
 /// space read the same. The walk itself lives in `paths`, which is also where
 /// `links` gets it from.
 fn notes_in(dir: &Path) -> Vec<PathBuf> {
-    files_in(dir).0
+    let (mut notes, others) = files_in(dir);
+
+    // The websites as well. A shortcut is three lines of text with an address in
+    // one of them, so a search for a site by its address is a search for the words
+    // in that file and needs nothing here to know what the format is; its title is
+    // its name, which the file search already reads. See web-tab/shortcut.ts.
+    notes.extend(others.into_iter().filter(|path| is_shortcut(path)));
+    notes.sort();
+    notes
 }
 
 #[cfg(test)]

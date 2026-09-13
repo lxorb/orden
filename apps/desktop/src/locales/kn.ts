@@ -8,6 +8,7 @@ export const kn: Dictionary = {
   'New note inside': 'ಇದರೊಳಗೆ ಹೊಸ ಟಿಪ್ಪಣಿ',
   'New canvas': 'ಹೊಸ ಕ್ಯಾನ್ವಾಸ್',
   'New page note': 'ಹೊಸ ಪುಟ ಟಿಪ್ಪಣಿ',
+  'New web note': 'ಹೊಸ ಜಾಲ ಟಿಪ್ಪಣಿ',
   'Add a page': 'ಪುಟ ಸೇರಿಸು',
   'Add a page after this': 'ಇದರ ನಂತರ ಪುಟ ಸೇರಿಸು',
   'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',
@@ -1231,6 +1232,7 @@ export const kn: Dictionary = {
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
+  'Convert website notes': 'ಜಾಲತಾಣ ಟಿಪ್ಪಣಿಗಳನ್ನು ಪರಿವರ್ತಿಸಿ',
   // Recording, meetings and what a model wrote
   Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
   Recording: 'ಧ್ವನಿಮುದ್ರಣ',

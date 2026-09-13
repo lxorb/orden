@@ -208,13 +208,22 @@ export function fuzzy(text: string, needle: string): boolean {
   return true
 }
 
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+/** The extensions a link may leave out: markdown's four, and the two a website is
+ *  written as.
+ *
+ *  `[[Svelte docs]]` resolves to `Svelte docs.url` the way `[[Plan]]` resolves to
+ *  `Plan.md`, because both are documents this app writes and names by their title -
+ *  the extension is nib's business rather than the writer's. A canvas and a PDF are
+ *  deliberately not here: those carry their extension in the link, since that is how
+ *  Obsidian writes them and this grammar is Obsidian's. A link that does carry
+ *  `.url` still resolves, through the files rather than the notes; see `isTabFile`. */
+const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
-/** A path as something to compare: `/` separators, no markdown extension, and
+/** A path as something to compare: `/` separators, no extension of our own, and
  *  folded case. Obsidian matches a link to a note by name whatever the case,
  *  and so do the two filesystems Nib runs on. */
 function comparable(path: string): string {
-  return path.replace(/\\/g, '/').replace(MARKDOWN, '').toLowerCase()
+  return path.replace(/\\/g, '/').replace(OWN, '').toLowerCase()
 }
 
 function folderOf(path: string): string {

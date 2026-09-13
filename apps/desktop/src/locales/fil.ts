@@ -8,6 +8,7 @@ export const fil: Dictionary = {
   'New note inside': 'Bagong tala sa loob',
   'New canvas': 'Bagong canvas',
   'New page note': 'Bagong talang may pahina',
+  'New web note': 'Bagong talang web',
   'Add a page': 'Magdagdag ng pahina',
   'Add a page after this': 'Magdagdag ng pahina pagkatapos nito',
   'Delete this page': 'Tanggalin ang pahinang ito',
@@ -1243,6 +1244,7 @@ export const fil: Dictionary = {
   'Show it here': 'Ipakita dito',
   Website: 'Website',
   'Open a website': 'Buksan ang website',
+  'Convert website notes': 'I-convert ang mga talang website',
   // Recording, meetings and what a model wrote
   Record: 'Mag-record',
   Recording: 'Recording',

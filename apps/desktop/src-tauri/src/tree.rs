@@ -9,8 +9,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, in_spaces, inside, is_canvas, is_markdown, is_pages, is_pdf, space_root, spaces_root,
-    Seen, MAX_DEPTH,
+    cannot, in_spaces, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, space_root,
+    spaces_root, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -136,12 +136,13 @@ fn walk(
                     || is_pdf(&child)
                     || is_canvas(&child)
                     || is_pages(&child)
+                    || is_shortcut(&child)
                 {
-                    // The notes, the PDFs beside them, the canvases and the
-                    // stacks of paper: the things a tab can hold. Everything
-                    // else in a space belongs to a note rather than standing on
-                    // its own - a picture, a PDF's own highlights - and a file
-                    // list nobody can act on is noise.
+                    // The notes, the PDFs beside them, the canvases, the stacks
+                    // of paper and the websites: the things a tab can hold.
+                    // Everything else in a space belongs to a note rather than
+                    // standing on its own - a picture, a PDF's own highlights -
+                    // and a file list nobody can act on is noise.
                     room(left)?;
                     children.push(listed(&child, name, false, entry.metadata().ok()));
                 }
@@ -308,6 +309,7 @@ mod tests {
         std::fs::write(here.join("Idea.md"), "").expect("a note");
         std::fs::write(here.join("Board.canvas"), "{}").expect("a canvas");
         std::fs::write(here.join("Journal.pages"), "{}").expect("a page note");
+        std::fs::write(here.join("Svelte docs.url"), "[InternetShortcut]").expect("a website");
         std::fs::write(here.join("paper.pdf"), "").expect("a pdf");
         std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("its highlights");
         std::fs::write(here.join("shot.png"), "").expect("a picture");
@@ -321,6 +323,7 @@ mod tests {
                 "Board.canvas",
                 "Idea.md",
                 "Journal.pages",
+                "Svelte docs.url",
                 "paper.pdf"
             ]
         );

@@ -8,6 +8,7 @@ export const ja: Dictionary = {
   'New note inside': 'この中に新しいノート',
   'New canvas': '新しいキャンバス',
   'New page note': '新しいページノート',
+  'New web note': '新しいウェブノート',
   'Add a page': 'ページを追加',
   'Add a page after this': 'この後にページを追加',
   'Delete this page': 'このページを削除',
@@ -1210,6 +1211,7 @@ export const ja: Dictionary = {
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
+  'Convert website notes': 'ウェブノートを変換',
   // Recording, meetings and what a model wrote
   Record: '録音',
   Recording: '録音',

@@ -13,14 +13,23 @@
  *  three different conclusions about one file. Nothing else may decide it - not what
  *  a tab was opened as, and not what a session wrote down about it months ago. */
 
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget, isWebTarget } from '@nib/markdown/links'
 
 /** The two shapes a room's document comes in, named as the service names them. */
 export type RoomKind = 'words' | 'plane'
 
-/** The shape the room for this file has. A file with no name at all - a draft
- *  nobody has saved - is words, which is what a tab with some text in it can always
- *  be read as; it has no room either way.
+/** The shape the room for this file has, or null for a file that has no room at all.
+ *
+ *  A website is the one that has none. It is a shortcut file - an address and a title
+ *  and nothing else - so there is no document in it for two people to be in at once,
+ *  and what would be shared is a line nobody types. `holdsWords` says the same thing
+ *  from the tab's end and is what actually keeps a room from being asked for; this
+ *  says it from the file's, which is the end both machines can see, so a website
+ *  cannot be talked into a room by a session, a layout or a tab that was opened as
+ *  something else.
+ *
+ *  A file with no name at all - a draft nobody has saved - is words, which is what a
+ *  tab with some text in it can always be read as; it has no room either way.
  *
  *  Two extensions are planes and not one. A page note is a canvas with pages on it:
  *  the same objects with the same ids in the same JSON Canvas file, so the shared
@@ -29,7 +38,8 @@ export type RoomKind = 'words' | 'plane'
  *  would buy is a way for the two ends of a file to disagree about which of two
  *  identical things it is. Which surface opens the file is a different question,
  *  asked of the same name somewhere else; see workspace/session.ts. */
-export function roomKind(path: string | null | undefined): RoomKind {
+export function roomKind(path: string | null | undefined): RoomKind | null {
   const name = path ?? ''
+  if (isWebTarget(name)) return null
   return isCanvasTarget(name) || isPagesTarget(name) ? 'plane' : 'words'
 }

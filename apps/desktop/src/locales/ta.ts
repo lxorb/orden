@@ -8,6 +8,7 @@ export const ta: Dictionary = {
   'New note inside': 'இதனுள் புதிய குறிப்பு',
   'New canvas': 'புதிய கேன்வாஸ்',
   'New page note': 'புதிய பக்கக் குறிப்பு',
+  'New web note': 'புதிய இணையக் குறிப்பு',
   'Add a page': 'பக்கம் சேர்',
   'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
@@ -1241,6 +1242,7 @@ export const ta: Dictionary = {
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',
+  'Convert website notes': 'இணையதளக் குறிப்புகளை மாற்று',
   // Recording, meetings and what a model wrote
   Record: 'பதிவு செய்',
   Recording: 'பதிவு',

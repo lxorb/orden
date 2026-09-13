@@ -8,6 +8,7 @@ export const ms: Dictionary = {
   'New note inside': 'Nota baharu di dalam',
   'New canvas': 'Kanvas baharu',
   'New page note': 'Nota halaman baharu',
+  'New web note': 'Nota web baharu',
   'Add a page': 'Tambah halaman',
   'Add a page after this': 'Tambah halaman selepas ini',
   'Delete this page': 'Hapuskan halaman ini',
@@ -1214,6 +1215,7 @@ export const ms: Dictionary = {
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
   'Open a website': 'Buka laman web',
+  'Convert website notes': 'Tukar nota laman web',
   // Recording, meetings and what a model wrote
   Record: 'Rakam',
   Recording: 'Rakaman',

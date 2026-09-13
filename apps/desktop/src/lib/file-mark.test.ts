@@ -150,16 +150,16 @@ describe('the mark a file or folder chose for itself', () => {
   test('and the kind s own mark is what a row falls back to', () => {
     // Which covers all four of: a row that chose nothing, a caller that knows no
     // path, a name no set holds, and the moment before a set has arrived.
-    expect(source).toContain('fallback={MARKS[shown]}')
+    expect(source).toContain('fallback={MARKS[mark]}')
   })
 
-  /** The one mark a name cannot earn: a website in the space is a note called
-   *  `Svelte docs.md`, and only the `url:` in it says otherwise. The index holds what
-   *  every note's front matter says, so the row asks the same lookup the chosen icon
-   *  above is. See web-tab/note.ts. */
-  test('a note that is a website wears the globe, read off the index', () => {
-    expect(source).toContain('links.urlOf(path)')
-    expect(source).toContain("? 'web'")
+  /** The mark a website wears comes off its name like every other kind's, because a
+   *  website in the space is `Svelte docs.url` - a shortcut file. It used to be a
+   *  note with `url:` in its front matter, which no name could say, and every list
+   *  that drew a mark had to ask the link index what the file said. Nothing asks
+   *  now, and this is what keeps the lookup from coming back. */
+  test('nothing about a mark is read out of the index', () => {
+    expect(source).not.toContain('links.')
   })
 
   /** One box, whichever of the three kinds is in it, and one size in it: `--icon-md`

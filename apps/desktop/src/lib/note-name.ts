@@ -8,13 +8,13 @@
  *  The strip, the file list, the palette, the menus and the window title all ask
  *  here, so a document is called one thing wherever it is listed. */
 
-/** The extensions a name is shown without: markdown's four, and a canvas. Those
- *  are the documents Nib writes itself, and a document is known by its title
- *  rather than by the file it is kept in. A PDF or a picture keeps its
- *  extension, because that is a file from somewhere else and its name is the
- *  file's own. Which kind a row holds is drawn beside it rather than spelled out
- *  after it; see file-mark.ts. */
-const OWN = /\.(md|markdown|mdown|mkd|canvas)$/i
+/** The extensions a name is shown without: markdown's four, a canvas, and the two
+ *  a website is written as. Those are the documents Nib writes itself, and a
+ *  document is known by its title rather than by the file it is kept in. A PDF or a
+ *  picture keeps its extension, because that is a file from somewhere else and its
+ *  name is the file's own. Which kind a row holds is drawn beside it rather than
+ *  spelled out after it; see file-mark.ts. */
+const OWN = /\.(md|markdown|mdown|mkd|canvas|url|webloc)$/i
 
 /** A document's name as everything that lists one shows it. */
 export function shownName(name: string): string {
@@ -91,8 +91,15 @@ export function draftName(lines: Iterable<string>): string | null {
 /** The note's own title, if it would make a sensible filename. */
 export function nameFromContent(doc: string): string | null {
   const title = titleFrom(doc.split('\n'))
-  if (title === null) return null
+  return title === null ? null : nameFromTitle(title)
+}
 
+/** A title as a file name, for a document whose title is not its first line: a
+ *  website, which is a shortcut file with the title in a key of its own. Everything
+ *  a filesystem would refuse comes out, the separators with it, and what is left is
+ *  cut to a length a name should be. Null where nothing is left at all, which is a
+ *  title made of nothing but punctuation. */
+export function nameFromTitle(title: string): string | null {
   const text = title
     // Everything a filesystem would refuse, plus the separators.
     .replace(/[<>:"/\\|?* -]/g, ' ')

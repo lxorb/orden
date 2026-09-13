@@ -8,6 +8,7 @@ export const gu: Dictionary = {
   'New note inside': 'અંદર નવી નોંધ',
   'New canvas': 'નવું કેનવાસ',
   'New page note': 'નવી પાનાંવાળી નોંધ',
+  'New web note': 'નવી વેબ નોંધ',
   'Add a page': 'પાનું ઉમેરો',
   'Add a page after this': 'આ પછી પાનું ઉમેરો',
   'Delete this page': 'આ પાનું કાઢો',
@@ -1216,6 +1217,7 @@ export const gu: Dictionary = {
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',
+  'Convert website notes': 'વેબસાઇટ નોંધો રૂપાંતરિત કરો',
   // Recording, meetings and what a model wrote
   Record: 'રેકૉર્ડ કરો',
   Recording: 'રેકૉર્ડિંગ',

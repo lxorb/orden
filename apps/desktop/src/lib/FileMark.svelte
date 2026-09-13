@@ -28,24 +28,8 @@
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon } from './icons'
-  import { links } from './link-index.svelte'
 
   const { mark, path }: { mark: FileMark; path?: string } = $props()
-
-  /** A note whose front matter says `url:` is a website, and wears the globe.
-   *
-   *  Read here rather than worked out from the name, because the name of such a file
-   *  is a note's name: `Svelte docs.md`, so that Obsidian shows it and `[[Svelte
-   *  docs]]` resolves to it. The index already holds what every note's front matter
-   *  says - this is the same lookup the chosen icon above is - so no list pays for a
-   *  second reading, and every list that draws a mark gets it without knowing that
-   *  websites exist. See web-tab/note.ts and file-mark.ts.
-   *
-   *  A caller that knows a kind but no path - the phone's title bar, which asks the
-   *  tab - has already said `web` itself. */
-  const shown = $derived<FileMark>(
-    mark === 'note' && path !== undefined && links.urlOf(path) !== null ? 'web' : mark,
-  )
 
   /** What the file or folder at this path chose, or null for a row that chose
    *  nothing - and for a caller that knows a name but no path, which gets its kind's
@@ -55,7 +39,7 @@
 </script>
 
 <span class="mark" class:quiet={chosen === null || chosen.kind === 'lucide'}>
-  <Icon icon={chosen} {tint} fallback={MARKS[shown]} />
+  <Icon icon={chosen} {tint} fallback={MARKS[mark]} />
 </span>
 
 <style>

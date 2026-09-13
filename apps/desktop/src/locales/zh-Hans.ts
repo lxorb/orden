@@ -8,6 +8,7 @@ export const zhHans: Dictionary = {
   'New note inside': '在其中新建笔记',
   'New canvas': '新建画布',
   'New page note': '新建分页笔记',
+  'New web note': '新建网页笔记',
   'Add a page': '添加一页',
   'Add a page after this': '在此页后添加一页',
   'Delete this page': '删除此页',
@@ -1190,6 +1191,7 @@ export const zhHans: Dictionary = {
   'Show it here': '在此显示',
   Website: '网站',
   'Open a website': '打开网站',
+  'Convert website notes': '转换网站笔记',
   // Recording, meetings and what a model wrote
   Record: '录音',
   Recording: '录音',

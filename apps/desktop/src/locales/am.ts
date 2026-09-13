@@ -8,6 +8,7 @@ export const am: Dictionary = {
   'New note inside': 'ውስጡ አዲስ ማስታወሻ',
   'New canvas': 'አዲስ ሸራ',
   'New page note': 'አዲስ የገጾች ማስታወሻ',
+  'New web note': 'አዲስ የድረ ገጽ ማስታወሻ',
   'Add a page': 'ገጽ ጨምር',
   'Add a page after this': 'ከዚህ በኋላ ገጽ ጨምር',
   'Delete this page': 'ይህን ገጽ አጥፋ',
@@ -1206,6 +1207,7 @@ export const am: Dictionary = {
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',
+  'Convert website notes': 'የድረ ገጽ ማስታወሻዎችን ቀይር',
   // Recording, meetings and what a model wrote
   Record: 'ቅረጽ',
   Recording: 'ቀረጻ',

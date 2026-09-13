@@ -8,6 +8,7 @@ export const vi: Dictionary = {
   'New note inside': 'Ghi chú mới bên trong',
   'New canvas': 'Canvas mới',
   'New page note': 'Ghi chú nhiều trang mới',
+  'New web note': 'Ghi chú web mới',
   'Add a page': 'Thêm một trang',
   'Add a page after this': 'Thêm một trang sau trang này',
   'Delete this page': 'Xoá trang này',
@@ -1207,6 +1208,7 @@ export const vi: Dictionary = {
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',
+  'Convert website notes': 'Chuyển đổi ghi chú trang web',
   // Recording, meetings and what a model wrote
   Record: 'Ghi âm',
   Recording: 'Bản ghi',

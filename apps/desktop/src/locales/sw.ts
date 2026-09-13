@@ -8,6 +8,7 @@ export const sw: Dictionary = {
   'New note inside': 'Dokezo jipya ndani',
   'New canvas': 'Turubai jipya',
   'New page note': 'Dokezo jipya la kurasa',
+  'New web note': 'Dokezo jipya la wavuti',
   'Add a page': 'Ongeza ukurasa',
   'Add a page after this': 'Ongeza ukurasa baada ya huu',
   'Delete this page': 'Futa ukurasa huu',
@@ -1239,6 +1240,7 @@ export const sw: Dictionary = {
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',
+  'Convert website notes': 'Badilisha madokezo ya tovuti',
   // Recording, meetings and what a model wrote
   Record: 'Rekodi',
   Recording: 'Rekodi',

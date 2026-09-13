@@ -8,6 +8,7 @@ export const hi: Dictionary = {
   'New note inside': 'इसमें नया नोट',
   'New canvas': 'नया कैनवास',
   'New page note': 'नया पृष्ठ नोट',
+  'New web note': 'नया वेब नोट',
   'Add a page': 'पृष्ठ जोड़ें',
   'Add a page after this': 'इसके बाद पृष्ठ जोड़ें',
   'Delete this page': 'यह पृष्ठ हटाएँ',
@@ -1221,6 +1222,7 @@ export const hi: Dictionary = {
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',
+  'Convert website notes': 'वेबसाइट नोट बदलें',
   // Recording, meetings and what a model wrote
   Record: 'रिकॉर्ड करें',
   Recording: 'रिकॉर्डिंग',

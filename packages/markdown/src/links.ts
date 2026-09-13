@@ -111,6 +111,19 @@ export function isPagesTarget(target: string): boolean {
   return /\.pages$/i.test(target.trim())
 }
 
+/** Whether a target names a website: a shortcut file, which nib opens as a page in
+ *  a tab rather than as words.
+ *
+ *  Two extensions because two systems already wrote them, and neither is nib's.
+ *  `.url` is the Windows Internet Shortcut - an INI file with an address in it,
+ *  which is what Explorer and every browser make when a page is dragged out onto
+ *  the desktop - and it is the one nib writes. `.webloc` is the same idea on macOS,
+ *  a plist, which is what Safari makes; nib reads one and never writes one. See
+ *  `web-tab/shortcut.ts`. */
+export function isWebTarget(target: string): boolean {
+  return /\.(url|webloc)$/i.test(target.trim())
+}
+
 /** The extensions a picture is written in. `apng` and `ico` are here because a
  *  browser draws them and somebody's notes may hold one. */
 const IMAGE = /\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i
@@ -170,9 +183,9 @@ export function embedKind(target: string): EmbedKind | null {
 }
 
 /** Whether a target names a file the app opens in a tab of its own rather than a
- *  note: a PDF, a canvas, or a page note.
+ *  note: a PDF, a canvas, a page note, or a website.
  *
- *  These three behave alike everywhere a link is read. All resolve through the
+ *  These four behave alike everywhere a link is read. All resolve through the
  *  files of the space rather than its notes, because a file has no headings and
  *  nothing to be told apart by except its extension; all are followed to the
  *  file itself; and a link to one the space does not hold is a link to nothing,
@@ -181,7 +194,9 @@ export function embedKind(target: string): EmbedKind | null {
  *  Not to be confused with `isNoteTarget`, which asks something else entirely:
  *  whether a target points inside the space at all rather than out at the web. */
 export function isTabFile(target: string): boolean {
-  return isPdfTarget(target) || isCanvasTarget(target) || isPagesTarget(target)
+  return (
+    isPdfTarget(target) || isCanvasTarget(target) || isPagesTarget(target) || isWebTarget(target)
+  )
 }
 
 /** Obsidian writes how wide to draw an embed after the bar: `![[pic.png|300]]`,

@@ -8,6 +8,7 @@ export const tr: Dictionary = {
   'New note inside': 'İçine yeni not',
   'New canvas': 'Yeni tuval',
   'New page note': 'Yeni sayfalı not',
+  'New web note': 'Yeni web notu',
   'Add a page': 'Sayfa ekle',
   'Add a page after this': 'Bundan sonra sayfa ekle',
   'Delete this page': 'Bu sayfayı sil',
@@ -1223,6 +1224,7 @@ export const tr: Dictionary = {
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',
+  'Convert website notes': 'Web sitesi notlarını dönüştür',
   // Recording, meetings and what a model wrote
   Record: 'Kaydet',
   Recording: 'Kayıt',

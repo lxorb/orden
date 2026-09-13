@@ -8,6 +8,7 @@ export const my: Dictionary = {
   'New note inside': 'အထဲတွင်မှတ်စုအသစ်',
   'New canvas': 'ကန်ဗတ်အသစ်',
   'New page note': 'စာမျက်နှာမှတ်စုအသစ်',
+  'New web note': 'ဝဘ်မှတ်စုအသစ်',
   'Add a page': 'စာမျက်နှာထည့်ပါ',
   'Add a page after this': 'ဤအပြီး စာမျက်နှာထည့်ပါ',
   'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',
@@ -1207,6 +1208,7 @@ export const my: Dictionary = {
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
+  'Convert website notes': 'ဝဘ်ဆိုက်မှတ်စုများ ပြောင်းပါ',
   // Recording, meetings and what a model wrote
   Record: 'အသံသွင်းပါ',
   Recording: 'အသံဖိုင်',

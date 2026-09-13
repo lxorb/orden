@@ -8,6 +8,7 @@ export const uk: Dictionary = {
   'New note inside': 'Нова нотатка всередині',
   'New canvas': 'Нове полотно',
   'New page note': 'Нова нотатка зі сторінками',
+  'New web note': 'Нова вебнотатка',
   'Add a page': 'Додати сторінку',
   'Add a page after this': 'Додати сторінку після цієї',
   'Delete this page': 'Видалити цю сторінку',
@@ -1285,6 +1286,7 @@ export const uk: Dictionary = {
   'Show it here': 'Показати тут',
   Website: 'Сайт',
   'Open a website': 'Відкрити сайт',
+  'Convert website notes': 'Перетворити вебнотатки',
   // Recording, meetings and what a model wrote
   Record: 'Записати',
   Recording: 'Запис',

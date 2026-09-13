@@ -8,6 +8,7 @@ export const ptBR: Dictionary = {
   'New note inside': 'Nova nota dentro',
   'New canvas': 'Novo quadro',
   'New page note': 'Nova nota de páginas',
+  'New web note': 'Nova nota da web',
   'Add a page': 'Adicionar uma página',
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Excluir esta página',
@@ -1248,6 +1249,7 @@ export const ptBR: Dictionary = {
   'Show it here': 'Mostrar aqui',
   Website: 'Site',
   'Open a website': 'Abrir um site',
+  'Convert website notes': 'Converter notas de sites',
   // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',

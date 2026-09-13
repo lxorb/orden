@@ -18,7 +18,7 @@ use std::fs;
 use tauri::AppHandle;
 
 use crate::front_matter;
-use crate::paths::{files_in, in_spaces, is_canvas, relative_to};
+use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
 use crate::tags::tags_in;
 
 /// How much of a line is worth keeping as the context a result is read in. The
@@ -74,14 +74,14 @@ pub struct Note {
     /// the same pass and for the same reason as the icon: the space is already
     /// being read, and a link may use any of them.
     aliases: Vec<String>,
-    /// The address a note points at, for a note that is a website rather than
-    /// words: `url:` in its front matter. None for every ordinary note, which is
-    /// almost all of them.
+    /// The address a note points at, for a note written when a website in a space
+    /// was a note: `url:` in its front matter. None for every ordinary note, which
+    /// is almost all of them, and None for a website written since - that is a
+    /// shortcut file, `Svelte docs.url`, and its name says what it is.
     ///
-    /// Read on this pass for the reason the icon is - the space is already being
-    /// read - and read at all because it is what tells the two apart: the file list
-    /// marks such a row with a globe and a click on it opens a web tab rather than
-    /// an editor. See file-mark.ts and docs/web-tabs.md.
+    /// So this is what says a note wants converting, and the only thing it says.
+    /// Read on this pass for the reason the icon is: the space is already being
+    /// read. See web-tab/shortcut.ts and docs/web-tabs.md.
     url: Option<String>,
 }
 
@@ -125,8 +125,19 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         out.push(canvas_note(relative_to(&dir, path), &body));
     }
 
-    // By path, so the order is the browser's order too: there the notes and the
-    // canvases are sorted together, and the two readings have to agree.
+    // And the websites, so a link can be made to one. A shortcut is a file rather
+    // than a note - `Svelte docs.url` - and it stays among `files` like a canvas;
+    // it is here as well because `[[Svelte docs]]` resolves by name against this
+    // list, and a website is a document in the space that a note may point at. What
+    // is inside the file is not read: an address is not a link out of the space's
+    // own graph, and the words of it are the search's business. See shortcut.ts.
+    for path in others.iter().filter(|path| is_shortcut(path)) {
+        out.push(shortcut_note(relative_to(&dir, path)));
+    }
+
+    // By path, so the order is the browser's order too: there the notes, the
+    // canvases and the websites are sorted together, and the readings have to
+    // agree.
     out.sort_by(|one, other| one.path.cmp(&other.path));
 
     Ok(SpaceLinks {
@@ -263,6 +274,34 @@ fn canvas_note(relative: String, body: &str) -> Note {
         aliases: Vec::new(),
         // A plane of cards is never a website: a canvas has no front matter to say
         // so, and JSON Canvas has no key for one.
+        url: None,
+    }
+}
+
+/// A website as the link index sees it: a name, and nothing else at all.
+///
+/// A shortcut holds one address and no words: no links out, no headings, no blocks,
+/// no tags, and no icon of its own - there is nowhere in the format to put one that
+/// another program reading it would not trip over. It is in the index so that a link
+/// can be made to it and so that the graph has a node for it, which is what a
+/// website in a space is.
+fn shortcut_note(relative: String) -> Note {
+    // The extension is part of the name, the way it is for a canvas: a link may be
+    // written `[[Svelte docs.url]]` as well as `[[Svelte docs]]`.
+    let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
+
+    Note {
+        name,
+        path: relative,
+        headings: Vec::new(),
+        blocks: Vec::new(),
+        links: Vec::new(),
+        tags: Vec::new(),
+        icon: None,
+        icon_color: None,
+        aliases: Vec::new(),
+        // What `url:` means here is a note that is a website in the old format and
+        // wants converting; a shortcut is already one. See shortcut.ts.
         url: None,
     }
 }

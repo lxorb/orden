@@ -82,12 +82,14 @@ const MOST_MENTIONS = 200
  *  screen. A handful is all a screenful of embeds can ask for. */
 const CACHED = 24
 
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+/** The extensions a link may leave out, which is the same list the editor's own
+ *  resolver keeps and for the same reasons; see `OWN` in wikilink/notes.ts. */
+const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
-/** A path as something to compare: no extension, folded case. The same reading
- *  `resolveNote` does, so a candidate here is a candidate there. */
+/** A path as something to compare: no extension of our own, folded case. The same
+ *  reading `resolveNote` does, so a candidate here is a candidate there. */
 function comparable(path: string): string {
-  return path.replace(/\\/g, '/').replace(MARKDOWN, '').toLowerCase()
+  return path.replace(/\\/g, '/').replace(OWN, '').toLowerCase()
 }
 
 /** Every name a note answers to, folded: the last part of its path, and the
@@ -292,13 +294,17 @@ class Links {
     return map
   })
 
-  /** The notes that are websites, by the address each points at.
+  /** The notes that were written as websites, by the address each points at.
+   *
+   *  A website is a shortcut file now - `Svelte docs.url` - and its name says so,
+   *  which is why no list asks this any more. What is left in here is the old format:
+   *  a `.md` note with `url:` in its front matter, from a space written by an older
+   *  nib. So this map is what says a note wants converting, and the only thing it
+   *  says; see web-tab/shortcut.ts and `workspace.asShortcut`.
    *
    *  The same shape as the icons above and for the same reason: a space of a
    *  thousand notes holds a handful of these, so the map is the size of what is
-   *  there rather than of the space, and a row redraws itself the moment the line is
-   *  written or taken out. What reads it is the mark a row wears and the click that
-   *  opens one; see web-tab/note.ts and file-mark.ts. */
+   *  there rather than of the space, and it empties itself as they are converted. */
   private readonly addresses = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const map = new Map<string, string>()
@@ -333,6 +339,13 @@ class Links {
   urlOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.addresses.get(relative) ?? null
+  }
+
+  /** Whether this space still holds a website written as a note, which is what the
+   *  palette's Convert row is offered for. Reactive, so the row goes as the last one
+   *  is converted. */
+  get websiteNotes(): boolean {
+    return this.addresses.size > 0
   }
 
   /** Forgets everything, for a window with no space open. */
@@ -766,7 +779,7 @@ class Links {
       found
         .map((hit) => ({
           path: this.relative(hit.path) ?? hit.path,
-          name: hit.name.replace(MARKDOWN, ''),
+          name: hit.name.replace(OWN, ''),
           line: hit.line,
           text: hit.text,
         }))

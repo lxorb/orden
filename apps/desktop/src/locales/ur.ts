@@ -8,6 +8,7 @@ export const ur: Dictionary = {
   'New note inside': 'اندر نیا نوٹ',
   'New canvas': 'نیا کینوس',
   'New page note': 'نیا صفحات والا نوٹ',
+  'New web note': 'نیا ویب نوٹ',
   'Add a page': 'صفحہ شامل کریں',
   'Add a page after this': 'اس کے بعد صفحہ شامل کریں',
   'Delete this page': 'یہ صفحہ حذف کریں',
@@ -1222,6 +1223,7 @@ export const ur: Dictionary = {
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
   'Open a website': 'ویب سائٹ کھولیں',
+  'Convert website notes': 'ویب سائٹ نوٹ تبدیل کریں',
   // Recording, meetings and what a model wrote
   Record: 'ریکارڈ کریں',
   Recording: 'ریکارڈنگ',

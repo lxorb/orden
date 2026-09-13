@@ -42,6 +42,12 @@ export function roomKind(path: string): RoomKind {
   return isCanvasTarget(path) || isPagesTarget(path) ? 'plane' : 'words'
 }
 
+/** What a website is doing in neither list: nothing, because no client asks for a
+ *  room for one. A `.url` file holds an address and no words, so there is no document
+ *  in it for two people to be in at once - the app refuses it at both ends, in
+ *  `holdsWords` and in its own rooms/kind.ts, and a file the door is never asked
+ *  about needs no shape here. It syncs like every other note; see notes.ts. */
+
 /** A kind that came off a header or out of storage, which is to say a kind that
  *  has not been checked yet. Anything unrecognised is words: that is what a room
  *  about a file this build has never heard of can always be read as. */

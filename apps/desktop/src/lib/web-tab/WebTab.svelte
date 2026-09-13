@@ -178,7 +178,12 @@
     onstep={(step: Step) => void pages.step(tab.id, step)}
     onaddress={(typed: string) => {
       const url = webAddress(typed)
-      if (url) void pages.go(tab.id, url)
+      if (!url) return
+
+      void pages.go(tab.id, url)
+      // An address somebody typed is where the document points, and the file says
+      // so. A link followed inside the page is not; see `workspace.webAimed`.
+      void workspace.webAimed(tab, url)
     }}
     onclip={clip}
     onmenu={(event: MouseEvent) => menu.show(event, webRows(page, clip), { title: t('Website') })}

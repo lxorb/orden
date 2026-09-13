@@ -8,6 +8,7 @@ export const ar: Dictionary = {
   'New note inside': 'ملاحظة جديدة بالداخل',
   'New canvas': 'لوحة جديدة',
   'New page note': 'ملاحظة صفحات جديدة',
+  'New web note': 'ملاحظة ويب جديدة',
   'Add a page': 'إضافة صفحة',
   'Add a page after this': 'إضافة صفحة بعد هذه',
   'Delete this page': 'حذف هذه الصفحة',
@@ -1308,6 +1309,7 @@ export const ar: Dictionary = {
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',
+  'Convert website notes': 'تحويل ملاحظات المواقع',
   // Recording, meetings and what a model wrote
   Record: 'تسجيل',
   Recording: 'تسجيل',

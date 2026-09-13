@@ -8,6 +8,7 @@ export const pa: Dictionary = {
   'New note inside': 'ਅੰਦਰ ਨਵੀਂ ਨੋਟ',
   'New canvas': 'ਨਵਾਂ ਕੈਨਵਸ',
   'New page note': 'ਨਵੀਂ ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'New web note': 'ਨਵੀਂ ਵੈੱਬ ਨੋਟ',
   'Add a page': 'ਸਫ਼ਾ ਜੋੜੋ',
   'Add a page after this': 'ਇਸ ਤੋਂ ਬਾਅਦ ਸਫ਼ਾ ਜੋੜੋ',
   'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',
@@ -1228,6 +1229,7 @@ export const pa: Dictionary = {
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
+  'Convert website notes': 'ਵੈੱਬਸਾਈਟ ਨੋਟਾਂ ਬਦਲੋ',
   // Recording, meetings and what a model wrote
   Record: 'ਰਿਕਾਰਡ ਕਰੋ',
   Recording: 'ਰਿਕਾਰਡਿੰਗ',

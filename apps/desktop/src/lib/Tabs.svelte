@@ -140,14 +140,17 @@
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: tab.shown })
 
-  /** The two things a tab can be opened as. A click on the plus makes a note,
-   *  which is what a strip is mostly filled with; asking the plus for a menu is
-   *  where the other kind lives, so a canvas is one gesture away rather than a
-   *  second button in the row. */
+  /** The things a tab can be opened as. A click on the plus makes a note, which is
+   *  what a strip is mostly filled with; asking the plus for a menu is where the
+   *  other kinds live, so a canvas or a website is one gesture away rather than two
+   *  more buttons in the row. */
   function newMenu(): MenuEntry[] {
     return [
       { label: t('New note'), run: () => makeNote() },
       { label: t('New canvas'), run: () => void makeCanvas() },
+      ...(viewport.device === 'phone'
+        ? []
+        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
     ]
   }
 

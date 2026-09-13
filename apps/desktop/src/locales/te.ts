@@ -8,6 +8,7 @@ export const te: Dictionary = {
   'New note inside': 'ఇందులో కొత్త నోట్',
   'New canvas': 'కొత్త క్యాన్వాస్',
   'New page note': 'కొత్త పేజీ నోట్',
+  'New web note': 'కొత్త వెబ్ నోట్',
   'Add a page': 'పేజీ చేర్చు',
   'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
   'Delete this page': 'ఈ పేజీ తొలగించు',
@@ -1225,6 +1226,7 @@ export const te: Dictionary = {
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',
+  'Convert website notes': 'వెబ్‌సైట్ నోట్లను మార్చు',
   // Recording, meetings and what a model wrote
   Record: 'రికార్డు చేయి',
   Recording: 'రికార్డింగ్',

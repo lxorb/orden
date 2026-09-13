@@ -8,6 +8,7 @@ export const ru: Dictionary = {
   'New note inside': 'Новая заметка внутри',
   'New canvas': 'Новое полотно',
   'New page note': 'Новая заметка со страницами',
+  'New web note': 'Новая веб-заметка',
   'Add a page': 'Добавить страницу',
   'Add a page after this': 'Добавить страницу после этой',
   'Delete this page': 'Удалить эту страницу',
@@ -1289,6 +1290,7 @@ export const ru: Dictionary = {
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',
+  'Convert website notes': 'Преобразовать веб-заметки',
   // Recording, meetings and what a model wrote
   Record: 'Записать',
   Recording: 'Запись',

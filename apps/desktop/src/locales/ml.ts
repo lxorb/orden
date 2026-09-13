@@ -8,6 +8,7 @@ export const ml: Dictionary = {
   'New note inside': 'ഇതിനുള്ളിൽ പുതിയ കുറിപ്പ്',
   'New canvas': 'പുതിയ ക്യാൻവാസ്',
   'New page note': 'പുതിയ താൾ കുറിപ്പ്',
+  'New web note': 'പുതിയ വെബ് കുറിപ്പ്',
   'Add a page': 'താൾ ചേർക്കുക',
   'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
   'Delete this page': 'ഈ താൾ മായ്ക്കുക',
@@ -1237,6 +1238,7 @@ export const ml: Dictionary = {
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
+  'Convert website notes': 'വെബ്‌സൈറ്റ് കുറിപ്പുകൾ പരിവർത്തനം ചെയ്യുക',
   // Recording, meetings and what a model wrote
   Record: 'റെക്കോർഡ് ചെയ്യുക',
   Recording: 'റെക്കോർഡിംഗ്',

@@ -8,6 +8,7 @@ export const ko: Dictionary = {
   'New note inside': '안에 새 노트',
   'New canvas': '새 캔버스',
   'New page note': '새 페이지 노트',
+  'New web note': '새 웹 노트',
   'Add a page': '페이지 추가',
   'Add a page after this': '이 뒤에 페이지 추가',
   'Delete this page': '이 페이지 삭제',
@@ -1202,6 +1203,7 @@ export const ko: Dictionary = {
   'Show it here': '여기에 표시',
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',
+  'Convert website notes': '웹 노트 변환',
   // Recording, meetings and what a model wrote
   Record: '녹음',
   Recording: '녹음',

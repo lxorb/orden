@@ -8,6 +8,7 @@ export const zhHantHK: Dictionary = {
   'New note inside': '在其中新增筆記',
   'New canvas': '新增畫布',
   'New page note': '新增分頁筆記',
+  'New web note': '新增網頁筆記',
   'Add a page': '加一頁',
   'Add a page after this': '在此頁之後加一頁',
   'Delete this page': '刪除此頁',
@@ -1190,6 +1191,7 @@ export const zhHantHK: Dictionary = {
   'Show it here': '在此顯示',
   Website: '網站',
   'Open a website': '開啟網站',
+  'Convert website notes': '轉換網站筆記',
   // Recording, meetings and what a model wrote
   Record: '錄音',
   Recording: '錄音',

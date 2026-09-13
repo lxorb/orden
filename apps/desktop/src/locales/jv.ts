@@ -8,6 +8,7 @@ export const jv: Dictionary = {
   'New note inside': 'Cathetan anyar ing njero',
   'New canvas': 'Kanvas anyar',
   'New page note': 'Cathetan kaca anyar',
+  'New web note': 'Cathetan web anyar',
   'Add a page': 'Tambah kaca',
   'Add a page after this': 'Tambah kaca sawise iki',
   'Delete this page': 'Busak kaca iki',
@@ -1210,6 +1211,7 @@ export const jv: Dictionary = {
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
   'Open a website': 'Bukak situs web',
+  'Convert website notes': 'Ngowahi cathetan situs web',
   // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',

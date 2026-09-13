@@ -8,6 +8,7 @@ export const th: Dictionary = {
   'New note inside': 'สร้างโน้ตข้างใน',
   'New canvas': 'แคนวาสใหม่',
   'New page note': 'โน้ตแบบหน้าใหม่',
+  'New web note': 'โน้ตเว็บใหม่',
   'Add a page': 'เพิ่มหน้า',
   'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
   'Delete this page': 'ลบหน้านี้',
@@ -1195,6 +1196,7 @@ export const th: Dictionary = {
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
   'Open a website': 'เปิดเว็บไซต์',
+  'Convert website notes': 'แปลงโน้ตเว็บไซต์',
   // Recording, meetings and what a model wrote
   Record: 'บันทึกเสียง',
   Recording: 'การบันทึก',

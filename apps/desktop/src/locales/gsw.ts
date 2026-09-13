@@ -8,6 +8,7 @@ export const gsw: Dictionary = {
   'New note inside': 'Nöii Notiz dinne',
   'New canvas': 'Nöii Liinwand',
   'New page note': 'Nöii Siitenotiz',
+  'New web note': 'Nöii Webnotiz',
   'Add a page': 'Siite hinzuefüege',
   'Add a page after this': 'Siite dernaa hinzuefüege',
   'Delete this page': 'Die Siite lösche',
@@ -1229,6 +1230,7 @@ export const gsw: Dictionary = {
   'Show it here': 'Da azeige',
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',
+  'Convert website notes': 'Webnotize umwandle',
   // Recording, meetings and what a model wrote
   Record: 'Ufnäh',
   Recording: 'Ufnahm',

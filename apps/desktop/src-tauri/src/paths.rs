@@ -106,6 +106,22 @@ pub fn is_pages(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
 }
 
+/// Whether a path names a website: a shortcut file rather than words.
+///
+/// `.url` is the Windows Internet Shortcut - an INI file with an address in it,
+/// which Explorer and every browser write - and it is the one the app writes.
+/// `.webloc` is the same idea on macOS, a plist, which Safari writes and the app
+/// only reads. Both are small text files, so `read_note` and `write_note` already
+/// carry them the way they carry a canvas, and all the crate has to agree on is
+/// that they are files the window lists and opens. See web-tab/shortcut.ts.
+pub fn is_shortcut(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| {
+            extension.eq_ignore_ascii_case("url") || extension.eq_ignore_ascii_case("webloc")
+        })
+}
+
 /// Where a PDF's highlights live: the PDF's own name with the suffix after it,
 /// so the two sit together in a folder and no note can ever collide with one.
 pub fn highlights_of(pdf: &Path) -> PathBuf {
@@ -608,8 +624,8 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
-        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, link_to, move_highlights,
-        space_root, write_atomically,
+        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, link_to,
+        move_highlights, space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -801,6 +817,20 @@ mod tests {
         // The two planes are told apart by their names, whatever is inside them.
         assert!(!is_canvas(Path::new("a/Journal.pages")));
         assert!(!is_markdown(Path::new("a/Journal.pages")));
+    }
+
+    #[test]
+    fn names_a_website_by_its_extension() {
+        assert!(is_shortcut(Path::new("a/Svelte docs.url")));
+        assert!(is_shortcut(Path::new("a/Svelte docs.URL")));
+        // The one macOS writes, which this app reads and never writes.
+        assert!(is_shortcut(Path::new("a/Safari page.webloc")));
+        assert!(!is_shortcut(Path::new("a/Svelte docs.url.md")));
+        assert!(!is_shortcut(Path::new("a/Svelte docs")));
+        // And a website is no other kind, whatever a space holds of that name.
+        assert!(!is_markdown(Path::new("a/Svelte docs.url")));
+        assert!(!is_canvas(Path::new("a/Svelte docs.url")));
+        assert!(!is_pages(Path::new("a/Svelte docs.url")));
     }
 
     #[test]

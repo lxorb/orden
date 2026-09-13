@@ -107,6 +107,33 @@ export function scanNote(path: string, content: string): ScannedNote {
  *  how the index resolves a path relative to the space.
  *
  *  Headings and blocks stay empty: nothing points into a canvas, only at it. */
+/** A website as the link index sees it: a name, and nothing else at all.
+ *
+ *  A shortcut file holds an address and no words: no links out, no headings, no
+ *  tags, and no icon of its own - there is nowhere in the format to put one that
+ *  another program reading it would not trip over. It is in the index so that a link
+ *  can be made to it and so that the graph has a node for it, which is what a website
+ *  in a space is. The desktop's `shortcut_note` in links.rs says the same thing on
+ *  the other side. */
+export function scanShortcut(path: string): ScannedNote {
+  return {
+    path,
+    // The extension is part of the name, the way it is for a canvas: a link may be
+    // written `[[Svelte docs.url]]` as well as `[[Svelte docs]]`.
+    name: path.split('/').pop() ?? path,
+    headings: [],
+    blocks: [],
+    tags: [],
+    icon: null,
+    iconColor: null,
+    aliases: [],
+    // What `url:` means is a note that is a website in the old format and wants
+    // converting; a shortcut is already one. See web-tab/shortcut.ts.
+    url: null,
+    links: [],
+  }
+}
+
 export function scanCanvas(path: string, content: string): ScannedNote {
   const canvas = readCanvas(content)
 

@@ -8,6 +8,7 @@ export const ptPT: Dictionary = {
   'New note inside': 'Nova nota dentro',
   'New canvas': 'Nova tela',
   'New page note': 'Nova nota de páginas',
+  'New web note': 'Nova nota da web',
   'Add a page': 'Adicionar uma página',
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Eliminar esta página',
@@ -1256,6 +1257,7 @@ export const ptPT: Dictionary = {
   'Show it here': 'Mostrar aqui',
   Website: 'Sítio web',
   'Open a website': 'Abrir um sítio web',
+  'Convert website notes': 'Converter notas de sítios',
   // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',

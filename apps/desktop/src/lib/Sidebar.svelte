@@ -164,6 +164,9 @@
       DIVIDER,
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
+      ...(viewport.device === 'phone'
+        ? []
+        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
     ]
   }
 
@@ -229,6 +232,9 @@
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
+      ...(viewport.device === 'phone'
+        ? []
+        : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
       ...(canRecord() ? [{ label: recordLabel(), run: () => record() }] : []),
       ...(canTakeMeetingNotes() ? [{ label: meetingLabel(), run: () => meeting() }] : []),
     ]
