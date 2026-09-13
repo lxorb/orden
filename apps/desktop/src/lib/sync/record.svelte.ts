@@ -144,7 +144,7 @@ class Record {
     }
 
     if (answer === 'both') {
-      const { conflictPath } = await import('./conflicts')
+      const { conflictPath } = await import('@nib/markdown/paths')
       await invoke('write_note', { path: conflictPath(path), content: clash.theirs })
     }
 

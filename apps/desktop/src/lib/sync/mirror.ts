@@ -19,13 +19,14 @@
 
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
+import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { isUntouchedWelcome } from '../welcome'
-import { type Clash, type ConflictRule, conflictPath, DEFAULT_RULE } from './conflicts'
+import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import type { Entry } from '../workspace.svelte'
 
 /** What the last sync left on disk, so local edits can be told apart from
@@ -160,8 +161,12 @@ async function holdsSameWords(local: string, hash: string): Promise<boolean> {
  *
  *  Nothing is kept for a file that is new, that says nothing, or that already says
  *  exactly this. Both platforms drop a version that repeats the one before it
- *  anyway; this saves them the round trip. */
-async function writeDown(path: string, content: string, was?: string | null) {
+ *  anyway; this saves them the round trip.
+ *
+ *  Exported for the room's side of the same question, which keeps the same copy
+ *  beside a note under the same name and wants the same version kept on the way
+ *  past; see rooms/apart.ts. */
+export async function writeDown(path: string, content: string, was?: string | null) {
   const previous =
     was === undefined ? await invoke<string>('read_note', { path }).catch(() => null) : was
 
@@ -454,7 +459,9 @@ export async function push(
     // A note in a room has already been carried up by the room, keystroke by
     // keystroke, and the room is what writes it into the account. Sending the file
     // as well would be a second writer for one note.
-    if (joined.has(tracked.id)) continue
+    if (joined.has(tracked.id)) {
+      continue
+    }
 
     moved = true
 

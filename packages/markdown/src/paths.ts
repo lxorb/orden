@@ -60,3 +60,22 @@ export function freePath(path: string, taken: (candidate: string) => boolean): s
     if (!taken(candidate)) return candidate
   }
 }
+
+/** Where the other side's copy of a note goes when both copies are kept.
+ *
+ *  The date rather than a number: a second copy of the same note on the same day is
+ *  rare, and a name with a date in it says what it is in a file list sorted by name.
+ *  One that is taken anyway steps aside by number like any other name; see
+ *  `numbered` above.
+ *
+ *  Here for the same reason the rest of this file is: three things keep such a copy
+ *  now - a pass that found two copies of a note, a reader answering the sync pane,
+ *  and a room about to write its own words over a note that something which could
+ *  not reach the room wrote - and two of them are in the app while the third is in
+ *  the service. A reader who sees two spellings of the same thing cannot tell that
+ *  they mean the same thing. See apps/desktop/src/lib/sync/conflicts.ts and
+ *  `keptBeside` in services/sync/src/rooms/room.ts. */
+export function conflictPath(path: string, on = new Date()): string {
+  const stamp = on.toISOString().slice(0, 10)
+  return path.replace(/(\.[^./\\]+)$/u, ` (from another device ${stamp})$1`)
+}

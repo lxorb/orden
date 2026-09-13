@@ -5,6 +5,13 @@
  *  reader meant, so the only question is what the app does about it, and there
  *  are exactly three honest answers.
  *
+ *  Two places ask the question and both answer it with these three. A pass over a
+ *  space finds two copies of a note that has no room, or none it could reach; and a
+ *  device joining a room finds that both it and the room wrote since the words they
+ *  last shared, which one replacement cannot express. See sync/mirror.ts and
+ *  rooms/apart.ts, and `conflictPath` in @nib/markdown/paths for the name the copy
+ *  takes wherever it is written.
+ *
  *  `both` is what nib has always done, and the default. The other copy is
  *  written beside the note as `Plan (from another device 2026-09-12).md` and the
  *  reader sorts it out with the diff in front of them. Nothing is ever lost, and
@@ -58,13 +65,3 @@ export interface Clash {
  *  `theirs` takes the other copy, `both` writes the other copy beside the note -
  *  which is what the default rule does without asking. */
 export type Answer = 'mine' | 'theirs' | 'both'
-
-/** Where the other side's copy goes when both copies are kept.
- *
- *  The date rather than a number: a second conflict in the same note on the same
- *  day is rare, and a name with a date in it says what it is in a file list
- *  sorted by name. */
-export function conflictPath(path: string): string {
-  const stamp = new Date().toISOString().slice(0, 10)
-  return path.replace(/(\.[^.\\/]+)$/, ` (from another device ${stamp})$1`)
-}

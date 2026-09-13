@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { freePath, numbered, withoutForbidden } from './paths'
+import { conflictPath, freePath, numbered, withoutForbidden } from './paths'
 
 describe('stepping a name that is taken', () => {
   test('leaves the first one as it is', () => {
@@ -58,5 +58,31 @@ describe('what a file may not hold', () => {
 
   test('leaves everything a file may hold', () => {
     expect(withoutForbidden("Plans & more (2026) - Emil's")).toBe("Plans & more (2026) - Emil's")
+  })
+})
+
+describe('where the other copy goes', () => {
+  test('is beside the note, saying where it came from and when', () => {
+    const today = new Date().toISOString().slice(0, 10)
+
+    expect(conflictPath('Plans/Trip.md')).toBe(`Plans/Trip (from another device ${today}).md`)
+  })
+
+  test('keeps the extension whatever it is', () => {
+    expect(conflictPath('Board.canvas')).toContain('.canvas')
+  })
+
+  test('and a file with no extension is still a name', () => {
+    expect(conflictPath('Notes')).toBe('Notes')
+  })
+
+  test('steps aside by number when that name is taken too', () => {
+    // Two copies of one note in one day: the same rule every other taken name
+    // goes through. The service walks these in order; see `noteBeside` in
+    // services/sync/src/notes.ts.
+    const beside = conflictPath('Plan.md', new Date('2026-09-13T10:00:00Z'))
+
+    expect(beside).toBe('Plan (from another device 2026-09-13).md')
+    expect(numbered(beside, 2)).toBe('Plan (from another device 2026-09-13) 2.md')
   })
 })
