@@ -1210,6 +1210,16 @@ and not the engine. And it is exactly what batch 1 exists to re-measure on a rea
 machine. **If a real Mac still costs most of a second, that is the moment to take B′
 seriously** - and section 2 has the shape of the alternative ready.
 
+**Linux, and two findings that are both worth having.** The first run there never
+got a browser at all: Chromium blocked looking for a D-Bus session bus a runner does
+not have, printed *"Failed to connect to the bus"* several hundred times, and spent
+its whole timeout doing it. `dbus-run-session` beside `xvfb-run` is the fix, and it
+is the kind of thing a packaging batch would otherwise discover in front of a user
+on a minimal desktop. The second is the size: CEF's Linux distribution ships
+`libcef.so` **unstripped at 1362 MB**, so the staged tree weighed 1487 MB - a release
+must strip it before any Linux number in this document means anything, and the
+research says a stripped one lands in the same 285-350 MB band as the other two.
+
 **The size rows are unpacked bytes, not an installer.** What a reader actually
 downloads is that tree compressed, and the spike does not build an installer, so the
 honest thing is an estimate with its basis: CEF's own `minimal` archive is 164 MB of
