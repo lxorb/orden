@@ -171,6 +171,51 @@ sides compute the same merge; see `docs/canvas.md`.
 The rule lives on the account, because it is a decision about the notes rather than
 about the machine.
 
+### And when the note is open in a room
+
+A note two devices have open is in a room, and a room settles two people typing in
+one paragraph keystroke by keystroke - so for as long as both devices can reach it,
+none of the three rules ever comes up. The words interleave and nobody is asked
+anything. A connection that drops and comes back is the same story: the room is
+still holding the document on both sides, so what was typed while it was away is
+merged the moment it returns.
+
+Two things can make a room unable to do that, and both of them are ordinary.
+
+The app can be **closed and opened again** while away - a lid shut on a train, a tab
+reopened in a tunnel. Nothing of the room survives it: the document it held is gone
+and the device comes back holding a file, which is words with no shared history to
+merge with. Or a device can reach the account but **never its room**, which is every
+network that allows HTTPS and blocks WebSockets. Then the file is the only way its
+words travel while everybody else's travel through the room.
+
+In both cases the device and the room have each written since the words they last
+shared, and neither copy may be written over the other. So the rule the reader chose
+is asked, exactly as a pass asks it:
+
+- **Keep both copies** writes the room's words beside the note as
+  `Plan (from another device 2026-09-13).md`, and then this device's words go into
+  the room. The note keeps what you wrote; the copy holds what everybody else did,
+  and travels to them like any other note.
+- **Let the newest win** takes the room's words, because they are the ones every
+  other device in the note is looking at and the ones the account holds. What loses
+  is kept as a version by the save that replaces it.
+- **Ask me each time** writes nothing either way. The note stays exactly as it is
+  here, the room's copy waits in `Sync`, and the note is out of its room until you
+  answer - so the file carries it in the meantime and nothing is pushed over the copy
+  nobody has read. Answering puts it back in the room.
+
+The account does the same thing from its side. A device that cannot reach a room
+pushes its whole file instead, naming the version it read, and the account takes it;
+but the room is still holding words of its own, and its next settle is a whole-file
+write too. So before it writes, the room keeps what the note says beside it, under
+the same name and by the same rule - `services/sync/src/rooms/room.ts`. The same
+words offered again on every pass are copied once, not once a pass.
+
+Which is the whole of the promise, stated as one sentence: **no write anywhere -
+not a pass, not a room, not a push - ever replaces a copy that is not the copy both
+sides started from.** Where it cannot merge, it keeps.
+
 ## What synced
 
 The light in the corner says syncing, or failed. That is the right amount to say in
@@ -348,10 +393,25 @@ writes rather than rows, because a Worker's ceiling is on writes.
   the factor, the sessions nor a rollback is one of them.
 - `services/sync/test/guests.test.ts` - and the same question for a guest, which
   reaches none of those either.
-- `apps/desktop/src/lib/sync/conflicts.test.ts` - the rule read off the account and
-  where the other copy goes.
+- `apps/desktop/src/lib/sync/conflicts.test.ts` - the rule read off the account, and
+  `packages/markdown/src/paths.test.ts` for where the other copy goes, which both the
+  app and the service name the same way.
 - `apps/desktop/src/lib/sync/mirror.test.ts` - the pass itself, including the three
   rules.
+- `apps/desktop/src/lib/rooms/bind.test.ts` - the one decision joining a room comes
+  down to, including the answer that writes over neither side.
+- `apps/desktop/src/lib/rooms/apart.test.ts` - and what each of the three rules does
+  when that answer comes up.
+- `services/sync/test/rooms.test.ts` - the same question from the account's side, as
+  the exact request sequence that used to lose a paragraph: a device that cannot reach
+  a room pushes its file, and the room's next settle keeps what it is about to stop
+  holding.
+- `apps/desktop/test/e2e/conflict.py` - two browser contexts against
+  `wrangler dev`, every rule, either side away, and three ways of being away: the
+  connection dropping, the app closed and opened again, and a network that blocks
+  WebSockets. Every line anybody typed is looked for afterwards in the notes, in the
+  copies beside them, in the device's own version history and in what the account
+  holds.
 - `apps/desktop/test/e2e/sync.py` - all of it against `wrangler dev`: a note pushed
   and its history read back, the rollback, the rule chosen in the pane and read off
   the account, the log, a second factor turned on with a code the drive works out
