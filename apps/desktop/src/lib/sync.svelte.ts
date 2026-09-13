@@ -8,7 +8,7 @@ import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
 import { isRecord, keep, stored } from './stored'
-import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
+import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
@@ -84,6 +84,17 @@ class Sync {
     else arriving.begin()
 
     this.schedule(0)
+  }
+
+  /** Whether a pass is still in the air.
+   *
+   *  The light cannot say: a stop takes it down at once and the pass it interrupted
+   *  goes on to its end, writing down what it found; see `run`. Nothing on screen
+   *  wants this - the light is what a reader watches - but `run` refuses a second
+   *  pass while the first is going, so whoever drives one pass at a time has to be
+   *  able to tell that the last one is over. */
+  get passing(): boolean {
+    return this.running
   }
 
   stop() {
@@ -188,19 +199,15 @@ class Sync {
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
-   *  interval the loop had settled into.
-   *
-   *  Sooner, never later. The pass already planned may be due before the nudge's
-   *  own delay - at a launch it is due at once - and re-planning it for later
-   *  would postpone the very sync this exists to hurry: a note saved in the first
-   *  instant of a launch pushed the first pass two seconds out, and a hand that
-   *  kept typing kept pushing it. So the nudge takes whichever moment is nearer,
-   *  which for a loop that had settled into its long interval is still its own. */
+   *  interval the loop had settled into - and should not be pushed back either. A
+   *  note saved in the first instant of a launch used to shove the pass that was
+   *  due at once two seconds out, and a hand that kept typing kept shoving it. The
+   *  rule is `nudgeDelay`, in backoff.ts beside the interval it answers to. */
   nudge() {
     if (!this.timer) return
 
     this.quiet = 0
-    this.schedule(Math.min(NUDGE_DELAY, Math.max(0, this.dueAt - Date.now())))
+    this.schedule(nudgeDelay(this.dueAt - Date.now()))
   }
 
   /** Hiding the window re-plans the pending pass at the longer interval;

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { pollDelay, roomDelay } from './backoff'
+import { NUDGE_DELAY, nudgeDelay, pollDelay, roomDelay } from './backoff'
 
 const SECOND = 1000
 
@@ -36,6 +36,28 @@ describe('how often syncing looks for changes', () => {
         expect(delay).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+/** A nudge exists to bring the next pass forward. It used to re-plan one for its own
+ *  delay whatever was already planned, so a note saved in the first instant of a
+ *  launch pushed the pass that was due at once two seconds out - and a hand that kept
+ *  typing kept pushing it, because every write ends in a nudge. */
+describe('how long a nudge leaves before the next pass', () => {
+  test('is its own delay when the pass was further off than that', () => {
+    expect(nudgeDelay(20 * SECOND)).toBe(NUDGE_DELAY)
+    expect(nudgeDelay(10 * 60 * SECOND)).toBe(NUDGE_DELAY)
+  })
+
+  test('is what the pass had left when that was sooner', () => {
+    expect(nudgeDelay(400)).toBe(400)
+    expect(nudgeDelay(0)).toBe(0)
+  })
+
+  test('is nought for a pass that is already due, rather than a wait of its own', () => {
+    // A launch plans the first pass for now; this is the case that was broken.
+    expect(nudgeDelay(-1)).toBe(0)
+    expect(nudgeDelay(-10 * SECOND)).toBe(0)
   })
 })
 

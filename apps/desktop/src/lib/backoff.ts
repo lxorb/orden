@@ -10,6 +10,19 @@ const POLL_HIDDEN_MAX = 600_000
  *  enough that a burst of saves becomes one pass. */
 export const NUDGE_DELAY = 2_000
 
+/** How long a nudge leaves before the next pass, given how long the pass already
+ *  planned has left.
+ *
+ *  Sooner, never later. A nudge exists to bring a pass forward, and the one already
+ *  planned may be nearer than the nudge's own delay - at a launch it is due at once
+ *  - so re-planning it for later would postpone the very sync the nudge is asking
+ *  for, and go on postponing it for as long as somebody kept typing. Its own
+ *  function, beside the interval it belongs to, so the rule can be read and tested
+ *  without a clock. */
+export function nudgeDelay(left: number): number {
+  return Math.min(NUDGE_DELAY, Math.max(0, left))
+}
+
 /** Spaces are made and renamed rarely. Asking on every pass was most of the
  *  traffic and almost none of the answers. */
 export const RECONCILE_INTERVAL = 300_000
