@@ -8,7 +8,8 @@
 
 import { Hono } from 'hono'
 import { objectBody } from '../body'
-import { byteLength, now } from '../crypto'
+import { now } from '../crypto'
+import { fits } from './columns'
 import type { Env, Space, Variables } from '../types'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { fillFronts } from '../blog/fill'
@@ -18,7 +19,6 @@ import { hashPassword, newSiteKey } from '../blog/gate'
 import {
   folders,
   LONGEST_ICON,
-  MOST_BYTES,
   presentSite,
   publishes,
   readSite,
@@ -201,7 +201,7 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   }
 
   const written = JSON.stringify(kept)
-  if (byteLength(written) > MOST_BYTES) {
+  if (!fits(written, 'site')) {
     return context.json({ error: 'that is more than a site keeps' }, 413)
   }
 

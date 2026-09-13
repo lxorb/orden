@@ -18,7 +18,7 @@
 
 import { Hono } from 'hono'
 import { objectBody, objectIn } from '../body'
-import { byteLength, now } from '../crypto'
+import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { atLeast, spaceOf } from './space'
 
@@ -33,10 +33,6 @@ const LEAST_SPREAD = 0.25
 const MOST_SPREAD = 4
 /** How many links out the picture beside one note may reach. */
 const DEEPEST = 3
-/** What the column may grow to. Every field is bounded on its own; this is the
- *  other end of the same guard, so a legal object still cannot make the space
- *  listing heavy for every device that reads it. */
-const MOST_BYTES = 4 * 1024
 
 interface ColourGroup {
   query: string
@@ -170,15 +166,13 @@ spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   // nothing else a client sent along ends up in the column.
   const kept = settingsOf(sent as object)
   const written = JSON.stringify(kept)
-  if (byteLength(written) > MOST_BYTES) {
+  if (!fits(written, 'graph')) {
     return context.json({ error: 'that is more than a space keeps about its graph' }, 413)
   }
 
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
-  await context.env.DB.prepare('update spaces set graph = ?, updated_at = ? where id = ?')
-    .bind(written, now(), space.id)
-    .run()
+  await writeColumn(context.env, 'graph', space.id, written)
 
   return context.json({ graph: kept })
 })

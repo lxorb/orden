@@ -16,7 +16,7 @@
 import { Hono } from 'hono'
 import { listIn, objectBody } from '../body'
 import { askInChunks, places } from '../bound'
-import { byteLength, now } from '../crypto'
+import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
@@ -25,9 +25,6 @@ import { atLeast, spaceOf } from './space'
  *  statement below that grows with what was sent. */
 const MOST = 200
 /** A path inside a space, which is a few folder names and a file name. */
-/** What the column may grow to. Every entry is bounded on its own; this is the
- *  other end of the same guard. */
-const MOST_BYTES = 32 * 1024
 
 const HASH = /^[a-f0-9]{64}$/
 
@@ -162,15 +159,13 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
 
   const files = [...kept, ...others]
   const written = JSON.stringify(files)
-  if (byteLength(written) > MOST_BYTES) {
+  if (!fits(written, 'files')) {
     return context.json({ error: 'that is more files than a space keeps' }, 413)
   }
 
   // The space is touched as well, so a device watching for spaces that changed
   // learns that this one did.
-  await context.env.DB.prepare('update spaces set files = ?, updated_at = ? where id = ?')
-    .bind(written, now(), space.id)
-    .run()
+  await writeColumn(context.env, 'files', space.id, written)
 
   // The column as it now stands rather than only the part of it this list
   // claimed, because what the space serves is the answer to what was asked.

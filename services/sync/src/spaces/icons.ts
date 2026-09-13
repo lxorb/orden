@@ -23,6 +23,7 @@
 import { Hono } from 'hono'
 import { objectBody, objectIn } from '../body'
 import { byteLength, now } from '../crypto'
+import { MOST_BYTES } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
@@ -35,15 +36,6 @@ import { atLeast, spaceOf } from './space'
  *  there fits here; see workspace/folder-icons.svelte.ts. */
 const MOST = 400
 /** A path inside a space, which is a few folder names. */
-/** What the two columns may grow to between them. Every entry is bounded on its
- *  own; this is the other end of the same guard, so a map of legal entries still
- *  cannot make the space listing heavy for every device that reads it. Four times
- *  what bookmarks are allowed, because four hundred folder paths is that much more
- *  than sixty bookmarks - a map the app considers legal has to be one this takes, or
- *  an icon somebody chose would vanish on the way up. Both maps against the one
- *  number, since the colours are the same paths again with an accent's name on each
- *  and the pair is what a listing carries. */
-const MOST_BYTES = 32 * 1024
 
 /** An icon name: what the space's own icon is checked against, plus the hyphen.
  *
@@ -193,7 +185,9 @@ folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   const tints = sentTints === undefined ? null : mapOf(sentTints as object, isTint)
   const written = JSON.stringify(kept)
   const writtenTints = tints === null ? null : JSON.stringify(tints)
-  if (byteLength(written) + byteLength(writtenTints ?? '') > MOST_BYTES) {
+  // Both maps against the one ceiling: what a space keeps about its folders is the
+  // two together, and either alone could otherwise fill the listing. See ./columns.
+  if (byteLength(written) + byteLength(writtenTints ?? '') > MOST_BYTES.icons) {
     return context.json({ error: 'that is more folder icons than a space holds' }, 413)
   }
 

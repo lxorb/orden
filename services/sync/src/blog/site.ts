@@ -42,10 +42,6 @@ const LONGEST_URL = 400
 /** The icon a tab shows, as the drawing the app made of it. Room for a Lucide
  *  stroke or an emoji drawn as text, and far too little to hide anything in. */
 export const LONGEST_ICON = 8 * 1024
-/** What the column may grow to. Every field is bounded on its own; this is the
- *  other end of the same guard, so a legal site cannot make the space listing
- *  heavy for every device that reads it. */
-export const MOST_BYTES = 24 * 1024
 
 /** What a note that says nothing about itself gets. */
 const DEFAULTS = ['all', 'none'] as const

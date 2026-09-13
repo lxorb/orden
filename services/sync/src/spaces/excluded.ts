@@ -14,7 +14,7 @@
 
 import { Hono } from 'hono'
 import { listIn, objectBody } from '../body'
-import { byteLength, now } from '../crypto'
+import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
@@ -24,10 +24,6 @@ import { atLeast, spaceOf } from './space'
  *  fits here. */
 const MOST = 200
 /** A path inside a space, which is a few folder names and a file name. */
-/** What the column may grow to. Every path is bounded on its own; this is the
- *  other end of the same guard, so a list of legal paths still cannot make the
- *  space listing heavy for every device that reads it. */
-const MOST_BYTES = 16 * 1024
 
 /** Whether a path names something inside its own space; see ./paths. A path left
  *  out has to be a path, so an empty one is not one. */
@@ -92,15 +88,13 @@ spaceExcluded.put('/:id/excluded', atLeast('write'), async (context) => {
   // nothing else a client sent along ends up in the column.
   const kept = pathsOf(sent as readonly unknown[])
   const written = JSON.stringify(kept)
-  if (byteLength(written) > MOST_BYTES) {
+  if (!fits(written, 'excluded')) {
     return context.json({ error: 'that is more paths than a space leaves out' }, 413)
   }
 
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
-  await context.env.DB.prepare('update spaces set excluded = ?, updated_at = ? where id = ?')
-    .bind(written, now(), space.id)
-    .run()
+  await writeColumn(context.env, 'excluded', space.id, written)
 
   return context.json({ excluded: kept })
 })

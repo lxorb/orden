@@ -10,7 +10,7 @@
 
 import { Hono } from 'hono'
 import { listIn, objectBody } from '../body'
-import { byteLength, now } from '../crypto'
+import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
@@ -21,10 +21,6 @@ const MOST = 60
 /** A path inside a space, which is a few folder names and a file name. */
 /** A heading, or the words of a search. */
 const LONGEST_TEXT = 200
-/** What the column may grow to. Every bookmark is bounded on its own; this is
- *  the other end of the same guard, so a list of legal entries still cannot
- *  make the space listing heavy for every device that reads it. */
-const MOST_BYTES = 8 * 1024
 
 const KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group', 'graph'] as const
 type Kind = (typeof KINDS)[number]
@@ -123,15 +119,13 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
     ...(view ? { view } : {}),
   }))
   const written = JSON.stringify(kept)
-  if (byteLength(written) > MOST_BYTES) {
+  if (!fits(written, 'bookmarks')) {
     return context.json({ error: 'that is more bookmarks than a space holds' }, 413)
   }
 
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
-  await context.env.DB.prepare('update spaces set bookmarks = ?, updated_at = ? where id = ?')
-    .bind(written, now(), space.id)
-    .run()
+  await writeColumn(context.env, 'bookmarks', space.id, written)
 
   return context.json({ bookmarks: kept })
 })
