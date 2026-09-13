@@ -34,7 +34,7 @@ import { describe, expect, test } from 'vitest'
  *  holds those five packages out is inside a dependency, where no walk of our own
  *  source can see it.
  *
- *  Batch 119 took 1.35 megabytes to 1.29, and this time none of it was a library at
+ *  Batch 119 took 1.36 megabytes to 1.29, and this time none of it was a library at
  *  all: it was the shell itself - what the window carries in order to draw a note and
  *  a file list. The Search panel and the engine that ranks for it, the find bar, the
  *  reading view, the rows of the app menu, the publish sheet's store, the import
@@ -155,8 +155,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  2,913,386 bytes over 366 files as this is written, measured on 2026-09-13, against
- *  1,289,847 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,931,291 bytes over 367 files as this is written, measured on 2026-09-13, against
+ *  1,294,326 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
