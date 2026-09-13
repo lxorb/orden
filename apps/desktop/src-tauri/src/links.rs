@@ -175,6 +175,16 @@ fn note_at(relative: String, body: &str) -> Note {
 
     let read = prose(body);
 
+    // Where the note's metadata sits, found once for the four keys read out of it: a
+    // note that opens with a fence nothing closes is a note whose whole body the
+    // search for that block reads, and four keys were four of those.
+    let block = front_matter::block(body);
+    let said = |key: &str| {
+        block
+            .as_ref()
+            .and_then(|one| front_matter::value(body, one, key))
+    };
+
     Note {
         path: relative,
         name,
@@ -182,10 +192,12 @@ fn note_at(relative: String, body: &str) -> Note {
         blocks: read.blocks,
         links: read.links,
         tags: note_tags(body),
-        icon: front_matter::value(body, "icon"),
-        icon_color: front_matter::value(body, "icon-color"),
-        aliases: front_matter::list(body, "aliases"),
-        url: front_matter::value(body, "url"),
+        icon: said("icon"),
+        icon_color: said("icon-color"),
+        aliases: block
+            .as_ref()
+            .map_or_else(Vec::new, |one| front_matter::list(body, one, "aliases")),
+        url: said("url"),
     }
 }
 

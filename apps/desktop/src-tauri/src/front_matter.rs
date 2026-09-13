@@ -65,26 +65,27 @@ pub fn block(body: &str) -> Option<Block> {
     None
 }
 
-/// A top-level `key: value`, quotes stripped, or None where the note has no
-/// block, no such key, or nothing after the colon.
+/// A top-level `key: value` of a block the caller has already found, quotes
+/// stripped, or None where the block holds no such key or nothing after the colon.
+///
+/// The block comes in rather than being looked for here, because a caller that wants
+/// one key wants four: the icon a row wears, the colour of it, the other names the
+/// note answers to and the address it stands for are four keys of one block. Looking
+/// for that block per key is four passes down a note that opens with a fence nothing
+/// closes, for every note in the space.
 ///
 /// The twin of `frontMatterValue`.
-pub fn value(body: &str, key: &str) -> Option<String> {
-    let block = block(body)?;
-    lines_of(body, &block).find_map(|line| value_of(line, key))
+pub fn value(body: &str, block: &Block, key: &str) -> Option<String> {
+    lines_of(body, block).find_map(|line| value_of(line, key))
 }
 
-/// A top-level key read as a list: `key: [a, b]`, the `- a` lines written under
-/// `key:`, or a single value standing for a list of one. Empty where the note has
-/// no block, no such key, or nothing under it.
+/// A top-level key of that block read as a list: `key: [a, b]`, the `- a` lines
+/// written under `key:`, or a single value standing for a list of one. Empty where
+/// the block holds no such key or nothing under it.
 ///
 /// The twin of `frontMatterList`.
-pub fn list(body: &str, key: &str) -> Vec<String> {
-    let Some(block) = block(body) else {
-        return Vec::new();
-    };
-
-    let mut lines = lines_of(body, &block);
+pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
+    let mut lines = lines_of(body, block);
     while let Some(line) = lines.next() {
         let Some(said) = named(line, key) else {
             continue;
@@ -197,13 +198,16 @@ mod tests {
     /// The icon a row wears, which is what `links` reads a note's front matter
     /// for. Every case here has its twin in
     /// `packages/markdown/src/front-matter.test.ts`.
+    ///
+    /// None for a note with no block at all, the way the reader in `links` answers
+    /// for one: a key of a block that is not there is a key nothing said.
     fn icon(body: &str) -> Option<String> {
-        value(body, "icon")
+        value(body, &block(body)?, "icon")
     }
 
     /// The other names a note gives itself, and the other twin.
     fn aliases(body: &str) -> Vec<String> {
-        list(body, "aliases")
+        block(body).map_or_else(Vec::new, |one| list(body, &one, "aliases"))
     }
 
     #[test]
