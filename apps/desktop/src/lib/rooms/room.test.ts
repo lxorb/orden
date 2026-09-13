@@ -120,7 +120,11 @@ function socketOf(): InstanceType<typeof sockets.FakeSocket> {
  *  `answer` is what the reader's rule says when the two have each written since that
  *  copy, which is the one thing a room cannot settle; `asked` records whether it came
  *  to that. What each rule answers is apart.test.ts. */
-function joining(file: string, words: string, { held = file, answer = 'offer' as Settling } = {}) {
+function joining(
+  file: string,
+  words: string,
+  { held = file, answer = 'offer' }: { held?: string; answer?: Settling } = {},
+) {
   const note = new SharedDoc(file)
   const server = new Server(words)
   const asked: string[] = []
