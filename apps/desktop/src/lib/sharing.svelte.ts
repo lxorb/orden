@@ -490,8 +490,11 @@ export const share = new Share()
 /** Whether this account owns the space on the server. Sharing and publishing
  *  both ask it and neither can do anything without it: there is nothing to share
  *  and nothing to put on the web until the folder has a copy on the account, and
- *  a space somebody shared is not the reader's to hand on. */
-export function ownsRemotely(space: Space): boolean {
+ *  a space somebody shared is not the reader's to hand on.
+ *
+ *  Not exported: the three questions below are what the app asks, and each of them
+ *  is a sentence about what a reader may do rather than about who owns a row. */
+function ownsRemotely(space: Space): boolean {
   return !!account.user && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }
 
