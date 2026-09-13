@@ -45,8 +45,9 @@ export const REGIONS = [
 export type Region = (typeof REGIONS)[number]
 
 /** The kinds of tab the bar under the note is left out over; see `hasStatusBar` at
- *  the foot of this file. */
-const WITHOUT_STATUS = new Set<TabKind>(['graph', 'canvas', 'pages'])
+ *  the foot of this file. A page note is not one of them: its bar carries the page
+ *  counter. */
+const WITHOUT_STATUS = new Set<TabKind>(['graph', 'canvas'])
 
 const RANK = new Map<string, number>(REGIONS.map((name, at) => [name, at]))
 
@@ -56,7 +57,7 @@ export function isRegion(value: string | null | undefined): value is Region {
 
 /** The regions on screen, in the order above. What arrives is whatever the page
  *  happens to hold - the sidebar may be shut, and the status bar is left out over a
- *  canvas, a page note and the graph - in whatever order it was collected, named
+ *  canvas and the graph - in whatever order it was collected, named
  *  once each. */
 function ordered(present: readonly string[]): Region[] {
   const kept = [...new Set(present.filter(isRegion))]
@@ -87,12 +88,17 @@ export function stepRegion(
 /** Whether the bar under the note is drawn over what is open now.
  *
  *  It says what is true of a note: how many words it has, which Vim mode the
- *  keyboard is in, whether the note was too long to parse. Three kinds of tab have
- *  no note for it to say that of - the graph is drawn from the space and holds no
- *  document at all, while a canvas and a page note hold the JSON of a file format,
- *  and counting the words of a file format is a number about nothing. So the bar is
- *  left out over all three rather than drawn empty, and F6 never lands on a region
- *  with nothing in it.
+ *  keyboard is in, whether the note was too long to parse. Two kinds of tab have no
+ *  note for it to say that of - the graph is drawn from the space and holds no
+ *  document at all, and a canvas holds the JSON of a file format, whose words are a
+ *  number about nothing. So the bar is left out over both rather than drawn empty,
+ *  and F6 never lands on a region with nothing in it.
+ *
+ *  A page note is the one that looks like those two and is not. It holds a file
+ *  format as well, and it has something of its own for the bar to say: which page
+ *  of how many is in front, which a reader scrolling a stack of paper cannot guess
+ *  and which is drawn nowhere else. The bar over one holds that and nothing else;
+ *  see `paper` in StatusBar.svelte.
  *
  *  Here rather than in the markup because three other places describe it - the table
  *  in docs/keyboard.md, `ordered` above and `regionsOn` in focus.ts - and a window

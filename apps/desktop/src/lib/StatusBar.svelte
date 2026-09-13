@@ -14,6 +14,15 @@
     vimMode = null,
   }: { doc?: string; reading?: boolean; vimMode?: VimMode | null } = $props()
 
+  /** Which page of how many, for a page note, or null for anything else. Read off the
+   *  surface's own store rather than pushed here by it: which page somebody is looking at
+   *  changes on every frame of a scroll, and a write per frame into what this bar has
+   *  already read is an update loop. See pages/showing.svelte.ts. */
+  const paper = $derived.by(() => {
+    const store = pages.current?.store
+    return store ? { at: store.showing, count: store.pages.length } : null
+  })
+
   /** Whether this note is long enough that the editor leaves the parse out of it,
    *  which is what colours the syntax and draws the live preview. Said here because
    *  a note that suddenly reads as plain source is a reader wondering what broke -
@@ -21,7 +30,7 @@
    *  nothing is wrong: the words are all there and typing at the end of it lands in
    *  the frame it was typed in, which is the whole of why. See `PARSED_AT_MOST` in
    *  packages/editor/src/modes.ts. */
-  const plain = $derived(tooLongToParse(doc.length))
+  const plain = $derived(!paper && tooLongToParse(doc.length))
 
   /** Whether the pointer is on the numbers. They are invisible until then, and
    *  counting the words of a large note is not something to do on the way past:
@@ -35,15 +44,6 @@
 
   /** Whether the numbers are on screen at all, by either road. */
   const asked = $derived(looking || held)
-
-  /** Which page of how many, for a page note, or null for anything else. Read off the
-   *  surface's own store rather than pushed here by it: which page somebody is looking at
-   *  changes on every frame of a scroll, and a write per frame into what this bar has
-   *  already read is an update loop. See pages/showing.svelte.ts. */
-  const paper = $derived.by(() => {
-    const store = pages.current?.store
-    return store ? { at: store.showing, count: store.pages.length } : null
-  })
 
   const counts = $derived(asked ? countText(doc) : null)
 
@@ -105,6 +105,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <footer
   class:looking={looking || held || reading || !!paper}
+  class:paper={!!paper}
   data-region="status"
   tabindex="0"
   aria-label={t('What this note is')}
@@ -284,11 +285,21 @@
     color: var(--muted-strong);
   }
 
-  /* There is no hover on a phone, so this never appears - but it still sits in
-     the corner catching taps meant for the button that does. Nor is there a
-     keyboard with modes on one. */
+  /* There is no hover on a phone, so the numbers never appear - and the corner
+     would still sit there catching taps meant for the button under it. Nor is there
+     a keyboard with modes on one. */
   :global([data-touch]) footer,
   :global([data-touch]) .mode {
     display: none;
+  }
+
+  /* Except over a page note, where the bar holds the one thing that shows unasked.
+     A page note is a pen and a tablet more often than it is anything else, and
+     which page of how many is drawn in no other place. It catches nothing: there
+     is nothing in it to press, and the pen's own bar is what the thumb is aiming
+     at down there. */
+  :global([data-touch]) footer.paper {
+    display: flex;
+    pointer-events: none;
   }
 </style>

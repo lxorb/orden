@@ -786,6 +786,35 @@ def check_counter(page: Page, label: str) -> None:
 
     count = len(pages_of(page))
     store_call(page, "s.turnTo(1)")
+
+    # The bar itself first. It was once left out over a page note - the kind was
+    # put in with the graph and a canvas, which have nothing for a bar to say -
+    # and the counter went with it, silently: this is the only place it is drawn,
+    # and a reader scrolling a stack of paper cannot guess which page they are on.
+    # See hasStatusBar in regions.ts.
+    bar = page.evaluate(
+        """() => {
+          const bar = document.querySelector('footer[data-region="status"], footer')
+          if (!bar) return null
+          const box = bar.getBoundingClientRect()
+          const counter = bar.querySelector('.page')
+          const spot = counter?.getBoundingClientRect()
+          return {
+            bar: { top: Math.round(box.top), height: Math.round(box.height) },
+            counter: spot ? { top: Math.round(spot.top), width: Math.round(spot.width) } : null,
+            inside: window.innerHeight,
+          }
+        }"""
+    )
+    if bar is None:
+        fail(f"[{label}] there is no status bar over a page note, so no page counter either")
+    else:
+        if bar["counter"] is None:
+            fail(f"[{label}] the status bar over a page note has no page counter in it")
+        elif bar["counter"]["width"] < 8 or bar["counter"]["top"] > bar["inside"]:
+            fail(f"[{label}] the page counter is not in view: {bar}")
+        say(f"[{label}] the bar and its counter: {bar}")
+
     said = page.locator("footer .page").inner_text() if page.locator("footer .page").count() else ""
 
     if said.replace(" ", "") != f"1/{count}":

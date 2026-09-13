@@ -128,12 +128,19 @@ describe('the bar under the note', () => {
     expect(hasStatusBar('web')).toBe(true)
   })
 
-  /** The graph holds no document at all; a canvas and a page note hold the JSON of
-   *  a file format, and the word count of JSON is a number about nothing. */
-  test('and left out over the three that have no words to count', () => {
+  /** The graph holds no document at all, and a canvas holds the JSON of a file
+   *  format whose word count is a number about nothing. */
+  test('and left out over the two that have nothing to say', () => {
     expect(hasStatusBar('graph')).toBe(false)
     expect(hasStatusBar('canvas')).toBe(false)
-    expect(hasStatusBar('pages')).toBe(false)
+  })
+
+  /** A page note holds a file format too, and it has one thing of its own to say:
+   *  which page of how many is in front. The bar is where that is written - see
+   *  `paper` in StatusBar.svelte - so leaving the bar out left the counter drawn
+   *  nowhere at all, in a surface a reader scrolls through page by page. */
+  test('and drawn over a page note, which is where the page counter lives', () => {
+    expect(hasStatusBar('pages')).toBe(true)
   })
 
   /** A window waiting for a note, rather than one showing something else. */

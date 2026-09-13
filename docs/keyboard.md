@@ -117,8 +117,9 @@ Nine, in the order the window draws them, which is the order Tab already walks:
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
 not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
-the graph, a canvas and a page note have no status bar - the bar counts the
-words of a note, and none of those three has a note for it to count; see
+the graph and a canvas have no status bar - the bar counts the words of a note,
+and neither of those has a note for it to count, while a page note keeps its bar
+for the one thing it does have to say, which page of how many is in front; see
 `hasStatusBar` in regions.ts, which is the one rule the window draws from - and
 most windows have no right side at all.
 
