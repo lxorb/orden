@@ -221,9 +221,23 @@ rooms.get('/:noteId', async (context) => {
   })
 })
 
-/** How many of somebody's open files one revocation reaches. Well past the tabs
- *  anybody keeps, and a bound on how many objects one request wakes. */
+/** How many of somebody's open files one revocation wakes at a time. A bound on
+ *  the fan-out of a single request rather than on the revocation itself; see
+ *  `MOST_ROUNDS`. */
 const MOST_OPEN = 50
+
+/** How many of those rounds it will do. Twenty of them is a thousand rooms, which
+ *  is far past what anybody has open - and past what somebody could open on purpose
+ *  to keep a socket the space has taken back.
+ *
+ *  The rounds are what this used to be missing. One query of fifty, and a member who
+ *  had fifty-one rooms of the space open kept a live socket on the rest: the checks
+ *  a socket was let in on are made at the handshake and never again, so those
+ *  sockets went on writing into the owner's notes until something else closed them.
+ *  A number was the right idea - the runtime cannot be asked which objects are
+ *  awake, and a revocation must not wake a whole space - but it belongs on the
+ *  request's width rather than on how much of the person's access ends. */
+const MOST_ROUNDS = 20
 
 /** Somebody's access to a space has ended, or narrowed to reading, and they may
  *  have its files open right now. The rooms are told inside the same request.
@@ -252,34 +266,49 @@ export async function roomsRevoked(
   const namespace = env.ROOMS
   if (!namespace || !who) return
 
-  const { results } = item
-    ? await env.DB.prepare(
-        'select note_id from room_sockets where space_id = ? and who = ? and note_id = ? limit ?',
-      )
-        .bind(spaceId, who, item, MOST_OPEN)
-        .all<{ note_id: string }>()
-    : await env.DB.prepare(
-        'select note_id from room_sockets where space_id = ? and who = ? limit ?',
-      )
-        .bind(spaceId, who, MOST_OPEN)
-        .all<{ note_id: string }>()
-
-  await Promise.all(
-    results.map(async ({ note_id: noteId }) => {
-      const room = namespace.get(namespace.idFromName(noteId))
-
-      try {
-        await room.fetch(
-          new Request(`https://rooms.invalid/${noteId}`, {
-            headers: { 'x-nib-revoked': who, 'x-nib-role': role },
-          }),
+  // One round at a time, ordered by the id so the next one starts where this ended:
+  // a page of rows rather than a page of a person's access. A round that came back
+  // short is the last one.
+  let after = ''
+  for (let round = 0; round < MOST_ROUNDS; round++) {
+    const { results } = item
+      ? await env.DB.prepare(
+          `select note_id from room_sockets
+            where space_id = ? and who = ? and note_id = ? and note_id > ?
+            order by note_id limit ?`,
         )
-      } catch {
-        // A room that cannot be reached right now leaves a socket open on
-        // something that is no longer true, which the next handshake corrects.
-        // The membership is already gone either way, and an owner taking
-        // somebody out must not fail because an object is unwell.
-      }
-    }),
-  )
+          .bind(spaceId, who, item, after, MOST_OPEN)
+          .all<{ note_id: string }>()
+      : await env.DB.prepare(
+          `select note_id from room_sockets
+            where space_id = ? and who = ? and note_id > ?
+            order by note_id limit ?`,
+        )
+          .bind(spaceId, who, after, MOST_OPEN)
+          .all<{ note_id: string }>()
+
+    if (!results.length) return
+
+    await Promise.all(
+      results.map(async ({ note_id: noteId }) => {
+        const room = namespace.get(namespace.idFromName(noteId))
+
+        try {
+          await room.fetch(
+            new Request(`https://rooms.invalid/${noteId}`, {
+              headers: { 'x-nib-revoked': who, 'x-nib-role': role },
+            }),
+          )
+        } catch {
+          // A room that cannot be reached right now leaves a socket open on
+          // something that is no longer true, which the next handshake corrects.
+          // The membership is already gone either way, and an owner taking
+          // somebody out must not fail because an object is unwell.
+        }
+      }),
+    )
+
+    if (results.length < MOST_OPEN) return
+    after = results[results.length - 1]?.note_id ?? ''
+  }
 }

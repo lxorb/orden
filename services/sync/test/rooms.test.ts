@@ -5,6 +5,7 @@ import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
+import { roomsRevoked } from '../src/rooms'
 import { writesOf } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
@@ -1780,5 +1781,61 @@ describe('a file that changed which kind of room it is', () => {
     await made.alarm()
 
     expect(await contentOf(noteId)).toBe('')
+  })
+})
+
+/** Who a revocation reaches, which is every file they have open rather than the
+ *  first fifty rows of them: the checks a socket was let in on are made at the
+ *  handshake and never again, so a room nobody told goes on writing. */
+describe('telling the rooms somebody has been taken out of a space', () => {
+  let told: TestEnv
+
+  afterEach(() => told.close())
+
+  /** Somebody holding `note-0000` upwards open, as the rooms wrote it down. */
+  function holding(open: number): void {
+    for (let at = 0; at < open; at++) {
+      told.db
+        .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)')
+        .run(`note-${String(at).padStart(4, '0')}`, 's1', 'u1', Date.now())
+    }
+  }
+
+  test('reaches every file they have open, however many that is', async () => {
+    const door = doorway()
+    told = testEnv({ ROOMS: door.ROOMS })
+
+    const open = 137
+    holding(open)
+
+    // A room of the same space held by somebody else, and one of another space
+    // held by this person: neither is this revocation's business.
+    for (const [noteId, spaceId, who] of [
+      ['note-9998', 's1', 'u2'],
+      ['note-9999', 's2', 'u1'],
+    ] as const) {
+      told.db
+        .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)')
+        .run(noteId, spaceId, who, Date.now())
+    }
+
+    await roomsRevoked(told, 's1', 'u1', 'none')
+
+    expect(door.asked).toHaveLength(open)
+    for (const headers of door.asked) {
+      expect(headers.get('x-nib-revoked')).toBe('u1')
+      expect(headers.get('x-nib-role')).toBe('none')
+    }
+  })
+
+  test('and only the one file, where a share was about one file', async () => {
+    const door = doorway()
+    told = testEnv({ ROOMS: door.ROOMS })
+    holding(3)
+
+    await roomsRevoked(told, 's1', 'u1', 'read', 'note-0001')
+
+    expect(door.asked).toHaveLength(1)
+    expect(door.asked[0]?.get('x-nib-role')).toBe('read')
   })
 })

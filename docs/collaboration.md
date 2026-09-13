@@ -438,7 +438,10 @@ account** below, which is where the rest of that lives.
 Two later ones belong to sharing as well. `0018_limits.sql` is `limits`, one row per
 ceiling and per thing counted, and `mailed_days`, which is which addresses have
 heard from Nib today; `0020_room_sockets.sql` is who has a file open, which is what
-lets a revocation reach the sockets it has to close.
+lets a revocation reach the sockets it has to close - all of them, in rounds of
+fifty rooms, because the fan-out of one request is what wants a ceiling and how
+much of somebody's access ends does not: fifty rows in one query left the
+fifty-first room open, and a room nobody told goes on writing.
 
 **One query answers everything.** `reachedSpace` in `spaces/space.ts` joins the
 space to the membership and returns the role, or nothing at all; `atLeast(role)`
