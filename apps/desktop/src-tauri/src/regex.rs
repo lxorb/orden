@@ -31,6 +31,7 @@
 //! gets typed, so the engine gives up rather than let the window stop answering.
 
 use std::cell::Cell;
+use std::sync::LazyLock;
 
 /// How many machine steps one note may spend on one pattern before the pattern
 /// gives up on it. Far more than any pattern a person means needs, and reached in
@@ -576,21 +577,41 @@ impl Kind {
         }
     }
 
-    /// Every character in the set, listed by asking the set itself so that the
-    /// list cannot drift from what a match tests against.
-    fn members(self) -> Vec<char> {
-        let ceiling = match self {
-            // Digits and word characters are ASCII, and the last of the spaces
-            // the browser counts is the byte order mark.
-            Kind::Digit | Kind::Word => 0x7f,
-            Kind::Space => 0xfeff,
-        };
-
-        (0..=ceiling)
-            .filter_map(char::from_u32)
-            .filter(|&c| self.holds(c))
-            .collect()
+    /// Every character in the set, worked out the first time one is asked for.
+    ///
+    /// Kept rather than listed again, because the answer never changes and reading
+    /// it is not free: the spaces are found by asking about sixty-five thousand
+    /// code points, and `first_of` asks once per set named in a class. A class may
+    /// hold a thousand of them, which is a pattern somebody can type, and a query
+    /// is compiled twice per keystroke.
+    fn members(self) -> &'static [char] {
+        match self {
+            Kind::Digit => &DIGITS,
+            Kind::Word => &WORDS,
+            Kind::Space => &SPACES,
+        }
     }
+}
+
+/// The three lists, each made the first time it is wanted; see `Kind::members`.
+static DIGITS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Digit));
+static WORDS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Word));
+static SPACES: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Space));
+
+/// Every character in one set, listed by asking the set itself so that the list
+/// cannot drift from what a match tests against.
+fn listed(kind: Kind) -> Vec<char> {
+    let ceiling = match kind {
+        // Digits and word characters are ASCII, and the last of the spaces the
+        // browser counts is the byte order mark.
+        Kind::Digit | Kind::Word => 0x7f,
+        Kind::Space => 0xfeff,
+    };
+
+    (0..=ceiling)
+        .filter_map(char::from_u32)
+        .filter(|&c| kind.holds(c))
+        .collect()
 }
 
 impl Class {
@@ -1090,7 +1111,7 @@ fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
                 if negated {
                     return None;
                 }
-                for c in kind.members() {
+                for &c in kind.members() {
                     spread(&mut out, c, fold)?;
                 }
             }
@@ -1348,7 +1369,7 @@ fn groups_in(node: &Node) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Match, Pattern, BUDGET};
+    use super::{Kind, Match, Pattern, BUDGET};
     use std::cell::Cell;
 
     /// One search on a budget of its own, which is what a case here is: the engine
@@ -1471,6 +1492,23 @@ mod tests {
         assert_eq!(first("[^abc]+", "abxy").as_deref(), Some("xy"));
         assert_eq!(first("[.*]+", "a.*b").as_deref(), Some(".*"));
         assert_eq!(first("[abc]", "xyz"), None);
+    }
+
+    /// A set is listed by asking it, and listed once: the spaces take sixty-five
+    /// thousand questions to find, and a class may name the set a thousand times
+    /// over. The saving is invisible in an answer, so what is checked is that a
+    /// second ask hands back the first list rather than making another.
+    #[test]
+    fn a_set_lists_itself_once() {
+        let spaces = Kind::Space.members();
+
+        assert!(std::ptr::eq(spaces, Kind::Space.members()));
+        assert!(spaces.contains(&' ') && spaces.contains(&'\t'));
+        assert!(!spaces.contains(&'a'));
+        // And the list is what the set itself says, which is the one thing it may
+        // not drift from.
+        assert!(spaces.iter().all(|&one| Kind::Space.holds(one)));
+        assert_eq!(Kind::Digit.members().len(), 10);
     }
 
     #[test]
