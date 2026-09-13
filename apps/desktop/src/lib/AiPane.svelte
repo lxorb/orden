@@ -17,7 +17,7 @@
   import { ai } from './ai/store.svelte'
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
-  import { apiRoot, KIND_NAMES, type Provider, type ProviderKind } from './ai/providers'
+  import { KIND_NAMES, type Provider, type ProviderKind, reachable } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
   import { message, t } from './i18n.svelte'
   import { dur } from './motion'
@@ -88,7 +88,7 @@
   /** Asks a provider what it has. The one network call this pane makes on purpose:
    *  a list of models is the first thing that tells somebody their key works. */
   async function refresh(provider: Provider) {
-    if (!apiRoot(provider)) return
+    if (!reachable(provider, keyed[provider.id] ?? false)) return
 
     asking = provider.id
     trouble = { ...trouble, [provider.id]: '' }
@@ -203,7 +203,7 @@
             {#if provider.model}<span class="hint">{provider.model}</span>{/if}
             <button
               class="pill"
-              disabled={asking === provider.id || !apiRoot(provider)}
+              disabled={asking === provider.id || !reachable(provider, keyed[provider.id] ?? false)}
               onclick={() => void refresh(provider)}
             >
               {asking === provider.id ? t('Asking…') : t('List models')}

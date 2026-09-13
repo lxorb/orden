@@ -99,6 +99,22 @@ export function usable(provider: Provider): boolean {
   return !!provider.model && !!apiRoot(provider)
 }
 
+/** Whether there is any point in a request to this provider yet.
+ *
+ *  The pane offers to list a provider's models, because a list of models is the
+ *  first thing that tells somebody their key works. It offered it before there
+ *  was a key too, and pressing it sent an unauthenticated request to Anthropic's
+ *  or OpenAI's own server and showed the 401 that came back. That request can
+ *  only fail, and it is a reader who has typed nothing yet telling somebody
+ *  else's server that they exist - which is not what an app that keeps keys on
+ *  the device and sends questions straight to the model should do with a press.
+ *
+ *  A compatible provider is the other case, and stays reachable without a key: a
+ *  model on this machine wants none, and the address is one the reader typed. */
+export function reachable(provider: Provider, keyed: boolean): boolean {
+  return !!apiRoot(provider) && (provider.kind === 'compatible' || keyed)
+}
+
 /** Where the list of models is. */
 export function modelsUrl(provider: Provider): string {
   return `${apiRoot(provider)}/models`

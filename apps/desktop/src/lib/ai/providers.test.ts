@@ -9,6 +9,7 @@ import {
   modelsIn,
   modelsUrl,
   type Provider,
+  reachable,
   troubleIn,
   usable,
 } from './providers'
@@ -75,6 +76,29 @@ describe('whether a provider can be asked', () => {
     expect(usable({ ...claude, model: '' })).toBe(false)
     expect(usable(local('http://localhost:11434'))).toBe(true)
     expect(usable(local(''))).toBe(false)
+  })
+})
+
+/** Whether asking this provider for its list of models can go anywhere yet.
+ *
+ *  The pane offers the list as the first thing that tells somebody their key
+ *  works, and it offered it before there was a key: pressing it sent an
+ *  unauthenticated request to Anthropic's own server and showed the 401 it came
+ *  back with. A request nobody can be answered is a request that should not
+ *  leave, on an app whose whole claim about models is that nothing goes anywhere
+ *  it was not sent. A model on this machine is the other case: it wants no key,
+ *  and the reader typed its address themselves. */
+describe('whether there is any point asking for the models', () => {
+  test('the hosted two want a key first', () => {
+    expect(reachable(claude, false)).toBe(false)
+    expect(reachable(openai, false)).toBe(false)
+    expect(reachable(claude, true)).toBe(true)
+    expect(reachable(openai, true)).toBe(true)
+  })
+
+  test('a model on this machine wants an address and nothing else', () => {
+    expect(reachable(local('http://localhost:11434'), false)).toBe(true)
+    expect(reachable(local(''), true)).toBe(false)
   })
 })
 
