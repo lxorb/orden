@@ -357,16 +357,21 @@
                 <span class="head">{row.head}</span>
               {:else}
                 {#each row.names as name (name)}
+                  <!-- What this icon is written as and what it is called, once
+                       each: the cell asked the first three times and the second
+                       twice, over a window of a few hundred cells. -->
+                  {@const written = value(name)}
+                  {@const label = called(name)}
                   <button
                     type="button"
                     class="cell"
-                    title={called(name)}
-                    aria-label={called(name)}
-                    class:active={sameIcon(value(name), worn)}
+                    title={label}
+                    aria-label={label}
+                    class:active={sameIcon(written, worn)}
                     class:at={cells[at] === name}
-                    onclick={() => chose(value(name))}
+                    onclick={() => chose(written)}
                   >
-                    <span class="glyph"><Icon icon={readIcon(value(name))} {tint} /></span>
+                    <span class="glyph"><Icon icon={readIcon(written)} {tint} /></span>
                   </button>
                 {/each}
               {/if}

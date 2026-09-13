@@ -60,16 +60,19 @@
   }}
 >
   {#each nodes as node (node.path)}
+    <!-- Whether this tag is showing what is under it, once: the row asked three
+         times, and the tree is every tag in the space with no window over it. -->
+    {@const open = workspace.isTagOpen(node.path)}
     <li>
       <div class="line">
         {#if node.children.length}
           <button
             class="twist"
-            aria-expanded={workspace.isTagOpen(node.path)}
+            aria-expanded={open}
             aria-label={node.name}
             onclick={() => workspace.toggleTag(node.path)}
           >
-            <span class="chevron"><Twist open={workspace.isTagOpen(node.path)} /></span>
+            <span class="chevron"><Twist {open} /></span>
           </button>
         {/if}
 
@@ -87,7 +90,7 @@
         </button>
       </div>
 
-      {#if node.children.length && workspace.isTagOpen(node.path)}
+      {#if node.children.length && open}
         <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
           <TagTree nodes={node.children} depth={depth + 1} />
         </div>

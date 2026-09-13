@@ -297,6 +297,12 @@
     ondrop={(event) => drop(event, tabs.length)}
   >
     {#each tabs as tab, at (tab.id)}
+      <!-- Which mark this tab wears, once: the rows asked three times over, and the
+           strip is drawn again whenever anything about the panes changes. -->
+      {@const wears = markOf(tab.kind)}
+      <!-- How many other devices are in this note, once and at most three: the
+           expression below it allocated a fresh array-like per tab per render. -->
+      {@const elsewhere = Math.min(rooms.present[tab.note.key] ?? 0, 3)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="tab"
@@ -342,14 +348,14 @@
                takes the room, and a tab kept open all day is one somebody knows
                by sight. The name is still what it says to a reader who cannot
                see it, and what the title shows. -->
-          {#if tab.pinned && markOf(tab.kind)}
+          {#if tab.pinned && wears}
             <span class="pin" aria-hidden="true">
               <!-- With the path where there is one, so a note that chose an icon
                    wears it here as well; see FileMark.svelte. -->
               {#if tab.path}
-                <FileMark mark={markOf(tab.kind) ?? 'note'} path={tab.path} />
+                <FileMark mark={wears} path={tab.path} />
               {:else}
-                <FileMark mark={markOf(tab.kind) ?? 'note'} />
+                <FileMark mark={wears} />
               {/if}
             </span>
           {/if}
@@ -373,7 +379,7 @@
                the text directly inside it, so the words were being cut through
                the middle of a letter. This is also the only part of the tab that
                gives way as the strip fills. -->
-          {#if !(tab.pinned && markOf(tab.kind))}
+          {#if !(tab.pinned && wears)}
             <span class="label">{tab.shown}</span>
           {/if}
           <!-- Not yours: this document is one somebody else shared on its own, and
@@ -386,14 +392,14 @@
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are
                already the whole sentence. -->
-          {#if rooms.present[tab.note.key]}
+          {#if elsewhere}
             <span
               class="here"
               role="img"
               aria-label={t('Also open elsewhere')}
               title={t('Also open elsewhere')}
             >
-              {#each { length: Math.min(rooms.present[tab.note.key] ?? 0, 3) } as _, at (at)}
+              {#each { length: elsewhere } as _, at (at)}
                 <span class="who" transition:fade={{ duration: dur(190) }}></span>
               {/each}
             </span>

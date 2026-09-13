@@ -227,6 +227,8 @@
       {:else if store.shown.length}
         <div class="grid">
           {#each store.shown as one (one.id)}
+            <!-- What the theme is for, once rather than twice. -->
+            {@const mood = moodOf(one)}
             <button
               class="card"
               onclick={() => {
@@ -252,8 +254,8 @@
                 <span class="who">
                   <span class="name">{one.name}</span>
                   <span class="by"
-                    >{one.author}{#if moodOf(one)}
-                      · {moodOf(one)}{/if}</span
+                    >{one.author}{#if mood}
+                      · {mood}{/if}</span
                   >
                 </span>
                 {@render mark(one)}

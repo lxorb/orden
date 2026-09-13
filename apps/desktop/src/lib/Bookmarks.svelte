@@ -283,6 +283,8 @@
     }}
   >
     {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
+      <!-- Whether a group is showing what is in it, once rather than twice. -->
+      {@const showing = workspace.isGroupOpen(row.mark.path)}
       <li>
         <!-- A group's twist and its name are two buttons rather than one,
              because they do two things: opening a group is not renaming it. The
@@ -293,11 +295,11 @@
             <button
               class="twist"
               style:--level={row.depth}
-              aria-expanded={workspace.isGroupOpen(row.mark.path)}
+              aria-expanded={showing}
               aria-label={row.label}
               onclick={() => workspace.toggleGroup(row.mark.path)}
             >
-              <span class="chevron"><Twist open={workspace.isGroupOpen(row.mark.path)} /></span>
+              <span class="chevron"><Twist open={showing} /></span>
             </button>
           {/if}
           <button

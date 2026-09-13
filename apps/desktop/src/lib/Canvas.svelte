@@ -1729,8 +1729,12 @@
          over. Sized in plane units so they are the same size on screen at any
          zoom. -->
     {#if portedBox}
+      <!-- The card's box once rather than once a side: which side a dot is on does
+           not change the card it is on, and this is worked out again on every frame
+           the pointer is over one. -->
+      {@const ported = boxOf(portedBox)}
       {#each SIDES as side (side)}
-        {@const point = sidePoint(boxOf(portedBox), side)}
+        {@const point = sidePoint(ported, side)}
         <div
           class="port"
           style:left="{point.x}px"

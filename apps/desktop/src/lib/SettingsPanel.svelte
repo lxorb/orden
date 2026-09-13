@@ -497,6 +497,11 @@
 <!-- One row per setting, whatever kind it is. -->
 {#snippet row(field: Field, where?: string)}
   {#if field.kind === 'switch'}
+    <!-- What the setting says now, read once. `get` reaches into a store - the
+         modes, the preferences, the theme - and this row asked it twice, the slider
+         three times, and a segmented control twice per option. Inside the branch
+         rather than above it, so each kind's answer is that kind's own type. -->
+    {@const held = field.get()}
     <!-- The whole row is the switch, so there is nothing to miss. A switch and
          not a button, because a row may carry the `i` that explains it and a
          button may hold nothing else anybody can press. -->
@@ -504,7 +509,7 @@
       class="setting pressable"
       role="switch"
       tabindex="0"
-      aria-checked={field.get()}
+      aria-checked={held}
       onclick={() => field.set(!field.get())}
       onkeydown={(event) => {
         if (event.key !== ' ' && event.key !== 'Enter') return
@@ -513,19 +518,20 @@
       }}
     >
       {@render named(field, where)}
-      <span class="nib-switch" class:on={field.get()} aria-hidden="true"></span>
+      <span class="nib-switch" class:on={held} aria-hidden="true"></span>
     </div>
   {:else if field.kind === 'slider'}
+    {@const held = field.get()}
     <div class="setting sliding">
       {@render named(field, where)}
-      <span class="value">{field.get()}{field.unit ?? ''}</span>
+      <span class="value">{held}{field.unit ?? ''}</span>
       <input
         class="slider nib-slider"
         type="range"
         min={field.min}
         max={field.max}
         step={field.step}
-        value={field.get()}
+        value={held}
         aria-label={field.label}
         style:--fill="{fraction(field)}%"
         oninput={(event) => field.set(Number(event.currentTarget.value))}
@@ -536,6 +542,7 @@
          control; see .nib-segmented in the themes package. A choice the setting
          cannot honour right now is disabled rather than left out, so the row does
          not change shape as themes are chosen. -->
+    {@const held = field.get()}
     <div class="setting">
       {@render named(field, where)}
       <div class="nib-segmented" role="radiogroup" aria-label={field.label} use:segmented>
@@ -543,8 +550,8 @@
           <button
             type="button"
             role="radio"
-            aria-checked={one.value === field.get()}
-            class:on={one.value === field.get()}
+            aria-checked={one.value === held}
+            class:on={one.value === held}
             disabled={one.disabled}
             onclick={() => field.set(one.value)}
           >
