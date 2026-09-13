@@ -23,6 +23,17 @@ import { describe, expect, test } from 'vitest'
  *  and forty-three fence languages for a note with no fence in it, and the HTML
  *  converter for a paste of plain text. Each is one edge below.
  *
+ *  Batch 118 took the built figure from 1.52 megabytes to 1.35, and that one was not an
+ *  edge of ours at all: `@codemirror/lang-markdown` imports `@codemirror/lang-html` for
+ *  the raw blocks and inline tags in a note, which brings the CSS and JavaScript
+ *  grammars and the LR parser runtime with it - a hundred and sixty-seven kilobytes,
+ *  fourteen milliseconds of the launch measured in Chrome, for the notes that have a
+ *  tag in them. What that package asks for now is a door of nib's own, said once in the
+ *  root manifest; see packages/lang-html. Which is why the last two tests here are
+ *  about a manifest and a dynamic import rather than about this graph: the edge that
+ *  holds those five packages out is inside a dependency, where no walk of our own
+ *  source can see it.
+ *
  *  Each of those is one edge in this graph, and any of them can come back by
  *  accident: a barrel import instead of a file, a type that was not imported as a
  *  type, a helper moved into a module that happens to sit behind a library. So the
@@ -134,12 +145,16 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,083,670 bytes over 382 files as this is written, measured on 2026-09-13, against
- *  1,521,376 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  3,084,181 bytes over 382 files as this is written, measured on 2026-09-13, against
+ *  1,354,371 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
  *  shell does not.
+ *
+ *  The two figures move independently, which is the point of having both: batch 118
+ *  took a hundred and sixty-seven kilobytes out of the built one and put five hundred
+ *  bytes of comment into this one, because what it moved was a library's own import.
  *
  *  Our own source only, and the library names below instead, because what a package in
  *  `node_modules` weighs is not something this file can read - and because the
@@ -213,6 +228,19 @@ describe('what the app evaluates before it draws anything', () => {
     // packages/editor/src/paste.ts.
     ['turndown', 'the HTML converter'],
     ['turndown-plugin-gfm', "the converter's GFM rules"],
+    // Batch 118's five, which arrive with the first note that has a tag in it. The HTML
+    // grammar is what colours a raw block or an inline tag, and it brings the other four
+    // with it: CSS and JavaScript for what a `<style>` and a `<script>` inside it hold,
+    // and the LR parser runtime all three are built on, which nothing else eager needs -
+    // markdown's own parser is written by hand. Reached through packages/lang-html, and
+    // through the fences that name them; never from here.
+    ['@codemirror/lang-html', 'the HTML grammar'],
+    ['@codemirror/lang-css', 'the CSS grammar'],
+    ['@codemirror/lang-javascript', 'the JavaScript grammar'],
+    ['@lezer/html', "HTML's own"],
+    ['@lezer/css', "CSS's own"],
+    ['@lezer/javascript', "JavaScript's own"],
+    ['@lezer/lr', 'the parser runtime under all three'],
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
@@ -299,5 +327,37 @@ describe('what the app evaluates before it draws anything', () => {
     ]) {
       expect([...graph.packages], wanted).toContain(wanted)
     }
+  })
+
+  /** The markdown mode above is why the HTML grammar has to be kept out from inside a
+   *  dependency rather than from here.
+   *
+   *  `markdown()` builds `html({ matchClosingTags: false })` at module level for the raw
+   *  blocks and inline tags in a note, so the import stands whether or not anybody asks
+   *  for it - and the export that reads it cannot be dropped either, because
+   *  `@codemirror/language-data` names `markdown()` for the ```markdown fence, which
+   *  keeps every export of that module alive in whatever chunk holds it. The editor
+   *  holds it in the first chunk: the base parser is in it, and so are the two keys that
+   *  continue a list and take a level of markup off.
+   *
+   *  So the grammar is substituted instead, once, in the root manifest. These two are
+   *  that edge: the manifest still says it, and the door still asks for the grammar
+   *  rather than importing it. Either one gone and the five packages above are back in
+   *  front of the first paint, with nothing else in this file any the wiser. */
+  const OVERRIDE = '@codemirror/lang-markdown>@codemirror/lang-html'
+  const DOOR = join(ROOT, 'packages/lang-html/src/index.ts')
+
+  test('and the HTML grammar comes through nib’s own door, as the manifest says', () => {
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+      pnpm?: { overrides?: Record<string, string> }
+    }
+
+    expect(manifest.pnpm?.overrides?.[OVERRIDE]).toBe('workspace:@nib/lang-html@*')
+    expect(existsSync(DOOR)).toBe(true)
+  })
+
+  test('and the door asks for the grammar rather than importing it', () => {
+    expect(asked(DOOR)).not.toContain('@codemirror/lang-html')
+    expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
   })
 })

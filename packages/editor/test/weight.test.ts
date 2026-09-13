@@ -15,6 +15,15 @@ import { describe, expect, test } from 'vitest'
 
 const MARKDOWN = fileURLToPath(new URL('../../markdown/src/', import.meta.url))
 
+/** The door the HTML grammar comes through, which is the other thing showing a note
+ *  used to load: a raw block or an inline tag in it is coloured by
+ *  `@codemirror/lang-html`, and `@codemirror/lang-markdown` imports that outright - with
+ *  the CSS and JavaScript grammars nested inside it, and the LR parser runtime under all
+ *  three. What that package is handed instead is this, said once in the root manifest;
+ *  see packages/lang-html for the whole of the reasoning, and the last two tests in
+ *  apps/desktop/test/weight.test.ts for the edge itself. */
+const DOOR = fileURLToPath(new URL('../../lang-html/src/index.ts', import.meta.url))
+
 /** Every module reached from a file, and every package any of them asks for.
  *
  *  Read off the source rather than out of a bundle, so the answer is the same
@@ -86,6 +95,24 @@ describe('what showing a note loads', () => {
       expect(names(files), entry).not.toContain('maths.ts')
       expect(names(files), entry).not.toContain('eager.ts')
     }
+  })
+
+  /** And the HTML grammar is asked for rather than imported: one module, whose only
+   *  mention of the grammar is inside a `import(...)`. A static import here would put
+   *  five packages back in front of the first paint, for the notes that have a tag in
+   *  them - which is exactly what it is here to stop. */
+  test('and the HTML grammar is a door, not an import', () => {
+    const { files, packages } = graphOf(DOOR)
+
+    expect(names(files)).toEqual(['index.ts'])
+    expect(packages).not.toContain('@codemirror/lang-html')
+    expect([...packages].sort()).toEqual([
+      '@codemirror/autocomplete',
+      '@codemirror/language',
+      '@codemirror/state',
+      '@codemirror/view',
+      '@lezer/common',
+    ])
   })
 
   test('while the eager pair still holds both, for the Worker that has no wait', () => {
