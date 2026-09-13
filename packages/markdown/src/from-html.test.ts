@@ -167,6 +167,49 @@ describe('a page as markdown', () => {
     ).toBe('```go\nx := 1\n```')
   })
 
+  /** MathML says what a formula means and markdown cannot write that down, but the
+   *  TeX it was built from travels inside it. Without this a formula arrived as the
+   *  letters it happened to be made of, or as nothing at all. */
+  test('a formula arrives as the TeX the page built it from', () => {
+    const html =
+      '<p>the equality <math alttext="e^{i\\pi}+1=0"><semantics>' +
+      '<annotation encoding="application/x-tex">e^{i\\pi}+1=0</annotation>' +
+      '</semantics></math> where</p>'
+
+    expect(htmlToMarkdown(html)).toBe('the equality $e^{i\\pi}+1=0$ where')
+  })
+
+  test('the element says the TeX when nothing inside it does', () => {
+    expect(htmlToMarkdown('<p>a <math alttext="x^2"><mi>x</mi></math> b</p>')).toBe('a $x^2$ b')
+  })
+
+  /** A formula with a whole block to itself is a block, and one a sentence runs
+   *  through is part of the sentence however the page draws it: `$$` in the middle
+   *  of a line is a formula to nobody. */
+  test('a formula alone in its block is written as a block', () => {
+    const html = '<p>words</p><p><math alttext="e^{i\\pi}+1=0"><mi>e</mi></math></p><p>after</p>'
+
+    expect(htmlToMarkdown(html)).toBe('words\n\n$$\ne^{i\\pi}+1=0\n$$\n\nafter')
+  })
+
+  test('a formula in a heading stays inside the heading', () => {
+    expect(htmlToMarkdown('<h2><math alttext="x=1"><mi>x</mi></math></h2>')).toBe('## $x=1$')
+  })
+
+  test('a dollar inside a formula cannot close it early', () => {
+    expect(htmlToMarkdown('<p>a <math alttext="x=$5"><mi>x</mi></math> b</p>')).toBe('a $x=\\$5$ b')
+
+    // One the page had already escaped stays as it is; escaping it again would
+    // leave a backslash of its own in the formula.
+    expect(htmlToMarkdown('<p>a <math alttext="x=\\$5"><mi>x</mi></math> b</p>')).toBe(
+      'a $x=\\$5$ b',
+    )
+  })
+
+  test('a formula that says no TeX keeps the letters it was made of', () => {
+    expect(htmlToMarkdown('<p>a <math><mi>x</mi></math> b</p>')).toBe('a x b')
+  })
+
   test('a block holding nothing is nothing to fence', () => {
     expect(htmlToMarkdown('<pre>  </pre>')).toBe('')
   })

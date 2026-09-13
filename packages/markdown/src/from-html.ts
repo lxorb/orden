@@ -53,6 +53,48 @@ export interface FromHtmlOptions {
   image?: (source: string, alt: string) => string
 }
 
+/** The TeX a formula carries about itself.
+ *
+ *  MathML says what a formula means and markdown has no way of writing that down,
+ *  but every renderer that emits MathML keeps the source it was built from - as an
+ *  annotation inside it, which is where the MathML standard puts it, or as
+ *  `alttext` on the element. KaTeX, MathJax and MediaWiki all write both. */
+function texOf(maths: Element): string {
+  const annotated = maths.querySelector('annotation[encoding="application/x-tex"]')
+  const said = annotated?.textContent ?? maths.getAttribute('alttext') ?? ''
+
+  return said.replace(/\s+/g, ' ').trim()
+}
+
+/** The elements a formula can have a line of its own inside. Turndown's own list
+ *  of what a blank line goes around, narrowed to the ones a page's prose nests a
+ *  formula in; a heading is deliberately not among them, because a formula in a
+ *  heading is part of the heading and not a block under it. */
+const OWNS_A_LINE = new Set(['P', 'DIV', 'DD', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'SECTION', 'BODY'])
+
+const HEADING = /^H[1-6]$/
+
+/** Whether the formula is the whole of the block it sits in.
+ *
+ *  What decides between the two ways of writing one down, and the page's own
+ *  `display` is not it: a site draws a formula on a line of its own with CSS while
+ *  leaving it inside the sentence it belongs to, and `$$` in the middle of a
+ *  sentence is not a formula to any reader of markdown. So the question is whether
+ *  anything else shares the block - the words before and after it, in the page's
+ *  own tree. */
+function standsAlone(maths: Element): boolean {
+  const said = (maths.textContent ?? '').trim()
+  let at: Element | null = maths.parentElement
+
+  while (at && !OWNS_A_LINE.has(at.nodeName)) {
+    if (HEADING.test(at.nodeName)) return false
+    if ((at.textContent ?? '').trim() !== said) return false
+    at = at.parentElement
+  }
+
+  return !!at && (at.textContent ?? '').trim() === said
+}
+
 /** A fence long enough to hold the code, whatever backticks the code contains. */
 function fenceFor(code: string): string {
   const longest = [...code.matchAll(/`+/g)].reduce((most, run) => Math.max(most, run[0].length), 0)
@@ -325,6 +367,28 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       const fence = fenceFor(code)
       return `\n\n${fence}${languageOf(node)}\n${code}\n${fence}\n\n`
+    },
+  })
+
+  // A formula, as the `$…$` this editor and Obsidian both draw. MathML is what a
+  // page renders one as, and the TeX it was built from travels inside it, so the
+  // note keeps the formula rather than the letters it was made of: a clipped
+  // Euler's identity is `e^{i\pi}+1=0` and not `eiπ+1=0`.
+  //
+  // Written by the rule rather than as text, because text is escaped: every `\`
+  // in the formula would come back doubled and the note would draw nothing.
+  service.addRule('maths', {
+    filter: 'math',
+    replacement: (content, node) => {
+      const tex = texOf(node as Element)
+      if (!tex) return content
+
+      if (standsAlone(node as Element)) return `\n\n$$\n${tex}\n$$\n\n`
+
+      // A dollar inside the formula is the one thing that would close it early,
+      // and `\$` is how TeX writes one anyway. One that the page had already
+      // escaped is left alone, or the escape would come back escaping itself.
+      return `$${tex.replace(/(?<!\\)\$/g, '\\$')}$`
     },
   })
 

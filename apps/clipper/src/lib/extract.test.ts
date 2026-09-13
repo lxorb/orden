@@ -169,6 +169,32 @@ describe('cleaning', () => {
     expect(page.body.innerHTML).toBe('<p>keep</p>')
   })
 
+  /** A page writes a formula out of sight and draws a picture of it instead, and
+   *  both copies used to go: the extractor drops what a reader cannot see and the
+   *  picture says it is decoration, so the sentence around the formula was left
+   *  with a hole in it. */
+  test('brings a hidden formula back into sight, wrapper and all', () => {
+    const page = pageOf(
+      '<p>the equality <span class="mathml" style="display: none;">' +
+        '<math alttext="e^{i\\pi}+1=0"><mi>e</mi></math></span>' +
+        '<img src="f.svg" aria-hidden="true" alt="e^{i\\pi}+1=0"> where</p>',
+    )
+    clean(page.body)
+
+    expect(page.querySelector('.mathml')?.getAttribute('style')).toBe(null)
+    expect(page.querySelectorAll('math')).toHaveLength(1)
+    expect(page.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  test('leaves a wrapper that holds more than the formula hidden', () => {
+    const page = pageOf(
+      '<div aria-hidden="true"><p>words</p><math alttext="x"><mi>x</mi></math></div>',
+    )
+    clean(page.body)
+
+    expect(page.querySelectorAll('math')).toHaveLength(0)
+  })
+
   test('keeps a task list tick, which is the one field that means something', () => {
     const page = pageOf('<li><input type="checkbox"><input type="text"></li>')
     clean(page.body)

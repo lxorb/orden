@@ -153,8 +153,51 @@ function bestSource(image: Element): string | null {
   return src || null
 }
 
+/** This element, brought back into sight: the three ways an element hides itself
+ *  taken off it. A class that hides it is the stylesheet's business, and the
+ *  stylesheet is not here. */
+function unhide(element: Element): void {
+  element.removeAttribute('hidden')
+  element.removeAttribute('aria-hidden')
+
+  const left = (element.getAttribute('style') ?? '')
+    .replace(/(?:display|visibility)\s*:[^;]*;?/gi, '')
+    .trim()
+
+  if (left) element.setAttribute('style', left)
+  else element.removeAttribute('style')
+}
+
+/** Formulas, kept.
+ *
+ *  A page writes a formula twice: once as MathML, which it then hides, and once as
+ *  a picture for whoever cannot draw MathML, which it marks as decoration. Both
+ *  copies were thrown away - the extractor drops what a reader cannot see, and
+ *  `clean` drops what the page calls decoration - and the note was left with a hole
+ *  where the formula had been: "is the equality where", and nothing after it.
+ *
+ *  So the MathML is brought back into sight before anything reads the page, and
+ *  with it the wrappers it sits alone inside, which is where a page does the hiding.
+ *  Only those: an ancestor holding anything else is a part of the page and not this
+ *  formula's coat. The picture beside it still goes, because the formula is about to
+ *  be written as `$…$`, and saying it twice would upload a picture of what the note
+ *  already holds. */
+export function keepMaths(root: ParentNode): void {
+  for (const formula of root.querySelectorAll('math')) {
+    let at: Element | null = formula
+
+    while (at) {
+      unhide(at)
+
+      const above: Element | null = at.parentElement
+      at = above?.children.length === 1 ? above : null
+    }
+  }
+}
+
 /** What a note never contains, plus what the page itself says is decoration. */
 export function clean(root: ParentNode): void {
+  keepMaths(root)
   for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
 }
 
@@ -254,6 +297,10 @@ function readable(
   // clipping serve their photographs; and it resolves what is left against the
   // page's address rather than against whatever the page said its base was.
   absolutise(clone.body, base)
+
+  // Also before it, and for the same reason: the extractor drops what a reader
+  // cannot see, and a formula is written out of sight.
+  keepMaths(clone.body)
 
   // Readability strips every class by default, and one of them carries meaning
   // the note wants: `language-rust` on a code block is how the fence learns
