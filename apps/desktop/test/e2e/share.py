@@ -476,7 +476,13 @@ def open_the_share_sheet(page: Page, name: str = SPACE):
     """The Share sheet, opened the way anybody opens it: the space's own menu, on
     its row in the switcher."""
     space_row(page, name).locator(".more").click()
-    page.get_by_role("menuitem", name="Share", exact=True).click()
+    # The menu first, then the row in it. Which rows a menu offers depends on what
+    # the app knows about the item, so the two are separate waits: a menu that never
+    # opened and a menu with no Share in it are different things to be told about.
+    page.wait_for_selector('[role="menu"]:visible', timeout=10_000)
+    share = page.get_by_role("menuitem", name="Share", exact=True)
+    share.wait_for(state="visible", timeout=30_000)
+    share.click()
 
     sheet = page.get_by_role("dialog")
     sheet.wait_for(state="visible", timeout=10_000)
@@ -612,7 +618,10 @@ def open_the_file_sheet(page: Page, path: str):
     )
 
     tree_row(page, path).click(button="right")
-    page.get_by_role("menuitem", name="Share", exact=True).click()
+    page.wait_for_selector('[role="menu"]:visible', timeout=10_000)
+    share = page.get_by_role("menuitem", name="Share", exact=True)
+    share.wait_for(state="visible", timeout=30_000)
+    share.click()
 
     sheet = page.get_by_role("dialog")
     sheet.wait_for(state="visible", timeout=10_000)

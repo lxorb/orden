@@ -1062,8 +1062,15 @@ class Lane:
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
             # Said every time: a first visit has no session behind it and opens on
-            # whichever panel the app starts with.
-            page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+            # whichever panel the app starts with. Asked for rather than pressed,
+            # because `showPanel` is what a key does and a key toggles: the first of
+            # these visits writes a sitting with the tree open, and saying it again on
+            # the visit after that shut the sidebar instead - which is a file list
+            # that never appears. See `showPanel` in workspace.svelte.ts.
+            page.evaluate(
+                "() => { const ws = window.nibApp.workspace;"
+                " if (ws.panel !== 'tree') ws.showPanel('tree') }"
+            )
             page.wait_for_selector("aside .row", timeout=60000)
 
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")
