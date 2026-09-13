@@ -44,6 +44,16 @@ export interface FoundLink extends Wikilink {
   /** Where `target` sits inside it, which is the only part a rename rewrites. */
   targetFrom: number
   targetTo: number
+  /** Which line it is on, counting from zero.
+   *
+   *  Carried out of here because this already knows it: the walk that finds the
+   *  links goes down the note line by line and has the number in hand. A caller
+   *  that wanted it used to count the newlines before the link instead, which is a
+   *  pass down the note per link - four hundred megabytes read for a four hundred
+   *  kilobyte note with a thousand links in it. See scan-note.perf.test.ts in the
+   *  app, and `link.line = index` in links.rs, which is the same answer on the
+   *  disk side. */
+  line: number
 }
 
 /** Everything between the brackets of a wikilink, in one piece. `[` and `]` are
@@ -337,7 +347,7 @@ export function findLinks(text: string): FoundLink[] {
   const found: FoundLink[] = []
 
   for (const row of lines(text)) {
-    if (!row.code) collect(withoutCode(row.text), row.from, found)
+    if (!row.code) collect(withoutCode(row.text), row.from, row.line, found)
   }
 
   return found
@@ -394,7 +404,7 @@ function* lines(text: string): Generator<Row> {
 }
 
 /** The links on one line of prose, added in the order they were written. */
-function collect(line: string, offset: number, found: FoundLink[]) {
+function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   const here: FoundLink[] = []
 
   for (const match of line.matchAll(WIKILINK)) {
@@ -415,6 +425,7 @@ function collect(line: string, offset: number, found: FoundLink[]) {
       to: from + whole.length,
       targetFrom,
       targetTo: targetFrom + link.target.length,
+      line: at,
     })
   }
 
@@ -446,6 +457,7 @@ function collect(line: string, offset: number, found: FoundLink[]) {
       to: from + whole.length,
       targetFrom,
       targetTo: targetFrom + target.length,
+      line: at,
     })
   }
 

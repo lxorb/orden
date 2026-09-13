@@ -92,7 +92,11 @@ export function scanNote(path: string, content: string): ScannedNote {
       block: link.block,
       alias: link.alias,
       embed: link.embed,
-      line: lineAt(content, link.from),
+      // Off the link rather than worked out again: the pass that found it walked
+      // the note line by line and knew which line it was on. See `line` on
+      // `FoundLink`, and scan-note.perf.test.ts for what counting the newlines
+      // before every link cost a note with a thousand of them.
+      line: link.line,
       text: contextAt(content, link.from),
     })),
   }
@@ -183,16 +187,6 @@ export function scanCanvas(path: string, content: string): ScannedNote {
  *  The twin of `note_tags` in links.rs. */
 function noteTags(content: string): string[] {
   return [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
-}
-
-/** Which line an offset falls on, counting from zero. */
-function lineAt(text: string, at: number): number {
-  let line = 0
-  for (let found = text.indexOf('\n'); found !== -1 && found < at;) {
-    line++
-    found = text.indexOf('\n', found + 1)
-  }
-  return line
 }
 
 /** The line an offset sits on, as the context a row is read in. */
