@@ -500,9 +500,7 @@ describe('saying Copied for a moment', () => {
  *  a unit after it. */
 describe('bytes said as words', () => {
   test('are said by one function, so a small note is not rounded up to a kilobyte', () => {
-    const own = components
-      .filter((one) => /\/ *\(?1024/.test(one.text))
-      .map((one) => one.name)
+    const own = components.filter((one) => /\/ *\(?1024/.test(one.text)).map((one) => one.name)
 
     expect(own).toEqual([])
   })

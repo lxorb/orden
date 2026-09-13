@@ -2176,8 +2176,8 @@ describe('whether this machine holds anything worth asking about', () => {
   })
 
   afterEach(() => {
-    delete notes[SEED]
-    delete notes[MINE]
+    delete notes['/Notes/Read me.md']
+    delete notes['/Notes/mine.md']
     workspace.tree = null
   })
 
