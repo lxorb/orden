@@ -118,7 +118,7 @@
   {#each ai.providers as provider (provider.id)}
     <div class="card" transition:slide={{ duration: dur(160) }}>
       <!-- What it is, and whether it is the one a block uses without being told. -->
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{named(provider)}</span>
         <div class="row">
           {#if ai.defaultId === provider.id}
@@ -133,7 +133,7 @@
       </div>
 
       {#if provider.kind === 'compatible'}
-        <label class="setting">
+        <label class="nib-setting setting">
           <span class="name">{t('Name')}</span>
           <input
             class="nib-field inline"
@@ -144,7 +144,7 @@
           />
         </label>
 
-        <label class="setting">
+        <label class="nib-setting setting">
           <span class="name">{t('Base URL')}</span>
           <input
             class="nib-field inline"
@@ -162,7 +162,7 @@
 
       <!-- The key. Shown as set and never shown again: a field that hands a key back
            is a field that can copy one out of somebody else's window. -->
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('API key')}</span>
         {#if keyed[provider.id]}
           <div class="row">
@@ -186,7 +186,7 @@
         {/if}
       </div>
 
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Model')}</span>
         {#if models[provider.id]?.length}
           <div class="pick">
@@ -246,7 +246,7 @@
 {#if glassesKey.set}
   <h3>{t('OpenAI key')}</h3>
   <div class="card">
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">{t('Used by the glasses')}</span>
       <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
     </div>
@@ -280,22 +280,6 @@
   }
 
   /* Name on the left, control on the right, one line each. */
-  .setting {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    min-height: 38px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
-  }
 
   .setting .name {
     flex: 1;

@@ -177,7 +177,7 @@
   <p class="hint">{t('This service cannot keep a second factor.')}</p>
 {:else}
   <div class="card">
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">{t('Ask for a code from an app')}</span>
       {#if factor?.on}
         <span class="text">{t('On')}</span>
@@ -200,7 +200,7 @@
         <figure class="square">{@html square}</figure>
       {/if}
       <Copyable value={secret.secret} label={t('Secret')} />
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Code from the app')}</span>
         <input
           class="inline narrow"
@@ -234,11 +234,11 @@
 
   {#if factor?.on}
     <div class="card">
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Recovery codes left')}</span>
         <span class="text">{factor.codesLeft}</span>
       </div>
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Code from the app')}</span>
         <input
           class="inline"
@@ -268,7 +268,7 @@
 
 <div class="card">
   {#each sessions as session (session.id)}
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">
         {session.name || t('A device')}
         {#if session.current}<small>{t('this one')}</small>{/if}
@@ -304,23 +304,6 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-  }
-
-  .setting {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    min-height: 38px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
   }
 
   .setting .name {

@@ -145,7 +145,7 @@
 <h3>{t('When the same note was written twice')}</h3>
 
 <div class="card">
-  <div class="setting">
+  <div class="nib-setting setting">
     <span class="name">{t('On two devices')}</span>
     <div class="pick">
       <Select
@@ -168,7 +168,7 @@
 <h3>{t('History on the account')}</h3>
 
 <div class="card">
-  <div class="setting">
+  <div class="nib-setting setting">
     <span class="name">{t('Keep versions')}</span>
     <div class="pick">
       <Select
@@ -246,7 +246,7 @@
 <h3>{t('Go back')}</h3>
 
 <div class="card">
-  <div class="setting">
+  <div class="nib-setting setting">
     <span class="name">{t('This space, as it was')}</span>
     <div class="pick">
       <Select
@@ -331,22 +331,6 @@
   }
 
   /* Name on the left, control on the right, one line each. */
-  .setting {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    min-height: 38px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
-  }
 
   .setting .name {
     flex: 1;

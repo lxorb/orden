@@ -469,7 +469,7 @@
         {#if hit.kind === 'field'}
           {@render row(hit.field, hit.pane.label)}
         {:else}
-          <button class="setting link" onclick={() => go(hit.section)}>
+          <button class="nib-setting setting link" onclick={() => go(hit.section)}>
             <span class="name">{hit.label}<small>{titleOf(hit.section)}</small></span>
             <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
           </button>
@@ -506,7 +506,7 @@
          not a button, because a row may carry the `i` that explains it and a
          button may hold nothing else anybody can press. -->
     <div
-      class="setting pressable"
+      class="nib-setting setting pressable"
       role="switch"
       tabindex="0"
       aria-checked={held}
@@ -522,7 +522,7 @@
     </div>
   {:else if field.kind === 'slider'}
     {@const held = field.get()}
-    <div class="setting sliding">
+    <div class="nib-setting setting sliding">
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
       <input
@@ -543,7 +543,7 @@
          cannot honour right now is disabled rather than left out, so the row does
          not change shape as themes are chosen. -->
     {@const held = field.get()}
-    <div class="setting">
+    <div class="nib-setting setting">
       {@render named(field, where)}
       <div class="nib-segmented" role="radiogroup" aria-label={field.label} use:segmented>
         {#each field.options as one (one.value)}
@@ -564,7 +564,7 @@
     <!-- A line somebody types. The placeholder is what the app answers to with
          nothing typed, so an empty field is the default put back and the reset is
          a field that is already there rather than a button beside it. -->
-    <label class="setting">
+    <label class="nib-setting setting">
       {@render named(field, where)}
       <input
         class="inline"
@@ -578,7 +578,7 @@
       />
     </label>
   {:else}
-    <div class="setting">
+    <div class="nib-setting setting">
       {@render named(field, where)}
       <div class="pick">
         <Select
@@ -601,7 +601,7 @@
 {#snippet dictionary()}
   <h3>{t('Your words')}</h3>
   <div class="card">
-    <div class="setting words">
+    <div class="nib-setting setting words">
       <span class="name"><span class="what">{t('Words')}</span></span>
       {#if modes.spellWords.length}
         <div class="chips">
@@ -683,7 +683,7 @@
     {#if account.user}
       <h3>{t('Account')}</h3>
       <div class="card">
-        <label class="setting">
+        <label class="nib-setting setting">
           <span class="name">{t('Display name')}</span>
           <input
             class="inline"
@@ -693,7 +693,7 @@
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
-        <div class="setting">
+        <div class="nib-setting setting">
           <span class="name">{t('Email')}</span>
           <span class="text">{account.user.email}</span>
         </div>
@@ -748,7 +748,7 @@
            thing they own is the name the others in the space see. -->
       <h3>{t('Account')}</h3>
       <div class="card">
-        <label class="setting">
+        <label class="nib-setting setting">
           <span class="name">{t('Your name')}</span>
           <input
             class="inline"
@@ -802,7 +802,7 @@
   {:else if settings.section === 'export'}
     <h3>{t('Page')}</h3>
     <div class="card">
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Paper')}</span>
         <div class="pick">
           <Select
@@ -814,7 +814,7 @@
           />
         </div>
       </div>
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Orientation')}</span>
         <div class="pick">
           <Select
@@ -826,7 +826,7 @@
           />
         </div>
       </div>
-      <label class="setting">
+      <label class="nib-setting setting">
         <span class="name">{t('Margin')}</span>
         <input
           class="inline"
@@ -837,7 +837,7 @@
       </label>
       <!-- Running text on every sheet. `${title}`, `${date}` and `${year}`
            are filled in; the hint shows the shape. -->
-      <label class="setting">
+      <label class="nib-setting setting">
         <span class="name">{t('Header')}</span>
         <input
           class="inline"
@@ -847,7 +847,7 @@
           spellcheck="false"
         />
       </label>
-      <label class="setting">
+      <label class="nib-setting setting">
         <span class="name">{t('Footer')}</span>
         <input
           class="inline"
@@ -857,7 +857,7 @@
           spellcheck="false"
         />
       </label>
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Appearance')}</span>
         <div class="pick">
           <Select
@@ -894,7 +894,7 @@
 {#snippet keyboard()}
   <!-- Whose keyboard this is, before the list of what is on it. -->
   <div class="card">
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">{t('Shortcuts')}</span>
       <div class="pick">
         <Select
@@ -929,7 +929,7 @@
       {#each group.rows as entry (entry.id)}
         {@const key = shortcuts.keyFor(entry.id)}
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
-        <div class="setting shortcut">
+        <div class="nib-setting setting shortcut">
           <span class="name">
             {entry.label()}
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
@@ -1004,7 +1004,7 @@
   <div class="card">
     {#each toolbar.ids as id, at (id)}
       <div
-        class="setting button"
+        class="nib-setting setting button"
         class:landing={dropAt === at}
         role="group"
         aria-label={nameFor(id)}
@@ -1060,7 +1060,7 @@
 
   <h3>{t('Pulling down')}</h3>
   <div class="card">
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">
         {t('A pull past the top runs')}
         <small>{t('On the note, and on the list of them.')}</small>
@@ -1087,7 +1087,7 @@
     <h3>{group.label}</h3>
     <div class="card">
       {#each group.rows as entry (entry.id)}
-        <div class="setting button">
+        <div class="nib-setting setting button">
           <span class="mark">{markFor(entry.id)}</span>
           <span class="name">{entry.label()}</span>
           <button
@@ -1120,7 +1120,7 @@
   <h3>{t('Questions')}</h3>
   <div class="card">
     {#if glassesKey.set && !replacingKey}
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('OpenAI key')}</span>
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
@@ -1130,7 +1130,7 @@
       </div>
     {:else}
       <!-- svelte-ignore a11y_autofocus -->
-      <label class="setting">
+      <label class="nib-setting setting">
         <span class="name">{t('OpenAI key')}</span>
         <input
           class="inline"
@@ -1149,7 +1149,7 @@
     {/if}
 
     {#if offered.models.length}
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Model')}</span>
         <div class="pick">
           <Select
@@ -1161,7 +1161,7 @@
           />
         </div>
       </div>
-      <div class="setting">
+      <div class="nib-setting setting">
         <span class="name">{t('Reasoning')}</span>
         <div class="pick">
           <Select
@@ -1190,7 +1190,7 @@
        way of choosing the same thing. Nowhere else in the app says there is a
        store, so nobody who never opens it ever hears about it. -->
   <div class="card">
-    <div class="setting">
+    <div class="nib-setting setting">
       <span class="name">{t('Themes')}</span>
       <button class="pill" onclick={() => store.show()}>{t('Browse')}</button>
     </div>
@@ -1447,22 +1447,6 @@
   }
 
   /* Name on the left, control on the right, one line each. */
-  .setting {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    min-height: 38px;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
-  }
 
   .setting .name {
     flex: 1;

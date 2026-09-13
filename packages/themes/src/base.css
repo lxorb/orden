@@ -358,6 +358,35 @@ select option {
   border-bottom-color: var(--accent);
 }
 
+/* One row of a settings pane: what it is on the left, what it is set to on the
+   right, and the same height whatever the control is.
+
+   Four panes had these fifteen lines word for word - the settings themselves, the
+   AI pane, the security pane and the sync pane - and forty rows are written out by
+   hand between them. A row that is a switch, a slider, a segmented control, a
+   field or a dropdown differs only in what sits at the end of it, which is each
+   pane's own; being a row is this.
+
+   Not a `.nib-row`, which is a row somebody presses: this one is read, and the
+   control in it is what is pressed. `cursor: default` is that difference said to
+   the pointer. */
+.nib-setting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: default;
+}
+
 /* ── Layers over the app ───────────────────── */
 
 /* What a layer is put up over: the app, dimmed and softened, so the surface in
