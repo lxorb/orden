@@ -25,6 +25,7 @@
  *  so nothing that changes anything happens on a GET. */
 
 import { Hono, type Context } from 'hono'
+import { SPACE_IS_FULL } from '../refused'
 import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
 import { readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
@@ -34,6 +35,11 @@ import { machineOf, mayTellTheOwner } from '../limits'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import { EMAIL_LIMIT, itemName, MOST_MEMBERS, personName, presentItem } from './share'
 import { presentSpace, type Given } from './space'
+
+/** A link that opens nothing: one nobody issued, one already spent, or one of the
+ *  wrong kind for the route it was sent to. The same words for all of them, because
+ *  which it was is not somebody-with-a-link's to learn. */
+const EXPIRED = 'that link has expired'
 
 type Mode = 'open' | 'approval'
 
@@ -232,7 +238,7 @@ async function memberNow(
 
 /** What a link says when the space it leads to holds as many people as it can. */
 function spaceIsFull(context: Reply) {
-  return context.json({ error: 'that is as many people as one space holds' }, 409)
+  return context.json({ error: SPACE_IS_FULL }, 409)
 }
 
 /** Whether the space has room for another guest through its link: how many are
@@ -344,7 +350,7 @@ export const join = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 join.get('/:token', async (context) => {
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
-  if (!found) return context.json({ error: 'that link has expired' }, 404)
+  if (!found) return context.json({ error: EXPIRED }, 404)
 
   const owner = await ownerOf(context.env, found.space)
 
@@ -367,7 +373,7 @@ join.get('/:token', async (context) => {
 join.post('/:token', async (context) => {
   const who = await requireWhoever(context.env, context.req.header('authorization'))
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
-  if (!found) return context.json({ error: 'that link has expired' }, 404)
+  if (!found) return context.json({ error: EXPIRED }, 404)
 
   // An invitation is proof of an address, so it opens that account whoever is
   // holding the tab. An account already signed in as somebody else is the one
@@ -385,7 +391,7 @@ join.post('/:token', async (context) => {
 /** The mailed link, opening the account it was written to. The whole of what
  *  somebody with no Nib account does: they press the link. */
 async function redeemInvitation(context: Reply, found: Leads, guest: Guest | null) {
-  if (found.kind !== 'invite') return context.json({ error: 'that link has expired' }, 404)
+  if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
   const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
   const role = await memberNow(context.env, found, user.email, found.role)
@@ -501,7 +507,7 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
 /** Nobody at all, at a link the space itself holds. This is where a guest comes
  *  from: one session, one name, one space. */
 async function asNobody(context: Reply, found: Leads) {
-  if (found.kind !== 'link') return context.json({ error: 'that link has expired' }, 404)
+  if (found.kind !== 'link') return context.json({ error: EXPIRED }, 404)
   const { space, item } = found
 
   if (!(await roomForAGuest(context.env, space.id, item))) {

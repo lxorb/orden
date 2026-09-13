@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { NOT_AN_EMAIL, TOOK_TOO_LONG, WRONG_CODE } from './refused'
 import { readBody } from './body'
 import {
   equals,
@@ -197,7 +198,7 @@ export async function sendCode(
   address: string,
   machine: string | null = null,
 ): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503 }> {
-  if (!isEmail(address)) return { error: 'enter a valid email address', status: 400 }
+  if (!isEmail(address)) return { error: NOT_AN_EMAIL, status: 400 }
 
   const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
     .bind(address)
@@ -266,7 +267,7 @@ export async function verifyCode(
   const entered = code.replace(/\D/g, '')
 
   if (!isEmail(address) || entered.length !== 6) {
-    return { error: 'that code is not right', status: 400 }
+    return { error: WRONG_CODE, status: 400 }
   }
 
   const pending = await env.DB.prepare(
@@ -287,7 +288,7 @@ export async function verifyCode(
     await env.DB.prepare('update login_codes set attempts = attempts + 1 where email = ?')
       .bind(address)
       .run()
-    return { error: 'that code is not right', status: 400 }
+    return { error: WRONG_CODE, status: 400 }
   }
 
   await env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
@@ -373,14 +374,14 @@ auth.post('/second', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   const whose = holding ? await whoseHalf(context.env, holding) : null
-  if (!whose) return context.json({ error: 'start again - that took too long' }, 400)
+  if (!whose) return context.json({ error: TOOK_TOO_LONG }, 400)
 
   if (!(await accepted(context.env, whose, code ?? '', machineOf(context.req)))) {
-    return context.json({ error: 'that code is not right' }, 400)
+    return context.json({ error: WRONG_CODE }, 400)
   }
 
   const user = await accountById(context.env, whose)
-  if (!user) return context.json({ error: 'that code is not right' }, 400)
+  if (!user) return context.json({ error: WRONG_CODE }, 400)
 
   // The emailed half is spent now that the second one has worked, and not
   // before: a mistyped code is not a reason to ask for another mail. See

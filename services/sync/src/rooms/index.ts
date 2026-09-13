@@ -16,6 +16,7 @@
  *  `Authorization`, and a socket has none. */
 
 import { Hono } from 'hono'
+import { NO_SUCH_NOTE, SIGN_IN } from '../refused'
 import { subprotocol, tokenOf } from '@nib/rooms'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
@@ -160,10 +161,10 @@ rooms.get('/:noteId', async (context) => {
       role: string | null
     }>()
 
-  if (!allowed?.who) return context.json({ error: 'sign in first' }, 401)
+  if (!allowed?.who) return context.json({ error: SIGN_IN }, 401)
   // A note in a space nobody shared is indistinguishable from one that is not
   // there, exactly as it is over the rest of the API.
-  if (!allowed.space_id) return context.json({ error: 'no such note' }, 404)
+  if (!allowed.space_id) return context.json({ error: NO_SUCH_NOTE }, 404)
 
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)

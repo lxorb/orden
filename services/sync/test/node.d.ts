@@ -26,6 +26,13 @@ declare module 'node:fs' {
    *  `btoa` takes and a hash can be made of without a reading in between. */
   export function readFileSync(path: string, encoding: 'utf8' | 'latin1'): string
   export function writeFileSync(path: string, contents: string): void
+  /** Only the one question, asked by the test that walks the source: is this a
+   *  folder to go into, or a file to read? */
+  export function statSync(path: string): { isDirectory(): boolean }
+}
+
+declare module 'node:path' {
+  export function join(...parts: string[]): string
 }
 
 declare module 'node:crypto' {

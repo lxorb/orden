@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { NOT_AN_OBJECT } from './refused'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { EFFORTS } from './ask/asking'
@@ -381,7 +382,7 @@ settings.get('/', async (context) => {
 settings.patch('/', async (context) => {
   const user = context.get('user')
   const body = await objectBody(context)
-  if (!body) return context.json({ error: 'send an object' }, 400)
+  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   for (const [name, value] of Object.entries(body)) {
     // Asked of the map itself, never through it: `KNOWN['__proto__']` reaches

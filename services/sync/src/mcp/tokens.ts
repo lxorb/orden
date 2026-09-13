@@ -4,6 +4,7 @@
  *  database cannot be used to read anyone's notes. */
 
 import { Hono } from 'hono'
+import { NOT_AN_OBJECT } from '../refused'
 import { objectBody } from '../body'
 import { tokenIn } from '../auth'
 import { now, randomToken, sha256 } from '../crypto'
@@ -109,7 +110,7 @@ mcpAdmin.post('/token', async (context) => {
   // read-only token, so `undefined` - no body at all - is let through, while a body
   // that parsed to a list or a number is a client's mistake. See objectBody.
   const body = await objectBody(context)
-  if (body === null) return context.json({ error: 'send an object' }, 400)
+  if (body === null) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   // Read-only unless writing is asked for in as many words, so a request that
   // says nothing cannot hand out more than the person meant.

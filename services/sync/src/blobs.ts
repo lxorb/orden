@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { OUT_OF_SPACE } from './refused'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { fits } from './storage'
@@ -78,7 +79,7 @@ blobs.put('/:hash', async (context) => {
   if (body.byteLength > limit) return context.json({ error: 'that file is too big' }, 413)
 
   if (!(await fits(context.env, user.id, body.byteLength))) {
-    return context.json({ error: 'out of space' }, 507)
+    return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
   // The object may already be there from someone else; writing it again is the

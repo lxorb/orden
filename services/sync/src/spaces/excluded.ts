@@ -13,6 +13,7 @@
  *  See spaces/bookmarks.ts, whose shape this is. */
 
 import { Hono } from 'hono'
+import { NOT_AN_OBJECT } from '../refused'
 import { listIn, objectBody } from '../body'
 import { fits, writeColumn } from './columns'
 import type { Env, Variables } from '../types'
@@ -78,7 +79,7 @@ spaceExcluded.put('/:id/excluded', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
   const body = await objectBody(context)
-  if (!body) return context.json({ error: 'send an object' }, 400)
+  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   const sent = body.excluded
   const problem = wrong(sent)

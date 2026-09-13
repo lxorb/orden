@@ -22,6 +22,7 @@
  *  says what it is about. See docs/sharing.md. */
 
 import { Hono, type MiddlewareHandler } from 'hono'
+import { NOT_AN_EMAIL, NO_SUCH_NOTE, SPACE_IS_FULL } from '../refused'
 import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { forgetMailed, inviteMessage, mailer, mayMail } from '../email'
@@ -30,6 +31,10 @@ import { machineOf } from '../limits'
 import { roomsRevoked } from '../rooms'
 import type { Env, Note, Space, User, Variables } from '../types'
 import { atLeast, isGiven, MOST_ITEMS, spaceOf, type Given } from './space'
+
+/** An invitation, a change of role or a guest's role with no role named. Three
+ *  routes and one sentence: what is missing is the same field each time. */
+const SAY_WHICH_ROLE = 'say whether they may write or read'
 
 /** More people in one space than anyone shares with, and the bound on every
  *  listing below. Exported because `join.ts` holds a link to the same number: a
@@ -344,7 +349,7 @@ function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
   return async (context, next) => {
     const space = spaceOf(context)
     const scope = await scopeOf(context.env, space.id, context.req.query('item'))
-    if (!scope) return context.json({ error: 'no such note' }, 404)
+    if (!scope) return context.json({ error: NO_SUCH_NOTE }, 404)
 
     context.set('scope', scope)
     await next()
@@ -374,8 +379,8 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const email = normaliseEmail(given ?? '')
   const role = givenRole(asked)
 
-  if (!isEmail(email)) return context.json({ error: 'enter a valid email address' }, 400)
-  if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
+  if (!isEmail(email)) return context.json({ error: NOT_AN_EMAIL }, 400)
+  if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
   if (email === owner.email) {
     return context.json(
       { error: scope.id ? 'this note is already yours' : 'this space is already yours' },
@@ -385,7 +390,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
 
   const held = await membersOf(context.env, space.id, scope.id)
   if (held.length >= MOST_MEMBERS && !held.some((one) => one.email === email)) {
-    return context.json({ error: 'that is as many people as one space holds' }, 409)
+    return context.json({ error: SPACE_IS_FULL }, 409)
   }
 
   if (!(await roomForAnItem(context.env, space.id, scope.id))) {
@@ -452,7 +457,7 @@ share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (conte
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   const role = givenRole(asked)
-  if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
+  if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
 
   const email = normaliseEmail(context.req.param('email'))
   const held = await context.env.DB.prepare(
@@ -684,7 +689,7 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (contex
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   const role = givenRole(asked)
-  if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
+  if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
 
   const held = await context.env.DB.prepare(
     'select role from guest_members where space_id = ? and guest_id = ? and item = ?',
@@ -853,7 +858,7 @@ sharedWithMe.delete('/:noteId', async (context) => {
     .bind(noteId)
     .first<Pick<Note, 'id' | 'space_id'>>()
 
-  if (!note) return context.json({ error: 'no such note' }, 404)
+  if (!note) return context.json({ error: NO_SUCH_NOTE }, 404)
 
   if (who.kind === 'guest') {
     await context.env.DB.prepare(

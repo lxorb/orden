@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { SIGN_IN } from './refused'
 import { cors } from 'hono/cors'
 import { ask } from './ask'
 import { accountById, auth, presentUser, requireWhoever, sessions } from './auth'
@@ -102,7 +103,7 @@ app.use('/v1/*', async (context, next) => {
   const header = context.req.header('authorization')
   const who: Asking | null =
     (await requireWhoever(context.env, header)) ?? (await asProgram(context.env, header))
-  if (!who) return context.json({ error: 'sign in first' }, 401)
+  if (!who) return context.json({ error: SIGN_IN }, 401)
 
   context.set('who', who)
 

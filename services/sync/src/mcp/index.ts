@@ -6,6 +6,7 @@
  *  asked for, and the shape of the answer. */
 
 import { Hono } from 'hono'
+import { SIGN_IN } from '../refused'
 import { challenge } from '../oauth'
 import type { Env } from '../types'
 import { bearer } from './tokens'
@@ -43,7 +44,7 @@ mcp.post('/', async (context) => {
   // The refusal says where to sign in (RFC 9728), which is how a client that
   // was only given the URL finds the OAuth server on its own.
   if (!token) {
-    return context.json({ error: 'sign in first' }, 401, {
+    return context.json({ error: SIGN_IN }, 401, {
       'www-authenticate': challenge(context.env, !!header),
     })
   }

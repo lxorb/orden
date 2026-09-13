@@ -14,6 +14,7 @@
  *  PDF is sent once rather than on every pass. */
 
 import { Hono } from 'hono'
+import { NOT_AN_OBJECT } from '../refused'
 import { listIn, objectBody } from '../body'
 import { askInChunks, places } from '../bound'
 import { fits, writeColumn } from './columns'
@@ -113,7 +114,7 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
   const body = await objectBody(context)
-  if (!body) return context.json({ error: 'send an object' }, 400)
+  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   const sent = body.files
   const problem = wrong(sent)

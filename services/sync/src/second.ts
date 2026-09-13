@@ -25,6 +25,7 @@
  *  phone is the common case and the only honest way out of it. */
 
 import { Hono } from 'hono'
+import { TOOK_TOO_LONG, WRONG_CODE } from './refused'
 
 import { opened, sealed } from './ask/key'
 import { equals, now, randomBytes, randomToken, sha256 } from './crypto'
@@ -401,7 +402,7 @@ second.post('/confirm', async (context) => {
   const holding = body.text('holding', 128)
   const code = body.text('code', 16)
   if (body.problem) return context.json({ error: body.problem }, 400)
-  if (!holding || !code) return context.json({ error: 'that code is not right' }, 400)
+  if (!holding || !code) return context.json({ error: WRONG_CODE }, 400)
 
   const row = await context.env.DB.prepare(
     'select value from cached where scope = ? and key = ? and until > ?',
@@ -411,10 +412,10 @@ second.post('/confirm', async (context) => {
 
   const [whose, secret] = (row?.value ?? '').split(':')
   if (!secret || whose !== user.id) {
-    return context.json({ error: 'start again - that took too long' }, 400)
+    return context.json({ error: TOOK_TOO_LONG }, 400)
   }
 
-  if (!(await matches(secret, code))) return context.json({ error: 'that code is not right' }, 400)
+  if (!(await matches(secret, code))) return context.json({ error: WRONG_CODE }, 400)
 
   const codes = await turnOn(context.env, user.id, secret)
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
@@ -433,7 +434,7 @@ second.delete('/', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   if (!(await accepted(context.env, user.id, code, machineOf(context.req)))) {
-    return context.json({ error: 'that code is not right' }, 400)
+    return context.json({ error: WRONG_CODE }, 400)
   }
 
   await context.env.DB.prepare(
@@ -456,7 +457,7 @@ second.post('/recovery', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   if (!(await accepted(context.env, user.id, code, machineOf(context.req)))) {
-    return context.json({ error: 'that code is not right' }, 400)
+    return context.json({ error: WRONG_CODE }, 400)
   }
 
   return context.json({ recovery: await writeRecovery(context.env, user.id) })

@@ -7,6 +7,7 @@
  *  gives; see spaces/publish.ts. */
 
 import { Hono } from 'hono'
+import { NOT_AN_OBJECT } from '../refused'
 import { objectBody } from '../body'
 import { now } from '../crypto'
 import { fits } from './columns'
@@ -54,7 +55,7 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   const body = await objectBody(context)
-  if (!body) return context.json({ error: 'send an object' }, 400)
+  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   const sent = body
   const problem = wrong(sent)
@@ -133,7 +134,7 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   const body = await objectBody(context)
-  if (!body) return context.json({ error: 'send an object' }, 400)
+  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
 
   const sent = body
   const problem = wrong(sent)

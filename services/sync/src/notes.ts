@@ -1,4 +1,5 @@
 import { type Context, Hono } from 'hono'
+import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
@@ -28,6 +29,10 @@ import {
   versionsOf,
   versionKey,
 } from './versions'
+
+/** A note past what one note may be. Said at each of the three moments a body
+ *  arrives: written, replaced, and rolled back to. */
+const TOO_LARGE = 'that note is too large'
 
 /** The largest note the API will take. R2 would hold more; a note this size
  *  is already a file that wants to be split, and the ceiling keeps one
@@ -297,8 +302,8 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   const content = sent ?? ''
   const size = byteLength(content)
 
-  if (!path) return context.json({ error: 'that path is not usable' }, 400)
-  if (size > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  if (!path) return context.json({ error: NOT_A_PATH }, 400)
+  if (size > MAX_NOTE_BYTES) return context.json({ error: TOO_LARGE }, 413)
 
   const taken = await noteAt(context.env, space.id, path)
   if (taken)
@@ -308,7 +313,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   // whoever owns the space rather than whoever is writing: the bytes land in
   // their storage, so it is their quota the note has to fit inside.
   if (!(await fits(context.env, space.user_id, size))) {
-    return context.json({ error: 'out of space' }, 507)
+    return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
   // The check above is not the guarantee; the space's unique index is. Two
@@ -368,7 +373,7 @@ async function reachedNote(
 
 notes.get('/notes/:id', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
   const { note } = found
 
   const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
@@ -384,7 +389,7 @@ notes.get('/notes/:id', async (context) => {
  *  nothing else. See versions.ts for what is kept and for how long. */
 notes.get('/notes/:id/versions', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
 
   const held = await versionsOf(context.env, found.note.id)
   return context.json({ versions: held.map(presentVersion) })
@@ -392,7 +397,7 @@ notes.get('/notes/:id/versions', async (context) => {
 
 notes.get('/notes/:id/versions/:at', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
 
   const asked = Math.floor(Number(context.req.param('at')))
   const content = Number.isFinite(asked) ? await versionAt(context.env, found.note.id, asked) : null
@@ -493,7 +498,7 @@ const SHOWN_PATHS = 40
  *  second file to go and find. */
 notes.put('/notes/:id', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
   const { note, space } = found
 
@@ -504,11 +509,11 @@ notes.put('/notes/:id', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   if (byteLength(sent ?? '') > MAX_NOTE_BYTES) {
-    return context.json({ error: 'that note is too large' }, 413)
+    return context.json({ error: TOO_LARGE }, 413)
   }
 
   const path = given === undefined ? note.path : cleanPath(given)
-  if (!path) return context.json({ error: 'that path is not usable' }, 400)
+  if (!path) return context.json({ error: NOT_A_PATH }, 400)
 
   // Somebody who was handed this one file may write in it and may not move it.
   // Where a note sits belongs to the space, and the space is not what they were
@@ -528,7 +533,7 @@ notes.put('/notes/:id', async (context) => {
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     content = mergeCanvasFiles(content, object ? await object.text() : '')
     if (byteLength(content) > MAX_NOTE_BYTES) {
-      return context.json({ error: 'that note is too large' }, 413)
+      return context.json({ error: TOO_LARGE }, 413)
     }
   }
 
@@ -536,7 +541,7 @@ notes.put('/notes/:id', async (context) => {
   // note that stays the same size is never refused. Against the space's owner,
   // for the same reason as above.
   if (!(await fits(context.env, space.user_id, byteLength(content), note.size))) {
-    return context.json({ error: 'out of space' }, 507)
+    return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
   const saved = await saveNote(
@@ -583,7 +588,7 @@ async function conflict(
  *  Recently deleted; the purge in trash.ts takes it away after 14 days. */
 notes.delete('/notes/:id', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
   // A file shared on its own is not the reader's to take away. Deleting it takes
   // something out of somebody else's space, which is what being given the space

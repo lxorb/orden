@@ -7,6 +7,7 @@
  *  to someone else is a 404, one shared with them is a 403, never a page. */
 
 import { Hono } from 'hono'
+import { NOT_A_PATH, NO_ADDRESS } from '../refused'
 import { readBody } from '../body'
 import { now } from '../crypto'
 import { domainStatus, releaseDomain } from '../hostnames'
@@ -110,7 +111,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
       : { subdomain: space.blog_subdomain, domain: space.blog_domain }
 
   if (!address.subdomain && !address.domain) {
-    return context.json({ error: 'choose an address' }, 400)
+    return context.json({ error: NO_ADDRESS }, 400)
   }
 
   // Checked like a name is, so the answer is a clear no and not the unique
@@ -146,7 +147,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   let note = space.blog_note
   if (asked !== undefined) {
     note = asked ? cleanPath(asked) : null
-    if (asked && note === null) return context.json({ error: 'that path is not usable' }, 400)
+    if (asked && note === null) return context.json({ error: NOT_A_PATH }, 400)
   }
 
   if (note) {

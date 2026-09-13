@@ -20,6 +20,7 @@
  *      often a resolver having a bad afternoon than a domain that has moved. */
 
 import { now, randomToken } from '../crypto'
+import { NO_ADDRESS } from '../refused'
 import { txtAt } from '../dns'
 import { claimDomain, releaseDomain } from '../hostnames'
 import type { Env, Space } from '../types'
@@ -60,7 +61,7 @@ export async function proveDomain(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const domain = space.blog_domain
   const token = space.blog_domain_token
-  if (!domain || !token) return { ok: false, error: 'choose an address' }
+  if (!domain || !token) return { ok: false, error: NO_ADDRESS }
 
   const found = await txtAt(proofName(domain))
   if (!found.asked || !found.values.includes(token)) return { ok: false, error: NOT_YET }
