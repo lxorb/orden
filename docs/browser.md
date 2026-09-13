@@ -478,14 +478,16 @@ machine still costs half a second, that is the moment to take B′ seriously.
    operating system's own decoders can be used. A browser that cannot play half the
    web's video is not a browser somebody will keep using.
 
-**And `tauri-runtime-cef` is unpublished, and today it does not build.** This is not
-a guess - `spike/shell` was pointed at revision `c8c75b1` and the branch failed to
-compile with eleven type errors, all from one cause: `tauri` takes `dpi` from
-crates.io while `tauri-runtime-cef` takes `winit` from the `winit-gtk4` fork, which
-vendors a `dpi` of its own, so `platform/mod.rs` hands a
-`winit::dpi::PhysicalPosition<i32>` to something that wants
-`tauri::PhysicalPosition<i32>`. A one-line `[patch.crates-io]` unifying the two is
-the obvious repair and the spike tries it.
+**And `tauri-runtime-cef` is unpublished, and today it does not build - on any of the
+three.** This is measured, not guessed: `spike/shell` was pointed at revision
+`c8c75b1` and the branch failed to compile on macOS with eleven type errors and on
+Linux with thirty, all from one cause. `tauri` takes `dpi` from crates.io while
+`tauri-runtime-cef` takes `winit` from the `winit-gtk4` fork, which vendors a `dpi`
+of its own, so `platform/mod.rs` hands a `winit::dpi::PhysicalPosition<i32>` to
+something that wants `tauri::PhysicalPosition<i32>` and the compiler says in as many
+words that there are *"multiple different versions of crate `dpi` in the dependency
+graph"*. A one-line `[patch.crates-io]` unifying the two is the obvious repair and
+the spike tries it.
 
 That is what an unreleased branch is like, and it is the argument for the shape of
 batch 1: **a gate, not a migration.** Build nib against a pinned revision behind a
@@ -1197,8 +1199,8 @@ not use, and section 2 has the shape of the alternative ready.
 - **No sandbox in an AppImage or a snap**, so the browser should not be offered in
   those builds. Section 7.
 - **`tauri-runtime-cef` is unpublished, and at revision `c8c75b1` it does not
-  compile** - one duplicated `dpi` crate, eleven type errors. Batch 1 is allowed to
-  end in "not yet".
+  compile on any desktop** - one duplicated `dpi` crate, eleven type errors on macOS
+  and thirty on Linux. Batch 1 is allowed to end in "not yet".
 - **A per-webview Chromium profile has no API found for it yet**, and section 5 says
   what happens to section 6 if it turns out there is none. The first question batch 2
   asks.
