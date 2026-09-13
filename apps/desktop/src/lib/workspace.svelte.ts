@@ -39,7 +39,7 @@ import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
-import { WELCOME_PATH } from './welcome'
+import { isUntouchedWelcome, WELCOME_PATH } from './welcome'
 import {
   type Draft,
   frameDraft,
@@ -1542,7 +1542,17 @@ class Workspace {
   async hasLocalContent(): Promise<boolean> {
     for (const note of this.notes) {
       const doc = await invoke<string>('read_note', { path: note.path }).catch(() => '')
-      if (doc.trim()) return true
+      if (!doc.trim()) continue
+
+      // The welcome note exactly as the app wrote it is not writing, and the
+      // question this answers is about writing: syncing already refuses to carry
+      // an untouched seed up (sync/mirror.ts), so keeping it joins nothing to the
+      // account and erasing it throws away nothing anybody wrote. Asked, it would
+      // be the first thing a new reader ever sees - a warning that cannot be
+      // undone, about the only note on screen. See welcome.ts and settling.ts.
+      if (isUntouchedWelcome(note.path, doc)) continue
+
+      return true
     }
 
     return false

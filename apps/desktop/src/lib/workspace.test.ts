@@ -2140,3 +2140,69 @@ describe('following a link to a note the space has not got', () => {
     }
   })
 })
+
+/** What signing in asks about, and what it must not.
+ *
+ *  Signing in on a machine that already holds notes asks whether they join the
+ *  account or go, because nothing is erased without an answer; see settling.ts.
+ *  The welcome note a browser seeds on a first visit is not such a note. It is the
+ *  app's own words, syncing already refuses to carry it up (see sync/mirror.ts),
+ *  and a first sign-in would otherwise be met by a question about the only thing
+ *  on screen - "this cannot be undone" under it - whose two answers both come to
+ *  nothing.
+ *
+ *  A character typed into the seed makes it writing like any other note, and then
+ *  the question is right to be asked. */
+describe('whether this machine holds anything worth asking about', () => {
+  const SEED = '/Notes/Read me.md'
+  const MINE = '/Notes/mine.md'
+
+  const file = (path: string): Entry => ({
+    name: path.split('/').pop() ?? '',
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+
+  const holding = (children: Entry[]): Entry => ({
+    name: 'Notes',
+    path: '/Notes',
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  afterEach(() => {
+    delete notes[SEED]
+    delete notes[MINE]
+    workspace.tree = null
+  })
+
+  test('a browser holding nothing but the seed holds nothing', async () => {
+    const { WELCOME } = await import('./welcome')
+    notes[SEED] = WELCOME
+    workspace.tree = holding([file(SEED)])
+
+    expect(await workspace.hasLocalContent()).toBe(false)
+  })
+
+  test('a seed somebody has typed into is writing', async () => {
+    const { WELCOME } = await import('./welcome')
+    notes[SEED] = `${WELCOME}and a line of my own\n`
+    workspace.tree = holding([file(SEED)])
+
+    expect(await workspace.hasLocalContent()).toBe(true)
+  })
+
+  test('and a note of their own is writing, seed beside it or not', async () => {
+    const { WELCOME } = await import('./welcome')
+    notes[SEED] = WELCOME
+    notes[MINE] = '# Mine\n'
+    workspace.tree = holding([file(SEED), file(MINE)])
+
+    expect(await workspace.hasLocalContent()).toBe(true)
+  })
+})
