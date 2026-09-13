@@ -19,6 +19,12 @@ export default tseslint.config(
       '**/dist-profile/**',
       '**/dist-even/**',
       '**/target/**',
+      // What the drives photograph, and the builds some of them make beside the
+      // pictures: `layers.py` leaves a whole `main-dist` in there. Git ignores the
+      // folder already, and nothing in it is anybody's source - but a run of the set
+      // would otherwise leave `pnpm lint` unable to parse a few hundred files that
+      // are output. See docs/conventions.md.
+      'apps/desktop/test/e2e/shots/**',
       // What running the Worker locally leaves behind: a bundle it made, and the
       // state of the databases it ran against. Neither is anybody's source.
       '**/.wrangler/**',
