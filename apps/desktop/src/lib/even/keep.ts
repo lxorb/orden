@@ -17,6 +17,7 @@
 
 import type { Vault } from '../account.svelte'
 import { forget as forgetHere, keep as keepHere, storedText } from '../stored'
+import { waited } from '../timing'
 import { connectStore } from './sdk'
 
 /** One place a value can be kept. Every method answers rather than throws: a
@@ -129,7 +130,7 @@ export const hostKeep: Keep = {
     // that will be gone on the next launch, which is what this whole file exists
     // to stop. Refusals are rare and transient enough to be worth three tries.
     for (const pause of [0, 200, 600]) {
-      if (pause) await new Promise((resolve) => setTimeout(resolve, pause))
+      if (pause) await waited(pause)
       if (await store.write(key, value)) return true
     }
 

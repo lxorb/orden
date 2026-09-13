@@ -11,6 +11,7 @@
 
 import { reading } from './direction'
 import { dur } from './motion'
+import { afterQuiet, onceAFrame } from './timing'
 
 /** The shortest a thumb may be, so a very long note still has something a
  *  pointer can grab. */
@@ -101,17 +102,12 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
    *  English and the left of it in Arabic: a reader's own scrollbar sits at the
    *  end of the line, the way the platform's does. */
   const box = { top: -1, height: -1, end: -1 }
-  let frame = 0
-  let hiding: ReturnType<typeof setTimeout> | undefined
-  let easing: ReturnType<typeof setTimeout> | undefined
   let held = false
 
   /** Everything read from the layout, in one go and before anything is written
    *  to it: a read after a write is what makes the browser lay the page out
    *  again there and then. */
   const draw = () => {
-    frame = 0
-
     const visible = scroller.clientHeight
     const top = scroller.offsetTop
     // Both gaps are physical - `offsetLeft` counts from the left of the box
@@ -145,14 +141,23 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
 
   /** Once a frame at most, and never straight from a scroll event: a scroll
    *  event fires many times a frame and each one would be a layout read. */
-  const soon = () => {
-    if (!frame) frame = requestAnimationFrame(draw)
-  }
+  const soon = onceAFrame(draw)
+
+  /** The bar goes out once the scrolling stops - unless it is being dragged, in
+   *  which case it stays until the finger is lifted. */
+  const dimming = afterQuiet(() => bar.classList.remove('is-lit'), IDLE)
+
+  /** The class is what turns the easing on, so the timer that takes it off has to
+   *  go the same way the easing does; see motion.ts. */
+  const easing = afterQuiet(
+    () => bar.classList.remove('is-settling'),
+    () => dur(SETTLING),
+  )
 
   const light = () => {
     bar.classList.add('is-lit')
-    clearTimeout(hiding)
-    if (!held) hiding = setTimeout(() => bar.classList.remove('is-lit'), IDLE)
+    dimming.cancel()
+    if (!held) dimming()
   }
 
   const onScroll = () => {
@@ -209,17 +214,14 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
   return {
     settle: () => {
       bar.classList.add('is-settling')
-      clearTimeout(easing)
-      // The class is what turns the easing on, so the timer that takes it off
-      // has to go the same way the easing does; see motion.ts.
-      easing = setTimeout(() => bar.classList.remove('is-settling'), dur(SETTLING))
+      easing()
       soon()
       light()
     },
     stop: () => {
-      cancelAnimationFrame(frame)
-      clearTimeout(hiding)
-      clearTimeout(easing)
+      soon.cancel()
+      dimming.cancel()
+      easing.cancel()
       watching.disconnect()
       scroller.removeEventListener('scroll', onScroll)
       scroller.removeEventListener('pointerenter', light)

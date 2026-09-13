@@ -43,6 +43,7 @@ import { lineStarts } from './search/match'
 import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
+import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
@@ -335,8 +336,10 @@ class Workspace {
   saveState = $state<Record<string, 'saving' | 'saved'>>({})
   private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
-  private saveTimer: ReturnType<typeof setTimeout> | undefined
-  private sessionTimer: ReturnType<typeof setTimeout> | undefined
+  /** The two writes that wait for a pause in the typing: the notes themselves,
+   *  and the strip of tabs. See timing.ts. */
+  private readonly saving = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY)
+  private readonly session = afterQuiet(() => this.persist(), SESSION_DELAY)
   /** Notes waiting to be written when the typing stops. A set rather than one
    *  note, because two panes may hold two different notes and both be edited
    *  between one pause and the next. */
@@ -748,7 +751,7 @@ class Workspace {
   }
 
   private persist() {
-    clearTimeout(this.sessionTimer)
+    this.session.cancel()
 
     const state: Session = {
       spaces: this.spaces,
@@ -767,8 +770,7 @@ class Workspace {
   /** Writes the session soon rather than now, so a burst of typing costs one
    *  write instead of one per keystroke. */
   private scheduleSession() {
-    clearTimeout(this.sessionTimer)
-    this.sessionTimer = setTimeout(() => this.persist(), SESSION_DELAY)
+    this.session()
   }
 
   /** Where the caret and the scroll are. Recorded as they move, because after
@@ -2239,8 +2241,7 @@ class Workspace {
     if (!note.keepsItself || note.shared !== null) return
 
     this.waiting.add(note)
-    clearTimeout(this.saveTimer)
-    this.saveTimer = setTimeout(() => void this.saveWaiting(), SAVE_DELAY)
+    this.saving()
   }
 
   private async saveWaiting() {

@@ -31,6 +31,7 @@ import { type Canvas, emptyCanvas, merged, readCanvas, stamped, writeCanvas } fr
 import { pickedBox } from './edits'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
+import { afterQuiet } from '../timing'
 import { CanvasHistory } from './history'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
 import type { NoteDoc, Tab } from '../workspace/documents.svelte'
@@ -96,7 +97,8 @@ export class CanvasStore implements PlaneSurface {
   /** Which revision of the document this surface has read. Anything past it came
    *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
-  private writing: ReturnType<typeof setTimeout> | undefined
+  /** The file written once the changes have stopped coming; see `soon`. */
+  private readonly writing = afterQuiet(() => this.commit(), WRITE_DELAY)
   /** The gesture the last edit belonged to, while one is under way; see `edit`. */
   private during: string | null = null
 
@@ -252,8 +254,7 @@ export class CanvasStore implements PlaneSurface {
    *  the plane is the size of the plane, and doing it per event is the one thing a
    *  canvas of five thousand strokes cannot afford. */
   private soon() {
-    clearTimeout(this.writing)
-    this.writing = setTimeout(() => this.commit(), WRITE_DELAY)
+    this.writing()
   }
 
   /** Who else is on the plane. Held here rather than in the room because this is
@@ -269,7 +270,7 @@ export class CanvasStore implements PlaneSurface {
   /** Anything owing, written now: the room is being left, or the last tab on this
    *  plane is closing. */
   part() {
-    if (this.writing !== undefined) this.commit()
+    this.writing.flush()
   }
 
   /** Brings the surface up to words that changed under it: a version restored, a
@@ -330,8 +331,7 @@ export class CanvasStore implements PlaneSurface {
    *  on the auto-save. The revision is noted so `follow` can tell our own write
    *  from somebody else's. */
   protected commit() {
-    clearTimeout(this.writing)
-    this.writing = undefined
+    this.writing.cancel()
 
     const text = this.serialise(this.canvas)
     // A plane that comes back saying exactly what the file says is not an edit, and

@@ -14,6 +14,8 @@
  *  carries on some other way is the worst of both: the wait happened, the result
  *  is not what was asked for, and nothing on screen says so. */
 
+import { afterQuiet } from './timing'
+
 /** How long the line stays once it has something to say. Long enough to read a
  *  sentence, short enough that it is gone before it is in the way. */
 const TROUBLE_SHOWN = 5000
@@ -26,7 +28,8 @@ class Busy {
   /** What did not work, in a sentence, or null while nothing has gone wrong.
    *  The line wears it instead of sweeping. */
   trouble = $state<string | null>(null)
-  private clearing: ReturnType<typeof setTimeout> | undefined
+  /** What went wrong is said for a moment and then goes; see `failed`. */
+  private readonly clearing = afterQuiet(() => (this.trouble = null), TROUBLE_SHOWN)
 
   get active(): boolean {
     return this.depth > 0
@@ -55,15 +58,12 @@ class Busy {
    *  rather than changing course without a word. */
   failed(reason: string) {
     this.trouble = reason
-    clearTimeout(this.clearing)
-    this.clearing = setTimeout(() => {
-      this.trouble = null
-    }, TROUBLE_SHOWN)
+    this.clearing()
   }
 
   /** Nothing to say any more. */
   clear() {
-    clearTimeout(this.clearing)
+    this.clearing.cancel()
     this.trouble = null
   }
 

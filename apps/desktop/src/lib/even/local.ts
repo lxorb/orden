@@ -19,6 +19,7 @@
  *  what colour the app is. So the cookie carries what has to be there at once,
  *  and the host store carries all of it. See docs/even.md. */
 
+import { afterQuiet } from '../timing'
 import { hostKeep, cookieOf, writeCookie } from './keep'
 
 /** The name both stores keep the settings under. */
@@ -121,7 +122,7 @@ function underTheLimit(all: Record<string, string>): Record<string, string> {
 
 class Local implements Storage {
   private readonly held = new Map<string, string>()
-  private timer: ReturnType<typeof setTimeout> | undefined
+  private readonly later = afterQuiet(() => this.flush(), SETTLE)
 
   constructor(seed: Record<string, string>) {
     for (const [key, value] of Object.entries(seed)) this.held.set(key, value)
@@ -167,11 +168,6 @@ class Local implements Storage {
     }
 
     if (grew) this.later()
-  }
-
-  private later(): void {
-    clearTimeout(this.timer)
-    this.timer = setTimeout(() => this.flush(), SETTLE)
   }
 
   private flush(): void {

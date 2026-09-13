@@ -1,5 +1,6 @@
 import { caretLine, type EditorView, foldLines, sharedOf, topLine } from '@nib/editor'
 import { untrack } from 'svelte'
+import { onceAFrame } from './timing'
 import { type Tab, workspace } from './workspace.svelte'
 
 /** Where a note is being read, written down as it moves. A crash gives no chance
@@ -74,14 +75,7 @@ class Placement {
     // again there and then - on every keystroke, over a document that may be
     // thousands of lines. Once a frame instead: by then the layout is the one
     // on screen, and a burst of keystrokes asks for it once.
-    let scheduled = 0
-    const soon = () => {
-      if (scheduled) return
-      scheduled = requestAnimationFrame(() => {
-        scheduled = 0
-        record()
-      })
-    }
+    const soon = onceAFrame(record)
     this.pending.set(view, soon)
 
     const settled = requestAnimationFrame(() => {
@@ -91,7 +85,7 @@ class Placement {
 
     return () => {
       cancelAnimationFrame(settled)
-      cancelAnimationFrame(scheduled)
+      soon.cancel()
       view.scrollDOM.removeEventListener('scroll', soon)
       // Nothing is written down on the way out. By the time this runs the pane
       // may already hold the next note, and what the view says then is about

@@ -25,6 +25,7 @@ import { modes } from '../modes.svelte'
 import { prompt } from '../prompt.svelte'
 import { insideAnyOf } from '../space-paths'
 import { joinPath } from '../tauri'
+import { waited } from '../timing'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { answer, method, onTheActivity } from './bridge'
@@ -164,7 +165,8 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
 
       parts.push(bytes)
       got += bytes.length
-      await breath()
+      // A turn of the event loop, so the page can draw between two slices.
+      await waited()
     }
 
     if (!got) continue
@@ -180,11 +182,6 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
   }
 
   return held
-}
-
-/** A turn of the event loop, so the page can draw between two slices. */
-function breath(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 /** Which of the two ways this share should land, or null for neither.

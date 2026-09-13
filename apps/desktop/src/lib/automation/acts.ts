@@ -21,6 +21,7 @@ import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
+import { waited } from '../timing'
 import { insidePath, noteFor, relativeIn, spaceFor } from './space'
 
 /** What a note's name may end in for the app to treat it as one. */
@@ -30,6 +31,10 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
  *  pause plus the walk; a space that is still answering after this has more to
  *  say than a caller was asking for. */
 const SEARCH_PATIENCE = 8000
+
+/** How often the search is asked again while that runs out. Long enough for the
+ *  disk to have answered, short enough that a fast space is not waited on. */
+const LOOKING_AGAIN = 50
 
 /** Opens a note, and lands on a heading or a block when the caller named one.
  *
@@ -194,7 +199,7 @@ export async function searchSpace(args: Said): Promise<unknown> {
   // The field waits for the typing to pause before it asks anything, so the first
   // moment says nothing either way.
   while (Date.now() < until) {
-    await pause()
+    await waited(LOOKING_AGAIN)
     if (!search.running) break
   }
 
@@ -359,10 +364,4 @@ export async function publishNow(args: Said): Promise<unknown> {
   await syncNow()
 
   return status
-}
-
-/** Long enough for the disk to have answered, short enough that a fast space is
- *  not waited on. */
-function pause(): Promise<void> {
-  return new Promise((settle) => setTimeout(settle, 50))
 }

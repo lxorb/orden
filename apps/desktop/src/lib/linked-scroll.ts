@@ -9,6 +9,8 @@
  *  get right is which end is leading and when the other one's scroll is only the
  *  echo of it - and that is worth testing without a browser. */
 
+import { afterQuiet } from './timing'
+
 /** One end of the link: where it is, where to put it, and when it moves. */
 export interface ScrollEnd {
   /** The document position of the line at the top of what is on screen. */
@@ -32,16 +34,13 @@ const ECHO = 150
  *  that moved first leads until it has been still for a moment. */
 export function linkScroll(a: ScrollEnd, b: ScrollEnd): () => void {
   let leading: ScrollEnd | null = null
-  let quiet: ReturnType<typeof setTimeout> | undefined
+  const quiet = afterQuiet(() => (leading = null), ECHO)
 
   const carry = (from: ScrollEnd, to: ScrollEnd) => () => {
     if (leading && leading !== from) return
 
     leading = from
-    clearTimeout(quiet)
-    quiet = setTimeout(() => {
-      leading = null
-    }, ECHO)
+    quiet()
 
     to.show(from.top())
   }
@@ -49,7 +48,7 @@ export function linkScroll(a: ScrollEnd, b: ScrollEnd): () => void {
   const stops = [a.onScroll(carry(a, b)), b.onScroll(carry(b, a))]
 
   return () => {
-    clearTimeout(quiet)
+    quiet.cancel()
     for (const stop of stops) stop()
   }
 }

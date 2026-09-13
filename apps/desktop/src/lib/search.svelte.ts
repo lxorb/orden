@@ -12,6 +12,7 @@ import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 import { isBoolean, isRecord, keep, stored } from './stored'
+import { afterQuiet } from './timing'
 import { workspace } from './workspace.svelte'
 
 /** How long after the last keystroke to ask. Long enough that a word typed at
@@ -77,7 +78,8 @@ class Search {
    *  so what is worth keeping is the exceptions. */
   private readonly skipped = new SvelteSet<string>()
 
-  private timer: ReturnType<typeof setTimeout> | undefined
+  /** The search itself, a moment after the last keystroke; see `ask`. */
+  private readonly asking = afterQuiet(() => void this.run(), WAIT)
   /** Which search is the latest. Typing outruns the disk, and answers to a
    *  word that is no longer in the field are dropped rather than shown. */
   private round = 0
@@ -163,7 +165,7 @@ class Search {
   ask(text: string) {
     this.text = text
     this.about = workspace.activeSpace?.root ?? null
-    clearTimeout(this.timer)
+    this.asking.cancel()
     this.round++
 
     if (!this.asks) {
@@ -173,7 +175,7 @@ class Search {
     }
 
     this.running = true
-    this.timer = setTimeout(() => void this.run(), WAIT)
+    this.asking()
   }
 
   /** Opens or shuts the replacement field. Shutting it turns every hit back
@@ -191,7 +193,7 @@ class Search {
   }
 
   clear() {
-    clearTimeout(this.timer)
+    this.asking.cancel()
     this.round++
     this.text = ''
     this.about = null

@@ -11,6 +11,8 @@
  *  Everything the host sends arrives as JSON and is read field by field here, at
  *  the boundary, into the shapes the rest of the plugin trusts. */
 
+import { waited } from '../timing'
+
 /** The SDK's `OsEventTypeList`, the values the plugin acts on. Written out
  *  rather than imported so that this module can be reasoned about, and used,
  *  without loading the SDK at all. */
@@ -166,10 +168,6 @@ const HOST_LOOK = 50
  *  already happened, and the poll is what catches that. */
 const READY = 'flutterInAppWebViewPlatformReady'
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 /** Resolves the moment the channel appears, or false when it never does. */
 async function waitForHost(): Promise<boolean> {
   if (hosted()) return true
@@ -192,7 +190,7 @@ async function waitForHost(): Promise<boolean> {
       if (Date.now() >= until) return false
       // Whichever comes first: the announcement, or the next look. The look is
       // what makes an announcement that came too early harmless.
-      await Promise.race([said, sleep(HOST_LOOK)])
+      await Promise.race([said, waited(HOST_LOOK)])
     }
 
     return true

@@ -29,6 +29,7 @@ import { links } from '../link-index.svelte'
 import { settings } from '../settings.svelte'
 import { nameOf } from '../space-paths'
 import { workspace } from '../workspace.svelte'
+import { waited } from '../timing'
 import { bestContainer, recordingName } from './container'
 import { MOST_BYTES, record, type Recording } from './microphone'
 import {
@@ -57,6 +58,11 @@ import {
 /** How often the pill's clock is read again. Twice a second: the seconds have to
  *  change when they change, and nothing here is worth a frame. */
 const TICK = 500
+
+/** How often the queue is looked at again while a summary waits for it to empty.
+ *  Short enough that a finished queue is not sat on, long enough that waiting
+ *  costs nothing. */
+const LOOK_AGAIN = 100
 
 /** How many pieces of a transcript may be waiting to be sent.
  *
@@ -352,7 +358,7 @@ class Recorder {
    *  up on its own. */
   private async drained() {
     while (this.queue.length || this.draining) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await waited(LOOK_AGAIN)
     }
   }
 

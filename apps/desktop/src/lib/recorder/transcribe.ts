@@ -23,6 +23,7 @@ import { api } from '../api'
 import { account } from '../account.svelte'
 import { roomDelay } from '../backoff'
 import { key, message } from '../i18n.svelte'
+import { waited } from '../timing'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
 /** How long a piece of a live transcript is.
@@ -146,8 +147,4 @@ async function decoded(bytes: ArrayBuffer): Promise<Float32Array> {
   // The rate is already what was asked for on every engine that honours it; resampling
   // answers the one that does not.
   return resampled(mono(channels), buffer.sampleRate, RATE)
-}
-
-function waited(delay: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, delay))
 }

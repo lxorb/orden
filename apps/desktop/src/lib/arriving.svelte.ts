@@ -29,6 +29,7 @@
 
 import { SvelteSet } from 'svelte/reactivity'
 import { t } from './i18n.svelte'
+import { afterQuiet } from './timing'
 
 /** How long with nothing arriving before the way out is offered.
  *
@@ -65,7 +66,9 @@ class Arriving {
    *  over two passes and a row is a row either way. */
   private readonly onTheWay = new SvelteSet<string>()
 
-  private timer: ReturnType<typeof setTimeout> | null = null
+  /** A pass that has said nothing for this long is a pass worth saying so
+   *  about; see `wait`. */
+  private readonly stalling = afterQuiet(() => (this.stuck = true), STUCK)
 
   /** What the pass has to say about itself, in as few words as it can. A count
    *  once it knows one, and the app's own word for this until then: two things
@@ -168,16 +171,11 @@ class Arriving {
   private finish() {
     this.showing = false
     this.stuck = false
-    if (this.timer) clearTimeout(this.timer)
-    this.timer = null
+    this.stalling.cancel()
   }
 
   private wait() {
-    if (this.timer) clearTimeout(this.timer)
-    this.timer = setTimeout(() => {
-      this.timer = null
-      this.stuck = true
-    }, STUCK)
+    this.stalling()
   }
 }
 

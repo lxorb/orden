@@ -25,6 +25,7 @@
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { warm } from '../search/warm.svelte'
+import { afterQuiet } from '../timing'
 import { forgetPaperText, keepPaperText, paperFiles, paperText, paperTextOf } from './text-cache'
 
 /** One paper, as its words stand in this window. */
@@ -64,7 +65,9 @@ const SETTLE = 1500
 const WINDOW = 180
 const BEFORE = 60
 
-let writing: ReturnType<typeof setTimeout> | undefined
+/** The papers written down once the reader has stopped turning pages; see
+ *  `pageRead` and `writePapers`. */
+const writing = afterQuiet(() => void writePapers(), SETTLE)
 
 /** Which space has had what was taken down in an earlier sitting read back, so
  *  that a search asks for it once rather than per keystroke. */
@@ -120,8 +123,7 @@ export function paperRead(path: string, page: number, runs: readonly string[]): 
   told()
   // Written down once the reader has stopped turning pages, and only for a paper
   // whose file has been named; see `paperOpened`.
-  clearTimeout(writing)
-  writing = setTimeout(() => void writePapers(), SETTLE)
+  writing()
 }
 
 /** Writes down every paper whose pages have changed since the last time.
@@ -129,7 +131,7 @@ export function paperRead(path: string, page: number, runs: readonly string[]): 
  *  Awaited by the idle pass, which reads one paper and writes it before it starts
  *  the next, and by the tests. The viewer's own pages are written on a timer. */
 export async function writePapers(): Promise<void> {
-  clearTimeout(writing)
+  writing.cancel()
 
   for (const [path, paper] of held) {
     if (!paper.unwritten || !paper.hash || !paper.pages.size) continue
@@ -329,5 +331,5 @@ export function searchPapers(
 export function forgetPapers(): void {
   held.clear()
   hydrated = null
-  clearTimeout(writing)
+  writing.cancel()
 }

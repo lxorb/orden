@@ -29,6 +29,7 @@ import { message } from './i18n.svelte'
 import { log } from './log'
 import { ownsRemotely } from './sharing.svelte'
 import { sync } from './sync.svelte'
+import { afterQuiet } from './timing'
 import type { Space } from './workspace.svelte'
 
 /** Which kind of address a blog is reached by. The sheet says which by name, so
@@ -112,7 +113,9 @@ class Publish {
   /** Whether the space is on the web right now. */
   readonly published = $derived(!!this.blog?.enabled)
 
-  private checkTimer: ReturnType<typeof setTimeout> | undefined
+  /** The availability check, a moment after the typing stops; see
+   *  `typeSubdomain`. */
+  private readonly checking = afterQuiet(() => void this.checkSubdomain(this.subdomain), 260)
 
   show(space: Space) {
     const id = sync.remoteIdFor(space.root)
@@ -248,7 +251,8 @@ class Publish {
   /** Which asking is the latest, for the same reason `checks` is: the rules can
    *  be changed twice while the first answer is still in flight. */
   private previews = 0
-  private askTimer: ReturnType<typeof setTimeout> | undefined
+  /** And what publishing would change, on the same terms; see `ask`. */
+  private readonly asked = afterQuiet(() => void this.askChanges(), 240)
 
   /** What publishing these rules would change, from the server that serves them.
    *
@@ -258,8 +262,7 @@ class Publish {
    *  thousand files off the disk to answer the same question. A moment after the
    *  typing stops, like the address check beside it. */
   ask() {
-    clearTimeout(this.askTimer)
-    this.askTimer = setTimeout(() => void this.askChanges(), 240)
+    this.asked()
   }
 
   /** And the question itself, for the moment the sheet opens and for a test that
@@ -298,8 +301,7 @@ class Publish {
   typeSubdomain(value: string) {
     this.subdomain = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
 
-    clearTimeout(this.checkTimer)
-    this.checkTimer = setTimeout(() => void this.checkSubdomain(this.subdomain), 260)
+    this.checking()
   }
 
   get ready(): boolean {

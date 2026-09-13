@@ -2,6 +2,7 @@ import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api
 import { arriving } from './arriving.svelte'
 import { called } from './person'
 import { forget, keep, storedText } from './stored'
+import { waited } from './timing'
 
 const STORAGE_KEY = 'nib:session'
 
@@ -32,10 +33,6 @@ const TRIES = [400, 1200, 2500]
  *  the journey, not the credential. */
 function rejected(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 401 || error.status === 403)
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 class Session {
@@ -136,7 +133,7 @@ class Session {
     this.token = saved
 
     for (const [attempt, pause] of [0, ...TRIES].entries()) {
-      if (pause) await wait(pause)
+      if (pause) await waited(pause)
 
       try {
         // Either kind of session answers here, and which one it is decides what

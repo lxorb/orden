@@ -19,6 +19,7 @@
  *  turned on from. */
 
 import { currentWindow } from './tauri'
+import { afterQuiet } from './timing'
 
 /** How long the way out stays lit after the last thing moved. Long enough to
  *  find, short enough that a page being read is not sharing it with a button. */
@@ -37,7 +38,8 @@ class FullScreen {
    *  no longer part of what is being read. */
   idle = $state(false)
 
-  private timer: ReturnType<typeof setTimeout> | undefined
+  /** The way out fades once nothing has moved for a while; see `wake`. */
+  private readonly fading = afterQuiet(() => (this.idle = true), IDLE)
   private stirred = 0
 
   async toggle(tabId: string | null) {
@@ -60,8 +62,7 @@ class FullScreen {
     this.on = false
     this.of = null
     this.idle = false
-    clearTimeout(this.timer)
-    this.timer = undefined
+    this.fading.cancel()
     await this.window(false)
   }
 
@@ -86,8 +87,7 @@ class FullScreen {
 
   private wake() {
     this.idle = false
-    clearTimeout(this.timer)
-    this.timer = setTimeout(() => (this.idle = true), IDLE)
+    this.fading()
   }
 
   /** The window itself, where there is one to ask: the desktop's frame, or the
