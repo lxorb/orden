@@ -510,11 +510,23 @@ something that wants `tauri::PhysicalPosition<i32>` and the compiler says in as 
 words that there are *"multiple different versions of crate `dpi` in the dependency
 graph"*.
 
-**One line repairs it**, and the spike proves that too: a `[patch.crates-io]` pointing
-`dpi` at the fork's copy unifies the two and the branch compiles. That is worth
-sending upstream - it is a dependency the branch should be declaring for itself
-rather than a thing every consumer discovers - and it is the shape of the risk in
-batch 1: real, cheap to fix, and found only by building.
+**One line repairs that one**, and the spike proves it: a `[patch.crates-io]` pointing
+`dpi` at the fork's copy unifies the two, and Windows and Linux then compile. That is
+worth sending upstream - it is a dependency the branch should be declaring for itself
+rather than a thing every consumer discovers.
+
+**And then macOS fails again, differently.** `window_builder.rs` calls
+`WindowAttributesMacOS::with_accepts_first_mouse`, which the `winit-gtk4` revision
+that resolves today does not have - so the branch is pinned in spirit to a winit it
+does not name, and an outside consumer gets whatever `master` happens to be. Two
+independent breakages in one afternoon, both from being a consumer of a branch rather
+than of a release.
+
+Neither is deep and neither is nib's to fix alone, but together they are the honest
+measure of how ready this is: **`tauri-runtime-cef` is not yet something a product
+can depend on, and batch 1 is the batch that finds out when it is.** That is not an
+argument against the recommendation - the engine itself is proven, four times over,
+in section 9 - it is an argument for the gate being real.
 
 That is what an unreleased branch is like, and it is the argument for the shape of
 batch 1: **a gate, not a migration.** Build nib against a pinned revision behind a
@@ -773,16 +785,21 @@ directory, so two installations pointed at one directory need
 `OnAlreadyRunningAppRelaunch`, which is the same problem
 `tauri-plugin-single-instance` already solves for nib.
 
-**This is the one piece of the design with no upstream API yet found for it.** CEF
-has the mechanism - a `CefRequestContext` per profile, and
-`browser_host_create_browser` takes one - but `tauri-runtime-cef` is configured with
-a single `root_cache_path` for the whole application, and whether a *per-webview*
-request context can be asked for through `CefWebviewAttributes` was not established.
-If it cannot, batch 2 either adds it upstream or the design falls back to one profile
-for everything, and then the sentence above becomes false and nib has to keep
-extensions away from its own document some other way - the labels the capabilities
-already match on being the obvious candidate. **This is the first thing batch 2 should
-find out**, because most of section 6 rests on it.
+**This is the one piece of the design with no upstream API yet found for it, and the
+spike proved it is not optional.** CEF has the mechanism - a `CefRequestContext` per
+profile, and `browser_host_create_browser` takes one - but `tauri-runtime-cef` is
+configured with a single `root_cache_path` for the whole application, and whether a
+*per-webview* request context can be asked for through `CefWebviewAttributes` was not
+established.
+
+What settles it is a screenshot. In `spike/shell`, with one profile for everything,
+the test extension's content script ran in **nib's own interface** as well as in the
+two web tabs - an `<all_urls>` extension reading the application's own document, in a
+picture, on the first try (section 9). So this is not a precaution any more.
+**Batch 2's first job is a second request context, and if `tauri-runtime-cef` cannot
+give one, adding it upstream is the batch** - because most of section 6 rests on it
+and the alternative is an app whose own interface is readable by anything a reader
+installs.
 
 ### Where it starts
 
@@ -1236,10 +1253,35 @@ all. That is stated rather than buried: a sandboxed build spends a little more a
 startup and a little more per renderer, so the launch figures are if anything
 optimistic, and a shipping build must have the sandbox on - which is ship gate 1.
 
-One honest note about the screenshots: the spike makes two *top-level* windows, so
-they overlap and a picture shows whichever is in front. The checks are what fail the
-job; the pictures corroborate. Putting one browser inside the other's window is
-`spike/shell`'s business, and that is the shape the recommendation takes anyway.
+One honest note about the screenshots: `spike/browser` makes two *top-level* windows,
+so they overlap and a picture shows whichever is in front. The checks are what fail
+the job; the pictures corroborate.
+
+### And the shape itself, which `spike/shell` did prove
+
+On Linux, `spike/shell` built against `tauri-runtime-cef` and ran. **One Tauri
+window, three webviews in it - nib's own interface and two web tabs, one of them on
+`chrome://settings` - and one browser process.** CEF was up 264 ms after the process
+started and the window was on screen at 354 ms.
+
+That is the recommendation, running: not a helper process, not a transport, not a
+window handle passed between programs. `Window::add_child` with bounds, which is the
+call `web_tabs.rs` already makes.
+
+**And the picture found a bug in this document.** The extension's content script ran
+in *all three* webviews - including nib's own interface, which is the green bar
+across the top-left pane in `tauri-window.png`. An extension with `<all_urls>` read
+the application's own document. That is exactly what section 5's two-profile model
+exists to prevent, and it had been written there as a precaution; it is now a
+demonstrated requirement with a screenshot attached. **Batch 2 does not ship one
+profile.**
+
+Two smaller findings from the same run. The shell exited with a segmentation fault
+*after* its work was done and `exit(0)` was called - a shutdown path in an unreleased
+runtime, worth reporting upstream rather than worrying about. And `--no-browser`
+there took 2.3 s to an initialised engine, because under this runtime there is no
+such thing as not starting Chromium - which is section 2's trade, measured in the
+shape that will actually ship rather than in a standalone program.
 
 ---
 
@@ -1267,9 +1309,11 @@ job; the pictures corroborate. Putting one browser inside the other's window is
 - **`tauri-runtime-cef` is unpublished, and at revision `c8c75b1` it does not
   compile on any desktop** - one duplicated `dpi` crate, eleven type errors on macOS
   and thirty on Linux. Batch 1 is allowed to end in "not yet".
-- **A per-webview Chromium profile has no API found for it yet**, and section 5 says
-  what happens to section 6 if it turns out there is none. The first question batch 2
-  asks.
+- **A per-webview Chromium profile has no API found for it yet, and it is not
+  optional**: with one profile, the spike's test extension read nib's own interface.
+  Section 5 and section 9. Batch 2's first job.
+- **The shell spike segfaults on exit** after its work is done - a shutdown path in
+  an unreleased runtime, to report upstream.
 - **Android and iOS get the system browser**, because CEF has no build for either.
 - **The saved-website format is `.url`**, which is a decision being made next door
   rather than here; this design reads it and does not change it. See
