@@ -35,10 +35,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       type, and a `-` or `+` after it saying whether it opens shut. A type
       nothing knows is still a callout, under its own name, so a theme can dress
       it with one rule and nothing has to be registered anywhere first
-- [x] Comments, hidden in the editor, in the reading view, in every export, on a
-      published page and on the glasses: a note to the writer stays one. Both
-      spellings, the HTML one and Obsidian's `%%like this%%`, read by one scan
-      that leaves code exactly as written
+- [x] Comments, hidden in the editor, in the reading view, in every export that
+      renders the note - plain text, RTF, HTML, Word, ePub, a picture, a printed
+      page - and on a published page and the glasses: a note to the writer stays
+      one. The one export that keeps it is Markdown, which is the note itself
+      byte for byte with its wikilinks resolved, and the comment is already in
+      the file on disk; see export/markdown.ts. Both spellings, the HTML one and
+      Obsidian's `%%like this%%`, read by one scan that leaves code exactly as
+      written
 - [x] Page breaks for export
 - [x] Definition lists (Pandoc)
 - [x] Abbreviations (Pandoc)
