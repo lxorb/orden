@@ -195,10 +195,31 @@ function keepMaths(root: ParentNode): void {
   }
 }
 
+/** The attributes nothing in a note has any use for, taken off whatever the page
+ *  put them on.
+ *
+ *  Nothing downstream keeps an attribute: the converter writes markdown out of the
+ *  tree and only ever reads the handful it needs - `href`, `src`, `alt`, a code
+ *  block's language. So this is a second lock rather than the first, and it is here
+ *  because the first one is a library's: a rule that hands a node back as its own
+ *  `outerHTML` puts every attribute on it into the note, which is exactly what a
+ *  table used to do. A clipped page is somebody else's, and `onerror`, `style` and
+ *  `srcdoc` are not things a note carries from one. */
+const NEVER_KEPT = /^(?:on|style$|srcdoc$|formaction$|xlink:href$)/i
+
 /** What a note never contains, plus what the page itself says is decoration. */
 export function clean(root: ParentNode): void {
   keepMaths(root)
   for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
+
+  // The root as well as what is under it: a selection can begin inside the very
+  // element that carries the handler.
+  const all = root.querySelectorAll('*')
+  for (const element of [...(root instanceof Element ? [root] : []), ...all]) {
+    for (const name of element.getAttributeNames()) {
+      if (NEVER_KEPT.test(name)) element.removeAttribute(name)
+    }
+  }
 }
 
 /** The tags the page publishes about itself. Sites write them as a comma list

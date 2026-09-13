@@ -195,6 +195,38 @@ describe('cleaning', () => {
     expect(page.querySelectorAll('math')).toHaveLength(0)
   })
 
+  /** A second lock: nothing downstream keeps an attribute, but the rule that hands
+   *  a node back verbatim is a library's, and what it hands back carries every
+   *  attribute the page wrote. */
+  test('takes the page’s handlers and styles off what it keeps', () => {
+    const page = pageOf(
+      '<div onmouseover="run()" style="position:fixed" class="prose">' +
+        '<p onclick="run()">keep</p><img src="a.png" onerror="run()" alt="a">' +
+        '<a href="/b" onfocus="run()">b</a></div>',
+    )
+    clean(page.body)
+
+    const html = page.body.innerHTML
+    expect(html).not.toContain('onmouseover')
+    expect(html).not.toContain('onclick')
+    expect(html).not.toContain('onerror')
+    expect(html).not.toContain('onfocus')
+    expect(html).not.toContain('style=')
+    // And keeps what the conversion reads.
+    expect(html).toContain('class="prose"')
+    expect(html).toContain('src="a.png"')
+    expect(html).toContain('alt="a"')
+    expect(html).toContain('href="/b"')
+  })
+
+  test('and off the element a selection began inside', () => {
+    const page = pageOf('<p id="one" onmouseover="run()">keep</p>')
+    const one = page.querySelector('#one')
+    if (one) clean(one)
+
+    expect(one?.hasAttribute('onmouseover')).toBe(false)
+  })
+
   test('keeps a task list tick, which is the one field that means something', () => {
     const page = pageOf('<li><input type="checkbox"><input type="text"></li>')
     clean(page.body)
