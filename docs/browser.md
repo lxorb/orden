@@ -472,10 +472,20 @@ out to be intolerable, B′ is the fallback and this document has its shape.
    operating system's own decoders can be used. A browser that cannot play half the
    web's video is not a browser somebody will keep using.
 
-**And `tauri-runtime-cef` is unpublished.** So batch 1 is a gate, not a migration:
-build nib against the branch behind a Cargo feature, run every test the app has,
-and keep wry as the default until the crate has a release and the app is green on
-all three desktops under both.
+**And `tauri-runtime-cef` is unpublished, and today it does not build.** This is not
+a guess - `spike/shell` was pointed at revision `c8c75b1` and the branch failed to
+compile with eleven type errors, all from one cause: `tauri` takes `dpi` from
+crates.io while `tauri-runtime-cef` takes `winit` from the `winit-gtk4` fork, which
+vendors a `dpi` of its own, so `platform/mod.rs` hands a
+`winit::dpi::PhysicalPosition<i32>` to something that wants
+`tauri::PhysicalPosition<i32>`. A one-line `[patch.crates-io]` unifying the two is
+the obvious repair and the spike tries it.
+
+That is what an unreleased branch is like, and it is the argument for the shape of
+batch 1: **a gate, not a migration.** Build nib against a pinned revision behind a
+Cargo feature, keep wry the default, run every test the app has under both, and move
+the default only when the crate has a release and all three desktops are green. A
+batch that is allowed to answer "not yet" is a batch that can be attempted now.
 
 ### Android, iOS and the browser build
 
@@ -721,10 +731,23 @@ from the engine's own model.
 
 The directory layout keeps the name the crate already uses: Chromium's user data
 directory is `web` inside the app's config folder, and `app` and `web` are profile
-directories inside it. One consequence to know: Chromium takes a **process
-singleton lock** on the user data directory, so two installations pointed at one
-directory need `OnAlreadyRunningAppRelaunch`, which is the same problem
+directories inside it - CEF accepts a profile as a **direct child** of the user data
+directory and refuses anything deeper, which is where that shape comes from. One
+consequence to know: Chromium takes a **process singleton lock** on the user data
+directory, so two installations pointed at one directory need
+`OnAlreadyRunningAppRelaunch`, which is the same problem
 `tauri-plugin-single-instance` already solves for nib.
+
+**This is the one piece of the design with no upstream API yet found for it.** CEF
+has the mechanism - a `CefRequestContext` per profile, and
+`browser_host_create_browser` takes one - but `tauri-runtime-cef` is configured with
+a single `root_cache_path` for the whole application, and whether a *per-webview*
+request context can be asked for through `CefWebviewAttributes` was not established.
+If it cannot, batch 2 either adds it upstream or the design falls back to one profile
+for everything, and then the sentence above becomes false and nib has to keep
+extensions away from its own document some other way - the labels the capabilities
+already match on being the obvious candidate. **This is the first thing batch 2 should
+find out**, because most of section 6 rests on it.
 
 ### Where it starts
 
@@ -1125,8 +1148,12 @@ _The numbers are in the report from the run; see the pull request's artefacts._
   change it.
 - **No sandbox in an AppImage or a snap**, so the browser should not be offered in
   those builds. Section 7.
-- **`tauri-runtime-cef` is unpublished**, and batch 1 is allowed to end in "not
-  yet".
+- **`tauri-runtime-cef` is unpublished, and at revision `c8c75b1` it does not
+  compile** - one duplicated `dpi` crate, eleven type errors. Batch 1 is allowed to
+  end in "not yet".
+- **A per-webview Chromium profile has no API found for it yet**, and section 5 says
+  what happens to section 6 if it turns out there is none. The first question batch 2
+  asks.
 - **Android and iOS get the system browser**, because CEF has no build for either.
 - **The saved-website format is `.url`**, which is a decision being made next door
   rather than here; this design reads it and does not change it. See
