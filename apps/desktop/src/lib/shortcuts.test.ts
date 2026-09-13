@@ -640,7 +640,8 @@ describe('what a reader is shown', () => {
     shortcuts.set('app.save', 'Mod-Alt-s')
 
     const { appCommands } = await import('./commands')
-    const { appMenu, isSubmenu } = await import('./app-menu')
+    const { appMenu } = await import('./app-menu')
+    const { isSubmenu } = await import('./menu-item')
 
     const command = appCommands().find((one) => one.id === 'save')
     expect(command?.hint).toBe('Ctrl+Alt+S')

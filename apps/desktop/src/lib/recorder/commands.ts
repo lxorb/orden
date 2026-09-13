@@ -9,27 +9,46 @@
  *
  *  `Transcribe` is the third: a row on the menu of a recording already in a note,
  *  which sends that file through the same Whisper path a meeting's live transcript goes
- *  through and writes what came back under the embed. */
+ *  through and writes what came back under the embed.
+ *
+ *  Nothing here carries the recorder. The microphone, the container it writes, the WAV
+ *  pieces, the live transcript and the summary are a subsystem of their own, and a
+ *  window that opens on a note has no use for any of it - so the store is fetched by
+ *  whichever of the rows above is pressed, and held once it arrives. What is left in
+ *  front of the first paint is what a menu needs in order to draw itself: whether the
+ *  rows are worth offering, and what they are called. */
 
 import type { EditorView } from '@nib/editor'
 import { embedKind, parseWikilink } from '@nib/markdown/links'
-import { busy } from '../busy.svelte'
-import { key, message, t } from '../i18n.svelte'
-import { links } from '../link-index.svelte'
-import { settings } from '../settings.svelte'
-import { assetUrl, joinPath } from '../tauri'
+import { t } from '../i18n.svelte'
 import { workspace } from '../workspace.svelte'
-import { i18n } from '../i18n.svelte'
-import { recorder, WHISPER } from './recording.svelte'
-import { canTranscribe, wordsInFile } from './transcribe'
-import { languageName, transcriptCallout } from './transcript'
+import { canRecordHere } from './container'
+import { canTranscribe } from './transcribe'
+
+/** The recorder, once one of the rows below has woken it.
+ *
+ *  Held rather than imported, and null until then - which is also the answer to what
+ *  the two labels say before that: nothing can be being recorded while the thing that
+ *  records has not been fetched. A plain reference and not a rune, because a menu is
+ *  built when it opens rather than watched. */
+type Recorder = (typeof import('./recording.svelte'))['recorder']
+let woken: Recorder | null = null
+
+/** The store, fetched the first time anything asks. The import is held by the module
+ *  registry, so the second press is not a second fetch. */
+async function wake(): Promise<Recorder> {
+  const { recorder } = await import('./recording.svelte')
+  woken = recorder
+
+  return recorder
+}
 
 /** Whether the row is worth offering: a microphone, and a space to write into.
  *
  *  Not "a note open": a recording makes one where there is none, which is the whole
  *  point of a command somebody presses in a hurry. */
 export function canRecord(): boolean {
-  return recorder.available && !!workspace.activeSpace
+  return canRecordHere() && !!workspace.activeSpace
 }
 
 /** And a meeting, which needs the account as well: its transcript and its summary are
@@ -40,11 +59,11 @@ export function canTakeMeetingNotes(): boolean {
 
 /** What the row says, which is the other half of one command doing two things. */
 export function recordLabel(): string {
-  return recorder.on && recorder.kind === 'note' ? t('Stop recording') : t('Record')
+  return woken?.on && woken.kind === 'note' ? t('Stop recording') : t('Record')
 }
 
 export function meetingLabel(): string {
-  return recorder.on && recorder.kind === 'meeting' ? t('Stop the meeting') : t('Meeting notes')
+  return woken?.on && woken.kind === 'meeting' ? t('Stop the meeting') : t('Meeting notes')
 }
 
 /** Whether a `![[…]]` under the pointer names a recording, and what it names. Null for
@@ -69,74 +88,21 @@ export function recordingAt(view: EditorView, at: number): string | null {
   return null
 }
 
-/** The recording named by an embed, as bytes, or null where the space has no such
- *  file.
- *
- *  Asked for at the very address the player is pointed at, which is the asset protocol
- *  in the app and the asset worker in a browser, so this cannot come to a different
- *  answer about where a file is than the thing that plays it. The same resolution too:
- *  a bare name is looked for anywhere in the space, anything else is a path beside the
- *  note. See note-images.ts. */
-async function bytesOf(target: string, notePath: string | null): Promise<ArrayBuffer | null> {
-  const root = workspace.activeSpace?.root
-  const found = root && !target.includes('/') ? links.fileNamed(target) : null
-  const path = found && root ? joinPath(root, found) : beside(notePath, target)
-  if (!path) return null
-
-  const response = await fetch(assetUrl(path)).catch(() => null)
-  return response?.ok ? response.arrayBuffer() : null
-}
-
-function beside(notePath: string | null, target: string): string | null {
-  if (!notePath) return null
-  return joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target)
-}
-
-/** Turns the recording an embed names into words, and writes them under it.
- *
- *  Under it rather than in place of it: the sound is the record and the transcript is a
- *  reading of it, and a reading that replaced the recording would throw away the one
- *  thing that cannot be got back. */
+/** Turns the recording an embed names into words, and writes them under it. The reading
+ *  and the writing are transcribing.ts, fetched by the press: see that file. */
 export async function transcribeEmbed(view: EditorView, at: number) {
   const target = recordingAt(view, at)
   if (!target) return
 
-  const note = workspace.active
-  const line = view.state.doc.lineAt(at)
-
-  try {
-    const words = await busy.run(t('Turning the recording into words'), async () => {
-      const bytes = await bytesOf(target, note?.path ?? null)
-      if (!bytes) throw new Error(key('That recording is not in this space.'))
-
-      return wordsInFile(bytes)
-    })
-
-    if (!words.text) {
-      settings.error = t('Nothing could be heard in that recording.')
-      return
-    }
-
-    const said = transcriptCallout(
-      words.text,
-      words.language ? languageName(words.language, i18n.language) : '',
-      WHISPER,
-    )
-
-    view.dispatch({
-      changes: { from: line.to, to: line.to, insert: `\n\n${said}` },
-      userEvent: 'input.complete',
-    })
-  } catch (error) {
-    settings.error = message(error, key('That recording could not be turned into words.'))
-  }
+  const { transcribeInto } = await import('./transcribing')
+  await transcribeInto(view, at, target)
 }
 
 /** Starts or stops a recording. The one function the ids run. */
-export function record() {
-  recorder.toggle('note')
+export async function record() {
+  ;(await wake()).toggle('note')
 }
 
-export function meeting() {
-  recorder.toggle('meeting')
+export async function meeting() {
+  ;(await wake()).toggle('meeting')
 }

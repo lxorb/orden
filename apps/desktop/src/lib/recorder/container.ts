@@ -73,6 +73,23 @@ export function bestContainer(): string | null {
   return ''
 }
 
+/** Whether this device can record at all: a microphone to open and a container to
+ *  write it into.
+ *
+ *  Here rather than on the recorder, because it is the one question about recording
+ *  the app has to answer before anything is fetched - a menu greys its Record row out
+ *  on a build with no `MediaRecorder` - and the recorder is a subsystem nothing
+ *  carries until somebody presses the row. `mediaDevices` is typed as always there and
+ *  is absent in a page served over plain http from anything but localhost, so it is
+ *  asked for rather than assumed, which is also what makes this answerable in a test
+ *  with no browser behind it. */
+export function canRecordHere(): boolean {
+  const devices: MediaDevices | undefined =
+    typeof navigator === 'undefined' ? undefined : navigator.mediaDevices
+
+  return !!devices && bestContainer() !== null
+}
+
 /** Two digits, for a name a person reads and a machine sorts. */
 function padded(value: number): string {
   return String(value).padStart(2, '0')

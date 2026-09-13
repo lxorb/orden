@@ -12,7 +12,7 @@
    *  same index the lists do, so the two cannot disagree about the space. */
 
   import { neighbourhood, type NoteGraph, without } from './graph'
-  import { graphSurface } from './surfaces'
+  import { graphSurface } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -118,7 +118,7 @@
 {:else if graph}
   <!-- The picture itself, with its layout and its painter, is fetched the first time
        somebody asks for one - here or in a tab of its own, whichever comes first; see
-       surfaces.ts. The list below is what the panel opens on. -->
+       surfaces.svelte.ts. The list below is what the panel opens on. -->
   {#await graphSurface() then Graph}
     <Graph
       graph={around}

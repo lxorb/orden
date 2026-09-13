@@ -500,6 +500,14 @@ export function canShare(space: Space): boolean {
   return ownsRemotely(space)
 }
 
+/** And whether it can be published: the same question, because it is the same folder
+ *  on the same server, and it lives here beside the other half of it rather than with
+ *  the publishing store - which is a sheet's worth of code the shell has no reason to
+ *  carry in order to grey out a menu row. See publishing.svelte.ts. */
+export function canPublish(space: Space): boolean {
+  return ownsRemotely(space)
+}
+
 /** Who else may have this one file, from the row it is on. The same sheet the
  *  space opens; see ShareSheet.svelte. */
 export async function shareThisFile(path: string) {

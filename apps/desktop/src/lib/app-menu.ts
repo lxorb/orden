@@ -29,7 +29,7 @@ import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
-import { DIVIDER, type MenuItem } from './menu-item'
+import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
 import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
@@ -50,45 +50,6 @@ export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
  *  of the same repository, so neither is a second address to keep in step. */
 export const ISSUES_URL = `${SOURCE_URL}/issues`
 export const RELEASES_URL = `${SOURCE_URL}/releases`
-
-/** A row that opens rows of its own: Export under File, whose list is a dozen
- *  formats and belongs behind one word rather than in front of it. */
-export interface MenuSubmenu {
-  label: string
-  disabled?: boolean
-  rows: MenuRow[]
-}
-
-/** A row of this menu: one of the app's own rows, one that leads to more, or the
- *  rule between groups. What a row is, is menu-item.ts - the same shape a row's own
- *  menu and the palette are lists of. */
-export type MenuRow = MenuItem | MenuSubmenu | typeof DIVIDER
-
-/** Whether a row leads to more rows. */
-export function isSubmenu(row: MenuRow): row is MenuSubmenu {
-  return row !== DIVIDER && 'rows' in row
-}
-
-/** Which of a list's rows a key may stand on, as places in the list.
- *
- *  A rule between groups is nothing to land on and neither is a row that is
- *  greyed out, so the arrows step over both. Here rather than in the component
- *  because it is the shape of the list rather than anything about the screen; see
- *  AppMenu.svelte. */
-export function walkableRows(rows: readonly MenuRow[]): number[] {
-  const out: number[] = []
-  for (const [index, row] of rows.entries()) {
-    if (row !== DIVIDER && !row.disabled) out.push(index)
-  }
-
-  return out
-}
-
-export interface MenuGroup {
-  id: string
-  label: string
-  rows: MenuRow[]
-}
 
 interface Context {
   view?: EditorView | undefined

@@ -165,7 +165,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
  *  app, and compiling that belongs to no one test. See docs/conventions.md. */
 const { workspace } = await import('../workspace.svelte')
 const { exportCommands } = await import('../commands')
-const { appMenu, isSubmenu } = await import('../app-menu')
+const { appMenu } = await import('../app-menu')
+const { isSubmenu } = await import('../menu-item')
 const { SHORTCUTS } = await import('../shortcuts/registry')
 
 /** Every row of Export, which is a submenu of File: rule rows left out. */

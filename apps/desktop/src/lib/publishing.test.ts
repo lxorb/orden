@@ -85,7 +85,8 @@ vi.mock('./i18n.svelte', () => ({
 // Imported once, at module scope: a hook that re-imported the store graph would
 // charge whichever test ran first for compiling it.
 import { account } from './account.svelte'
-import { canPublish, publish } from './publishing.svelte'
+import { publish } from './publishing.svelte'
+import { canPublish } from './sharing.svelte'
 import type { RemoteSpace } from './api'
 
 /** A space on the account, with only the fields any of this reads. */

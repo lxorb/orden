@@ -10,7 +10,6 @@
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
-  import { importing } from './lib/importing.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import Palette from './lib/Palette.svelte'
@@ -51,8 +50,7 @@
     settingsSheet,
     shareSheet,
     slidesStage,
-  } from './lib/surfaces'
-  import { publish } from './lib/publishing.svelte'
+  } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
@@ -92,7 +90,7 @@
    *  listens on. */
   let middle = $state<HTMLElement>()
 
-  /** Which of the overlays have been asked for, once each and for good.
+  /** The overlays, knocked on.
    *
    *  Every sheet the app opens over what is under it is fetched rather than imported:
    *  none of them is on screen when the window opens, and between them they were the
@@ -101,32 +99,25 @@
    *  exactly what it was - a component unmounted the moment it closed would have no
    *  way out to play, and the sheet's own `{#if}` is what plays it either way.
    *
-   *  A latch rather than the flag itself, and only ever set: `{#await}` on a promise
-   *  that has already resolved renders in the same pass, so the second open costs
-   *  nothing and only the first ever sees an empty frame. See surfaces.ts, which holds
-   *  one kept promise per door.
+   *  Each door remembers being asked, so what is on the page is the door's own
+   *  answer rather than a second list of flags here; see surfaces.svelte.ts. Only
+   *  ever set: `{#await}` on a promise that has already resolved renders in the same
+   *  pass, so the second open costs nothing and only the first ever sees an empty
+   *  frame.
    *
-   *  The deck is not here: it takes the tab it is presenting as a prop, so there is
-   *  nothing for it to be while nothing is presented and its own `{#if}` is the
-   *  boundary already. */
-  const asked = $state({
-    settings: false,
-    history: false,
-    share: false,
-    publish: false,
-    imports: false,
-    icons: false,
-  })
-
-  // One effect for all of them: each line is a door being knocked on, and none of
-  // them is ever closed again.
+   *  Four of the six are knocked on here, because their stores are ones this
+   *  component already holds and none of them has a single way in to say it from. The
+   *  publish sheet and the import sheet are not: neither store is carried here at
+   *  all, and each knocks on its own door as it is shown.
+   *
+   *  The deck is not here either: it takes the tab it is presenting as a prop, so
+   *  there is nothing for it to be while nothing is presented and its own `{#if}` is
+   *  the boundary already. */
   $effect(() => {
-    if (settings.open) asked.settings = true
-    if (settings.historyOpen) asked.history = true
-    if (share.open) asked.share = true
-    if (publish.open) asked.publish = true
-    if (importing.open) asked.imports = true
-    if (iconChoice.target) asked.icons = true
+    if (settings.open) void settingsSheet.ask()
+    if (settings.historyOpen) void historySheet.ask()
+    if (share.open) void shareSheet.ask()
+    if (iconChoice.target) void iconPicker.ask()
   })
 
   // Everything that has to happen as the app comes up; see start.ts.
@@ -394,18 +385,11 @@
         // The picker is opened from a row's menu, which a drive cannot reach; this
         // is how a screenshot run opens it on a note, a canvas or a folder.
         iconChoice,
-        // The import sheet, which opens from a row in File: a drive walks the file
-        // chooser rather than the menu, so it needs the sheet on screen first.
-        importing,
         // The page note in front, which is the only way to reach its surface's store
         // from outside its pane: the thumbnails and the page counter already do, and a
         // drive turns pages and reads what is on them the same way. See
         // apps/desktop/test/e2e/pages.py.
         pages,
-        // The publish sheet, for the same reason the share sheet is here: it opens
-        // from a space's own menu, which a drive cannot reach by pointing. See
-        // apps/desktop/test/e2e/site.py.
-        publish,
         rooms,
         // One rewrite, which is a sheet opened from the editor's own menu: a drive
         // cannot reach a right-click menu, so it asks for the sheet.
@@ -436,6 +420,20 @@
         views,
       },
     })
+
+    // The two stores the shell no longer carries, put on the same handle once they
+    // arrive. Both are sheets a drive opens by name rather than by pointing - the
+    // import sheet opens from a row in File and walks a file chooser, the publish
+    // sheet from a space's own menu - and neither is any use to the app until
+    // somebody asks for it; see surfaces.svelte.ts, test/e2e/import.py and
+    // test/e2e/site.py. Fetched here rather than imported so that a development
+    // build is the only one that pays for them, and awaited by every drive the same
+    // way the space is: nothing reaches either of these before the space is open.
+    void Promise.all([import('./lib/importing.svelte'), import('./lib/publishing.svelte')]).then(
+      ([{ importing }, { publish }]) => {
+        Object.assign((window as unknown as { nibApp: object }).nibApp, { importing, publish })
+      },
+    )
   }
 
   /** Every pair of panes in a list of them, each pair once. */
@@ -818,7 +816,7 @@
 <!-- Over everything, with no chrome of its own: while a note is being presented
      the window is the deck. Fetched when a deck is first asked for, and the promise
      kept, so the second presentation opens in the same pass as the `{#if}`; see
-     surfaces.ts. -->
+     surfaces.svelte.ts. -->
 {#if presenting}
   {#await slidesStage() then Slides}
     <Slides tab={presenting} />
@@ -842,33 +840,33 @@
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />
 <!-- The sheets, each fetched the first time something opens it and kept mounted
-     afterwards; `asked` above says why, and surfaces.ts holds the doors. The largest
-     of them is the settings sheet - the pane per section, the theme store, the sync
-     pane, the AI pane, the security pane - and none of them is on screen when the
-     window opens. -->
-{#if asked.settings}
-  {#await settingsSheet() then SettingsPanel}
+     afterwards; the effect above says why, and surfaces.svelte.ts holds the doors.
+     The largest of them is the settings sheet - the pane per section, the theme
+     store, the sync pane, the AI pane, the security pane - and none of them is on
+     screen when the window opens. -->
+{#if settingsSheet.asked}
+  {#await settingsSheet.asked then SettingsPanel}
     <SettingsPanel {view} />
   {/await}
 {/if}
 <FormatBar bind:this={formatBar} {view} context={appContext} />
-{#if asked.history}
-  {#await historySheet() then History}
+{#if historySheet.asked}
+  {#await historySheet.asked then History}
     <History bind:open={settings.historyOpen} />
   {/await}
 {/if}
-{#if asked.share}
-  {#await shareSheet() then ShareSheet}
+{#if shareSheet.asked}
+  {#await shareSheet.asked then ShareSheet}
     <ShareSheet />
   {/await}
 {/if}
-{#if asked.publish}
-  {#await publishSheet() then PublishSheet}
+{#if publishSheet.asked}
+  {#await publishSheet.asked then PublishSheet}
     <PublishSheet />
   {/await}
 {/if}
-{#if asked.imports}
-  {#await importSheet() then ImportSheet}
+{#if importSheet.asked}
+  {#await importSheet.asked then ImportSheet}
     <ImportSheet />
   {/await}
 {/if}
@@ -877,8 +875,8 @@
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet
      for one: a space in the switcher, a note in the file list. -->
-{#if asked.icons}
-  {#await iconPicker() then IconPicker}
+{#if iconPicker.asked}
+  {#await iconPicker.asked then IconPicker}
     <IconPicker />
   {/await}
 {/if}

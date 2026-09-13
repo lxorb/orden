@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import type { MenuGroup, MenuRow } from './app-menu'
+import type { MenuGroup, MenuRow } from './menu-item'
 import type { MenuItem } from './menu-item'
 import { de } from '../locales/de'
 
@@ -25,8 +25,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 /** Loaded once, at module scope: the menu and the command list reach half the app,
  *  and compiling that belongs to no one test. See docs/conventions.md. */
-const { appMenu, isSubmenu, ISSUES_URL, RELEASES_URL, SOURCE_URL, walkableRows } =
-  await import('./app-menu')
+const { appMenu, ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./app-menu')
+const { isSubmenu, walkableRows } = await import('./menu-item')
 const { appCommands } = await import('./commands')
 const { BY_ID } = await import('./shortcuts/registry')
 const { i18n } = await import('./i18n.svelte')

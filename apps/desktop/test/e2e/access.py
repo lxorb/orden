@@ -639,7 +639,7 @@ def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
     first time it is asked for rather than carried into the first paint, so the store
     saying it is open is a moment ahead of it being on screen; a walk that measured
     the gap would find nothing wrong with a surface that is not there. See
-    surfaces.ts."""
+    surfaces.svelte.ts."""
     if not opens(window, how, wait):
         return
 
@@ -753,7 +753,7 @@ def drive(browser: Browser, name: str, width: int, height: int,
             # A canvas is made and then named, and the plane is not on screen until
             # the name is committed: Escape leaves the row as it is and gets on. Then
             # the plane itself, which is fetched the first time a tab of its kind is
-            # opened rather than carried into the first paint; see surfaces.ts.
+            # opened rather than carried into the first paint; see surfaces.svelte.ts.
             page.keyboard.press("Escape")
             try:
                 page.wait_for_selector("[role=application]", state="visible", timeout=20000)

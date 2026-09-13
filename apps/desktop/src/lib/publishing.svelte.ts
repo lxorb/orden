@@ -27,8 +27,8 @@ import { account } from './account.svelte'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { log } from './log'
-import { ownsRemotely } from './sharing.svelte'
 import { relativeTo as relativeIn } from './space-paths'
+import { publishSheet } from './surfaces.svelte'
 import { sync } from './sync.svelte'
 import { afterQuiet } from './timing'
 import type { Space } from './workspace.svelte'
@@ -118,9 +118,17 @@ class Publish {
    *  `typeSubdomain`. */
   private readonly checking = afterQuiet(() => void this.checkSubdomain(this.subdomain), 260)
 
+  /** Opens the sheet on a space, and asks for the sheet.
+   *
+   *  The knock is here rather than at the call sites because this is the one way in,
+   *  whichever of them ran: a space's own menu, and a drive reaching the store by
+   *  name. App.svelte mounts the sheet off that door rather than off `open`, so the
+   *  shell carries neither half. See surfaces.svelte.ts. */
   show(space: Space) {
     const id = sync.remoteIdFor(space.root)
     if (!id) return
+
+    void publishSheet.ask()
 
     this.space = space
     this.spaceId = id
@@ -535,10 +543,3 @@ class Publish {
 }
 
 export const publish = new Publish()
-
-/** Whether a space can be published from here: it is on the account, and it is
- *  this account's to publish. The same question sharing asks, because it is the
- *  same folder on the same server. */
-export function canPublish(space: Space): boolean {
-  return ownsRemotely(space)
-}

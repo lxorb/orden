@@ -6,8 +6,6 @@
  *  to show what it asked. */
 
 import { SvelteSet } from 'svelte/reactivity'
-import { changesFor } from './search/apply'
-import { fuzzyTerms } from './search/fuzzy'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -230,6 +228,13 @@ class Search {
     // replacement is being written: that is precision work, and a list holding
     // rows the replacement will not touch would be a list lying about what is
     // about to happen. See fuzzy.ts for what else is left exact.
+    //
+    // The ranking engine is fetched here rather than imported: it is the largest
+    // single module the sidebar reaches, and a window that opens on a note has not
+    // been asked anything yet. One fetch per session - the module registry holds it -
+    // and the panel it belongs to has already asked for it by the time anybody types,
+    // because the panel carries it too. See `warmDoors` in surfaces.svelte.ts.
+    const { fuzzyTerms } = await import('./search/fuzzy')
     const terms = this.replacing ? [] : fuzzyTerms(this.query)
 
     // Rows arrive in handfuls and go on the end, so the list fills from the
@@ -259,6 +264,9 @@ class Search {
     const chosen = this.chosen
     if (!root || !chosen.length) return
 
+    // What a replacement would do to each note, worked out where the edits are
+    // written down; fetched with the press, like the ranking above.
+    const { changesFor } = await import('./search/apply')
     const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
       workspace.noteText(path),
     )

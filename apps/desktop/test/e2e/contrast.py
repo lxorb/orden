@@ -466,7 +466,7 @@ def drive_settings(browser: Browser) -> None:
     # The sheet is fetched the first time it is asked for rather than carried into the
     # first paint, so it arrives a moment after the store says it is open. Waited for,
     # because every question below is about what the pane does not say and a pane that
-    # is not there yet says nothing at all. See surfaces.ts.
+    # is not there yet says nothing at all. See surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")

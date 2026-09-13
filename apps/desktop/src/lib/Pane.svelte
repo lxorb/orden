@@ -34,7 +34,6 @@
   import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
-  import FindBar from './FindBar.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
   import { showEditorMenu } from './editor-menu'
@@ -45,10 +44,17 @@
   import { pull } from './pull.svelte'
   import { notePicture } from './note-images'
   import { placement } from './placement.svelte'
-  import Reading from './Reading.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
-  import { canvasSurface, graphSurface, pagesSurface, pdfSurface, webSurface } from './surfaces'
+  import {
+    canvasSurface,
+    findBar,
+    graphSurface,
+    pagesSurface,
+    pdfSurface,
+    readingSurface,
+    webSurface,
+  } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
@@ -354,31 +360,37 @@
        the note rather than over it: a bar that covered the first line would be a
        bar hiding the first match. The reading view and a PDF draw the same
        component themselves, because each holds its own idea of where the words
-       are; see FindBar.svelte. -->
+       are; see FindBar.svelte.
+
+       Fetched the first time a key asks for it, like every other part of the app
+       nothing is showing yet, and preloaded once the launch is over so the first
+       Control+F is not a wait; see `warmDoors` in surfaces.svelte.ts. -->
   {#if finding && writing}
-    <FindBar
-      query={spec.query}
-      count={tally.count}
-      current={tally.current}
-      capped={tally.capped}
-      flags={spec}
-      onflags={(flags: FindFlags) => look({ ...spec, ...flags })}
-      {replacing}
-      replacement={spec.replace}
-      onreplacing={(open: boolean) => {
-        replacing = open
-      }}
-      onreplacement={(typed: string) => look({ ...spec, replace: typed })}
-      onreplace={canReplace ? replaceOne : undefined}
-      onreplaceall={canReplace ? replaceEvery : undefined}
-      onstep={stepFinding}
-      onclose={shutFinding}
-      onquery={(typed: string) => look({ ...spec, query: typed })}
-    />
+    {#await findBar() then FindBar}
+      <FindBar
+        query={spec.query}
+        count={tally.count}
+        current={tally.current}
+        capped={tally.capped}
+        flags={spec}
+        onflags={(flags: FindFlags) => look({ ...spec, ...flags })}
+        {replacing}
+        replacement={spec.replace}
+        onreplacing={(open: boolean) => {
+          replacing = open
+        }}
+        onreplacement={(typed: string) => look({ ...spec, replace: typed })}
+        onreplace={canReplace ? replaceOne : undefined}
+        onreplaceall={canReplace ? replaceEvery : undefined}
+        onstep={stepFinding}
+        onclose={shutFinding}
+        onquery={(typed: string) => look({ ...spec, query: typed })}
+      />
+    {/await}
   {/if}
 
   <!-- Every surface below the editor is fetched the first time a tab of its kind is
-       opened rather than before the window is on screen; see surfaces.ts. The awaited
+       opened rather than before the window is on screen; see surfaces.svelte.ts. The awaited
        promise is kept, so only the first canvas, PDF, deck of pages, graph or website
        of a session waits, and switching back to one does not. Nothing is drawn while
        one is on its way: the pane keeps its own ground for a frame, which is what it
@@ -440,9 +452,13 @@
     <div class="coming" role="status">{t('Loading…')}</div>
   {:else if tab?.reading}
     <!-- The note through the renderer. A tab keeps its own face, so the same note
-         can be read here and written in next door. -->
+         can be read here and written in next door. Fetched like the surfaces above
+         it: a reader who writes and never reads never carries the renderer's own
+         side of the app. -->
     {#key tab.id}
-      <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await readingSurface() then Reading}
+        <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
     {/key}
   {:else if tab}
     <!-- One editor for the pane, whichever note is in it: switching swaps the

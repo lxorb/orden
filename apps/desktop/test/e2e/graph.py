@@ -484,7 +484,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     # The surface is fetched the first time a tab of its kind is opened rather than
     # carried into the first paint, so the pane is empty for as long as that takes:
     # waited for, or the card this run goes on to open is looked for before there is
-    # anything to open it on. See surfaces.ts.
+    # anything to open it on. See surfaces.svelte.ts.
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(1400)
     shot("arrived")
@@ -653,7 +653,7 @@ def measure(browser, out: Path, count: int) -> None:
 
     page.evaluate("() => window.nibApp.workspace.openGraph()")
     # The surface itself first, which is fetched when a tab of its kind is opened; see
-    # surfaces.ts. Then the arrangement, which takes as many ticks as each frame has
+    # surfaces.svelte.ts. Then the arrangement, which takes as many ticks as each frame has
     # room for, so a space this size settles over a few seconds of animation -
     # measured at 4.9 seconds for five thousand notes, watched by the picture
     # stopping; see graph-still.py. Waited out here rather than watched, because

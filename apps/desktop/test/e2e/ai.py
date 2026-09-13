@@ -653,7 +653,7 @@ def drive_pane(browser: Browser) -> None:
     # The sheet is fetched the first time it is asked for rather than carried into the
     # first paint, so it arrives a moment after the store says it is open; waited for
     # rather than slept through, or the rows below are counted before there are any.
-    # See surfaces.ts.
+    # See surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(400)
     shot(page, "60-pane-empty")

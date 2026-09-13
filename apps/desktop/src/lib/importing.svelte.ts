@@ -22,6 +22,7 @@ import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
 import { relativeTo } from './space-paths'
+import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -75,7 +76,14 @@ class Importing {
     workspace.spaces.find((space) => space.root === this.root)?.name ?? '',
   )
 
+  /** Opens the sheet, and asks for the sheet.
+   *
+   *  The knock is here rather than at the call sites because this is the one way in,
+   *  whichever of them ran: the row in File, and a drive reaching the store by name.
+   *  App.svelte mounts the sheet off that door rather than off `open`, so the shell
+   *  carries neither this nor the readers behind it. See surfaces.svelte.ts. */
   show() {
+    void importSheet.ask()
     this.open = true
     if (this.stage === 'waiting') this.root = workspace.activeSpace?.root ?? null
   }

@@ -2,8 +2,8 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, walkableRows } from './app-menu'
-  import { DIVIDER } from './menu-item'
+  import { DIVIDER, isSubmenu, type MenuGroup, type MenuRow, walkableRows } from './menu-item'
+  import { appMenuRows } from './surfaces.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { steppedKey } from './direction'
   import { overlays } from './overlays'
@@ -46,8 +46,19 @@
    *  other but is not one of the group's own. */
   const BACK = -1
 
-  function show() {
-    // Built on opening, so what is ticked and what is greyed out describes now.
+  /** Opens the menu, on rows built for this moment.
+   *
+   *  The builder is fetched rather than imported: it names every command in the app,
+   *  asks each whether it may run and carries the export list and the shortcut hints
+   *  with it, none of which is worth a byte before somebody presses the bars. The
+   *  fetch is kept, and the launch has already asked for it by the time a hand
+   *  reaches the bars, so no open of it ever waits; see `warmDoors` in
+   *  surfaces.svelte.ts.
+   *
+   *  Built on opening, so what is ticked and what is greyed out describes now. */
+  async function show() {
+    const appMenu = await appMenuRows()
+
     groups = appMenu({ view, onpalette, onhistory })
     current = groups[0]?.id ?? 'file'
     into = null
@@ -205,7 +216,7 @@
   title={t('Menu')}
   aria-label={t('Menu')}
   aria-expanded={open}
-  onclick={() => (open ? (open = false) : show())}
+  onclick={() => (open ? (open = false) : void show())}
 >
   {#if dots}
     <svg viewBox="0 0 16 16"

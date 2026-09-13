@@ -459,7 +459,7 @@ def one(
     page.evaluate("() => window.nibApp.settings.show()")
     # The sheet is fetched the first time it is asked for rather than carried into the
     # first paint; measuring before it lands measures nothing and reads as a pass. See
-    # surfaces.ts.
+    # surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))

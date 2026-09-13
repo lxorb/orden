@@ -61,8 +61,7 @@ import { moveTargets } from './move-targets'
 import { prompt } from './prompt.svelte'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
-import { canPublish } from './publishing.svelte'
-import { canShare, canShareItem, shareThisFile } from './sharing.svelte'
+import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
@@ -578,8 +577,8 @@ const BLOCKS: Block[] = [
   // starts and the next stops; neither needs a note open, because either will make
   // one. See recorder/commands.ts, which is what the quick settings tile on Android
   // calls by these very ids.
-  { id: 'record', label: recordLabel, apply: () => record(), ready: canRecord },
-  { id: 'meeting', label: meetingLabel, apply: () => meeting(), ready: canTakeMeetingNotes },
+  { id: 'record', label: recordLabel, apply: () => void record(), ready: canRecord },
+  { id: 'meeting', label: meetingLabel, apply: () => void meeting(), ready: canTakeMeetingNotes },
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),
   block('paragraph.toc', () => t('Table of contents'), insertToc),

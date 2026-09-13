@@ -39,3 +39,43 @@ export const DIVIDER = null
 
 /** A row, or the rule between groups. */
 export type MenuEntry = MenuItem | typeof DIVIDER
+
+/** A row that opens rows of its own: Export under File, whose list is a dozen
+ *  formats and belongs behind one word rather than in front of it. */
+export interface MenuSubmenu {
+  label: string
+  disabled?: boolean
+  rows: MenuRow[]
+}
+
+/** A row of the app menu: one of its own rows, one that leads to more, or the rule
+ *  between groups. */
+export type MenuRow = MenuItem | MenuSubmenu | typeof DIVIDER
+
+/** Whether a row leads to more rows. */
+export function isSubmenu(row: MenuRow): row is MenuSubmenu {
+  return row !== DIVIDER && 'rows' in row
+}
+
+/** Which of a list's rows a key may stand on, as places in the list.
+ *
+ *  A rule between groups is nothing to land on and neither is a row that is greyed
+ *  out, so the arrows step over both. The shape of the list rather than anything
+ *  about the screen, and here rather than with the rows themselves so that the menu
+ *  can walk what it is showing without carrying what builds it; see AppMenu.svelte
+ *  and app-menu.ts. */
+export function walkableRows(rows: readonly MenuRow[]): number[] {
+  const out: number[] = []
+  for (const [index, row] of rows.entries()) {
+    if (row !== DIVIDER && !row.disabled) out.push(index)
+  }
+
+  return out
+}
+
+/** One group of the app menu: File, Edit, View, and the rows under each. */
+export interface MenuGroup {
+  id: string
+  label: string
+  rows: MenuRow[]
+}

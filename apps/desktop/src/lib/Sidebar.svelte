@@ -27,7 +27,7 @@
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
-  import { pagesNavigator } from './surfaces'
+  import { pagesNavigator, searchPanel } from './surfaces.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide, SortKey } from './workspace.svelte'
@@ -40,7 +40,6 @@
   import { viewport } from './viewport.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
-  import SearchPanel from './SearchPanel.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
@@ -235,8 +234,8 @@
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...(canRecord() ? [{ label: recordLabel(), run: () => record() }] : []),
-      ...(canTakeMeetingNotes() ? [{ label: meetingLabel(), run: () => meeting() }] : []),
+      ...(canRecord() ? [{ label: recordLabel(), run: () => void record() }] : []),
+      ...(canTakeMeetingNotes() ? [{ label: meetingLabel(), run: () => void meeting() }] : []),
     ]
   }
 
@@ -708,7 +707,7 @@
               <!-- Fetched the first time a page note is in front. It draws its
                    thumbnails with the surface's own ink engine - one picture of a
                    stroke - and that engine is the larger half of the canvas; see
-                   surfaces.ts, where the pages surface itself is. -->
+                   surfaces.svelte.ts, where the pages surface itself is. -->
               {#await pagesNavigator() then PagesNavigator}
                 <PagesNavigator />
               {/await}
@@ -784,7 +783,13 @@
           {:else if showing === 'links'}
             <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
           {:else if showing === 'search'}
-            <SearchPanel {ongoto} />
+            <!-- The one panel with a ranking engine behind it, fetched the first time
+                 the tab is chosen rather than carried into the first paint; see
+                 surfaces.svelte.ts. Preloaded once the launch is over, so the tab
+                 that is a keystroke away is never a wait. -->
+            {#await searchPanel() then SearchPanel}
+              <SearchPanel {ongoto} />
+            {/await}
           {/if}
         </div>
       {/key}

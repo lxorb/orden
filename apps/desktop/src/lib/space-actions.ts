@@ -2,8 +2,7 @@ import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
-import { canPublish, publish } from './publishing.svelte'
-import { canShare, roleOf, share } from './sharing.svelte'
+import { canPublish, canShare, roleOf, share } from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
@@ -153,8 +152,13 @@ export async function shareSpace(space: Space) {
 }
 
 /** Putting a space on the web, which is the other half of who may read it and
- *  is asked in the sheet beside it; see PublishSheet.svelte. */
-export function publishSpace(space: Space) {
+ *  is asked in the sheet beside it; see PublishSheet.svelte.
+ *
+ *  The store arrives with the sheet, which is fetched rather than carried: nothing
+ *  about publishing is in the app until a space's own menu asks for it. `show` puts
+ *  the sheet on the page itself; see surfaces.svelte.ts. */
+export async function publishSpace(space: Space) {
+  const { publish } = await import('./publishing.svelte')
   publish.show(space)
 }
 

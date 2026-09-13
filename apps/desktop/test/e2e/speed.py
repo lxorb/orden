@@ -1041,7 +1041,7 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
     # selector as well, and a page that has been through the parts above has canvases
     # in it that are nothing to do with the graph and are not on screen: the first of
     # those in the page is what both of these lines then waited on, which is a wait
-    # that never ends. See surfaces.ts, which is also why the surface is not there the
+    # that never ends. See surfaces.svelte.ts, which is also why the surface is not there the
     # moment the tab is opened.
     page.wait_for_selector(".graph", state="visible", timeout=90000)
     box = page.locator(".graph").first.bounding_box()

@@ -14,7 +14,10 @@
  *  note's icon and every link in the open note come out of it; then the search
  *  index; then the icon sets, which are fetched rather than read; then the rooms,
  *  which are a socket per open note and the one thing here that nobody is looking
- *  at while it happens.
+ *  at while it happens; and last the doors - the parts of the app that are fetched
+ *  rather than carried and that a single keystroke can ask for, which is the one
+ *  stage that exists so that something is *already* there rather than so that it
+ *  arrives late. See `warmDoors` in surfaces.svelte.ts.
  *
  *  A turn is when a stage may *start*, not when it has finished. The index takes
  *  as long as the space is large, and a phone that had to finish scanning before
@@ -32,7 +35,7 @@
 import { mark, sendTrace } from './trace'
 
 /** The stages, in the order their turns come. */
-const STAGES = ['index', 'search', 'icons', 'rooms'] as const
+const STAGES = ['index', 'search', 'icons', 'rooms', 'doors'] as const
 
 /** Not exported, because nothing outside says a stage except by name: the words
  *  below are the only ones there are, and a caller that gets one wrong is a type
@@ -139,7 +142,7 @@ class Startup {
 
     // The launch is over as far as the order is concerned, so whatever was timed
     // goes to the crate to be written beside its own steps; see trace.ts. Nothing
-    // is awaited for it: the order costs the four idle callbacks above and not one
+    // is awaited for it: the order costs the five idle callbacks above and not one
     // more, and the trace waits on a timer of its own.
     mark('launch order finished')
     sendTrace()

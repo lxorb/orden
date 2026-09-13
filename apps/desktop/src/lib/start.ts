@@ -16,6 +16,7 @@ import { collectErrors, log } from './log'
 import { startHanded } from './mobile/handed'
 import { modes } from './modes.svelte'
 import { settleUp } from './parting'
+import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
@@ -142,6 +143,12 @@ export function start(): () => void {
   // The session first, because a link followed by somebody who is already
   // signed in walks straight through rather than asking for an address again.
   void account.restore().then(() => joining.start())
+
+  // And last of all, the parts of the app that are fetched rather than carried and
+  // that one keystroke can ask for: the find bar, the Search panel, the app menu's
+  // rows, the reading view. Nothing waits for this and nothing is on screen for it;
+  // it is the last turn of the launch order. See `warmDoors` in surfaces.svelte.ts.
+  void warmDoors()
 
   return () => {
     clearInterval(sweeper)

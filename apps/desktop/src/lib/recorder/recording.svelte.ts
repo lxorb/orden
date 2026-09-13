@@ -30,7 +30,7 @@ import { settings } from '../settings.svelte'
 import { nameOf } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { waited } from '../timing'
-import { bestContainer, recordingName } from './container'
+import { canRecordHere, recordingName } from './container'
 import { MOST_BYTES, record, type Recording } from './microphone'
 import {
   appendTo,
@@ -42,6 +42,7 @@ import {
   writeAtCaret,
 } from './note'
 import { spaceRelative } from './paths'
+import { recordingPill } from '../surfaces.svelte'
 import { canSummarise, summaryOf } from './summarise'
 import { canTranscribe, heardPiece, LIVE_SECONDS } from './transcribe'
 import {
@@ -124,16 +125,10 @@ class Recorder {
   private lost = 0
 
   /** Whether recording is possible at all: a microphone to open and a container to
-   *  write.
-   *
-   *  `mediaDevices` is typed as always there and is absent in a page served over plain
-   *  http from anything but localhost, so it is asked for rather than assumed - which is
-   *  also what makes this answerable in a test with no browser behind it. */
+   *  write. The question itself is container.ts's, because a menu has to answer it
+   *  without fetching any of this; see `canRecordHere`. */
   get available(): boolean {
-    const devices: MediaDevices | undefined =
-      typeof navigator === 'undefined' ? undefined : navigator.mediaDevices
-
-    return !!devices && bestContainer() !== null
+    return canRecordHere()
   }
 
   /** The one command. Pressed while it is running, it stops - the row says so, the
@@ -147,6 +142,12 @@ class Recorder {
       void this.stop()
       return
     }
+
+    // The pill, asked for as the microphone opens rather than drawn while a recording
+    // runs: it is what stays up while what was recorded is still being written down,
+    // so the bar mounts it for good the first time anything asks. See
+    // surfaces.svelte.ts and StatusBar.svelte.
+    void recordingPill.ask()
 
     void this.start(kind)
   }
