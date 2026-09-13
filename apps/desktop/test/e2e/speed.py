@@ -1368,6 +1368,25 @@ class Lane:
                 out[key] = floor(rounds, key, UNIT.get(key, ""))
         return out
 
+    def middles(self) -> dict[str, float]:
+        """The same rows, as their middle round.
+
+        Beside the best because the two answer different questions, and a row where
+        they disagree is the interesting kind. The best round says what the code
+        costs when the machine leaves it alone, which is what two builds can be
+        compared by. The middle round says what somebody actually waits for - and a
+        wait that is sometimes four times its own best is a wait that comes and
+        goes, which is worse to use than a slower one that never varies. The reading
+        view read 258ms at best on both sides of a change that took its middle round
+        from 683ms to 268ms: a change worth making that the best round could not see.
+        """
+        out: dict[str, float] = {}
+        for rounds in self.rounds.values():
+            for key in rounds[0]:
+                found = [one[key] for one in rounds if key in one]
+                out[key] = statistics.median(found) if found else 0.0
+        return out
+
     def served(self) -> dict[str, int]:
         """What this lane's server was asked for over the whole run."""
         return SERVED.get(self.port, {"asked": 0, "sent": 0, "again": 0, "bytes": 0})
@@ -1419,6 +1438,44 @@ SAID = [
 
 #: What each row is in, so `pick` knows which way is better. One list of rows.
 UNIT = {key: unit for key, _, unit in SAID}
+
+
+def waits(
+    found: dict[str, dict[str, float]],
+    middle: dict[str, dict[str, float]],
+    moved: dict[str, dict[str, float]],
+    names: list[str],
+) -> None:
+    """The rows whose middle round is well above their best.
+
+    A row that reads the same every round is a wait somebody learns; a row that is
+    sometimes four times itself is one they never stop noticing. The table above is
+    best rounds, so this is where that shows - and it is where a change can be worth
+    making without the table above moving at all. See `middles`.
+    """
+    loud = []
+    for key, words, unit in SAID:
+        if unit != "ms":
+            continue
+
+        for name in names:
+            if key not in found[name]:
+                continue
+
+            best = found[name][key]
+            mid = middle[name].get(key, best)
+            # Twice its best and clear of what the row is worth to nobody, so an
+            # eight millisecond row that read sixteen once is not news.
+            if mid > best * 2 and mid - best > max(moved[name].get(key, 0.0), 20.0):
+                loud.append(f"{words:44} {name:>14} best {best:5.0f}ms  middle {mid:5.0f}ms")
+
+    if not loud:
+        return
+
+    print("rows whose middle round is well above their best, which is a wait that comes and goes:")
+    for line in loud:
+        say(line)
+    print()
 
 
 def prove(
@@ -1588,6 +1645,8 @@ def main() -> int:
             say(words)
 
     print()
+    waits(found, {lane.name: lane.middles() for lane in lanes}, moved, names)
+
     for lane in lanes:
         for part, times in lane.lost.items():
             if times * 2 >= rounds:
