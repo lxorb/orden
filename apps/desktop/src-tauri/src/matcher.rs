@@ -19,7 +19,7 @@
 //!
 //! search/match.ts is the twin of this, down to the cases its tests use.
 
-use std::cell::OnceCell;
+use std::cell::{Cell, OnceCell};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -27,7 +27,7 @@ use serde::Serialize;
 
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
-use crate::regex::Pattern;
+use crate::regex::{Pattern, BUDGET};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -165,6 +165,9 @@ struct Facts<'a> {
     tags: Vec<String>,
     front: HashMap<String, String>,
     units: [Vec<Region>; UNITS],
+    /// What is left for a pattern to spend on this note, region and region alike.
+    /// One note, not one region: see `find_within` in regex.rs.
+    budget: Cell<usize>,
 }
 
 impl Facts<'_> {
@@ -436,44 +439,83 @@ fn literals(hay: &str, needle: &str, region: Region) -> Option<Vec<Span>> {
 /// The pattern reads characters, so the region is turned into some, and the
 /// places it names are turned back into bytes. Only a query that holds a
 /// pattern pays for that.
-fn patterned(pattern: &Pattern, body: &str, region: Region) -> Option<Vec<Span>> {
+fn patterned(
+    pattern: &Pattern,
+    body: &str,
+    region: Region,
+    budget: &Cell<usize>,
+) -> Option<Vec<Span>> {
     let slice = body.get(region.from..region.to)?;
     let letters: Vec<char> = slice.chars().collect();
 
-    // Asked before the offsets are worked out, because most notes in a space
-    // answer no and paying for a second reading of each of them is what makes
-    // a pattern search feel like one.
-    let first = pattern.find(&letters, 0)?;
-    let mut bytes: Vec<usize> = slice.char_indices().map(|(at, _)| at).collect();
-    bytes.push(slice.len());
-
+    // Asked before anything is counted up, because most notes in a space answer
+    // no and paying for a second reading of each of them is what makes a pattern
+    // search feel like one.
+    let mut found = pattern.find_within(&letters, 0, budget)?;
+    let mut ahead = Ahead::new(&letters);
     let mut out = Vec::new();
-    let mut at = first.from;
 
-    while at <= letters.len() {
-        let Some(found) = pattern.find(&letters, at) else {
-            break;
-        };
-
+    loop {
         // A pattern that can match nothing would sit on the same place for
         // ever, and an empty match is not a place to show.
-        if found.to == found.from {
-            at = found.from + 1;
-            continue;
-        }
+        let at = if found.to == found.from {
+            found.from + 1
+        } else {
+            let (Some(from), Some(to)) = (ahead.byte(found.from), ahead.byte(found.to)) else {
+                break;
+            };
 
-        let (Some(&from), Some(&to)) = (bytes.get(found.from), bytes.get(found.to)) else {
-            break;
+            out.push(Span {
+                from: region.from + from,
+                to: region.from + to,
+            });
+            found.to
         };
 
-        out.push(Span {
-            from: region.from + from,
-            to: region.from + to,
-        });
-        at = found.to;
+        if at > letters.len() {
+            break;
+        }
+        let Some(next) = pattern.find_within(&letters, at, budget) else {
+            break;
+        };
+        found = next;
     }
 
     (!out.is_empty()).then_some(out)
+}
+
+/// Where a character sits in the bytes of a region, counted forward from the last
+/// one asked about.
+///
+/// The matches come out in order and neither end of one lies before the end of the
+/// one before it, so one walk over the region answers every offset they need. The
+/// table this replaces was eight bytes a character of the region, built for every
+/// region a pattern was asked about - which under a `line:` group is every line of
+/// every note in the space.
+struct Ahead<'a> {
+    letters: &'a [char],
+    index: usize,
+    byte: usize,
+}
+
+impl<'a> Ahead<'a> {
+    fn new(letters: &'a [char]) -> Self {
+        Self {
+            letters,
+            index: 0,
+            byte: 0,
+        }
+    }
+
+    /// The byte offset of the character at `index`, or None for one behind the
+    /// walk or past the end, neither of which a match names.
+    fn byte(&mut self, index: usize) -> Option<usize> {
+        let passed = self.letters.get(self.index..index)?;
+        self.byte += passed.iter().map(|one| one.len_utf8()).sum::<usize>();
+        self.index = index;
+
+        Some(self.byte)
+    }
 }
 
 /// The two regions overlapping, or None when they do not.
@@ -618,6 +660,7 @@ impl Matcher {
             },
             units,
             starts,
+            budget: Cell::new(BUDGET),
         }
     }
 }
@@ -657,7 +700,7 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             region,
         ),
 
-        Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region),
+        Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region, &facts.budget),
 
         Term::Path { needle, folded } => holds(note.relative, needle, *folded).then(Vec::new),
 
@@ -1318,6 +1361,36 @@ mod tests {
         assert_eq!(marked(&pattern("B[a-z]+a on", false), NOTE), ["Beta on"]);
         // One that will not compile matches nothing rather than complaining.
         assert!(!answers(&pattern("([a-", false), NOTE));
+    }
+
+    /// A pattern names the characters it matched and a note is indexed in bytes,
+    /// so every match of a line outside ASCII is counted up a character at a time.
+    /// Several matches on one line is what says the counting walks forward rather
+    /// than starting again: a second match measured from the top of the line would
+    /// be marked three times too far along.
+    #[test]
+    fn a_pattern_marks_what_it_matched_outside_ascii() {
+        let body = "のnoteのanotherのnote\n";
+
+        assert_eq!(marked(&pattern("note", false), body), ["note", "note"]);
+        assert_eq!(marked(&pattern("の.", false), body), ["のn", "のa", "のn"]);
+    }
+
+    /// A pattern that cannot finish is bounded per note and not per line, so a
+    /// note of lines it cannot finish on costs one budget rather than one each.
+    /// Measured, because the answer is the same either way: what went wrong was
+    /// the time. See `find_within` in regex.rs.
+    #[test]
+    fn a_pattern_that_cannot_finish_costs_one_note_one_budget() {
+        let line = format!("{}\n", "a".repeat(30));
+        let body = line.repeat(2000);
+        let query = scope("line", &pattern("(a+)+b", false));
+
+        let started = std::time::Instant::now();
+        assert!(!answers(&query, &body));
+        let spent = started.elapsed();
+
+        assert!(spent.as_secs() < 5, "{spent:?} for 2000 lines");
     }
 
     #[test]

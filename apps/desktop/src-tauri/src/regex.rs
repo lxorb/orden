@@ -30,9 +30,17 @@
 //! line of the right shape, and a search field is exactly where such a pattern
 //! gets typed, so the engine gives up rather than let the window stop answering.
 
-/// How many machine steps one `find` may spend before it gives up. Far more than
-/// any pattern a person means needs, and reached in a moment by one they do not.
-const BUDGET: usize = 250_000;
+use std::cell::Cell;
+
+/// How many machine steps one note may spend on one pattern before the pattern
+/// gives up on it. Far more than any pattern a person means needs, and reached in
+/// a moment by one they do not.
+///
+/// One note rather than one `find`, which is what `find_within` is for: a search
+/// asks a pattern about a note region by region - every line of it, for a
+/// `line:(/…/)` group - and a budget that started again at each of them would
+/// bound nothing. Twenty thousand lines is twenty thousand times this.
+pub const BUDGET: usize = 250_000;
 
 /// The most instructions a compiled pattern may hold. Counted repetitions are
 /// written out in full, so this is what keeps `(a{1000}){1000}` from becoming a
@@ -276,10 +284,18 @@ impl Pattern {
         })
     }
 
-    /// The leftmost match at or after `at`, searching forward.
+    /// The leftmost match at or after `at`, spending what is left of `budget`.
+    ///
+    /// The budget is the caller's, and one note is what it is meant to cover. A
+    /// pattern that cannot finish gives up for good rather than per region: a
+    /// `line:(/(a+)+b/)` group asks a pattern about every line of a note, and a
+    /// note of twenty thousand lines of `aaaa…` would otherwise cost twenty
+    /// thousand budgets - tens of seconds for one note, with every note in the
+    /// space paying its own. What a spent budget costs instead is that the rest
+    /// of that note answers no, which is the same answer the pattern was about to
+    /// spend a minute failing to improve on.
     #[must_use]
-    pub fn find(&self, text: &[char], at: usize) -> Option<Match> {
-        let mut budget = BUDGET;
+    pub fn find_within(&self, text: &[char], at: usize, budget: &Cell<usize>) -> Option<Match> {
         let mut start = at;
 
         while start <= text.len() {
@@ -288,13 +304,12 @@ impl Pattern {
             // anything at them.
             start = self.next_start(text, start)?;
 
-            if let Some(cells) = self.attempt(text, start, &mut budget) {
+            if let Some(cells) = self.attempt(text, start, budget) {
                 return Some(self.take(text, &cells, start));
             }
 
-            // The budget covers the whole search rather than one starting point,
-            // so a pattern that cannot finish gives up here for good.
-            if budget == 0 {
+            // Spent, so this note is answered: see above.
+            if budget.get() == 0 {
                 return None;
             }
 
@@ -323,7 +338,7 @@ impl Pattern {
     /// behind until one path reaches the end or none is left. `None` covers both
     /// no match and a budget that ran out, which the caller tells apart by
     /// looking at what is left of the budget.
-    fn attempt(&self, text: &[char], start: usize, budget: &mut usize) -> Option<Vec<usize>> {
+    fn attempt(&self, text: &[char], start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
         let mut run = Run {
             text,
             cells: vec![UNSET; self.program.cells],
@@ -346,9 +361,9 @@ impl Pattern {
     /// Follows one path as far as it goes: `true` when it reached the end of the
     /// pattern, `false` when it ran into something that did not match, and `None`
     /// when the budget ran out under it.
-    fn follow(&self, run: &mut Run, budget: &mut usize) -> Option<bool> {
+    fn follow(&self, run: &mut Run, budget: &Cell<usize>) -> Option<bool> {
         loop {
-            *budget = budget.checked_sub(1)?;
+            budget.set(budget.get().checked_sub(1)?);
 
             let Some(step) = self.program.steps.get(run.pc).copied() else {
                 return Some(false);
@@ -389,6 +404,12 @@ impl Pattern {
                     run.pc += 1;
                 }
                 Step::Clear { from, to } => {
+                    // Charged for the cells it writes rather than for being one
+                    // step. A pattern may hold a thousand groups inside a starred
+                    // body, and a budget that counts clearing all of them as one
+                    // step is a budget out by a thousand.
+                    budget.set(budget.get().saturating_sub(to.saturating_sub(from)));
+
                     for (cell, slot) in run.cells.iter_mut().enumerate().skip(from) {
                         if cell > to {
                             break;
@@ -1327,13 +1348,21 @@ fn groups_in(node: &Node) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Match, Pattern};
+    use super::{Match, Pattern, BUDGET};
+    use std::cell::Cell;
+
+    /// One search on a budget of its own, which is what a case here is: the engine
+    /// shares one budget over a whole note, and every case below is one subject
+    /// asked about once. See `find_within`.
+    fn find(pattern: &Pattern, text: &[char], at: usize) -> Option<Match> {
+        pattern.find_within(text, at, &Cell::new(BUDGET))
+    }
 
     /// The first match a pattern makes in a subject, with the text it was found
     /// in, since a match names positions rather than carrying the characters.
     fn run(source: &str, subject: &str, fold: bool, from: usize) -> Option<(Match, Vec<char>)> {
         let text: Vec<char> = subject.chars().collect();
-        let found = Pattern::compile(source, fold)?.find(&text, from)?;
+        let found = find(&Pattern::compile(source, fold)?, &text, from)?;
         Some((found, text))
     }
 
@@ -1425,7 +1454,7 @@ mod tests {
     #[test]
     fn a_match_counts_in_characters_rather_than_bytes() {
         let text: Vec<char> = "äöü42".chars().collect();
-        let found = Pattern::compile(r"\d+", false).and_then(|p| p.find(&text, 0));
+        let found = Pattern::compile(r"\d+", false).and_then(|p| find(&p, &text, 0));
         assert_eq!(
             found,
             Some(Match {
@@ -1698,7 +1727,7 @@ mod tests {
         assert!(pattern.is_some(), "the pattern itself is a fine one");
 
         let started = std::time::Instant::now();
-        assert_eq!(pattern.and_then(|p| p.find(&text, 0)), None);
+        assert_eq!(pattern.and_then(|p| find(&p, &text, 0)), None);
         assert!(
             started.elapsed().as_secs() < 5,
             "the step budget should have stopped this long before now"
@@ -1818,8 +1847,8 @@ mod tests {
 
                 for at in 0..=text.len() {
                     assert_eq!(
-                        quick.find(&text, at),
-                        plain.find(&text, at),
+                        find(&quick, &text, at),
+                        find(&plain, &text, at),
                         "{source} over {subject:?} from {at}, with fold {fold}"
                     );
                 }
@@ -1877,8 +1906,8 @@ mod tests {
             let text: Vec<char> = subject.chars().collect();
             for at in 0..=text.len() {
                 assert_eq!(
-                    quick.find(&text, at),
-                    plain.find(&text, at),
+                    find(&quick, &text, at),
+                    find(&plain, &text, at),
                     "{source} over {subject:?} from {at}, with fold {fold}"
                 );
             }
@@ -1893,7 +1922,7 @@ mod tests {
     fn a_query_of_the_shape_search_sends_reads_the_line_it_is_given() {
         let line: Vec<char> = "  ## A heading, and a #tag".chars().collect();
         let pattern = Pattern::compile(r"^\s*(#+)\s+(.+)$", false);
-        let found = pattern.and_then(|p| p.find(&line, 0));
+        let found = pattern.and_then(|p| find(&p, &line, 0));
         assert_eq!(
             found,
             Some(Match {
