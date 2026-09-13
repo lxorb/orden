@@ -148,6 +148,23 @@ download on the phone under Nib's authority.
 `apps/desktop/test/android.test.ts` holds both switches, and the rules resource,
 so a manifest edited for something else cannot quietly turn the backup back on.
 
+## What a frame inside the page may not reach
+
+`addJavascriptInterface` is the whole bridge, and Android injects that object into
+**every** frame of the webview - an `<iframe>` at somebody else's origin included -
+while telling the activity nothing about which frame called. A note can hold such a
+frame on purpose: a page it embeds, and a block of its own HTML, both of which are
+sandboxed exactly so the app is out of their reach. The bridge went round the
+sandbox, so an embedded page could have read every AI key on the phone or turned the
+microphone on.
+
+So `secretRead`, `secretWrite`, `secretForget` and `listen` take a word first: a
+UUID the activity makes up at launch, which it will say only by running a line in
+the page - and `evaluateJavascript` runs in the main frame. A framed page may call
+`askForTheFrame` all it likes; the answer lands where it cannot read it. See
+`frameWord` in `src/lib/mobile/bridge.ts`, `frame` in `MainActivity.kt`, and the
+test in `test/android.test.ts` that holds the two sides to each other.
+
 ## What the app asks the phone for
 
 Two permissions, and the second is only for dictation:

@@ -199,6 +199,39 @@ describe('the bridge the page talks over', () => {
     expect([...kotlin].sort()).toEqual([...typed].sort())
   })
 
+  /** `addJavascriptInterface` injects the bridge object into every frame of the
+   *  webview, iframes included, and hands the activity nothing about which of them
+   *  called. Nib's pages hold frames of somebody else's - a page a note embeds, a
+   *  block of a note's own HTML - sandboxed exactly so the app is out of their
+   *  reach, and the bridge was the way round that sandbox: a framed page could ask
+   *  for every AI key on the phone, or turn the microphone on. So the calls that
+   *  matter take a word the activity says only into the main frame. */
+  test('asks for this launch’s word before a key or the microphone', () => {
+    expect(activity).toContain('private val frame: String = UUID.randomUUID()')
+    // Said by running a line in the page, which is the main frame and nothing else.
+    expect(activity).toContain('fun askForTheFrame()')
+    expect(activity).toContain('window.__nibFrame?.(')
+
+    for (const name of ['secretRead', 'secretWrite', 'secretForget', 'listen']) {
+      const found = new RegExp(`fun ${name}\\(\\s*said: String`).test(activity)
+      expect(found, `${name} takes the word first`).toBe(true)
+      expect(activity, `${name} checks the word`).toMatch(
+        new RegExp(`fun ${name}\\([\\s\\S]{0,200}?said [!=]= frame`),
+      )
+    }
+
+    // And the page asks for it rather than guessing: every call from this side
+    // carries what `frameWord` answered.
+    expect(page).toContain(`answer('__nibFrame'`)
+    for (const call of [
+      'secretRead(await frameWord(), id)',
+      'secretWrite(await frameWord(), id, trimmed)',
+      'secretForget(await frameWord(), id)',
+    ]) {
+      expect(page, call).toContain(call)
+    }
+  })
+
   /** The one thing a compiler cannot say until it has downloaded the artifact:
    *  `MasterKey` is in androidx.security:security-crypto from 1.1.0, and 1.0.0
    *  ships only the alias-based `MasterKeys` it replaced. With 1.0.0 on the path

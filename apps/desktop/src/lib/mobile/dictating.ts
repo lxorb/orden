@@ -17,7 +17,7 @@ import { writeAtCaret } from '../insert-picture'
 import { log } from '../log'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { answer, method } from './bridge'
+import { answer, frameWord, method } from './bridge'
 import { spaced, speechRecogniser } from './dictation'
 
 /** One thing a recogniser heard, as the web hands it over. Written out rather
@@ -75,9 +75,17 @@ function start(view: EditorView): void {
     listening = true
     hold()
     answer('__nibHeard', (json: string) => said(json, view))
-    // False where the microphone has still to be asked for; the answer arrives
-    // through `__nibHeard` either way.
-    phone(true)
+    // The word the activity says to the page and to nothing else: a microphone is
+    // not a thing an embedded page turns on. Asked for once and answered within a
+    // frame, so what waits on it is the request and never the row; see
+    // `frameWord`. And checked again on the way out, because a row pressed twice
+    // in that frame is off rather than on.
+    //
+    // What it answers is false where the microphone has still to be asked for; the
+    // words arrive through `__nibHeard` either way.
+    void frameWord().then((word) => {
+      if (listening) phone(word, true)
+    })
     return
   }
 
@@ -124,7 +132,7 @@ function stop(): void {
 
   const phone = method('listen')
   if (phone) {
-    phone(false)
+    void frameWord().then((word) => phone(word, false))
     answer('__nibHeard', undefined)
   }
 

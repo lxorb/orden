@@ -17,6 +17,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import java.util.UUID
 import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
@@ -59,6 +60,24 @@ class MainActivity : TauriActivity() {
   /** The page, once there is one. Held so an intent that arrives while the app is
    *  already open can say so, and so the recogniser's words have somewhere to go. */
   private var page: WebView? = null
+
+  /** A word made up for this launch, which the activity says to the page itself and
+   *  to nothing else.
+   *
+   *  `addJavascriptInterface` has no notion of an origin and no notion of a frame:
+   *  Android injects the object into *every* frame of the webview, iframes included,
+   *  and the call carries nothing about who made it. Nib's pages do hold frames of
+   *  somebody else's - a note may embed a page, and a block of a note's own HTML
+   *  runs in a frame of its own - and those are sandboxed precisely so that the app
+   *  is out of their reach. The bridge was the way round the sandbox: a framed page
+   *  could ask for every AI key on the phone, or turn the microphone on.
+   *
+   *  So the calls that matter want this word, and the only way to learn it is to be
+   *  the page: `evaluateJavascript` runs in the main frame, so `askForTheFrame`
+   *  answers into the main frame whoever asked, and a frame at another origin cannot
+   *  read a variable the main frame holds. See mobile/bridge.ts, which is the page's
+   *  side of it. */
+  private val frame: String = UUID.randomUUID().toString()
 
   private val dictation by lazy { Dictation(this) }
 
@@ -217,18 +236,31 @@ class MainActivity : TauriActivity() {
   private inner class Bridge {
     @JavascriptInterface fun insets(): String = edges
 
-    /** The key kept under `name`, or null where there is none. */
-    @JavascriptInterface fun secretRead(name: String): String? = secrets.getString(name, null)
+    /** Says this launch's word, into the page itself. Whoever called it, the answer
+     *  goes to the main frame - which is what makes it a word only the page has;
+     *  see `frame`. */
+    @JavascriptInterface
+    fun askForTheFrame() {
+      tell("window.__nibFrame?.(${JSONObject.quote(frame)})")
+    }
+
+    /** The key kept under `name`, or null where there is none - and null for
+     *  anybody who is not the page; see `frame`. */
+    @JavascriptInterface
+    fun secretRead(said: String, name: String): String? =
+      if (said == frame) secrets.getString(name, null) else null
 
     /** Writes one, replacing whatever was there. */
     @JavascriptInterface
-    fun secretWrite(name: String, secret: String) {
+    fun secretWrite(said: String, name: String, secret: String) {
+      if (said != frame) return
       secrets.edit().putString(name, secret).apply()
     }
 
     /** Takes one away. */
     @JavascriptInterface
-    fun secretForget(name: String) {
+    fun secretForget(said: String, name: String) {
+      if (said != frame) return
       secrets.edit().remove(name).apply()
     }
 
@@ -279,7 +311,9 @@ class MainActivity : TauriActivity() {
     /** Whether this phone has a speech recogniser to dictate into. */
     @JavascriptInterface fun dictates(): Boolean = dictation.available()
 
-    /** Turns dictation on or off; answers whether it is listening now. */
-    @JavascriptInterface fun listen(on: Boolean): Boolean = dictation.listen(on)
+    /** Turns dictation on or off; answers whether it is listening now. The word,
+     *  because a microphone is not a thing a framed page turns on; see `frame`. */
+    @JavascriptInterface
+    fun listen(said: String, on: Boolean): Boolean = said == frame && dictation.listen(on)
   }
 }

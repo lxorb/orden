@@ -22,14 +22,20 @@
  *  Read back rather than write-only, because the request is made by the page: a
  *  store that could not be read would mean nib could not ask anything. */
 
+import { frameWord } from '../mobile/bridge'
 import { isMobile, isNative, invoke } from '../tauri'
 import type { Provider } from './providers'
 
-/** What the activity puts in the page; see MainActivity.kt. */
+/** What the activity puts in the page; see MainActivity.kt.
+ *
+ *  Each takes the word the activity says to the page and to nothing else. The bridge
+ *  object is injected into every frame of the webview - a page a note embeds, a block
+ *  of a note's own HTML - and without the word a framed page could ask for every key
+ *  on the phone. See `frameWord` in mobile/bridge.ts. */
 interface Secrets {
-  secretRead(name: string): string | null
-  secretWrite(name: string, secret: string): void
-  secretForget(name: string): void
+  secretRead(said: string, name: string): string | null
+  secretWrite(said: string, name: string, secret: string): void
+  secretForget(said: string, name: string): void
 }
 
 /** The activity's side of the bridge, or nothing anywhere else. Checked member by
@@ -76,13 +82,13 @@ export async function writeKey(id: string, secret: string): Promise<void> {
   }
 
   const phone = isMobile ? bridge() : undefined
-  if (phone) phone.secretWrite(id, trimmed)
+  if (phone) phone.secretWrite(await frameWord(), id, trimmed)
   else await invoke<null>('secret_write', { name: id, secret: trimmed })
 }
 
 export async function forgetKey(id: string): Promise<void> {
   const phone = isMobile ? bridge() : undefined
-  if (phone) phone.secretForget(id)
+  if (phone) phone.secretForget(await frameWord(), id)
   else await invoke<null>('secret_forget', { name: id })
 }
 
@@ -91,7 +97,7 @@ export async function forgetKey(id: string): Promise<void> {
 async function read(id: string): Promise<string | null> {
   const phone = isMobile ? bridge() : undefined
   const found: unknown = phone
-    ? phone.secretRead(id)
+    ? phone.secretRead(await frameWord(), id)
     : await invoke<unknown>('secret_read', { name: id })
   return typeof found === 'string' && found ? found : null
 }
