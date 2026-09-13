@@ -24,12 +24,21 @@ const DOCS = `${ROOT}docs/`
  *  folder to look in rather than a file to find. */
 const PATH = /`((?:apps|packages|services|scripts|spike|docs)\/[A-Za-z0-9_./*-]+)`/g
 
-/** Where a drive writes what it photographed. Named by the documents and ignored by
- *  git, so it is there after a run and not before; nothing about it can be checked. */
-const OUTPUT = 'apps/desktop/test/e2e/shots/'
+/** What a command makes rather than what is committed.
+ *
+ *  A document names these as well, and they are there on a machine that has built and
+ *  absent on a fresh runner - so neither is rot. Git knows which is which and is the
+ *  obvious thing to ask, but it cannot answer the case that matters: `.gitignore` says
+ *  `dist/`, a pattern that matches only a directory, and `git check-ignore` decides
+ *  directory-ness off the filesystem - so with the build absent, which is the whole
+ *  point, it reports the path as not ignored.
+ *
+ *  A list instead, two long and deliberate. Something added to it is a new kind of
+ *  output somebody wrote a document about, which is worth a line. */
+const MADE = ['apps/desktop/dist', 'apps/desktop/test/e2e/shots']
 
 function exists(path: string): boolean {
-  if (path.startsWith(OUTPUT)) return true
+  if (MADE.some((made) => path === made || path.startsWith(`${made}/`))) return true
 
   const star = path.indexOf('*')
   const named = star === -1 ? path : path.slice(0, path.lastIndexOf('/', star))
