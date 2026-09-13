@@ -740,7 +740,13 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
     lane.profile("search panel opened", panel.pop("loaf"))
     # Attached rather than visible: the line is a data attribute on a row that a
     # theme may give no size at all, and what is being read is the attribute.
-    page.wait_for_selector("[data-search]", state="attached", timeout=30000)
+    try:
+        page.wait_for_selector("[data-search]", state="attached", timeout=30000)
+    except Exception:
+        # Which panel the sidebar is actually on, so a run that ends here says what
+        # it found rather than only which selector it was waiting for.
+        say(f"{lane.name}: no search panel; the window says {page.evaluate(SIDEBAR)}")
+        raise
     # The pass that reads the space into the worker is part of the launch, not part
     # of a query: wait for it to say it is warm before asking anything.
     page.wait_for_function(
@@ -759,6 +765,21 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
 
     return found
 
+
+#: What the window says about its sidebar, for a run that did not find a panel it
+#: asked for. Read off the app and off the page, because the two disagreeing is the
+#: interesting answer.
+SIDEBAR = r"""
+() => ({
+  panel: window.nibApp?.workspace?.panel ?? null,
+  aside: !!document.querySelector('aside'),
+  rows: document.querySelectorAll('aside .row').length,
+  find: !!document.querySelector('.find'),
+  sheet: !!document.querySelector('.nib-screen.sheet'),
+  palette: !!document.querySelector('.palette'),
+  space: window.nibApp?.workspace?.activeSpace?.root ?? null,
+})
+"""
 
 PANEL = r"""
 async () => {
