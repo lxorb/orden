@@ -28,7 +28,7 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::fs;
-use std::io::{Read as _, Write as _};
+use std::io::{Read, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -105,12 +105,21 @@ pub fn start(app: &AppHandle) {
     let Ok(address) = listener.local_addr() else {
         return;
     };
-    let Ok(kept) = remember(app, address.port()) else {
-        return;
-    };
 
     let app = app.clone();
+    let port = address.port();
     std::thread::spawn(move || {
+        // The file the port and the secret are written down in, written on this
+        // thread rather than before it. It is a read, a folder made and a write,
+        // and `start` is called from the setup hook - the thread the window is
+        // about to be shown on, where the disk is the one thing that can hold a
+        // launch up. The socket is already listening by the time this runs, so a
+        // request that arrives in the same moment waits in the backlog instead of
+        // finding nothing there.
+        let Ok(kept) = remember(&app, port) else {
+            return;
+        };
+
         for incoming in listener.incoming() {
             let Ok(stream) = incoming else { continue };
 
@@ -392,14 +401,23 @@ impl Request {
 /// A request as far as this endpoint reads one: the method, the headers, and a
 /// body as long as `content-length` says. None for anything that is not shaped
 /// like a request at all, which is the shape a port scanner arrives in.
-fn read_request(stream: &mut TcpStream) -> std::io::Result<Option<Request>> {
+fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
     let mut bytes: Vec<u8> = Vec::new();
     let mut chunk = [0_u8; 8192];
 
+    // Where the next look for the end of the head starts. Three bytes back from
+    // what has been read, because a blank line can straddle two chunks and cannot
+    // straddle more than that: looking over the whole of what has arrived per chunk
+    // reads a head in the square of its length, which for the eight megabytes
+    // allowed here is minutes of a thread for one caller that sends no blank line.
+    let mut scanned = 0;
+
     let ends = loop {
-        if let Some(at) = find(&bytes, b"\r\n\r\n") {
-            break at;
+        if let Some(at) = find(&bytes[scanned..], b"\r\n\r\n") {
+            break scanned + at;
         }
+        scanned = bytes.len().saturating_sub(3);
+
         if bytes.len() > MOST_BYTES {
             return Ok(None);
         }
@@ -523,7 +541,8 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, find, is_json, is_local, parse_head, reason, refused, same_secret, SECRET_BYTES,
+        as_hex, find, is_json, is_local, parse_head, read_request, reason, refused, same_secret,
+        Request, MOST_BYTES, SECRET_BYTES,
     };
 
     #[test]
@@ -553,6 +572,86 @@ mod tests {
     fn finds_where_the_head_ends() {
         assert_eq!(find(b"ab\r\n\r\ncd", b"\r\n\r\n"), Some(2));
         assert_eq!(find(b"ab", b"\r\n\r\n"), None);
+    }
+
+    /// One request off the wire. Read through `Read` rather than off a socket,
+    /// because what is being checked is what this makes of the bytes: the caller is
+    /// whatever found the port, and most of what finds a port is not the `nib`
+    /// command.
+    fn read(said: &[u8]) -> Option<Request> {
+        read_request(&mut std::io::Cursor::new(said.to_vec())).expect("a cursor cannot fail")
+    }
+
+    #[test]
+    fn reads_a_whole_request_off_the_wire() {
+        let request = read(b"POST / HTTP/1.1\r\ncontent-type: application/json\r\ncontent-length: 16\r\n\r\n{\"verb\":\"open\"}\n")
+            .expect("a request");
+
+        assert_eq!(request.method, "POST");
+        assert_eq!(request.header("content-type"), Some("application/json"));
+        assert_eq!(request.body, "{\"verb\":\"open\"}\n");
+    }
+
+    /// What a port scanner sends: a line, or nothing, and then the connection goes.
+    /// None rather than a wait or a panic - and the socket's own read timeout is the
+    /// other half of that; see `SLOWEST`.
+    #[test]
+    fn anything_that_is_not_a_request_is_no_request() {
+        assert!(read(b"").is_none());
+        assert!(read(b"GET /\r\n").is_none());
+        assert!(read(b"\x16\x03\x01\x02\x00\x01\x00").is_none());
+    }
+
+    /// A caller that opens with eight megabytes and no blank line in them. It is
+    /// refused for being longer than a request may be - and it is refused in a
+    /// moment, which is the half worth measuring: the head is read in chunks, and
+    /// looking over all of what has arrived per chunk costs the square of its
+    /// length. That was a minute and a half of a thread for one caller, and any
+    /// program on this machine can be that caller before the secret is even looked
+    /// at.
+    #[test]
+    fn a_head_that_never_ends_is_refused_without_being_read_twice() {
+        let started = std::time::Instant::now();
+
+        assert!(read(&vec![b'a'; MOST_BYTES + 1]).is_none());
+
+        let spent = started.elapsed();
+        assert!(spent.as_secs() < 5, "{spent:?} for a head of 8 MB");
+    }
+
+    #[test]
+    fn a_body_longer_than_a_note_is_not_read_at_all() {
+        let said = format!(
+            "POST / HTTP/1.1\r\ncontent-length: {}\r\n\r\n",
+            MOST_BYTES + 1
+        );
+
+        assert!(read(said.as_bytes()).is_none());
+    }
+
+    /// A caller that promised more than it sent. What arrived is what is read: the
+    /// verb is then not JSON and the request is refused by the reader above, which
+    /// is the same answer as for any other nonsense.
+    #[test]
+    fn a_body_shorter_than_it_said_is_what_arrived() {
+        let request =
+            read(b"POST / HTTP/1.1\r\ncontent-length: 99\r\n\r\n{\"verb\"").expect("a request");
+
+        assert_eq!(request.body, "{\"verb\"");
+    }
+
+    /// And one that sent more than it promised: the rest is not part of this
+    /// request, so a second request smuggled behind the first is not read either.
+    #[test]
+    fn a_body_longer_than_it_said_is_cut_where_it_said() {
+        let request = read(b"POST / HTTP/1.1\r\ncontent-length: 2\r\n\r\n{}POST /").expect("one");
+
+        assert_eq!(request.body, "{}");
+    }
+
+    #[test]
+    fn a_body_that_is_not_text_is_no_request() {
+        assert!(read(b"POST / HTTP/1.1\r\ncontent-length: 2\r\n\r\n\xff\xfe").is_none());
     }
 
     #[test]
