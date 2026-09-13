@@ -44,8 +44,15 @@ export const PATH_LIMIT = 400
  *  text that is edited on more than one device, so it wants the first: the
  *  version, the hash and the conflict rule are exactly what a file two people
  *  draw on needs. See apps/desktop/src/lib/sync/mirror.ts, which sends every file
- *  that is not a PDF through here. */
-const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas)$/i
+ *  that is not a PDF through here.
+ *
+ *  A page note - `.pages` - is that same file under another name: JSON Canvas
+ *  with pages among its nodes, merged by the very code a canvas is merged by
+ *  (`roomKind` answers `plane` for one; see rooms/kind.ts). It was left out of
+ *  this list, and since the mirror sends every file that is not a PDF here, that
+ *  meant every page note anybody wrote was refused - on every pass, silently,
+ *  for ever - and never reached a second device. */
+const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages)$/i
 
 /** Paths are relative, forward-slashed and named like a note. Nothing escapes
  *  the space.

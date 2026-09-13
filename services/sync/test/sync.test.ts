@@ -443,6 +443,44 @@ describe('notes', () => {
     expect((await addNote('paper.pdf', 'x')).status).toBe(400)
   })
 
+  /** A page note is the same file as a canvas under another name - JSON Canvas
+   *  with pages among its nodes - and the app's mirror sends every file that is
+   *  not a PDF up this road. The list of endings left `.pages` out, so every page
+   *  note a reader made was refused here, on every pass, for ever: the file stayed
+   *  on the one machine that wrote it and no second device ever saw it. Nothing
+   *  said so out loud, because a note the server will not take is a note the pass
+   *  simply steps over.
+   *
+   *  `roomKind` in src/rooms/kind.ts already answers `plane` for one, which is the
+   *  rest of what a page note needs to be edited from two devices at once. */
+  test('takes a page note, which is a canvas under another name', async () => {
+    const paper =
+      '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],"edges":[]}\n'
+    const created = await addNote('Paper/Journal.pages', paper)
+
+    expect(created.status).toBe(201)
+    expect(created.json.note.path).toBe('Paper/Journal.pages')
+
+    const fetched = await call(env, `/v1/notes/${created.json.note.id}`, { token })
+    expect(fetched.json.content).toBe(paper)
+  })
+
+  test('a page note that changed comes back in the next catch-up', async () => {
+    const created = await addNote('Journal.pages', '{"nodes":[],"edges":[]}')
+    await call(env, `/v1/notes/${created.json.note.id}`, {
+      method: 'PUT',
+      token,
+      body: { content: '{"nodes":[{"id":"p1"}],"edges":[]}', baseVersion: 1 },
+    })
+
+    const page = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
+    const paper = (page.json.notes as { path: string; version: number }[]).find(
+      (note) => note.path === 'Journal.pages',
+    )
+
+    expect(paper?.version).toBe(2)
+  })
+
   /** A canvas is text that is drawn on from more than one device, so it travels
    *  the way a note does: versioned, hashed, and with the conflict rule behind
    *  it. The blob list beside this only goes up, which would not round trip. */

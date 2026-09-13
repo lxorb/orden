@@ -347,6 +347,58 @@ describe('a note only one side changed', () => {
   })
 })
 
+/** A page note is JSON Canvas with pages among its nodes, and it travels the way
+ *  a canvas travels: up as a note, merged rather than copied, and down onto every
+ *  other machine. The server's list of endings left `.pages` out, so a page note
+ *  was refused on every pass and stayed on the one device that wrote it; see
+ *  NOTE_PATH in services/sync/src/notes.ts. This is that road, from this side. */
+describe('a page note', () => {
+  const paper = (id: string) =>
+    `{
+	"nodes": [{ "id": "p1", "type": "page", "x": 0, "y": 0, "width": 794, "height": 1123 }],
+	"edges": [],
+	"nib": {
+		"version": 1,
+		"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],
+		"at": { "${id}": 1000 }
+	}
+}
+`
+
+  test('goes up to the account when it is new here', async () => {
+    const mirror = newMirror('s-one', ROOT)
+    fake.disk.set(`${ROOT}/Journal.pages`, paper('here'))
+
+    expect(await push(mirror, 'token', NOBODY)).toBe(true)
+    expect(fake.calls).toContain('createNote Journal.pages')
+  })
+
+  test('and comes down onto a machine that has never seen it', async () => {
+    fake.addRemote('Journal.pages', paper('elsewhere'))
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Journal.pages`)).toBe(paper('elsewhere'))
+  })
+
+  /** The same merge a canvas gets, because it is the same file: two devices that
+   *  drew on one page keep both hands rather than one winning. */
+  test('is merged rather than copied when both sides drew on it', async () => {
+    const { mirror, id } = await paired('Journal.pages', paper('base'))
+
+    fake.disk.set(`${ROOT}/Journal.pages`, paper('here'))
+    fake.editRemote(id, paper('there'))
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toEqual([])
+    const held = fake.disk.get(`${ROOT}/Journal.pages`) ?? ''
+    expect(held).toContain('"here"')
+    expect(held).toContain('"there"')
+  })
+})
+
 describe('a path the account named', () => {
   test('is not written outside the folder the space is', async () => {
     fake.addRemote('../../escape.md', 'somebody else wrote this\n')

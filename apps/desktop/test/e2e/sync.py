@@ -516,6 +516,43 @@ def headless(worker: Worker, token: str, space: str) -> None:
             say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")
 
 
+def page_note(browser, token: str, space: str) -> None:
+    """A page note, across two devices.
+
+    The mirror sends every file that is not a PDF up as a note, and the server's
+    list of endings left `.pages` out: every page note anybody wrote was refused,
+    on every pass, silently, and never left the machine it was written on. Both
+    halves are checked here - the account takes the file, and a second device that
+    has never seen it finds it in its tree.
+    """
+    paper = (
+        '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],'
+        '"edges":[]}\n'
+    )
+    made = request(f"/v1/spaces/{space}/notes", token, {"path": "Journal.pages", "content": paper})
+    landed = made.get("note", {}).get("path")
+    say(f"the account took the page note as {landed!r}")
+    if landed != "Journal.pages":
+        say("FAILED: the account would not take a page note")
+        return
+
+    context, page = opened(browser, "pages", 1280, 860, DESKTOP_AGENT, False, token)
+    try:
+        page.wait_for_function(
+            """() => {
+              const walk = (one) => (one ? [one.path, ...(one.children ?? []).flatMap(walk)] : [])
+              return walk(window.nibApp.workspace.tree)
+                .some((path) => path.endsWith('Journal.pages'))
+            }""",
+            timeout=60000,
+        )
+        say("and a second device found it in its tree")
+    except Exception as error:
+        say(f"FAILED: the page note never reached a second device: {error}")
+    finally:
+        context.close()
+
+
 def main() -> int:
     out = Path(__file__).resolve().parent / "shots" / "sync"
     worker = Worker()
@@ -550,6 +587,9 @@ def main() -> int:
                 ]:
                     say(f"--- {one[0]} ---")
                     remote = drive(browser, worker, out, token, user, *one) or remote
+                say("--- a page note across two devices ---")
+                if remote:
+                    page_note(browser, token, remote)
             finally:
                 browser.close()
 
