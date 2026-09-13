@@ -108,6 +108,34 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     raise SystemExit(f"gave up waiting for {what}")
 
 
+#: How long a state has to hold before the drive believes it. See `holds`.
+HOLD = 1.5
+
+
+def holds(page: Page, script: str, what: str, hold: float = HOLD) -> None:
+    """Waits for something to be true and to stay true.
+
+    Once is not enough where the app is still starting. The sitting is read back
+    after the window says it has a space, and reading it back sets which tab is
+    active: a note made the active one before that lands is the active one until it
+    lands, and this drive walked the wrong note about one run in three - true when it
+    looked, false a moment later, before a single key was pressed.
+
+    `script` is expected to put the state back as well as report it, so what this
+    measures is a second and a half in which nothing moved it."""
+    until = time.monotonic() + PATIENCE
+    while time.monotonic() < until:
+        since = time.monotonic()
+        while page.evaluate(script):
+            if time.monotonic() - since >= hold:
+                return
+            page.wait_for_timeout(50)
+
+        page.wait_for_timeout(50)
+
+    raise SystemExit(f"gave up waiting for {what} to stay put")
+
+
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme=scheme)
     page = context.new_page()
@@ -133,7 +161,9 @@ SEED = """
 async (text) => {
   const ws = window.nibApp.workspace
   const path = await ws.noteFrom(text, ws.activeSpace.root)
-  await ws.openEntry(path)
+  // Activated, not merely opened - and see `SHOWING`, which is what makes it stay
+  // activated through the sitting being read back.
+  await ws.openEntry(path, { activate: true })
   if (ws.panel) ws.showPanel(null)
   return path
 }
@@ -161,7 +191,63 @@ BAR = """
 """
 
 WHERE = "() => document.activeElement?.className ?? document.activeElement?.tagName ?? ''"
-DOC = "() => window.nib.state.doc.toString()"
+#: The note that is open, off the workspace rather than off `window.nib`.
+#:
+#: `window.nib` is whichever editor was made last - Editor.svelte assigns it on
+#: every view it creates - so it is the focused pane's editor only until something
+#: else makes one. Reading the document through it was this drive's own race: the
+#: caret steps below went to the second word of a note nobody was looking at, Ctrl+F
+#: came up on a word this note does not hold, and all fourteen checks after that
+#: read as bugs in the find bar. The workspace knows which note is open.
+DOC = "() => window.nibApp.workspace.active.doc"
+#: How many gales the note holds, which is what a replacement can be waited for by.
+GALE = "(window.nibApp.workspace.active.doc.match(/gale/g) || []).length"
+#: Which note the pane is on, how many editors there are, and what is selected.
+CARET = """
+() => ({
+  active: window.nibApp.workspace.active?.path ?? null,
+  tabs: window.nibApp.workspace.tabs.length,
+  editors: document.querySelectorAll('.cm-content').length,
+  windmill: (window.nibApp.workspace.active?.doc ?? '').includes('windmill'),
+  picked: (getSelection()?.toString() ?? '').slice(0, 24),
+  focused: document.activeElement?.className?.slice?.(0, 40) ?? '',
+})
+"""
+
+#: The note the drive wrote, made the one the window is on - asked for again until
+#: it stays that way.
+#:
+#: Three things have to be true at once and none of them was reliably. The note has
+#: to be the *active* tab, because the find bar searches the pane with the keyboard
+#: in it. It has to be the *only* tab, because `.cm-content` is picked by document
+#: order and another pane's editor can come first. And both have to survive the
+#: app's own sitting being read back, which lands after the app says it has a space
+#: and sets which tab is active: seeded once, the note was replaced a moment later
+#: by whichever note the space opened on - `Read me.md`, whose second word is `to`
+#: and which has no wind in it at all. That is the whole of why this drive failed
+#: about one run in three, and why every check after the first seven then read as a
+#: bug in the find bar rather than in the drive.
+#:
+#: So it is not asked once. `wait_for` polls this, and each poll puts the window back
+#: on the note if something has moved it, which is what carries it through the
+#: restore.
+SHOWING = """
+() => {
+  const ws = window.nibApp.workspace
+  const mine = ws.tabs.find((one) => (one.path ?? '').endsWith('The wind.md'))
+  if (!mine) return false
+
+  if (ws.activeTabId !== mine.id) {
+    ws.activeTabId = mine.id
+    return false
+  }
+
+  for (const other of [...ws.tabs]) if (other.id !== mine.id) ws.close(other.id)
+
+  return (ws.active?.doc ?? '').includes('windmill')
+    && document.querySelectorAll('.cm-content').length === 1
+}
+"""
 # No CodeMirror panel anywhere: the one thing this rework must be able to prove.
 PANEL = "() => document.querySelectorAll('.cm-panel, .cm-panels').length"
 
@@ -221,11 +307,11 @@ def on_phone(browser: Browser) -> None:
         page.wait_for_timeout(200)
         say(f"[{label}] wrote {page.evaluate(SEED, NOTE)}")
         wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
-        page.wait_for_timeout(400)
+        holds(page, SHOWING, f"[{label}] the note to be the document")
 
         page.locator(".cm-content").first.click()
         page.keyboard.press("Control+f")
-        page.wait_for_timeout(400)
+        page.wait_for_selector(".findbar", state="visible", timeout=8000)
 
         bar = page.evaluate(BAR)
         check(bar is not None, f"[{label}] Ctrl+F puts the bar up")
@@ -256,7 +342,13 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
     try:
         say(f"[{label}] wrote {page.evaluate(SEED, NOTE)}")
         wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
-        page.wait_for_timeout(300)
+        # And the note itself in it, which is not the same thing. An editor exists
+        # before the note it is going to show arrives, so waiting for one and then
+        # sleeping is waiting for whichever document was there: the caret went to the
+        # second word of the wrong note, Ctrl+F opened on a word this note does not
+        # hold, and every check after it read as a bug in the find bar. One run in
+        # three. `windmill` is in this note and in nothing else in the space.
+        holds(page, SHOWING, f"[{label}] the note to be the document")
 
         # ── Ctrl+F, with a word under the caret ──
         content = page.locator(".cm-content").first
@@ -266,8 +358,12 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
         page.keyboard.press("Control+ArrowRight")
         page.keyboard.press("Control+ArrowRight")
         page.keyboard.press("Control+Shift+ArrowRight")
+        # What the keys found, said out loud: which note the pane is on, how many
+        # editors are on the page, and what the caret has hold of. A drive that
+        # cannot say this is a drive whose failures all look the same.
+        say(f"[{label}] before Ctrl+F: {page.evaluate(CARET)}")
         page.keyboard.press("Control+f")
-        page.wait_for_timeout(400)
+        page.wait_for_selector(".findbar", state="visible", timeout=8000)
 
         bar = page.evaluate(BAR)
         say(f"[{label}] the bar: {bar}")
@@ -288,9 +384,37 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
         say(f"[{label}] wrote bar-{label}.png")
 
         # ── The tally, and what the flags do to it ──
-        def tally() -> str:
-            page.wait_for_timeout(250)
-            return page.evaluate(BAR)["tally"]
+        def tally(unlike: str | None = None) -> str:
+            """What the bar says it found, once it has finished saying it.
+
+            A sleep was what this used to be, and the flags below are pressed one
+            after another with nothing between them: a quarter of a second is
+            usually enough for the field to be read and the tally rewritten, and
+            once in three runs it was not. So the tally is waited for - for a
+            different answer where one is expected, and for any answer otherwise."""
+            until = time.monotonic() + PATIENCE
+            said = ""
+            while time.monotonic() < until:
+                said = page.evaluate(BAR)["tally"]
+                if said and (unlike is None or said != unlike):
+                    return said
+                page.wait_for_timeout(30)
+
+            return said
+
+        def flag(label: str, on: bool) -> None:
+            """A flag pressed, and seen to have taken.
+
+            `aria-pressed` is the flag's own answer about itself, so this is the
+            state the next step depends on rather than the click that asked for it.
+            A click that went astray used to leave a flag on, and a flag left on is
+            a query with nothing to replace - which is how the Replace button came
+            to be disabled when the run below clicked it, for thirty seconds."""
+            page.locator(f'.findbar .flag[aria-label="{label}"]').click()
+            page.wait_for_selector(
+                f'.findbar .flag[aria-label="{label}"][aria-pressed="{str(on).lower()}"]',
+                timeout=8000,
+            )
 
         field = page.locator(".findbar input").first
         field.fill("wind")
@@ -300,38 +424,35 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
         # the last line. Case is ignored until Match case is pressed.
         check("of 7" in loose, f"[{label}] finds every wind, however written ({loose!r})")
 
-        page.locator('.findbar .flag[aria-label="Match case"]').click()
-        cased = tally()
+        flag("Match case", True)
+        cased = tally(unlike=loose)
         say(f"[{label}] with Match case: {cased!r}")
         check(cased != loose, f"[{label}] Match case changes the answer")
 
-        page.locator('.findbar .flag[aria-label="Match case"]').click()
-        page.locator('.findbar .flag[aria-label="Whole word"]').click()
-        whole = tally()
+        flag("Match case", False)
+        flag("Whole word", True)
+        whole = tally(unlike=loose)
         say(f"[{label}] with Whole word: {whole!r}")
         check(whole != loose, f"[{label}] Whole word changes the answer")
 
-        page.locator('.findbar .flag[aria-label="Whole word"]').click()
-        page.locator('.findbar .flag[aria-label="Regular expression"]').click()
+        flag("Whole word", False)
+        flag("Regular expression", True)
         field.fill("w[a-z]+d")
         regex = tally()
         say(f"[{label}] as a regular expression: {regex!r}")
         check(bool(regex) and "0" not in regex[:2], f"[{label}] a regular expression matches")
-        page.locator('.findbar .flag[aria-label="Regular expression"]').click()
+        flag("Regular expression", False)
 
         # ── Enter and Shift+Enter ──
         field.fill("wind")
-        page.wait_for_timeout(250)
-        first = page.evaluate(BAR)["tally"]
+        first = tally()
         field.press("Enter")
-        page.wait_for_timeout(250)
-        second = page.evaluate(BAR)["tally"]
+        second = tally(unlike=first)
         say(f"[{label}] Enter took {first!r} to {second!r}")
         check(first != second, f"[{label}] Enter steps on")
 
         field.press("Shift+Enter")
-        page.wait_for_timeout(250)
-        back = page.evaluate(BAR)["tally"]
+        back = tally(unlike=second)
         say(f"[{label}] Shift+Enter took {second!r} to {back!r}")
         check(back == first, f"[{label}] and Shift+Enter steps back")
 
@@ -342,7 +463,10 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
 
         # ── The replace row ──
         page.locator('.findbar .act[aria-label="Replace"]').click()
-        page.wait_for_timeout(400)
+        # The row itself, which is the second field appearing in the bar.
+        page.wait_for_function(
+            "() => document.querySelectorAll('.findbar input').length > 1", timeout=8000
+        )
         open_bar = page.evaluate(BAR)
         say(f"[{label}] with the replace row: {open_bar}")
         check(open_bar["replacing"], f"[{label}] the chevron opens the replace row")
@@ -351,21 +475,30 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
         say(f"[{label}] wrote replace-{label}.png")
 
         page.locator(".findbar input").nth(1).fill("gale")
+        # Replace is disabled while nothing is found, so what this step waits for is
+        # something to replace. Clicking into the wait was a thirty second timeout on
+        # a button that was never going to be enabled.
+        page.wait_for_selector(".findbar .apply:not([disabled])", timeout=8000)
         page.locator(".findbar .apply").first.click()
-        page.wait_for_timeout(400)
+        # The replacement landing in the document, which is the thing the next line
+        # asserts about. Counted rather than compared whole: the note is a page of
+        # prose and a string of it does not belong in a selector.
+        wait_for(page, f"() => {GALE} >= 1", "the first replacement")
         once = page.evaluate(DOC)
         say(f"[{label}] after one Replace: {once.count('gale')} gale, {once.count('wind')} wind")
         check(once.count("gale") == 1, f"[{label}] Replace changes one match")
 
         page.locator(".findbar .apply").nth(1).click()
-        page.wait_for_timeout(500)
+        wait_for(page, f"() => {GALE} > 1", "the rest of the replacements")
         all_done = page.evaluate(DOC)
         say(f"[{label}] after Replace all: {all_done.count('gale')} gale")
         check(all_done.count("gale") > 1, f"[{label}] and Replace all changes the rest")
 
         # ── Escape ──
         page.locator(".findbar input").first.press("Escape")
-        page.wait_for_timeout(400)
+        # The bar going, rather than four hundred milliseconds: this is the check
+        # that failed on its own, one run in three.
+        page.wait_for_selector(".findbar", state="detached", timeout=8000)
         say(f"[{label}] the keyboard landed on {page.evaluate(WHERE)!r}")
         check(page.evaluate(BAR) is None, f"[{label}] Escape closes the bar")
         check(
