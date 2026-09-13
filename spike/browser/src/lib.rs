@@ -116,29 +116,35 @@ pub struct Spike {
     step: usize,
 }
 
-impl Spike {
-    fn browser(&self, which: usize) -> Option<BrowserHost> {
-        self.browsers.get(which).and_then(|browser| browser.host())
-    }
-
-    fn load(&self, which: usize, url: &str) {
-        let Some(mut browser) = self.browsers.get(which).cloned() else {
-            return;
-        };
-        if let Some(frame) = browser.main_frame() {
-            frame.load_url(Some(&CefString::from(url)));
-        }
-    }
-}
-
 /// One step of the plan, and the step after it.
 ///
 /// Each arm does one thing and says what it found. The last arm quits the message
 /// loop, which is what lets the program exit 0 and the harness report a number
 /// rather than a timeout.
 fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
-    let mut held = spike.lock().expect("the spike was poisoned");
-    held.step = n;
+    // The lock is taken, copied out of, and dropped before anything below calls
+    // into CEF. That is not tidiness, it is the only shape that cannot deadlock:
+    // CEF runs its callbacks on this same thread, several of them take this same
+    // lock - `on_before_close` and `on_load_error` both do - and `close_browser`
+    // on the UI thread can reach `on_before_close` without ever yielding. The
+    // first version of this function held the guard across that call.
+    //
+    // A `Browser` is reference-counted, so the copy is cheap and the browsers it
+    // names are the same ones.
+    let (browsers, failed) = {
+        let mut held = spike.lock().expect("the spike was poisoned");
+        held.step = n;
+        (held.browsers.clone(), held.failed.clone())
+    };
+
+    let host = |which: usize| browsers.get(which).and_then(|browser| browser.host());
+    let load = |which: usize, url: &str| {
+        if let Some(browser) = browsers.get(which).cloned() {
+            if let Some(frame) = browser.main_frame() {
+                frame.load_url(Some(&CefString::from(url)));
+            }
+        }
+    };
 
     match n {
         // Both tabs exist by now. This is the moment the harness counts processes
@@ -146,12 +152,10 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
         0 => {
             check(
                 "two browsers",
-                held.browsers.len() == 2,
-                &format!("{} browsers", held.browsers.len()),
+                browsers.len() == 2,
+                &format!("{} browsers", browsers.len()),
             );
-            let chrome = held
-                .browser(0)
-                .map(|host| host.runtime_style() == RuntimeStyle::CHROME);
+            let chrome = host(0).map(|host| host.runtime_style() == RuntimeStyle::CHROME);
             check(
                 "Chrome style, which is what unlocks the pages below",
                 chrome == Some(true),
@@ -160,13 +164,12 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
             say(&format!(
                 "\"event\":\"ready\",\"pid\":{},\"browsers\":{}",
                 std::process::id(),
-                held.browsers.len()
+                browsers.len()
             ));
         }
 
         // The extension. Its content script renamed the first tab's title, which
-        // the display handler below noticed; and `chrome://extensions` has to be
-        // able to list it.
+        // the display handler below noticed.
         1 => {
             check(
                 "an unpacked MV3 extension ran",
@@ -179,7 +182,7 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
         // Chromium's own pages, one per step from here.
         n if n >= 2 && n < 2 + CHROME_PAGES.len() => {
             let url = CHROME_PAGES[n - 2];
-            held.load(1, url);
+            load(1, url);
             say(&format!("\"event\":\"navigating\",\"url\":\"{url}\""));
         }
 
@@ -187,53 +190,53 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
         // for it.
         n if n == 2 + CHROME_PAGES.len() => {
             for url in CHROME_PAGES {
-                let bad = held.failed.iter().any(|failed| failed.starts_with(url));
+                let bad = failed.iter().any(|one| one.starts_with(url));
                 check(url, !bad, if bad { "load error" } else { "loaded" });
             }
             shot("chrome-pages");
         }
 
-        // DevTools, which in the Chrome runtime is Chromium's own window.
+        // DevTools, which in Chrome style is Chromium's own window.
         n if n == 3 + CHROME_PAGES.len() => {
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.show_dev_tools(None, None, None, None);
             }
         }
         n if n == 4 + CHROME_PAGES.len() => {
-            let open = held.browser(0).map(|host| host.has_dev_tools() != 0);
+            let open = host(0).map(|host| host.has_dev_tools() != 0);
             check("DevTools opened", open == Some(true), "has_dev_tools");
             shot("devtools");
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.close_dev_tools();
             }
         }
 
-        // Find in page. In the Chrome runtime the match count is drawn by
-        // Chromium's own find bar, which is the point: nib does not draw one.
+        // Find in page. In Chrome style the match count is drawn by Chromium's own
+        // find bar, which is the point: nib does not draw one.
         n if n == 5 + CHROME_PAGES.len() => {
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.find(Some(&CefString::from("Example")), 1, 0, 0);
             }
         }
         n if n == 6 + CHROME_PAGES.len() => {
             shot("find");
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.stop_finding(1);
             }
         }
 
         // Print, which is Chromium's own preview and not a dialog nib draws.
         n if n == 7 + CHROME_PAGES.len() => {
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.print();
             }
         }
         n if n == 8 + CHROME_PAGES.len() => shot("print"),
 
         // Zoom, because it is the one thing nib's View menu drives rather than
-        // keeps a number for.
+        // keeps a number of its own.
         n if n == 9 + CHROME_PAGES.len() => {
-            if let Some(host) = held.browser(0) {
+            if let Some(host) = host(0) {
                 host.set_zoom_level(1.0);
                 let back = host.zoom_level();
                 check("zoom", (back - 1.0).abs() < 0.001, &format!("{back}"));
@@ -244,7 +247,7 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
         // the loop, which is how cefsimple ends and how this ends.
         _ => {
             event("finishing");
-            for browser in held.browsers.clone() {
+            for browser in &browsers {
                 if let Some(host) = browser.host() {
                     host.close_browser(1);
                 }
@@ -253,7 +256,6 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
         }
     }
 
-    drop(held);
     let mut task = Step::new(spike.clone(), n + 1);
     post_delayed_task(ThreadId::UI, Some(&mut task), STEP_MS);
 }
@@ -339,16 +341,21 @@ wrap_life_span_handler! {
         }
 
         fn on_before_close(&self, browser: Option<&mut Browser>) {
-            let mut held = self.spike.lock().expect("the spike was poisoned");
-            let mut browser = browser.cloned().expect("a browser closed without being one");
-            if let Some(at) = held
-                .browsers
-                .iter()
-                .position(|one| one.is_same(Some(&mut browser)) != 0)
-            {
-                held.browsers.remove(at);
-            }
-            if held.browsers.is_empty() {
+            // Same rule as `step`: nothing is called into CEF while the lock is
+            // held. `quit_message_loop` is below the `drop`.
+            let last = {
+                let mut held = self.spike.lock().expect("the spike was poisoned");
+                let mut browser = browser.cloned().expect("a browser closed without being one");
+                if let Some(at) = held
+                    .browsers
+                    .iter()
+                    .position(|one| one.is_same(Some(&mut browser)) != 0)
+                {
+                    held.browsers.remove(at);
+                }
+                held.browsers.is_empty()
+            };
+            if last {
                 event("all-closed");
                 quit_message_loop();
             }

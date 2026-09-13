@@ -408,6 +408,7 @@ So it is CEF, and the only real question is **where the engine lives**.
 | who writes the embedding | Tauri. `Window::add_child` with bounds, which `web_tabs.rs` already calls | **nib.** `SetParent` on Windows, a child `NSWindow` on macOS, `XReparentWindow` on Linux, plus a transport and a lifecycle |
 | Wayland | Tauri's problem, and it forces X11 through GTK 4 | cross-process embedding needs X11. Wayland has no protocol for it, so nib would be Xwayland-only |
 | Chromium's sandbox on Windows | **not today.** A Tauri app is not the DLL `bootstrap.exe` loads | **yes today.** The helper can be that DLL; cef-rs already builds one |
+| a security fix without an app release | on Windows, yes, once the DLL host lands - CEF's own installer manages a shared engine. On macOS and Linux, no | the same on Windows, and on Linux a downloaded engine *loses* the sandbox (section 7) |
 | crash isolation | a browser-process crash is nib's crash | a browser-process crash loses the web tabs and nothing else |
 | macOS signing | Tauri's bundler signs the framework and the helper bundles | nib's packaging does |
 | Linux packaging | Tauri's deb and rpm bundlers already install the setuid `chrome-sandbox` | nib's packaging does |
@@ -995,6 +996,36 @@ CEF as a separately-updated 125 MB package for years and sat on Chromium 126 for
 some twenty-one months; JetBrains fetches a 246 MB JCEF runtime on demand and runs
 about three milestones behind. Separating the engine does not by itself buy a
 cadence. Only automation does, which is what the workflow above is.
+
+### Signing on macOS, which is five bundles and a framework
+
+A CEF application on macOS is not one signable thing. CEF's own documentation is
+plain that *"the single executable structure is supported on Windows and Linux but
+not on MacOS"*: the app bundle holds `Chromium Embedded Framework.framework` and a
+set of helper bundles - the renderer, the GPU, the plugin host, the alerts helper
+and a plain one - *"because it needs to have a separate app bundle and Info.plist
+file so that, among other things, it doesn't show dock icons."* Every one of those
+has to be signed **separately and inside-out**: the framework and its nested
+libraries first, then each helper, then the outer app. `codesign --deep` is Apple's
+own deprecated shortcut for this and produces a bundle that notarises and then fails
+to launch, so it is not the answer.
+
+Each of them also needs the hardened runtime with entitlements Chromium cannot run
+without, because a JavaScript engine is a program that writes code and then executes
+it: `com.apple.security.cs.allow-jit` for the renderer, and
+`com.apple.security.cs.allow-unsigned-executable-memory` plus
+`com.apple.security.cs.disable-library-validation` for the helpers that load the
+framework out of another bundle. This is the same set every Electron and CEF
+application on macOS ships, and `tauri-macos-sign` and Tauri's bundler are where it
+has to be taught - `tauri-runtime-cef` carries a `macos-application-bootstrap` test
+of its own, which is a sign the branch is already thinking about it.
+
+Two consequences worth stating before batch 7 rather than during it: the notarisation
+upload becomes a few hundred megabytes rather than a few, which lengthens every
+macOS release; and `LSUIElement` must be true on every helper, or five icons appear
+in the Dock and the app steals focus each time a tab opens.
+`spike/browser/scripts/stage.py` writes that layout, including the flag, which is
+why it exists at all.
 
 ### Packaging, which on Linux is the sandbox question again
 

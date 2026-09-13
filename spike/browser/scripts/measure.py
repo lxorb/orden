@@ -280,10 +280,12 @@ def summarise(result: dict) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument('--binary', required=True)
+    ap.add_argument('--binary', required=True, help='the spike to run')
+    ap.add_argument('--control', default=None, help='the same program with no CEF linked in')
+    ap.add_argument('--stage', default=None, help='the tree a release would ship, to weigh')
     ap.add_argument('--cef-path', default=os.environ.get('CEF_PATH'))
     ap.add_argument('--out', default='spike-out')
-    ap.add_argument('--timeout', type=int, default=300)
+    ap.add_argument('--timeout', type=int, default=420)
     args = ap.parse_args()
 
     binary = Path(args.binary).resolve()
@@ -294,24 +296,27 @@ def main() -> int:
         'platform': f'{platform.system()} {platform.machine()}',
         'cef': os.environ.get('CEF_VERSION'),
         'chromium': os.environ.get('CHROMIUM_VERSION'),
-        'binary_bytes': binary.stat().st_size,
+        'binary_mb': round(binary.stat().st_size / 1048576, 2),
     }
+    if args.stage:
+        report['ships'] = weigh(Path(args.stage).resolve())
 
-    if args.cef_path:
-        report['shipped'] = shipped_size(Path(args.cef_path))
+    # The control first, so the machine is as quiet for it as it will ever be: the
+    # same program with no Chromium linked into it. Everything after is measured
+    # against it.
+    if args.control and Path(args.control).is_file():
+        print('== no Chromium linked in ==')
+        report['control'] = summarise(run(Path(args.control).resolve(), [], out_dir / 'control', 60))
 
-    # The cold run first, so the machine is as quiet for it as it will ever be.
-    # No browser is asked for, so CEF is never initialised: what this measures is
-    # the cost of a build that *can* open a web tab to somebody who does not.
-    print('== no web tab ==')
-    report['cold'] = summarise(run(binary, ['--no-browser'], out_dir / 'cold', 120))
+    # Then a launch that links Chromium and never initialises it, which is what a
+    # build that *can* open a web tab costs somebody who does not.
+    print('== linked, no web tab ==')
+    report['cold'] = summarise(run(binary, ['--no-browser'], out_dir / 'cold', 180))
 
     print('== two web tabs ==')
     full = run(binary, [], out_dir / 'full', args.timeout)
     report['full'] = summarise(full)
-    report['full']['checks'] = [
-        e for e in full['events'] if e.get('event') == 'check'
-    ]
+    report['full']['checks'] = [e for e in full['events'] if e.get('event') == 'check']
 
     (out_dir / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     (out_dir / 'full.log').write_text('\n'.join(full['log']), encoding='utf-8')

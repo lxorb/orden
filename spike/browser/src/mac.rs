@@ -28,7 +28,7 @@ use cef::application_mac::{CefAppProtocol, CrAppControlProtocol, CrAppProtocol};
 use objc2::runtime::Bool;
 use objc2::{define_class, extern_methods, msg_send, rc::Retained, ClassType, DefinedClass};
 use objc2_app_kit::{NSApp, NSApplication, NSEvent};
-use objc2_foundation::MainThreadMarker;
+use objc2_foundation::{MainThreadMarker, NSObjectProtocol};
 use std::cell::Cell;
 
 /// Whether this application is inside `-sendEvent:` right now. That single bit is
