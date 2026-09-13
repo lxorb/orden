@@ -394,6 +394,20 @@ describe('the icon a tab shows', () => {
 
     expect((await page('/favicon.svg')).text).toContain('>F<')
   })
+
+  /** An SVG is a document, and this one is the author's own markup on a host under
+   *  the shared domain: opened on its own it is a page there. The same policy a
+   *  diagram gets from /i/; see `SVG_POLICY`. */
+  test('and is sandboxed, because a drawing opened on its own is a document', async () => {
+    await publish()
+    await setSite({ icon: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="8"/></svg>' })
+
+    const answer = await page('/favicon.svg')
+    expect(answer.headers.get('content-security-policy')).toBe(
+      "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    )
+    expect(answer.headers.get('x-content-type-options')).toBe('nosniff')
+  })
 })
 
 describe('a site behind a password', () => {

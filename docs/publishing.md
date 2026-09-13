@@ -321,6 +321,11 @@ An SVG and nothing else. Every browser still shipped draws an SVG favicon; the
 PNG that one or two platforms would rather have needs a rasteriser in a Worker or
 a canvas dance in the app, and a tab icon is not worth either.
 
+It is served sandboxed, with the policy a diagram from `/i/` gets: an SVG is a
+document, and an icon is the author's own markup on a host under the shared domain,
+so somebody who opens `/favicon.svg` on its own is opening a page there. The two
+answers say it from one place now; see `SVG_POLICY` in `blog/site.ts`.
+
 ## Getting around a site
 
 Part one decided which notes are on a site. This is everything a reader of one

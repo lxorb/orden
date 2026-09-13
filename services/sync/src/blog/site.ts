@@ -43,6 +43,20 @@ const LONGEST_URL = 400
  *  stroke or an emoji drawn as text, and far too little to hide anything in. */
 export const LONGEST_ICON = 8 * 1024
 
+/** What an SVG served from a site may do, which is nothing.
+ *
+ *  An SVG is a document, not a picture. Inside an `<img>` - which is the only way
+ *  a page here writes one - a browser runs no script and fetches nothing anyway,
+ *  but the address is a link like any other and somebody may open it on its own:
+ *  a tab icon is `/favicon.svg`, and a diagram is `/i/<hash>.svg`. Then it is a
+ *  document on a `nibeditor.com` host, drawn out of text somebody wrote. So it is
+ *  sandboxed into an origin of its own with nothing allowed but the styles the
+ *  picture's own colours are written in.
+ *
+ *  Here rather than beside either route because both serve one, and a picture that
+ *  was sandboxed on one path and not the other is the path nobody remembered. */
+export const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+
 /** What a note that says nothing about itself gets. */
 const DEFAULTS = ['all', 'none'] as const
 type Otherwise = (typeof DEFAULTS)[number]

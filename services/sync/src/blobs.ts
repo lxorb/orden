@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { OUT_OF_SPACE } from './refused'
 import { spaceForHost } from './blog'
-import { readSite } from './blog/site'
+import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { fits } from './storage'
@@ -159,17 +159,10 @@ blobs.delete('/:hash', async (context) => {
  *  private space is not something a hash gets anybody any more. */
 export const publicBlobs = new Hono<{ Bindings: Env }>()
 
-/** What an SVG served from here may do, which is nothing.
- *
- *  An SVG is a document: inside an `<img>` - which is the only way a page here
- *  writes one - a browser runs no script and fetches nothing anyway, but the
- *  address is a link like any other and somebody may open it on its own. Then it
- *  is a document on this site's origin, and one drawn by a drawing library out of
- *  text somebody wrote. So it is sandboxed into an origin of its own with nothing
- *  allowed but the styles the picture's own colours are written in. The app strips
- *  scripts and handlers before it uploads one; this is the half that does not
- *  depend on which version of the app drew it. */
-const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+/** What an SVG served from here may do, which is nothing, and the same answer a
+ *  site's own tab icon gets: see `SVG_POLICY` in blog/site.ts. The app strips
+ *  scripts and handlers before it uploads a diagram; the policy is the half that
+ *  does not depend on which version of the app drew it. */
 
 /** Whether any published space says it keeps this file beside its notes, which is
  *  the one condition under which a page here writes its URL.

@@ -35,7 +35,7 @@ import { machineOf, maySendAnswer, mayTakeAnswer } from './limits'
 import { newId } from './crypto'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
-import { publishes, readSite, type Site, type SitePassword } from './blog/site'
+import { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './blog/site'
 import type { Env, Note, Space } from './types'
 
 /** Where a page lives is blog/paths.ts now that a note can say so itself; the
@@ -690,6 +690,10 @@ function favicon(space: Space, site: Site): Response {
       'content-type': 'image/svg+xml; charset=utf-8',
       'cache-control': 'public, max-age=3600',
       'x-content-type-options': 'nosniff',
+      // An icon is the author's own markup, and an SVG opened on its own is a
+      // document on this site's origin; the same policy the diagrams get. See
+      // `SVG_POLICY`.
+      'content-security-policy': SVG_POLICY,
     },
   })
 }
