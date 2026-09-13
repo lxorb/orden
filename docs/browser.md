@@ -455,10 +455,16 @@ saves is a lazy start.
 **The laziness goes, and that is the one place this recommends against the brief.**
 CEF cannot be initialised on the first web tab; the maintainer's answer is
 unambiguous. So every launch starts Chromium, and somebody who never opens a web
-tab pays for one. The spike measures exactly this - the control with no Chromium
-linked in, a launch that links it and never initialises it, and the full run - and
-the numbers in section 8 are what the trade should be judged on. If the floor turns
-out to be intolerable, B′ is the fallback and this document has its shape.
+tab pays for one.
+
+The spike measured exactly this, three ways, on a macOS runner: **0 ms** for the same
+program with no Chromium linked in, **276 ms** for one that links it and never
+initialises it, and **1006 ms** to an initialised engine. Under B nib's own interface
+is a CEF webview, so that last number is the floor before anything is on screen -
+about a second added to every launch, on CI hardware. Section 9 has the caveats and
+they are real (a runner has no GPU), but the shape of the cost is now known rather
+than guessed, and **it is the thing to re-measure first in batch 1.** If a real
+machine still costs half a second, that is the moment to take B′ seriously.
 
 **Two ship gates, and nib does not ship a browser until both are shut.**
 
@@ -1134,7 +1140,38 @@ ignored by `eslint.config.js` and by `knip.json`, and built by no workflow that 
 on main or on a pull request. That is deliberate and worth keeping: the moment a
 300 MB download is on the path of an ordinary check, every contribution gets slower.
 
-_The numbers are in the report from the run; see the pull request's artefacts._
+### What it said
+
+`macos-latest`, an arm64 runner, CEF 152.0.6 / Chromium 152.0.7977.83, 2026-09-13.
+Every check green. The full report and the screenshots are the run's artefacts.
+
+| | |
+| --- | --- |
+| **browser processes for two tabs** | **1.** The tree was one browser, one GPU, two utilities and five renderers |
+| Chrome style | confirmed at `BrowserHost::runtime_style` |
+| `chrome://settings`, `extensions`, `history`, `downloads`, `version` | all five loaded. The screenshots are Chromium's real settings UI in a window with no Chrome toolbar and no Chrome tab strip |
+| an unpacked MV3 extension | loaded, injected, and its content script ran |
+| DevTools, print preview, find, zoom | all four |
+| what it ships | **319.3 MB** in 244 files. `Chromium Embedded Framework` alone is 218.8 MB; `resources.pak` 17.7; swiftshader 15.8; `icudtl.dat` 10.4; the locale packs the rest |
+| memory, two tabs, DevTools open | **892 MB** resident across the whole tree |
+| **launch, with no web tab** | **276 ms** to the binary's own first line, against **0 ms** for the same program with no Chromium linked in |
+| **CEF initialised** | **1006 ms** from process start |
+| first load finished | 2426 ms |
+
+**Read the launch row carefully, because it is the price of the decision.** 276 ms is
+what it costs merely to *load* the framework, before CEF is initialised at all; the
+engine is not usable until 1006 ms. Under B nib's own interface is a CEF webview, so
+nothing can be drawn before that - **a launch that is a second slower, for everybody,
+whether or not they ever open a web tab.** That is a great deal to pay in an editor
+whose philosophy has "fast" in it.
+
+Two things to hold against it before it decides anything. A CI runner is the worst
+hardware this will ever run on, with no GPU and a software rasteriser, so the figure
+is an upper bound rather than an estimate - Chrome itself cold-starts in a fraction
+of it on a real machine. And it is exactly what batch 1 exists to measure properly.
+**If a real machine still costs half a second, that is the moment to take B′
+seriously**, because half a second on every launch buys a feature most launches do
+not use, and section 2 has the shape of the alternative ready.
 
 ---
 
