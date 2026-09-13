@@ -206,6 +206,12 @@ the size of a request visible rather than surprising:
   requires a number; OpenAI-shaped providers are left to their own default.
 - Nothing is sent in the background. Every request in this document is one
   somebody pressed a button for.
+- Nothing is sent to a provider with no key on this device either. A hosted
+  provider without one can only answer 401, and the note is on the wire before it
+  does - so the request is refused here rather than there. The check is in
+  `complete()`, which is the one place a request is made, rather than only in the
+  pane that offers the press: a key removed leaves the provider chosen, with its
+  model still set.
 - A local model through an OpenAI-compatible provider costs electricity.
 
 If a provider refuses a request - a key that has expired, a model that has gone,

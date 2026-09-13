@@ -26,6 +26,7 @@ import {
   modelsIn,
   modelsUrl,
   type Provider,
+  reachable,
   troubleIn,
   usable,
 } from './providers'
@@ -54,6 +55,14 @@ export async function complete(ask: Ask): Promise<string> {
   if (!usable(provider)) throw new Error(t('That provider is not set up yet.'))
 
   const apiKey = await readKey(provider)
+  // No key, no request to somebody else's server - which is the same question the
+  // pane asks before it offers to list the models, asked here because this is where
+  // the note goes. A hosted provider with no key can only answer 401, and by the
+  // time it does the body has left: the prompt, and the whole note where the fence
+  // asked for it. A provider whose key was removed keeps its model, so it is still
+  // the chosen one; see store.svelte.ts.
+  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
+
   const streaming = !!ask.stream
 
   const response = await fetch(askUrl(provider), {
@@ -172,6 +181,9 @@ async function streamed(
  *  local server with no model loaded looks like. */
 export async function listModels(provider: Provider, signal?: AbortSignal): Promise<string[]> {
   const apiKey = await readKey(provider)
+  // Asked here as well as by the pane that offers the press: the rule is about the
+  // request rather than about the button.
+  if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
 
   const response = await fetch(modelsUrl(provider), {
     headers: headersFor(provider, apiKey),
