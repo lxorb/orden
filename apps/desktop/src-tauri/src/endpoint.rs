@@ -37,7 +37,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::paths::{cannot, made};
+use crate::paths::{cannot, config_dir, made};
 
 /// What the window hears a request on.
 const ASKED: &str = "nib://automation";
@@ -181,13 +181,10 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
     Ok(kept)
 }
 
-/// Where the file lives: the app's own config folder, which exists by the time
+/// Where the file lives: the app's own settings folder, which exists by the time
 /// this returns.
 fn endpoint_file(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_config_dir()
-        .map_err(|error| format!("could not find the config folder: {error}"))?;
+    let dir = config_dir(app)?;
 
     made(&dir)?;
     Ok(dir.join("automation.json"))

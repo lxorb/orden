@@ -5,9 +5,9 @@
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-use crate::paths::{cannot, made};
+use crate::paths::{self, cannot};
 
 /// Anything past this and the file is rolled over, so a loop cannot fill a disk.
 const MAX_BYTES: u64 = 1024 * 1024;
@@ -71,13 +71,7 @@ pub fn read_log(app: AppHandle) -> String {
 
 /// The log file, in a folder that exists by the time this returns.
 fn log_file(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_log_dir()
-        .map_err(|error| format!("could not find the log folder: {error}"))?;
-
-    made(&dir)?;
-    Ok(dir.join("nib.log"))
+    Ok(paths::log_dir(app)?.join("nib.log"))
 }
 
 /// A log line is one line, so a stack trace cannot pass itself off as several

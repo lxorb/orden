@@ -30,10 +30,10 @@ use std::fs;
 use std::io::Write as _;
 use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::made;
+use crate::paths::log_dir;
 
 /// The variable that turns this on. Any value but `0`, because somebody who wrote
 /// `NIB_TRACE_STARTUP=0` meant off.
@@ -135,13 +135,7 @@ pub fn write(app: &AppHandle) {
 
 /// Where the file is, in a folder that exists by the time this returns.
 fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
-    let dir = app
-        .path()
-        .app_log_dir()
-        .map_err(|error| format!("could not find the log folder: {error}"))?;
-
-    made(&dir)?;
-    Ok(dir.join(FILE))
+    Ok(log_dir(app)?.join(FILE))
 }
 
 /// The whole trace as it reads on the page: a line per step with the time it

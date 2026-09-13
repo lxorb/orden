@@ -210,6 +210,20 @@ pub fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| format!("could not find the settings folder: {error}"))
 }
 
+/// The app's own log folder, made if it is not there yet.
+///
+/// Here rather than in one of the two modules that writes into it, because both do:
+/// the log itself, and the launch trace that sits beside it.
+pub fn log_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|error| format!("could not find the log folder: {error}"))?;
+
+    made(&dir)?;
+    Ok(dir)
+}
+
 /// The same path with `.` and `..` folded away, so it is judged by where it
 /// points rather than by how it was spelled. Nothing is read from disk, and the
 /// separators come out as this platform writes them.
