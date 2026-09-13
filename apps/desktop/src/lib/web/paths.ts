@@ -59,6 +59,12 @@ export function isCanvas(path: string): boolean {
   return /\.canvas$/i.test(path)
 }
 
+/** And a page note is the same file under another name - JSON Canvas with pages
+ *  among its nodes - so it lives in the same store and is listed the same way. */
+export function isPages(path: string): boolean {
+  return /\.pages$/i.test(path)
+}
+
 /** The space a path belongs to: the first segment under the root. */
 export function spaceOf(path: string): string {
   const segment = normalise(path).split('/')[1]

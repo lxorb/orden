@@ -9,8 +9,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, in_spaces, inside, is_canvas, is_markdown, is_pdf, space_root, spaces_root, Seen,
-    MAX_DEPTH,
+    cannot, in_spaces, inside, is_canvas, is_markdown, is_pages, is_pdf, space_root, spaces_root,
+    Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -132,12 +132,16 @@ fn walk(
                     } else {
                         folder(&child, name)
                     });
-                } else if is_markdown(&child) || is_pdf(&child) || is_canvas(&child) {
-                    // The notes, the PDFs beside them and the canvases: the
-                    // three things a tab can hold. Everything else in a space
-                    // belongs to a note rather than standing on its own - a
-                    // picture, a PDF's own highlights - and a file list nobody
-                    // can act on is noise.
+                } else if is_markdown(&child)
+                    || is_pdf(&child)
+                    || is_canvas(&child)
+                    || is_pages(&child)
+                {
+                    // The notes, the PDFs beside them, the canvases and the
+                    // stacks of paper: the things a tab can hold. Everything
+                    // else in a space belongs to a note rather than standing on
+                    // its own - a picture, a PDF's own highlights - and a file
+                    // list nobody can act on is noise.
                     room(left)?;
                     children.push(listed(&child, name, false, entry.metadata().ok()));
                 }
@@ -303,6 +307,7 @@ mod tests {
         std::fs::create_dir_all(here.join("Reading")).expect("a folder");
         std::fs::write(here.join("Idea.md"), "").expect("a note");
         std::fs::write(here.join("Board.canvas"), "{}").expect("a canvas");
+        std::fs::write(here.join("Journal.pages"), "{}").expect("a page note");
         std::fs::write(here.join("paper.pdf"), "").expect("a pdf");
         std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("its highlights");
         std::fs::write(here.join("shot.png"), "").expect("a picture");
@@ -311,7 +316,13 @@ mod tests {
         let top = read(here, &options("name", false));
         assert_eq!(
             names(&top.children),
-            ["Reading", "Board.canvas", "Idea.md", "paper.pdf"]
+            [
+                "Reading",
+                "Board.canvas",
+                "Idea.md",
+                "Journal.pages",
+                "paper.pdf"
+            ]
         );
 
         let nested = &top.children[0];

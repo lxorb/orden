@@ -10,6 +10,7 @@ import {
   basename,
   isCanvas,
   isMarkdown,
+  isPages,
   isPdf,
   join,
   normalise,
@@ -47,10 +48,13 @@ const now = () => Date.now()
 const SCANNED_AT_ONCE = 128
 
 /** Whether a file is one the tree shows: a note, a PDF beside one, or a canvas.
- *  The same three kinds the desktop's `read_tree` lists, and for the same
- *  reason - they are the three things a tab can hold. */
+ *  The same kinds the desktop's `read_tree` lists, and for the same reason - they
+ *  are the things a tab can hold. A page note was left out of both lists, which
+ *  left one drawn in a tab and nowhere else: no row in the file list, nothing for
+ *  a search to read, and nothing for the mirror to send up, since the mirror walks
+ *  this tree. */
 function listed(path: string): boolean {
-  return isMarkdown(path) || isPdf(path) || isCanvas(path)
+  return isMarkdown(path) || isPdf(path) || isCanvas(path) || isPages(path)
 }
 
 /** Where a PDF's highlights are kept. The desktop's command derives this on the

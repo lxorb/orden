@@ -305,6 +305,20 @@ describe('the tree', () => {
     expect(tree.children.map((one) => one.name)).toEqual(['Work', 'a.md', 'b.md'])
   })
 
+  /** A page note is a file in a space like a canvas is, and the list of kinds the
+   *  tree shows left it out: a page note was drawn in a tab and in nothing else -
+   *  no row in the file list, nothing for a search to read, and nothing for the
+   *  mirror to send, since the mirror walks this tree. */
+  test('shows a page note, which is a file in the space like any other', async () => {
+    await write('/Notes/Journal.pages')
+    await write('/Notes/Board.canvas')
+    await write('/Notes/a.md')
+
+    const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
+
+    expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'Board.canvas', 'Journal.pages'])
+  })
+
   test('keeps an empty folder alive through its marker, and shows no marker', async () => {
     await webInvoke('create_folder', { path: '/Notes/Empty' })
 

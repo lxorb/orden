@@ -91,6 +91,21 @@ pub fn is_canvas(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("canvas"))
 }
 
+/// Whether a path names a page note: the stack of paper a pen is used on, kept
+/// in a `.pages` file.
+///
+/// The same file as a canvas under another name - JSON Canvas with pages among
+/// its nodes - so the same reasoning holds: it is text, `read_note` and
+/// `write_note` carry it, and the crate only has to agree that it is a file the
+/// window lists and opens. It did not, which left a page note drawn in a tab and
+/// in nothing else: no row in the file list, and nothing for the mirror to send
+/// up, since the mirror walks the tree this crate builds.
+pub fn is_pages(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
+}
+
 /// Where a PDF's highlights live: the PDF's own name with the suffix after it,
 /// so the two sit together in a folder and no note can ever collide with one.
 pub fn highlights_of(pdf: &Path) -> PathBuf {
@@ -593,7 +608,7 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
-        highlights_of, inside, is_canvas, is_markdown, is_pdf, link_to, move_highlights,
+        highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, link_to, move_highlights,
         space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
@@ -775,6 +790,17 @@ mod tests {
         assert!(!is_canvas(Path::new("a/Board.canvas.md")));
         assert!(!is_canvas(Path::new("a/Board")));
         assert!(!is_markdown(Path::new("a/Board.canvas")));
+    }
+
+    #[test]
+    fn names_a_page_note_by_its_extension() {
+        assert!(is_pages(Path::new("a/Journal.pages")));
+        assert!(is_pages(Path::new("a/Journal.PAGES")));
+        assert!(!is_pages(Path::new("a/Journal.pages.md")));
+        assert!(!is_pages(Path::new("a/Journal")));
+        // The two planes are told apart by their names, whatever is inside them.
+        assert!(!is_canvas(Path::new("a/Journal.pages")));
+        assert!(!is_markdown(Path::new("a/Journal.pages")));
     }
 
     #[test]
