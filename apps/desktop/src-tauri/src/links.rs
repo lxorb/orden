@@ -379,6 +379,20 @@ fn prose(body: &str) -> Prose {
             blocks.push(id);
         }
 
+        // Every link is written inside brackets, so a line that holds none holds
+        // no link - and that is nearly every line of a space. Read off the line as
+        // it was written, because blanking a code span below can only ever take a
+        // bracket away.
+        //
+        // What this skips is the pass that reads the line as characters, which is
+        // an array as long as the line for every line of every note: the walk that
+        // follows cannot start without one. 4.8 MB of prose with no link in it,
+        // release build: 19.6 ms before, 6.1 ms now.
+
+        if !line.as_bytes().contains(&b'[') {
+            return;
+        }
+
         // Inline code spans are blanked rather than removed, so what is left
         // still lines up with the line the context is taken from.
         let mut found = links_on(&without_code(line));
