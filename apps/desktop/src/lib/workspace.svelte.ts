@@ -12,7 +12,6 @@ import {
 import { blankPages } from '@nib/markdown/pages'
 import { freePath } from '@nib/markdown/paths'
 import { paperGone, paperMoved } from './pdf/papers'
-import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
@@ -59,6 +58,7 @@ import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-t
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
+import * as composing from './workspace/composing'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { undoLastFileAction } from './workspace/undoing'
@@ -2950,89 +2950,20 @@ class Workspace {
   }
 
   /** Appends this note into another, deletes it, and points every link that came
-   *  here at the note it went into. */
+   *  here at the note it went into; see workspace/composing. */
   async mergeInto(from: string, into: string) {
-    if (from === into) return
-
-    const [fromContent, intoContent] = await Promise.all([
-      invoke<string>('read_note', { path: from }).catch(() => null),
-      invoke<string>('read_note', { path: into }).catch(() => null),
-    ])
-    if (fromContent === null || intoContent === null) return
-
-    const joined = merged(intoContent, fromContent)
-
-    await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
-    await invoke('write_note', { path: into, content: joined })
-    links.noteSaved(into, joined)
-    this.reload(into, joined)
-
-    // Before the note goes, so the links that pointed at it can still be found.
-    await this.retarget(from, into)
-
-    await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
-    await invoke('delete_note', { path: from })
-    links.noteGone(from)
-
-    for (const tab of this.tabs.filter((one) => one.path === from)) this.close(tab.id)
-
-    this.undone.record({ kind: 'merge', from, fromContent, into, intoContent })
-    await this.loadTree()
-    await this.open(into)
+    await composing.mergeInto(this, from, into)
   }
 
   /** Everything from the caret on becomes a note of its own, with a link left in
    *  its place. */
   async splitAtCaret(at: number) {
-    const tab = this.active
-    if (!tab?.path) return
-    this.flush()
-
-    const carved = splitAt(tab.doc, at, UNTITLED)
-    if (!carved) return
-
-    await this.carve(tab.path, tab.doc, carved, 'split')
+    await composing.splitAtCaret(this, at)
   }
 
   /** The selection becomes a note of its own, with a link in its place. */
   async extractSelection(from: number, to: number) {
-    const tab = this.active
-    if (!tab?.path) return
-    this.flush()
-
-    const carved = extracted(tab.doc, from, to, UNTITLED)
-    if (!carved) return
-
-    await this.carve(tab.path, tab.doc, carved, 'extract')
-  }
-
-  /** What a split and an extraction both do: write the new note, write what is
-   *  left of this one, and remember enough to undo both. */
-  private async carve(
-    path: string,
-    before: string,
-    carved: { kept: string; taken: string; name: string },
-    kind: 'split' | 'extract',
-  ) {
-    const folder = folderOf(path)
-    const taken = new Set(this.notes.map((note) => note.path))
-
-    let name = `${carved.name}.md`
-    let counter = 2
-    while (taken.has(joinPath(folder, name))) name = `${carved.name} ${counter++}.md`
-    const created = joinPath(folder, name)
-
-    await invoke('write_note', { path: created, content: carved.taken })
-    links.noteSaved(created, carved.taken)
-
-    await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
-    await invoke('write_note', { path, content: carved.kept })
-    links.noteSaved(path, carved.kept)
-    this.reload(path, carved.kept)
-
-    this.undone.record({ kind, from: path, fromContent: before, created })
-    await this.loadTree()
-    this.persist()
+    await composing.extractSelection(this, from, to)
   }
 
   /** A note whose name is the moment it was made, so nothing ever collides with
