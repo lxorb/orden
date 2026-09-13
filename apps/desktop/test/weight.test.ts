@@ -155,8 +155,8 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  2,919,533 bytes over 366 files as this is written, measured on 2026-09-13, against
- *  1,290,951 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  2,924,437 bytes over 366 files as this is written, measured on 2026-09-13, against
+ *  1,294,581 bytes of built JavaScript in the chunks `index.html` preloads - source
  *  counts the comments, and this repository has a great many of them. Both ceilings
  *  are ten per cent over what was measured: close enough that a whole subsystem
  *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
