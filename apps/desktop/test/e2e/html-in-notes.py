@@ -3,9 +3,9 @@
 Raw HTML blocks and inline tags are part of nib's markdown, and the grammar that
 colours them used to be in front of the first paint: `@codemirror/lang-markdown`
 imports `@codemirror/lang-html` outright, which drags the CSS and JavaScript grammars
-in with it - a hundred and forty kilobytes for the sake of the notes that have a tag
-in them. It arrives with the first tag now, the way a fence's language does; see
-packages/editor/src/markdown/html.ts.
+in with it and the parser runtime under all three - a hundred and sixty-seven
+kilobytes for the sake of the notes that have a tag in them. It arrives with the first
+tag now, the way a fence's language does; see packages/lang-html.
 
 So this drive is the proof that nothing about the colouring changed. It photographs
 the three places HTML can appear in a note, twice over, and the two sets of PNGs are

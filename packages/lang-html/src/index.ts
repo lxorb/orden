@@ -15,9 +15,12 @@ import { Parser, type Input, type PartialParse, type TreeFragment } from '@lezer
  *
  *  Raw HTML blocks and inline tags are part of nib's markdown, so `markdown()` wants a
  *  grammar for them, and the one it reaches for brings the CSS and JavaScript grammars
- *  with it for `<style>` and `<script>`. Five packages and a hundred and forty
- *  kilobytes, evaluated before the window has drawn anything, for the notes that have a
- *  tag in them - fourteen milliseconds of the launch, measured in Chrome on the machine
+ *  with it for `<style>` and `<script>`, and the LR parser runtime under all three -
+ *  which nothing else in front of the first paint needs, markdown's own parser being
+ *  written by hand. Six packages and a hundred and sixty-seven kilobytes, evaluated
+ *  before the window has drawn anything, for the notes that have a tag in them: four
+ *  requests and 166,966 bytes, counted out of the browser's own resource timing, and
+ *  fourteen milliseconds to fetch warm, parse and run, measured in Chrome on the machine
  *  this was written on.
  *
  *  Nothing here parses HTML. `html()` below answers with a parser that skips the region
@@ -170,9 +173,9 @@ const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, i
  *  `html` above - and it is answered honestly all the same: nothing while the grammar
  *  is on its way, and whatever the grammar says once it is here.
  *
- *  It is not what fetches the grammar. A reader who has typed a `<` has not asked for
- *  a hundred and forty kilobytes, and the parse that finds a tag in the note is already
- *  asking. */
+ *  It is not what fetches the grammar. A reader who has typed a `<` has not asked for a
+ *  hundred and sixty-seven kilobytes, and the parse that finds a tag in the note is
+ *  already asking. */
 export function htmlCompletionSource(context: CompletionContext): CompletionResult | null {
   return here ? here.htmlCompletionSource(context) : null
 }
