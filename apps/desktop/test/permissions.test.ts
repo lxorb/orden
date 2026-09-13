@@ -153,7 +153,7 @@ describe('writing an export', () => {
    *  happened. The plugin writes in place, which truncates the file it is replacing
    *  the moment it opens it. */
   test('and the write is atomic, which is what the plugin could not give it', () => {
-    expect(read('../src-tauri/src/notes.rs')).toContain('write_atomically(&target, bytes)')
+    expect(read('../src-tauri/src/notes.rs')).toContain('write_atomically(target, bytes)')
     expect(read('../src-tauri/src/paths.rs')).toContain('fs::rename(&temp, target)')
   })
 
