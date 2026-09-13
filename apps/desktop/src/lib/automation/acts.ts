@@ -50,7 +50,7 @@ export async function openNote(args: Said): Promise<unknown> {
   // what the index already answers: `nib://open?path=Plan` finds `notes/Plan.md`.
   // Resolved first and judged after, so the index's answer is a path on the same
   // terms as one the caller wrote out; see `insidePath`.
-  const relative = insidePath(named(asked) ?? asked)
+  const relative = insidePath((await named(asked)) ?? asked)
   const path = insideSpace(space.root, relative)
 
   const heading = said(args, 'heading')
@@ -71,11 +71,26 @@ export async function openNote(args: Said): Promise<unknown> {
 
 /** The path the index holds for a bare note name, or null when the caller gave
  *  something that looks like a path already. Not a judged path: what it answers is
- *  judged by the caller, which is the only caller it has. */
-function named(asked: string): string | null {
+ *  judged by the caller, which is the only caller it has.
+ *
+ *  Through the resolver a `[[wikilink]]` goes through, which is what the table in
+ *  docs/automation.md says a link with a name in it does. It used to ask
+ *  `fileNamed`, which reads the list of files *beside* the notes - the pictures,
+ *  the PDFs, the recordings - and a note is never in that list, so every
+ *  `nib://open?path=Plan` written by hand answered "that link could not be
+ *  followed". A name carrying an extension the resolver knows, `paper.pdf`,
+ *  resolves as itself: the same rule the editor follows a wikilink by.
+ *
+ *  And after the scan has landed. A link is followed the moment the space is
+ *  restored, and the index is read off the launch's critical path on purpose, so a
+ *  link that *starts* the app arrived while the index was still empty and the name
+ *  resolved to nothing - while the same link a moment later worked. `scanned`
+ *  answers at once when nothing is in flight; see link-index.svelte.ts. */
+async function named(asked: string): Promise<string | null> {
   if (asked.includes('/') || asked.includes('\\')) return null
 
-  return links.fileNamed(MARKDOWN.test(asked) ? asked : `${asked}.md`)
+  await links.scanned()
+  return links.targetOf(null, { kind: 'wikilink', target: asked })
 }
 
 /** Makes a note, or adds to one that is already there.
