@@ -361,3 +361,90 @@ describe('what the app evaluates before it draws anything', () => {
     expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
   })
 })
+
+/** What the reading view fetches the first time somebody reads a note.
+ *
+ *  Not the first paint, so it is not in the graph above - but it is the same shape of
+ *  mistake one step later, and a reader feels it: the switch to the reading view is a
+ *  button press, and it waits for whatever the module behind it drags in.
+ *
+ *  What it used to drag in was the exporter. Two functions are wanted - the diagrams
+ *  drawn and the fence grammars fetched before a render that cannot wait, see
+ *  before-render.ts - and they lived in export.ts, which imports the print stylesheets
+ *  as JavaScript strings, the picture inliner, the save dialog, the maths fonts, the
+ *  page setup and the Pandoc format list. Half a megabyte of built JavaScript, a
+ *  hundred and forty kilobytes of it stylesheets, for a surface that has a stylesheet
+ *  of its own and never saves a file.
+ *
+ *  The edge is read off each surface's own source rather than named here, so this is
+ *  about which module that surface reaches and not about what it is called. */
+describe('what reading a note fetches', () => {
+  const READING = fileURLToPath(new URL('../src/lib/reading/render.ts', import.meta.url))
+  const SLIDES = fileURLToPath(new URL('../src/lib/slides/render.ts', import.meta.url))
+  const EXPORTER = fileURLToPath(new URL('../src/lib/export.ts', import.meta.url))
+
+  /** The module a surface waits for before it renders, named by its own source. */
+  function waitedFor(surface: string): string {
+    const source = readFileSync(surface, 'utf8')
+    const found = /prepareFences[^}]*\}\s*=\s*await import\('([^']+)'\)/.exec(source)
+    expect(found, 'the surface no longer awaits prepareFences').not.toBeNull()
+
+    const file = relativeFile(surface, found?.[1] ?? '')
+    expect(file, `nothing at ${found?.[1]}`).not.toBeNull()
+
+    return file ?? ''
+  }
+
+  /** What a graph costs that the app has not already read.
+   *
+   *  The marginal weight, not the whole graph: both of these reach `@nib/editor` for
+   *  the two lists of languages the renderer draws rather than colours, and the editor
+   *  is on screen before either surface is asked for, so the bundler has it in a chunk
+   *  the page already has. What a reader waits for is the part that is new. */
+  const already = new Set(graph.files)
+
+  function newBytes(files: readonly string[]): number {
+    return files
+      .filter((one) => !already.has(one))
+      .reduce((sum, one) => sum + statSync(one).size, 0)
+  }
+
+  /** The exporter's own weight, which is what these surfaces used to pay. */
+  const exporter = newBytes(eagerGraph(EXPORTER).files)
+
+  for (const [what, surface] of [
+    ['the reading view', READING],
+    ['the slides', SLIDES],
+  ] as const) {
+    test(`${what} does not fetch the exporter to render a note`, () => {
+      const ahead = eagerGraph(waitedFor(surface))
+      const reached = ahead.files.map((one) => one.replace(/\\/g, '/'))
+
+      // The stylesheets are the largest single thing in it and the plainest to name:
+      // an export carries its own CSS because it lands in a file somebody else opens,
+      // and a surface on screen is already wearing the app's.
+      expect([...ahead.packages]).not.toContain('@nib/themes/raw')
+
+      for (const heavy of [
+        '/export.ts',
+        '/export/save.ts',
+        '/export/pictures.ts',
+        '/export/document.ts',
+        '/export-formats.ts',
+        '/math-fonts.ts',
+        '/page-setup.ts',
+      ]) {
+        expect(
+          reached.filter((one) => one.endsWith(heavy)),
+          heavy,
+        ).toEqual([])
+      }
+
+      // And a size, because a name can be moved and the weight is the point: less than
+      // half of what the exporter brings that the app has not already read, which is
+      // the difference between the two functions this needs and the module they used to
+      // live in.
+      expect(newBytes(ahead.files)).toBeLessThan(exporter / 2)
+    })
+  }
+})

@@ -68,10 +68,12 @@ const MEASURE = 'nib:reading'
  *  a note from a shared space, a room, a guest or a paste is not. The rule is
  *  trust.ts, and the caller has already asked it. */
 export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean): Promise<string> {
-  // The exporter carries the diagram drawers and the syntax parsers, which are
-  // most of what the app can load; asked for here rather than at startup, since
-  // a note is read after the app is open.
-  const { prepareEmbeds, prepareFences } = await import('../export')
+  // The diagram drawers and the syntax parsers, which are most of what the app can
+  // load; asked for here rather than at startup, since a note is read after the app
+  // is open. Not through the exporter, which used to be the way to them and brought
+  // its own half megabyte along - the print stylesheets among it, for a surface with
+  // a stylesheet of its own. See before-render.ts.
+  const { prepareEmbeds, prepareFences } = await import('../before-render')
 
   const [fence, embed] = await Promise.all([
     // A query fence is answered here, which is the one surface besides the editor

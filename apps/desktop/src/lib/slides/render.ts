@@ -49,10 +49,11 @@ export async function deckHtml(
 ): Promise<StageSlide[]> {
   const slides = deckOf(note.text)
 
-  // The exporter carries the diagram drawers and the syntax parsers, which are
-  // most of what the app can load; asked for here rather than at startup, since
-  // a deck is presented after the app is open.
-  const { prepareEmbeds, prepareFences } = await import('../export')
+  // The diagram drawers and the syntax parsers, which are most of what the app can
+  // load; asked for here rather than at startup, since a deck is presented after the
+  // app is open. Not through the exporter: a deck is not an export. See
+  // before-render.ts.
+  const { prepareEmbeds, prepareFences } = await import('../before-render')
   const { links } = await import('../link-index.svelte')
 
   const [fence, embed] = await Promise.all([
