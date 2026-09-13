@@ -1,0 +1,136 @@
+import { describe, expect, test } from 'vitest'
+import { closing, moving, openOn, panelsOn, showing, sideOf, type Sides } from './panels'
+
+/** Which side each panel sits on, as arithmetic.
+ *
+ *  The workspace's own tests take these through the store; see 'the two sides of
+ *  the window' in workspace.test.ts. What is here is the rules themselves, which is
+ *  where the awkward cases live: a panel moved while it was open, the last panel
+ *  leaving the right side, and a session written by a build that had only one. */
+
+const EVERY = ['tree', 'outline', 'search', 'links'] as const
+
+/** Nothing open and nothing moved over, which is where every window starts. */
+function fresh(): Sides {
+  return { panel: null, rightPanel: null, right: [] }
+}
+
+describe('which side a panel is on', () => {
+  test('is the left unless it was moved', () => {
+    expect(sideOf([], 'tree')).toBe('left')
+    expect(sideOf(['outline'], 'tree')).toBe('left')
+    expect(sideOf(['outline'], 'outline')).toBe('right')
+  })
+
+  test('and a session with no right side at all reads as all on the left', () => {
+    // What a session written by a build that had one side looks like.
+    for (const panel of EVERY) expect(sideOf([], panel)).toBe('left')
+  })
+})
+
+describe('which panels a side holds', () => {
+  test('the left keeps the app’s own order, less whatever moved over', () => {
+    expect(panelsOn(['search'], 'left', EVERY)).toEqual(['tree', 'outline', 'links'])
+  })
+
+  test('the right keeps the order they were moved over in', () => {
+    expect(panelsOn(['search', 'outline'], 'right', EVERY)).toEqual(['search', 'outline'])
+  })
+
+  test('and a panel this build has never heard of is on neither', () => {
+    expect(panelsOn(['ghost' as never], 'right', EVERY)).toEqual([])
+    expect(panelsOn(['ghost' as never], 'left', EVERY)).toEqual(EVERY)
+  })
+})
+
+describe('showing a panel', () => {
+  test('opens it on its own side', () => {
+    expect(showing(fresh(), 'tree')).toEqual({ panel: 'tree', rightPanel: null, right: [] })
+
+    const moved: Sides = { panel: 'tree', rightPanel: null, right: ['outline'] }
+    expect(showing(moved, 'outline')).toEqual({
+      panel: 'tree',
+      rightPanel: 'outline',
+      right: ['outline'],
+    })
+  })
+
+  test('and shuts it where it is already the one showing', () => {
+    const open: Sides = { panel: 'tree', rightPanel: null, right: [] }
+    expect(showing(open, 'tree').panel).toBeNull()
+  })
+
+  test('and leaves the other side alone either way', () => {
+    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
+    expect(showing(both, 'search')).toEqual({ panel: 'tree', rightPanel: null, right: ['search'] })
+    expect(showing(both, 'tree')).toEqual({ panel: null, rightPanel: 'search', right: ['search'] })
+  })
+})
+
+describe('shutting a side', () => {
+  test('closes whichever panel is in it', () => {
+    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
+    expect(closing(both, 'left')).toEqual({ panel: null, rightPanel: 'search', right: ['search'] })
+    expect(closing(both, 'right')).toEqual({ panel: 'tree', rightPanel: null, right: ['search'] })
+  })
+
+  test('and leaves what has been moved over where it is', () => {
+    const both: Sides = { panel: null, rightPanel: 'search', right: ['search'] }
+    expect(closing(both, 'right').right).toEqual(['search'])
+  })
+})
+
+describe('moving a panel to the other side', () => {
+  test('takes its open state with it', () => {
+    const open: Sides = { panel: 'outline', rightPanel: null, right: [] }
+    expect(moving(open, 'outline', 'right')).toEqual({
+      panel: null,
+      rightPanel: 'outline',
+      right: ['outline'],
+    })
+  })
+
+  test('and a panel that was not being read arrives shut', () => {
+    const other: Sides = { panel: 'tree', rightPanel: null, right: [] }
+    expect(moving(other, 'outline', 'right')).toEqual({
+      panel: 'tree',
+      rightPanel: null,
+      right: ['outline'],
+    })
+  })
+
+  test('and back again the same way', () => {
+    const over: Sides = { panel: null, rightPanel: 'outline', right: ['outline'] }
+    expect(moving(over, 'outline', 'left')).toEqual({
+      panel: 'outline',
+      rightPanel: null,
+      right: [],
+    })
+  })
+
+  test('and the last one leaving means a right side with nothing to draw', () => {
+    const two: Sides = { panel: null, rightPanel: 'search', right: ['outline', 'search'] }
+    const after = moving(two, 'outline', 'left')
+    expect(after.right).toEqual(['search'])
+
+    const one = moving(after, 'search', 'left')
+    expect(one.right).toEqual([])
+    expect(one.rightPanel).toBeNull()
+  })
+
+  test('and moving it where it already is changes nothing at all', () => {
+    const over: Sides = { panel: null, rightPanel: 'outline', right: ['outline'] }
+    expect(moving(over, 'outline', 'right')).toBe(over)
+    expect(moving(fresh(), 'tree', 'left')).toEqual(fresh())
+  })
+})
+
+describe('what each side shows', () => {
+  test('is the panel open on it, or none', () => {
+    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
+    expect(openOn(both, 'left')).toBe('tree')
+    expect(openOn(both, 'right')).toBe('search')
+    expect(openOn(fresh(), 'left')).toBeNull()
+    expect(openOn(fresh(), 'right')).toBeNull()
+  })
+})

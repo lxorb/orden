@@ -58,6 +58,8 @@ import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import * as composing from './workspace/composing'
+import * as panels from './workspace/panels'
+import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
@@ -2830,74 +2832,50 @@ class Workspace {
     await this.loadTree()
   }
 
+  /** The three panel fields together, for the rules next door to work out the
+   *  next set of; see workspace/panels. */
+  private get sides(): Sides {
+    return { panel: this.panel, rightPanel: this.rightPanel, right: this.right }
+  }
+
+  private set sides(next: Sides) {
+    this.panel = next.panel
+    this.rightPanel = next.rightPanel
+    this.right = next.right
+    this.persist()
+  }
+
   /** Which side a panel lives on. Left unless it was moved. */
   sideOf(panel: Panel): PanelSide {
-    return this.right.includes(panel) ? 'right' : 'left'
+    return panels.sideOf(this.right, panel)
   }
 
   /** The panel open on one side, which is what that side's tab strip marks and
    *  what its body draws. */
   openOn(side: PanelSide): Panel | null {
-    return side === 'right' ? this.rightPanel : this.panel
+    return panels.openOn(this.sides, side)
   }
 
-  /** Which tabs one side holds, in the order the strip shows them: the right
-   *  side's in the order they were moved over, the left side's in the app's own
-   *  order - which is the order they have always been in. */
+  /** Which tabs one side holds, in the order the strip shows them. */
   panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
-    return side === 'right'
-      ? this.right.filter((one) => every.includes(one))
-      : every.filter((one) => !this.right.includes(one))
+    return panels.panelsOn(this.right, side, every)
   }
 
-  /** Shows a panel, or shuts it where it is already the one showing. On its own
-   *  side, so a panel moved to the right opens over there and the side it left
-   *  is not disturbed. */
+  /** Shows a panel, or shuts it where it is already the one showing. */
   showPanel(next: Panel) {
-    const side = this.sideOf(next)
-    if (side === 'right') this.rightPanel = this.rightPanel === next ? null : next
-    else this.panel = this.panel === next ? null : next
-
-    this.persist()
+    this.sides = panels.showing(this.sides, next)
   }
 
-  /** Shuts a side whichever panel is in it. Its own method because every caller
-   *  had to name the panel it was closing, and `showPanel(panel)` only closes it
-   *  by happening to be the one already open. */
+  /** Shuts a side whichever panel is in it. */
   closePanel(side: PanelSide = 'left') {
     if (!this.openOn(side)) return
 
-    if (side === 'right') this.rightPanel = null
-    else this.panel = null
-
-    this.persist()
+    this.sides = panels.closing(this.sides, side)
   }
 
-  /** Moves a panel to the other side, and takes its open state with it: a panel
-   *  somebody moved while reading it is a panel they want to go on reading, over
-   *  there. The side it left keeps whatever else was open on it.
-   *
-   *  A side with nothing on it is not drawn at all, which is what the last panel
-   *  leaving the right side means. */
+  /** Moves a panel to the other side, and takes its open state with it. */
   movePanel(panel: Panel, side: PanelSide) {
-    if (this.sideOf(panel) === side) return
-
-    const showing = this.openOn(this.sideOf(panel)) === panel
-    if (side === 'right') {
-      this.right = [...this.right, panel]
-      if (showing) {
-        this.panel = null
-        this.rightPanel = panel
-      }
-    } else {
-      this.right = this.right.filter((one) => one !== panel)
-      if (showing) {
-        this.rightPanel = null
-        this.panel = panel
-      }
-    }
-
-    this.persist()
+    this.sides = panels.moving(this.sides, panel, side)
   }
 
   toggleSidebar() {

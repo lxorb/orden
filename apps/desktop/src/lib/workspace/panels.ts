@@ -1,0 +1,90 @@
+/** Which side of the window each panel sits on, and which one each side shows.
+ *
+ *  Three things say all of it: the panel open on the left, the panel open on the
+ *  right, and the list of panels that have been moved over to the right. A panel is
+ *  on the left unless it is in that list, which is why a build that has never heard
+ *  of the right side reads its own session back correctly.
+ *
+ *  Pure. Every one of these answers what the three would be after a gesture rather
+ *  than doing it, which is what makes the rules - a panel moved while it was being
+ *  read stays open over there, a side with nothing on it is not drawn - readable as
+ *  rules and testable as arithmetic. The store writes the answer down; see
+ *  `showPanel` and its neighbours in workspace.svelte.ts. */
+
+import type { Panel, PanelSide } from '../workspace.svelte'
+
+/** The three, together: what is open on each side and what has been moved over. */
+export interface Sides {
+  panel: Panel | null
+  rightPanel: Panel | null
+  right: Panel[]
+}
+
+/** Which side a panel lives on. Left unless it was moved. */
+export function sideOf(right: readonly Panel[], panel: Panel): PanelSide {
+  return right.includes(panel) ? 'right' : 'left'
+}
+
+/** The panel open on one side, which is what that side's tab strip marks and
+ *  what its body draws. */
+export function openOn(sides: Sides, side: PanelSide): Panel | null {
+  return side === 'right' ? sides.rightPanel : sides.panel
+}
+
+/** Which tabs one side holds, in the order the strip shows them: the right
+ *  side's in the order they were moved over, the left side's in the app's own
+ *  order - which is the order they have always been in. */
+export function panelsOn(
+  right: readonly Panel[],
+  side: PanelSide,
+  every: readonly Panel[],
+): Panel[] {
+  return side === 'right'
+    ? right.filter((one) => every.includes(one))
+    : every.filter((one) => !right.includes(one))
+}
+
+/** Showing a panel, or shutting it where it is already the one showing. On its own
+ *  side, so a panel moved to the right opens over there and the side it left is not
+ *  disturbed. */
+export function showing(sides: Sides, next: Panel): Sides {
+  if (sideOf(sides.right, next) === 'right') {
+    return { ...sides, rightPanel: sides.rightPanel === next ? null : next }
+  }
+
+  return { ...sides, panel: sides.panel === next ? null : next }
+}
+
+/** Shutting a side, whichever panel is in it. Its own answer because every caller
+ *  had to name the panel it was closing, and `showing` only closes one by
+ *  happening to be handed the one already open. */
+export function closing(sides: Sides, side: PanelSide): Sides {
+  return side === 'right' ? { ...sides, rightPanel: null } : { ...sides, panel: null }
+}
+
+/** Moving a panel to the other side, taking its open state with it: a panel
+ *  somebody moved while reading it is a panel they want to go on reading, over
+ *  there. The side it left keeps whatever else was open on it.
+ *
+ *  A side with nothing on it is not drawn at all, which is what the last panel
+ *  leaving the right side means. */
+export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
+  const was = sideOf(sides.right, panel)
+  if (was === side) return sides
+
+  const open = openOn(sides, was) === panel
+
+  if (side === 'right') {
+    return {
+      right: [...sides.right, panel],
+      panel: open ? null : sides.panel,
+      rightPanel: open ? panel : sides.rightPanel,
+    }
+  }
+
+  return {
+    right: sides.right.filter((one) => one !== panel),
+    panel: open ? panel : sides.panel,
+    rightPanel: open ? null : sides.rightPanel,
+  }
+}
