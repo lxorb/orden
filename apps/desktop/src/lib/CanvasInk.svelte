@@ -31,7 +31,14 @@
   import type { Camera } from './camera'
   import type { InkStroke } from './canvas/format'
   import { type InkMode, inkLayer, wantedInkMode } from './canvas/backing'
-  import { type Palette, paintInk, paintLive, type View } from './canvas/paint'
+  import {
+    GATHERED_A_FRAME,
+    inkPending,
+    type Palette,
+    paintInk,
+    paintLive,
+    type View,
+  } from './canvas/paint'
 
   const {
     ink,
@@ -135,9 +142,45 @@
       // The layer is the view plus a margin all round, and its middle is the
       // view's middle, so the transform above works from the same point.
       const view: View = { camera, width: wide, height: tall, ratio }
-      paintInk(context, ink, view, palette, picked)
+      paintInk(context, ink, view, palette, picked, GATHERED_A_FRAME)
       painted = { ...camera }
+
+      // A plane too big to gather in one frame is carried on next frame, so the
+      // cards are on screen for the first of them and the ink fills in behind.
+      // Everything else on the surface - the pen, a pan, a card picked up - works
+      // while this is going on, because each of these frames is a short one.
+      if (inkPending(ink)) {
+        stillAt = moves
+        filling ||= requestAnimationFrame(fill)
+      }
     })
+  }
+
+  /** The frame the rest of the ink is waiting on, or nought, and what `moves` read
+   *  when it was asked for. */
+  let filling = 0
+  let stillAt = 0
+
+  /** The next slice of a plane that is still arriving.
+   *
+   *  Not while the view is moving. A pan is a transform over the pixels already
+   *  there and costs nothing; gathering on the same frames put a slice of the plane
+   *  into every one of them and took the worst frame of a drag from eighteen
+   *  milliseconds to thirty-six. So the hand is asked rather than the clock: `moves`
+   *  is what the camera effect counts, and a fill whose turn comes up while it is
+   *  still climbing waits for the next frame instead. The raster `settle` runs when
+   *  the hand stops carries the gather on from where this left it, so nothing is
+   *  lost by waiting - and somebody dragging the plane about is not looking at the
+   *  ink they have not reached yet. */
+  function fill() {
+    filling = 0
+    if (moves !== stillAt) {
+      stillAt = moves
+      filling = requestAnimationFrame(fill)
+      return
+    }
+
+    rasterise()
   }
 
   /** How many times the view has moved, and whether a frame is being waited on.
@@ -213,7 +256,10 @@
     settle()
   })
 
-  $effect(() => () => cancelAnimationFrame(looking))
+  $effect(() => () => {
+    cancelAnimationFrame(looking)
+    cancelAnimationFrame(filling)
+  })
 
   /** Whether the upper layer has anything on it. An empty one is left alone
    *  rather than cleared: clearing it is a whole texture handed to the compositor

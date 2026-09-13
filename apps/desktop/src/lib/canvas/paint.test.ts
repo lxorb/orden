@@ -60,7 +60,7 @@ beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
 })
 
-const { paintInk, strokesBatched } = await import('./paint')
+const { GATHERED_A_FRAME, inkPending, paintInk, strokesBatched } = await import('./paint')
 
 /** A plane of strokes laid out in a grid, each a short line, all in one ink - so
  *  they are one batch and the count is about gathering rather than about how many
@@ -211,5 +211,94 @@ describe('repainting the ink under the camera', () => {
     const again = paintInk(kept.ctx, strokes, view(1300, 1000), {})
 
     expect(again).toBeGreaterThanOrEqual(drawn)
+  })
+})
+
+/** What the first frame of a plane too big to gather in one costs.
+ *
+ *  A canvas opened for the first time frames itself to fit what is on it, so every
+ *  stroke there is meets the view and the gather that used to happen on the mount
+ *  was the whole plane: ten thousand outlines in one task, a second of it, before a
+ *  single card was on screen. The cards are what somebody opening a canvas is
+ *  waiting for, and the ink can arrive behind them.
+ *
+ *  Counted rather than timed, for the reason the counts above are: the count is what
+ *  the code did and it is the same number on a busy machine. A frame is held to its
+ *  budget, the frames after it carry on from where it stopped, and the plane ends up
+ *  with every stroke in it - which is the three things that have to be true at once,
+ *  and the three assertions below. */
+describe('the first frame of a plane bigger than one frame', () => {
+  test('gathers its budget and no more, and says there is more to come', () => {
+    const strokes = plane(4_000, 4)
+    const { ctx } = context()
+
+    const before = strokesBatched()
+    // The whole plane in view, which is what framing a canvas to fit does.
+    paintInk(ctx, strokes, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
+    const first = strokesBatched() - before
+
+    expect(first).toBe(GATHERED_A_FRAME)
+    expect(inkPending(strokes)).toBe(true)
+  })
+
+  test('carries on where it stopped, and gathers exactly what one frame would', () => {
+    // Two planes of the same shape, so each has a gather of its own to compare.
+    const budgeted = plane(4_000, 4)
+    const whole = plane(4_000, 4)
+
+    const atOnce = strokesBatched()
+    paintInk(context().ctx, whole, view(0, 0, 0.02), {})
+    const once = strokesBatched() - atOnce
+
+    const { ctx } = context()
+    const before = strokesBatched()
+    let frames = 0
+    do {
+      paintInk(ctx, budgeted, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
+      frames++
+    } while (inkPending(budgeted) && frames < 40)
+
+    // The same strokes, gathered exactly once between them: no frame went back over
+    // what an earlier one had done, which is what the cursor is for, and none was
+    // left out, which is what would show as ink missing off the plane.
+    expect(strokesBatched() - before).toBe(once)
+    expect(inkPending(budgeted)).toBe(false)
+    expect(frames).toBeGreaterThan(1)
+  })
+
+  test('gathers a plane that fits in one frame in one frame', () => {
+    // Fewer strokes near the view than a frame's budget, which is the ordinary
+    // plane: this arrives whole on the frame it was asked for and never comes back.
+    const strokes = plane(200)
+    const { ctx } = context()
+
+    const before = strokesBatched()
+    paintInk(ctx, strokes, view(1000, 1000), {}, undefined, GATHERED_A_FRAME)
+
+    expect(strokesBatched() - before).toBeLessThan(GATHERED_A_FRAME)
+    expect(inkPending(strokes)).toBe(false)
+  })
+
+  test('takes a stroke drawn while the rest is still arriving', () => {
+    const strokes = plane(4_000, 4)
+    const { ctx } = context()
+
+    paintInk(ctx, strokes, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
+    expect(inkPending(strokes)).toBe(true)
+
+    // The pen, on the frame after the first: the plane is the same strokes and one
+    // more on the end, and what has been gathered stands. Counting from the end of
+    // the old list rather than from the cursor would have left the middle out.
+    const drawn = plane(1)[0]
+    if (!drawn) throw new Error('no stroke')
+    const grown = [...strokes, { ...drawn, id: 'drawn' }]
+
+    let frames = 0
+    do {
+      paintInk(ctx, grown, view(0, 0, 0.02), {}, undefined, GATHERED_A_FRAME)
+      frames++
+    } while (inkPending(grown) && frames < 40)
+
+    expect(inkPending(grown)).toBe(false)
   })
 })

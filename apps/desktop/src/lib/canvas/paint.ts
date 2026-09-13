@@ -190,6 +190,10 @@ interface Gathered {
   covers: Box
   batches: Map<string, Batch>
   drawn: number
+  /** How far down `strokes` the gather has got. Short of the end means there is
+   *  more of this plane to put into the batches, which the next frame does; see
+   *  `inkPending`. */
+  at: number
 }
 
 /** The batches gathered for a plane, and the part of it they cover.
@@ -223,6 +227,34 @@ export function strokesBatched(): number {
   return batched
 }
 
+/** How many strokes one frame puts into the batches before it leaves the rest for
+ *  the next one.
+ *
+ *  Working out a stroke's outline is what a gather costs, and on the machine this
+ *  was measured on a plane of ten thousand took a second of it - in one task, before
+ *  the first card was on screen, because a canvas opened for the first time frames
+ *  itself to fit and every stroke on it is then in view.
+ *
+ *  A stroke is about a sixth of a millisecond of that, so this is a slice of forty
+ *  milliseconds at the worst and a good deal less for the short strokes most planes
+ *  are made of - short enough that the pen, a pan and a card picked up all answer
+ *  while the rest of the plane is still arriving, and long enough that ten thousand
+ *  strokes are in within a second of the cards. A count rather than a deadline
+ *  because what this is worth is asserted by counting it; see paint.test.ts.
+ *
+ *  Ordinary planes are gathered in one frame and never notice this. */
+export const GATHERED_A_FRAME = 256
+
+/** Whether this plane has strokes not yet in the batches, which is a repaint owed.
+ *
+ *  The surface asks after every raster and comes back next frame while it is true;
+ *  see `rasterise` in CanvasInk.svelte. Answered off the same weakly held gather the
+ *  paint keeps, so a plane nobody is looking at is nobody's. */
+export function inkPending(strokes: readonly InkStroke[]): boolean {
+  const held = gathered.get(strokes)
+  return held !== undefined && held.at < held.strokes.length
+}
+
 /** How much of the plane either side of the view is gathered, as a share of the
  *  view's own size. One viewport of margin all round, which is the pan a hand
  *  makes in a second or so: far enough that a drag is one gather rather than one
@@ -230,17 +262,28 @@ export function strokesBatched(): number {
  *  looking at rather than all of it. */
 const SPARE = 1
 
-/** Some of a list of strokes into the batches, from `at` onwards. Answers how
- *  many went in. */
+/** Some of a list of strokes into the batches, from `at` onwards, and at most
+ *  `budget` of them. Answers how many went in and how far it got.
+ *
+ *  The budget is what keeps the first paint of a plane that is all in view inside a
+ *  frame. Working out a stroke's outline is most of what a repaint costs, and a
+ *  canvas opened for the first time frames itself to fit everything on it - so every
+ *  stroke there is meets the view, and a plane of ten thousand was one task of a
+ *  second before a single card was on screen. What is left over is gathered on the
+ *  frames after, so the plane arrives at once and the ink fills in behind it. */
 function gather(
   batches: Map<string, Batch>,
   strokes: readonly InkStroke[],
   covers: Box,
   at: number,
-): number {
+  budget: number,
+): { drawn: number; at: number } {
   let drawn = 0
+  let one = at
 
-  for (let one = at; one < strokes.length; one++) {
+  for (; one < strokes.length; one++) {
+    if (drawn >= budget) break
+
     const stroke = strokes[one]
     if (!stroke || !meets(strokeBox(stroke), covers)) continue
 
@@ -263,7 +306,7 @@ ${inkOpacity(stroke)}`
   }
 
   batched += drawn
-  return drawn
+  return { drawn, at: one }
 }
 
 /** Whether `now` is `was` with something added on the end - the same strokes, by
@@ -310,6 +353,7 @@ export function paintInk(
   view: View,
   palette: Palette,
   picked?: ReadonlySet<string>,
+  budget = Infinity,
 ): number {
   wipe(ctx, view)
   place(ctx, view)
@@ -327,10 +371,23 @@ export function paintInk(
     const grew = was && grewFrom(was, strokes) ? near(gathered.get(was)) : null
 
     if (grew) {
-      grew.drawn += gather(grew.batches, strokes, grew.covers, grew.strokes.length)
+      // From where the gather got to rather than from the end of the old list, so a
+      // stroke drawn while the rest of the plane is still arriving does not leave
+      // the middle of it out. The two are the same number once the plane is in.
+      const more = gather(grew.batches, strokes, grew.covers, grew.at, budget)
+      grew.drawn += more.drawn
+      grew.at = more.at
       grew.strokes = strokes
       held = grew
     }
+  }
+
+  // A plane whose gather stopped short of the end, carried on: this is the frame
+  // after the one that showed the cards.
+  if (held && held.at < held.strokes.length) {
+    const more = gather(held.batches, held.strokes, held.covers, held.at, budget)
+    held.drawn += more.drawn
+    held.at = more.at
   }
 
   if (!held) {
@@ -338,7 +395,8 @@ export function paintInk(
     // was gathered rather than leaving it on the next frame.
     const covers = grown(box, SPARE * Math.max(box.width, box.height))
     const batches = new Map<string, Batch>()
-    held = { strokes, covers, batches, drawn: gather(batches, strokes, covers, 0) }
+    const first = gather(batches, strokes, covers, 0, budget)
+    held = { strokes, covers, batches, drawn: first.drawn, at: first.at }
   }
 
   gathered.set(strokes, held)
