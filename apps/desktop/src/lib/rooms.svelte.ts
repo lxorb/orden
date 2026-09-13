@@ -37,6 +37,9 @@ interface Open {
   /** The account's hash of this file as of the last sync, or null for one it has
    *  never handed over. */
   hash: string | null
+  /** And the version the account holds, for the row in the sync pane when the two
+   *  copies disagree. Zero for a file with no copy here to disagree with. */
+  version: number
 }
 
 /** One file in a room: the room, which file the room is about - so a document that
@@ -49,9 +52,14 @@ interface Open {
  *  which is a question only code holding the class can ask - and the classes arrive
  *  when the first room is joined now. The kind was already here and answers it
  *  exactly; see `join`. */
-type Joined = { noteId: string; note: NoteDoc } & (
-  { kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom }
-)
+type Joined = {
+  noteId: string
+  note: NoteDoc
+  /** The hash the room was joined against, so a file whose copy on the account has
+   *  moved since - a pass settled a disagreement about it, say - is joined again
+   *  rather than left in a room that is not carrying it; see `follow`. */
+  hash: string | null
+} & ({ kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom })
 
 /** The two kinds of room, once they are here.
  *
@@ -125,7 +133,8 @@ class Rooms {
       if (
         still?.noteId === joined.noteId &&
         roomKind(still.note.path) === joined.kind &&
-        this.ready(still)
+        this.ready(still) &&
+        !this.answered(joined, still)
       ) {
         continue
       }
@@ -229,6 +238,22 @@ class Rooms {
     return roomKind(open.note.path) === 'words' || this.planes.has(open.key)
   }
 
+  /** Whether a room that was waiting on a reader may be joined again.
+   *
+   *  A note the room and this device disagreed about is out of its room until somebody
+   *  answers, and the file sync carries it meanwhile; see rooms/apart.ts. Nothing in a
+   *  room can hear the answer - it is given in the sync pane and it touches files - so
+   *  what says so is the account's copy of this file moving on, which is what settling
+   *  it looks like from out here. Without this the note would stay out of its room
+   *  until its tab was closed.
+   *
+   *  Only for a room that is waiting, so nothing else is ever rejoined for a hash: a
+   *  pass lands whenever it lands, and a room in the middle of its own round trip is
+   *  not something to throw away and start again. */
+  private answered(joined: Joined, still: Open): boolean {
+    return joined.kind === 'words' && joined.room.waiting && still.hash !== joined.hash
+  }
+
   /** The room for this file was thrown away by the service and another will be built
    *  out of the file; see `REBUILT` in rooms/door.ts. So this one is let go and the
    *  pairing worked out again, which joins a room with a document of its own. */
@@ -290,6 +315,7 @@ class Rooms {
         room: new engine.PlaneRoom({ ...shape, surface }),
         noteId: open.noteId,
         note: open.note,
+        hash: open.hash,
         kind,
       })
       return
@@ -303,9 +329,36 @@ class Rooms {
       note: open.note.live,
       hash: open.hash,
       digest: sha256,
+      // The one thing a room cannot settle: this device and the room have each
+      // written since the words they shared. What happens then is the reader's
+      // conflict rule, which is a store's to know and not a room's; see
+      // rooms/apart.ts.
+      //
+      // Both arrive when it comes up rather than with this module. It comes up for
+      // one note in a thousand, the rule is a setting and the copy is a file write,
+      // and nothing about joining a room should pull either in - this store is the
+      // one every launch with a note open evaluates.
+      apart: async (theirs) => {
+        const [{ apart }, { modes }] = await Promise.all([
+          import('./rooms/apart'),
+          import('./modes.svelte'),
+        ])
+
+        return await apart(
+          modes.conflicts,
+          { path: open.note.path ?? '', id: open.noteId, version: open.version },
+          theirs,
+        )
+      },
     })
 
-    this.held.set(key, { room, noteId: open.noteId, note: open.note, kind: 'words' })
+    this.held.set(key, {
+      room,
+      noteId: open.noteId,
+      note: open.note,
+      hash: open.hash,
+      kind: 'words',
+    })
   }
 }
 

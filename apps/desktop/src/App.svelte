@@ -354,7 +354,9 @@
       account.syncable && startup.reached('rooms')
         ? workspace.openNotes.map((one) => ({
             ...one,
-            tracked: one.note.shared ? { id: one.note.shared, hash: null } : sync.tracked(one.path),
+            tracked: one.note.shared
+              ? { id: one.note.shared, version: 0, hash: null }
+              : sync.tracked(one.path),
           }))
         : []
 
@@ -366,6 +368,7 @@
           note: one.note,
           noteId: one.tracked?.id ?? '',
           hash: one.tracked?.hash ?? null,
+          version: one.tracked?.version ?? 0,
         })),
     )
   })

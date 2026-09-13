@@ -14,6 +14,7 @@ import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
+import { invoke } from './tauri'
 import { type Mirror, newMirror, pull, push, readMirror, type Waiting, within } from './sync/mirror'
 import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
@@ -423,16 +424,16 @@ class Sync {
   }
 
   /** What the account holds for a note on this machine: the id its room is named
-   *  after, and the hash of the copy the last pass left here.
+   *  after, the version, and the hash of the copy the last pass left here.
    *
    *  Null for a note in no space, and for one the account has never been handed -
    *  a note with no id has no room, and a note whose hash nobody knows has nothing
    *  to be compared against. See rooms.svelte.ts, which asks. */
-  tracked(path: string): { id: string; hash: string } | null {
+  tracked(path: string): { id: string; version: number; hash: string } | null {
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       const held = relative === null ? undefined : mirror.notes[relative]
-      if (held) return { id: held.id, hash: held.hash }
+      if (held) return { id: held.id, version: held.version, hash: held.hash }
     }
 
     return null
@@ -452,7 +453,7 @@ class Sync {
    *  The reading is the workspace's and the counting is `arriving`'s; this is the
    *  wiring between them and the pass, which knows about neither. See
    *  sync/mirror.ts. */
-  private waiting(mirror: Mirror): Waiting {
+  private waiting(mirror: Mirror, joined: ReadonlySet<string>): Waiting {
     const open = new Set(
       workspace.openNotes
         .map((one) => within(mirror.root, one.path))
@@ -464,6 +465,7 @@ class Sync {
       wrote: (path) => {
         arriving.arrived()
         void workspace.arrived(path)
+        void this.refresh(path, joined)
         this.pulled += 1
       },
       wanted: open,
@@ -476,6 +478,34 @@ class Sync {
       },
       held: record.held,
     }
+  }
+
+  /** A note the pass has just written, put into the document if that note is open
+   *  and there is nothing unsaved in it.
+   *
+   *  Which is the rule the app already states for a file that changed underneath it:
+   *  one nobody has edited quietly becomes what is on disk, and one with unsaved
+   *  words in it is touched by nothing and said out loud instead. Space notes are
+   *  not watched - nothing else writes them - and a pass was the exception nobody
+   *  had noticed: the file changed, the tab did not, and the next save wrote the
+   *  tab's older words back over it. A device that could not reach a note's room
+   *  then offered them again on every pass, and the account kept what it replaced
+   *  every time. See watch.svelte.ts, which says the same thing about files from
+   *  outside a space.
+   *
+   *  Never for a note a room is carrying: the room is that note's truth and the
+   *  document is already joined to it keystroke by keystroke, so putting a file into
+   *  it would offer a whole text to the room as one edit - which is the write this
+   *  batch is about. See rooms/join.ts. */
+  private async refresh(path: string, joined: ReadonlySet<string>) {
+    const id = this.tracked(path)?.id
+    if (id !== undefined && joined.has(id)) return
+
+    const note = workspace.openNotes.find((one) => one.path === path)?.note
+    if (!note || note.dirty) return
+
+    const content = await invoke<string>('read_note', { path }).catch(() => null)
+    if (content !== null && content !== note.text) workspace.reload(path, content)
   }
 
   /** What the pass being run has moved, for the log. Counted on the store rather
@@ -528,7 +558,7 @@ class Sync {
         this.clashed = 0
         const began = Date.now()
 
-        if (await pull(mirror, token, joined, this.waiting(mirror))) {
+        if (await pull(mirror, token, joined, this.waiting(mirror, joined))) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }

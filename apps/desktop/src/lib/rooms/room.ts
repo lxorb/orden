@@ -22,9 +22,10 @@
 
 import { setPeers, type SharedDoc } from '@nib/editor'
 import { TEXT } from '@nib/rooms'
+import type { Settling } from './apart'
 import { bind, replace } from './bind'
 import { HERE, RoomDoor, type Who } from './door'
-import { meeting } from './join'
+import { type Base, meeting } from './join'
 import { peersIn, relative } from './peers'
 
 /** What a room is joined on behalf of. */
@@ -48,6 +49,11 @@ export interface Joining {
   /** The hash of a string. Asked of the app because the platform answers it
    *  asynchronously and a room should not have a second way of doing it. */
   digest: (text: string) => Promise<string>
+  /** This device and the room have each written since the words they shared, which
+   *  is the one thing a room cannot settle by itself. Answers what to do about it,
+   *  which is the reader's conflict rule rather than anything a room knows; see
+   *  apart.ts. `theirs` is what the room holds, for the copy that keeps it. */
+  apart: (theirs: string) => Promise<Settling>
   /** The room was thrown away and another will be built out of the file; see
    *  `REBUILT` in door.ts. Nothing this room holds can carry on, so what answers is
    *  whoever paired the two: it lets this one go and joins again. */
@@ -76,6 +82,9 @@ export class Room {
    *  closed or after the document moved on; what it was about to do must not happen
    *  behind the room's back. */
   private left = false
+  /** Whether this room and this device disagreed about the words and the reader's rule
+   *  is the one that waits to be asked; see `waiting`. */
+  private awaiting = false
 
   constructor(private readonly joining: Joining) {
     this.scheme = joining.scheme
@@ -94,9 +103,28 @@ export class Room {
    *
    *  False for the moment between opening a note and the room answering with what
    *  it holds. Until then the room is not the note's truth yet, so the file sync
-   *  carries on as it always did; see rooms.svelte.ts. */
+   *  carries on as it always did; see rooms.svelte.ts.
+   *
+   *  And false for a note the room and this device disagree about and nobody has
+   *  settled yet, which is what `bind` not having happened says. Such a note is the
+   *  file sync's again in both directions - it is held back from a push while its
+   *  clash waits, and a version arriving for it is read as the disagreement it is
+   *  rather than waved through as something the room already settled. Saying "the
+   *  room has this" for a note the room is not carrying is how the words on one side
+   *  of it get written over without a copy. */
   get settled(): boolean {
-    return this.door.caughtUp
+    return this.door.caughtUp && this.unbind !== null
+  }
+
+  /** Whether this room is the one waiting on a reader: it and this device each wrote
+   *  since the words they shared, and the rule is the one that asks.
+   *
+   *  What it is for is being joined again once somebody answers. Nothing here can
+   *  hear an answer - it is given in the sync pane and it touches files - so what
+   *  says so is the account's copy of this file moving on, which is what settling it
+   *  looks like from the outside. See `follow` in rooms.svelte.ts. */
+  get waiting(): boolean {
+    return this.awaiting
   }
 
   private get text() {
@@ -146,33 +174,77 @@ export class Room {
 
   /** The room's words and this device's file, brought together, and the note joined
    *  to the shared text from here on. Which of the two is news is decided next
-   *  door, in join.ts. */
+   *  door, in join.ts.
+   *
+   *  Nothing is bound for the one answer that leaves the two apart: until somebody
+   *  settles it this note is not in a room at all - `settled` above says so - and the
+   *  file sync carries it exactly as it does for a note nobody else has open. */
   private async together() {
+    const base = await this.startedFrom()
+    if (base === undefined) return
+
+    if (await this.settleAgainst(base)) {
+      this.unbind = bind(this.joining.note, this.text, () => this.holds())
+    }
+  }
+
+  /** Which of the two texts is still exactly the copy the account last handed this
+   *  device, which is what says whose words are news; see `Base` in join.ts.
+   *
+   *  Null where the account has never handed this file over. Undefined where the
+   *  document moved on to another note while the digests were being worked out: a
+   *  click can land inside that moment, and then this room is about a file these
+   *  words are no longer, so neither text is anybody's news and binding would leave
+   *  the note writing into a room it has left.
+   *
+   *  Both texts are read before the digests and again after them, and one that moved
+   *  in between is not the copy that was hashed: a keystroke may land here and an
+   *  update may arrive from the room while they are worked out, and a copy that has
+   *  changed since is no longer the copy the account handed over. */
+  private async startedFrom(): Promise<Base | null | undefined> {
     const { note, hash, digest } = this.joining
+    if (!this.holds()) return undefined
+    if (hash === null) return null
+
     const asked = note.text.toString()
-    const untouched = hash !== null && (await digest(asked)) === hash
+    const asksRoom = this.text.toJSON()
+    const [mine, theirs] = await Promise.all([digest(asked), digest(asksRoom)])
+    if (!this.holds()) return undefined
 
-    // The hash is answered asynchronously, and a click can land inside that
-    // moment: the tab moves on to another note and this room is about a file these
-    // words are no longer. Neither text is anybody's news then, and binding would
-    // leave the note writing into a room it has left.
-    if (!this.holds()) return
+    return {
+      mine: mine === hash && note.text.toString() === asked,
+      theirs: theirs === hash && this.text.toJSON() === asksRoom,
+    }
+  }
 
-    // Both texts are read after the hash rather than before it. The hash is
-    // answered asynchronously, and in that moment a keystroke may land here and
-    // an update may arrive from the room; a change worked out against either text
-    // as it was would then be applied to the other as it is. A note that moved
-    // while the hash was being worked out is this device writing, whatever the
-    // hash came back saying.
-    const mine = note.text.toString()
-    const met = meeting(mine, this.text.toJSON(), untouched && mine === asked)
+  /** The meeting, carried out against the words as they now stand. Answers whether
+   *  the note and the room may be bound, which is every answer except the one that
+   *  leaves them apart and waiting for a reader.
+   *
+   *  An answer to that one turns the question the room could not settle into one it
+   *  can: the room's copy has been kept beside the note, so writing over it is no
+   *  longer a loss, or this device's words are the ones being kept, so taking the
+   *  room's is not. Which is why it comes back through here once, with one side of
+   *  the base now true - and so cannot come back a second time. */
+  private async settleAgainst(base: Base | null): Promise<boolean> {
+    const { note } = this.joining
+    const met = meeting(note.text.toString(), this.text.toJSON(), base)
 
     if (met.kind === 'take') note.arrived([met.change])
-    else if (met.kind === 'offer') {
-      this.door.doc.transact(() => replace(this.text, met.change), HERE)
+    if (met.kind === 'offer') this.door.doc.transact(() => replace(this.text, met.change), HERE)
+    if (met.kind !== 'apart') return true
+
+    const answer = await this.joining.apart(this.text.toJSON())
+    if (!this.holds()) return false
+
+    if (answer === 'wait') {
+      this.awaiting = true
+      return false
     }
 
-    this.unbind = bind(note, this.text, () => this.holds())
+    return await this.settleAgainst(
+      answer === 'take' ? { mine: true, theirs: false } : { mine: false, theirs: true },
+    )
   }
 
   /** Who is in the note, told to every pane showing it and counted for the tab. */
