@@ -346,6 +346,19 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/microphone.ts', 'the microphone'],
     ['/lib/recorder/transcript.ts', "the transcript's markdown"],
     ['/lib/RecordingPill.svelte', 'the pill'],
+    // Everything the app knows about talking to a model: which providers there are,
+    // where their keys are kept, the streaming, what a model is told, the four
+    // rewrites and the sheet they are read in. The glyph on an `ai` fence still
+    // answers from the first paint - `installAiRunner` registers a stub that fetches
+    // the runner with the first press - which is the whole of what the launch keeps.
+    // See ai/ask.ts and ai/answering.ts.
+    ['/lib/ai/answering.ts', 'what answers an ai fence'],
+    ['/lib/ai/store.svelte.ts', 'the providers'],
+    ['/lib/ai/providers.ts', 'what a provider is'],
+    ['/lib/ai/complete.ts', 'the request to a model'],
+    ['/lib/ai/keys.ts', 'where a key is kept'],
+    ['/lib/ai/rewriting.svelte.ts', 'the four rewrites'],
+    ['/lib/RewriteSheet.svelte', 'the sheet they are read in'],
     // And the pages engine, which a window that opens on a note has no stack of paper
     // to read. The canvas reader under it is not here and cannot be: the link index
     // scans a plane's cards for links and the sync mirror merges two versions of one,
@@ -376,6 +389,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/menu-item.ts', 'what a menu row is, which the app menu walks without it'],
     ['/lib/recorder/commands.ts', 'the two rows that wake the recorder'],
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
+    ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })

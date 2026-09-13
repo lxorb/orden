@@ -127,3 +127,10 @@ class Ai {
 }
 
 export const ai = new Ai()
+
+// Read as this module arrives rather than at launch, because the launch does not have
+// it any more: everything about talking to a model is fetched by the press that asks
+// for it, and the moment it is fetched is the moment to read what was kept. Idempotent,
+// so a test that loads the module twice reads the same thing twice. See start.ts, which
+// used to call this, and surfaces.svelte.ts for the doors it now comes through.
+ai.restore()

@@ -16,7 +16,6 @@
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
-  import RewriteSheet from './lib/RewriteSheet.svelte'
   import JoinSheet from './lib/JoinSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
   import { present } from './lib/slides/present.svelte'
@@ -25,8 +24,6 @@
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
-  import { ai } from './lib/ai/store.svelte'
-  import { rewriting } from './lib/ai/rewriting.svelte'
   import { arriving } from './lib/arriving.svelte'
   import { busy } from './lib/busy.svelte'
   import FirstSync from './lib/FirstSync.svelte'
@@ -47,6 +44,7 @@
     iconPicker,
     importSheet,
     publishSheet,
+    rewriteSheet,
     settingsSheet,
     shareSheet,
     slidesStage,
@@ -376,9 +374,6 @@
     Object.assign(window, {
       nibApp: {
         account,
-        // The AI providers, which a drive sets up against a fake OpenAI-compatible
-        // server rather than against anybody's key; see test/e2e/ai.py.
-        ai,
         arriving,
         busy,
         fullscreen,
@@ -391,9 +386,6 @@
         // apps/desktop/test/e2e/pages.py.
         pages,
         rooms,
-        // One rewrite, which is a sheet opened from the editor's own menu: a drive
-        // cannot reach a right-click menu, so it asks for the sheet.
-        rewriting,
         share,
         // The files other people shared on their own, so a drive can watch one
         // arrive at the foot of the switcher and disappear again when it is
@@ -421,19 +413,29 @@
       },
     })
 
-    // The two stores the shell no longer carries, put on the same handle once they
-    // arrive. Both are sheets a drive opens by name rather than by pointing - the
-    // import sheet opens from a row in File and walks a file chooser, the publish
-    // sheet from a space's own menu - and neither is any use to the app until
-    // somebody asks for it; see surfaces.svelte.ts, test/e2e/import.py and
-    // test/e2e/site.py. Fetched here rather than imported so that a development
-    // build is the only one that pays for them, and awaited by every drive the same
-    // way the space is: nothing reaches either of these before the space is open.
-    void Promise.all([import('./lib/importing.svelte'), import('./lib/publishing.svelte')]).then(
-      ([{ importing }, { publish }]) => {
-        Object.assign((window as unknown as { nibApp: object }).nibApp, { importing, publish })
-      },
-    )
+    // The stores the shell no longer carries, put on the same handle once they arrive.
+    // Each is a sheet or a subsystem a drive reaches by name rather than by pointing -
+    // the import sheet opens from a row in File and walks a file chooser, the publish
+    // sheet from a space's own menu, the rewrite sheet from a right-click in the note,
+    // and the AI providers are set up against a fake OpenAI-compatible server rather
+    // than anybody's key - and none of them is any use to the app until somebody asks.
+    // See surfaces.svelte.ts, test/e2e/import.py, test/e2e/site.py and test/e2e/ai.py.
+    // Fetched here rather than imported so that a development build is the only one
+    // that pays for them, and awaited by every drive the same way the space is:
+    // nothing reaches any of these before the space is open.
+    void Promise.all([
+      import('./lib/importing.svelte'),
+      import('./lib/publishing.svelte'),
+      import('./lib/ai/store.svelte'),
+      import('./lib/ai/rewriting.svelte'),
+    ]).then(([{ importing }, { publish }, { ai }, { rewriting }]) => {
+      Object.assign((window as unknown as { nibApp: object }).nibApp, {
+        ai,
+        importing,
+        publish,
+        rewriting,
+      })
+    })
   }
 
   /** Every pair of panes in a list of them, each pair once. */
@@ -870,7 +872,11 @@
     <ImportSheet />
   {/await}
 {/if}
-<RewriteSheet />
+{#if rewriteSheet.asked}
+  {#await rewriteSheet.asked then RewriteSheet}
+    <RewriteSheet />
+  {/await}
+{/if}
 <PromptSheet />
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet

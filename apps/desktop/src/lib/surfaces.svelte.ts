@@ -124,6 +124,13 @@ export const importSheet = latched(() => import('./ImportSheet.svelte'))
 /** The one picker everything that wears an icon asks for one. */
 export const iconPicker = latched(() => import('./IconPicker.svelte'))
 
+/** The four rewrites, and the diff a reader keeps or throws away. Asked for by the
+ *  store behind it, which is fetched with it: `rewriting.show` is what opens this sheet
+ *  from anywhere, and everything either half knows about talking to a model - the
+ *  providers, the keys, the streaming - is behind this one import. See
+ *  ai/rewriting.svelte.ts. */
+export const rewriteSheet = latched(() => import('./RewriteSheet.svelte'))
+
 /** The red dot, the clock and the stop, which is the whole of what the window says
  *  about an open microphone. Latched rather than drawn while a recording runs, because
  *  the pill is what stays up while what was recorded is still being written down; the

@@ -21,6 +21,7 @@ import type { EditorView } from '@nib/editor'
 import { i18n, message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, type Verb } from './rewrite'
+import { rewriteSheet } from '../surfaces.svelte'
 import { ai } from './store.svelte'
 
 class Rewriting {
@@ -44,9 +45,17 @@ class Rewriting {
 
   /** Opens it on the selection. Nothing at all without one: the menu row is not
    *  offered then, and this is the same answer said twice. */
+  /** Opens the sheet on what is selected, and asks for the sheet.
+   *
+   *  The knock is here rather than at the call site because this is the one way in;
+   *  App.svelte mounts the sheet off that door rather than off `open`, so neither the
+   *  sheet nor anything behind it is in front of the first paint. See
+   *  surfaces.svelte.ts. */
   show(view: EditorView) {
     const range = view.state.selection.main
     if (range.empty || view.state.readOnly) return
+
+    void rewriteSheet.ask()
 
     this.view = view
     this.place = { from: range.from, to: range.to }

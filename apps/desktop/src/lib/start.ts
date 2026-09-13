@@ -8,7 +8,6 @@
 import { setBlocks } from '@nib/editor'
 import { account } from './account.svelte'
 import { installAiRunner } from './ai/ask'
-import { ai } from './ai/store.svelte'
 import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
@@ -52,10 +51,11 @@ export function start(): () => void {
   // And which command a pull down past the top of a list runs.
   pull.restore()
   settings.restore()
-  // Which providers are set up, and the one glyph on an `ai` fence that asks one.
-  // Installed whether or not any are, so a press on a block in a note somebody was
-  // sent says where to add one; see ai/ask.ts.
-  ai.restore()
+  // The one glyph on an `ai` fence that asks a model, installed whether or not any
+  // provider is set up: a press on a block in a note somebody was sent says where to
+  // add one. What it installs is a stub that fetches the runner with the first press,
+  // so the guarantee costs the launch one function; see ai/ask.ts. Which providers
+  // there are is read by the store as it arrives, which is the same moment.
   installAiRunner()
   recovery.restore()
   // What the last passes did, and what is waiting to be settled; see

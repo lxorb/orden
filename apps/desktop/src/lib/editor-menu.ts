@@ -19,7 +19,6 @@ import {
   toggleWrap,
   type Transaction,
 } from '@nib/editor'
-import { rewriting } from './ai/rewriting.svelte'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { countText } from './counts'
 import { linkTo } from './composer'
@@ -200,6 +199,17 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   ]
 }
 
+/** The rewrite sheet, opened on what is selected.
+ *
+ *  Fetched rather than imported: the four rewrites carry everything the app knows about
+ *  talking to a model, and a menu that only has to draw one row has no use for any of
+ *  it. The row is already a press on an open menu by the time this runs, so the fetch
+ *  happens under the sheet's own way in. See ai/rewriting.svelte.ts. */
+async function rewrite(view: EditorView) {
+  const { rewriting } = await import('./ai/rewriting.svelte')
+  rewriting.show(view)
+}
+
 function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
   const selected = !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
@@ -259,7 +269,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
           DIVIDER,
           // `selected` is what says there is a view: it is false without one, which
           // is why nothing here has to ask again.
-          { label: t('Rewrite…'), run: () => rewriting.show(view) },
+          { label: t('Rewrite…'), run: () => void rewrite(view) },
         ]
       : []),
     DIVIDER,
