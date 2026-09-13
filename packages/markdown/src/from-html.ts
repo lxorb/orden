@@ -63,23 +63,61 @@ function texOf(maths: Element): string {
   const annotated = maths.querySelector('annotation[encoding="application/x-tex"]')
   const said = annotated?.textContent ?? maths.getAttribute('alttext') ?? ''
 
-  return said.replace(/\s+/g, ' ').trim()
+  return angled(said.replace(/\s+/g, ' ').trim())
+}
+
+/** A formula's own `<` and `>`, as TeX also writes them.
+ *
+ *  The formula is written into the note by the rule rather than as text, because
+ *  text is escaped and every `\` in a formula would come back doubled - so nothing
+ *  else is looking at what an `alttext` says. And a page chooses what that says: a
+ *  formula whose TeX was `<img src=x onerror=…>` put a tag into the note, and a
+ *  tag in a note of the reader's own is markup the app renders. So the two
+ *  characters a tag can begin with are written the way TeX writes them anyway.
+ *  KaTeX draws `\lt` and `\gt` as the same glyphs, and the note then holds nothing
+ *  a markdown reader can see a tag in, whether or not the formula around them
+ *  parses. */
+function angled(tex: string): string {
+  return tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
+}
+
+/** Whether this is the table's first `tbody`, which is where the GFM rules will
+ *  look for a heading row outside a `thead`. An empty `thead` in front of it does
+ *  not count against it; anything else does. */
+function firstBody(element: Element | null): boolean {
+  if (element?.nodeName !== 'TBODY') return false
+
+  const before = element.previousElementSibling
+  return before === null || (before.nodeName === 'THEAD' && !before.textContent.trim())
 }
 
 /** Whether the first row of a table is its headings, which is what the GFM rules
- *  ask before they will convert one at all: a row in a `thead`, or the table's own
- *  first row with nothing but `th` in it. Asked here as well, because the answer
- *  decides whether the table needs a heading row written for it. */
+ *  ask before they will convert one at all: a row in a `thead`, or the first row
+ *  of the table or of its first `tbody` with nothing but `th` in it.
+ *
+ *  Asked here as well, because the answer decides whether the table needs a
+ *  heading row written for it - and it has to be the *same* answer, or the row
+ *  rule and this one would disagree about what the table already says.
+ *
+ *  The `tbody` half of it is what was missing, and it was a way to get a page's
+ *  own markup into a note: a table whose rows sit in a second `tbody` looked
+ *  headed here and did not to the plugin, so neither rule claimed the table, and
+ *  what turndown does with a node no rule claims is hand back its `outerHTML` -
+ *  classes, handlers, nested tags, an `<img>` pointing at the page's own host and
+ *  all. The rule below now claims every table, so a disagreement could only ever
+ *  cost a line of dashes; this keeps the two agreeing anyway. */
 function headed(table: HTMLTableElement): boolean {
   const first = table.rows[0]
   if (!first) return false
 
-  const parent = first.parentElement?.nodeName
-  const cells = [...first.cells]
+  const parent = first.parentElement
+  if (parent?.nodeName === 'THEAD') return true
 
+  const looked = parent?.nodeName === 'TABLE' || firstBody(parent)
   return (
-    parent === 'THEAD' ||
-    (first.previousElementSibling === null && cells.every((one) => one.nodeName === 'TH'))
+    looked &&
+    first.previousElementSibling === null &&
+    [...first.cells].every((one) => one.nodeName === 'TH')
   )
 }
 
@@ -418,16 +456,19 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // A table with no headings, which the GFM rules hand back as the page's own raw
-  // HTML: its classes, its styles, its attributes and whatever is nested inside
-  // them, straight into the note, which the app then renders as the note's own
-  // markup. A clipped page is somebody else's and none of it is kept verbatim - so
-  // the table becomes a table, with the empty heading row markdown writes for one.
+  // Every table, because a table no rule claims is the page's own raw HTML: the
+  // GFM rules hand one back verbatim - its classes, its styles, its attributes and
+  // whatever is nested inside them - straight into the note, which the app then
+  // renders as the note's own markup. A clipped page is somebody else's and none
+  // of it is kept verbatim, so a table becomes a table: the rows as the row rules
+  // wrote them, under the empty heading row markdown writes for a table that has
+  // no headings of its own.
   service.addRule('table', {
-    filter: (node) => node.nodeName === 'TABLE' && !headed(node as HTMLTableElement),
+    filter: (node) => node.nodeName === 'TABLE',
     replacement: (content, node) => {
       const rows = content.replace(/^\n+/, '').trimEnd()
       if (!rows) return ''
+      if (headed(node as HTMLTableElement)) return `\n\n${rows}\n\n`
 
       return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`
     },

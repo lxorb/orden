@@ -186,6 +186,32 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown(html)).not.toContain('<td')
   })
 
+  /** A second `tbody` was a way past both rules at once: this one said the table
+   *  was headed and the GFM rules said it was not, so neither claimed it and
+   *  turndown handed back the page's own markup. */
+  test('nor from a table whose rows sit in a tbody of their own', () => {
+    const html =
+      '<table class="layout"><tbody></tbody><tbody><tr><th>Col</th></tr>' +
+      '<tr><td>cell<img src="https://elsewhere.example/b.png" onerror="run()"></td></tr>' +
+      '</tbody></table>'
+    const markdown = htmlToMarkdown(html)
+
+    expect(markdown).not.toContain('<table')
+    expect(markdown).not.toContain('onerror')
+    expect(markdown).toBe('|  |\n| --- |\n| Col |\n| cell![](https://elsewhere.example/b.png) |')
+  })
+
+  test('and a headed table keeps the heading row it already had', () => {
+    for (const html of [
+      '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
+      '<table><tr><th>H</th></tr><tr><td>c</td></tr></table>',
+      '<table><tbody><tr><th>H</th></tr><tr><td>c</td></tr></tbody></table>',
+      '<table><thead></thead><tbody><tr><th>H</th></tr><tr><td>c</td></tr></tbody></table>',
+    ]) {
+      expect(htmlToMarkdown(html)).toBe('| H |\n| --- |\n| c |')
+    }
+  })
+
   test('a cell is one line, whatever the page put inside it', () => {
     const html = '<table><tr><td><p>one</p><p>two</p></td><td>a | b</td></tr></table>'
 
@@ -246,6 +272,22 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>a <math alttext="x=\\$5"><mi>x</mi></math> b</p>')).toBe(
       'a $x=\\$5$ b',
     )
+  })
+
+  /** The rule writes the formula rather than escaping it, so what an `alttext`
+   *  says is the one string on a clipped page that nothing else looks at - and a
+   *  tag in a note of the reader's own is markup the app renders. */
+  test('a tag inside a formula is written as TeX rather than as a tag', () => {
+    const html = '<p>see <math alttext="<a href=javascript:run()>click</a> \\"><mi>q</mi></math> ok</p>'
+    const markdown = htmlToMarkdown(html)
+
+    expect(markdown).not.toContain('<a')
+    expect(markdown).not.toContain('</a>')
+    expect(markdown).toContain('\\lt ')
+  })
+
+  test('and a comparison in a formula still draws as one', () => {
+    expect(htmlToMarkdown('<p>a <math alttext="x<y"><mi>x</mi></math> b</p>')).toBe('a $x\\lt y$ b')
   })
 
   test('a formula that says no TeX keeps the letters it was made of', () => {
