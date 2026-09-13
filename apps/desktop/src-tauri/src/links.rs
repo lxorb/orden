@@ -25,6 +25,22 @@ use crate::tags::tags_in;
 /// same as a search hit shows, so the two panels read alike.
 const LINE: usize = 200;
 
+/// How far a `[label](target)` may run before it is not one. A label is a phrase
+/// and a target is a path - three hundred characters at the outside, the same
+/// ceiling a stored path has - so this is room and then some. See `markdown_link`,
+/// where it is also what keeps one line's walk linear.
+const LONGEST_LINK: usize = 1000;
+
+/// How many links one note is read for.
+///
+/// A note that points at more places than this is not a note anybody is reading,
+/// and each link kept carries the line it sits on: a megabyte of `[[A]]` is two
+/// hundred thousand links with two hundred characters of context each, which is
+/// forty megabytes for one file - and the answer is held for every note of the
+/// space at once. A note arrives from a share, a room or a folder somebody synced,
+/// so the ceiling is what stops one of them from being the whole index.
+const MOST_LINKS: usize = 5000;
+
 /// One link out of a note.
 #[derive(Serialize)]
 pub struct Link {
@@ -393,9 +409,16 @@ fn prose(body: &str) -> Prose {
             return;
         }
 
+        // And a note that has said where it points five thousand times has said it;
+        // see `MOST_LINKS`. The lines after this one are still read, because the
+        // headings and the blocks in them are what the rest of this pass is for.
+        if links.len() >= MOST_LINKS {
+            return;
+        }
+
         // Inline code spans are blanked rather than removed, so what is left
         // still lines up with the line the context is taken from.
-        let mut found = links_on(&without_code(line));
+        let mut found = links_on(&without_code(line), MOST_LINKS - links.len());
         if found.is_empty() {
             return;
         }
@@ -534,13 +557,15 @@ fn without_code(line: &str) -> Cow<'_, str> {
     Cow::Owned(out)
 }
 
-/// Every link on one line of prose, in the order they were written.
-fn links_on(line: &str) -> Vec<Link> {
+/// Every link on one line of prose, in the order they were written, and at most
+/// `most` of them: what is left of the note's own ceiling by the time this line is
+/// reached. See `MOST_LINKS`.
+fn links_on(line: &str, most: usize) -> Vec<Link> {
     let letters: Vec<char> = line.chars().collect();
     let mut found = Vec::new();
     let mut at = 0;
 
-    while at < letters.len() {
+    while at < letters.len() && found.len() < most {
         // A backslash escapes the bracket, and a link nobody wrote is not one.
         if letters[at] != '[' || (at > 0 && letters[at - 1] == '\\') {
             at += 1;
@@ -598,19 +623,30 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
 /// A `[label](target)` starting at `at`: where it ends, what it is labelled, and
 /// where it points. Titles and `<>` around the target are both understood.
 fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)> {
+    // Every scan below stops here rather than at the end of the line, and that is
+    // what keeps the walk over a line linear. A `[` that turns out not to open a
+    // link moves the walk on by one character and the next `[` is read from there,
+    // so a scan that runs to the end of the line is a scan repeated for every `[`
+    // on it: `[a](` written two hundred thousand times - which is one line of a
+    // note somebody shared - is a line read a hundred billion times over, with a
+    // string of half the line built and thrown away at each step. A link longer
+    // than this is not one anybody wrote: the target is a path, and a path is
+    // three hundred characters at the outside.
+    let stop = letters.len().min(at + LONGEST_LINK);
+
     let mut close = at + 1;
-    while close < letters.len() && letters[close] != ']' {
+    while close < stop && letters[close] != ']' {
         if letters[close] == '[' {
             return None;
         }
         close += 1;
     }
-    if close >= letters.len() || letters.get(close + 1) != Some(&'(') {
+    if close >= stop || letters.get(close + 1) != Some(&'(') {
         return None;
     }
 
     let mut scan = close + 2;
-    while scan < letters.len() && (letters[scan] == ' ' || letters[scan] == '\t') {
+    while scan < stop && (letters[scan] == ' ' || letters[scan] == '\t') {
         scan += 1;
     }
 
@@ -620,7 +656,7 @@ fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)>
     }
 
     let mut target = String::new();
-    while scan < letters.len() {
+    while scan < stop {
         let one = letters[scan];
         if angled && one == '>' {
             scan += 1;
@@ -637,10 +673,10 @@ fn markdown_link(letters: &[char], at: usize) -> Option<(usize, String, String)>
     }
 
     // Whatever is left has to close the link, with room for a title.
-    while scan < letters.len() && letters[scan] != ')' {
+    while scan < stop && letters[scan] != ')' {
         scan += 1;
     }
-    if scan >= letters.len() {
+    if scan >= stop || letters[scan] != ')' {
         return None;
     }
 
@@ -967,6 +1003,59 @@ mod tests {
     #[test]
     fn several_links_on_one_line_all_count() {
         assert_eq!(targets("[[A]] and [[B|b]] and ![[C]]"), vec!["A", "B", "C"]);
+    }
+
+    /// A note arrives from a share, a room or a folder somebody synced, and every
+    /// note of a space is read on one pass whose answer is held whole. Both halves
+    /// of this were a line: the work done per `[` and the links kept per note.
+    ///
+    /// What the reading does is bounded rather than timed. A `[` that turns out not
+    /// to open a link moves the walk on by one character, so a scan that runs to the
+    /// end of the line is a scan repeated for every `[` on it - and a line of
+    /// `[a](` with no `)` anywhere is that line read once per character, with a
+    /// string of half of it built and dropped each time. A stopwatch would say the
+    /// same thing and say it differently on a busy machine; this says which links
+    /// there are.
+    #[test]
+    fn a_link_longer_than_any_link_is_not_one() {
+        let target = "x".repeat(super::LONGEST_LINK);
+        assert!(links_in(&format!("[a]({target}.md)")).is_empty());
+
+        // A label nobody would write, for the same reason.
+        let label = "y".repeat(super::LONGEST_LINK);
+        assert!(links_in(&format!("[{label}](Note.md)")).is_empty());
+
+        // And a link of a size anybody writes is still a link.
+        let path = "x".repeat(200);
+        assert_eq!(links_in(&format!("[a]({path}.md)")).len(), 1);
+    }
+
+    #[test]
+    fn a_line_of_half_written_links_is_a_line_of_none() {
+        assert!(links_in(&"[a](".repeat(5_000)).is_empty());
+        assert!(links_in(&"[[a".repeat(5_000)).is_empty());
+    }
+
+    #[test]
+    fn a_note_says_where_it_points_only_so_many_times() {
+        let many = "[[A]] ".repeat(20_000);
+        let found = links_in(&many);
+
+        assert_eq!(found.len(), super::MOST_LINKS);
+        // And the line each is read in is still there, which is what makes the
+        // ceiling worth having.
+        assert!(found[0].text.len() <= super::LINE);
+    }
+
+    /// The ceiling is per note rather than per line, and the lines after it are
+    /// still read for their headings and their blocks.
+    #[test]
+    fn what_is_past_the_ceiling_is_the_links_and_nothing_else() {
+        let body = format!("{}\n## Later\n", "[[A]] ".repeat(6000));
+        let read = prose(&body);
+
+        assert_eq!(read.links.len(), super::MOST_LINKS);
+        assert_eq!(read.headings, vec!["Later"]);
     }
 
     #[test]
