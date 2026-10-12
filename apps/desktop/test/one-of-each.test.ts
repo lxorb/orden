@@ -606,6 +606,25 @@ describe('the small action at the end of a row', () => {
   })
 })
 
+/** A bar of how much is used: the account's storage, an online machine's month. Two
+ *  panes of one sheet drew their own, at two heights, two tracks and two corners. */
+describe('the bar of what is used', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-meter')
+    expect(draw(/\.nib-meter/)).toEqual([])
+  })
+
+  test('and every bar that says how much is used wears it', () => {
+    const own = components
+      .filter((one) => /role="(meter|progressbar)"/.test(one.text))
+      .filter((one) => !one.text.includes('class="nib-meter"'))
+      .map((one) => one.name)
+
+    expect(own).toEqual([])
+  })
+})
+
 /** How a control that cannot be pressed looks. The themes package says it once, at
  *  0.4, and then eighteen rules in fifteen components said it again at 0.3, 0.35,
  *  0.45, 0.5 and 0.55 - so a refused button in the settings was a different grey from

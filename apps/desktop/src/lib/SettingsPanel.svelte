@@ -944,14 +944,14 @@
       <div class="card">
         <div class="stack">
           <div
-            class="meter"
-            class:full={usage.nearlyFull}
+            class="nib-meter"
+            class:is-full={usage.nearlyFull}
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={usage.limit}
             aria-valuenow={usage.used}
           >
-            <div class="fill" style:width="{Math.min(100, usage.fraction * 100)}%"></div>
+            <div class="nib-meter-fill" style:width="{Math.min(100, usage.fraction * 100)}%"></div>
           </div>
           <p class="hint">
             {t('{used} of {limit} used.', {
@@ -1350,12 +1350,12 @@
   <h3>{t('Questions')}</h3>
   <div class="card">
     {#if glassesKey.set && !replacingKey}
-      <div class="nib-setting setting">
+      <div class="nib-setting setting keyed">
         <span class="name">{t('OpenAI key')}</span>
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-          <button class="nib-action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
-          <button class="nib-action is-danger" onclick={() => void offered.remove()}
+          <button class="nib-chip" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
+          <button class="nib-chip is-quiet" onclick={() => void offered.remove()}
             >{t('Remove')}</button
           >
         </div>
@@ -1946,11 +1946,13 @@
     align-self: flex-start;
   }
 
+  /* What may be done about a row, at the end of it: its own width, so the name
+     beside it keeps the rest. */
   .row {
+    flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    width: 100%;
   }
 
   /* A list of words is as long as it is, so it runs down the card rather than
@@ -2171,23 +2173,8 @@
     scale: 0.97;
   }
 
-  .meter {
-    height: 8px;
-    border-radius: 99px;
-    background: var(--surface-3);
-    overflow: hidden;
-  }
-
-  .fill {
-    height: 100%;
-    border-radius: 99px;
-    background: var(--accent);
-    transition: width var(--dur-base) var(--ease-out);
-  }
-
-  .meter.full .fill {
-    background: var(--danger);
-  }
+  /* The storage bar is `.nib-meter` in the themes package, the one an online
+     machine's month is drawn with too. */
 
   /* ── On a phone ────────────────────────────────────────────────── */
 
@@ -2403,6 +2390,23 @@
   .sheet.phone .setting.sliding {
     flex-wrap: wrap;
     padding-bottom: 6px;
+  }
+
+  /* The key's sentence and its two answers are wider than what a phone's row has
+     beside the name, so they are a line of their own under it: the sentence where
+     the words start, the answers at the end. */
+  .sheet.phone .setting.keyed {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
+  .sheet.phone .setting.keyed .row {
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+  }
+
+  .sheet.phone .setting.keyed .hint {
+    margin-inline-end: auto;
   }
 
   .sheet.phone .setting .value {
