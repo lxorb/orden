@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '重新安排',
+  'Later this week': '本周晚些时候',
+  'This weekend': '本周末',
+  'Next weekend': '下周末',
+  'Every week on {day}': '每周{day}',
+  'Every month on day {day}': '每月{day}日',
+  'Every year on {date}': '每年{date}',
+  'Type a date': '输入日期',
+  'Previous month': '上个月',
+  'Next month': '下个月',
+  'No time': '无时间',
+  'No repeat': '不重复',
+  Complete: '完成',
+  Reopen: '重新打开',
+  Schedule: '安排',
+  'Open in note': '在笔记中打开',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '其他应用',
   'Start fresh': '从头开始',
@@ -1958,7 +1975,6 @@ export const zhHans: Dictionary = {
   'Any of them': '任一',
   Compare: '比较',
   'Add a filter': '添加筛选',
-  'Reschedule to today': '改到今天',
   Collapse: '折叠',
   Expand: '展开',
   Summary: '汇总',

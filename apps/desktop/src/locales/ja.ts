@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '日程を変更',
+  'Later this week': '今週の後半',
+  'This weekend': '今週末',
+  'Next weekend': '来週末',
+  'Every week on {day}': '毎週{day}',
+  'Every month on day {day}': '毎月{day}日',
+  'Every year on {date}': '毎年{date}',
+  'Type a date': '日付を入力',
+  'Previous month': '前の月',
+  'Next month': '次の月',
+  'No time': '時刻なし',
+  'No repeat': '繰り返しなし',
+  Complete: '完了にする',
+  Reopen: '再開',
+  Schedule: '予定を設定',
+  'Open in note': 'ノートで開く',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'ほかのアプリ',
   'Start fresh': '新しく始める',
@@ -1995,7 +2012,6 @@ export const ja: Dictionary = {
   'Any of them': 'いずれか',
   Compare: '比較',
   'Add a filter': 'フィルターを追加',
-  'Reschedule to today': '今日に変更',
   Collapse: '折りたたむ',
   Expand: '展開',
   Summary: '集計',

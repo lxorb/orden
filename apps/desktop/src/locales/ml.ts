@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'വീണ്ടും ക്രമീകരിക്കുക',
+  'Later this week': 'ഈ ആഴ്ച പിന്നീട്',
+  'This weekend': 'ഈ വാരാന്ത്യം',
+  'Next weekend': 'അടുത്ത വാരാന്ത്യം',
+  'Every week on {day}': 'എല്ലാ ആഴ്ചയും {day}',
+  'Every month on day {day}': 'എല്ലാ മാസവും {day}-ാം തീയതി',
+  'Every year on {date}': 'എല്ലാ വർഷവും {date}',
+  'Type a date': 'തീയതി ടൈപ്പ് ചെയ്യുക',
+  'Previous month': 'കഴിഞ്ഞ മാസം',
+  'Next month': 'അടുത്ത മാസം',
+  'No time': 'സമയമില്ല',
+  'No repeat': 'ആവർത്തനമില്ല',
+  Complete: 'പൂർത്തിയാക്കുക',
+  Reopen: 'വീണ്ടും തുറക്കുക',
+  Schedule: 'സമയം നിശ്ചയിക്കുക',
+  'Open in note': 'കുറിപ്പിൽ തുറക്കുക',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'മറ്റൊരു ആപ്പ്',
   'Start fresh': 'പുതുതായി തുടങ്ങുക',
@@ -2029,7 +2046,6 @@ export const ml: Dictionary = {
   'Any of them': 'ഏതെങ്കിലും',
   Compare: 'താരതമ്യം',
   'Add a filter': 'ഫിൽട്ടർ ചേർക്കുക',
-  'Reschedule to today': 'ഇന്നത്തേക്ക് മാറ്റുക',
   Collapse: 'ചുരുക്കുക',
   Expand: 'വികസിപ്പിക്കുക',
   Summary: 'സംഗ്രഹം',

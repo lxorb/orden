@@ -2,21 +2,24 @@
   /** The list layout: the view's groups, each a head with its count and its rows, the
    *  sub-tasks under their parents, and an add row at the end (docs/tasks.md 5.9).
    *
-   *  Every item is one row tall, so the list keeps a window of what is on screen and a
-   *  Logbook of ten thousand lines mounts thirty (row-window.ts). The keyboard walks
-   *  the rows and every key of row-keys.ts works on the one it is on. A row carried
-   *  onto another group is written into it; onto another task of its own note, it
-   *  moves its lines there. */
+   *  A task is Todoist's row of up to three lines (TaskRow.svelte), and how many is
+   *  arithmetic over what it carries (task-meta.ts), so the list still keeps a window
+   *  of what is on screen without measuring a row: a Logbook of ten thousand lines
+   *  mounts thirty (`Heights`, the chat's own). The three heights a line can be are
+   *  read off a probe once, and again when the box is resized. The keyboard walks the
+   *  rows and every key of row-keys.ts works on the one it is on. A row carried onto
+   *  another group is written into it; onto another task of its own note, it moves its
+   *  lines there. */
   import { groupName, type Row, rowId, type Value } from '@nib/bases'
   import { untrack } from 'svelte'
+  import { Heights } from '../chats/view/window'
   import { t } from '../i18n.svelte'
   import { currentPlatform } from '../keys'
   import { ListView, tokenRow } from '../row-window.svelte'
-  import { windowFor } from '../row-window'
   import Twist from '../Twist.svelte'
   import { samePath } from '../space-paths'
   import { viewport } from '../viewport.svelte'
-  import { moveBeside, writeRows } from './act'
+  import { moveBeside } from './act'
   import AddRow from './AddRow.svelte'
   import { droppable, type Point } from './drag.svelte'
   import { type Kit, runKey } from './kit'
@@ -24,6 +27,9 @@
   import { parentOf } from './columns'
   import { rowKey } from './row-keys'
   import RowLine from './RowLine.svelte'
+  import { scheduleRows } from './task-actions'
+  import { hasMeta, lineCount, subtaskCounts, taskKey } from './task-meta'
+  import TaskRow from './TaskRow.svelte'
   import { groupLabel } from './words'
 
   const {
@@ -62,24 +68,61 @@
   )
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
 
+  /** Every task's sub-tasks, counted over all the rows the view is over. */
+  const subtasks = $derived(subtaskCounts(live.rows))
+  const countsOf = (row: Row) =>
+    row.anchor ? subtasks.get(taskKey(row.space, row.path, row.anchor.line)) : undefined
+
+  /** How many lines each item is drawn on: a task as many as it has things to say,
+   *  everything else one. */
+  const lines = $derived(
+    items.map((item) => {
+      const task = item.kind === 'row' ? item.row.task : undefined
+      if (!task || item.kind !== 'row') return 1
+      return lineCount(task, hasMeta(task, dated, countsOf(item.row)), where)
+    }),
+  )
+
   let list = $state<HTMLElement>()
+  let probe = $state<HTMLElement>()
+  /** The three heights a task's lines come in, read off the probe. */
+  let pitch = $state({ head: 28, line: 18, foot: 6 })
   const win = new ListView()
   $effect(() => {
     const box = list
     if (!box) return
     const touch = viewport.touch
-    return untrack(() => win.follow(box, () => tokenRow(touch)))
+    return untrack(() =>
+      win.follow(box, () => {
+        const [head, line, foot] = [...(probe?.children ?? [])].map((one) =>
+          one instanceof HTMLElement ? one.offsetHeight : 0,
+        )
+        if (head && line && foot !== undefined) pitch = { head, line, foot }
+        return tokenRow(touch)
+      }),
+    )
   })
-  const shown = $derived(
-    windowFor({
-      count: items.length,
-      height: win.row || 28,
-      top: win.top,
-      room: win.room || 600,
-      overscan: 8,
-      pinned: selected === null ? [] : [items.findIndex((item) => item.id === selected)],
-    }),
-  )
+
+  const heights = $derived.by(() => {
+    const row = win.row || 28
+    const { head, line, foot } = pitch
+    return new Heights(
+      items.map((item, at) => {
+        const many = lines[at] ?? 1
+        if (item.kind !== 'row' || !item.row.task) return row
+        return head + (many - 1) * line + (many > 1 ? foot : 0)
+      }),
+    )
+  })
+  const shown = $derived.by(() => {
+    const span = heights.span(win.top, win.room || 600, 8 * (win.row || 28))
+    return {
+      first: span.from,
+      last: span.to - 1,
+      above: heights.top(span.from),
+      below: Math.max(0, heights.total - heights.top(span.to)),
+    }
+  })
 
   /** A row let go over another row: within its own note, its lines move beside that
    *  one's; anywhere else, it joins that row's group. */
@@ -129,11 +172,6 @@
       list?.querySelector<HTMLElement>(`[data-item="${CSS.escape(id)}"] [role=option]`)?.focus(),
     )
   }
-
-  /** Today's overdue tasks moved to today, as one write. */
-  function rescheduleToday(rows: readonly Row[]) {
-    void writeRows(rows, { task: { due: live.today } })
-  }
 </script>
 
 <div
@@ -149,7 +187,12 @@
   style:padding-top="{shown.above}px"
   style:padding-bottom="{shown.below}px"
 >
-  {#each items.slice(shown.first, shown.last + 1) as item (item.id)}
+  <div class="probe" bind:this={probe} aria-hidden="true">
+    <div class="probe-head"></div>
+    <div class="probe-line"></div>
+    <div class="probe-foot"></div>
+  </div>
+  {#each items.slice(shown.first, shown.last + 1) as item, index (item.id)}
     <div class="item" data-item={item.id}>
       {#if item.kind === 'head'}
         {@const name = groupName(item.group.key)}
@@ -168,7 +211,8 @@
             <button
               type="button"
               class="nib-chip is-quiet act"
-              onclick={() => rescheduleToday(item.group.rows)}>{t('Reschedule to today')}</button
+              onclick={(event) => scheduleRows(item.group.rows, event.currentTarget, kit)}
+              >{t('Reschedule')}</button
             >
           {/if}
         </div>
@@ -179,17 +223,33 @@
           class="drop"
           use:droppable={(carried, at, box) => landOnRow(row, key, carried, at, box)}
         >
-          <RowLine
-            {row}
-            {kit}
-            {dated}
-            {where}
-            depth={item.depth}
-            twist={item.twist}
-            ontwist={() => (shut = toggled(shut, rowId(row)))}
-            selected={selected === item.id}
-            onselect={() => (selected = item.id)}
-          />
+          {#if row.task}
+            <TaskRow
+              {row}
+              {kit}
+              {dated}
+              {where}
+              lines={lines[shown.first + index] ?? 1}
+              subtasks={countsOf(row)}
+              depth={item.depth}
+              twist={item.twist}
+              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              selected={selected === item.id}
+              onselect={() => (selected = item.id)}
+            />
+          {:else}
+            <RowLine
+              {row}
+              {kit}
+              {dated}
+              {where}
+              depth={item.depth}
+              twist={item.twist}
+              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              selected={selected === item.id}
+              onselect={() => (selected = item.id)}
+            />
+          {/if}
         </div>
       {:else}
         <AddRow
@@ -203,11 +263,45 @@
 </div>
 
 <style>
+  /* A task's three heights: the line of its words, each line under them, and the room
+     under the last. Read back by the probe, so the arithmetic and the drawing are one
+     number each. */
   .list {
+    --task-head: var(--row-height);
+    --task-line: 18px;
+    --task-foot: 6px;
+    position: relative;
     display: flex;
     flex-direction: column;
     min-height: 100%;
     padding-inline: var(--space-2);
+  }
+
+  :global([data-touch]) .list {
+    --task-head: var(--touch-target);
+    --task-line: 22px;
+    --task-foot: 8px;
+  }
+
+  .probe {
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+  }
+
+  .probe-head {
+    height: var(--task-head);
+  }
+
+  .probe-line {
+    height: var(--task-line);
+  }
+
+  .probe-foot {
+    height: var(--task-foot);
   }
 
   .item {

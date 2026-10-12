@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Перенести',
+  'Later this week': 'Позже на этой неделе',
+  'This weekend': 'В эти выходные',
+  'Next weekend': 'В следующие выходные',
+  'Every week on {day}': 'Каждую неделю: {day}',
+  'Every month on day {day}': 'Каждый месяц {day}-го числа',
+  'Every year on {date}': 'Каждый год {date}',
+  'Type a date': 'Введите дату',
+  'Previous month': 'Предыдущий месяц',
+  'Next month': 'Следующий месяц',
+  'No time': 'Без времени',
+  'No repeat': 'Без повтора',
+  Complete: 'Выполнить',
+  Reopen: 'Открыть снова',
+  Schedule: 'Запланировать',
+  'Open in note': 'Открыть в заметке',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Другое приложение',
   'Start fresh': 'Начать с нуля',
@@ -2089,7 +2106,6 @@ export const ru: Dictionary = {
   'Any of them': 'Любое',
   Compare: 'Сравнение',
   'Add a filter': 'Добавить фильтр',
-  'Reschedule to today': 'Перенести на сегодня',
   Collapse: 'Свернуть',
   Expand: 'Развернуть',
   Summary: 'Итог',

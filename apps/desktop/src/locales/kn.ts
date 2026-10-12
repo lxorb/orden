@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'ಮರುನಿಗದಿಪಡಿಸಿ',
+  'Later this week': 'ಈ ವಾರ ನಂತರ',
+  'This weekend': 'ಈ ವಾರಾಂತ್ಯ',
+  'Next weekend': 'ಮುಂದಿನ ವಾರಾಂತ್ಯ',
+  'Every week on {day}': 'ಪ್ರತಿ ವಾರ {day}',
+  'Every month on day {day}': 'ಪ್ರತಿ ತಿಂಗಳು {day}ನೇ ದಿನ',
+  'Every year on {date}': 'ಪ್ರತಿ ವರ್ಷ {date}',
+  'Type a date': 'ದಿನಾಂಕ ಬರೆಯಿರಿ',
+  'Previous month': 'ಹಿಂದಿನ ತಿಂಗಳು',
+  'Next month': 'ಮುಂದಿನ ತಿಂಗಳು',
+  'No time': 'ಸಮಯವಿಲ್ಲ',
+  'No repeat': 'ಪುನರಾವರ್ತನೆ ಇಲ್ಲ',
+  Complete: 'ಪೂರ್ಣಗೊಳಿಸಿ',
+  Reopen: 'ಮತ್ತೆ ತೆರೆಯಿರಿ',
+  Schedule: 'ನಿಗದಿಪಡಿಸಿ',
+  'Open in note': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿ ತೆರೆಯಿರಿ',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'ಬೇರೆ ಆ್ಯಪ್',
   'Start fresh': 'ಹೊಸದಾಗಿ ಆರಂಭಿಸಿ',
@@ -2026,7 +2043,6 @@ export const kn: Dictionary = {
   'Any of them': 'ಯಾವುದಾದರೂ',
   Compare: 'ಹೋಲಿಸಿ',
   'Add a filter': 'ಫಿಲ್ಟರ್ ಸೇರಿಸಿ',
-  'Reschedule to today': 'ಇಂದಿಗೆ ಸರಿಸಿ',
   Collapse: 'ಮಡಚಿ',
   Expand: 'ವಿಸ್ತರಿಸಿ',
   Summary: 'ಸಾರಾಂಶ',

@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Reagendar',
+  'Later this week': 'Ainda nesta semana',
+  'This weekend': 'Neste fim de semana',
+  'Next weekend': 'No próximo fim de semana',
+  'Every week on {day}': 'Toda semana: {day}',
+  'Every month on day {day}': 'Todo mês no dia {day}',
+  'Every year on {date}': 'Todo ano em {date}',
+  'Type a date': 'Digite uma data',
+  'Previous month': 'Mês anterior',
+  'Next month': 'Próximo mês',
+  'No time': 'Sem horário',
+  'No repeat': 'Sem repetição',
+  Complete: 'Concluir',
+  Reopen: 'Reabrir',
+  Schedule: 'Agendar',
+  'Open in note': 'Abrir na nota',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Outro app',
   'Start fresh': 'Começar do zero',
@@ -2044,7 +2061,6 @@ export const ptBR: Dictionary = {
   'Any of them': 'Qualquer',
   Compare: 'Comparar',
   'Add a filter': 'Adicionar filtro',
-  'Reschedule to today': 'Mover para hoje',
   Collapse: 'Recolher',
   Expand: 'Expandir',
   Summary: 'Resumo',

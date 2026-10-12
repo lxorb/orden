@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Neu plane',
+  'Later this week': 'Spöter die Wuche',
+  'This weekend': 'Das Wuchenänd',
+  'Next weekend': 'Nächschts Wuchenänd',
+  'Every week on {day}': 'Jedi Wuche am {day}',
+  'Every month on day {day}': 'Jede Monet am {day}.',
+  'Every year on {date}': 'Jedes Jahr am {date}',
+  'Type a date': 'Datum iitippe',
+  'Previous month': 'Vorige Monet',
+  'Next month': 'Nächschte Monet',
+  'No time': 'Kei Ziit',
+  'No repeat': 'Kei Widerholig',
+  Complete: 'Erledige',
+  Reopen: 'Wider uftue',
+  Schedule: 'Plane',
+  'Open in note': 'I de Notiz uftue',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Anderi App',
   'Start fresh': 'Nöi aafange',
@@ -2018,7 +2035,6 @@ export const gsw: Dictionary = {
   'Any of them': 'Eini devo',
   Compare: 'Vergliich',
   'Add a filter': 'Filter dezuefüege',
-  'Reschedule to today': 'Uf hüt verschiebe',
   Collapse: 'Iichlappe',
   Expand: 'Uusklappe',
   Summary: 'Zämefassig',

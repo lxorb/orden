@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'زمان‌بندی دوباره',
+  'Later this week': 'اواخر همین هفته',
+  'This weekend': 'همین آخر هفته',
+  'Next weekend': 'آخر هفتهٔ بعد',
+  'Every week on {day}': 'هر هفته {day}',
+  'Every month on day {day}': 'هر ماه روز {day}',
+  'Every year on {date}': 'هر سال {date}',
+  'Type a date': 'تاریخی بنویسید',
+  'Previous month': 'ماه قبل',
+  'Next month': 'ماه بعد',
+  'No time': 'بدون ساعت',
+  'No repeat': 'بدون تکرار',
+  Complete: 'انجام شد',
+  Reopen: 'بازگشایی',
+  Schedule: 'زمان‌بندی',
+  'Open in note': 'باز کردن در یادداشت',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'برنامهٔ دیگر',
   'Start fresh': 'شروع از نو',
@@ -2008,7 +2025,6 @@ export const fa: Dictionary = {
   'Any of them': 'هر کدام',
   Compare: 'مقایسه',
   'Add a filter': 'افزودن فیلتر',
-  'Reschedule to today': 'انتقال به امروز',
   Collapse: 'جمع کردن',
   Expand: 'باز کردن',
   Summary: 'خلاصه',

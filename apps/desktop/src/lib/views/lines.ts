@@ -180,3 +180,21 @@ export function movedUnder(text: string, anchor: Anchor, heading: string): strin
   if (!cut) return null
   return withLines(cut.rest, cut.block, heading)
 }
+
+/** The note without a task's block: the task deleted with its description, comments
+ *  and sub-tasks. Null where the anchor names no line. */
+export function withoutBlock(text: string, anchor: Anchor): string | null {
+  return cutBlock(text, anchor)?.rest ?? null
+}
+
+/** The note with a task's block written again just under itself: Todoist's Duplicate,
+ *  the copy as the task is, sub-tasks and all, and any block name it carries left off
+ *  the copy, since a name belongs to one block. */
+export function duplicatedBlock(text: string, anchor: Anchor): string | null {
+  const index = lineOfAnchor(text, anchor)
+  if (index === null) return null
+  const lines = linesOf(text)
+  const [from, to] = blockAt(lines, index)
+  const copy = lines.slice(from, to).map((one) => one.text.replace(/\s\^[\w-]+\s*$/, ''))
+  return spliced(lines, to, to, copy)
+}

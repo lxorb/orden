@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'మళ్లీ షెడ్యూల్ చేయి',
+  'Later this week': 'ఈ వారం తర్వాత',
+  'This weekend': 'ఈ వారాంతం',
+  'Next weekend': 'వచ్చే వారాంతం',
+  'Every week on {day}': 'ప్రతి వారం {day}',
+  'Every month on day {day}': 'ప్రతి నెల {day}వ తేదీ',
+  'Every year on {date}': 'ప్రతి సంవత్సరం {date}',
+  'Type a date': 'తేదీ రాయండి',
+  'Previous month': 'గత నెల',
+  'Next month': 'వచ్చే నెల',
+  'No time': 'సమయం లేదు',
+  'No repeat': 'పునరావృతం లేదు',
+  Complete: 'పూర్తి చేయి',
+  Reopen: 'మళ్లీ తెరువు',
+  Schedule: 'షెడ్యూల్ చేయి',
+  'Open in note': 'నోట్‌లో తెరువు',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'వేరే యాప్',
   'Start fresh': 'కొత్తగా మొదలుపెట్టు',
@@ -2016,7 +2033,6 @@ export const te: Dictionary = {
   'Any of them': 'ఏదైనా',
   Compare: 'పోల్చు',
   'Add a filter': 'ఫిల్టర్ జోడించు',
-  'Reschedule to today': 'ఈ రోజుకి మార్చు',
   Collapse: 'కుదించు',
   Expand: 'విస్తరించు',
   Summary: 'సారాంశం',

@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Yeniden planla',
+  'Later this week': 'Bu hafta daha sonra',
+  'This weekend': 'Bu hafta sonu',
+  'Next weekend': 'Gelecek hafta sonu',
+  'Every week on {day}': 'Her hafta {day}',
+  'Every month on day {day}': 'Her ayın {day}. günü',
+  'Every year on {date}': 'Her yıl {date}',
+  'Type a date': 'Bir tarih yazın',
+  'Previous month': 'Önceki ay',
+  'Next month': 'Sonraki ay',
+  'No time': 'Saat yok',
+  'No repeat': 'Tekrar yok',
+  Complete: 'Tamamla',
+  Reopen: 'Yeniden aç',
+  Schedule: 'Planla',
+  'Open in note': 'Notta aç',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Başka bir uygulama',
   'Start fresh': 'Sıfırdan başla',
@@ -2014,7 +2031,6 @@ export const tr: Dictionary = {
   'Any of them': 'Herhangi biri',
   Compare: 'Karşılaştır',
   'Add a filter': 'Filtre ekle',
-  'Reschedule to today': 'Bugüne taşı',
   Collapse: 'Daralt',
   Expand: 'Genişlet',
   Summary: 'Özet',

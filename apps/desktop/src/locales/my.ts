@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'အချိန်ပြန်သတ်မှတ်',
+  'Later this week': 'ဤအပတ်နောက်ပိုင်း',
+  'This weekend': 'ဤအပတ်ကုန်',
+  'Next weekend': 'နောက်အပတ်ကုန်',
+  'Every week on {day}': 'အပတ်တိုင်း {day}',
+  'Every month on day {day}': 'လတိုင်း {day} ရက်',
+  'Every year on {date}': 'နှစ်တိုင်း {date}',
+  'Type a date': 'ရက်စွဲရိုက်ထည့်ပါ',
+  'Previous month': 'ယခင်လ',
+  'Next month': 'နောက်လ',
+  'No time': 'အချိန် မရှိ',
+  'No repeat': 'ထပ်ခါ မရှိ',
+  Complete: 'ပြီးစီး',
+  Reopen: 'ပြန်ဖွင့်',
+  Schedule: 'အချိန်သတ်မှတ်',
+  'Open in note': 'မှတ်စုတွင် ဖွင့်',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'အခြားအက်ပ်',
   'Start fresh': 'အသစ်စတင်ပါ',
@@ -1992,7 +2009,6 @@ export const my: Dictionary = {
   'Any of them': 'တစ်ခုခု',
   Compare: 'နှိုင်းယှဉ်ရန်',
   'Add a filter': 'စစ်ထုတ်မှု ထည့်ရန်',
-  'Reschedule to today': 'ယနေ့သို့ ရွှေ့ရန်',
   Collapse: 'ခေါက်ရန်',
   Expand: 'ဖြန့်ရန်',
   Summary: 'အကျဉ်းချုပ်',

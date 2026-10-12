@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'กำหนดเวลาใหม่',
+  'Later this week': 'ภายหลังในสัปดาห์นี้',
+  'This weekend': 'สุดสัปดาห์นี้',
+  'Next weekend': 'สุดสัปดาห์หน้า',
+  'Every week on {day}': 'ทุกสัปดาห์ วัน{day}',
+  'Every month on day {day}': 'ทุกเดือน วันที่ {day}',
+  'Every year on {date}': 'ทุกปี วันที่ {date}',
+  'Type a date': 'พิมพ์วันที่',
+  'Previous month': 'เดือนก่อน',
+  'Next month': 'เดือนถัดไป',
+  'No time': 'ไม่มีเวลา',
+  'No repeat': 'ไม่ทำซ้ำ',
+  Complete: 'ทำเสร็จ',
+  Reopen: 'เปิดอีกครั้ง',
+  Schedule: 'กำหนดเวลา',
+  'Open in note': 'เปิดในโน้ต',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'แอปอื่น',
   'Start fresh': 'เริ่มใหม่',
@@ -1969,7 +1986,6 @@ export const th: Dictionary = {
   'Any of them': 'อย่างใดอย่างหนึ่ง',
   Compare: 'เปรียบเทียบ',
   'Add a filter': 'เพิ่มตัวกรอง',
-  'Reschedule to today': 'ย้ายมาวันนี้',
   Collapse: 'ยุบ',
   Expand: 'ขยาย',
   Summary: 'สรุป',

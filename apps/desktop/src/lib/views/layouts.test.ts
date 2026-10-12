@@ -1,4 +1,5 @@
 import { answer, type Base, builtinView, cellValue, readBase, type Row } from '@nib/bases'
+import { timeWords } from '@nib/editor/task-days'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -102,10 +103,10 @@ describe('the list', () => {
     const html = render(ListLayout, { props: { kit: kitOf(builtinView('today'), TASKS) } }).body
     expect(html).toContain('Overdue')
     expect(html.indexOf('Call the bank')).toBeLessThan(html.indexOf('Milk'))
-    expect(html).toContain('16:00')
+    expect(html).toContain(timeWords('16:00'))
     expect(html).toContain('Errands')
     expect(html.match(/Add task/g)?.length).toBe(2)
-    expect(html).toContain('Reschedule to today')
+    expect(html).toContain('Reschedule')
   })
 
   test('puts a sub-task under its parent in a project', () => {

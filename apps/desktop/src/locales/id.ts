@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Jadwalkan ulang',
+  'Later this week': 'Nanti minggu ini',
+  'This weekend': 'Akhir pekan ini',
+  'Next weekend': 'Akhir pekan depan',
+  'Every week on {day}': 'Setiap minggu pada {day}',
+  'Every month on day {day}': 'Setiap bulan pada tanggal {day}',
+  'Every year on {date}': 'Setiap tahun pada {date}',
+  'Type a date': 'Ketik tanggal',
+  'Previous month': 'Bulan sebelumnya',
+  'Next month': 'Bulan berikutnya',
+  'No time': 'Tanpa waktu',
+  'No repeat': 'Tanpa pengulangan',
+  Complete: 'Selesaikan',
+  Reopen: 'Buka kembali',
+  Schedule: 'Jadwalkan',
+  'Open in note': 'Buka di catatan',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Aplikasi lain',
   'Start fresh': 'Mulai dari awal',
@@ -2000,7 +2017,6 @@ export const id: Dictionary = {
   'Any of them': 'Salah satu',
   Compare: 'Bandingkan',
   'Add a filter': 'Tambah filter',
-  'Reschedule to today': 'Pindahkan ke hari ini',
   Collapse: 'Ciutkan',
   Expand: 'Bentangkan',
   Summary: 'Ringkasan',

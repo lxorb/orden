@@ -170,7 +170,7 @@ def open_builtin(page: Page, name: str) -> None:
 
 def today_and_upcoming(page: Page) -> None:
     open_builtin(page, "today")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     say(f"[today] {json.dumps(words, ensure_ascii=False)}")
     for wanted in ["Call the bank", "Water the plants", "Renew passport"]:
         if wanted not in words:
@@ -181,7 +181,7 @@ def today_and_upcoming(page: Page) -> None:
     shot(page, "02-today")
 
     open_builtin(page, "upcoming")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     say(f"[upcoming] {json.dumps(words, ensure_ascii=False)}")
     for wanted in ["Milk", "Draft the talk"]:
         if wanted not in words:
@@ -373,7 +373,7 @@ def at_phone_width(browser: Browser) -> None:
     DRIVE.open(page)
     seed(page)
     open_builtin(page, "today")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     if "Call the bank" not in words:
         wrong(f"Today at phone width holds {words}")
     shot(page, "10-phone-today")

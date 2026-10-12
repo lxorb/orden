@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'மீண்டும் திட்டமிடு',
+  'Later this week': 'இந்த வாரம் பின்னர்',
+  'This weekend': 'இந்த வார இறுதி',
+  'Next weekend': 'அடுத்த வார இறுதி',
+  'Every week on {day}': 'ஒவ்வொரு வாரமும் {day}',
+  'Every month on day {day}': 'ஒவ்வொரு மாதமும் {day}ஆம் தேதி',
+  'Every year on {date}': 'ஒவ்வொரு ஆண்டும் {date}',
+  'Type a date': 'தேதியை எழுதுக',
+  'Previous month': 'முந்தைய மாதம்',
+  'Next month': 'அடுத்த மாதம்',
+  'No time': 'நேரம் இல்லை',
+  'No repeat': 'மீள்செயல் இல்லை',
+  Complete: 'முடி',
+  Reopen: 'மீண்டும் திற',
+  Schedule: 'திட்டமிடு',
+  'Open in note': 'குறிப்பில் திற',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'வேறு ஆப்',
   'Start fresh': 'புதிதாகத் தொடங்கு',
@@ -2037,7 +2054,6 @@ export const ta: Dictionary = {
   'Any of them': 'ஏதேனும்',
   Compare: 'ஒப்பிடு',
   'Add a filter': 'வடிகட்டியைச் சேர்',
-  'Reschedule to today': 'இன்றைக்கு மாற்று',
   Collapse: 'சுருக்கு',
   Expand: 'விரி',
   Summary: 'சுருக்கம்',

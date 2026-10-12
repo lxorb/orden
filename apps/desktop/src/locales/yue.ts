@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '改期',
+  'Later this week': '今個禮拜遲啲',
+  'This weekend': '今個週末',
+  'Next weekend': '下個週末',
+  'Every week on {day}': '每個禮拜{day}',
+  'Every month on day {day}': '每個月{day}號',
+  'Every year on {date}': '每年{date}',
+  'Type a date': '輸入日期',
+  'Previous month': '上個月',
+  'Next month': '下個月',
+  'No time': '冇時間',
+  'No repeat': '唔重複',
+  Complete: '完成',
+  Reopen: '重新打開',
+  Schedule: '排期',
+  'Open in note': '喺筆記度打開',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '其他 app',
   'Start fresh': '重新開始',
@@ -1958,7 +1975,6 @@ export const yue: Dictionary = {
   'Any of them': '任何一個',
   Compare: '比較',
   'Add a filter': '加篩選',
-  'Reschedule to today': '改去今日',
   Collapse: '收埋',
   Expand: '打開',
   Summary: '總結',

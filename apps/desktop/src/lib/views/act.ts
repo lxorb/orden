@@ -12,6 +12,7 @@
 import { tick } from '@nib/bases'
 import type { Row } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
+import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
@@ -24,12 +25,14 @@ import { dayOf } from './days'
 import type { Drop } from './drop'
 import {
   cutBlock,
+  duplicatedBlock,
   indentedBlock,
   lineOfAnchor,
   movedBeside,
   movedBlock,
   movedUnder,
   withLines,
+  withoutBlock,
 } from './lines'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
@@ -56,15 +59,9 @@ export function writeRow(row: Row, change: RowChange): Promise<boolean> {
   return rows.write(row, change)
 }
 
-/** One change made to many rows as one write, so one undo takes all of it back:
- *  Today's "Reschedule to today" over every overdue task. Each note is read once and
- *  every change in it made on its words in turn. */
-export function writeRows(many: readonly Row[], change: RowChange): Promise<boolean> {
-  return writeEach(many.map((row) => ({ row, change })))
-}
-
-/** A change of its own to each of many rows, as one write: an option renamed in every
- *  note that holds it, ids given to a base's rows. `join` makes it one undo with the
+/** A change of its own to each of many rows, as one write, so one undo takes all of it
+ *  back: Overdue's Reschedule, an option renamed in every note that holds it, ids given
+ *  to a base's rows. `join` makes it one undo with the
  *  write just before, where it follows from that one (an automation). */
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
@@ -129,6 +126,59 @@ export async function moveBeside(row: Row, target: Row, after: boolean): Promise
     return false
   }
   return rewrite(path, (before) => movedBeside(before, anchor, there, after))
+}
+
+/** Many tasks deleted as one write, so one undo brings all of them back: the bulk
+ *  bar's Delete. Each note is cut from its last task up, so the lines above a cut are
+ *  where the anchors say. */
+export async function deleteRows(many: readonly Row[]): Promise<boolean> {
+  const byNote = new Map<string, Row[]>()
+  for (const row of many) {
+    const path = pathOf(row)
+    if (path !== null && row.anchor) byNote.set(path, [...(byNote.get(path) ?? []), row])
+  }
+  const changes = []
+  for (const [path, inNote] of byNote) {
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    let after = before
+    const upward = [...inNote].sort((a, b) => (b.anchor?.line ?? 0) - (a.anchor?.line ?? 0))
+    for (const row of upward) if (row.anchor) after = withoutBlock(after, row.anchor) ?? after
+    const edit = oneEdit(before, after)
+    if (edit) changes.push(changeOf(path, before, [edit]))
+  }
+  if (!changes.length) return false
+  await replaceInNotes(workspace, changes)
+  return true
+}
+
+/** A task written again just under itself, with everything under it: Duplicate. */
+export async function duplicateRow(row: Row): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  return rewrite(path, (before) => duplicatedBlock(before, anchor))
+}
+
+/** The link to a task, Obsidian's block reference: the task's block name, given it the
+ *  first time it is asked for (one edit, `^` and the name at the end of its line), and
+ *  `[[Note#^name]]`, which opens the task here and in Obsidian. Null where the task is
+ *  not in its note any more. */
+export async function linkToRow(row: Row): Promise<string | null> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return null
+  const note = row.path.replace(/\.md$/i, '')
+  if (row.task?.block) return `[[${note}#^${row.task.block}]]`
+
+  const before = await noteText(workspace, path)
+  if (before === null) return null
+  const id = freeBlockId(new Set(blockIds(before).map((one) => one.id)))
+  const after = changed(before, row, { task: { block: id } })
+  if (after === null) return null
+  const edit = oneEdit(before, after)
+  if (edit) await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  return `[[${note}#^${id}]]`
 }
 
 /** Tab and Shift+Tab: a sub-task of the task above it, or lifted out a level. */

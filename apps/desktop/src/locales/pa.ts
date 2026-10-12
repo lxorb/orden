@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'ਮੁੜ ਸਮਾਂ ਤੈਅ ਕਰੋ',
+  'Later this week': 'ਇਸ ਹਫ਼ਤੇ ਬਾਅਦ ਵਿੱਚ',
+  'This weekend': 'ਇਸ ਹਫ਼ਤੇ ਦੇ ਅੰਤ',
+  'Next weekend': 'ਅਗਲੇ ਹਫ਼ਤੇ ਦੇ ਅੰਤ',
+  'Every week on {day}': 'ਹਰ ਹਫ਼ਤੇ {day}',
+  'Every month on day {day}': 'ਹਰ ਮਹੀਨੇ ਦੀ {day} ਤਾਰੀਖ',
+  'Every year on {date}': 'ਹਰ ਸਾਲ {date}',
+  'Type a date': 'ਤਾਰੀਖ ਲਿਖੋ',
+  'Previous month': 'ਪਿਛਲਾ ਮਹੀਨਾ',
+  'Next month': 'ਅਗਲਾ ਮਹੀਨਾ',
+  'No time': 'ਕੋਈ ਸਮਾਂ ਨਹੀਂ',
+  'No repeat': 'ਕੋਈ ਦੁਹਰਾਅ ਨਹੀਂ',
+  Complete: 'ਪੂਰਾ ਕਰੋ',
+  Reopen: 'ਮੁੜ ਖੋਲ੍ਹੋ',
+  Schedule: 'ਸਮਾਂ ਤੈਅ ਕਰੋ',
+  'Open in note': 'ਨੋਟ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'ਕੋਈ ਹੋਰ ਐਪ',
   'Start fresh': 'ਨਵੇਂ ਸਿਰੇ ਤੋਂ ਸ਼ੁਰੂ ਕਰੋ',
@@ -2013,7 +2030,6 @@ export const pa: Dictionary = {
   'Any of them': 'ਕੋਈ ਵੀ',
   Compare: 'ਤੁਲਨਾ',
   'Add a filter': 'ਫਿਲਟਰ ਜੋੜੋ',
-  'Reschedule to today': 'ਅੱਜ ’ਤੇ ਲਿਜਾਓ',
   Collapse: 'ਸਮੇਟੋ',
   Expand: 'ਫੈਲਾਓ',
   Summary: 'ਸਾਰ',

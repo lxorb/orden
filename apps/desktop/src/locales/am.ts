@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'እንደገና መድብ',
+  'Later this week': 'በዚህ ሳምንት በኋላ',
+  'This weekend': 'በዚህ ሳምንት መጨረሻ',
+  'Next weekend': 'በሚቀጥለው ሳምንት መጨረሻ',
+  'Every week on {day}': 'በየሳምንቱ {day}',
+  'Every month on day {day}': 'በየወሩ ቀን {day}',
+  'Every year on {date}': 'በየዓመቱ {date}',
+  'Type a date': 'ቀን ይጻፉ',
+  'Previous month': 'ያለፈው ወር',
+  'Next month': 'የሚቀጥለው ወር',
+  'No time': 'ሰዓት የለም',
+  'No repeat': 'ድግግሞሽ የለም',
+  Complete: 'አጠናቅቅ',
+  Reopen: 'እንደገና ክፈት',
+  Schedule: 'መድብ',
+  'Open in note': 'በማስታወሻው ውስጥ ክፈት',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'ሌላ መተግበሪያ',
   'Start fresh': 'አዲስ ጀምር',
@@ -1983,7 +2000,6 @@ export const am: Dictionary = {
   'Any of them': 'ማንኛውም',
   Compare: 'አወዳድር',
   'Add a filter': 'ማጣሪያ አክል',
-  'Reschedule to today': 'ወደ ዛሬ አዛውር',
   Collapse: 'ሰብስብ',
   Expand: 'ዘርጋ',
   Summary: 'ማጠቃለያ',

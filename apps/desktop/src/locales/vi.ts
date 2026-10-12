@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Lên lịch lại',
+  'Later this week': 'Mấy hôm nữa trong tuần',
+  'This weekend': 'Cuối tuần này',
+  'Next weekend': 'Cuối tuần sau',
+  'Every week on {day}': 'Hằng tuần vào {day}',
+  'Every month on day {day}': 'Hằng tháng vào ngày {day}',
+  'Every year on {date}': 'Hằng năm vào {date}',
+  'Type a date': 'Nhập ngày',
+  'Previous month': 'Tháng trước',
+  'Next month': 'Tháng sau',
+  'No time': 'Không có giờ',
+  'No repeat': 'Không lặp lại',
+  Complete: 'Hoàn thành',
+  Reopen: 'Mở lại',
+  Schedule: 'Lên lịch',
+  'Open in note': 'Mở trong ghi chú',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Ứng dụng khác',
   'Start fresh': 'Bắt đầu mới',
@@ -1988,7 +2005,6 @@ export const vi: Dictionary = {
   'Any of them': 'Bất kỳ',
   Compare: 'So sánh',
   'Add a filter': 'Thêm bộ lọc',
-  'Reschedule to today': 'Dời sang hôm nay',
   Collapse: 'Thu gọn',
   Expand: 'Mở rộng',
   Summary: 'Tóm tắt',

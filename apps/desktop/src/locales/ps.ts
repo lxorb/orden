@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'بیا مهالویش',
+  'Later this week': 'د دې اونۍ وروسته',
+  'This weekend': 'د دې اونۍ پای',
+  'Next weekend': 'د راتلونکې اونۍ پای',
+  'Every week on {day}': 'هره اونۍ {day}',
+  'Every month on day {day}': 'هره میاشت په {day} نېټه',
+  'Every year on {date}': 'هر کال {date}',
+  'Type a date': 'نېټه ولیکئ',
+  'Previous month': 'تېره میاشت',
+  'Next month': 'راتلونکې میاشت',
+  'No time': 'وخت نشته',
+  'No repeat': 'تکرار نشته',
+  Complete: 'بشپړ کړئ',
+  Reopen: 'بیا پرانیزئ',
+  Schedule: 'مهالویش',
+  'Open in note': 'په یادښت کې پرانیزئ',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'بل اپ',
   'Start fresh': 'له سره پیل کړئ',
@@ -2010,7 +2027,6 @@ export const ps: Dictionary = {
   'Any of them': 'هر یو',
   Compare: 'پرتله',
   'Add a filter': 'چاڼګر ورزیات کړئ',
-  'Reschedule to today': 'نن ته یې یوسئ',
   Collapse: 'راټول کړئ',
   Expand: 'پراخ کړئ',
   Summary: 'لنډیز',

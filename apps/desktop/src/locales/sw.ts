@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Panga upya',
+  'Later this week': 'Baadaye wiki hii',
+  'This weekend': 'Wikendi hii',
+  'Next weekend': 'Wikendi ijayo',
+  'Every week on {day}': 'Kila wiki siku ya {day}',
+  'Every month on day {day}': 'Kila mwezi tarehe {day}',
+  'Every year on {date}': 'Kila mwaka tarehe {date}',
+  'Type a date': 'Andika tarehe',
+  'Previous month': 'Mwezi uliopita',
+  'Next month': 'Mwezi ujao',
+  'No time': 'Hakuna saa',
+  'No repeat': 'Hakuna kurudia',
+  Complete: 'Kamilisha',
+  Reopen: 'Fungua tena',
+  Schedule: 'Panga',
+  'Open in note': 'Fungua kwenye dokezo',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'Programu nyingine',
   'Start fresh': 'Anza upya',
@@ -2036,7 +2053,6 @@ export const sw: Dictionary = {
   'Any of them': 'Yoyote',
   Compare: 'Linganisha',
   'Add a filter': 'Ongeza kichujio',
-  'Reschedule to today': 'Hamishia leo',
   Collapse: 'Kunja',
   Expand: 'Panua',
   Summary: 'Muhtasari',

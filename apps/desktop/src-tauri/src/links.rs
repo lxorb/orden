@@ -54,6 +54,11 @@ const MOST_TASKS: usize = 5000;
 /// and the rows keep what a row can show.
 const LONGEST_TASK: usize = 2000;
 
+/// How much of a task's description is kept, in characters: its first line, and more
+/// of it than any row has room for. The twin of `LONGEST_DESCRIPTION` in
+/// packages/bases/src/scan.ts.
+const LONGEST_DESCRIPTION: usize = 300;
+
 /// One task line of a note, raw. The rows of a space are built from these in the
 /// window, which reads the fields with the one parser it has (`@nib/bases`), so the
 /// crate and the window cannot disagree about what a date or a priority is. See
@@ -70,6 +75,93 @@ pub struct Task {
     text: String,
     /// The headings above it, outermost first: the section it is filed under.
     section: Vec<String>,
+    /// The first line of the prose written under it before any list item: its
+    /// description, which a row shows under the words.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+    /// How many list items written directly under it are not tasks: its comments.
+    #[serde(skip_serializing_if = "is_zero")]
+    comments: usize,
+}
+
+/// Whether a count is nothing, so a task with no comments says nothing about them.
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_zero(count: &usize) -> bool {
+    *count == 0
+}
+
+/// A list item the walk is inside of, for what is written under a task. The twin of
+/// `Open` in packages/bases/src/scan.ts.
+struct Open {
+    indent: usize,
+    /// Which of the note's tasks it is, where it is one.
+    task: Option<usize>,
+    /// Whether a list item has been written under it yet: a line of prose after that
+    /// is no longer its description.
+    told: bool,
+}
+
+/// Whether a line is a list item of any kind, a bullet or a number and then a blank
+/// or the end of the line. The twin of `LIST_ITEM` in packages/bases/src/scan.ts.
+fn is_list_item(line: &str) -> bool {
+    let rest = line.trim_start_matches([' ', '\t']);
+    let after = if let Some(after) = rest.strip_prefix(['-', '*', '+']) {
+        after
+    } else {
+        let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+        if digits == 0 || digits > 9 {
+            return false;
+        }
+        match rest[digits..].strip_prefix(['.', ')']) {
+            Some(after) => after,
+            None => return false,
+        }
+    };
+    after.is_empty() || after.starts_with([' ', '\t'])
+}
+
+/// What a line says about the task it is written under, if any. A line belongs to the
+/// nearest list item indented less than it is, so a bullet under a comment is part of
+/// that comment, and a line indented no further than a task ends it; a blank line ends
+/// nothing. Under a task, a list item that is not a task is a comment, and the first
+/// line of prose before any list item is the description. The twin of `under` in
+/// packages/bases/src/scan.ts.
+fn under(open: &mut Vec<Open>, tasks: &mut [Task], line: &str, task: Option<usize>, is_task: bool) {
+    let words = line.trim();
+    if words.is_empty() {
+        return;
+    }
+    let indent = line.chars().count() - line.trim_start().chars().count();
+    while open.last().is_some_and(|one| one.indent >= indent) {
+        open.pop();
+    }
+    let owner = open.last_mut();
+
+    if is_task || is_list_item(line) {
+        if let Some(owner) = owner {
+            if let Some(at) = owner.task {
+                owner.told = true;
+                if !is_task {
+                    tasks[at].comments += 1;
+                }
+            }
+        }
+        open.push(Open {
+            indent,
+            task,
+            told: false,
+        });
+    } else if let Some(Open {
+        task: Some(at),
+        told: false,
+        ..
+    }) = owner
+    {
+        let held = &mut tasks[*at];
+        if held.description.is_none() {
+            held.description = Some(clipped(words, LONGEST_DESCRIPTION).to_string());
+        }
+    }
 }
 
 /// What a note's file says about itself, for the rows' `file.size`, `file.mtime` and
@@ -556,31 +648,42 @@ fn prose(body: &str, words_from: usize) -> Prose {
     let mut headings = Vec::new();
     let mut blocks = Vec::new();
     let mut links = Vec::new();
-    let mut tasks = Vec::new();
+    let mut tasks: Vec<Task> = Vec::new();
     // The headings the walk is under, each with its level, outermost first.
     let mut section: Vec<(usize, String)> = Vec::new();
+    // The list items it is inside of, for what is written under each task.
+    let mut open: Vec<Open> = Vec::new();
 
     prose_lines(body, |index, line| {
-        if let Some((level, text)) = heading_of(line) {
+        let heading = heading_of(line);
+        if let Some((level, text)) = heading {
             if index >= words_from {
                 while section.last().is_some_and(|(above, _)| *above >= level) {
                     section.pop();
                 }
                 section.push((level, text.clone()));
+                // A heading ends every list above it.
+                open.clear();
             }
             headings.push(text);
-        }
-
-        if index >= words_from && tasks.len() < MOST_TASKS {
-            if let Some(task) = task_at(line) {
-                tasks.push(Task {
-                    line: index,
-                    indent: task.indent,
-                    mark: task.mark,
-                    text: clipped(&line[task.marker..], LONGEST_TASK).to_string(),
-                    section: section.iter().map(|(_, text)| text.clone()).collect(),
-                });
+        } else if index >= words_from {
+            let item = task_at(line);
+            let mut task = None;
+            if let Some(found) = &item {
+                if tasks.len() < MOST_TASKS {
+                    task = Some(tasks.len());
+                    tasks.push(Task {
+                        line: index,
+                        indent: found.indent,
+                        mark: found.mark,
+                        text: clipped(&line[found.marker..], LONGEST_TASK).to_string(),
+                        section: section.iter().map(|(_, text)| text.clone()).collect(),
+                        description: None,
+                        comments: 0,
+                    });
+                }
             }
+            under(&mut open, &mut tasks, line, task, item.is_some());
         }
         if let Some(id) = block_id_of(line) {
             blocks.push(id);
@@ -1037,7 +1140,8 @@ fn hex(byte: u8) -> Option<u8> {
 mod tests {
     use super::{
         block_id_of, canvas_note, decode, favicon_of, heading_of, note_at, note_tags, prose,
-        shortcut_note, stamp_of, without_code, words_stamped, Link, LONGEST_TASK,
+        shortcut_note, stamp_of, without_code, words_stamped, Link, LONGEST_DESCRIPTION,
+        LONGEST_TASK,
     };
 
     /// The links out of one note, which is one of the three lists the pass down it
@@ -1534,6 +1638,63 @@ mod tests {
         let read = note_at("Long.md".to_string(), &long);
 
         assert_eq!(read.tasks[0].text.chars().count(), LONGEST_TASK);
+    }
+
+    /// A task says the first line of its description and how many comments it has.
+    /// The twin of the same case in packages/bases/src/scan.test.ts.
+    #[test]
+    fn a_task_carries_its_description_and_its_comments() {
+        let note = [
+            "- [ ] Call the bank",
+            "  Their number is on the back.",
+            "  And a second line.",
+            "",
+            "  - [ ] Find the old card",
+            "    - a note under the sub-task",
+            "  - Called, no answer.",
+            "    - a bullet inside the comment",
+            "  - Called again.",
+            "- [ ] Water the plants",
+            "Lazy words at the margin belong to nobody.",
+            "- [ ] Pay rent",
+            "  - [ ] One step",
+            "  Words after a step are not the description.",
+            "## Next",
+            "  Under a heading, nobody.",
+        ]
+        .join("\n");
+        let read = note_at("Errands.md".to_string(), &note);
+
+        let tasks: Vec<_> = read
+            .tasks
+            .iter()
+            .map(|one| (one.text.as_str(), one.description.as_deref(), one.comments))
+            .collect();
+        assert_eq!(
+            tasks,
+            [
+                ("Call the bank", Some("Their number is on the back."), 2),
+                ("Find the old card", None, 1),
+                ("Water the plants", None, 0),
+                ("Pay rent", None, 0),
+                ("One step", None, 0),
+            ]
+        );
+    }
+
+    /// A description is kept to a length, and code under a task is no description.
+    #[test]
+    fn a_description_is_kept_to_a_length_and_code_is_none() {
+        let long = format!("- [ ] a\n  {}\n", "é".repeat(LONGEST_DESCRIPTION + 5));
+        let read = note_at("Long.md".to_string(), &long);
+        let kept = read.tasks[0].description.as_deref().unwrap_or_default();
+        assert_eq!(kept.chars().count(), LONGEST_DESCRIPTION);
+
+        let code = note_at(
+            "Code.md".to_string(),
+            "- [ ] a\n  ```\n  not words\n  ```\n  words\r\n",
+        );
+        assert_eq!(code.tasks[0].description.as_deref(), Some("words"));
     }
 
     /// What the task lines add to a scan of 5,000 notes holding 10,000 tasks: the same

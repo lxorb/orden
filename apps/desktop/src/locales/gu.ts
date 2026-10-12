@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'ફરી સમય નક્કી કરો',
+  'Later this week': 'આ અઠવાડિયે પછી',
+  'This weekend': 'આ સપ્તાહાંતે',
+  'Next weekend': 'આવતા સપ્તાહાંતે',
+  'Every week on {day}': 'દર અઠવાડિયે {day}',
+  'Every month on day {day}': 'દર મહિને {day} તારીખે',
+  'Every year on {date}': 'દર વર્ષે {date}',
+  'Type a date': 'તારીખ લખો',
+  'Previous month': 'પાછલો મહિનો',
+  'Next month': 'આવતો મહિનો',
+  'No time': 'સમય નથી',
+  'No repeat': 'પુનરાવર્તન નથી',
+  Complete: 'પૂર્ણ કરો',
+  Reopen: 'ફરી ખોલો',
+  Schedule: 'સમય નક્કી કરો',
+  'Open in note': 'નોંધમાં ખોલો',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'બીજી એપ',
   'Start fresh': 'નવેસરથી શરૂ કરો',
@@ -1999,7 +2016,6 @@ export const gu: Dictionary = {
   'Any of them': 'કોઈ પણ',
   Compare: 'સરખામણી',
   'Add a filter': 'ફિલ્ટર ઉમેરો',
-  'Reschedule to today': 'આજે ખસેડો',
   Collapse: 'સંકેલો',
   Expand: 'વિસ્તારો',
   Summary: 'સારાંશ',

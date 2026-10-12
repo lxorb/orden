@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { LONGEST_TASK, scanRows } from './scan'
+import { LONGEST_DESCRIPTION, LONGEST_TASK, scanRows } from './scan'
 
 /** The twins of the crate's cases in links.rs: the same notes, the same answers. */
 describe('what a note gives the rows of its space', () => {
@@ -40,5 +40,44 @@ describe('what a note gives the rows of its space', () => {
   test('a heading of the same level or higher closes the one before it', () => {
     const { tasks } = scanRows('## A\n### B\n- [ ] one\n## C\n- [ ] two\n#nottag\n- [ ] three\n')
     expect(tasks.map((one) => one.section)).toEqual([['A', 'B'], ['C'], ['C']])
+  })
+
+  test('a task says the first line of its description and how many comments it has', () => {
+    const { tasks } = scanRows(
+      [
+        '- [ ] Call the bank',
+        '  Their number is on the back.',
+        '  And a second line.',
+        '',
+        '  - [ ] Find the old card',
+        '    - a note under the sub-task',
+        '  - Called, no answer.',
+        '    - a bullet inside the comment',
+        '  - Called again.',
+        '- [ ] Water the plants',
+        'Lazy words at the margin belong to nobody.',
+        '- [ ] Pay rent',
+        '  - [ ] One step',
+        '  Words after a step are not the description.',
+        '## Next',
+        '  Under a heading, nobody.',
+      ].join('\n'),
+    )
+
+    expect(tasks.map((one) => [one.text, one.description, one.comments])).toEqual([
+      ['Call the bank', 'Their number is on the back.', 2],
+      ['Find the old card', undefined, 1],
+      ['Water the plants', undefined, undefined],
+      ['Pay rent', undefined, undefined],
+      ['One step', undefined, undefined],
+    ])
+  })
+
+  test('a description is kept to a length, and code under a task is no description', () => {
+    const long = scanRows(`- [ ] a\n  ${'é'.repeat(LONGEST_DESCRIPTION + 5)}\n`)
+    expect(Array.from(long.tasks[0]?.description ?? '')).toHaveLength(LONGEST_DESCRIPTION)
+
+    const code = scanRows('- [ ] a\n  ```\n  not words\n  ```\n  words\r\n')
+    expect(code.tasks[0]?.description).toBe('words')
   })
 })

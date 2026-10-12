@@ -1,6 +1,23 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '일정 변경',
+  'Later this week': '이번 주 후반',
+  'This weekend': '이번 주말',
+  'Next weekend': '다음 주말',
+  'Every week on {day}': '매주 {day}',
+  'Every month on day {day}': '매월 {day}일',
+  'Every year on {date}': '매년 {date}',
+  'Type a date': '날짜 입력',
+  'Previous month': '이전 달',
+  'Next month': '다음 달',
+  'No time': '시간 없음',
+  'No repeat': '반복 없음',
+  Complete: '완료',
+  Reopen: '다시 열기',
+  Schedule: '일정 잡기',
+  'Open in note': '노트에서 열기',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '다른 앱',
   'Start fresh': '새로 시작',
@@ -1981,7 +1998,6 @@ export const ko: Dictionary = {
   'Any of them': '하나라도',
   Compare: '비교',
   'Add a filter': '필터 추가',
-  'Reschedule to today': '오늘로 옮기기',
   Collapse: '접기',
   Expand: '펼치기',
   Summary: '요약',
