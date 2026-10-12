@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: 'Yêu thích',
+  'Add project': 'Thêm dự án',
+  'Add sub-project': 'Thêm dự án con',
   // Tasks: the task view
   'Sub-tasks': 'Việc con',
   'Add sub-task': 'Thêm việc con',

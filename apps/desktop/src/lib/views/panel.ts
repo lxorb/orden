@@ -1,10 +1,10 @@
 /** What the Tasks panel lists, with its counts: Inbox, Today and Upcoming as the views
- *  they open answer them, then the projects (every note with open tasks, the most
+ *  they open answer them, then the notes (every note with open tasks, the most
  *  recently written first) and the labels (every tag on an open task).
  *
  *  Inbox, Today and Upcoming are counted by the engine answering the very bases their
  *  tabs open (`builtinView`), so a number in the panel and the rows behind it can never
- *  disagree. The projects and labels are one pass over the open tasks. Pure: the panel
+ *  disagree. The notes and labels are one pass over the open tasks. Pure: the panel
  *  hands in the rows and the day, and draws the answer. */
 
 import { answer, type Base, builtinView, type Row } from '@nib/bases'
@@ -31,7 +31,8 @@ export interface PanelCounts {
   /** Whether any of Today's tasks are overdue, which turns its count to the danger tone. */
   overdue: boolean
   upcoming: number
-  projects: Project[]
+  /** Every note with open tasks, which the panel sorts into projects and the rest. */
+  notes: Project[]
   labels: Label[]
 }
 
@@ -90,14 +91,22 @@ export function panelCounts(
     today: todayAnswer.total,
     overdue: todayAnswer.groups.some((group) => group.key === true && group.rows.length > 0),
     upcoming: answer(builtin('upcoming', inboxes), 0, rows, context).total,
-    projects: [...projects.values()].sort(
-      (a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name),
-    ),
+    notes: [...projects.values()].sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
     labels: [...labels.entries()]
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)),
   }
 }
 
-/** How many projects the panel lists before the rest go under More. */
-export const PROJECTS_SHOWN = 7
+/** Open tasks per note of one space, by the note's path in it. */
+export function openByPath(
+  notes: readonly Project[],
+  space: string | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>()
+  for (const one of notes) if (one.space === space) out.set(one.path, one.count)
+  return out
+}
+
+/** How many notes the panel lists before the rest go under More. */
+export const NOTES_SHOWN = 7

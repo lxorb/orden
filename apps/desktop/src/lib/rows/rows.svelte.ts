@@ -21,6 +21,7 @@ import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
 import { inboxes, inboxOf } from './inbox'
+import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { type RowsListener, RowsStore } from './store'
 import { type RowChange, writeRow } from './write'
@@ -42,6 +43,7 @@ const store = new RowsStore({
 links.hearSaves((path, content) => store.saved(path, content))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))
+workspace.fileOps.follow(keeping(projectFolders))
 
 // The spaces as the window has them: a new one read, one gone forgotten, one renamed
 // renamed. Handed over untracked, so the store's own reads are never this effect's.

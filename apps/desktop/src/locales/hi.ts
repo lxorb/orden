@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: 'पसंदीदा',
+  'Add project': 'प्रोजेक्ट जोड़ें',
+  'Add sub-project': 'उप-प्रोजेक्ट जोड़ें',
   // Tasks: the task view
   'Sub-tasks': 'उप-कार्य',
   'Add sub-task': 'उप-कार्य जोड़ें',

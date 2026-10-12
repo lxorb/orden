@@ -476,7 +476,7 @@ describe('the panel', () => {
     ]
     const counts = panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }])
     expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 1 })
-    expect(counts.projects.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
+    expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
       'Errands 2',
       'Inbox 1',
       'Thesis 1',

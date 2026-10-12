@@ -25,6 +25,9 @@ export type Item =
 export interface ListOptions {
   /** Whether the view groups at all: an ungrouped view draws no heads. */
   grouped: boolean
+  /** Whether the group of rows with no value goes without a head: a project's tasks
+   *  above its first heading are Todoist's tasks in no section, which have none. */
+  bareNone?: boolean
   /** Groups folded, by name. */
   folded: ReadonlySet<string>
   /** Parents whose sub-tasks are folded, by row id. */
@@ -95,7 +98,8 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
     const name = groupName(group.key)
     if (options.hidden?.includes(name)) continue
     const folded = options.folded.has(name)
-    if (options.grouped) {
+    const bare = options.bareNone === true && (group.key === null || group.key === '')
+    if (options.grouped && !bare) {
       out.push({ kind: 'head', id: `head:${name}`, group, count: group.rows.length, folded })
       if (folded) continue
     }

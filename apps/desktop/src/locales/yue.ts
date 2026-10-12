@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: '最愛',
+  'Add project': '加專案',
+  'Add sub-project': '加子專案',
   // Tasks: the task view
   'Sub-tasks': '子任務',
   'Add sub-task': '加子任務',

@@ -43,10 +43,10 @@ export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
 
 /** A project's tasks as a view of their own, which "Open as board" and "Open as
  *  calendar" open with that layout. */
-export function openProject(space: string, path: string, layout?: string) {
+export function openProject(space: string, path: string, layout?: string, how: OpenHow = {}) {
   const name = nameOf(path).replace(/\.md$/i, '')
   const spec: ViewSpec = { builtin: 'project', space, path }
-  const tab = openSpec(spec, name)
+  const tab = openSpec(spec, name, null, how)
   if (layout) {
     // The tab's own words say the layout, so a tab already open switches to it too and
     // the view in it reads the change (ViewTab.svelte).
@@ -59,8 +59,8 @@ export function openProject(space: string, path: string, layout?: string) {
 }
 
 /** A label's tasks and notes. */
-export function openLabel(tag: string) {
-  return openSpec({ builtin: 'label', tag }, `#${tag}`)
+export function openLabel(tag: string, how: OpenHow = {}) {
+  return openSpec({ builtin: 'label', tag }, `#${tag}`, null, how)
 }
 
 /** A `.base` file, as its view. */

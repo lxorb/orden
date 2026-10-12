@@ -59,6 +59,7 @@
   const items = $derived(
     listItems(live.answer?.groups ?? [], {
       grouped: property !== undefined,
+      bareNone: property === 'task.section',
       folded,
       shut,
       hidden: view?.nib.hidden ?? [],

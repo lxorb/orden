@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: 'Вибране',
+  'Add project': 'Додати проєкт',
+  'Add sub-project': 'Додати підпроєкт',
   // Tasks: the task view
   'Sub-tasks': 'Підзавдання',
   'Add sub-task': 'Додати підзавдання',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: 'பிடித்தவை',
+  'Add project': 'திட்டத்தைச் சேர்',
+  'Add sub-project': 'துணைத் திட்டத்தைச் சேர்',
   // Tasks: the task view
   'Sub-tasks': 'துணைப் பணிகள்',
   'Add sub-task': 'துணைப் பணியைச் சேர்',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Tasks: the projects in the panel
+  Favorites: 'Favorite',
+  'Add project': 'Projekt dezuetue',
+  'Add sub-project': 'Underprojekt dezuetue',
   // Tasks: the task view
   'Sub-tasks': 'Underufgabe',
   'Add sub-task': 'Underufgab dezuetue',
