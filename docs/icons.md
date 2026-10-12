@@ -134,7 +134,10 @@ once rather than loading for ever.
 
 A chat takes the note's picker, through the same row of the file list's menu, and
 the same two values; `setFileIcon` writes the pointer again as the smallest edit there
-is, so a version is kept and one undo takes it back. No scan of a space reads a
+is, so a version is kept and one undo takes it back. A chat open in its tab is written
+the same way: the tab shows the account's messages and holds none of the pointer's
+words, so the pointer is read and written past it, as a base's is past its view
+(`documentAt` in the workspace). No scan of a space reads a
 pointer, so what a chat wears is read off the pointer on its own the first time a mark
 asks, in the open space as in any other (`marks-elsewhere.svelte.ts`), and again when
 the app writes it. Every mark asks `chosenIcon`, so the file list, the tab, a bookmark,

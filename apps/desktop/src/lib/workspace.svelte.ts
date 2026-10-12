@@ -509,7 +509,10 @@ class Workspace {
     const open = this.opened.at(path)
     // A view tab over a `.base` file holds which view it is, not the file's words: the
     // file is read and written past it, as any closed file is. See lib/views/source.ts.
-    return open?.kind === 'view' ? null : open
+    // So does a chat's tab over its `.chat` pointer, which shows the account's messages
+    // and holds none of the file's words: an icon chosen for an open chat was measured
+    // against its empty text and never written (#227).
+    return open?.kind === 'view' || open?.kind === 'channel' ? null : open
   }
 
   /** Every open file that has words of its own and a path behind it, once each
