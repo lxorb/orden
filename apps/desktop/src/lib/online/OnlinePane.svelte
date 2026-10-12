@@ -8,8 +8,12 @@
    *  and costs a month, Restart in place of Stop, and its disk, the bar that matters,
    *  amber at 80% as every disk's is.
    *
+   *  Laid out as every other pane is. The machine is one row of settings: its name and
+   *  what it is on the left, and at the end what it is doing beside what can be done
+   *  about it, as the AI pane's account rows are. The bars are a card of their own, with
+   *  the day they start again under it.
+   *
    *  Fetched as it is opened, never before. */
-  import { readableSize as bytes } from '../usage.svelte'
   import { i18n, t } from '../i18n.svelte'
   import { diskNear, diskShare, shares } from '@nib/online'
   import { cityOf } from './calls'
@@ -28,8 +32,19 @@
   /** Gigabytes as Hetzner counts them, whole. */
   const gb = (value: number) => `${i18n.amount(Math.round(value))} GB`
 
+  /** Bytes as the service counts them, in thousands rather than 1024s, so the month's
+   *  5 GB of home reads 5 GB and not 4.7; to one place under ten. */
+  function bytes(value: number): string {
+    const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
+    const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
+    return `${i18n.amount(shown)} ${unit}`
+  }
+
   /** What the server is, where, and what it costs, one line:
-   *  CX43 · Falkenstein · 8 vCPU · 16 GB · 160 GB · €16.49 a month. */
+   *  CX43 · Falkenstein · 8 vCPU · 16 GB · 160 GB · €16.49 a month. Where the line has
+   *  to wrap, as it does beside the row's end on a phone, it wraps between two facts and
+   *  never inside one, with the dot at the end of a line rather than the start of the
+   *  next. */
   const spec = $derived.by(() => {
     const about = known?.machine?.server
     if (!about) return null
@@ -47,7 +62,7 @@
       }).format(about.price)
       parts.push(t('{price} a month', { price }))
     }
-    return parts.join(' · ')
+    return parts.map((part) => part.replaceAll(' ', '\u00a0')).join('\u00a0· ')
   })
 
   const stateWords = $derived(
@@ -75,7 +90,7 @@
             label: t('Disk'),
             share: diskShare(disk),
             near: diskNear(disk),
-            words: `${gb(disk.used / 1e9)} / ${gb(disk.total / 1e9)}`,
+            words: `${bytes(disk.used)} / ${bytes(disk.total)}`,
           },
         ]
       : [],
@@ -127,48 +142,53 @@
 <div class="online">
   {#if known?.machine}
     <div class="card">
-      <div class="nib-setting">
+      <div class="nib-setting setting">
         <span class="name">
           {t('Machine')}
-          <small>{stateWords}</small>
           {#if spec}<small>{spec}</small>{/if}
         </span>
-        <button
-          class="nib-action"
-          disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
-          onclick={() => void machine.startStop(!awake)}
-          >{awake ? (server ? t('Restart') : t('Stop')) : t('Start')}</button
-        >
+        <div class="row">
+          <span class="hint">{stateWords}</span>
+          <button
+            class="nib-chip"
+            disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
+            onclick={() => void machine.startStop(!awake)}
+            >{awake ? (server ? t('Restart') : t('Stop')) : t('Start')}</button
+          >
+        </div>
       </div>
     </div>
   {/if}
 
   {#if meters.length}
-    <div class="card meters">
-      {#each meters as meter (meter.label)}
-        <div class="meter" class:is-near={meter.near}>
-          <div class="line">
-            <span>{meter.label}</span>
-            <span class="words">{meter.words}</span>
+    <div class="card">
+      <div class="stack">
+        {#each meters as meter (meter.label)}
+          <div class="meter">
+            <div class="line">
+              <span>{meter.label}</span>
+              <span class="words">{meter.words}</span>
+            </div>
+            <div
+              class="nib-meter"
+              class:is-near={meter.near}
+              role="meter"
+              aria-label={meter.label}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(meter.share * 100)}
+            >
+              <div class="nib-meter-fill" style:width={`${meter.share * 100}%`}></div>
+            </div>
           </div>
-          <div
-            class="track"
-            role="meter"
-            aria-label={meter.label}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(meter.share * 100)}
-          >
-            <div class="fill" style:width={`${meter.share * 100}%`}></div>
-          </div>
-        </div>
-      {/each}
-      {#if known && !server}
-        <p class="hint">
-          {t('Starts again {date}', { date: i18n.when(known.resets, { dateStyle: 'medium' }) })}
-        </p>
-      {/if}
+        {/each}
+      </div>
     </div>
+    {#if known && !server}
+      <p class="hint caption">
+        {t('Starts again {date}', { date: i18n.when(known.resets, { dateStyle: 'medium' }) })}
+      </p>
+    {/if}
   {/if}
 
   {#if refusal}
@@ -177,6 +197,9 @@
 </div>
 
 <style>
+  /* The settings pane's own shapes, with the panel's values: a section in a component
+     of its own does not inherit the panel's rules, which are scoped to it. See
+     SettingsPanel.svelte, and AiPane.svelte, which does the same. */
   .online {
     display: flex;
     flex-direction: column;
@@ -184,13 +207,14 @@
     width: 100%;
   }
 
+  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
 
-  .name {
+  .setting .name {
     flex: 1;
     min-width: 0;
     display: flex;
@@ -198,15 +222,27 @@
     gap: 1px;
   }
 
-  .name small {
+  .setting .name small {
     font-size: var(--text-xs);
     color: var(--muted);
   }
 
-  .meters {
+  /* What the machine is doing, and what can be done about it, at the end of its row. */
+  .row {
+    flex: none;
+    display: flex;
+    align-items: center;
     gap: var(--space-3);
   }
 
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  /* One allowance: its name and its numbers on a line, the bar under them. */
   .meter {
     display: flex;
     flex-direction: column;
@@ -227,30 +263,50 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* A thin bar on a recessive track, its end rounded: the month so far. */
-  .track {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--line);
-    overflow: hidden;
-  }
-
-  .fill {
-    height: 100%;
-    border-radius: 2px;
-    background: var(--accent);
-    transition: width var(--dur-base) var(--ease-out);
-  }
-
-  /* Near the month's end of it: the amber a tab's mark wears too. */
-  .is-near .fill {
-    background: var(--callout-warning);
-  }
-
   .hint {
     margin: 0;
+    font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
+  }
+
+  /* Under the card it explains, closer to it than the next group. */
+  .hint.caption {
+    margin-top: calc(-1 * var(--space-2));
+  }
+
+  /* A phone draws the box, the touch row and the room inside the box, at the sizes
+     the panel's own cards have there. The sheet is the panel's, so that half of the
+     selector is global. */
+  :global(.sheet.phone) .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  :global(.sheet.phone) .setting {
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .setting .name small,
+  :global(.sheet.phone) .hint {
+    font-size: var(--text-base);
+  }
+
+  :global(.sheet.phone) .stack {
+    padding: var(--touch-pad);
+  }
+
+  :global(.sheet.phone) .meter {
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .hint.caption {
+    margin: calc(-1 * var(--space-2)) var(--touch-pad) 0;
   }
 </style>

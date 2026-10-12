@@ -1387,6 +1387,39 @@ select option {
   font-size: var(--touch-text);
 }
 
+/* ── How much is used ──────────────────────── */
+
+/* A bar of what is used of something: the account's storage, and an online
+   machine's month - its hours, its CPU, its home, the web and its disk. The
+   fill is set as a width by whoever draws it. Two panes drew their own, at two
+   heights, two tracks and two corners, one above the other in the same sheet.
+
+   Amber near the end, which is also when an online terminal's tab mark turns,
+   and the refusal's red once it is full. */
+.nib-meter {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.nib-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition:
+    width var(--dur-base) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.nib-meter.is-near .nib-meter-fill {
+  background: var(--callout-warning);
+}
+
+.nib-meter.is-full .nib-meter-fill {
+  background: var(--danger);
+}
+
 /* ── Fields ────────────────────────────────── */
 
 /* One box for anything typed into or standing in for something typed into: the
