@@ -266,12 +266,8 @@ class Modes {
    *  Off, because the people a hint is for would never look for the switch. The
    *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
   silent = $state(false)
-  /** Whether this is somebody who writes code: Discord's Developer Mode, a switch that
-   *  brings the tools only a programmer wants - the terminals - into the menus, and
-   *  leaves them out of everybody else's. Null until answered (an optional question of
-   *  the first run, see SpaceChooser.svelte), which counts as yes, so an install from
-   *  before the question, or a reader who passed it, keeps the terminals. The account's, like the rest of how somebody likes
-   *  the app. Read through `coder`. */
+  /** Developer mode: the terminals offered. Null until answered, which counts as yes;
+   *  the account's. See SpaceChooser.svelte. */
   developer = $state<boolean | null>(null)
   typewriter = $state(false)
   punctuation = $state(false)
@@ -701,17 +697,12 @@ class Modes {
     this.share({ silent: this.silent })
   }
 
-  /** Whether the tools for writing code are offered; see `developer`. */
   get coder(): boolean {
     return this.developer !== false
   }
 
-  /** The first screen's answer, and Settings' switch after it. The first answer also
-   *  picks how markdown is written, because the two people it tells apart came from
-   *  different apps: somebody who writes code knows Obsidian's live preview, where a
-   *  mark shows under the caret, and everybody else knows Notion's page, where it
-   *  never does. Only the first: after that the two are separate settings, and an
-   *  import from either app still brings its own habit along (see import/carry.ts). */
+  /** The first answer also picks how markdown is written: Obsidian's live preview for
+   *  yes, Notion's hidden marks for no. */
   setDeveloper(on: boolean) {
     const first = this.developer === null
     this.developer = on
