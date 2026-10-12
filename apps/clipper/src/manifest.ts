@@ -44,7 +44,7 @@ export const manifest: chrome.runtime.ManifestV3 = {
 
   // A clipped picture is fetched from wherever the article keeps it, which is
   // any host at all, and uploaded to the account so the note stops depending on
-  // the site. That is the whole reason for the breadth; nibeditor.com alone
+  // the site. That is the whole reason for the breadth; orden.so alone
   // would leave every image a dead link the day the article moves.
   //
   // Asked for at install rather than at the first clip with pictures in it, which

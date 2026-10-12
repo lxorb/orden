@@ -7,7 +7,7 @@
  *  `vite.content.config.ts` the second, into the same folder.
  *
  *  What comes out is `dist/`, which is what "Load unpacked" wants, and
- *  `nib-clipper.zip` beside it, which is what the Chrome Web Store wants.
+ *  `orden-clipper.zip` beside it, which is what the Chrome Web Store wants.
  *  The zip is written here rather than shelled out to a platform's own archiver
  *  so that the same command works wherever it is run, and so the archive has no
  *  timestamps in it and is the same bytes for the same sources. */
@@ -19,7 +19,7 @@ import { build } from 'vite'
 
 const here = resolve(import.meta.dirname, '..')
 const dist = join(here, 'dist')
-const archive = join(here, 'nib-clipper.zip')
+const archive = join(here, 'orden-clipper.zip')
 
 /** 1980-01-01 in the two packed words MS-DOS used, which is what a zip carries
  *  when it is meant to say nothing about when it was made. */

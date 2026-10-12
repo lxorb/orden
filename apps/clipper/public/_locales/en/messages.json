@@ -1,6 +1,6 @@
 {
-  "name": { "message": "nibeditor" },
-  "description": { "message": "Clip a page, a selection or a link into your nibeditor notes." },
+  "name": { "message": "Orden" },
+  "description": { "message": "Clip a page, a selection or a link into your Orden notes." },
   "clipPage": { "message": "Clip the page" },
   "clipSelection": { "message": "Clip the selection" },
   "clipLink": { "message": "Clip the link" }

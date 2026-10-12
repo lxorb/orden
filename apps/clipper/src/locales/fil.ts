@@ -62,14 +62,14 @@ export const fil: Dictionary = {
   'Resend in {seconds}s': 'Ipadala muli sa {seconds}s',
   'Digit {number}': 'Digit {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': 'Mag-sign in muna sa nibeditor.',
-  'Make a space in nibeditor first.': 'Gumawa muna ng espasyo sa nibeditor.',
+  'Sign in to Orden first.': 'Mag-sign in muna sa Orden.',
+  'Make a space in Orden first.': 'Gumawa muna ng espasyo sa Orden.',
   'This page cannot be clipped.': 'Hindi maaaring i-clip ang pahinang ito.',
   'There is nothing to clip here.': 'Walang maaaring i-clip dito.',
   'This clip is larger than a note can be.':
     'Mas malaki ang clip na ito kaysa sa maaaring maging tala.',
   'Your account is out of space.': 'Wala nang espasyo ang account mo.',
-  'Could not reach nibeditor.': 'Hindi maabot ang nibeditor.',
+  'Could not reach Orden.': 'Hindi maabot ang Orden.',
   'Could not reach the provider.': 'Hindi maabot ang provider.',
   'The provider answered with something else.': 'Ibang bagay ang isinagot ng provider.',
   // And what the sync service itself answers with, looked up like any other string

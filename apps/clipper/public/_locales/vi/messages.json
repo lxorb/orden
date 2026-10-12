@@ -1,7 +1,7 @@
 {
-  "name": { "message": "nibeditor" },
+  "name": { "message": "Orden" },
   "description": {
-    "message": "Cắt một trang, vùng chọn hay liên kết vào ghi chú nibeditor của bạn."
+    "message": "Cắt một trang, vùng chọn hay liên kết vào ghi chú Orden của bạn."
   },
   "clipPage": { "message": "Cắt trang" },
   "clipSelection": { "message": "Cắt vùng chọn" },

@@ -12,7 +12,11 @@
  *  with no room left, which is about the account rather than the picture, and
  *  which the person has to be told about. */
 
-import { api, BASE, outOfSpace } from './api'
+import { api, BASE, LEGACY_BASE, outOfSpace } from './api'
+
+/** Where the account's own pictures are served, under the name it has and the
+ *  one it had. */
+const OURS = [BASE, LEGACY_BASE].map((base) => `${base}/i/`)
 
 /** What the blob route stores; see `services/sync/src/blobs.ts`. An SVG or a
  *  BMP is refused there, so it is not offered here. */
@@ -72,8 +76,9 @@ function blobUrl(hash: string, type: string): string {
 
 /** One picture on the account, or null to leave it where it is. */
 async function move(token: string, url: string, page: string): Promise<string | null> {
-  // Already ours: a clip of a page that itself shows a Nib blob.
-  if (url.startsWith(`${BASE}/i/`)) return null
+  // Already ours: a clip of a page that itself shows an Orden picture, under
+  // either of the service's names.
+  if (OURS.some((own) => url.startsWith(own))) return null
 
   // A picture the page carried inside itself, as a `data:` URL. There is no
   // site to stop depending on and nothing worth a request, so it stays as it is.

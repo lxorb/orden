@@ -57,13 +57,13 @@ export const sw: Dictionary = {
   'Resend in {seconds}s': 'Tuma tena baada ya {seconds}s',
   'Digit {number}': 'Tarakimu {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': 'Ingia kwa nibeditor kwanza.',
-  'Make a space in nibeditor first.': 'Fanya nafasi katika nibeditor kwanza.',
+  'Sign in to Orden first.': 'Ingia kwa Orden kwanza.',
+  'Make a space in Orden first.': 'Fanya nafasi katika Orden kwanza.',
   'This page cannot be clipped.': 'Ukurasa huu hauwezi kudondolewa.',
   'There is nothing to clip here.': 'Hakuna kitu cha kudondoa hapa.',
   'This clip is larger than a note can be.': 'Dondoo hili ni kubwa kuliko dokezo linaweza kuwa.',
   'Your account is out of space.': 'Akaunti yako haina hifadhi.',
-  'Could not reach nibeditor.': 'nibeditor haikufikiwa.',
+  'Could not reach Orden.': 'Orden haikufikiwa.',
   'Could not reach the provider.': 'Mtoa huduma haikufikiwa.',
   'The provider answered with something else.': 'Mtoa huduma alijibu kitu kingine.',
   // And what the sync service itself answers with, looked up like any other string
