@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': '子任務',
+  'Add sub-task': '加子任務',
+  'New label': '新標籤',
+  'No deadline': '冇限期',
   // Tasks: the row's menu and the scheduler
   Reschedule: '改期',
   'Later this week': '今個禮拜遲啲',

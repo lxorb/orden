@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Kazi ndogo',
+  'Add sub-task': 'Ongeza kazi ndogo',
+  'New label': 'Lebo mpya',
+  'No deadline': 'Hakuna tarehe ya mwisho',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Panga upya',
   'Later this week': 'Baadaye wiki hii',

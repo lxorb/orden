@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'فرعي دندې',
+  'Add sub-task': 'فرعي دنده ورزیاته کړئ',
+  'New label': 'نوی لیبل',
+  'No deadline': 'وروستۍ نېټه نشته',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'بیا مهالویش',
   'Later this week': 'د دې اونۍ وروسته',

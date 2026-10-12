@@ -34,6 +34,8 @@ export interface Asked {
   pick: (picked: Scheduled) => void
   /** Told when it closes, picked or not, so a key's focus can go back where it was. */
   closed?: () => void
+  /** A day and nothing else: a deadline has no time, no length and no repeat. */
+  dateOnly?: boolean
 }
 
 class Scheduling {

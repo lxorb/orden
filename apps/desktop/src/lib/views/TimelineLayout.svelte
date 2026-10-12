@@ -109,7 +109,7 @@
       element.style.marginInlineStart = ''
       element.style.marginInlineEnd = ''
       if (!moved) {
-        if (part === 'move') kit.open(bar.row, linkModifier(next) ? 'tab' : 'aside')
+        if (part === 'move') kit.choose(bar.row, linkModifier(next))
         return
       }
       const written = dragged(bar, part, days(next.clientX))
@@ -147,7 +147,7 @@
         <button
           type="button"
           class="name"
-          onclick={(event) => kit.open(bar.row, linkModifier(event) ? 'tab' : 'aside')}
+          onclick={(event) => kit.choose(bar.row, linkModifier(event))}
         >
           {bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
         </button>

@@ -44,6 +44,20 @@ export function scheduleRows(
   })
 }
 
+/** The scheduler for a task's deadline: a day and nothing else, written as its
+ *  `[deadline::]`, or taken away by No date. */
+export function scheduleDeadline(row: Row, from: Element | Box, kit: Kit): void {
+  const task = row.task
+  if (!task) return
+  showScheduler(from, {
+    current: { due: task.deadline },
+    today: kit.live.today,
+    load: loadByDay(kit.live.rows),
+    dateOnly: true,
+    pick: (picked) => void writeEach([{ row, change: { task: { deadline: picked.due } } }]),
+  })
+}
+
 /** Priority for these tasks, as one write. */
 function prioritise(rows: readonly Row[], priority: Priority): Promise<boolean> {
   return writeEach(
@@ -52,7 +66,7 @@ function prioritise(rows: readonly Row[], priority: Priority): Promise<boolean> 
 }
 
 /** The rows of the priority choice, p1 to p4, the one in force ticked. */
-function priorityEntries(current: number, set: (priority: Priority) => void): MenuEntry[] {
+export function priorityEntries(current: number, set: (priority: Priority) => void): MenuEntry[] {
   return ([1, 2, 3, 4] as const).map((level) => ({
     label: t('Priority {level}', { level }),
     checked: current === level,

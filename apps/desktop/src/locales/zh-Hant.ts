@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHant: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': '子任務',
+  'Add sub-task': '新增子任務',
+  'New label': '新標籤',
+  'No deadline': '無截止日期',
   // Tasks: the row's menu and the scheduler
   Reschedule: '重新安排',
   'Later this week': '本週稍後',

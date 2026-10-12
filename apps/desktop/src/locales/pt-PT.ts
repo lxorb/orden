@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Subtarefas',
+  'Add sub-task': 'Adicionar subtarefa',
+  'New label': 'Nova etiqueta',
+  'No deadline': 'Sem prazo',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Reagendar',
   'Later this week': 'Ainda esta semana',

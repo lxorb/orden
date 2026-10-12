@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'ንዑስ ተግባራት',
+  'Add sub-task': 'ንዑስ ተግባር አክል',
+  'New label': 'አዲስ መለያ',
+  'No deadline': 'የመጨረሻ ቀን የለም',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'እንደገና መድብ',
   'Later this week': 'በዚህ ሳምንት በኋላ',

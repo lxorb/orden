@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Alt görevler',
+  'Add sub-task': 'Alt görev ekle',
+  'New label': 'Yeni etiket',
+  'No deadline': 'Son tarih yok',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Yeniden planla',
   'Later this week': 'Bu hafta daha sonra',

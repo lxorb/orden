@@ -116,9 +116,9 @@
     tabindex="0"
     style:--tone={row.task ? priorityTone(row.task.priority) : null}
     use:draggable={{ row, label: title }}
-    onclick={(event) => kit.open(row, linkModifier(event) ? 'tab' : 'aside')}
+    onclick={(event) => kit.choose(row, linkModifier(event))}
     onkeydown={(event) => {
-      if (event.key === 'Enter') kit.open(row, 'aside')
+      if (event.key === 'Enter') kit.choose(row)
     }}
   >
     <div class="title">

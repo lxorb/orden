@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Việc con',
+  'Add sub-task': 'Thêm việc con',
+  'New label': 'Nhãn mới',
+  'No deadline': 'Không có hạn chót',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Lên lịch lại',
   'Later this week': 'Mấy hôm nữa trong tuần',

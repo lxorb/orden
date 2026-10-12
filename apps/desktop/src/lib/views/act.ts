@@ -34,6 +34,7 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
+import { withDescription, withSubtask } from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -275,4 +276,21 @@ export async function pressRow(row: Row, change: RowChange, task?: string): Prom
     if (set === null) return null
     return task?.trim() ? withLines(set, [`- [ ] ${task.trim()}`]) : set
   })
+}
+/** A task's description written as these words, under its line and indented to be its
+ *  own; the task view's editor, a moment after the typing stops. `path` is on this disk. */
+export function describe(
+  path: string,
+  anchor: { line: number; hash: string },
+  words: string,
+): Promise<boolean> {
+  return rewrite(path, (before) => withDescription(before, anchor, words))
+}
+
+/** A sub-task, a whole line already written, at the end of what a task holds. */
+export async function addSubtask(row: Row, line: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  return rewrite(path, (before) => withSubtask(before, anchor, line))
 }

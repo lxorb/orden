@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Sub-tugas',
+  'Add sub-task': 'Tambah sub-tugas',
+  'New label': 'Label anyar',
+  'No deadline': 'Tanpa wates wektu',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Jadwal maneh',
   'Later this week': 'Mengko minggu iki',

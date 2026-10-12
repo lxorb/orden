@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': '하위 작업',
+  'Add sub-task': '하위 작업 추가',
+  'New label': '새 라벨',
+  'No deadline': '마감 없음',
   // Tasks: the row's menu and the scheduler
   Reschedule: '일정 변경',
   'Later this week': '이번 주 후반',

@@ -64,6 +64,14 @@ export function subtaskCounts(rows: readonly Row[]): Map<string, Subtasks> {
   return out
 }
 
+/** Every label the tasks carry, once each, in the reader's order: what a task's label
+ *  choice offers. */
+export function labelsOf(rows: readonly Row[]): string[] {
+  const seen = new Set<string>()
+  for (const row of rows) for (const tag of row.task?.tags ?? []) seen.add(tag)
+  return [...seen].sort((a, b) => a.localeCompare(b))
+}
+
 /** The meta line of a task, in the order Todoist draws it. `dated` false leaves the
  *  day off, for a view whose groups already are the days. */
 export function metaOf(

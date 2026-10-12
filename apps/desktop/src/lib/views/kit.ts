@@ -25,6 +25,11 @@ export interface Kit {
   compact: boolean
   /** Opens the row's note at its line: beside the view, or in a tab of its own. */
   open(row: Row, how?: 'aside' | 'tab'): void
+  /** Opens a task's view, with the view's own rows for its arrows. */
+  openTask(row: Row): void
+  /** What a press on a row opens: a task's view, a note beside the view; with `tab`
+   *  (Ctrl or Cmd held), the note in a tab of its own either way. */
+  choose(row: Row, tab?: boolean): void
   tick(row: Row): void
   write(row: Row, change: RowChange): void
   /** A button cell pressed: `column` is `button.<name>`. */
@@ -49,7 +54,7 @@ export function notePath(row: Row): string | null {
 }
 
 export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, compact: boolean): Kit {
-  return {
+  const kit: Kit = {
     live,
     spec,
     file,
@@ -61,6 +66,14 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       void (how === 'aside' ? workspace.openAside(path) : workspace.open(path)).then(() => {
         workspace.goto = { path, line }
       })
+    },
+    openTask(row) {
+      const list = (live.answer?.groups ?? []).flatMap((group) => group.rows)
+      void import('./task-view/viewing.svelte').then((one) => one.showTask(row, kit, list))
+    },
+    choose(row, tab = false) {
+      if (row.task && !tab) kit.openTask(row)
+      else kit.open(row, tab ? 'tab' : 'aside')
     },
     tick(row) {
       void tickRow(row, live.today)
@@ -97,6 +110,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       void live.change(edit(base, live.at))
     },
   }
+  return kit
 }
 
 /** A key pressed on a row, done (row-keys.ts). Answers whether it was one of a row's

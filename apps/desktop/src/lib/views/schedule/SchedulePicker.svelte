@@ -310,37 +310,39 @@
     </div>
   </div>
 
-  <div class="extras">
-    <button
-      type="button"
-      class="extra"
-      class:set={time !== undefined}
-      aria-expanded={open === 'time'}
-      onclick={() => (open = open === 'time' ? null : 'time')}
-    >
-      <Glyph icon={Clock} />
-      <span
-        >{time === undefined ? t('Time') : timeWords(time)}{#if duration !== undefined}
-          · {durationLabel(duration)}{/if}</span
+  {#if !asked.dateOnly}
+    <div class="extras">
+      <button
+        type="button"
+        class="extra"
+        class:set={time !== undefined}
+        aria-expanded={open === 'time'}
+        onclick={() => (open = open === 'time' ? null : 'time')}
       >
-    </button>
-    <button
-      type="button"
-      class="extra"
-      class:set={recurrence !== undefined}
-      aria-expanded={open === 'repeat'}
-      onclick={() => (open = open === 'repeat' ? null : 'repeat')}
-    >
-      <Glyph icon={Repeat} />
-      <span
-        >{recurrence === undefined
-          ? t('Repeat')
-          : repeatKind
-            ? repeatLabel(repeatKind, repeatDay)
-            : recurrence}</span
+        <Glyph icon={Clock} />
+        <span
+          >{time === undefined ? t('Time') : timeWords(time)}{#if duration !== undefined}
+            · {durationLabel(duration)}{/if}</span
+        >
+      </button>
+      <button
+        type="button"
+        class="extra"
+        class:set={recurrence !== undefined}
+        aria-expanded={open === 'repeat'}
+        onclick={() => (open = open === 'repeat' ? null : 'repeat')}
       >
-    </button>
-  </div>
+        <Glyph icon={Repeat} />
+        <span
+          >{recurrence === undefined
+            ? t('Repeat')
+            : repeatKind
+              ? repeatLabel(repeatKind, repeatDay)
+              : recurrence}</span
+        >
+      </button>
+    </div>
+  {/if}
 
   {#if open === 'time'}
     <div class="panel">

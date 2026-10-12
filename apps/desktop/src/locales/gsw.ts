@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'Underufgabe',
+  'Add sub-task': 'Underufgab dezuetue',
+  'New label': 'Neus Label',
+  'No deadline': 'Kei Frischt',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'Neu plane',
   'Later this week': 'Spöter die Wuche',

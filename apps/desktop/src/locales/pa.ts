@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': 'ਉਪ-ਕੰਮ',
+  'Add sub-task': 'ਉਪ-ਕੰਮ ਜੋੜੋ',
+  'New label': 'ਨਵਾਂ ਲੇਬਲ',
+  'No deadline': 'ਕੋਈ ਆਖ਼ਰੀ ਤਾਰੀਖ ਨਹੀਂ',
   // Tasks: the row's menu and the scheduler
   Reschedule: 'ਮੁੜ ਸਮਾਂ ਤੈਅ ਕਰੋ',
   'Later this week': 'ਇਸ ਹਫ਼ਤੇ ਬਾਅਦ ਵਿੱਚ',

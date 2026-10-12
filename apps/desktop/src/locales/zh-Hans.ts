@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Tasks: the task view
+  'Sub-tasks': '子任务',
+  'Add sub-task': '添加子任务',
+  'New label': '新标签',
+  'No deadline': '无截止日期',
   // Tasks: the row's menu and the scheduler
   Reschedule: '重新安排',
   'Later this week': '本周晚些时候',

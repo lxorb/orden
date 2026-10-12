@@ -155,9 +155,9 @@
       ? `${Math.max(18, (one.minutes / 60) * HOUR)}px`
       : null}
     use:draggable={{ row: one.row, label, disabled: one.ghost === true }}
-    onclick={(event) => kit.open(one.row, linkModifier(event) ? 'tab' : 'aside')}
+    onclick={(event) => kit.choose(one.row, linkModifier(event))}
     onkeydown={(event) => {
-      if (event.key === 'Enter') kit.open(one.row, 'aside')
+      if (event.key === 'Enter') kit.choose(one.row)
     }}
   >
     {#if one.row.task?.recurrence}<span class="repeat" aria-hidden="true">↻</span>{/if}

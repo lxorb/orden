@@ -32,7 +32,7 @@
       {@const title = row.task ? plain(row.task.text) : row.file.basename}
       <div class="row">
         {#if row.task}<TaskBox task={row.task} label={title} ontick={() => kit.tick(row)} />{/if}
-        <button type="button" class="body" onclick={() => kit.open(row, 'tab')}>
+        <button type="button" class="body" onclick={() => kit.choose(row, !row.task)}>
           <span class="title">{title}</span>
           {#each shown as one (one)}
             {@const said = live.base

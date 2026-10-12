@@ -77,9 +77,17 @@
     later: undefined,
   } as const
 
+  /** The note at the line, beside the view (with Ctrl or Cmd, in a tab). */
   function open(event: MouseEvent) {
     onselect?.()
     kit.open(row, linkModifier(event) ? 'tab' : 'aside')
+  }
+
+  /** The task's own view; with Ctrl or Cmd, its note in a tab. */
+  function view(event: MouseEvent) {
+    onselect?.()
+    if (linkModifier(event)) kit.open(row, 'tab')
+    else kit.openTask(row)
   }
 
   function schedule(event: MouseEvent) {
@@ -132,7 +140,7 @@
         <span class="twist" aria-hidden="true"></span>
       {/if}
       <TaskBox {task} {label} ontick={() => kit.tick(row)} />
-      <button type="button" class="words" onclick={open} tabindex="-1">
+      <button type="button" class="words" onclick={view} tabindex="-1">
         <Words words={task.text} />
       </button>
       <span class="actions">
@@ -156,7 +164,7 @@
     </div>
 
     {#if task.description}
-      <button type="button" class="line description" onclick={open} tabindex="-1"
+      <button type="button" class="line description" onclick={view} tabindex="-1"
         >{plain(task.description)}</button
       >
     {/if}
@@ -205,8 +213,8 @@
     display: flex;
     flex-direction: column;
     height: calc(
-      var(--task-head) + (var(--lines) - 1) * var(--task-line) + min(var(--lines) - 1, 1) *
-        var(--task-foot)
+      var(--task-head, var(--row-height)) + (var(--lines) - 1) * var(--task-line, 18px) +
+        min(var(--lines) - 1, 1) * var(--task-foot, 6px)
     );
     padding-inline: calc(var(--row-pad) + var(--depth) * var(--row-indent)) var(--row-pad);
     border-radius: var(--radius-row);
@@ -245,7 +253,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    height: var(--task-head);
+    height: var(--task-head, var(--row-height));
     min-width: 0;
   }
 
@@ -331,7 +339,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    height: var(--task-line);
+    height: var(--task-line, 18px);
     min-width: 0;
     margin-inline-start: calc(var(--box) + var(--space-2) + var(--twisted, 0px));
     overflow: hidden;
