@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // The first screen's question, and Settings' Developer mode that changes it
+  'Developer mode': 'وضع المطوّر',
+  'Do you write code?': 'هل تكتب الكود؟',
+  Yes: 'نعم',
+  No: 'لا',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': 'تطبيق آخر',
   'Start fresh': 'ابدأ من جديد',

@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // The first screen's question, and Settings' Developer mode that changes it
+  'Developer mode': '개발자 모드',
+  'Do you write code?': '코드를 작성하시나요?',
+  Yes: '예',
+  No: '아니요',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '다른 앱',
   'Start fresh': '새로 시작',

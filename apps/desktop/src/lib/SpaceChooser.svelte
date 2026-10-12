@@ -17,7 +17,14 @@
    *  space behind it and "Start fresh" the way back to it; see first-visit.svelte.ts.
    *  App.svelte fetches it only while there is no space or that visit is asking, and
    *  its transitions are global because that `{#if}` can take it away as well as
-   *  this one. */
+   *  this one.
+   *
+   *  Before the rows, one question: whether this is somebody who writes code. Notion's
+   *  first run asks how it will be used before it makes a workspace, one question to a
+   *  screen; nib asks the one answer it acts on. Yes keeps the terminals in the menus
+   *  and markdown's marks under the caret, as Obsidian has them; no leaves the
+   *  terminals out and writes the way a Notion page does. See `setDeveloper` in
+   *  modes.svelte.ts, and Settings' Developer mode for changing it. */
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
   import { i18n, t } from './i18n.svelte'
@@ -26,6 +33,7 @@
   import Select from './Select.svelte'
   import { firstSpace } from './first-space.svelte'
   import { migrating } from './migrating.svelte'
+  import { modes } from './modes.svelte'
   import MigrateRows from './MigrateRows.svelte'
   import { spaceChooser } from './space-chooser.svelte'
   import { firstVisit } from './first-visit.svelte'
@@ -58,63 +66,88 @@
       <p class="version">{version}</p>
     </div>
 
-    <div class="rows">
-      <!-- Where the notes come from first, the way the iPhone's setup asks about
-           the old phone before anything else; Create is the fresh start under them. -->
-      <MigrateRows />
-
-      {#if !migrating.vaults}
-        <!-- The browser build already has its welcome note's space, so starting
-             fresh there is staying on it; see first-visit.svelte.ts. -->
-        {#if isNative}
-          <div class="nib-setting">
-            <span class="name">{t('Create a space')}</span>
-            <button
-              class="nib-button"
-              type="button"
-              data-lands
-              disabled={firstSpace.working || migrating.working}
-              onclick={() => void firstSpace.create()}
-            >
-              {t('Create')}
-            </button>
-          </div>
-        {:else}
-          <div class="nib-setting">
-            <span class="name">{t('Start fresh')}</span>
-            <button
-              class="nib-button"
-              type="button"
-              data-lands
-              disabled={migrating.working}
-              onclick={() => firstVisit.answered()}
-            >
-              {t('Continue')}
-            </button>
-          </div>
-        {/if}
-
+    {#if modes.developer === null}
+      <div class="rows">
         <div class="nib-setting">
-          <span class="name">{t('Sign in to sync')}</span>
+          <span class="name">{t('Do you write code?')}</span>
           <span class="pair">
             <button
               class="nib-button is-quiet is-soft"
               type="button"
-              onclick={() => firstSpace.signIn('sign-in')}
+              onclick={() => modes.setDeveloper(false)}
             >
-              {t('Sign in')}
+              {t('No')}
             </button>
             <button
               class="nib-button is-quiet is-soft"
               type="button"
-              onclick={() => firstSpace.signIn('create')}
+              data-lands
+              onclick={() => modes.setDeveloper(true)}
             >
-              {t('Create account')}
+              {t('Yes')}
             </button>
           </span>
         </div>
-      {/if}
-    </div>
+      </div>
+    {:else}
+      <div class="rows">
+        <!-- Where the notes come from first, the way the iPhone's setup asks about
+           the old phone before anything else; Create is the fresh start under them. -->
+        <MigrateRows />
+
+        {#if !migrating.vaults}
+          <!-- The browser build already has its welcome note's space, so starting
+             fresh there is staying on it; see first-visit.svelte.ts. -->
+          {#if isNative}
+            <div class="nib-setting">
+              <span class="name">{t('Create a space')}</span>
+              <button
+                class="nib-button"
+                type="button"
+                data-lands
+                disabled={firstSpace.working || migrating.working}
+                onclick={() => void firstSpace.create()}
+              >
+                {t('Create')}
+              </button>
+            </div>
+          {:else}
+            <div class="nib-setting">
+              <span class="name">{t('Start fresh')}</span>
+              <button
+                class="nib-button"
+                type="button"
+                data-lands
+                disabled={migrating.working}
+                onclick={() => firstVisit.answered()}
+              >
+                {t('Continue')}
+              </button>
+            </div>
+          {/if}
+
+          <div class="nib-setting">
+            <span class="name">{t('Sign in to sync')}</span>
+            <span class="pair">
+              <button
+                class="nib-button is-quiet is-soft"
+                type="button"
+                onclick={() => firstSpace.signIn('sign-in')}
+              >
+                {t('Sign in')}
+              </button>
+              <button
+                class="nib-button is-quiet is-soft"
+                type="button"
+                onclick={() => firstSpace.signIn('create')}
+              >
+                {t('Create account')}
+              </button>
+            </span>
+          </div>
+        {/if}
+      </div>
+    {/if}
 
     <div class="foot">
       <Select

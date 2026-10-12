@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // The first screen's question, and Settings' Developer mode that changes it
+  'Developer mode': '开发者模式',
+  'Do you write code?': '你写代码吗？',
+  Yes: '是',
+  No: '否',
   // Import: the first screen's rows for another app, and the palette's two
   'Another app': '其他应用',
   'Start fresh': '从头开始',

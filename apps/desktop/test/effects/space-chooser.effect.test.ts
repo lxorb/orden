@@ -46,6 +46,7 @@ Element.prototype.animate = () => {
 }
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
+const { modes } = await import('../../src/lib/modes.svelte')
 const { spaceChooser } = await import('../../src/lib/space-chooser.svelte')
 const { default: Choosing } = await import('./Choosing.svelte')
 
@@ -56,6 +57,7 @@ beforeEach(() => {
   workspace.activeSpaceId = null
   workspace.tabs = []
   workspace.restored = true
+  modes.developer = null
 })
 
 afterEach(() => {
@@ -86,6 +88,13 @@ test('the card is drawn while it is up, and a space takes it away', async () => 
   flushSync()
 
   expect(target.querySelector('[role="dialog"]')).not.toBeNull()
+
+  // The one question first, then the ways in; see `setDeveloper` in modes.svelte.ts.
+  const answers = [...target.querySelectorAll('button')].map((one) => one.textContent.trim())
+  expect(answers).toContain('Yes')
+  expect(answers).toContain('No')
+  modes.setDeveloper(true)
+  flushSync()
   expect(target.querySelectorAll('button').length).toBeGreaterThanOrEqual(3)
 
   await workspace.addSpace('One')
