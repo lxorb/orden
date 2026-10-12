@@ -79,7 +79,7 @@
   /** Whether the update waiting to be installed is `version`, looked for first where
    *  none has been downloaded yet. */
   async function updateBrings(version: string): Promise<boolean> {
-    if (stagedVersion() !== version) await updates.check()
+    if (stagedVersion() !== version) await updates.look()
     arrived = 0
     return stagedVersion() === version
   }

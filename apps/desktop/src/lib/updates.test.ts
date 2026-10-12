@@ -22,6 +22,9 @@ const TICKS = 20 * 60 * 1000
 
 const world = vi.hoisted(() => ({
   version: null as string | null,
+  /** The version downloaded and waiting to be installed. The updater answers
+   *  nothing while one is, as the real one does, which is how Later holds. */
+  staged: null as string | null,
   looks: 0,
   /** The channel each look was made on, in the order they were made. */
   channels: [] as string[],
@@ -38,14 +41,19 @@ vi.mock('./updater', () => ({
   stageUpdate: (channel: string) => {
     world.looks++
     world.channels.push(channel)
-    if (!world.slow) return Promise.resolve(world.version)
+    if (world.staged) return Promise.resolve(null)
+
+    const landed = () => (world.staged = world.version)
+    if (!world.slow) return Promise.resolve(landed())
 
     return new Promise<string | null>((resolve) => {
-      world.land = () => resolve(world.version)
+      world.land = () => resolve(landed())
     })
   },
+  stagedVersion: () => world.staged,
   discard: () => {
     world.discards++
+    world.staged = null
     return Promise.resolve()
   },
 }))
@@ -105,6 +113,7 @@ beforeEach(async () => {
   vi.useFakeTimers()
   world.looks = 0
   world.version = null
+  world.staged = null
   world.channels = []
   world.discards = 0
   world.slow = false
@@ -294,8 +303,85 @@ describe('what a look finds', () => {
     updates.dismiss()
     expect(updates.ready).toBe(null)
 
-    world.version = null
+    // The release is still out there; the looks nobody asked for go on.
+    asleep(EVERY)
+    fire('focus')
     await vi.advanceTimersByTimeAsync(2 * EVERY)
+
+    expect(world.looks).toBeGreaterThan(1)
+    expect(updates.ready).toBe(null)
+    stop()
+  })
+})
+
+/** The menu's and the palette's Check for updates. Later holds against the looks
+ *  nobody asked for; somebody who asks is shown what is waiting, at once. */
+describe('asked for by name', () => {
+  test('brings back the notice Later put away', async () => {
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    updates.dismiss()
+
+    await updates.check()
+
+    expect(updates.ready).toBe('1.4.0')
+    stop()
+  })
+
+  test('shows what it finds at once, straight after a key', async () => {
+    const stop = updates.start()
+    await settle()
+
+    // The Enter that chose it in the palette.
+    world.version = '1.4.0'
+    fire('keydown')
+    await updates.check()
+
+    expect(updates.ready).toBe('1.4.0')
+    stop()
+  })
+
+  test('waits for the look already downloading and shows what it brings', async () => {
+    world.slow = true
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+
+    fire('keydown')
+    const asked = updates.check()
+    world.land?.()
+    await asked
+
+    expect(world.looks).toBe(1)
+    expect(updates.ready).toBe('1.4.0')
+    stop()
+  })
+
+  test('looks on the stream followed now, not on one still downloading from the stream left', async () => {
+    world.slow = true
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    updates.setChannel('unstable')
+    await settle()
+
+    const asked = updates.check()
+    world.slow = false
+    world.version = '0.7.0-12'
+    world.land?.()
+    await asked
+
+    expect(world.channels).toEqual(['stable', 'unstable'])
+    expect(updates.ready).toBe('0.7.0-12')
+    stop()
+  })
+
+  test('with nothing new, shows nothing', async () => {
+    const stop = updates.start()
+    await settle()
+
+    await updates.check()
 
     expect(updates.ready).toBe(null)
     stop()
@@ -393,19 +479,17 @@ describe('the channel', () => {
     stop()
   })
 
-  test('is looked on by the timer once the look in flight has landed', async () => {
+  test('is looked on as soon as the look in flight has landed', async () => {
     world.slow = true
     const stop = updates.start()
     await settle()
 
     updates.setChannel('unstable')
+    world.slow = false
     world.land?.()
     await settle()
 
-    world.slow = false
-    await vi.advanceTimersByTimeAsync(TICKS)
-
-    expect(world.channels.at(-1)).toBe('unstable')
+    expect(world.channels).toEqual(['stable', 'unstable'])
     stop()
   })
 })
