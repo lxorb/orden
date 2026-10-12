@@ -47,7 +47,7 @@ mcp.post('/', async (context) => {
   // was only given the URL finds the OAuth server on its own.
   if (!token) {
     return context.json({ error: SIGN_IN }, 401, {
-      'www-authenticate': challenge(context.env, !!header),
+      'www-authenticate': challenge(context.env, context.req.url, !!header),
     })
   }
 

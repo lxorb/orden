@@ -132,7 +132,7 @@ tokens.post('/token', async (context) => {
     }
     if (!resourceMatches(context.env, body.resource ?? '')) {
       return context.json(
-        failure('invalid_target', `this server is ${resourceUrl(context.env)}`),
+        failure('invalid_target', `this server is ${resourceUrl(context.env, context.req.url)}`),
         400,
       )
     }

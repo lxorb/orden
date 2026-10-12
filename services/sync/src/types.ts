@@ -54,11 +54,24 @@ export interface Env {
 
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
+  /** The other roots the same subdomains are served under, comma-separated: the
+   *  service's other name, so `x.<either>` is one site. See hosts.ts. */
+  OTHER_BLOG_ROOTS?: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside
    *  BLOG_ROOT that publishes nothing itself; its label is reserved. Also the
    *  zone's fallback origin for Cloudflare for SaaS. */
   BLOG_CNAME_TARGET: string
+  /** The origin every link the service writes names. */
   APP_ORIGIN: string
+  /** The other origins the service answers on as itself, comma-separated: the
+   *  name it had, which installed apps, connectors and links already sent keep
+   *  using. Answered directly, never redirected; see hosts.ts. */
+  OTHER_ORIGINS?: string
+  /** The domain the machines' hostnames are made in: the zone CF_ZONE_ID names,
+   *  which holds their DNS records. Its own var because nobody types a machine's
+   *  name, so it stays where its records are when the app's name moves. Absent,
+   *  it is APP_ORIGIN's host. See machines/hetzner-host.ts. */
+  MACHINE_DOMAIN?: string
 
   /** Cloudflare for SaaS, which issues certificates for domains people bring:
    *  the zone that holds the custom hostnames, and a token allowed to edit

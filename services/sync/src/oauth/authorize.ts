@@ -71,8 +71,9 @@ async function roomToConnect(env: Env, userId: string, clientId: string): Promis
 
 /** Sends the browser back to the client with whatever happened. The issuer
  *  rides along (RFC 9207) so the client can tell this server's answer from an
- *  impostor's. */
-function backToClient(env: Env, ask: Ask, params: Record<string, string>): Response {
+ *  impostor's, in the name the page was reached at (`at`, its URL), which is the
+ *  name the client knows the server by. */
+function backToClient(env: Env, at: string, ask: Ask, params: Record<string, string>): Response {
   let url: URL
   try {
     url = new URL(ask.redirect_uri)
@@ -84,7 +85,7 @@ function backToClient(env: Env, ask: Ask, params: Record<string, string>): Respo
 
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
   if (ask.state) url.searchParams.set('state', ask.state)
-  url.searchParams.set('iss', issuer(env))
+  url.searchParams.set('iss', issuer(env, at))
 
   return new Response(null, { status: 302, headers: { location: url.toString() } })
 }
@@ -112,6 +113,7 @@ async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { p
 /** Checks the rest, whose failures go back to the client as OAuth errors. */
 function checkRequest(
   env: Env,
+  at: string,
   ask: Ask,
   query: Record<string, string | undefined>,
 ): Record<string, string> | null {
@@ -125,7 +127,7 @@ function checkRequest(
     return failure('invalid_request', 'PKCE with S256 is required')
   }
   if (!resourceMatches(env, ask.resource)) {
-    return failure('invalid_target', `this server is ${resourceUrl(env)}`)
+    return failure('invalid_target', `this server is ${resourceUrl(env, at)}`)
   }
   const unknown = unknownScopes(ask.scope)
   if (unknown.length) return failure('invalid_scope', `unknown scope ${unknown[0]}`)
@@ -140,8 +142,8 @@ authorize.get('/authorize', async (context) => {
   const checked = await checkClient(context.env, ask)
   if ('problem' in checked) return page(context.env, refusal(checked.problem), 400)
 
-  const problem = checkRequest(context.env, ask, query)
-  if (problem) return backToClient(context.env, ask, problem)
+  const problem = checkRequest(context.env, context.req.url, ask, query)
+  if (problem) return backToClient(context.env, context.req.url, ask, problem)
 
   return page(context.env, emailStep(checked.client, ask, {}))
 })
@@ -182,7 +184,12 @@ authorize.post('/authorize', async (context) => {
   const email = normaliseEmail(form.email ?? '')
 
   if (form.action === 'deny') {
-    return backToClient(context.env, ask, failure('access_denied', 'the person said no'))
+    return backToClient(
+      context.env,
+      context.req.url,
+      ask,
+      failure('access_denied', 'the person said no'),
+    )
   }
 
   if (form.action === 'send') {
@@ -281,5 +288,5 @@ async function grant(
   // this far is not one of the dead ones the nightly sweep collects.
   await clientWasUsed(context.env, client.id)
 
-  return backToClient(context.env, ask, { code })
+  return backToClient(context.env, context.req.url, ask, { code })
 }

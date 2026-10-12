@@ -12,7 +12,7 @@ import { GRANTS, issuer, resourceUrl, SCOPES } from './protocol'
 export const oauthMetadata = new Hono<{ Bindings: Env }>()
 
 oauthMetadata.get('/oauth-authorization-server', (context) => {
-  const base = issuer(context.env)
+  const base = issuer(context.env, context.req.url)
 
   return context.json({
     issuer: base,
@@ -34,10 +34,10 @@ oauthMetadata.get('/oauth-authorization-server', (context) => {
 
 /** The same document at the plain path and at the one with the connector's
  *  path folded in: RFC 9728 asks for the second, older clients try the first. */
-function protectedResource(env: Env) {
+function protectedResource(env: Env, at: string) {
   return {
-    resource: resourceUrl(env),
-    authorization_servers: [issuer(env)],
+    resource: resourceUrl(env, at),
+    authorization_servers: [issuer(env, at)],
     scopes_supported: SCOPES,
     bearer_methods_supported: ['header'],
     resource_name: 'nibeditor',
@@ -45,16 +45,17 @@ function protectedResource(env: Env) {
 }
 
 oauthMetadata.get('/oauth-protected-resource', (context) =>
-  context.json(protectedResource(context.env)),
+  context.json(protectedResource(context.env, context.req.url)),
 )
 oauthMetadata.get('/oauth-protected-resource/mcp', (context) =>
-  context.json(protectedResource(context.env)),
+  context.json(protectedResource(context.env, context.req.url)),
 )
 
-/** What a refused connector request carries, so a client knows where to go. */
-export function challenge(env: Env, invalid: boolean): string {
+/** What a refused connector request carries, so a client knows where to go:
+ *  `at` is the refused request's URL, whose name the client knows the server by. */
+export function challenge(env: Env, at: string, invalid: boolean): string {
   const parts = [
-    `resource_metadata="${issuer(env)}/.well-known/oauth-protected-resource/mcp"`,
+    `resource_metadata="${issuer(env, at)}/.well-known/oauth-protected-resource/mcp"`,
     `scope="${SCOPES.join(' ')}"`,
   ]
   if (invalid) parts.unshift('error="invalid_token"')

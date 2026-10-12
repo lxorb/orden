@@ -1,4 +1,4 @@
-import { Hono, type MiddlewareHandler } from 'hono'
+import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { SIGN_IN, SIGN_IN_TO_DO_THAT } from './refused'
 import { cors } from 'hono/cors'
 import { account } from './account'
@@ -7,6 +7,7 @@ import { accountById, auth, presentUser, requireWhoever, sessions } from './auth
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
+import { blogRootOf, isOwnOrigin } from './hosts'
 import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
@@ -36,7 +37,7 @@ import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
 import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
-import { isMachineHost } from './machines/hetzner-host'
+import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
 import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
@@ -63,12 +64,14 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 app.onError(failed)
 
 /** The desktop app is not served from the API's origin, so it needs to be let in
- *  by name. Auth rides on a bearer token, never on cookies. */
+ *  by name. Auth rides on a bearer token, never on cookies. Each of the service's
+ *  own names is let in as well, because the web app on one of them may be a build
+ *  that asks the API at the other; see hosts.ts. */
 const appOrigins = cors({
-  origin: (origin) =>
-    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost|https:\/\/nibeditor\.com)$/.test(
+  origin: (origin, context: Context<{ Bindings: Env }>) =>
+    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(
       origin,
-    )
+    ) || isOwnOrigin(context.env, origin)
       ? origin
       : '',
   // `x-nib-device` is what a version the account keeps says it came from; a
@@ -364,9 +367,9 @@ app.all('*', async (context) => {
   // show, and the editor does not live there either. Temporary, because the
   // name may be taken tomorrow. Read through the same normalising as above, so
   // one spelling of a host cannot be a blog and another the app.
-  if (hostnameOf(url.host).endsWith(`.${context.env.BLOG_ROOT}`)) {
-    return context.redirect(context.env.APP_ORIGIN, 302)
-  }
+  const hostname = hostnameOf(url.host)
+  const root = blogRootOf(context.env, hostname)
+  if (root && hostname !== root) return context.redirect(context.env.APP_ORIGIN, 302)
 
   // The web build of the editor. It stores notes in the browser until someone
   // signs in, so it is served to anyone who asks.
@@ -452,7 +455,7 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
  *  how `Machine`'s link reaches `nibd` whichever way Cloudflare routes it, and anybody
  *  else meets Access and `nibd`'s own secret there, never the Worker. */
 function serve(request: Request, env: Env, context?: ExecutionContext) {
-  if (isMachineHost(new URL(request.url).hostname, env.APP_ORIGIN)) return fetch(request)
+  if (isMachineHost(new URL(request.url).hostname, machineDomain(env))) return fetch(request)
   return app.fetch(request, env, context)
 }
 

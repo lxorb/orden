@@ -32,6 +32,7 @@ import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
+import { blogRootOf } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { noteKey } from './notes'
 import { keepAnswer } from './spaces/answers'
@@ -109,8 +110,11 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
   const hostname = hostnameOf(host)
   if (!hostname) return null
 
-  if (hostname.endsWith(`.${env.BLOG_ROOT}`)) {
-    const subdomain = hostname.slice(0, -(env.BLOG_ROOT.length + 1))
+  // A subdomain is the same site under every root: the service's two names
+  // hand out one pool of them. See hosts.ts.
+  const root = blogRootOf(env, hostname)
+  if (root && hostname !== root) {
+    const subdomain = hostname.slice(0, -(root.length + 1))
     return (
       (await env.DB.prepare('select * from spaces where blog_subdomain = ? and blog_enabled = 1')
         .bind(subdomain)
@@ -118,9 +122,9 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
     )
   }
 
-  // The shared domain itself is the app, whatever any row might say. The
+  // A shared domain itself is the app, whatever any row might say. The
   // API refuses such a row; this is for the day something else writes one.
-  if (hostname === env.BLOG_ROOT) return null
+  if (root) return null
 
   // A domain of one's own answers only once a record in it has said the domain
   // is this account's. A row is not a claim to a name in DNS: without this,

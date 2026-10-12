@@ -2,6 +2,7 @@
  *  domain of its own. What each may look like, which names are not on offer,
  *  and what the owner has to add at their registrar. */
 
+import { blogRoots, origins } from '../hosts'
 import type { Env, Space } from '../types'
 
 // Two to thirty-two, which is what the message beside it promises. The
@@ -121,6 +122,7 @@ const RESERVED = new Set([
   'nibeditor',
   'oauth',
   'ops',
+  'orden',
   'pay',
   'payment',
   'payments',
@@ -196,12 +198,13 @@ export function looksLikeDomain(domain: string): boolean {
 
 /** Whether a domain is the app's own, or sits under it.
  *
- *  The shared domain and everything under it are the app's and the pool's. A
+ *  The shared domains - every name the service has - and everything under
+ *  them are the app's and the pool's. A
  *  row naming the apex would put a blog in front of the app for everyone; one
  *  naming a subdomain would be a name taken without going through the pool,
  *  and a certificate asked for inside the zone's own. */
 export function ours(env: Env, domain: string): boolean {
-  const roots = [env.BLOG_ROOT, new URL(env.APP_ORIGIN).hostname]
+  const roots = [...blogRoots(env), ...origins(env).map((origin) => new URL(origin).hostname)]
   return roots.some((root) => domain === root || domain.endsWith(`.${root}`))
 }
 

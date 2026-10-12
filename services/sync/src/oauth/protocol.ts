@@ -3,13 +3,19 @@
  *  authorization request as they travel from the query string through the
  *  consent page's forms and into the code. */
 
+import { originAt, origins } from '../hosts'
 import type { Env } from '../types'
 
 export const SCOPES = ['notes:read', 'notes:write']
 export const GRANTS = ['authorization_code', 'refresh_token']
 
-export const issuer = (env: Env) => env.APP_ORIGIN
-export const resourceUrl = (env: Env) => `${env.APP_ORIGIN}/mcp`
+/** Who this server is, said in the name the request reached it at: `at` is the
+ *  request's URL. A connector added under one of the service's names checks
+ *  every answer against that name - the issuer of the metadata it fetched, the
+ *  `iss` on the redirect, the resource it asked for - so each name answers as
+ *  itself. A token is a row in the one database, and good under either. */
+export const issuer = (env: Env, at: string) => originAt(env, at)
+export const resourceUrl = (env: Env, at: string) => `${issuer(env, at)}/mcp`
 
 /** An OAuth error object, which is what every failure here looks like. */
 export const failure = (error: string, description: string) => ({
@@ -79,8 +85,9 @@ export function challengeLooksRight(value: string): boolean {
   return CHALLENGE.test(value)
 }
 
-/** The resource the token is for must be this connector, when named at all.
- *  Case in the host and a trailing slash are forgiven, as the spec advises. */
+/** The resource the token is for must be this connector, under any of its
+ *  names, when named at all. Case in the host and a trailing slash are
+ *  forgiven, as the spec advises. */
 export function resourceMatches(env: Env, given: string): boolean {
   if (!given) return true
   const canonical = (uri: string) => {
@@ -91,7 +98,7 @@ export function resourceMatches(env: Env, given: string): boolean {
       return uri
     }
   }
-  return canonical(given) === canonical(resourceUrl(env))
+  return origins(env).some((origin) => canonical(given) === canonical(`${origin}/mcp`))
 }
 
 /** The text fields of a submitted body. A file, or a field sent twice, is not

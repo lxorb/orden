@@ -141,6 +141,14 @@
     "BLOG_CNAME_TARGET": "cname.nibeditor.com",
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://nibeditor.com",
+    // The service's other name, answered on as itself and never redirected, and
+    // the same blog subdomains under it; see src/hosts.ts. When the names swap,
+    // APP_ORIGIN and BLOG_ROOT take the new one and these the old.
+    "OTHER_ORIGINS": "https://orden.so",
+    "OTHER_BLOG_ROOTS": "orden.so",
+    // Where the machines' hostnames are made: CF_ZONE_ID's zone, whatever
+    // APP_ORIGIN says. See machines/hetzner-host.ts.
+    "MACHINE_DOMAIN": "nibeditor.com",
     "MAIL_FROM": "nibeditor <nib@nibeditor.com>",
     // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
     "MACHINE_EGRESS": "open",
