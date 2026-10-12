@@ -14,7 +14,11 @@
 
 import { isRecord, listOf, parsed, readSpace, text } from './stored'
 
-export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
+export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://orden.so'
+
+/** Where the service lived while the product was called nibeditor. It still
+ *  answers every route, and the pictures clipped back then point at it. */
+export const LEGACY_BASE = 'https://nibeditor.com'
 
 export interface Account {
   email: string

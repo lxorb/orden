@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { ApiError, BASE } from './api'
+import { ApiError, BASE, LEGACY_BASE } from './api'
 import { belongsTo, uploaded } from './images'
 
 const PAGE = 'https://site.example/article'
@@ -111,6 +111,22 @@ describe('moving the pictures onto the account', () => {
 
     expect(await uploaded('t', [own], PAGE)).toEqual([own])
     expect(fetched).toEqual([])
+  })
+
+  test('and one stored while the service was nibeditor.com', async () => {
+    serving('image/png')
+    const old = `${LEGACY_BASE}/i/${'a'.repeat(64)}.png`
+
+    expect(await uploaded('t', [old], PAGE)).toEqual([old])
+    expect(fetched).toEqual([])
+  })
+
+  test('but not one on a host that only starts like ours', async () => {
+    serving('image/png')
+    const lookalike = `${LEGACY_BASE}.evil.example/i/${'a'.repeat(64)}.png`
+    const urls = await uploaded('t', [lookalike], PAGE)
+
+    expect(urls[0]).toMatch(new RegExp(`^${BASE}/i/[0-9a-f]{64}\\.png$`))
   })
 
   test('keeps the addresses past the sixtieth without asking for them', async () => {

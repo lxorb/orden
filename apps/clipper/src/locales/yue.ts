@@ -60,13 +60,13 @@ export const yue: Dictionary = {
   'Resend in {seconds}s': '{seconds} 秒之後可以再發',
   'Digit {number}': '第 {number} 位',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': '請先登入 nibeditor。',
-  'Make a space in nibeditor first.': '請先喺 nibeditor 開一個空間。',
+  'Sign in to Orden first.': '請先登入 Orden。',
+  'Make a space in Orden first.': '請先喺 Orden 開一個空間。',
   'This page cannot be clipped.': '呢個頁面剪藏唔到。',
   'There is nothing to clip here.': '呢度冇嘢可以剪藏。',
   'This clip is larger than a note can be.': '呢個剪藏大過一則筆記可以有嘅大小。',
   'Your account is out of space.': '你個帳戶冇晒儲存空間。',
-  'Could not reach nibeditor.': '連唔到 nibeditor。',
+  'Could not reach Orden.': '連唔到 Orden。',
   'Could not reach the provider.': '連唔到服務商。',
   'The provider answered with something else.': '服務商答咗啲唔相干嘅嘢。',
   // And what the sync service itself answers with, looked up like any other string

@@ -1,7 +1,7 @@
 {
-  "name": { "message": "nibeditor" },
+  "name": { "message": "Orden" },
   "description": {
-    "message": "Capturez une page, une sélection ou un lien dans vos notes nibeditor."
+    "message": "Capturez une page, une sélection ou un lien dans vos notes Orden."
   },
   "clipPage": { "message": "Capturer la page" },
   "clipSelection": { "message": "Capturer la sélection" },

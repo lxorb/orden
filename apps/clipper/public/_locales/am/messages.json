@@ -1,6 +1,6 @@
 {
-  "name": { "message": "nibeditor" },
-  "description": { "message": "ገጽ፣ ምርጫ ወይም አገናኝ ወደ nibeditor ማስታወሻዎችህ ቅነጥብ።" },
+  "name": { "message": "Orden" },
+  "description": { "message": "ገጽ፣ ምርጫ ወይም አገናኝ ወደ Orden ማስታወሻዎችህ ቅነጥብ።" },
   "clipPage": { "message": "ገጹን ቅነጥብ" },
   "clipSelection": { "message": "ምርጫውን ቅነጥብ" },
   "clipLink": { "message": "አገናኙን ቅነጥብ" }

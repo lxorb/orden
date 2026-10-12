@@ -1,6 +1,6 @@
 {
-  "name": { "message": "nibeditor" },
-  "description": { "message": "คลิปหน้าเว็บ สิ่งที่เลือก หรือลิงก์ ลงในโน้ต nibeditor ของคุณ" },
+  "name": { "message": "Orden" },
+  "description": { "message": "คลิปหน้าเว็บ สิ่งที่เลือก หรือลิงก์ ลงในโน้ต Orden ของคุณ" },
   "clipPage": { "message": "คลิปหน้านี้" },
   "clipSelection": { "message": "คลิปสิ่งที่เลือก" },
   "clipLink": { "message": "คลิปลิงก์" }

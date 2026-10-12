@@ -57,13 +57,13 @@ export const th: Dictionary = {
   'Resend in {seconds}s': 'ส่งอีกใน {seconds} วิ',
   'Digit {number}': 'หลัก {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': 'เข้าสู่ระบบ nibeditor ก่อน',
-  'Make a space in nibeditor first.': 'สร้างพื้นที่ใน nibeditor ก่อน',
+  'Sign in to Orden first.': 'เข้าสู่ระบบ Orden ก่อน',
+  'Make a space in Orden first.': 'สร้างพื้นที่ใน Orden ก่อน',
   'This page cannot be clipped.': 'หน้านี้คลิปไม่ได้',
   'There is nothing to clip here.': 'ที่นี่ไม่มีอะไรให้คลิป',
   'This clip is larger than a note can be.': 'คลิปนี้ใหญ่กว่าที่โน้ตจะรับได้',
   'Your account is out of space.': 'บัญชีของคุณไม่มีที่เก็บเหลือ',
-  'Could not reach nibeditor.': 'ติดต่อ nibeditor ไม่ได้',
+  'Could not reach Orden.': 'ติดต่อ Orden ไม่ได้',
   'Could not reach the provider.': 'ติดต่อผู้ให้บริการไม่ได้',
   'The provider answered with something else.': 'ผู้ให้บริการตอบอย่างอื่น',
   // And what the sync service itself answers with, looked up like any other string

@@ -43,8 +43,7 @@ export interface Language {
 /** Where a correction goes. Shown under the language row on the options page,
  *  because a reader who can see that a word is wrong is the only person who can
  *  put it right. */
-export const CATALOGUES_URL =
-  'https://github.com/lxorb/nibeditor/tree/main/apps/clipper/src/locales'
+export const CATALOGUES_URL = 'https://github.com/lxorb/orden/tree/main/apps/clipper/src/locales'
 
 /** The same list the app offers, in the same order, so the two settings pages
  *  read alike.
