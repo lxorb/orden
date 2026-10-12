@@ -3,7 +3,7 @@ import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
-import { readBody } from './body'
+import { objectBody, readBody } from './body'
 import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
@@ -32,6 +32,8 @@ import {
   keepVersion,
   ROLLBACK_AT_ONCE,
   presentVersion,
+  saidAs,
+  saidOnce,
   versionAt,
   versionsAt,
   versionsOf,
@@ -567,6 +569,42 @@ notes.get('/notes/:id/versions/:at', async (context) => {
 
   if (content === null) return context.json({ error: 'no such version' }, 404)
   return context.json({ at: asked, content })
+})
+
+/** The most notes one ancestry question names: a page of changes is a few hundred,
+ *  and the device asks a page at a time. */
+export const MOST_ASKED = 100
+
+/** Which of these copies a device holds are words its note once said: the device
+ *  signing back in with no record of where it left off (docs/sync.md, "Signing back
+ *  in"). A note nobody here can reach answers the same as one that never said it. */
+notes.post('/notes/said', async (context) => {
+  const body = await objectBody(context)
+  const asked = Array.isArray(body?.notes) ? body.notes : null
+  if (!asked || asked.length > MOST_ASKED) return context.json({ error: 'which notes' }, 400)
+
+  const said: string[] = []
+  for (const one of asked) {
+    const note = one as { id?: unknown; hash?: unknown } | null
+    if (typeof note?.id !== 'string' || typeof note.hash !== 'string') {
+      return context.json({ error: 'which notes' }, 400)
+    }
+    const found = await reachedNote(context.env, context.get('who'), note.id)
+    if (found && (await saidOnce(context.env, found.note, note.hash))) said.push(note.id)
+  }
+
+  return context.json({ said })
+})
+
+/** What a note said when its words hashed to this: the ancestor a device merges its
+ *  own writing and the account's against. */
+notes.get('/notes/:id/said/:hash', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+
+  const content = await saidAs(context.env, found.note.id, context.req.param('hash'))
+  if (content === null) return context.json({ error: 'no such version' }, 404)
+  return context.json({ content })
 })
 
 /** Putting a space, or one folder of it, back to how it read at a moment.

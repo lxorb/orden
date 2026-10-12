@@ -948,6 +948,16 @@ export const routes = {
   noteVersion: (token: string, id: string, at: number) =>
     request<{ at: number; content: string }>(`/v1/notes/${id}/versions/${at}`, { token }),
 
+  /** Which of these copies are words their note once said, by id: a copy that is
+   *  only behind the account's. At most a hundred at a time; see sync/ancestry.ts. */
+  said: (token: string, notes: readonly { id: string; hash: string }[]) =>
+    request<{ said: string[] }>('/v1/notes/said', { token, body: { notes } }),
+
+  /** What a note said when its words hashed to `hash`: the base a merge is made
+   *  against. */
+  saidAs: (token: string, id: string, hash: string) =>
+    request<{ content: string }>(`/v1/notes/${id}/said/${hash}`, { token }),
+
   /** A space, or one folder of it, back to how it read at a moment. `dry` asks
    *  what would change and changes nothing. */
   /** Putting a space back to a moment. Bounded on the server, so `partial` says

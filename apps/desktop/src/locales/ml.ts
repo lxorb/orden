@@ -694,12 +694,9 @@ export const ml: Dictionary = {
   Continue: 'തുടരുക',
   'Send a new code': 'പുതിയ കോഡ് അയയ്ക്കുക',
   'Code sent to': 'കോഡ് അയച്ച വിലാസം',
-  'You already have notes on this computer.':
-    'ഈ കമ്പ്യൂട്ടറിൽ നിങ്ങൾക്ക് ഇപ്പോൾ തന്നെ കുറിപ്പുകളുണ്ട്.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'സൂക്ഷിച്ചാൽ അവ നിങ്ങളുടെ അക്കൗണ്ടിൽ ചേരും. മായ്ച്ചാൽ അക്കൗണ്ടിൽ ഇപ്പോഴുള്ളത് മാത്രം ശേഷിക്കും - ഇത് പഴയപടിയാക്കാനാകില്ല.',
-  'Keep them': 'സൂക്ഷിക്കുക',
-  'Erase them': 'മായ്ക്കുക',
+  'This device already has notes.': 'ഈ ഉപകരണത്തിൽ ഇതിനകം കുറിപ്പുകളുണ്ട്.',
+  Merge: 'ലയിപ്പിക്കുക',
+  'Keep separate': 'വേറിട്ട് സൂക്ഷിക്കുക',
   'Digit {number}': 'അങ്കം {number}',
   'Resend in {seconds}s': '{seconds} സെക്കൻഡിൽ വീണ്ടും അയയ്ക്കുക',
   'Last synced {time}.': 'അവസാന സിങ്ക് {time}.',

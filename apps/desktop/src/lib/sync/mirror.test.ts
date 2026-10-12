@@ -93,6 +93,11 @@ const fake = vi.hoisted(() => {
       return Promise.resolve(undefined as T)
     }
 
+    // The versions a merge looks for its base in. None, here: this file is about
+    // the rules for two copies nothing can merge, and relogin.test.ts holds the merge
+    // to the real Worker.
+    if (command === 'list_snapshots') return Promise.resolve([] as T)
+
     if (command === 'delete_note') {
       calls.push(`delete ${path}`)
       disk.delete(path)
@@ -234,6 +239,10 @@ const fake = vi.hoisted(() => {
       return Promise.resolve({ ok: true as const })
     },
     saveSpaceFiles: () => Promise.resolve({ files: [], missing: [] as string[] }),
+    // An account that keeps no history: no copy here is ever only behind it, and no
+    // base is ever found for a merge.
+    said: () => Promise.resolve({ said: [] as string[] }),
+    saidAs: () => Promise.reject(new ApiError(404, 'no such version')),
   }
 
   /** A note the account holds, and what its next version will be called. */

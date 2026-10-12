@@ -541,29 +541,6 @@ describe('signing in on a machine that already holds notes', () => {
     expect(account.syncable).toBe(true)
   })
 
-  test('erasing them brings the account down in their place, without a restart', async () => {
-    await machineWithNotes()
-    accountWithNotes()
-    await signIn()
-
-    await workspace.eraseLocalSpaces()
-    account.settled()
-    await sync.pass()
-
-    expect(workspace.spaces.map((space) => space.name)).toEqual(['Account'])
-    expect(workspace.activeSpace?.name).toBe('Account')
-    expect(workspace.tree?.children.map((entry) => entry.name)).toEqual(['Hello.md'])
-    expect(fake.disk.get('/Account/Hello.md')).toBe('# Hello from the account')
-
-    // Nothing that was erased reaches the account, and nothing of the
-    // account's is taken for deleted.
-    expect(fake.remote.calls).toEqual([])
-    expect(fake.remote.spaces.map((space) => space.name)).toEqual(['Account'])
-
-    // No tab is left pointing at a note that is gone.
-    expect(workspace.tabs.every((tab) => !tab.path)).toBe(true)
-  })
-
   test("keeping them sends them up and takes the account's spaces alongside", async () => {
     await machineWithNotes()
     accountWithNotes()
@@ -975,6 +952,34 @@ describe('the mirrors this machine remembers', () => {
     await started()
     try {
       expect(sync.remoteIdFor('/Theirs')).toBeNull()
+    } finally {
+      stopped()
+    }
+  })
+
+  test('stay the account’s they were for when written down after it signed out', async () => {
+    // A pass in the air when somebody signs out writes what it found once the account
+    // has gone. Written down as nobody's, the next sign-in - of any account - read it
+    // as its own; see settling.ts.
+    localStorage.setItem(
+      'nib:mirrors',
+      JSON.stringify({
+        account: 'u1',
+        mirrors: { '/Notes': { spaceId: 's-Notes', root: '/Notes' } },
+      }),
+    )
+
+    await started()
+    try {
+      await account.signOut()
+      await sync.renamed('/Notes', '/Renamed', 'Renamed')
+
+      const written = JSON.parse(localStorage.getItem('nib:mirrors') ?? '{}') as {
+        account?: unknown
+        mirrors?: Record<string, unknown>
+      }
+      expect(written.account).toBe('u1')
+      expect(Object.keys(written.mirrors ?? {})).toEqual(['/Renamed'])
     } finally {
       stopped()
     }

@@ -2290,16 +2290,6 @@ class Workspace {
     await spaces.showSpace(this, id)
   }
 
-  /** True as soon as one note on this machine has something written in it. */
-  async hasLocalContent(): Promise<boolean> {
-    return (await changes()).hasLocalContent(this)
-  }
-
-  /** Removes every space on this machine. Only ever called with an explicit yes. */
-  async eraseLocalSpaces() {
-    await (await changes()).eraseLocalSpaces(this)
-  }
-
   /** Deletes the space's folder, or puts it in this device's trash. */
   async deleteSpace(id: string, keep = false) {
     await (await changes()).deleteSpace(this, id, keep)

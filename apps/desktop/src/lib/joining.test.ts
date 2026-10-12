@@ -85,9 +85,6 @@ vi.mock('./workspace.svelte', () => ({
       world.shown = id
       return Promise.resolve()
     },
-    // A machine with nothing on it, so the question a fresh account's session
-    // asks about the notes already here has nothing to ask about; see settling.ts.
-    hasLocalContent: () => Promise.resolve(false),
   },
 }))
 
