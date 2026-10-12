@@ -33,6 +33,8 @@
 
   --line: #7c8593;
   --line-strong: #5c6472;
+  /* The open tab's edge is a rule like the others. */
+  --tab-edge: var(--line);
 
   --muted: #4a515c;
   --muted-strong: #2b3038;
@@ -73,6 +75,7 @@
 
   --line: #5d6673;
   --line-strong: #7e8898;
+  --tab-edge: var(--line);
 
   --muted: #b9c0cb;
   --muted-strong: #d8dee6;

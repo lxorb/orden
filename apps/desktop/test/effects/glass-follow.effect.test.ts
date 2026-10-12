@@ -243,6 +243,6 @@ test('the shell, the bar and the open tab ease the colour rather than jump to it
     /background: var\(--shell-ground\);\s*transition: background var\(--dur-/,
   )
   expect(source('src/lib/web-tab/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
-  expect(source('src/lib/Tabs.svelte')).toMatch(/transition: --tab-ground var\(--dur-/)
+  expect(source('src/lib/Tabs.svelte')).toMatch(/transition:\s+--tab-ground var\(--dur-/)
   expect(source('../../packages/themes/src/glass.css')).toMatch(/@property --tab-ground/)
 })

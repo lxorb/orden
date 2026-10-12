@@ -775,10 +775,10 @@
     align-items: stretch;
     flex: none;
     height: var(--titlebar-height);
-    /* The window's own bar, again: the frame the tabs are cut out of, and the line
-       inside it that the active tab covers. See Titlebar.svelte. */
+    /* The window's own bar, again: the frame the tabs are cut out of, whose line the
+       strip draws. See Titlebar.svelte. */
     background: var(--tab-frame);
-    box-shadow: inset 0 -1px var(--line);
+    overflow-x: clip;
   }
 
   .editor {

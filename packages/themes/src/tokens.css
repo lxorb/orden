@@ -191,6 +191,9 @@
      Chrome's rule rather than a token; see apps/desktop/src/lib/tab-strip/layout.ts
      and docs/chrome-tabs.md. */
   --tab-frame: var(--surface-2);
+  /* And `--tab-edge`, the hairline the open tab is cut out of it with: the bar's line,
+     rising round the tab. A lift of the ink, so it holds on whatever the frame is - a
+     glass tint, a picture - as the words do; said per scheme below. See Tabs.svelte. */
 
   /* What a thumb needs to land on, and how far a finger has to be from the
      left edge of the screen for a sideways drag to be the sidebar's rather
@@ -503,6 +506,8 @@
      `data:` URL with a raw `<` in it is not a valid URL. */
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%23878f9d' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
 
+  --tab-edge: color-mix(in srgb, var(--text) 20%, transparent);
+
   --scrollbar: #39404d;
   --scrollbar-hover: #4d5665;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -566,6 +571,8 @@
 
   /* This side's own; see the dark block. */
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%235c6574' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+
+  --tab-edge: color-mix(in srgb, var(--text) 24%, transparent);
 
   --scrollbar: #c3cbd6;
   --scrollbar-hover: #a7b1bf;

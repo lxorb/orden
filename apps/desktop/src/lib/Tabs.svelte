@@ -248,6 +248,10 @@
     return separated(ids, filled)
   })
 
+  const quiet = $derived(!focused && !alone)
+  /** No open tab to leave out of the bar's line. */
+  const bare = $derived(!activeId || (drag.out && lifted.includes(activeId)))
+
   /** Where a point on the glass is along the strip, from the start of the first
    *  tab, in the direction the interface reads, the strip's own scroll included. */
   function alongOf(clientX: number): number {
@@ -760,6 +764,7 @@
     </div>
   {/if}
 
+  <span class="reach" class:quiet aria-hidden="true"></span>
   <!-- The whole strip takes a note dropped out of the file list, and makes room
        for it where it would land. In the titlebar its empty stretch is the
        window's caption: dragged, it moves the window, and a double click maximises
@@ -791,9 +796,10 @@
       remove: (row) => void workspace.closeAsking(row.dataset.tab ?? ''),
       menu: (row, at) => row.dispatchEvent(at),
     }}
-    class:quiet={!focused && !alone}
+    class:quiet
     class:live={live && !resizing}
     class:moving={drag.on}
+    class:bare
     ondragover={over}
     ondragleave={(event) => {
       const box = event.currentTarget.getBoundingClientRect()
@@ -853,8 +859,9 @@
         out:leave
       >
         <!-- The tab's shape: the rounded body with its feet when it is the one
-             being read, nothing on the frame when it is not. -->
+             being read, nothing on the frame when it is not; and its edge. -->
         <span class="fill" aria-hidden="true"></span>
+        <span class="edge" aria-hidden="true"></span>
         <!-- A double click keeps a preview, the way VS Code does it, and renames a
              terminal. A long press stands in for the right click on a touch screen,
              and the middle button closes, as it does on every browser's tab. Dragged,
@@ -1027,6 +1034,7 @@
       </button>
     {/if}
   </div>
+  <span class="reach" class:quiet aria-hidden="true"></span>
 
   <!-- Two links of a chain: this pane scrolls with the other one on the same
        note. Only there while there is another one. -->
@@ -1060,6 +1068,8 @@
     align-items: stretch;
     min-width: 0;
     flex: 1 1 0;
+    /* The frame's, though the open tab may wear the other scheme. */
+    --tab-line: var(--tab-edge);
   }
 
   /* The tabs are placed by hand inside this box, so it is only a box: as tall as
@@ -1073,7 +1083,6 @@
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
-    transition: opacity var(--dur-base) var(--ease-out);
     /* What the active tab is filled with: the ground of whatever is directly under
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
@@ -1094,9 +1103,39 @@
     display: none;
   }
 
+  /* The bar's line, out to the bar's ends. Under the tabs the open one draws it, leaving
+     itself out, as its body may be see-through. */
+  .reach {
+    position: relative;
+    flex: none;
+  }
+
+  .reach::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    inset-inline-end: 0;
+    width: 100vw;
+    height: 1px;
+    background: var(--tab-line);
+  }
+
+  .tabs + .reach::after {
+    inset-inline: 0 auto;
+  }
+
+  .tabs.bare {
+    box-shadow: inset 0 -1px var(--tab-line);
+  }
+
+  .tabs,
+  .reach {
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
   /* The pane that is not being worked in says so by receding. Nothing is drawn
      around the words themselves; a line there is a line to read past. */
-  .tabs.quiet {
+  .quiet {
     opacity: 0.55;
   }
 
@@ -1167,11 +1206,19 @@
     pointer-events: none;
   }
 
+  /* Out at once, so no tab closing is a second open one. */
+  .fill {
+    opacity: 0;
+  }
+
   .tab.active .fill {
+    opacity: 1;
     background: var(--tab-ground);
     /* Eased with the bar under it when the page's colour changes; glass.css registers
        the property, so the feet ease with the body. */
-    transition: --tab-ground var(--dur-slow) var(--ease-out);
+    transition:
+      --tab-ground var(--dur-slow) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out);
   }
 
   /* Picked with Ctrl or Shift: the hover's box, held, as Chrome's selected tab, in the
@@ -1193,24 +1240,55 @@
     bottom: 0;
     width: var(--tab-foot);
     height: var(--tab-foot);
+    /* The edge's curve, and the ground past it. */
+    --rise:
+      transparent calc(var(--tab-foot) - 1.5px),
+      var(--tab-line) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px),
+      var(--tab-ground) var(--tab-foot);
   }
 
   .tab.active .fill::before {
     right: 100%;
-    background: radial-gradient(
-      circle at 0 0,
-      transparent calc(var(--tab-foot) - 0.5px),
-      var(--tab-ground) var(--tab-foot)
-    );
+    background: radial-gradient(circle at 0 0, var(--rise));
   }
 
   .tab.active .fill::after {
     left: 100%;
-    background: radial-gradient(
-      circle at 100% 0,
-      transparent calc(var(--tab-foot) - 0.5px),
-      var(--tab-ground) var(--tab-foot)
-    );
+    background: radial-gradient(circle at 100% 0, var(--rise));
+  }
+
+  /* The bar's line rising round the open tab, up each foot (`--rise`), its sides and top:
+     Chrome's stroke for a tab too like its frame (`TabStrip::ShouldDrawStrokes`). */
+  .edge {
+    position: absolute;
+    inset: calc(var(--tab-top) - 1px) 2px var(--tab-foot);
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: calc(var(--round) + 1px) calc(var(--round) + 1px) 0 0;
+    pointer-events: none;
+  }
+
+  .tab.active .edge {
+    border-color: var(--tab-line);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .tab.active .edge::before,
+  .tab.active .edge::after {
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * var(--tab-foot));
+    width: 100vw;
+    height: 1px;
+    background: var(--tab-line);
+  }
+
+  .tab.active .edge::before {
+    right: calc(100% + var(--tab-foot));
+  }
+
+  .tab.active .edge::after {
+    left: calc(100% + var(--tab-foot));
   }
 
   /* Hovered, a tab that is not the active one lights as a rounded box with the active

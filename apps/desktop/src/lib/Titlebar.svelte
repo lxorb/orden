@@ -211,6 +211,12 @@
     box-shadow: inset 0 -1px var(--line);
   }
 
+  /* With tabs in it, the strip draws the line, leaving the open tab out. */
+  header:has(:global([data-region='tabs'])) {
+    box-shadow: none;
+    overflow-x: clip;
+  }
+
   /* The three lights and the gap after them, the room a Mac's own apps leave. On the
      left whichever way the words run: the lights are the system's, about the screen
      rather than about reading, and AppKit keeps them at the window's left edge. */
@@ -232,7 +238,9 @@
     width: var(--space-5);
   }
 
+  /* Placed, so a lit button is drawn over the strip's line. */
   .controls {
+    position: relative;
     flex: none;
     display: flex;
     opacity: 0.45;

@@ -14,6 +14,7 @@ nib's. Source paths are under `chrome/browser/ui/`.
 | Concave foot where the active tab meets the toolbar | radius 12 (`GetBottomCornerRadius`), outside the tab body | `horizontal_tab_style_views.cc` `GetPath` | `--radius-md` |
 | Active tab fill | the toolbar's colour; the path runs 1 DIP into the toolbar, so no line under it | `tab_style.cc`, `kTabstripToolbarOverlap` | the colour of what is under the strip; the bar's hairline stops under it |
 | Underline on the active tab | none | | none (was a 2 px accent line) |
+| Stroke round the active tab | only where the tab and the frame are under 1.3:1, or under 0.2 apart in luminance | `TabStrip::ShouldDrawStrokes`, `kTabOutlinesInLowContrastThemes` | always: `--tab-edge`, the bar's hairline rising round the feet, sides and top, held to 1.5:1 on every frame a built-in theme can put behind it (`test/tab-edge.test.ts`); faded in with the fill over `--dur-fast` |
 | Hover fill | a detached rounded rectangle: top 6 down, 6 + 1 short of the bottom, every corner rounded, in the header's hover tone (`kColorSysStateHeaderHover`, a tone past the frame) | `GetPath(kHighlight)`, `material_tab_strip_color_mixer.cc` | the same box, 5 from the top and from the bar, in `--tab-hover`: the ink lifted 8% off the frame, which the plus and the steps light in too |
 | Contents | centred in the hover's box: the strip's padding above and below (`GetContentsInsets`), not the active body's middle | `tab_style.cc` | `.pick` padded `--tab-top` above and below, so the middle of the strip, level with the bar's own buttons |
 | Hover in / out | 200 ms, ease-out in, ease-in out | `glow_hover_controller.cc` | `--dur-fast` |
@@ -299,6 +300,14 @@ so a width change lays out that one tab and nothing beside it.
   Chrome's last. A place past the end does nothing, as in Chrome.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active
   tab has something to be cut out of.
+- **The active tab is always stroked** (lxorb, issue #242), where Chrome strokes it only
+  in a theme whose tab and frame are too alike. Every nib palette is under Chrome's 1.3:1
+  there, and under glass or a picture the open tab's fill can be the frame's own colour.
+  The stroke is the bar's own hairline, a lift of the ink (`--tab-edge`, `--line` in the
+  contrast theme), which leaves the open tab out of it: the line either side is drawn by
+  the tab itself (see `.edge` in Tabs.svelte), so under a see-through fill there is no
+  line showing through it. Edge's lift and Arc's pill were the other answers looked at;
+  both leave the tab off the page below, which is what makes it the open one.
 - **The cross turns the danger colour on hover**, over Chrome's grey circle: nib's
   own close.
 - **A web tab's active fill is the bar's `--surface`, a note's is the page's
