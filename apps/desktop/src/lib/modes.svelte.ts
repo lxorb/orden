@@ -268,9 +268,9 @@ class Modes {
   silent = $state(false)
   /** Whether this is somebody who writes code: Discord's Developer Mode, a switch that
    *  brings the tools only a programmer wants - the terminals - into the menus, and
-   *  leaves them out of everybody else's. Null until the first screen has asked (see
-   *  SpaceChooser.svelte), which counts as yes, so an install from before the question
-   *  keeps the terminals it had. The account's, like the rest of how somebody likes
+   *  leaves them out of everybody else's. Null until answered (an optional question of
+   *  the first run, see SpaceChooser.svelte), which counts as yes, so an install from
+   *  before the question, or a reader who passed it, keeps the terminals. The account's, like the rest of how somebody likes
    *  the app. Read through `coder`. */
   developer = $state<boolean | null>(null)
   typewriter = $state(false)

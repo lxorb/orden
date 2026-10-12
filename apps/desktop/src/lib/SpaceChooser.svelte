@@ -19,12 +19,21 @@
    *  its transitions are global because that `{#if}` can take it away as well as
    *  this one.
    *
-   *  Before the rows, one question: whether this is somebody who writes code. Notion's
-   *  first run asks how it will be used before it makes a workspace, one question to a
-   *  screen; nib asks the one answer it acts on. Yes keeps the terminals in the menus
+   *  Those rows are the one step nib needs. Once it is done the card stays for
+   *  somebody new and says so - all set - with the optional questions a press away,
+   *  the way Claude Design asks: one at a time, each answered or passed with Next, and
+   *  Done at every one of them, which leaves the rest at their defaults. Choosing an
+   *  answer applies it at once, so the app behind the card is already what was asked
+   *  for. The list is setup.svelte.ts; whether the card stays is space-chooser.svelte.ts:
+   *  armed while the chooser is up for somebody new, so the card stays where it is when
+   *  the space it asked for arrives rather than going and coming back, and never for a
+   *  reader who signs in, whose account already holds their answers (David,
+   *  2026-10-12: only what nib must know is required, everything else is optional).
+   *
+   *  Whether this is somebody who writes code is one of them: yes keeps the terminals
    *  and markdown's marks under the caret, as Obsidian has them; no leaves the
-   *  terminals out and writes the way a Notion page does. See `setDeveloper` in
-   *  modes.svelte.ts, and Settings' Developer mode for changing it. */
+   *  terminals out and writes the way a Notion page does, until the markdown question
+   *  after it says otherwise. See `setDeveloper` in modes.svelte.ts. */
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
   import { i18n, t } from './i18n.svelte'
@@ -35,12 +44,70 @@
   import { migrating } from './migrating.svelte'
   import { modes } from './modes.svelte'
   import MigrateRows from './MigrateRows.svelte'
+  import { account } from './account.svelte'
+  import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
+  import { QUESTIONS, setup, type Question } from './setup.svelte'
+  import { segmented } from './slide'
   import { spaceChooser } from './space-chooser.svelte'
   import { firstVisit } from './first-visit.svelte'
   import { isDesktop, isNative } from './tauri'
+  import { theme, type SchemeChoice } from './theme.svelte'
   import { trap } from './trap'
 
   const version = __APP_VERSION__
+
+  // Somebody new gets the optional questions once the required step is done; a reader
+  // who signs in instead already has their answers on the account.
+  if (spaceChooser.asking && !account.signedIn) setup.arm()
+  $effect(() => {
+    if (setup.armed && !spaceChooser.asking && account.signedIn) setup.finish()
+  })
+
+  interface Asked {
+    label: string
+    options: { value: string; label: string }[]
+    get: () => string | null
+    set: (value: string) => void
+  }
+
+  /** Each optional question: what it is called, its answers, and the setting it reads
+   *  and writes - the same setters Settings uses, so an answer is saved and shared the
+   *  same way. */
+  function asked(question: Question): Asked {
+    switch (question) {
+      case 'theme':
+        return {
+          label: t('Theme'),
+          options: SCHEME_CHOICES.map((one) => ({ value: one, label: t(SCHEME_NAMES[one]) })),
+          get: () => theme.scheme,
+          set: (value) => theme.setScheme(value as SchemeChoice),
+        }
+      case 'developer':
+        return {
+          label: t('Do you write code?'),
+          options: [
+            { value: 'yes', label: t('Yes') },
+            { value: 'no', label: t('No') },
+          ],
+          get: () => (modes.developer === null ? null : modes.developer ? 'yes' : 'no'),
+          set: (value) => modes.setDeveloper(value === 'yes'),
+        }
+      case 'markdown':
+        // Notion's page, where a mark never shows, or Obsidian's live preview, where it
+        // shows under the caret; named for what they do rather than for either app.
+        return {
+          label: t('Markdown'),
+          options: [
+            { value: 'clean', label: t('Clean') },
+            { value: 'live', label: t('Live preview') },
+          ],
+          get: () => (modes.quietMarks ? 'clean' : 'live'),
+          set: (value) => {
+            if ((value === 'clean') !== modes.quietMarks) modes.toggleQuietMarks()
+          },
+        }
+    }
+  }
 </script>
 
 {#if spaceChooser.showing}
@@ -66,28 +133,64 @@
       <p class="version">{version}</p>
     </div>
 
-    {#if modes.developer === null}
+    {#if spaceChooser.personalizing}
+      {@const question = setup.question}
       <div class="rows">
-        <div class="nib-setting">
-          <span class="name">{t('Do you write code?')}</span>
-          <span class="pair">
-            <button
-              class="nib-button is-quiet is-soft"
-              type="button"
-              onclick={() => modes.setDeveloper(false)}
-            >
-              {t('No')}
-            </button>
-            <button
-              class="nib-button is-quiet is-soft"
-              type="button"
-              data-lands
-              onclick={() => modes.setDeveloper(true)}
-            >
-              {t('Yes')}
-            </button>
-          </span>
-        </div>
+        {#if question === null}
+          <div class="nib-setting">
+            <span class="name">{t('All set')}</span>
+            <span class="pair">
+              <button
+                class="nib-button is-quiet is-soft"
+                type="button"
+                onclick={() => setup.personalize()}
+              >
+                {t('Personalize')}
+              </button>
+              <button class="nib-button" type="button" data-lands onclick={() => setup.finish()}>
+                {t('Done')}
+              </button>
+            </span>
+          </div>
+        {:else}
+          {@const one = asked(question)}
+          {@const held = one.get()}
+          <div class="nib-setting">
+            <span class="name">{one.label}</span>
+            <div class="nib-segmented" role="radiogroup" aria-label={one.label} use:segmented>
+              {#each one.options as option (option.value)}
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={option.value === held}
+                  class:on={option.value === held}
+                  onclick={() => one.set(option.value)}
+                >
+                  {option.label}
+                </button>
+              {/each}
+            </div>
+          </div>
+          <div class="steps">
+            <span class="dots" aria-hidden="true">
+              {#each QUESTIONS as step, at (step)}
+                <span class="dot" class:on={at === setup.at}></span>
+              {/each}
+            </span>
+            <span class="pair">
+              <button
+                class="nib-button is-quiet is-soft"
+                type="button"
+                onclick={() => setup.finish()}
+              >
+                {t('Done')}
+              </button>
+              <button class="nib-button" type="button" onclick={() => setup.next()}>
+                {t('Next')}
+              </button>
+            </span>
+          </div>
+        {/if}
       </div>
     {:else}
       <div class="rows">
@@ -236,6 +339,32 @@
 
   .rows .nib-button {
     flex: none;
+  }
+
+  /* Where the optional questions are, and the way on or out. */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  .dots {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    opacity: 0.4;
+  }
+
+  .dot.on {
+    opacity: 1;
   }
 
   .foot {

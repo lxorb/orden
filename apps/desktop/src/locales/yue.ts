@@ -1,7 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
-  // The first screen's question, and Settings' Developer mode that changes it
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '搞掂晒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
   'Developer mode': '開發人員模式',
   'Do you write code?': '你寫唔寫程式？',
   Yes: '係',

@@ -1,7 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fr: Dictionary = {
-  // The first screen's question, and Settings' Developer mode that changes it
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Tout est prêt',
+  Personalize: 'Personnaliser',
+  Clean: 'Épuré',
+  'Live preview': 'Aperçu en direct',
   'Developer mode': 'Mode développeur',
   'Do you write code?': 'Vous écrivez du code ?',
   Yes: 'Oui',

@@ -1,7 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
-  // The first screen's question, and Settings' Developer mode that changes it
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Kabeh wis siyap',
+  Personalize: 'Atur dhewe',
+  Clean: 'Resik',
+  'Live preview': 'Pratinjau langsung',
   'Developer mode': 'Mode pangembang',
   'Do you write code?': 'Apa sampeyan nulis kode?',
   Yes: 'Iya',
