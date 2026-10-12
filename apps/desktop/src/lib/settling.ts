@@ -1,30 +1,19 @@
 /** The notes already on this machine, the moment an account's session begins.
  *
- *  Almost always nothing is asked. A device signing back in to the account it was
- *  last in step with resumes where it left off, note by note, the way Git
- *  fast-forwards; one whose notes would join the account without two different texts
- *  ever landing at one path just joins. The question is for the one case a person has
- *  to decide: notes of unknown standing - another account's, or ones no pass has
- *  seen - that would meet different words in the account's space of the same name.
- *  Then the answer is Merge, or Keep separate, and neither loses a word. See
- *  sync/returning.ts for the table and sync/meeting.ts for what meeting is.
+ *  Almost always nothing is asked: a device back with the account it was last in step
+ *  with resumes note by note, and notes that would land nowhere another text is just
+ *  join. Only notes of unknown standing that would meet other words in the account's
+ *  space of that name ask, Merge or Keep separate, and neither loses a word. The table
+ *  is sync/returning.ts's; syncing waits for this.
  *
- *  Syncing waits for this, so the first pass already knows what was decided.
- *
- *  Its own file because two things begin a session: the emailed code, and a link that
- *  was its own proof. It is the same question either way, and asking it in two places
- *  is how two answers drift apart.
- *
- *  A guest is never asked, and never reaches this: there is no account for the
- *  writing here to join, because what a link lent them is a space beside their own
- *  notes. */
+ *  Its own file because a code and a link both begin a session, and one question
+ *  asked in two places drifts apart. A guest is never asked: there is no account for
+ *  the writing here to join. */
 
 import { account } from './account.svelte'
 import { t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
-import { meeting } from './sync/meeting'
-import { apartName, asksOnReturn, baseFor } from './sync/returning'
-import { MIRRORS_KEY, savedRecord } from './sync/saved'
+import { MIRRORS_KEY, savedRecord } from './sync/mirror'
 import { stored } from './stored'
 import { workspace } from './workspace.svelte'
 
@@ -34,10 +23,15 @@ export async function settleLocalNotes(): Promise<void> {
     const user = account.user
     if (!token || !user) return
 
+    // Fetched with the sign-in rather than the launch, like everything after it.
+    const { apartName, asksOnReturn, baseFor } = await import('./sync/returning')
+
     // Back with the account this device was last in step with: the pass resumes.
     const base = baseFor(savedRecord(stored(MIRRORS_KEY)), user.id)
     if (base === 'mine') return
 
+    // Fetched only here, the one sign-in in many that has something to compare.
+    const { meeting } = await import('./sync/meeting')
     const met = await meeting(token, workspace.spaces, account.spaces)
     if (!asksOnReturn(base, met.length > 0)) return
 

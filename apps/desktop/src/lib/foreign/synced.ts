@@ -15,7 +15,7 @@ import { account } from '../account.svelte'
 import { api, ApiError } from '../api'
 import { log } from '../log'
 import { stored } from '../stored'
-import { savedMirrors } from '../sync/saved'
+import { savedMirrors } from '../sync/mirror'
 import { STORAGE_KEY, sync } from '../sync.svelte'
 import type { Engine, ForeignCopies } from '../sync2/asking.svelte'
 

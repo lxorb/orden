@@ -17,10 +17,16 @@ import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke, joinPath } from './tauri'
-import { type Mirror, newMirror, type Tracked, within } from './sync/mirror'
+import {
+  MIRRORS_KEY,
+  type Mirror,
+  newMirror,
+  savedRecord,
+  type Tracked,
+  within,
+} from './sync/mirror'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
-import { MIRRORS_KEY, savedRecord } from './sync/saved'
 import type { Folded } from './sync/web-copies'
 import { workspace } from './workspace.svelte'
 import type { FileOp } from './workspace/file-ops'
@@ -88,11 +94,8 @@ class Sync {
    *  a cursor cannot answer it: a space this machine uploaded and never pulled
    *  anything from has a cursor of nought for as long as it exists. */
   private seen = false
-  /** The account the mirrors are this machine's relationship with: whoever was signed
-   *  in when the loop started. Written beside them rather than whoever is signed in at
-   *  the moment of writing, because a pass still in the air when somebody signs out
-   *  writes down what it found after the account has gone - and a blob that then said
-   *  nobody's was read by the next sign-in, of any account, as its own. */
+  /** Whose the mirrors are: whoever was signed in when the loop started, so a pass
+   *  that lands after a sign-out does not write them down as nobody's. */
   private owner: string | null = null
 
   /** The mirrors, as space-pairing.ts reads and writes a pairing. */

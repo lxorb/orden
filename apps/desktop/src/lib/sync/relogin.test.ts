@@ -97,21 +97,46 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: world.invoke,
 }))
 
-const { default: worker } = await import('../../../../../services/sync/src/index')
-const { call, signIn, testEnv } = await import('../../../../../services/sync/test/harness')
+/** The Worker and its test harness, out of services/sync. Named through a variable so
+ *  the app's type check, which holds the app to the browser's types, does not walk
+ *  into a Worker held to Cloudflare's; the shapes this file uses are spelled below. */
+const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
+interface Env {
+  db: { exec(sql: string): void }
+  close(): void
+}
+interface Answer<T> {
+  status: number
+  json: T
+}
+interface Harness {
+  testEnv: () => Env
+  signIn: (env: Env, email: string) => Promise<string>
+  call: <T>(
+    env: Env,
+    path: string,
+    options?: { token?: string; body?: unknown; method?: string },
+  ) => Promise<Answer<T>>
+}
+interface Worker {
+  default: { fetch(request: Request, env: Env): Promise<Response> }
+}
+const { default: worker } = (await import(/* @vite-ignore */ `${SERVICE}src/index.ts`)) as Worker
+const { call, signIn, testEnv } = (await import(
+  /* @vite-ignore */ `${SERVICE}test/harness.ts`
+)) as Harness
 const { newMirror, readMirror } = await import('./mirror')
 const { pull, push } = await import('./pass')
 const { meeting } = await import('./meeting')
 const { asksOnReturn, baseFor } = await import('./returning')
-const { savedRecord } = await import('./saved')
+const { savedRecord } = await import('./mirror')
 type Mirror = import('./mirror').Mirror
 type Device = InstanceType<typeof world.Device>
-type Env = ReturnType<typeof testEnv>
 
 const NOBODY = new Set<string>()
 const ROOT = '/Plans'
 const NOTE = `${ROOT}/plan.md`
-const COPY = /from another device/
+const COPY = 'from another device'
 
 let env: Env
 
@@ -244,7 +269,7 @@ describe('signing back in to the same account', () => {
 
     await pass(laptop, mirror, back.token)
     expect(laptop.disk.get(NOTE)).toBe('# Plan\n\none\ntwo\n')
-    expect([...laptop.disk.keys()].filter((one) => COPY.test(one))).toEqual([])
+    expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 
   test('written here while signed out, untouched there: they go up, nothing asked', async () => {
@@ -256,7 +281,7 @@ describe('signing back in to the same account', () => {
 
     await pass(laptop, mirror, back.token)
     expect((await accountHolds(back.token, spaceId)).content).toBe('# Plan\n\none\noffline\n')
-    expect([...laptop.disk.keys()].filter((one) => COPY.test(one))).toEqual([])
+    expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 
   test('written on both, apart: one note with both, nothing asked, no copy', async () => {
@@ -272,7 +297,7 @@ describe('signing back in to the same account', () => {
     const merged = '# Plan\n\nfirst line, here\n\nsecond line\n\nthird, there\n'
     expect(laptop.disk.get(NOTE)).toBe(merged)
     expect((await accountHolds(back.token, spaceId)).content).toBe(merged)
-    expect([...laptop.disk.keys()].filter((one) => COPY.test(one))).toEqual([])
+    expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 
   test('and merged against the account’s version when this device kept none', async () => {
@@ -291,7 +316,7 @@ describe('signing back in to the same account', () => {
     expect(laptop.disk.get(NOTE)).toBe(
       '# Plan\n\nfirst line, here\n\nsecond line\n\nthird, there\n',
     )
-    expect([...laptop.disk.keys()].filter((one) => COPY.test(one))).toEqual([])
+    expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 
   test('written on both, in the same sentence: the copy beside it holds the other', async () => {
@@ -307,7 +332,7 @@ describe('signing back in to the same account', () => {
 
     await pass(laptop, mirror, back.token)
     expect(laptop.disk.get(NOTE)).toBe(mine)
-    const copies = [...laptop.disk.entries()].filter(([path]) => COPY.test(path))
+    const copies = [...laptop.disk.entries()].filter(([path]) => path.includes(COPY))
     expect(copies.map(([, words]) => words)).toEqual([theirs])
   })
 })
@@ -356,7 +381,7 @@ describe('signing in with notes of unknown standing', () => {
 
     await pass(laptop, newMirror(spaceId, ROOT), back.token)
     expect(laptop.disk.get(NOTE)).toBe('# Plan\n\none\ntwo\n')
-    expect([...laptop.disk.keys()].filter((one) => COPY.test(one))).toEqual([])
+    expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 
   test('no record, the same words: paired, nothing asked', async () => {

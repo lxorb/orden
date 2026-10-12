@@ -4,12 +4,21 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  does. What counts as meeting is sync/meeting.ts's, held to the real Worker in
  *  sync/relogin.test.ts; here it is whatever the test says. */
 
-const world = vi.hoisted(() => ({
-  record: null as unknown,
-  met: [] as { name: string; root: string }[],
-  answer: null as string | null,
+interface World {
+  record: unknown
+  met: { name: string; root: string }[]
+  answer: string | null
+  asked: number
+  renamed: [string, string][]
+  settled: number
+}
+
+const world = vi.hoisted((): World => ({
+  record: null,
+  met: [],
+  answer: null,
   asked: 0,
-  renamed: [] as [string, string][],
+  renamed: [],
   settled: 0,
 }))
 

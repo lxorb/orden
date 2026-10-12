@@ -11,7 +11,6 @@
  *  question that cannot be answered - the network, a base nobody kept - answers that
  *  the copy is beside the account's, which is the conflict copy it always was. */
 
-import { diverge } from '@nib/sync-core/diverge'
 import { api } from '../api'
 import { sha256 } from '../bytes'
 import { invoke } from '../tauri'
@@ -69,13 +68,4 @@ export async function baseOf(
 
   const held = await api.saidAs(token, id, hash).catch(() => null)
   return held?.content ?? null
-}
-
-/** The two copies as one note, when they meet nowhere: every edit either side made
- *  since `base` kept, an edit both made once. Null where they overlap, or where the
- *  merge would break something both kept (front matter, a fence), which is the
- *  conflict rule's to settle. */
-export function mergedCleanly(base: string, local: string, remote: string): string | null {
-  const judged = diverge(base, local, remote, { local: 0, remote: 0 })
-  return judged.verdict === 'clean' ? judged.resolution : null
 }

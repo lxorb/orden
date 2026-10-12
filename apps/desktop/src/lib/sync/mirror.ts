@@ -100,6 +100,49 @@ export async function fileStamp(path: string): Promise<Stamp | null> {
     : null
 }
 
+/** Where the record of every mirror is kept, wrapped as a newer version writes it or
+ *  bare as an older one did. Read here once for every reader: the launch, the Sync
+ *  pane, v2's first pass and a sign-in (settling.ts). */
+export const MIRRORS_KEY = 'nib:mirrors'
+
+/** This machine's record of where it is with an account. */
+export interface Saved {
+  /** Whose it is. Null in what a version from before accounts wrote, which belongs to
+   *  whoever signs in. */
+  whose: string | null
+  /** Whether a pass ever finished. */
+  seen: boolean
+  mirrors: Record<string, Mirror>
+}
+
+/** The record, or null where nothing that reads as one was written. */
+export function savedRecord(saved: unknown): Saved | null {
+  if (!isRecord(saved)) return null
+
+  const held = isRecord(saved.mirrors) ? saved.mirrors : saved
+  const mirrors: Record<string, Mirror> = {}
+  for (const [root, one] of Object.entries(held)) {
+    const mirror = readMirror(root, one)
+    if (mirror) mirrors[root] = mirror
+  }
+
+  return {
+    whose: typeof saved.account === 'string' ? saved.account : null,
+    // Absent in what an older version wrote. A machine that has mirrors from before
+    // this field existed has plainly seen the account, and reading it as unseen would
+    // hold the app back once, on the next launch only.
+    seen: saved.seen === true || Object.keys(mirrors).length > 0,
+    mirrors,
+  }
+}
+
+/** Every mirror the record holds for an account, and none of another account's. */
+export function savedMirrors(saved: unknown, accountId: string | null): Mirror[] {
+  const record = savedRecord(saved)
+  if (!record || (record.whose !== null && record.whose !== accountId)) return []
+  return Object.values(record.mirrors)
+}
+
 /** One mirror as it was written down, once it reads as one. A mirror with no
  *  space to point at is worse than none: the next pass would sync a folder
  *  against nothing and read every note in it as deleted. */

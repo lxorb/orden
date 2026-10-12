@@ -32,7 +32,7 @@ import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
-import { baseOf, behind, mergedCleanly, unixLines } from './ancestry'
+import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
@@ -468,7 +468,8 @@ async function onlyBehind(token: string, id: string, local: string): Promise<boo
 
 /** The file here and the account's copy as one note, merged against the words both
  *  last agreed on (`base`, a hash), or null where the two overlap or that base was
- *  never kept. Planes and web notes are settled before this is asked. */
+ *  never kept. Planes and web notes are settled before this is asked. Never in the
+ *  glasses' plugin, which keeps both copies; see merging.ts. */
 async function mergedOver(
   token: string,
   path: string,
@@ -477,9 +478,12 @@ async function mergedOver(
   local: string,
   remote: string,
 ): Promise<string | null> {
+  if (__EVEN_PLUGIN__) return null
+
   const ancestor = await baseOf(token, path, id, base)
   if (ancestor === null) return null
 
+  const { mergedCleanly } = await import('./merging')
   return mergedCleanly(ancestor, unixLines(local), remote)
 }
 
