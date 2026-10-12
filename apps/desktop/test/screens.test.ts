@@ -122,6 +122,7 @@ describe('every layer in the middle of the window', () => {
       'lib/quitting/QuitSheet.svelte',
       'lib/remote/HostPicker.svelte',
       'lib/theme-picker/ThemePicker.svelte',
+      'lib/views/task-view/TaskSheet.svelte',
     ])
   })
 

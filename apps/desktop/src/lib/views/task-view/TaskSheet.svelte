@@ -551,7 +551,6 @@
     z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
-    max-height: min(var(--screen-tall), calc(100vh - var(--screen-top) - var(--screen-gutter)));
     overflow: hidden;
     outline: none;
     font-family: var(--font-ui);
