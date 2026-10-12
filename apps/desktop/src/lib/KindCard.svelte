@@ -12,6 +12,7 @@
   import type { HTMLButtonAttributes } from 'svelte/elements'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import { MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { dur } from './motion'
@@ -59,11 +60,12 @@
   <!-- The way to the kind's other forms, where it has any: a terminal's other shells.
        Part of the card rather than a button of its own, so the cards stay one stop each;
        the place that draws the card tells a press on it apart. See `showOthers` in
-       new-kinds.ts. -->
+       new-kinds.ts. Lucide's chevron, the one the find bar draws, so the card's two
+       drawings come out of one set. -->
   {#if one.others}
-    <span class="more" data-more aria-hidden="true">
-      <svg viewBox="0 0 16 16"><path d="M4 6.5l4 4 4-4" /></svg>
-    </span>
+    <span class="more" data-more aria-hidden="true"
+      ><span class="chevron"><Icon icon={null} fallback={ChevronDown} /></span></span
+    >
   {/if}
 </button>
 
@@ -170,36 +172,61 @@
     color: var(--muted-strong);
   }
 
-  /* In the corner under the letter, inside the card's own padding so it never meets the
-     name however long a language writes it, and a target of its own for the pointer. */
+  /* The letter's corner turned over: centred on the letter's own column, as far up from
+     the bottom as the letter is down from the top, in the letter's quiet colour. The
+     letter's box is one character of its type, so `ch` and `em` are read in that type
+     here too and the two stay one column in any theme's font. A target of its own for
+     the pointer, a little larger than the chevron.
+
+     Under the pointer in colour only, as the card itself is. It used to light a square
+     of its own four pixels from the edge, which the corner has no room for: it sat
+     against the hairline and the keyboard's ring, out of line with the letter
+     (issue #244). */
   .more {
+    --target: calc(var(--icon-sm) + var(--space-2));
     position: absolute;
-    bottom: var(--space-1);
-    inset-inline-end: var(--space-1);
+    bottom: calc(var(--space-3) + (1em - var(--target)) / 2);
+    inset-inline-end: calc(var(--space-3) + (1ch - var(--target)) / 2);
     display: grid;
     place-items: center;
-    width: calc(var(--icon-sm) + var(--space-2));
-    height: calc(var(--icon-sm) + var(--space-2));
-    border-radius: var(--radius-sm);
+    width: var(--target);
+    height: var(--target);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
     color: var(--muted);
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
+    stroke: currentColor;
+    /* The find bar's chevron's weight at this size, which is the letter's stroke. */
+    stroke-width: 2.2;
+    transition: color var(--dur-fast) var(--ease-out);
   }
 
-  .more:hover {
-    background: var(--surface-press);
-    color: var(--text-strong);
-  }
-
-  .more svg {
+  .chevron {
+    display: block;
     width: var(--icon-sm);
     height: var(--icon-sm);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    transition: translate var(--dur-fast) var(--ease-out);
+  }
+
+  /* The accent says what a press here does: it leaves the kind's mark for the chevron,
+     so the card is not promising the usual shell while the pointer is on the others. */
+  @media (hover: hover) {
+    .more:hover {
+      color: var(--accent);
+    }
+
+    .kind:hover:has(.more:hover) .mark {
+      color: var(--muted);
+    }
+  }
+
+  /* Pressed, it drops a pixel towards the list it opens, and the card is not pressed
+     with it: the card's own press makes the usual one. */
+  .more:active .chevron {
+    translate: 0 1px;
+  }
+
+  .kind:active:has(.more:active) {
+    background: var(--surface-hover);
   }
 
   /* Stacked under a thumb, as the rows every other list is made of there: the mark
