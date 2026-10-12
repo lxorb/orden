@@ -1011,6 +1011,11 @@ app menu, a tag pressed, a bookmarked search and, on a phone, the pull from the
 top each open the Search panel, whose own field is the first thing under the tabs.
 So the order on the screen is name, tabs, list.
 
+The right side has no name, so its tabs are its first row, straight under the bar.
+They stand `--space-2` off the bar, as far as they stand off the list below, where
+they used to touch it (issue #247); a drawer from the right adds the status bar's
+inset to that, as the head does on the left.
+
 ### Either side of the note
 
 Two sides, and the panels are divided between them by what they are about. The left

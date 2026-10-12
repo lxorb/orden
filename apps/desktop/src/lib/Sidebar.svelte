@@ -1306,6 +1306,18 @@
     padding: 0 var(--space-1) var(--space-2);
   }
 
+  /* The right side has no head, so its tabs are the panel's first row, straight
+     under the bar: they stand off the bar by what they stand off the list with,
+     rather than touching it (issue #247). A drawer from the right covers the bar,
+     so there they clear the status bar too, as the head does on the left. */
+  aside.right .switch {
+    padding-top: var(--space-2);
+  }
+
+  :global([data-drawer]) aside.right .switch {
+    padding-top: calc(var(--space-2) + var(--inset-top));
+  }
+
   /* The tabs are the segmented control the settings sheet already uses: one
      shape, so "this one" looks the same wherever the app says it. As wide as its
      tabs, like the view's layout switch: a share of a wide row drew six loose marks. */
