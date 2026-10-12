@@ -58,13 +58,13 @@ export const jv: Dictionary = {
   'Resend in {seconds}s': 'Kirim maneh sawise {seconds}d',
   'Digit {number}': 'Angka {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': 'Mlebu nibeditor dhisik.',
-  'Make a space in nibeditor first.': 'Gawe papan ing nibeditor dhisik.',
+  'Sign in to Orden first.': 'Mlebu Orden dhisik.',
+  'Make a space in Orden first.': 'Gawe papan ing Orden dhisik.',
   'This page cannot be clipped.': 'Kaca iki ora bisa diklip.',
   'There is nothing to clip here.': 'Ora ana sing bisa diklip ing kene.',
   'This clip is larger than a note can be.': 'Klip iki luwih gedhe tinimbang cathetan.',
   'Your account is out of space.': 'Akunmu wis entek panyimpenane.',
-  'Could not reach nibeditor.': 'Ora bisa nggayuh nibeditor.',
+  'Could not reach Orden.': 'Ora bisa nggayuh Orden.',
   'Could not reach the provider.': 'Ora bisa nggayuh panyedhiya.',
   'The provider answered with something else.': 'Panyedhiya mangsuli liyane.',
   // And what the sync service itself answers with, looked up like any other string

@@ -372,6 +372,14 @@ describe('the catalogues between them', () => {
     expect(ja.Space).toBe('スペース')
   })
 
+  test('call the product Orden, never by the name it had before', () => {
+    for (const [id, catalogue] of CATALOGUES) {
+      for (const [english, value] of Object.entries(catalogue)) {
+        expect(`${english} ${JSON.stringify(value)}`, `${id}: ${english}`).not.toMatch(/nibeditor/i)
+      }
+    }
+  })
+
   test('Swiss German never uses an eszett', () => {
     for (const [english, value] of Object.entries(gsw)) {
       for (const written of forms(value)) expect(written, english).not.toContain('ß')
@@ -661,7 +669,15 @@ describe('the words Chrome draws', () => {
   /** The extension's name is never translated, and neither is the product's; see
    *  docs/conventions.md. */
   test('leave the name alone', () => {
-    for (const tag of TAGS) expect(messages(tag).name?.message, tag).toBe('nibeditor')
+    for (const tag of TAGS) expect(messages(tag).name?.message, tag).toBe('Orden')
+  })
+
+  test('never use the name the product had before', () => {
+    for (const tag of TAGS) {
+      for (const [key, row] of Object.entries(messages(tag))) {
+        expect(row.message, `${tag}: ${key}`).not.toMatch(/nibeditor/i)
+      }
+    }
   })
 
   test('are translated everywhere but English', () => {

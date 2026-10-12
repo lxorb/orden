@@ -57,14 +57,14 @@ export const ha: Dictionary = {
   'Resend in {seconds}s': 'Sake aika cikin {seconds}s',
   'Digit {number}': 'Lambar {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to nibeditor first.': 'Ka shiga nibeditor da farko.',
-  'Make a space in nibeditor first.': 'Ka ƙirƙiri wuri a nibeditor da farko.',
+  'Sign in to Orden first.': 'Ka shiga Orden da farko.',
+  'Make a space in Orden first.': 'Ka ƙirƙiri wuri a Orden da farko.',
   'This page cannot be clipped.': 'Ba za a iya yanke wannan shafi ba.',
   'There is nothing to clip here.': 'Babu abin da za a yanke a nan.',
   'This clip is larger than a note can be.':
     'Wannan yanki ya fi girman da bayanin kula zai iya kaiwa.',
   'Your account is out of space.': "Asusunka ya ƙare da ma'aji.",
-  'Could not reach nibeditor.': 'Ba a iya kai wa nibeditor ba.',
+  'Could not reach Orden.': 'Ba a iya kai wa Orden ba.',
   'Could not reach the provider.': 'Ba a iya kai wa mai bayarwa ba.',
   'The provider answered with something else.': 'Mai bayarwa ya amsa wani abu dabam.',
   // And what the sync service itself answers with, looked up like any other string

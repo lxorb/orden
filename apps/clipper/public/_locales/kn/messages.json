@@ -1,7 +1,7 @@
 {
-  "name": { "message": "nibeditor" },
+  "name": { "message": "Orden" },
   "description": {
-    "message": "ಪುಟ, ಆಯ್ಕೆ ಅಥವಾ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ nibeditor ಟಿಪ್ಪಣಿಗಳಿಗೆ ಕ್ಲಿಪ್ ಮಾಡಿ."
+    "message": "ಪುಟ, ಆಯ್ಕೆ ಅಥವಾ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ Orden ಟಿಪ್ಪಣಿಗಳಿಗೆ ಕ್ಲಿಪ್ ಮಾಡಿ."
   },
   "clipPage": { "message": "ಪುಟ ಕ್ಲಿಪ್ ಮಾಡಿ" },
   "clipSelection": { "message": "ಆಯ್ಕೆ ಕ್ಲಿಪ್ ಮಾಡಿ" },

@@ -1,7 +1,7 @@
 {
-  "name": { "message": "nibeditor" },
+  "name": { "message": "Orden" },
   "description": {
-    "message": "Bir sayfayı, bir seçimi ya da bir bağlantıyı nibeditor notlarına kırp."
+    "message": "Bir sayfayı, bir seçimi ya da bir bağlantıyı Orden notlarına kırp."
   },
   "clipPage": { "message": "Sayfayı kırp" },
   "clipSelection": { "message": "Seçimi kırp" },

@@ -1,7 +1,7 @@
 {
-  "name": { "message": "nibeditor" },
+  "name": { "message": "Orden" },
   "description": {
-    "message": "Wytnij stronę, zaznaczenie lub link do swoich notatek w nibeditor."
+    "message": "Wytnij stronę, zaznaczenie lub link do swoich notatek w Orden."
   },
   "clipPage": { "message": "Wytnij stronę" },
   "clipSelection": { "message": "Wytnij zaznaczenie" },
