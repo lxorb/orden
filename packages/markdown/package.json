@@ -30,6 +30,7 @@
     "./highlights": "./src/highlights.ts",
     "./html": "./src/html.ts",
     "./html-block": "./src/html-block.ts",
+    "./language-order": "./src/language-order.ts",
     "./links": "./src/links.ts",
     "./pages": "./src/pages.ts",
     "./papers": "./src/papers.ts",
