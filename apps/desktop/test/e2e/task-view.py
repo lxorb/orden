@@ -160,6 +160,23 @@ def the_view(page: Page) -> None:
     page.locator(".sheet .comment .gone").first.click()
     wait_for(page, "document.querySelectorAll('.sheet .comment').length === 1", "a comment deleted")
 
+    # In the note itself the stamp is a quiet chip, not the field's raw words.
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('.sheet')", "the view put away")
+    page.evaluate(
+        "async () => { const ws = window.nibApp.workspace; await ws.open(ws.activeSpace.root.replace(/[\\\\/]+$/, '') + '/Errands.md') }"
+    )
+    wait_for(page, "document.querySelector('.cm-content .nib-comment-chips')", "the comment's chip in the note")
+    shown = page.locator(".cm-content .nib-comment-chips").first.inner_text()
+    say(f"[comment chip] {shown!r}")
+    if "[at::" in page.locator(".cm-content").inner_text():
+        wrong("the comment's stamp is drawn as its raw field")
+    shot(page, "02c-comment-in-note")
+    page.evaluate("window.tasks.openBuiltin('today')")
+    wait_for(page, "document.querySelector('.view-tab .task')", "Today again")
+    page.locator(f"{row('Call the bank again')} .words").click()
+    wait_for(page, "document.querySelector('.sheet .title')", "the task view again")
+
     # The next task.
     page.locator(".sheet").focus()
     page.keyboard.press("j")

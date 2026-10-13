@@ -9,7 +9,8 @@ import { nibMarkdownExtensions } from '../markdown/extensions'
 import { tickLines } from '../task-tick'
 import { noteIndex, type TaskHelp } from '../wikilink/notes'
 import { buildDecorations, loadTaskChips } from './decorate'
-import { chipsOf, TaskChipsWidget } from './task-chips'
+import { chipsOf, CommentChipsWidget, commentDrawing, TaskChipsWidget } from './task-chips'
+import { dayWords } from '../task-days'
 import { takeHint, taskHint } from './task-hint'
 
 /** A task line in a note: its fields hidden like marks and said again as chips, the
@@ -240,5 +241,35 @@ describe('a date typed at the end of a task', () => {
   test('and Tab with nothing offered is not taken', () => {
     const note = '- [ ] Call mum'
     expect(takeHint(viewOf(stateOf(note, note.length, HELP)) as unknown as EditorView)).toBe(false)
+  })
+})
+
+describe("a task's comment", () => {
+  const NOTE = '- [ ] Call the bank\n  - Called again [at:: 2026-10-06T09:30] [by:: Lu]\n\nwords'
+
+  test('hides its when and its who like marks, and says them as quiet chips', () => {
+    const state = stateOf(NOTE, NOTE.length)
+    expect(hidden(state)).toEqual(
+      expect.arrayContaining([' [at:: 2026-10-06T09:30]', ' [by:: Lu]']),
+    )
+    let said: string[] = []
+    buildDecorations(state).decorations.between(0, state.doc.length, (_from, _to, value) => {
+      if (value.spec.widget instanceof CommentChipsWidget) said = [...value.spec.widget.chips]
+    })
+    expect(said).toHaveLength(2)
+    expect(said[1]).toBe('Lu')
+  })
+
+  test('is the source again with the caret on its line', () => {
+    const at = NOTE.indexOf('Called')
+    expect(hidden(stateOf(NOTE, at)).join('')).not.toContain('[by:: Lu]')
+  })
+
+  test('reads its moment as a day and a time, and a task line draws none of it', () => {
+    expect(commentDrawing('  - Done [at:: 2026-10-06T09:30]', '2026-10-06')?.chips).toEqual([
+      dayWords('2026-10-06', '2026-10-06', '09:30'),
+    ])
+    expect(commentDrawing('- [ ] A task [at:: 2026-10-06]', '2026-10-06')).toBeNull()
+    expect(commentDrawing('  - Nothing to say', '2026-10-06')).toBeNull()
   })
 })

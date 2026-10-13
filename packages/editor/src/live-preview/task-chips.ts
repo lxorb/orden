@@ -181,3 +181,59 @@ export function taskDrawing(
   if (!parsed) return null
   return { hide: fieldSpans(line, parsed), chips: chipsOf(parsed.fields, todayHere()) }
 }
+
+/** A comment's own fields (\`[at:: 2026-10-13T09:30]\`, \`[by:: Lu]\`), written by the task
+ *  view's composer under a task: hidden like a mark, and said after its words as a
+ *  quiet chip - when, and by whom. Nothing to pick, so nothing to press. */
+const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
+
+/** A list item that is a task, which draws its own fields. */
+const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
+
+/** What a comment's line hides and says again, or null for a line with no such field. */
+export function commentDrawing(
+  line: string,
+  today = todayHere(),
+): { hide: { from: number; to: number }[]; chips: string[] } | null {
+  if (TASK_ITEM.test(line)) return null
+  const hide: { from: number; to: number }[] = []
+  const chips: string[] = []
+  for (const found of line.matchAll(COMMENT_FIELD)) {
+    const [whole, key, value = ''] = found
+    if (!value) continue
+    hide.push({ from: found.index, to: found.index + whole.length })
+    if (key === 'by') chips.push(value)
+    else {
+      const [day = '', time] = value.split('T')
+      chips.push(/^\d{4}-\d{2}-\d{2}$/.test(day) ? dayWords(day, today, time?.slice(0, 5)) : value)
+    }
+  }
+  return hide.length ? { hide, chips } : null
+}
+
+/** The when and the who after a comment's words, in the task chips' quiet ink. */
+export class CommentChipsWidget extends NibWidget {
+  constructor(readonly chips: readonly string[]) {
+    super()
+  }
+
+  override eq(other: CommentChipsWidget) {
+    return other.chips.join('\n') === this.chips.join('\n')
+  }
+
+  toDOM() {
+    const row = document.createElement('span')
+    row.className = 'nib-task-chips nib-comment-chips'
+    for (const text of this.chips) {
+      const one = document.createElement('span')
+      one.className = 'nib-task-chip'
+      one.textContent = text
+      row.append(one)
+    }
+    return row
+  }
+
+  override ignoreEvent() {
+    return false
+  }
+}

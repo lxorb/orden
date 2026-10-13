@@ -900,6 +900,17 @@
   pointer-events: none;
 }
 
+/* A comment's when and who: said, not picked. A press goes to the words, which bring
+   the fields back to be edited. */
+.nib-comment-chips .nib-task-chip {
+  cursor: text;
+}
+
+.nib-comment-chips .nib-task-chip:hover {
+  background: none;
+  color: inherit;
+}
+
 /* A date typed at the end of a task, offered: Tab takes it. See task-hint.ts. */
 .nib-task-hint {
   margin-inline-start: 0.5em;
