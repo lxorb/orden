@@ -191,23 +191,29 @@ class Publish {
    *  The bytes go the way a picture's do - addressed by their own hash, so a
    *  theme two sites wear is stored once - and the site keeps the name and the
    *  hash. The app is the side that has the theme, which is why it does the
-   *  sending; see docs/publishing.md. */
+   *  sending; see docs/publishing.md.
+   *
+   *  Read again on every save rather than kept by its name, so a theme the store
+   *  has updated since - a scheme it did not have, a colour moved - reaches the
+   *  site the next time it is saved, and is only sent when its bytes changed. */
   private async themeFor(
     token: string,
   ): Promise<{ name: string; hash: string } | null | undefined> {
     if (!this.themeName) return null
 
     const held = this.blog?.site.theme
-    if (held?.name === this.themeName) return held
+    const kept = held?.name === this.themeName ? held : undefined
 
     const file = theme.files.find((one) => one.name === this.themeName && one.path)
-    if (!file?.path) return undefined
+    if (!file?.path) return kept
 
     const css = await invoke<string>('read_theme', { path: file.path }).catch(() => '')
-    if (!css) return undefined
+    if (!css) return kept
 
-    const bytes = new TextEncoder().encode(css)
+    const { pageSheet } = await import('./themes/page-sheet')
+    const bytes = new TextEncoder().encode(pageSheet(css))
     const hash = await sha256(bytes)
+    if (kept?.hash === hash) return kept
 
     await api.putBlob(token, hash, 'text/css', bytes.buffer)
     return { name: this.themeName, hash }
