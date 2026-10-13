@@ -32,8 +32,8 @@ describe('a browser theme as an Orden theme', () => {
       '--accent': '#ff8800',
       '--accent-ink': '#000000',
     })
-    // A white list under light words is a ground that cannot carry the ink.
-    expect(css).not.toContain('--side-bar-bg-color')
+    // A white list cannot carry light words, so it is as much white as they read on.
+    expect(tokens(css, 'dark')['--side-bar-bg-color']).toBe('#404040')
     expect(ordenCss({ name: 'Pictures', source: '{"images":{}}', css: false, pages: '' })).toBe('')
   })
 
@@ -60,6 +60,34 @@ describe('a browser theme as an Orden theme', () => {
     // Nothing a comment could end on, and nothing at all where nothing is said.
     expect(line.slice(3, -4)).not.toContain('*/')
     expect(paged('')).toBe('')
+  })
+
+  test('hsl() and light-dark() are read as the colours they are', () => {
+    const colors = {
+      frame: 'hsl(220, 72%, 28%)',
+      ntp_background: 'hsl(221 63% 87% / 1)',
+      ntp_text: 'hsl(0, 0%, 0%)',
+    }
+    const light = ordenCss({
+      name: 'Activist',
+      source: JSON.stringify({ colors }),
+      css: false,
+      pages: '',
+    })
+    expect(tokens(light, 'light')).toMatchObject({ '--bg': '#c9d6f3', '--text': '#000000' })
+    // Its deep blue frame cannot carry the note's black, so it is a wash of that blue.
+    expect(tokens(light, 'light')['--tab-frame']).toBe('#93a6cf')
+
+    const source =
+      ':root { --toolbar-bgcolor: light-dark(#f7f7f7, color-mix(in srgb, #000 80%, #fff)); }'
+    const both = ordenCss({
+      name: 'Either',
+      source: `${source} #nav-bar { color: light-dark(#000, #fff) }`,
+      css: true,
+      pages: '',
+    })
+    expect(tokens(both, 'light')).toMatchObject({ '--bg': '#f7f7f7', '--text': '#000000' })
+    expect(both).not.toContain("data-theme='dark'")
   })
 
   test('a stylesheet is read by its cascade, a scheme to a block', () => {

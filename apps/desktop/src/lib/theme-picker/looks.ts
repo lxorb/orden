@@ -94,7 +94,7 @@ function statedIn(sheet: string): Stated[] {
 
 /** Where the `var(` that starts at `from` closes, and the comma splitting its name
  *  from its fallback, counting the parentheses in between. */
-function argumentsOf(value: string, from: number): { end: number; comma: number } {
+export function argumentsOf(value: string, from: number): { end: number; comma: number } {
   let depth = 0
   let comma = -1
 

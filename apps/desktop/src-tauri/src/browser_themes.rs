@@ -91,11 +91,13 @@ fn firefox_themes(profile: &Path) -> Vec<BrowserTheme> {
     let sheet = profile.join("chrome/userChrome.css");
     let folder = profile.file_name().unwrap_or_default().to_string_lossy();
     let name = folder.split_once('.').map_or(&*folder, |(_, name)| name);
+    let prefs = ["prefs.js", "user.js"].map(|file| fs::read_to_string(profile.join(file)));
+    let prefs = prefs.map(Result::unwrap_or_default).concat();
     let own = sheet.is_file().then(|| BrowserTheme {
         name: format!("userChrome ({name})"),
-        source: inlined(&sheet, 8),
+        source: inlined(&sheet, &prefs, 8),
         css: true,
-        pages: inlined(&profile.join("chrome/userContent.css"), 8),
+        pages: inlined(&profile.join("chrome/userContent.css"), &prefs, 8),
     });
 
     let add_ons = entries(&profile.join("extensions"));
@@ -138,9 +140,10 @@ fn manifest_in(xpi: &Path) -> Option<String> {
 }
 
 /// A stylesheet with its comments gone and every sheet it imports in the import's
-/// place, as Firefox reads it: an import somebody commented out is not one. `depth`
-/// is what ends a sheet that imports itself.
-fn inlined(sheet: &Path, depth: u8) -> String {
+/// place, as Firefox reads it: an import somebody commented out is not one, and one
+/// behind a preference is one only where `prefs`, the profile's own, turn it on.
+/// `depth` is what ends a sheet that imports itself.
+fn inlined(sheet: &Path, prefs: &str, depth: u8) -> String {
     let mut css = fs::read_to_string(sheet).unwrap_or_default();
     while let Some(start) = css.find("/*") {
         let end = css[start..]
@@ -151,16 +154,19 @@ fn inlined(sheet: &Path, depth: u8) -> String {
 
     let imported = |line: &str| {
         let rest = line.trim().strip_prefix("@import").filter(|_| depth > 0)?;
+        let behind = rest.split("-moz-bool-pref:").nth(1);
+        let pref = behind.and_then(|said| said.split('"').nth(1));
+        if pref.is_some_and(|name| !prefs.contains(&format!("\"{name}\", true"))) {
+            return Some(String::new());
+        }
         let mut parts = rest.split(['\'', '"', '(', ')']).map(str::trim);
         let is_css = |file: &&str| {
             Path::new(file)
                 .extension()
                 .is_some_and(|end| end.eq_ignore_ascii_case("css"))
         };
-        Some(inlined(
-            &sheet.with_file_name(parts.find(is_css)?),
-            depth - 1,
-        ))
+        let file = sheet.with_file_name(parts.find(is_css)?);
+        Some(inlined(&file, prefs, depth - 1))
     };
     let lines = css
         .lines()
@@ -176,8 +182,9 @@ mod tests {
     use std::path::PathBuf;
 
     /// A home with a Firefox profile and a Chromium one in it: the stylesheet with
-    /// what it imports and not what it commented out, the add-on that is a theme and
-    /// not the one that is not, and each browser's own and never the other's.
+    /// what it imports and not what it commented out or left behind a preference that
+    /// is off, the add-on that is a theme and not the one that is not, and each
+    /// browser's own and never the other's.
     #[test]
     fn every_theme_of_a_browser_is_found_and_nothing_else() {
         let home = tempfile::tempdir().expect("a temp folder");
@@ -205,7 +212,8 @@ mod tests {
             profile.join("chrome/colors/light.css"),
             b":root { --toolbar-bgcolor: #fafafa; }",
         );
-        let sheet = "/*\n@import url('colors/light.css');\n*/\n@import url('colors/dark.css');\n#nav-bar {}";
+        let sheet = "/*\n@import url('colors/light.css');\n*/\n@import 'colors/light.css' (-moz-bool-pref: \"uc.light\");\n@import url('colors/dark.css') (-moz-bool-pref: \"uc.dark\");\n#nav-bar {}";
+        write(profile.join("user.js"), br#"user_pref("uc.dark", true);"#);
         write(profile.join("chrome/userChrome.css"), sheet.as_bytes());
         write(
             profile.join("chrome/userContent.css"),

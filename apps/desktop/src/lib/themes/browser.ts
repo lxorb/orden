@@ -18,7 +18,7 @@
 import { BODY } from '../content-ground'
 import { AA, hexOf, inkFor, luminance, over, ratio, type Rgb, rgbOf } from '../legibility'
 import type { Scheme } from '../theme.svelte'
-import { substituted } from '../theme-picker/looks'
+import { argumentsOf, substituted } from '../theme-picker/looks'
 import { closes, declarationsOf } from './validate'
 
 /** One theme as its browser holds it; see browser_themes.rs. */
@@ -38,6 +38,8 @@ const WHITE: Rgb = [255, 255, 255]
 const GREY: Rgb = [128, 128, 128]
 const NAMED: Record<string, string> = { black: '#000', white: '#fff', transparent: 'rgba(0,0,0,0)' }
 const SCHEMES: Scheme[] = ['light', 'dark']
+/** How much of a ground is tried over the note, the most first. */
+const WASHES = [0.6, 0.45, 0.3, 0.2]
 /** Short of what `write_theme` takes, by the room a stamp needs; see themes.rs. */
 const MOST = 60_000
 
@@ -170,6 +172,16 @@ function* saidIn(css: string, scheme: Scheme | null = null): Generator<Said> {
   }
 }
 
+/** A value with every `light-dark()` in it answered for one scheme. */
+function schemed(value: string, scheme: Scheme): string {
+  const start = value.indexOf('light-dark(')
+  if (start < 0) return value
+
+  const { end, comma } = argumentsOf(value, start + 10)
+  const taken = scheme === 'light' ? value.slice(start + 11, comma) : value.slice(comma + 1, end)
+  return schemed(`${value.slice(0, start)}${taken.trim()}${value.slice(end + 1)}`, scheme)
+}
+
 /** A sheet as a theme's keys for one scheme: the last of the strongest of each name,
  *  its `var()`s worked out against the rest. */
 function partsOfSheet(said: Said[], scheme: Scheme): Parts {
@@ -182,10 +194,9 @@ function partsOfSheet(said: Said[], scheme: Scheme): Parts {
   const known = new Map([...best].map(([name, one]) => [name, one.value]))
   const colourOf = (key: string, source: string) => {
     const property = key.endsWith('_text') ? 'color' : 'background'
-    return substituted(
-      known.get(source.startsWith('--') ? source : `${source} ${property}`) ?? '',
-      known,
-    )
+    const name = source.startsWith('--') ? source : `${source} ${property}`
+    const worked = substituted(known.get(name) ?? '', known)
+    return worked === null ? null : schemed(worked, scheme)
   }
   return Object.fromEntries(
     Object.entries(PAINTED).map(([key, sources]) => [
@@ -210,7 +221,19 @@ function parsed(said: string): [Rgb, number] | null {
   const cut = (hex.length * 3) / 4
   const last = hex.slice(cut).padEnd(2, hex.slice(-1))
 
-  const named = NAMED[text] ?? text
+  // `hsl()` as the `rgb()` it is, by the CSS Color formula, its alpha kept where it was.
+  const turned = /^hsla?\(([^)]*)\)$/.exec(text)?.[1] ?? ''
+  const parts = turned.split(/[\s,/]+/).filter(Boolean)
+  const [h = 0, s = 0, l = 0] = parts.map(Number.parseFloat)
+  const spread = (s / 100) * Math.min(l, 100 - l)
+  const channel = (n: number) => {
+    const k = (n + h / 30) % 12
+    return 2.55 * (l - spread * Math.max(-1, Math.min(k - 3, 9 - k, 1)))
+  }
+  const channels = [channel(0), channel(8), channel(4), ...parts.slice(3)]
+  const hsl = parts.length > 2 && `rgba(${channels.join(', ')})`
+
+  const named = hsl || (NAMED[text] ?? text)
   const rgb = rgbOf(hex ? `#${hex.slice(0, cut)}` : named)
   const fourth = hex ? `${Number.parseInt(last, 16) / 2.55}%` : named.match(/[\d.]+%?/g)?.[3]
   const alpha = fourth ? Number.parseFloat(fourth) / (fourth.endsWith('%') ? 100 : 1) : 1
@@ -245,7 +268,13 @@ function tokensOf(parts: Parts, scheme: Scheme): Record<string, string> {
   const said = { '--bg': hexOf(ground), '--text': hexOf(ink), '--text-strong': hexOf(ink) }
   const tokens: Record<string, string> = { ...DERIVED, ...said }
   for (const [token, keys] of Object.entries(GROUNDS)) {
-    const found = coloursOf(parts, keys, under).find((one) => ratio(ink, one) >= AA)
+    // A ground the ink cannot be read on is laid over the note as thinly as lets even
+    // the quiet words on it be read: a deep blue frame under black words is a paler
+    // blue, and still the theme's.
+    const said = coloursOf(parts, keys, under)
+    const washed = said.flatMap((one) => WASHES.map((share) => over(one, share, ground)))
+    const found =
+      said.find((one) => ratio(ink, one) >= AA) ?? washed.find((one) => ratio(ink, one) >= BODY)
     if (found) tokens[token] = hexOf(found)
   }
 
@@ -308,15 +337,15 @@ export function paged(css: string): string {
 }
 
 /** The theme as a sheet Orden wears, a block for each scheme it states, or nothing
- *  for a theme that colours no ground. One that says nothing of schemes is one look:
- *  whichever side of grey its ground lands on. A second block is for the window that
+ *  for a theme that colours no ground. One that says the same of both schemes is one
+ *  look: whichever side of grey its ground lands on. A second block is for the window that
  *  is see-through, and stands unread where the platform has nothing to see through. */
 export function ordenCss(theme: BrowserTheme): string {
   const said = theme.css ? [...saidIn(theme.source)] : []
   const partsFor = (scheme: Scheme) =>
     theme.css ? partsOfSheet(said, scheme) : partsOfManifest(theme.source)
 
-  const stated = SCHEMES.filter((scheme) => said.some((one) => one.scheme === scheme))
+  const sides = SCHEMES.map((scheme) => JSON.stringify(partsFor(scheme)))
   const [ground] = coloursOf(partsFor('dark'), PAGE, GREY)
   const lone: Scheme = ground && luminance(ground) < luminance(GREY) ? 'dark' : 'light'
 
@@ -324,7 +353,7 @@ export function ordenCss(theme: BrowserTheme): string {
     const lines = Object.entries(tokens).map(([token, value]) => `  ${token}: ${value};`)
     return lines.length ? `${selector} {\n${lines.join('\n')}\n}\n` : ''
   }
-  return (stated.length ? stated : [lone])
+  return (sides[0] === sides[1] ? [lone] : SCHEMES)
     .map((scheme) => {
       const parts = partsFor(scheme)
       const worn = block(`:root[data-theme='${scheme}']`, tokensOf(parts, scheme))
