@@ -18,6 +18,7 @@
  *  in front of the first paint. */
 
 import { busy } from './busy.svelte'
+import { firstVisit } from './first-visit.svelte'
 import { message, t } from './i18n.svelte'
 import { type FormatId, worthKnowing } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
@@ -223,6 +224,8 @@ async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<
  *  phone the list is a drawer over the note, and opening it would hide the note.
  *  `open` false lands on the list alone. */
 export async function arrive(space: Space, open = true) {
+  // Notes have come in, so this browser holds somebody's now; see first-visit.svelte.ts.
+  if (firstVisit.fresh) firstVisit.answered()
   // From Settings' Import pane, the new space is what there is to look at.
   const { settings } = await import('./settings.svelte')
   settings.open = false
