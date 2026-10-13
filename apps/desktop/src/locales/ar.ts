@@ -1015,7 +1015,7 @@ export const ar: Dictionary = {
   'No footnotes in this note': 'لا حواشي في هذه الملاحظة',
   'Stack tabs': 'ترتيب الألسنة في أعمدة',
   'Unstack tabs': 'إلغاء ترتيب الألسنة',
-  'High contrast': 'تباين عالٍ',
+  Contrast: 'تباين',
   Glass: 'زجاج',
   Classic: 'كلاسيكي',
   'Front matter': 'بيانات أولية',

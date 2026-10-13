@@ -970,7 +970,7 @@ export const te: Dictionary = {
   'No footnotes in this note': 'ఈ నోట్‌లో ఫుట్‌నోట్‌లు లేవు',
   'Stack tabs': 'ట్యాబ్‌లను నిలువుగా పెట్టు',
   'Unstack tabs': 'ట్యాబ్ నిలువు తీసివేయి',
-  'High contrast': 'అధిక కాంట్రాస్ట్',
+  Contrast: 'కాంట్రాస్ట్',
   Glass: 'గాజు',
   Classic: 'క్లాసిక్',
   'Front matter': 'ఫ్రంట్ మేటర్',

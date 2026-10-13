@@ -970,7 +970,7 @@ export const fa: Dictionary = {
   'No footnotes in this note': 'در این یادداشت پانویسی نیست',
   'Stack tabs': 'چیدن زبانه‌ها در ستون',
   'Unstack tabs': 'برچیدن ستون زبانه‌ها',
-  'High contrast': 'کنتراست بالا',
+  Contrast: 'کنتراست',
   Glass: 'شیشه',
   Classic: 'کلاسیک',
   'Front matter': 'پیش‌داده',

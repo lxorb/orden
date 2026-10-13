@@ -970,7 +970,7 @@ export const hi: Dictionary = {
   'No footnotes in this note': 'इस नोट में कोई पादटिप्पणी नहीं',
   'Stack tabs': 'टैब को स्तंभों में रखें',
   'Unstack tabs': 'टैब के स्तंभ हटाएँ',
-  'High contrast': 'उच्च कंट्रास्ट',
+  Contrast: 'कंट्रास्ट',
   Glass: 'कांच',
   Classic: 'क्लासिक',
   'Front matter': 'फ़्रंट मैटर',

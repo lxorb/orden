@@ -161,7 +161,7 @@ function asked(file: string): string[] {
  *
  *  This is where a hundred and twenty-six kilobytes were hiding. `raw.ts` in
  *  @nib/themes holds seven stylesheets as text for what an export and a deck bake into
- *  the file they write, the shell wanted one of them - the high contrast palette, three
+ *  the file they write, the shell wanted one of them - the contrast palette, three
  *  kilobytes - and a module is the unit a chunk is made of, so the shell got all seven.
  *  The module's own source is a dozen lines of comment, so the budget above saw nothing
  *  at all: 1.21 megabytes of built JavaScript in front of the first paint measured on

@@ -978,7 +978,7 @@ export const ta: Dictionary = {
   'No footnotes in this note': 'இந்தக் குறிப்பில் அடிக்குறிப்பு இல்லை',
   'Stack tabs': 'தாவல்களை அடுக்கு',
   'Unstack tabs': 'தாவல் அடுக்கை நீக்கு',
-  'High contrast': 'உயர் மாறுபாடு',
+  Contrast: 'மாறுபாடு',
   Glass: 'கண்ணாடி',
   Classic: 'கிளாசிக்',
   'Front matter': 'முன்தகவல்',

@@ -968,7 +968,7 @@ export const mr: Dictionary = {
   'No footnotes in this note': 'या टिपणात तळटीप नाही',
   'Stack tabs': 'टॅब स्तंभांत ठेवा',
   'Unstack tabs': 'टॅब स्तंभ काढा',
-  'High contrast': 'उच्च कॉन्ट्रास्ट',
+  Contrast: 'कॉन्ट्रास्ट',
   Glass: 'काच',
   Classic: 'क्लासिक',
   'Front matter': 'फ्रंट मॅटर',

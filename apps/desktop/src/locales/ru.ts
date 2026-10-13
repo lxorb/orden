@@ -1005,7 +1005,7 @@ export const ru: Dictionary = {
   'No footnotes in this note': 'В этой заметке нет сносок',
   'Stack tabs': 'Расставить вкладки в столбцы',
   'Unstack tabs': 'Убрать столбцы вкладок',
-  'High contrast': 'Высокая контрастность',
+  Contrast: 'Контраст',
   Glass: 'Стекло',
   Classic: 'Классика',
   'Front matter': 'Метаданные',

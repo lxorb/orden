@@ -954,7 +954,7 @@ export const zhHans: Dictionary = {
   'No footnotes in this note': '这则笔记没有脚注',
   'Stack tabs': '并排标签页',
   'Unstack tabs': '取消并排标签页',
-  'High contrast': '高对比度',
+  Contrast: '对比度',
   Glass: '玻璃',
   Classic: '经典',
   'Front matter': '前置元数据',

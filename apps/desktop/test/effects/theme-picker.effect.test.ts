@@ -202,7 +202,7 @@ test('shows every theme as a card, with the store last', async () => {
   await opened()
 
   const names = cards().map((one) => one.textContent.trim())
-  expect(names).toEqual(['Classic', 'High contrast', 'Glass', 'Wallpaper', 'Rose', 'Browse'])
+  expect(names).toEqual(['Classic', 'Contrast', 'Glass', 'Wallpaper', 'Rose', 'Browse'])
 })
 
 test('pointing at a theme puts it on the app and writes nothing down', async () => {
@@ -220,7 +220,7 @@ test('pointing at a theme puts it on the app and writes nothing down', async () 
 test('moving off the cards gives the kept one back', async () => {
   await opened()
 
-  pointAt(card('High contrast'))
+  pointAt(card('Contrast'))
   expect(theme.id).toBe('contrast')
 
   leave(grid())

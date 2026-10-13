@@ -8,7 +8,7 @@ import { ACCENTS, accentTokens } from '../src/lib/accents'
  *
  *  The accent cannot be both the ink and the fill: on the dark side a colour bright
  *  enough to be read on the page is too bright to carry white, which came to 3.98 to
- *  one on every primary button, and to 2.67 on the High contrast theme, the one a
+ *  one on every primary button, and to 2.67 on the Contrast theme, the one a
  *  reader chooses to be able to read. So what is written on a fill is a token of its
  *  own, `--accent-ink`, answered per scheme: the dark ink on the dark side and white
  *  on the light one - the way Material's `onPrimary` is, and Obsidian's
@@ -72,8 +72,8 @@ const BUILT_IN = {
 const PALETTES: [string, Record<string, string>][] = [
   ['dark', BUILT_IN.dark],
   ['light', BUILT_IN.light],
-  ['High contrast, dark', { ...BUILT_IN.dark, ...block(contrast, "[data-theme='dark']") }],
-  ['High contrast, light', { ...BUILT_IN.light, ...block(contrast, "[data-theme='light']") }],
+  ['Contrast, dark', { ...BUILT_IN.dark, ...block(contrast, "[data-theme='dark']") }],
+  ['Contrast, light', { ...BUILT_IN.light, ...block(contrast, "[data-theme='light']") }],
 ]
 
 describe('ink on a fill of the accent', () => {

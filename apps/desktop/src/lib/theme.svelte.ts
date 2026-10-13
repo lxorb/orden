@@ -45,7 +45,7 @@ interface ThemeInfo {
    *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
-  /** The stylesheet itself: high contrast's, a file's as `reload` last read it, or
+  /** The stylesheet itself: contrast's, a file's as `reload` last read it, or
    *  glass's once it has arrived. Held, so choosing or pointing paints at once. */
   css?: string
   /** A built-in's stylesheet behind a door: glass's. */
@@ -86,12 +86,7 @@ const SHEET_KEY = 'nib:theme-sheet'
 /** That the contrast theme has been offered, so it is offered once and never
  *  again. Absent means the offer has not been made yet; see `offerContrast`. */
 const OFFERED_KEY = 'nib:contrast-offered'
-/** The high contrast theme's own id. The same word the registry knows it under, and
- *  deliberately: the theme in the store is this palette, published so a reader can
- *  update it without waiting for a release of the app, and a card there that installed
- *  a theme under a different name would be a second Contrast in the dropdown. An
- *  installed copy is a file and carries `file:` in front of its id, so the two can sit
- *  beside each other without either becoming the other. */
+/** The contrast theme's id, the one the store's copy had too; see `isBuiltIn`. */
 const CONTRAST_THEME = 'contrast'
 
 /** The one built-in theme: the app's own tokens, which state both schemes.
@@ -108,19 +103,12 @@ const DEFAULT_THEME: ThemeInfo = {
   variants: ['dark', 'light'],
 }
 
-/** And the second: high contrast, which the app ships with rather than fetches.
- *
- *  A mode in every sense that matters - one row in Appearance, one row in the palette,
- *  and what a system asking for more contrast is answered with - and a theme in the
- *  way it is built, which is what keeps it out of every other theme's way. It states
- *  an accent of its own, so the reader's accent is not painted over the palette the
- *  row showed; see `paintsOver` in themes/settings.ts.
- *
- *  Offline, because the launch that needs it most is a first launch. See
- *  contrast.css in @nib/themes. */
+/** And the second: contrast, shipped rather than fetched, because the launch that
+ *  needs it most is a first one. Its own accent, so the reader's is not painted over
+ *  it; see `paintsOver` in themes/settings.ts and contrast.css in @nib/themes. */
 const CONTRAST: ThemeInfo = {
   id: CONTRAST_THEME,
-  name: 'High contrast',
+  name: 'Contrast',
   variants: ['dark', 'light'],
   css: contrastCss,
 }
@@ -167,6 +155,12 @@ const WALLPAPER: ThemeInfo = {
   own: () => import('./wallpaper/settings').then((module) => module.wallpaperSettings),
 }
 
+/** Whether an id is one of the app's own themes. A store copy of one is that theme:
+ *  not listed, offered no update, and whoever chose it is moved onto it. */
+export function isBuiltIn(id: string): boolean {
+  return [DEFAULT_THEME, CONTRAST, GLASS, WALLPAPER].some((one) => one.id === id)
+}
+
 const LIGHT = '(prefers-color-scheme: light)'
 /** Asked once, at the launch that offers the contrast theme, and never listened
  *  to: a theme is chosen, and a system changing its mind does not get to choose
@@ -188,6 +182,9 @@ function earlySheet(): { id: string; css: string } | null {
   if (!isRecord(held) || typeof held.id !== 'string' || typeof held.css !== 'string') return null
   return { id: held.id, css: held.css }
 }
+
+/** Whether a file is the store's copy of a built-in; see `isBuiltIn`. */
+const copiesBuiltIn = (file: ThemeInfo) => file.stamp !== undefined && isBuiltIn(file.stamp.id)
 
 function isScheme(value: unknown): value is Scheme {
   return value === 'dark' || value === 'light'
@@ -237,6 +234,9 @@ class Themes {
 
   readonly accents = ACCENTS
 
+  /** The folder's themes but a built-in's copy. */
+  private readonly fromFolder = $derived(this.files.filter((file) => !copiesBuiltIn(file)))
+
   /** The built-in first, then what is installed, in the order the folder gave
    *  them - both platforms list a folder by name, so the order is the same on
    *  every machine and does not move as themes are used. */
@@ -245,7 +245,7 @@ class Themes {
     CONTRAST,
     ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
     ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
-    ...this.files,
+    ...this.fromFolder,
   ])
 
   readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
@@ -266,7 +266,9 @@ class Themes {
   /** What the store has put in the folder, by the id the registry knows it
    *  under, so the gallery can mark a card installed and offer an update. */
   readonly installed = $derived(
-    new Map(this.files.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : []))),
+    new Map(
+      this.fromFolder.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : [])),
+    ),
   )
 
   init() {
@@ -395,7 +397,7 @@ class Themes {
   /** Whether to answer a system asking for more contrast, which happens once or not
    *  at all.
    *
-   *  High contrast is a theme the app ships with, so the answer is the theme itself:
+   *  Contrast is a theme the app ships with, so the answer is the theme itself:
    *  it is chosen, on the frame the launch happens on, with nothing to fetch and no
    *  network to depend on. That is the whole reason it is built in - the launch that
    *  needs more contrast most is a first launch, and a reader who cannot read the
@@ -417,7 +419,7 @@ class Themes {
 
     // A reader who has already chosen a theme has answered the question about how
     // their screen looks, and repainting it because their system asks for contrast
-    // would be the app overruling them. The question is marked answered: High contrast
+    // would be the app overruling them. The question is marked answered: Contrast
     // is a row in Appearance and in the palette, there whenever they want it.
     if (this.chose()) {
       keep(OFFERED_KEY, 'yes')
@@ -482,10 +484,13 @@ class Themes {
       }
     })
 
+    // A built-in's copy, chosen, is the built-in.
+    const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
+    if (copy?.stamp) this.select(copy.stamp.id)
     // A theme file may have been deleted while it was selected. Only ever
     // decided on a folder that answered: until one has, a theme the storage
     // names is one not found yet rather than one that is gone.
-    if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
+    else if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing
     // to apply and whatever it declared was nobody's yet.

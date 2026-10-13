@@ -959,7 +959,7 @@ export const am: Dictionary = {
   'No footnotes in this note': 'በዚህ ማስታወሻ ውስጥ የግርጌ ማስታወሻ የለም',
   'Stack tabs': 'ትሮችን አደራድር',
   'Unstack tabs': 'ትሮችን አታደራድር',
-  'High contrast': 'ከፍተኛ ንፅፅር',
+  Contrast: 'ንፅፅር',
   Glass: 'መስታወት',
   Classic: 'ክላሲክ',
   'Front matter': 'Front matter',

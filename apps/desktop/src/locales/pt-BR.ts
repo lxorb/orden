@@ -980,7 +980,7 @@ export const ptBR: Dictionary = {
   'No footnotes in this note': 'Nenhuma nota de rodapé nesta nota',
   'Stack tabs': 'Empilhar abas',
   'Unstack tabs': 'Desempilhar abas',
-  'High contrast': 'Alto contraste',
+  Contrast: 'Contraste',
   Glass: 'Vidro',
   Classic: 'Clássico',
   'Front matter': 'Cabeçalho YAML',

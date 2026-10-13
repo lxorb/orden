@@ -974,7 +974,7 @@ export const kn: Dictionary = {
   'No footnotes in this note': 'ಈ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಅಡಿಟಿಪ್ಪಣಿ ಇಲ್ಲ',
   'Stack tabs': 'ಟ್ಯಾಬ್‌ಗಳನ್ನು ಜೋಡಿಸಿ',
   'Unstack tabs': 'ಟ್ಯಾಬ್ ಜೋಡಣೆ ತೆಗೆ',
-  'High contrast': 'ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್',
+  Contrast: 'ಕಾಂಟ್ರಾಸ್ಟ್',
   Glass: 'ಗಾಜು',
   Classic: 'ಕ್ಲಾಸಿಕ್',
   'Front matter': 'ಫ್ರಂಟ್ ಮ್ಯಾಟರ್',

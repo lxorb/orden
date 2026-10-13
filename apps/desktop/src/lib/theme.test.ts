@@ -246,7 +246,7 @@ describe('what the dropdown offers', () => {
       'file:warm-paper',
     ])
     expect(theme.all[0]?.name).toBe('Classic')
-    expect(theme.all[1]?.name).toBe('High contrast')
+    expect(theme.all[1]?.name).toBe('Contrast')
     expect(theme.all[2]?.name).toBe('Glass')
   })
 
@@ -258,7 +258,7 @@ describe('what the dropdown offers', () => {
     expect(theme.all).toHaveLength(4)
   })
 
-  /** High contrast is a mode in every sense that matters and a theme in the way it is
+  /** Contrast is a mode in every sense that matters and a theme in the way it is
    *  built, which is what keeps it out of every other theme's way. It carries its own
    *  stylesheet, so a first launch with no network can still be answered with it. */
   test('the built-in contrast theme brings its own palette rather than a file', () => {
@@ -604,7 +604,7 @@ describe('an installed theme across a restart', () => {
 
     expect(theme.all.map((one) => one.name)).toEqual([
       'Classic',
-      'High contrast',
+      'Contrast',
       'Glass',
       'Wallpaper',
       'Rose',
@@ -612,6 +612,51 @@ describe('an installed theme across a restart', () => {
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
+  })
+})
+
+/** The store had a copy of the contrast theme under the same id, and two Contrasts in
+ *  the dropdown were one too many (Emil, 2026-10-13). A copy still in the folder is the
+ *  built-in: not listed, not offered an update, and nobody who chose it loses it. */
+describe('a store copy of the contrast theme', () => {
+  test('is not a second card', async () => {
+    installed('contrast', 'Contrast', PAIR, '2.0.1')
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+
+    expect(theme.all.map((one) => one.name)).toEqual([
+      'Classic',
+      'Contrast',
+      'Glass',
+      'Wallpaper',
+      'Rose',
+    ])
+    expect(theme.installed.has('contrast')).toBe(false)
+  })
+
+  test('and a reader who had it chosen is on the built-in after a restart', async () => {
+    installed('contrast', 'Contrast', PAIR, '2.0.1')
+    kept.setItem('nib:theme', 'file:contrast')
+    kept.setItem('nib:theme-scheme', 'light')
+
+    theme.init()
+    await theme.reload()
+
+    expect(theme.id).toBe('contrast')
+    expect(kept.getItem('nib:theme')).toBe('contrast')
+    expect(theme.current).toBe('light')
+    expect(injected()).toContain('--text: #000000')
+  })
+
+  test('while a hand-made contrast.css is a theme of its own', async () => {
+    folder.files.set('contrast', PAIR)
+    kept.setItem('nib:theme', 'file:contrast')
+
+    theme.init()
+    await theme.reload()
+
+    expect(theme.id).toBe('file:contrast')
+    expect(theme.all.map((one) => one.id)).toContain('file:contrast')
   })
 })
 

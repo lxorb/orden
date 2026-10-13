@@ -719,8 +719,8 @@ list carries, and the three references all spend a filled row on it.
 
 Who answers how much contrast the page has? The theme does, and only the theme.
 There is one palette per look, and asking for more contrast is asking for a
-different look, so it is the `contrast` theme in the store and not a switch beside
-the mode. A switch was the old answer, and it had to restate the whole palette
+different look, so it is the Contrast theme the app ships with and not a switch
+beside the mode. A switch was the old answer, and it had to restate the whole palette
 over whichever theme was in force: two answers to every colour question, with a
 theme author having no say in the second one.
 
@@ -735,9 +735,11 @@ read while Highlighting follows the theme, which is what it does unless somebody
 changes it: a reader who pinned GitHub or Dracula pinned that palette's colours
 with it.
 
-A system that asks for more contrast is shown that theme once, on a fresh install,
-on the card it would be installed from. Nothing installs itself, and nothing asks
-twice.
+A system that asks for more contrast is answered with that theme once, on a fresh
+install, chosen and shown in Appearance so putting it back is one press. Nothing
+asks twice. There is one Contrast: the theme store had a copy of it, and two in the
+dropdown were one too many (Emil, 2026-10-13), so the copy is gone from the store
+and one still installed is read as the built-in.
 
 ### The floor under the default palette
 
@@ -773,7 +775,7 @@ says the same thing the heading already says; prose does not.
 
 The accent cannot be both the ink and the fill: a colour bright enough to be read
 on the dark page is too bright to carry white, which came to 3.98 to one on every
-primary button and to 2.67 on the High contrast theme. So what is written on a fill
+primary button and to 2.67 on the Contrast theme. So what is written on a fill
 of the accent is a token of its own, `--accent-ink`, answered per scheme the way
 Material's `onPrimary` is: the page's darkest ink on the dark side, white on the
 light one. Every filled accent surface reads it - a button's words, the plus that
@@ -784,8 +786,8 @@ that is on, a bar's button under the pointer, the match find is on, a caret's na
 | --- | --- | --- | --- |
 | dark | 4.89 | 5.99 | 7.28 |
 | light | 5.95 | 7.04 | 8.60 |
-| High contrast, dark | 7.29 | 9.23 | 5.91 |
-| High contrast, light | 9.18 | 11.09 | 13.36 |
+| Contrast, dark | 7.29 | 9.23 | 5.91 |
+| Contrast, light | 9.18 | 11.09 | 13.36 |
 
 On the dark side `--accent-press` moved away from the page, which is lighter, rather
 than towards it: under a dark ink a press that darkened the fill dimmed the words as

@@ -959,7 +959,7 @@ export const th: Dictionary = {
   'No footnotes in this note': 'บันทึกนี้ไม่มีเชิงอรรถ',
   'Stack tabs': 'เรียงแท็บเป็นคอลัมน์',
   'Unstack tabs': 'เลิกเรียงแท็บ',
-  'High contrast': 'คอนทราสต์สูง',
+  Contrast: 'คอนทราสต์',
   Glass: 'กระจก',
   Classic: 'คลาสสิก',
   'Front matter': 'ส่วนหัวเอกสาร',

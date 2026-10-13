@@ -1,26 +1,24 @@
-/* High contrast: the second theme the app ships with, and the one it reaches for
-   when the system asks for more contrast.
+/* Contrast: the second theme the app ships with, and the one it reaches for when the
+   system asks for more contrast.
 
    A theme and not a switch. Contrast was a switch beside the mode once, with a
    palette painted over whichever theme was in force, and painting a third of
    somebody's theme is how a theme stops being the thing they chose. So this is a
    whole palette of its own, on both sides, stated in exactly the tokens any other
-   theme states - which is also why it can sit in the theme registry as `contrast`
-   and be installed there by a reader who wants to update it separately.
+   theme states.
 
    Built in rather than fetched, because the one launch that needs it most is a
    first launch: a reader whose system asks for more contrast should not have to be
-   online to be answered. The registry copy still works and still updates; this is
-   the copy that is always there.
+   online to be answered. It was in the theme registry as well, once, as `contrast`,
+   and two of it in the dropdown was one too many (Emil, 2026-10-13); this is the
+   one, and a copy installed from the store is read as it. The canvas colours, the
+   shadows and the two callouts came from that copy.
 
    Every colour here clears a floor the built-in theme does not have to: the text
    and its strong form at 15:1 against the page, the muted greys at 7 and 9, the
    accent at 5.5, the rules at 3 and 4.5, and the two state colours at 4.5. Which is
    measured rather than claimed - see apps/desktop/test/e2e/contrast.py, which reads
-   the ratios back off the real page and fails on any that slipped.
-
-   Published as contrast 2.0.1 in lxorb/nib-themes, and byte for byte the palette
-   that drive already measured. */
+   the ratios back off the real page and fails on any that slipped. */
 
 [data-theme='light'] {
   color-scheme: light;
@@ -62,6 +60,21 @@
 
   --scrollbar: #9aa3b2;
   --scrollbar-hover: #6b7480;
+
+  --canvas-1: #c00018;
+  --canvas-2: #a34500;
+  --canvas-3: #7a5c00;
+  --canvas-4: #005c22;
+  --canvas-5: #005e5c;
+  --canvas-6: #4b1fa8;
+  --canvas-dot: #9a9a9a;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.24);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.36);
+  --shadow-lg: 0 24px 64px -12px rgb(0 0 0 / 0.48);
+
+  --callout-note: #0b2fbf;
+  --callout-warning: #7a5c00;
 }
 
 [data-theme='dark'] {
@@ -99,4 +112,19 @@
 
   --scrollbar: #5b6470;
   --scrollbar-hover: #7d8794;
+
+  --canvas-1: #ff7b7b;
+  --canvas-2: #ffb35c;
+  --canvas-3: #ffe066;
+  --canvas-4: #6ee79f;
+  --canvas-5: #66e6e0;
+  --canvas-6: #c0a6ff;
+  --canvas-dot: #5a5a5a;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.9);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.9);
+  --shadow-lg: 0 24px 64px -12px rgb(0 0 0 / 0.9);
+
+  --callout-note: #8ab6ff;
+  --callout-warning: #ffcf5c;
 }

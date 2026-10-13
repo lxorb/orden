@@ -973,7 +973,7 @@ export const pa: Dictionary = {
   'No footnotes in this note': 'ਇਸ ਨੋਟ ਵਿੱਚ ਕੋਈ ਫੁਟਨੋਟ ਨਹੀਂ',
   'Stack tabs': 'ਟੈਬ ਕਾਲਮਾਂ ਵਿੱਚ ਰੱਖੋ',
   'Unstack tabs': 'ਟੈਬ ਕਾਲਮ ਹਟਾਓ',
-  'High contrast': 'ਉੱਚ ਕੰਟਰਾਸਟ',
+  Contrast: 'ਕੰਟਰਾਸਟ',
   Glass: 'ਸ਼ੀਸ਼ਾ',
   Classic: 'ਕਲਾਸਿਕ',
   'Front matter': 'Front matter',

@@ -979,7 +979,7 @@ export const de: Dictionary = {
   'No footnotes in this note': 'Keine Fussnoten in dieser Notiz',
   'Stack tabs': 'Tabs stapeln',
   'Unstack tabs': 'Tabs nicht stapeln',
-  'High contrast': 'Hoher Kontrast',
+  Contrast: 'Kontrast',
   Glass: 'Glas',
   Classic: 'Klassisch',
   'Front matter': 'Kopfdaten',

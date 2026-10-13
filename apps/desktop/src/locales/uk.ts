@@ -1004,7 +1004,7 @@ export const uk: Dictionary = {
   'No footnotes in this note': 'У цій нотатці немає виносок',
   'Stack tabs': 'Розставити вкладки в стовпці',
   'Unstack tabs': 'Прибрати стовпці вкладок',
-  'High contrast': 'Висока контрастність',
+  Contrast: 'Контраст',
   Glass: 'Скло',
   Classic: 'Класика',
   'Front matter': 'Метадані',

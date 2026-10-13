@@ -984,7 +984,7 @@ export const ptPT: Dictionary = {
   'No footnotes in this note': 'Nenhuma nota de rodapé nesta nota',
   'Stack tabs': 'Empilhar separadores',
   'Unstack tabs': 'Desempilhar separadores',
-  'High contrast': 'Contraste elevado',
+  Contrast: 'Contraste',
   Glass: 'Vidro',
   Classic: 'Clássico',
   'Front matter': 'Cabeçalho YAML',

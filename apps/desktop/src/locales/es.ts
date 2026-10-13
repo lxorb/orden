@@ -984,7 +984,7 @@ export const es: Dictionary = {
   'No footnotes in this note': 'No hay notas al pie en esta nota',
   'Stack tabs': 'Apilar pestañas',
   'Unstack tabs': 'Desapilar pestañas',
-  'High contrast': 'Alto contraste',
+  Contrast: 'Contraste',
   Glass: 'Cristal',
   Classic: 'Clásico',
   'Front matter': 'Encabezado YAML',

@@ -965,7 +965,7 @@ export const jv: Dictionary = {
   'No footnotes in this note': 'Ora ana cathetan sikil ing cathetan iki',
   'Stack tabs': 'Tumpuk tab',
   'Unstack tabs': 'Batalake tumpukan tab',
-  'High contrast': 'Kontras dhuwur',
+  Contrast: 'Kontras',
   Glass: 'Kaca',
   Classic: 'Klasik',
   'Front matter': 'Front matter',
