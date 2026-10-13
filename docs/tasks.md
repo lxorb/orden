@@ -507,6 +507,16 @@ readable. A test holds the writer to the Tasks plugin's own examples.
 - A project's menu in the panel also duplicates it and saves it as Todoist's CSV, the file
   Todoist imports into a project (`views/todoist-csv.ts`); the Projects plus's own menu
   (a press with the other button) makes a project from a note of the templates folder.
+  Its menu adds a project above or below it, and a project carried with the pointer lands
+  above or below another, the file list's own Manual order (`placeProject`,
+  `views/reorder-drag.ts`). Which folder holds the projects is a row of the settings'
+  Add task group. A note of the templates folder is never listed under Notes.
+- On a project's **board** a column's head carries the section to another place
+  (`placedSection`); **Upcoming** as a board is a column a day for the two weeks from the
+  strip's first day, what is overdue first, the strip's arrows (and Shift with ← →) a week
+  at a time.
+- A **repeating task** is skipped to its next occurrence (the scheduler's Skip, the menu's
+  Skip) or done for good (Complete forever), the engine's `skip` and `finish`.
 - A project's **head** is its name, whose menu renames the note (and its title with it),
   adds a section and opens the note; under it, the words at the top of the note are the
   project's description. An open project follows its note when it is renamed or moved
@@ -517,7 +527,10 @@ readable. A test holds the writer to the Tasks plugin's own examples.
   indented line that is not a task; an **attachment** is an embed among them. Views fold them
   under the row and show a count. The task view lists the comments with when each was
   written and has a field for one more (`c`), written as `- words [at:: YYYY-MM-DDTHH:mm]`
-  under the task (`views/task-body.ts`, `task-view/Comments.svelte`).
+  under the task (`views/task-body.ts`, `task-view/Comments.svelte`). The row's comment
+  button opens the view with that field ready. In the note a comment's `[at::]` and
+  `[by::]` are hidden like marks and said as a quiet chip after its words (`commentDrawing`
+  in the editor's task-chips.ts).
 - The **Inbox** is `Inbox.md` at the root of each space, made by the first quick add that
   names no note. It is an ordinary note, so it syncs and can be renamed; the space keeps
   which note is its inbox in its own settings (`inbox:` in the space's settings file), so a
@@ -727,6 +740,10 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   they were typed. A chip pressed is words again (Todoist's undo); Backspace into a chip
   takes it apart. The row under the field shows the result as controls (where, date,
   priority, reminder, duration), each one a picker for somebody who would rather click.
+- **Suggestions**: a word typed after `#`, `@` or `%` is offered the space's labels,
+  after `>` its notes, after `>Note/` that note's headings (Todoist's `#`, `@` and `/`);
+  ↑ ↓ walk them, Enter or Tab takes one, Escape puts them away (`tokenAt` in
+  `quick-add/field.ts`).
 - **The grammar**, English and German, one table per language in `@nib/bases`:
 
   | what     | English                                                                                                                                                                                        | German                                                                                                                                                                                      |

@@ -13,7 +13,7 @@
   import { quickAdd } from '../quick-add/asked.svelte'
   import type { Entry, Prefill } from '../quick-add/entry'
   import QuickAdd from '../quick-add/QuickAdd.svelte'
-  import { addTask, noteNames } from '../quick-add/write'
+  import { addTask, headingsOf, noteNames } from '../quick-add/write'
   import { workspace } from '../workspace.svelte'
   import { noteText } from '../workspace/note-text'
   import { editTask } from './act'
@@ -99,6 +99,7 @@
       langs={[i18n.language]}
       {notes}
       {tags}
+      headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
       prefill={start}
       smart={quickAdd.smart}
       mode={row ? 'edit' : 'add'}

@@ -118,8 +118,11 @@ def sections(page: Page) -> None:
     page.keyboard.type("Galley", delay=10)
     page.keyboard.press("Enter")
     wait_for(page, f"async () => (await ({READ})('Home.md'))?.includes('## Galley')", "Galley written")
-    if "## Kitchen" in note(page):
-        wrong(f"the old name stayed: {note(page)!r}")
+    wait_for(
+        page,
+        f"async () => !(await ({READ})('Home.md'))?.includes('## Kitchen')",
+        "the old name gone",
+    )
 
     page.locator(".view-tab .head .fold", has_text="Galley").click(button="right")
     page.locator(".menu [role=menuitem]", has_text="Move down").click()

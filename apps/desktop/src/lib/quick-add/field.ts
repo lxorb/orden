@@ -68,3 +68,52 @@ export function pastedLines(text: string): string[] {
     )
     .filter(Boolean)
 }
+
+/** The word being typed at the caret that asks for a suggestion: a label after `#`, `@`
+ *  or `%`, a note after `>`, a heading of that note after `/`. Null where the caret is in
+ *  no such word. */
+export interface Token {
+  sign: '#' | '@' | '%' | '>' | '/'
+  /** What has been typed after the sign. */
+  query: string
+  from: number
+  to: number
+}
+
+const SIGNS = new Set(['#', '@', '%', '>', '/'])
+
+export function tokenAt(text: string, caret: number): Token | null {
+  let from = caret
+  while (from > 0 && !/\s/u.test(text.charAt(from - 1))) from--
+  const word = text.slice(from, caret)
+  const sign = word.charAt(0)
+  if (!SIGNS.has(sign)) return null
+  // A heading is asked for right after a note: `>Home/Kit`.
+  const slash = sign === '>' ? word.lastIndexOf('/') : -1
+  if (slash > 0) return { sign: '/', query: word.slice(slash + 1), from: from + slash, to: caret }
+  if (!/\s/u.test(text.charAt(caret)) && caret < text.length) return null
+  return { sign: sign as Token['sign'], query: word.slice(1), from, to: caret }
+}
+
+/** What a token could be, the ones that start with what was typed first, then the ones
+ *  that hold it; at most `most`. */
+export function suggestions(query: string, among: readonly string[], most = 6): string[] {
+  const said = query.toLowerCase()
+  const starts: string[] = []
+  const holds: string[] = []
+  for (const one of new Set(among)) {
+    const name = one.toLowerCase()
+    if (name === said) continue
+    if (name.startsWith(said)) starts.push(one)
+    else if (said && name.includes(said)) holds.push(one)
+  }
+  return [...starts, ...holds].slice(0, most)
+}
+
+/** The line with a token's words replaced by what was chosen, and the caret after it. */
+export function chosen(text: string, token: Token, value: string): { text: string; caret: number } {
+  const words = `${token.sign}${value} `
+  const after = text.slice(token.to).replace(/^\s+/u, '')
+  const out = text.slice(0, token.from) + words + after
+  return { text: out, caret: token.from + words.length }
+}

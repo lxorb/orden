@@ -9,6 +9,10 @@
    *  words again (Todoist's undo), and Backspace into one takes it apart by changing its
    *  words.
    *
+   *  A word typed after `#`, `@` or `%` is offered the space's labels, after `>` its
+   *  notes, after `>Note/` that note's headings, as Todoist offers its projects, labels
+   *  and sections: ↑ ↓ walk them, Enter or Tab takes one, Escape puts them away.
+   *
    *  Enter adds and keeps the field for the next task, Shift+Enter or ↓ opens a line for
    *  the description, Ctrl+Enter adds and opens the note at the task, Escape closes.
    *  Several lines pasted at once ask whether they are one task or one each, Todoist's
@@ -22,6 +26,7 @@
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
+  import Hash from 'lucide/dist/esm/icons/heading.mjs'
   import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Tag from 'lucide/dist/esm/icons/tag.mjs'
@@ -31,7 +36,16 @@
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
-  import { carried, pastedLines, piecesOf, type Span, without } from './field'
+  import {
+    carried,
+    chosen,
+    pastedLines,
+    piecesOf,
+    type Span,
+    suggestions,
+    tokenAt,
+    without,
+  } from './field'
   import Glyph from './Glyph.svelte'
   import { dayWords, durationLabel, priorityTone } from './labels'
   import Picker from './Picker.svelte'
@@ -48,6 +62,7 @@
     onclose,
     oncancel,
     onpicking,
+    headingsOf,
   }: {
     /** The app's language first; English is always read too. */
     langs: readonly string[]
@@ -66,6 +81,8 @@
     oncancel?: () => void
     /** A picker opened or put away: the global window grows to hold it. */
     onpicking?: (open: boolean) => void
+    /** A note's headings, by the name `>` gives it, for `/`. */
+    headingsOf?: (note: string) => readonly string[]
   } = $props()
 
   // What the opener knew, taken once: the field is made again for every opening.
@@ -150,6 +167,66 @@
   /** The layer of letters follows the field as a long line scrolls in it. */
   function follow() {
     if (input && mirror) mirror.scrollLeft = input.scrollLeft
+    caret = input && input.selectionStart === input.selectionEnd ? (input.selectionStart ?? -1) : -1
+  }
+
+  /** Where the caret is in the line, or -1 while words are selected. */
+  let caret = $state(-1)
+  /** The word the suggestions were put away for, by where it starts. */
+  let dismissed = $state(-1)
+  let active = $state(0)
+
+  const token = $derived(smart && caret >= 0 ? tokenAt(text, caret) : null)
+  const offered = $derived.by((): string[] => {
+    if (!token || token.from === dismissed) return []
+    if (token.sign === '>') return suggestions(token.query, notes)
+    if (token.sign === '/') {
+      const start = text.lastIndexOf('>', token.from)
+      const note = start === -1 ? '' : text.slice(start + 1, token.from).replace(/^"|"$/g, '')
+      return note && headingsOf ? suggestions(token.query, headingsOf(note)) : []
+    }
+    return suggestions(token.query, tags)
+  })
+  // A new list of suggestions starts at its first.
+  $effect.pre(() => {
+    if (offered.length >= 0) active = 0
+  })
+
+  /** The suggestion chosen: its words in place of what was typed, the caret after it. */
+  function take(value: string) {
+    const field = input
+    if (!token || !field) return
+    const next = chosen(text, token, value)
+    text = next.text
+    void tick().then(() => {
+      field.setSelectionRange(next.caret, next.caret)
+      follow()
+    })
+  }
+
+  /** The keys the suggestions have while they are up; true when one was theirs. */
+  function suggestKey(event: KeyboardEvent): boolean {
+    if (!offered.length || event.isComposing) return false
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      const by = event.key === 'ArrowDown' ? 1 : -1
+      active = (active + by + offered.length) % offered.length
+      return true
+    }
+    if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Tab') {
+      const one = offered[active]
+      if (one === undefined) return false
+      event.preventDefault()
+      take(one)
+      return true
+    }
+    if (event.key === 'Escape' && token) {
+      event.preventDefault()
+      event.stopPropagation()
+      dismissed = token.from
+      return true
+    }
+    return false
   }
 
   /** A press on a chip makes it words again: Todoist's undo of a misread. */
@@ -341,6 +418,7 @@
   }
 
   function onkeydown(event: KeyboardEvent) {
+    if (event.currentTarget === input && suggestKey(event)) return
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -407,7 +485,30 @@
       aria-label={t('Add task')}
       spellcheck="false"
       autocomplete="off"
+      aria-autocomplete="list"
+      aria-expanded={offered.length > 0}
     />
+    {#if offered.length}
+      <div class="suggest" role="listbox" aria-label={t('Add task')}>
+        {#each offered as one, index (one)}
+          <button
+            type="button"
+            class="nib-row is-short"
+            class:is-on={index === active}
+            role="option"
+            aria-selected={index === active}
+            tabindex="-1"
+            onpointerdown={(event) => event.preventDefault()}
+            onclick={() => take(one)}
+          >
+            <span class="nib-row-mark"
+              ><Glyph icon={token?.sign === '>' ? Inbox : token?.sign === '/' ? Hash : Tag} /></span
+            >
+            <span class="nib-row-label">{one}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   {#if description !== null}
@@ -533,6 +634,21 @@
      field holds. */
   .line {
     position: relative;
+  }
+
+  /* What a word could be, under the line, over whatever is below it. */
+  .suggest {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    inset-inline-start: 0;
+    z-index: var(--z-popover);
+    min-width: 14rem;
+    max-width: 100%;
+    padding: var(--space-1);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-3);
+    box-shadow: var(--shadow-md);
   }
 
   .letters,

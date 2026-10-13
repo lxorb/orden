@@ -39,7 +39,7 @@ def typed(page: Page, words: str) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n")
+    DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n\n## Today\n\n## Later\n")
     DRIVE.open_note(page, "Plan")
 
     # The palette, and its Add task row.
@@ -82,6 +82,37 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("End")
     page.keyboard.press("Enter")
     wait_for(page, f"document.querySelector('{FIELD}')?.value === ''", "the field empty again")
+
+    # A label, a note and its heading offered as they are typed, Todoist's # @ / way.
+    typed(page, "Water the plants #fa")
+    wait_for(page, "document.querySelector('.sheet .quick .suggest [role=option]')", "a label offered")
+    offered = page.locator(".sheet .quick .suggest [role=option]").all_inner_texts()
+    say(f"[labels offered] {offered}")
+    if not any("family" in one for one in offered):
+        wrong("the label typed before is not offered")
+    shot(page, "02b-suggest")
+    page.keyboard.press("Tab")
+    wait_for(page, f"document.querySelector('{FIELD}')?.value === 'Water the plants #family '", "the label taken")
+    page.keyboard.type(">Pl", delay=15)
+    wait_for(
+        page,
+        "[...document.querySelectorAll('.sheet .quick .suggest [role=option]')].some((one) => one.textContent.includes('Plan'))",
+        "the note offered",
+    )
+    page.keyboard.press("Enter")
+    wait_for(page, f"document.querySelector('{FIELD}')?.value.endsWith('>Plan ')", "the note taken, not the task added")
+    page.keyboard.press("Backspace")
+    page.keyboard.type("/To", delay=15)
+    wait_for(
+        page,
+        "[...document.querySelectorAll('.sheet .quick .suggest [role=option]')].some((one) => one.textContent.includes('Today'))",
+        "the note's heading offered",
+    )
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('.sheet .quick .suggest')", "the suggestions put away, the field kept")
+    if not page.locator(FIELD).count():
+        wrong("Escape over the suggestions closed quick add")
+    page.locator(FIELD).fill("")
 
     # The field stays up for the next one.
     typed(page, "Pay rent friday p2")

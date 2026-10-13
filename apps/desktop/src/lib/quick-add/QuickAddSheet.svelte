@@ -14,7 +14,8 @@
   import { quickAdd } from './asked.svelte'
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
-  import { addTask, noteNames } from './write'
+  import { links } from '../link-index.svelte'
+  import { addTask, headingsOf, noteNames } from './write'
 
   const root = $derived(workspace.activeSpace?.root ?? null)
   const notes = $derived(quickAdd.open && root ? noteNames(root) : [])
@@ -48,6 +49,8 @@
     <QuickAdd
       langs={[i18n.language]}
       {notes}
+      tags={links.spaceTags.map((one) => one.tag)}
+      headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
       prefill={quickAdd.prefill}
       smart={quickAdd.smart}
       onsubmit={added}
