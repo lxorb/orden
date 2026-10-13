@@ -26,7 +26,7 @@ import { MADE_NAME, termName } from './path'
  *  was made. */
 export async function openOnline(beside = false): Promise<Tab | null> {
   if (!account.accountToken) {
-    account.ask('sign-in')
+    account.ask()
     return null
   }
   const root = workspace.activeSpace?.root
@@ -77,7 +77,7 @@ export function openTerm(path: string, how: OpenHow = {}, text = ''): Tab | null
 /** Why no terminal was made, said once in the question sheet. */
 async function refused(why: Refused): Promise<void> {
   if (why === 'signed-out') {
-    account.ask('sign-in')
+    account.ask()
     return
   }
   const title = refusalWords(why)

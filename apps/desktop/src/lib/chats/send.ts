@@ -28,7 +28,7 @@ export async function sendToChat(
   quote?: { text: string; heading?: string | null },
 ): Promise<void> {
   if (!account.accountToken) {
-    account.ask('sign-in')
+    account.ask()
     return
   }
   const chats = store()

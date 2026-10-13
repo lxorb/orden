@@ -41,8 +41,8 @@ declare const __EVEN_PLUGIN__: boolean
  *  See vite.config.ts, and smoke.py, which drives both. */
 declare const __DRIVEABLE__: boolean
 
-/** The version the installer carries, out of `src-tauri/tauri.conf.json`. Shown under
- *  the name on the space chooser; see vite.config.ts. */
+/** The version the installer carries, out of `src-tauri/tauri.conf.json`; see
+ *  vite.config.ts. */
 declare const __APP_VERSION__: string
 
 /** Whether this build offers Claude Code in Settings > AI.

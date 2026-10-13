@@ -1,12 +1,12 @@
 <script lang="ts">
   /** The rows that bring notes over from another app, each into a space of its own:
-   *  the first screen's, Settings' Import pane's, and the web's first visit's.
+   *  Settings' Import pane, which the welcome note links to (welcome.ts).
    *
    *  The iPhone's "Transfer Your Apps & Data": a row per place the notes could come
    *  from and nothing to read. Obsidian and Notion by name, because they are where
    *  most people arrive from; everything else is one row, since the import tells an
    *  `.enex` from a Logseq graph by itself (docs/import.md, "Nobody picks a format").
-   *  Names and no logos, the way the chooser's other rows are a title and a button.
+   *  Names and no logos, the way every row in Settings is a title and a button.
    *
    *  Obsidian on a desktop opens on the vaults Obsidian lists, the way Arc opens on
    *  the browsers it found; see migrating.svelte.ts. Zen, the browser, the same way

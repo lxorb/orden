@@ -79,9 +79,8 @@ export const kn: Dictionary = {
   Reopen: 'ಮತ್ತೆ ತೆರೆಯಿರಿ',
   Schedule: 'ನಿಗದಿಪಡಿಸಿ',
   'Open in note': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿ ತೆರೆಯಿರಿ',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ಬೇರೆ ಆ್ಯಪ್',
-  'Start fresh': 'ಹೊಸದಾಗಿ ಆರಂಭಿಸಿ',
   'Import from Obsidian': 'Obsidian ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Import from Notion': 'Notion ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const kn: Dictionary = {
   'Loading…': 'ಲೋಡ್ ಆಗುತ್ತಿದೆ…',
   'Create a space': 'ಸ್ಪೇಸ್ ರಚಿಸಿ',
   'Import a folder': 'ಫೋಲ್ಡರ್ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
-  'Sign in to sync': 'ಸಿಂಕ್‌ಗಾಗಿ ಸೈನ್ ಇನ್',
-  'Create account': 'ಖಾತೆ ರಚಿಸಿ',
   'Delete space': 'ಸ್ಪೇಸ್ ಅಳಿಸಿ',
   'Delete {name}?': '{name} ಅಳಿಸಬೇಕೆ?',
   'Every note in this space is deleted from your computer.':

@@ -79,9 +79,8 @@ export const ms: Dictionary = {
   Reopen: 'Buka semula',
   Schedule: 'Jadualkan',
   'Open in note': 'Buka dalam nota',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Apl lain',
-  'Start fresh': 'Mula baharu',
   'Import from Obsidian': 'Import daripada Obsidian',
   'Import from Notion': 'Import daripada Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ms: Dictionary = {
   'Loading…': 'Memuatkan…',
   'Create a space': 'Cipta ruang',
   'Import a folder': 'Import folder',
-  'Sign in to sync': 'Masuk untuk menyegerakkan',
-  'Create account': 'Cipta akaun',
   'Delete space': 'Hapuskan ruang',
   'Delete {name}?': 'Hapuskan {name}?',
   'Every note in this space is deleted from your computer.':

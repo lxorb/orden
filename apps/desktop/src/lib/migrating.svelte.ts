@@ -1,5 +1,5 @@
-/** Bringing notes over from another app as a space of their own: the rows of the
- *  first screen, of Settings' Import pane and of the palette's two commands.
+/** Bringing notes over from another app as a space of their own: the rows of
+ *  Settings' Import pane and the palette's two commands.
  *
  *  The iPhone's "Transfer Your Apps & Data", which is one screen inside setup with a
  *  row per place the data could come from, the same function under Settings
@@ -14,11 +14,10 @@
  *  An import into a space that already exists is the import sheet's, and carries no
  *  settings: it is notes arriving, not somebody arriving. See importing.svelte.ts.
  *
- *  Fetched with the card, the pane or the command that asks for it; nothing here is
+ *  Fetched with the pane or the command that asks for it; nothing here is
  *  in front of the first paint. */
 
 import { busy } from './busy.svelte'
-import { firstVisit } from './first-visit.svelte'
 import { message, t } from './i18n.svelte'
 import { type FormatId, worthKnowing } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
@@ -224,8 +223,6 @@ async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<
  *  phone the list is a drawer over the note, and opening it would hide the note.
  *  `open` false lands on the list alone. */
 export async function arrive(space: Space, open = true) {
-  // The browser's first visit has had its question answered; see first-visit.svelte.ts.
-  if (firstVisit.asking) firstVisit.answered()
   // From Settings' Import pane, the new space is what there is to look at.
   const { settings } = await import('./settings.svelte')
   settings.open = false

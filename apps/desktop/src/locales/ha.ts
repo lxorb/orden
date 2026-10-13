@@ -79,9 +79,8 @@ export const ha: Dictionary = {
   Reopen: 'Sake buɗewa',
   Schedule: 'Tsara lokaci',
   'Open in note': 'Buɗe a cikin bayani',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Wata manhaja',
-  'Start fresh': 'Fara sabo',
   'Import from Obsidian': 'Shigo daga Obsidian',
   'Import from Notion': 'Shigo daga Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ha: Dictionary = {
   'Loading…': 'Ana ɗauka…',
   'Create a space': 'Ƙirƙiri wuri',
   'Import a folder': 'Shigar da babban fayil',
-  'Sign in to sync': 'Shiga don daidaitawa',
-  'Create account': 'Ƙirƙiri asusu',
   'Delete space': 'Share wuri',
   'Delete {name}?': 'A share {name}?',
   'Every note in this space is deleted from your computer.':

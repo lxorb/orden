@@ -79,9 +79,8 @@ export const gsw: Dictionary = {
   Reopen: 'Wider uftue',
   Schedule: 'Plane',
   'Open in note': 'I de Notiz uftue',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Anderi App',
-  'Start fresh': 'Nöi aafange',
   'Import from Obsidian': 'Us Obsidian importiere',
   'Import from Notion': 'Us Notion importiere',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const gsw: Dictionary = {
   'Loading…': 'Wird glade…',
   'Create a space': 'Ablag mache',
   'Import a folder': 'Ordner importiere',
-  'Sign in to sync': 'Aamelde zum Synchronisiere',
-  'Create account': 'Konto mache',
   'Delete space': 'Ablag lösche',
   'Delete {name}?': '{name} lösche?',
   'Every note in this space is deleted from your computer.':

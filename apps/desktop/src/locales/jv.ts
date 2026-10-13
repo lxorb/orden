@@ -79,9 +79,8 @@ export const jv: Dictionary = {
   Reopen: 'Bukak maneh',
   Schedule: 'Jadwalake',
   'Open in note': 'Bukak ing cathetan',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Aplikasi liyane',
-  'Start fresh': 'Miwiti anyar',
   'Import from Obsidian': 'Impor saka Obsidian',
   'Import from Notion': 'Impor saka Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const jv: Dictionary = {
   'Loading…': 'Ngemot…',
   'Create a space': 'Gawe papan',
   'Import a folder': 'Impor folder',
-  'Sign in to sync': 'Mlebu kanggo nyelarasake',
-  'Create account': 'Gawe akun',
   'Delete space': 'Busak papan',
   'Delete {name}?': 'Busak {name}?',
   'Every note in this space is deleted from your computer.':

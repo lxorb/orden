@@ -123,16 +123,10 @@ POINTED = ".nib-build"
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
-#: What every browser a drive opens has already said: where its notes come from. The
-#: browser build asks that on the visit that writes the welcome note, over the note, and
-#: a drive's browser is a first visit every time; so each one is a reader who answered
-#: before, written into the page's storage before the app reads it. See
-#: src/lib/first-visit.svelte.ts. Guarded, because a page with no storage of its own
-#: (`about:blank`, a `data:` frame) refuses the setter.
-ANSWERED = "try { localStorage.setItem('nib:first-visit', 'answered') } catch {}"
-
-#: And the look it chose: the built-in theme (Classic), unless it has chosen another since,
-#: having been moved off it to glass once already. A first launch is glass in green
+#: The look every browser a drive opens has chosen, written into the page's storage
+#: before the app reads it: the built-in theme (Classic), unless it has chosen another
+#: since, having been moved off it to glass once already. Guarded, because a page with
+#: no storage of its own (`about:blank`, a `data:` frame) refuses the setter. A first launch is glass in green
 #: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
 #: photographs and measures the built-in palette. A context made with `first_look=True`
 #: is a new reader's.
@@ -194,13 +188,12 @@ for _stream in (sys.stdout, sys.stderr):
 
 def answering(browser: Any) -> Any:
     """The browser, with every context it makes from now on - a drive's own
-    `new_context` and `new_page` included - carrying `ANSWERED`. On the browser rather
+    `new_context` and `new_page` included - carrying `BUILT_IN`. On the browser rather
     than in `context`, because most drives make their contexts themselves."""
     made_context = browser.new_context
     made_page = browser.new_page
 
     def answered(context: Any, first_look: bool) -> None:
-        context.add_init_script(ANSWERED)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -740,7 +733,6 @@ class Drive:
         survives the browser being closed and opened again."""
         options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
         context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
-        context.add_init_script(ANSWERED)
         context.add_init_script(BUILT_IN)
         return context
 

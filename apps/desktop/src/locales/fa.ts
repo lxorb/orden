@@ -79,9 +79,8 @@ export const fa: Dictionary = {
   Reopen: 'بازگشایی',
   Schedule: 'زمان‌بندی',
   'Open in note': 'باز کردن در یادداشت',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'برنامهٔ دیگر',
-  'Start fresh': 'شروع از نو',
   'Import from Obsidian': 'درون‌آوری از Obsidian',
   'Import from Notion': 'درون‌آوری از Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const fa: Dictionary = {
   'Loading…': 'در حال بارگذاری…',
   'Create a space': 'ساختن فضا',
   'Import a folder': 'درون‌آوری پوشه',
-  'Sign in to sync': 'ورود برای همگام‌سازی',
-  'Create account': 'ساختن حساب',
   'Delete space': 'حذف فضا',
   'Delete {name}?': '{name} حذف شود؟',
   'Every note in this space is deleted from your computer.':

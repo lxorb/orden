@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Press, tabAsk } from './new-tab'
-import { type LinkPlace, opensLink, placeFor, webHref } from './open-link'
+import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
 
 /** Which press on a link goes where.
  *
@@ -103,5 +103,21 @@ describe('reading the press', () => {
     expect(opensLink({ button: 0, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 1, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 2, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(false)
+  })
+})
+
+/** The welcome note's last line, which opens Settings > Import rather than leaving the
+ *  app for a scheme nobody else answers. See welcome.ts. */
+describe('a link to a settings pane', () => {
+  test('opens Import, however it is spelled', () => {
+    expect(settingsPane('nib://settings/import')).toBe('import')
+    expect(settingsPane(' NIB://Settings/Import/ ')).toBe('import')
+  })
+
+  test('and nothing else is one', () => {
+    expect(settingsPane('nib://settings/account')).toBeNull()
+    expect(settingsPane('nib://settings/import/more')).toBeNull()
+    expect(settingsPane('https://example.com/settings/import')).toBeNull()
+    expect(settingsPane('nib://open?path=settings/import')).toBeNull()
   })
 })

@@ -79,9 +79,8 @@ export const te: Dictionary = {
   Reopen: 'మళ్లీ తెరువు',
   Schedule: 'షెడ్యూల్ చేయి',
   'Open in note': 'నోట్‌లో తెరువు',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'వేరే యాప్',
-  'Start fresh': 'కొత్తగా మొదలుపెట్టు',
   'Import from Obsidian': 'Obsidian నుండి ఇంపోర్ట్ చేయి',
   'Import from Notion': 'Notion నుండి ఇంపోర్ట్ చేయి',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const te: Dictionary = {
   'Loading…': 'లోడ్ అవుతోంది…',
   'Create a space': 'స్పేస్ సృష్టించు',
   'Import a folder': 'ఫోల్డర్ ఇంపోర్ట్ చేయి',
-  'Sign in to sync': 'సింక్ కోసం సైన్ ఇన్',
-  'Create account': 'ఖాతా సృష్టించు',
   'Delete space': 'స్పేస్ తొలగించు',
   'Delete {name}?': '{name} తొలగించాలా?',
   'Every note in this space is deleted from your computer.':

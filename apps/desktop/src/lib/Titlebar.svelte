@@ -115,8 +115,8 @@
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <!-- Not while there is no space and no tab: the space chooser's scrim covers the
-       panel then. Asked of the workspace, since the chooser is fetched with its card. -->
+  <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
+       fresh start's space is made (fresh-start.ts). -->
   {#if !listless}
     <SidebarToggle />
   {/if}

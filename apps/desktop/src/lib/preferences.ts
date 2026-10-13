@@ -716,7 +716,7 @@ export function preferences(view?: EditorView): Pane[] {
               kind: 'select',
               label: t('Language'),
               // Each row says for itself whether its catalogue was read through;
-              // see language-options.ts, which the space chooser offers too.
+              // see language-options.ts.
               options: languageOptions(),
               get: () => i18n.choice,
               set: (value) => i18n.select(value),

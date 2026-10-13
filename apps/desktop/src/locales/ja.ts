@@ -79,9 +79,8 @@ export const ja: Dictionary = {
   Reopen: '再開',
   Schedule: '予定を設定',
   'Open in note': 'ノートで開く',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ほかのアプリ',
-  'Start fresh': '新しく始める',
   'Import from Obsidian': 'Obsidian から読み込む',
   'Import from Notion': 'Notion から読み込む',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ja: Dictionary = {
   'Loading…': '読み込み中…',
   'Create a space': 'スペースを作る',
   'Import a folder': 'フォルダを読み込む',
-  'Sign in to sync': 'サインインして同期',
-  'Create account': 'アカウントを作成',
   'Delete space': 'スペースを削除',
   'Delete {name}?': '{name} を削除しますか？',
   'Every note in this space is deleted from your computer.':

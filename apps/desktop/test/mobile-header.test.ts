@@ -60,15 +60,11 @@ describe('the button that opens the file list', () => {
     }
   })
 
-  /** A fresh install's space chooser covers everything under the bar with an opaque
-   *  scrim, and the panel is under that scrim: pressed there, the button opened a
-   *  list nobody could see, of a space that did not exist yet. So the bar does not
-   *  offer it while there is no space and no tab, which is the only time the chooser
-   *  can be up - Obsidian's chooser has no such button either. Asked of the
-   *  workspace, because the chooser's own store is fetched with its card and stays
-   *  out of the first paint (see weight.test.ts). The plus stays: a tab is how a
-   *  note is written with no space yet, and a tab is what sends the chooser away. */
-  test('is not in the bar while the space chooser covers the panel', () => {
+  /** With no space and no tab there is nothing for the list to show - the moment before
+   *  a fresh start's space is made (fresh-start.ts) - and pressed then, the button
+   *  opened a list of a space that did not exist yet. So the bar does not offer it.
+   *  The plus stays: a tab is how a note is written with no space yet. */
+  test('is not in the bar while there is nothing to list', () => {
     expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle \/>\s*\{\/if\}/)
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
   })

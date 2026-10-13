@@ -97,8 +97,8 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
-  /** Which door was taken; both lead to the same code. See `mode`. */
-  const heading = $derived(account.mode === 'create' ? t('Create account') : t('Sign in'))
+  /** Signing in and signing up are the same emailed code, so the one word says both. */
+  const heading = $derived(t('Sign in'))
 
   function close() {
     account.open = false

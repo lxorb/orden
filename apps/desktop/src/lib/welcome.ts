@@ -24,11 +24,15 @@
  *  Any one of them fixes Emil's complaint. All three are here because each is a
  *  different way of being wrong about the same thing. */
 
-/** Where the shim writes it, in the virtual file system's own absolute form. */
-export const WELCOME_PATH = '/Notes/Read me.md'
+/** The space it is written into: the browser build's only one, and the one a fresh
+ *  start makes on the others (first-space.svelte.ts). */
+export const WELCOME_SPACE = 'Notes'
 
 /** What it is called inside its space, which is the shape syncing sees. */
 export const WELCOME_NAME = 'Read me.md'
+
+/** Where the shim writes it, in the virtual file system's own absolute form. */
+export const WELCOME_PATH = `/${WELCOME_SPACE}/${WELCOME_NAME}`
 
 /** Written by every build - see first-space.svelte.ts - so it names none. */
 export const WELCOME = `# Welcome to Orden
@@ -48,7 +52,16 @@ const hello = 'world'
 | ---- | ----- |
 | Notes | this device |
 | Synced notes | your account |
+
+[Import from Obsidian or Notion](nib://settings/import)
 `
+
+/** The welcome note's way to Settings > Import, the one place notes from another app
+ *  come in: the line that stands where a first screen used to ask about them. Every
+ *  seed before it was written without it. */
+const IMPORT_LINE = '
+[Import from Obsidian or Notion](nib://settings/import)
+'
 
 /** The seed as it was written while the app was called nibeditor, and before that
  *  Nib. Word for word, because that is what an untouched one is. */
@@ -75,5 +88,8 @@ const EARLIER = [
  *  wrote. */
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
-  return name === WELCOME_NAME && (content === WELCOME || EARLIER.includes(content))
+  if (name !== WELCOME_NAME) return false
+  return [WELCOME, ...EARLIER].some(
+    (seed) => content === seed || content === seed.replace(IMPORT_LINE, ''),
+  )
 }

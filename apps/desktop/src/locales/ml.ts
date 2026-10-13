@@ -79,9 +79,8 @@ export const ml: Dictionary = {
   Reopen: 'വീണ്ടും തുറക്കുക',
   Schedule: 'സമയം നിശ്ചയിക്കുക',
   'Open in note': 'കുറിപ്പിൽ തുറക്കുക',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'മറ്റൊരു ആപ്പ്',
-  'Start fresh': 'പുതുതായി തുടങ്ങുക',
   'Import from Obsidian': 'Obsidian-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Import from Notion': 'Notion-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ml: Dictionary = {
   'Loading…': 'ലോഡ് ചെയ്യുന്നു…',
   'Create a space': 'സ്പേസ് സൃഷ്ടിക്കുക',
   'Import a folder': 'ഫോൾഡർ ഇംപോർട്ട് ചെയ്യുക',
-  'Sign in to sync': 'സിങ്കിനായി സൈൻ ഇൻ',
-  'Create account': 'അക്കൗണ്ട് സൃഷ്ടിക്കുക',
   'Delete space': 'സ്പേസ് ഇല്ലാതാക്കുക',
   'Delete {name}?': '{name} ഇല്ലാതാക്കണോ?',
   'Every note in this space is deleted from your computer.':

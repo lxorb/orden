@@ -79,9 +79,8 @@ export const it: Dictionary = {
   Reopen: 'Riapri',
   Schedule: 'Pianifica',
   'Open in note': 'Apri nella nota',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Un’altra app',
-  'Start fresh': 'Ricomincia da zero',
   'Import from Obsidian': 'Importa da Obsidian',
   'Import from Notion': 'Importa da Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const it: Dictionary = {
   'Loading…': 'Caricamento…',
   'Create a space': 'Crea uno spazio',
   'Import a folder': 'Importa una cartella',
-  'Sign in to sync': 'Accedi per sincronizzare',
-  'Create account': 'Crea un account',
   'Delete space': 'Elimina lo spazio',
   'Delete {name}?': 'Eliminare {name}?',
   'Every note in this space is deleted from your computer.':

@@ -103,9 +103,6 @@ vi.mock('./link-index.svelte', () => ({
 vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('./viewport.svelte', () => ({ viewport: { drawer: false } }))
 vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
-vi.mock('./first-visit.svelte', () => ({
-  firstVisit: { asking: false, answered: () => undefined },
-}))
 // What carry-over.ts does to the spelling every link is written in, through
 // modes.setLinkFormat.
 vi.mock('./carry-over', async () => {
