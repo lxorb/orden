@@ -498,10 +498,17 @@ export class Tab {
     this.note.name = to
   }
 
+  /** A web tab with no file and no address: what Ctrl+T makes. See `isNewTab`. */
+  get nowhere(): boolean {
+    return this.kind === 'web' && this.path === null && !this.address
+  }
+
   /** What the strip, the tooltip and this tab's own menu call it. See
    *  NoteDoc.shown: `name` is the file, this is the document - or, for a terminal,
-   *  what runs in it. */
+   *  what runs in it. A tab with nowhere to go is a New tab, as a browser's is; read
+   *  here, not written down, so a sitting before says it too. Issue #241. */
   get shown(): string {
+    if (this.nowhere) return t('New tab')
     return this.running?.name ?? this.note.shown
   }
 
