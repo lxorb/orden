@@ -1075,6 +1075,14 @@ export const de: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zugriff',
+  Set: 'Gesetzt',
+  'Start over': 'Neu beginnen',
+  'Sign in here': 'Hier anmelden',
+  '{device} wants your AI accounts': '{device} möchte deine KI-Konten',
+  'Allow this device on another one': 'Dieses Gerät auf einem anderen zulassen',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Auf jedem Gerät, auf dem du angemeldet bist, Ende-zu-Ende-verschlüsselt.',
+  'Sign in to have them on every device.': 'Melde dich an, um sie auf jedem Gerät zu haben.',
   'Agents on this computer connect on their own':
     'Agenten auf diesem Computer verbinden sich selbst',
   Helpers: 'Helfer',
@@ -1407,14 +1415,11 @@ export const de: Dictionary = {
   'OpenAI-compatible': 'OpenAI-kompatibel',
   'Base URL': 'Basis-URL',
   'API key': 'API-Schlüssel',
-  'Set on this device': 'Auf diesem Gerät gesetzt',
   Optional: 'Optional',
   'List models': 'Modelle abrufen',
   'Asking…': 'Wird gefragt…',
   'No providers yet.': 'Noch keine Anbieter.',
   'Add {name}': '{name} hinzufügen',
-  'Keys stay in the secure store on this device.':
-    'Schlüssel bleiben im sicheren Speicher dieses Geräts.',
   'This browser holds the keys in its own storage.':
     'Dieser Browser bewahrt die Schlüssel in seinem eigenen Speicher auf.',
   'AI can be wrong. Check the facts.': 'KI kann sich irren. Fakten prüfen.',

@@ -312,6 +312,8 @@ describe('the ring a keyboard leaves', () => {
       'lib/Slides.svelte',
       // A program asking to become an agent, which holds the keys for WebAsk's reason.
       'lib/agents/ui/PairingBubble.svelte',
+      // Another device asking for the AI accounts, for WebApprove's reason.
+      'lib/ai/vault/VaultApprove.svelte',
       // The theme picker on a phone, which holds the keys itself rather than putting
       // the keyboard up over the cards for a search nobody asked for.
       'lib/theme-picker/ThemePicker.svelte',
@@ -399,6 +401,8 @@ describe('the badge in front of a name', () => {
       'lib/agents/settings/AgentMark.svelte',
       // A program asking to become an agent, as the Share sheet shows a person.
       'lib/agents/ui/PairingBubble.svelte',
+      // Another device asking for the AI accounts, as the web logins' bubble shows one.
+      'lib/ai/vault/VaultApprove.svelte',
       // The space a page of another space is from, beside its site in a tab's card.
       'lib/tab-strip/TabCard.svelte',
       // Another of the person's computers asking for the web logins, the same way.
@@ -749,7 +753,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the thirteen that show one wear the class rather than a card of their own', () => {
+  test('and the fourteen that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -762,6 +766,8 @@ describe('the bubble a sentence appears in', () => {
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
+      // Another device asking for the AI accounts, in the web logins' shape.
+      'lib/ai/vault/VaultApprove.svelte',
       // A chat's one bubble: who reacted, when a message was written, what it said before.
       'lib/chats/view/Tip.svelte',
       // Chrome's hover card under a tab: a name and where it lives.

@@ -1081,6 +1081,14 @@ export const fr: Dictionary = {
   'AI account: {name}': 'Compte IA : {name}',
   Accounts: 'Comptes',
   Access: 'Accès',
+  Set: 'Défini',
+  'Start over': 'Recommencer',
+  'Sign in here': 'Se connecter ici',
+  '{device} wants your AI accounts': '{device} demande vos comptes IA',
+  'Allow this device on another one': 'Autorisez cet appareil depuis un autre',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Sur chaque appareil où vous êtes connecté, chiffré de bout en bout.',
+  'Sign in to have them on every device.': 'Connectez-vous pour les avoir sur chaque appareil.',
   'Agents on this computer connect on their own':
     'Les agents de cet ordinateur se connectent d’eux-mêmes',
   Helpers: 'Assistants',
@@ -1430,14 +1438,11 @@ export const fr: Dictionary = {
   'OpenAI-compatible': 'Compatible OpenAI',
   'Base URL': 'URL de base',
   'API key': 'Clé API',
-  'Set on this device': 'Définie sur cet appareil',
   Optional: 'Facultatif',
   'List models': 'Lister les modèles',
   'Asking…': 'Demande en cours…',
   'No providers yet.': 'Aucun fournisseur pour le moment.',
   'Add {name}': 'Ajouter {name}',
-  'Keys stay in the secure store on this device.':
-    'Les clés restent dans le coffre sécurisé de cet appareil.',
   'This browser holds the keys in its own storage.':
     'Ce navigateur garde les clés dans son propre stockage.',
   'AI can be wrong. Check the facts.': 'L’IA peut se tromper. Vérifiez les faits.',

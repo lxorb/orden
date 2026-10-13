@@ -1071,6 +1071,14 @@ export const sw: Dictionary = {
   'AI account: {name}': 'Akaunti ya AI: {name}',
   Accounts: 'Akaunti',
   Access: 'Ufikiaji',
+  Set: 'Imewekwa',
+  'Start over': 'Anza upya',
+  'Sign in here': 'Ingia hapa',
+  '{device} wants your AI accounts': '{device} inaomba akaunti zako za AI',
+  'Allow this device on another one': 'Ruhusu kifaa hiki kwenye kingine',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Kwenye kila kifaa unachoingia, kimesimbwa mwisho hadi mwisho.',
+  'Sign in to have them on every device.': 'Ingia ili uwe nazo kwenye kila kifaa.',
   'Agents on this computer connect on their own':
     'Mawakala kwenye kompyuta hii hujiunganisha wenyewe',
   Helpers: 'Wasaidizi',
@@ -1402,14 +1410,11 @@ export const sw: Dictionary = {
   'OpenAI-compatible': 'Inaoana na OpenAI',
   'Base URL': 'URL ya msingi',
   'API key': 'Kitufe cha API',
-  'Set on this device': 'Imewekwa kwenye kifaa hiki',
   Optional: 'Si lazima',
   'List models': 'Pata modeli',
   'Asking…': 'Inauliza…',
   'No providers yet.': 'Hakuna watoa huduma bado.',
   'Add {name}': 'Ongeza {name}',
-  'Keys stay in the secure store on this device.':
-    'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
   'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
