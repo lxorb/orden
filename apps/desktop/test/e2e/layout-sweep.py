@@ -57,7 +57,7 @@ import sys
 import time
 from typing import Any
 
-from harness import ANSWERED, LAUNCHED, Drive
+from harness import LAUNCHED, Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -387,7 +387,6 @@ class Browser:
             color_scheme="light",
             reduced_motion="reduce",
         )
-        await context.add_init_script(ANSWERED)
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
         await context.route(re.compile(r"^https?://(?!layout-sweep\.localhost)"), self.answer)
