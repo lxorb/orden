@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: comments
+  Comments: 'یادداشت‌ها',
   // Tasks: filters
   Filters: 'پالایه‌ها',
   'Add filter': 'افزودن پالایه',

@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // Tasks: comments
+  Comments: 'Kommentare',
   // Tasks: filters
   Filters: 'Filter',
   'Add filter': 'Filter hinzufügen',

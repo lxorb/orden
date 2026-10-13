@@ -24,6 +24,7 @@ const TASK_ENTRIES: Shortcut[] = (
     ['tasks.labels', () => t('Labels'), 'l'],
     ['tasks.move', () => t('Move to'), 'v'],
     ['tasks.more', () => t('More'), '.'],
+    ['tasks.comment', () => t('Comment'), 'c'],
     ['tasks.select', () => t('Select'), 'x'],
     ['tasks.edit', () => t('Edit'), 'Mod-e'],
     ['tasks.indent', () => t('Indent'), 'Mod-]'],

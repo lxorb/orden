@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: comments
+  Comments: '留言',
   // Tasks: filters
   Filters: '篩選',
   'Add filter': '加篩選',

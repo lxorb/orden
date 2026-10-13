@@ -206,6 +206,7 @@ export function runKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): bo
   if (!first) return false
   if (key.kind === 'open') kit.choose(first)
   else if (key.kind === 'note') kit.open(first, 'aside')
+  else if (key.kind === 'comment' && first.task) kit.openTask(first, true)
   else return runTaskKey(kit, rows, key, at)
   return true
 }
@@ -261,6 +262,7 @@ function runTaskKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): boole
     case 'step':
     case 'open':
     case 'note':
+    case 'comment':
     case 'pick':
     case 'unpick':
     case 'fold':

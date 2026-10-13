@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // Tasks: comments
+  Comments: 'கருத்துகள்',
   // Tasks: filters
   Filters: 'வடிகட்டிகள்',
   'Add filter': 'வடிகட்டியைச் சேர்',

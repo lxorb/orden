@@ -50,6 +50,7 @@
   } from '../task-actions'
   import TaskBox from '../TaskBox.svelte'
   import TaskRow from '../TaskRow.svelte'
+  import Comments from './Comments.svelte'
   import Description from './Description.svelte'
   import { rowFor, type Shown, viewing } from './viewing.svelte'
 
@@ -123,6 +124,12 @@
   let adding = $state(false)
   let subtask = $state('')
   let subField = $state<HTMLInputElement>()
+  /** The comments, whose field `c` gives the keyboard to. */
+  let comments = $state<{ focus: () => void }>()
+  $effect(() => {
+    const field = comments
+    if (shown.comment && field) untrack(() => field.focus())
+  })
 
   async function writeSubtask() {
     const words = subtask.trim()
@@ -177,6 +184,10 @@
       case 'e':
         event.preventDefault()
         kit.tick(row)
+        return
+      case 'c':
+        event.preventDefault()
+        comments?.focus()
         return
       case 't':
         event.preventDefault()
@@ -423,6 +434,13 @@
             </button>
           {/if}
         </div>
+
+        {#if path && row}
+          {#key `${shown.ref.path}
+${shown.ref.line}`}
+            <Comments bind:this={comments} {row} {path} />
+          {/key}
+        {/if}
       </section>
 
       <aside class="side">

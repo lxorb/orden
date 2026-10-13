@@ -1,6 +1,13 @@
 import { taskHash } from '@nib/bases'
 import { describe, expect, test } from 'vitest'
-import { descriptionOf, withDescription, withSubtask } from './task-body'
+import {
+  commentsOf,
+  descriptionOf,
+  withComment,
+  withDescription,
+  withoutComment,
+  withSubtask,
+} from './task-body'
 
 const NOTE = [
   '# Errands',
@@ -71,5 +78,35 @@ describe('what is written under a task', () => {
   test('a task that is not there any more is nothing to write', () => {
     expect(descriptionOf(NOTE, at(1, 'Something else'))).toBeNull()
     expect(withDescription(NOTE, at(1, 'Something else'), 'x')).toBeNull()
+  })
+})
+
+describe('a task’s comments', () => {
+  const bank = at(1, 'Call the bank')
+
+  test('are the list items straight under it that are no tasks', () => {
+    expect(commentsOf(NOTE, bank)).toEqual([{ line: 6, text: 'Called once.' }])
+    expect(commentsOf(NOTE, at(7, 'Water the plants'))).toEqual([])
+  })
+
+  test('are added after the last one, stamped, and read back with their moment', () => {
+    const one = withComment(NOTE, bank, 'Called again.\nNo answer.', '2026-10-13T09:30')
+    expect(one?.split('\n').slice(6, 9)).toEqual([
+      '  - Called once.',
+      '  - Called again. [at:: 2026-10-13T09:30]',
+      '    No answer.',
+    ])
+    expect(commentsOf(one ?? '', bank).at(-1)).toEqual({
+      line: 7,
+      text: 'Called again.\nNo answer.',
+      at: '2026-10-13T09:30',
+    })
+    expect(withComment(NOTE, bank, '   ', '2026-10-13T09:30')).toBeNull()
+  })
+
+  test('are deleted with their further lines', () => {
+    const one = withComment(NOTE, bank, 'Called again.\nNo answer.', '2026-10-13T09:30') ?? ''
+    expect(withoutComment(one, bank, 7)).toBe(NOTE)
+    expect(withoutComment(NOTE, bank, 5)).toBeNull()
   })
 })

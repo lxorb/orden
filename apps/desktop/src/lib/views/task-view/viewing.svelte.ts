@@ -25,6 +25,8 @@ export interface Shown {
   /** The tasks of the list it was opened from, in its order. */
   list: readonly TaskRef[]
   kit: Kit
+  /** Opened to write a comment (`c`): its field has the keyboard. */
+  comment?: boolean
 }
 
 export function refOf(row: Row): TaskRef | null {
@@ -110,7 +112,7 @@ export const viewing = new Viewing()
 let mounted = false
 
 /** Opens a task's view, with the list it was pressed in for the arrows. */
-export function showTask(row: Row, kit: Kit, list: readonly Row[]): void {
+export function showTask(row: Row, kit: Kit, list: readonly Row[], comment = false): void {
   const ref = refOf(row)
   if (!ref) return
   viewing.shown = {
@@ -120,6 +122,7 @@ export function showTask(row: Row, kit: Kit, list: readonly Row[]): void {
       return made ? [made] : []
     }),
     kit,
+    ...(comment ? { comment } : {}),
   }
   if (mounted) return
   mounted = true

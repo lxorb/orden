@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Tasks: comments
+  Comments: 'Comentários',
   // Tasks: filters
   Filters: 'Filtros',
   'Add filter': 'Adicionar filtro',

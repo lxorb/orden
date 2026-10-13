@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Tasks: comments
+  Comments: 'التعليقات',
   // Tasks: filters
   Filters: 'عوامل التصفية',
   'Add filter': 'إضافة عامل تصفية',

@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Tasks: comments
+  Comments: 'ਟਿੱਪਣੀਆਂ',
   // Tasks: filters
   Filters: 'ਫਿਲਟਰ',
   'Add filter': 'ਫਿਲਟਰ ਜੋੜੋ',

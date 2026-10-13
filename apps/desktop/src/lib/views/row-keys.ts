@@ -9,6 +9,7 @@
  *    t, Shift+T           the scheduler; the date taken away
  *    y, 1 2 3 4           priority: its menu, or one of them
  *    l, v, .              labels, move to a project, the task's menu
+ *    c                    its view, to write a comment
  *    x, Esc               select the row; the selection let go
  *    Ctrl+E               change the task in its own field (Todoist's inline editor)
  *    Ctrl+] Ctrl+[, Tab   a sub-task of the one above, or lifted out
@@ -34,6 +35,7 @@ export type RowKey =
   | { kind: 'labels' }
   | { kind: 'project' }
   | { kind: 'more' }
+  | { kind: 'comment' }
   | { kind: 'pick' }
   | { kind: 'unpick' }
   | { kind: 'move'; up: boolean }
@@ -62,6 +64,7 @@ const ROW_KEYS: readonly (readonly [string, RowKey])[] = [
   ['tasks.labels', { kind: 'labels' }],
   ['tasks.move', { kind: 'project' }],
   ['tasks.more', { kind: 'more' }],
+  ['tasks.comment', { kind: 'comment' }],
   ['tasks.select', { kind: 'pick' }],
   ['tasks.edit', { kind: 'edit' }],
   ['tasks.indent', { kind: 'indent', deeper: true }],

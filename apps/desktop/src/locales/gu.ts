@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Tasks: comments
+  Comments: 'ટિપ્પણીઓ',
   // Tasks: filters
   Filters: 'ફિલ્ટર',
   'Add filter': 'ફિલ્ટર ઉમેરો',

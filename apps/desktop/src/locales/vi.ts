@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: comments
+  Comments: 'Bình luận',
   // Tasks: filters
   Filters: 'Bộ lọc',
   'Add filter': 'Thêm bộ lọc',

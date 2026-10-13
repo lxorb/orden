@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Tasks: comments
+  Comments: '留言',
   // Tasks: filters
   Filters: '篩選器',
   'Add filter': '新增篩選器',

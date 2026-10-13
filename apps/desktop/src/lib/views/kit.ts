@@ -23,8 +23,9 @@ export interface Kit {
   compact: boolean
   /** Opens the row's note at its line: beside the view, or in a tab of its own. */
   open(row: Row, how?: 'aside' | 'tab'): void
-  /** Opens a task's view, with the view's own rows for its arrows. */
-  openTask(row: Row): void
+  /** Opens a task's view, with the view's own rows for its arrows; `comment` gives its
+   *  comment field the keyboard. */
+  openTask(row: Row, comment?: boolean): void
   /** What a press on a row opens: a task's view, a note beside the view; with `tab`
    *  (Ctrl or Cmd held), the note in a tab of its own either way. */
   choose(row: Row, tab?: boolean): void
@@ -65,9 +66,9 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         workspace.goto = { path, line }
       })
     },
-    openTask(row) {
+    openTask(row, comment = false) {
       const list = (live.answer?.groups ?? []).flatMap((group) => group.rows)
-      void import('./task-view/viewing.svelte').then((one) => one.showTask(row, kit, list))
+      void import('./task-view/viewing.svelte').then((one) => one.showTask(row, kit, list, comment))
     },
     choose(row, tab = false) {
       if (row.task && !tab) kit.openTask(row)

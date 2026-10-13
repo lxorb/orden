@@ -512,7 +512,9 @@ readable. A test holds the writer to the Tasks plugin's own examples.
   in the same edit, as Todoist completes them with it; one Ctrl+Z opens all of them again.
 - A **description** is the first indented paragraph under a task; a **comment** is any other
   indented line that is not a task; an **attachment** is an embed among them. Views fold them
-  under the row and show a count.
+  under the row and show a count. The task view lists the comments with when each was
+  written and has a field for one more (`c`), written as `- words [at:: YYYY-MM-DDTHH:mm]`
+  under the task (`views/task-body.ts`, `task-view/Comments.svelte`).
 - The **Inbox** is `Inbox.md` at the root of each space, made by the first quick add that
   names no note. It is an ordinary note, so it syncs and can be renamed; the space keeps
   which note is its inbox in its own settings (`inbox:` in the space's settings file), so a

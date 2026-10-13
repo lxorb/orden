@@ -48,6 +48,7 @@ ERRANDS = """# Errands
 - [ ] Call the bank #admin 📅 {today}
   Their number is on the back of the old card.
   - [x] Find the old card
+  - Called once, no answer.
 - [ ] Water the plants 📅 {today}
 """
 
@@ -136,6 +137,28 @@ def the_view(page: Page) -> None:
     page.locator(".sheet .side .nib-row", has_text="p4").click()
     page.locator(".menu [role=menuitem]", has_text="1").first.click()
     wait_for(page, f"() => ({TASK})('Call the bank again')?.priority === 1", "priority 1 written")
+
+    # Its comments: the one there, and one more written from the field, stamped.
+    wait_for(page, "document.querySelector('.sheet .comment')?.textContent.includes('Called once')", "the comment")
+    page.locator(".sheet").focus()
+    page.keyboard.press("c")
+    wait_for(page, "document.activeElement?.matches('.sheet .composer')", "c giving the field the keyboard")
+    page.keyboard.type("Called again, they will ring back.", delay=5)
+    page.keyboard.press("Enter")
+    for _ in range(100):
+        if "  - Called again, they will ring back. [at:: " in note(page):
+            break
+        page.wait_for_timeout(100)
+    else:
+        say(note(page))
+        wrong("the comment was not written under the task, stamped")
+    wait_for(page, "document.querySelectorAll('.sheet .comment').length === 2", "two comments")
+    if not page.locator(".sheet .comment .at").count():
+        wrong("the new comment does not say when it was written")
+    shot(page, "02b-comments")
+    page.locator(".sheet .comment").first.hover()
+    page.locator(".sheet .comment .gone").first.click()
+    wait_for(page, "document.querySelectorAll('.sheet .comment').length === 1", "a comment deleted")
 
     # The next task.
     page.locator(".sheet").focus()

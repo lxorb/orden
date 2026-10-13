@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: comments
+  Comments: 'မှတ်ချက်များ',
   // Tasks: filters
   Filters: 'စစ်ထုတ်မှုများ',
   'Add filter': 'စစ်ထုတ်မှု ထည့်ရန်',

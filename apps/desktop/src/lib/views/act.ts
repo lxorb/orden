@@ -23,7 +23,7 @@ import { insideSpace, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { type Said, undoToast } from '../undo-toast.svelte'
-import { dayOf } from './days'
+import { dayOf, nowOf } from './days'
 import type { Drop } from './drop'
 import {
   cutBlock,
@@ -37,7 +37,7 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import { withDescription, withSubtask } from './task-body'
+import { withComment, withDescription, withoutComment, withSubtask } from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -414,6 +414,23 @@ export async function addSubtask(row: Row, line: string): Promise<boolean> {
   const path = pathOf(row)
   if (!anchor || path === null) return false
   return rewrite(path, (before) => withSubtask(before, anchor, line))
+}
+
+/** A comment written under a task, stamped with this moment: the task view's composer. */
+export async function addComment(row: Row, words: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  const stamp = nowOf(new Date()).slice(0, 16)
+  return rewrite(path, (before) => withComment(before, anchor, words, stamp))
+}
+
+/** A task's comment deleted, the one on that line of its note. */
+export async function deleteComment(row: Row, line: number): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  return rewrite(path, (before) => withoutComment(before, anchor, line))
 }
 
 /** A task changed the way the field that edits it says: its line and, where the field

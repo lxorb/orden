@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: comments
+  Comments: '댓글',
   // Tasks: filters
   Filters: '필터',
   'Add filter': '필터 추가',
