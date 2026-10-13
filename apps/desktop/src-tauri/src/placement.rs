@@ -297,6 +297,7 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     let window = created_away::during(|| building.build())?;
     #[cfg(not(windows))]
     let window = building.build()?;
+    crate::top_edge::follow(&window.as_ref().window());
     window.set_position(LogicalPosition::new(x, y))?;
     window.show()?;
     Ok(window)
@@ -400,10 +401,12 @@ mod created_away {
 pub fn built<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
-    match away() {
-        Some(at) => built_away(building, at),
-        None => building.build(),
+    if let Some(at) = away() {
+        return built_away(building, at);
     }
+    let window = building.build()?;
+    crate::top_edge::follow(&window.as_ref().window());
+    Ok(window)
 }
 
 /// Brings a window forward because somebody asked for the app - a second launch, a
