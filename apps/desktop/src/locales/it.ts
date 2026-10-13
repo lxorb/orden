@@ -942,6 +942,7 @@ export const it: Dictionary = {
   'Unstack tabs': 'Separa le schede',
   'High contrast': 'Contrasto elevato',
   Glass: 'Vetro',
+  Classic: 'Classico',
   'Front matter': 'Intestazione YAML',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -932,6 +932,7 @@ export const de: Dictionary = {
   'Unstack tabs': 'Tabs nicht stapeln',
   'High contrast': 'Hoher Kontrast',
   Glass: 'Glas',
+  Classic: 'Klassisch',
   'Front matter': 'Kopfdaten',
   'Front matter: {name}': 'Kopfdaten: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

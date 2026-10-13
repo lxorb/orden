@@ -908,6 +908,7 @@ export const zhHans: Dictionary = {
   'Unstack tabs': '取消并排标签页',
   'High contrast': '高对比度',
   Glass: '玻璃',
+  Classic: '经典',
   'Front matter': '前置元数据',
   'Front matter: {name}': '前置数据：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

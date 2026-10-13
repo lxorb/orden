@@ -923,6 +923,7 @@ export const te: Dictionary = {
   'Unstack tabs': 'ట్యాబ్ నిలువు తీసివేయి',
   'High contrast': 'అధిక కాంట్రాస్ట్',
   Glass: 'గాజు',
+  Classic: 'క్లాసిక్',
   'Front matter': 'ఫ్రంట్ మేటర్',
   'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

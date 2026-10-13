@@ -956,6 +956,7 @@ export const uk: Dictionary = {
   'Unstack tabs': 'Прибрати стовпці вкладок',
   'High contrast': 'Висока контрастність',
   Glass: 'Скло',
+  Classic: 'Класика',
   'Front matter': 'Метадані',
   'Front matter: {name}': 'Метадані: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

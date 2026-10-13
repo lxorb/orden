@@ -289,7 +289,12 @@ And glass is what nib opens in: a first launch is glass, in yellow, following th
 (Emil, 2026-10-12). The theme is not written down until somebody chooses one, so an
 install that never has stays on that look and can still be offered the contrast theme;
 the accent is, because it follows the reader to whatever theme they choose next. An
-install from before keeps everything it had. See `FIRST_LOOK` in theme.svelte.ts.
+install an older build left on the built-in - which it wrote down for everybody, chosen or
+not - is moved to glass once, keeping its accent and scheme (yellow only where it never
+chose an accent), and `nib:theme-moved` says so, so picking the built-in again sticks
+(Emil, 2026-10-13). The built-in is called Classic now that it is not the default; its
+id stays `default`, which stored choices, theme files and the registry name. See
+`FIRST_LOOK` in theme.svelte.ts.
 
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the

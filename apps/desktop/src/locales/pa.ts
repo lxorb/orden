@@ -926,6 +926,7 @@ export const pa: Dictionary = {
   'Unstack tabs': 'ਟੈਬ ਕਾਲਮ ਹਟਾਓ',
   'High contrast': 'ਉੱਚ ਕੰਟਰਾਸਟ',
   Glass: 'ਸ਼ੀਸ਼ਾ',
+  Classic: 'ਕਲਾਸਿਕ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ਮੁੱਖ ਜਾਣਕਾਰੀ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

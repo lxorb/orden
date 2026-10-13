@@ -931,6 +931,7 @@ export const fil: Dictionary = {
   'Unstack tabs': 'Alisin ang salansan ng tab',
   'High contrast': 'Mataas na kontrast',
   Glass: 'Salamin',
+  Classic: 'Klasiko',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

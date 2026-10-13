@@ -920,6 +920,7 @@ export const bn: Dictionary = {
   'Unstack tabs': 'ট্যাব স্তূপ সরান',
   'High contrast': 'উচ্চ বৈসাদৃশ্য',
   Glass: 'কাচ',
+  Classic: 'ক্লাসিক',
   'Front matter': 'ফ্রন্ট ম্যাটার',
   'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

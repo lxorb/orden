@@ -933,6 +933,7 @@ export const ptBR: Dictionary = {
   'Unstack tabs': 'Desempilhar abas',
   'High contrast': 'Alto contraste',
   Glass: 'Vidro',
+  Classic: 'Clássico',
   'Front matter': 'Cabeçalho YAML',
   'Front matter: {name}': 'Metadados: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

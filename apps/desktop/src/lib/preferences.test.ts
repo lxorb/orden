@@ -111,7 +111,7 @@ describe('the Appearance pane', () => {
     const one = field('appearance', 'Style')
     if (one.kind !== 'select') throw new Error('the theme is a dropdown')
 
-    expect(one.options[0]).toEqual({ value: 'default', label: 'Default' })
+    expect(one.options[0]).toEqual({ value: 'default', label: 'Classic' })
     expect(one.options.map((option) => option.value)).not.toContain('dark')
     expect(one.options.map((option) => option.value)).not.toContain('light')
   })

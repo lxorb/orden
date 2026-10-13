@@ -936,6 +936,7 @@ export const es: Dictionary = {
   'Unstack tabs': 'Desapilar pestañas',
   'High contrast': 'Alto contraste',
   Glass: 'Cristal',
+  Classic: 'Clásico',
   'Front matter': 'Encabezado YAML',
   'Front matter: {name}': 'Metadatos: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -920,6 +920,7 @@ export const ps: Dictionary = {
   'Unstack tabs': 'د ټوپونو ستنې لرې کړه',
   'High contrast': 'لوړ تضاد',
   Glass: 'ښیښه',
+  Classic: 'کلاسیک',
   'Front matter': 'سرمنځپانګه',
   'Front matter: {name}': 'سرلیک معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

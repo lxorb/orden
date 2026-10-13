@@ -915,6 +915,7 @@ export const ko: Dictionary = {
   'Unstack tabs': '탭 나란히 해제',
   'High contrast': '고대비',
   Glass: '유리',
+  Classic: '클래식',
   'Front matter': '프런트 매터',
   'Front matter: {name}': '프런트 매터: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

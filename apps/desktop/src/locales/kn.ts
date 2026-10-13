@@ -927,6 +927,7 @@ export const kn: Dictionary = {
   'Unstack tabs': 'ಟ್ಯಾಬ್ ಜೋಡಣೆ ತೆಗೆ',
   'High contrast': 'ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್',
   Glass: 'ಗಾಜು',
+  Classic: 'ಕ್ಲಾಸಿಕ್',
   'Front matter': 'ಫ್ರಂಟ್ ಮ್ಯಾಟರ್',
   'Front matter: {name}': 'ಮುನ್ನುಡಿ ಮಾಹಿತಿ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

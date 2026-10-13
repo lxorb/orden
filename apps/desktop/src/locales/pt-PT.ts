@@ -936,6 +936,7 @@ export const ptPT: Dictionary = {
   'Unstack tabs': 'Desempilhar separadores',
   'High contrast': 'Contraste elevado',
   Glass: 'Vidro',
+  Classic: 'Clássico',
   'Front matter': 'Cabeçalho YAML',
   'Front matter: {name}': 'Metadados: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -917,6 +917,7 @@ export const jv: Dictionary = {
   'Unstack tabs': 'Batalake tumpukan tab',
   'High contrast': 'Kontras dhuwur',
   Glass: 'Kaca',
+  Classic: 'Klasik',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

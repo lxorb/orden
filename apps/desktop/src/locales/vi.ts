@@ -915,6 +915,7 @@ export const vi: Dictionary = {
   'Unstack tabs': 'Bỏ xếp cột thẻ',
   'High contrast': 'Tương phản cao',
   Glass: 'Kính',
+  Classic: 'Cổ điển',
   'Front matter': 'Phần đầu tệp',
   'Front matter: {name}': 'Siêu dữ liệu: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

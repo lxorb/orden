@@ -923,6 +923,7 @@ export const hi: Dictionary = {
   'Unstack tabs': 'टैब के स्तंभ हटाएँ',
   'High contrast': 'उच्च कंट्रास्ट',
   Glass: 'कांच',
+  Classic: 'क्लासिक',
   'Front matter': 'फ़्रंट मैटर',
   'Front matter: {name}': 'फ़्रंट मैटर: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

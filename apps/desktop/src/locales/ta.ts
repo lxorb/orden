@@ -930,6 +930,7 @@ export const ta: Dictionary = {
   'Unstack tabs': 'தாவல் அடுக்கை நீக்கு',
   'High contrast': 'உயர் மாறுபாடு',
   Glass: 'கண்ணாடி',
+  Classic: 'கிளாசிக்',
   'Front matter': 'முன்தகவல்',
   'Front matter: {name}': 'முன்தகவல்: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

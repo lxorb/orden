@@ -918,6 +918,7 @@ export const ja: Dictionary = {
   'Unstack tabs': 'タブを並べない',
   'High contrast': 'ハイコントラスト',
   Glass: 'ガラス',
+  Classic: 'クラシック',
   'Front matter': 'フロントマター',
   'Front matter: {name}': 'フロントマター: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

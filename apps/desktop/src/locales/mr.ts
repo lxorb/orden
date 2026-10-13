@@ -921,6 +921,7 @@ export const mr: Dictionary = {
   'Unstack tabs': 'टॅब स्तंभ काढा',
   'High contrast': 'उच्च कॉन्ट्रास्ट',
   Glass: 'काच',
+  Classic: 'क्लासिक',
   'Front matter': 'फ्रंट मॅटर',
   'Front matter: {name}': 'शीर्षमाहिती: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -911,6 +911,7 @@ export const th: Dictionary = {
   'Unstack tabs': 'เลิกเรียงแท็บ',
   'High contrast': 'คอนทราสต์สูง',
   Glass: 'กระจก',
+  Classic: 'คลาสสิก',
   'Front matter': 'ส่วนหัวเอกสาร',
   'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

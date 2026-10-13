@@ -928,6 +928,7 @@ export const sw: Dictionary = {
   'Unstack tabs': 'Ondoa safu za vichupo',
   'High contrast': 'Utofautishaji wa juu',
   Glass: 'Kioo',
+  Classic: 'Asili',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Data ya kichwa: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

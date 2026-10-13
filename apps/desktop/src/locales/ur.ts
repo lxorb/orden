@@ -921,6 +921,7 @@ export const ur: Dictionary = {
   'Unstack tabs': 'ٹیب کالم ہٹائیں',
   'High contrast': 'زیادہ تضاد',
   Glass: 'شیشہ',
+  Classic: 'کلاسیک',
   'Front matter': 'ابتدائی ڈیٹا',
   'Front matter: {name}': 'ابتدائی معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

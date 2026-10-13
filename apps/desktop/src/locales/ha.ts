@@ -929,6 +929,7 @@ export const ha: Dictionary = {
   'Unstack tabs': 'Warware tarin shafuka',
   'High contrast': 'Bambanci mai ƙarfi',
   Glass: 'Gilashi',
+  Classic: 'Na gargajiya',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Bayanan gaba: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

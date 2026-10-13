@@ -938,6 +938,7 @@ export const fr: Dictionary = {
   'Unstack tabs': 'Désempiler les onglets',
   'High contrast': 'Contraste élevé',
   Glass: 'Verre',
+  Classic: 'Classique',
   'Front matter': 'En-tête YAML',
   'Front matter: {name}': 'Métadonnées : {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

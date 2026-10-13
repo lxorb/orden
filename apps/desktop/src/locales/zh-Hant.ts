@@ -909,6 +909,7 @@ export const zhHant: Dictionary = {
   'Unstack tabs': '取消並排標籤頁',
   'High contrast': '高對比',
   Glass: '玻璃',
+  Classic: '經典',
   'Front matter': '前置資料',
   'Front matter: {name}': '前置資料：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

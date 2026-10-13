@@ -929,6 +929,7 @@ export const ml: Dictionary = {
   'Unstack tabs': 'ടാബ് അടുക്കൽ മാറ്റുക',
   'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
   Glass: 'ഗ്ലാസ്',
+  Classic: 'ക്ലാസിക്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
   'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

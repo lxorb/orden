@@ -912,6 +912,7 @@ export const am: Dictionary = {
   'Unstack tabs': 'ትሮችን አታደራድር',
   'High contrast': 'ከፍተኛ ንፅፅር',
   Glass: 'መስታወት',
+  Classic: 'ክላሲክ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ራስጌ መረጃ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

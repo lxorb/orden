@@ -922,6 +922,7 @@ export const tr: Dictionary = {
   'Unstack tabs': 'Sekme dizilişini kaldır',
   'High contrast': 'Yüksek karşıtlık',
   Glass: 'Cam',
+  Classic: 'Klasik',
   'Front matter': 'Ön bilgi',
   'Front matter: {name}': 'Ön bilgi: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

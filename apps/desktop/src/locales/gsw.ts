@@ -923,6 +923,7 @@ export const gsw: Dictionary = {
   'Unstack tabs': 'Tabs nöd stapla',
   'High contrast': 'Hohe Kontrascht',
   Glass: 'Glas',
+  Classic: 'Klassisch',
   'Front matter': 'Chopfdate',
   'Front matter: {name}': 'Chopfdate: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

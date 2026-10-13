@@ -915,6 +915,7 @@ export const my: Dictionary = {
   'Unstack tabs': 'တက်ဗ် အတန်းစီမှု ဖျက်ရန်',
   'High contrast': 'အရောင်ကွာဟမှု မြင့်',
   Glass: 'မှန်',
+  Classic: 'ဂန္ထဝင်',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ခေါင်းစီးအချက်အလက်: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

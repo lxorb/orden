@@ -131,14 +131,15 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 #: (`about:blank`, a `data:` frame) refuses the setter.
 ANSWERED = "try { localStorage.setItem('nib:first-visit', 'answered') } catch {}"
 
-#: And the look it chose: the built-in theme, unless it has chosen another since. A first
-#: launch is glass in yellow (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive
-#: but the one about that look photographs and measures the built-in palette, so each
-#: browser is a reader who opened nib before that was the first look. A context made with
-#: `first_look=True` is a new reader's.
+#: And the look it chose: the built-in theme (Classic), unless it has chosen another since,
+#: having been moved off it to glass once already. A first launch is glass in yellow
+#: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
+#: photographs and measures the built-in palette. A context made with `first_look=True`
+#: is a new reader's.
 BUILT_IN = (
-    "try { if (localStorage.getItem('nib:theme') === null)"
-    " localStorage.setItem('nib:theme', 'default') } catch {}"
+    "try { if (localStorage.getItem('nib:theme') === null) {"
+    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') } }"
+    " catch {}"
 )
 
 #: How long anything a drive waits for is given by default, in seconds.

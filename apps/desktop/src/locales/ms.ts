@@ -919,6 +919,7 @@ export const ms: Dictionary = {
   'Unstack tabs': 'Buang susunan tab',
   'High contrast': 'Kontras tinggi',
   Glass: 'Kaca',
+  Classic: 'Klasik',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

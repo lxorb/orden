@@ -922,6 +922,7 @@ export const fa: Dictionary = {
   'Unstack tabs': 'برچیدن ستون زبانه‌ها',
   'High contrast': 'کنتراست بالا',
   Glass: 'شیشه',
+  Classic: 'کلاسیک',
   'Front matter': 'پیش‌داده',
   'Front matter: {name}': 'فرامتن: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

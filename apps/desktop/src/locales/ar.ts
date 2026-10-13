@@ -967,6 +967,7 @@ export const ar: Dictionary = {
   'Unstack tabs': 'إلغاء ترتيب الألسنة',
   'High contrast': 'تباين عالٍ',
   Glass: 'زجاج',
+  Classic: 'كلاسيكي',
   'Front matter': 'بيانات أولية',
   'Front matter: {name}': 'البيانات الأولية: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -212,9 +212,11 @@ function installed(id: string, name: string, css: string, version = '1.0.0') {
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
-  // An install that has been opened before, on the built-in, which is what every test
-  // here is about but the first look's own; see 'a first launch'.
+  // An install that has been opened before, on the built-in, and already moved to the
+  // first look once, which is what every test here is about but the first look's own;
+  // see 'a first launch' and 'an install on the built-in'.
   kept.setItem('nib:theme', 'default')
+  kept.setItem('nib:theme-moved', 'yes')
 
   folder.files.clear()
   folder.listing = true
@@ -243,7 +245,7 @@ describe('what the dropdown offers', () => {
       'file:rose',
       'file:warm-paper',
     ])
-    expect(theme.all[0]?.name).toBe('Default')
+    expect(theme.all[0]?.name).toBe('Classic')
     expect(theme.all[1]?.name).toBe('High contrast')
     expect(theme.all[2]?.name).toBe('Glass')
   })
@@ -585,7 +587,7 @@ describe('an installed theme across a restart', () => {
     await theme.reload()
 
     expect(theme.all.map((one) => one.name)).toEqual([
-      'Default',
+      'Classic',
       'High contrast',
       'Glass',
       'Wallpaper',
@@ -732,15 +734,6 @@ describe('a first launch', () => {
     expect(theme.accent).toBe('teal')
   })
 
-  test('is not what an install from before it opens in: that one keeps what it had', () => {
-    kept.setItem('nib:theme', 'default')
-    theme.init()
-
-    expect(theme.id).toBe('default')
-    expect(theme.accent).toBe('violet')
-    expect(kept.getItem('nib:theme-settings')).toBe(null)
-  })
-
   test('nor over an accent an older device kept under a key of its own', () => {
     kept.setItem('nib:accent', 'green')
     theme.init()
@@ -757,6 +750,68 @@ describe('a first launch', () => {
 
     expect(theme.offerContrast).toBe(true)
     expect(theme.id).toBe('contrast')
+  })
+})
+
+/** Emil, 2026-10-13: an install an older build left on the built-in - which it wrote
+ *  down for everybody, chosen or not - moves to the first look once, keeping what the
+ *  reader did choose, and is never moved again. */
+describe('an install on the built-in', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme-moved')
+  })
+
+  test('moves to glass once, in yellow where no accent was ever chosen', () => {
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('yellow')
+    expect(kept.getItem('nib:theme')).toBe(null)
+    expect(kept.getItem('nib:theme-moved')).toBe('yes')
+  })
+
+  test('keeps the accent and the scheme it chose', () => {
+    kept.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'teal' } }))
+    kept.setItem('nib:theme-scheme', 'light')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('teal')
+    expect(theme.scheme).toBe('light')
+  })
+
+  test('the old spellings of the built-in move too', () => {
+    kept.setItem('nib:theme', 'dark')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.scheme).toBe('dark')
+  })
+
+  test('and one who picks the built-in again afterwards keeps it', () => {
+    theme.init()
+    theme.select('default')
+    theme.init()
+    theme.init()
+
+    expect(theme.id).toBe('default')
+  })
+
+  test('a new install that later picks the built-in keeps it too', () => {
+    kept.removeItem('nib:theme')
+    theme.init()
+    theme.select('default')
+    theme.init()
+
+    expect(theme.id).toBe('default')
+  })
+
+  test('any other theme stays where it is', () => {
+    kept.setItem('nib:theme', 'contrast')
+    theme.init()
+
+    expect(theme.id).toBe('contrast')
+    expect(theme.accent).toBe('violet')
   })
 })
 

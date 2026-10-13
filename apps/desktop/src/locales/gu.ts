@@ -921,6 +921,7 @@ export const gu: Dictionary = {
   'Unstack tabs': 'ટેબ થપ્પી હટાવો',
   'High contrast': 'ઉચ્ચ કોન્ટ્રાસ્ટ',
   Glass: 'કાચ',
+  Classic: 'ક્લાસિક',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ફ્રન્ટ મેટર: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

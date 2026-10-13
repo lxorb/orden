@@ -202,7 +202,7 @@ test('shows every theme as a card, with the store last', async () => {
   await opened()
 
   const names = cards().map((one) => one.textContent.trim())
-  expect(names).toEqual(['Default', 'High contrast', 'Glass', 'Wallpaper', 'Rose', 'Browse'])
+  expect(names).toEqual(['Classic', 'High contrast', 'Glass', 'Wallpaper', 'Rose', 'Browse'])
 })
 
 test('pointing at a theme puts it on the app and writes nothing down', async () => {

@@ -956,6 +956,7 @@ export const pl: Dictionary = {
   'Unstack tabs': 'Rozłóż karty',
   'High contrast': 'Wysoki kontrast',
   Glass: 'Szkło',
+  Classic: 'Klasyczny',
   'Front matter': 'Nagłówek YAML',
   'Front matter: {name}': 'Metadane: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

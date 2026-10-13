@@ -104,7 +104,7 @@ const CONTRAST_THEME = 'contrast'
 const DEFAULT_ID = 'default'
 const DEFAULT_THEME: ThemeInfo = {
   id: DEFAULT_ID,
-  name: 'Default',
+  name: 'Classic',
   variants: ['dark', 'light'],
 }
 
@@ -148,9 +148,10 @@ const GLASS: ThemeInfo = {
   own: () => import('./glass/settings').then((module) => module.glassSettings),
 }
 
-/** What an install opens in until a look is chosen (Emil, 2026-10-12). The theme stays
- *  unwritten until then; the accent is kept at once, as it follows the reader. */
+/** What opens until a look is chosen (Emil); the accent is kept, as it follows. */
 const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'yellow' }
+/** Older builds wrote the built-in for all: moved to the first look once. */
+const MOVED_KEY = 'nib:theme-moved'
 
 /** And wallpaper: the reader's picture, in its sheet (wallpaper/sheet.ts). */
 const WALLPAPER: ThemeInfo = {
@@ -272,10 +273,9 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
-    const unopened = storedText(STORAGE_KEY) === null
-    this.restoreChoice()
+    const first = this.restoreChoice()
     this.offerTheContrastTheme()
-    this.restoreSettings(unopened)
+    this.restoreSettings(first)
     this.early = earlySheet()
     // What the crate put back behind the window before the page started, said on the
     // first frame; and a launch that stood on it, or cannot tell, asks for it off
@@ -311,7 +311,7 @@ class Themes {
 
   /** Every answer, the accent's old key read into the app's drawer and left for an
    *  older build. Nothing is trusted: `valueOf` reads each against its setting. */
-  private restoreSettings(unopened: boolean) {
+  private restoreSettings(first: boolean) {
     const drawers: ChosenSettings = Object.fromEntries(
       Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
         owner,
@@ -324,7 +324,7 @@ class Themes {
       drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
-    if (FIRST_LOOK && unopened && drawers[SHARED]?.accent === undefined) {
+    if (FIRST_LOOK && first && drawers[SHARED]?.accent === undefined) {
       drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
       keep(SETTINGS_KEY, JSON.stringify(drawers))
     }
@@ -351,21 +351,26 @@ class Themes {
    *  a scheme, so that is what they are read as.
    *
    *  Written back in the new spelling at once, so nothing further along has to
-   *  know there was an old one. Nothing at all is the first look. */
-  private restoreChoice() {
+   *  know there was an old one. */
+  private restoreChoice(): boolean {
     const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
+    const id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
+    const moved = saved && storedText(MOVED_KEY)
 
     this.scheme = isChoice(chosen) ? chosen : isChoice(saved) ? saved : 'system'
     keep(SCHEME_KEY, this.scheme)
+    keep(MOVED_KEY, 'yes')
 
-    if (saved === null) {
-      this.id = FIRST_LOOK?.theme ?? DEFAULT_ID
-      return
+    if (FIRST_LOOK && id === DEFAULT_ID && !moved) {
+      this.id = FIRST_LOOK.theme
+      forget(STORAGE_KEY)
+      return true
     }
 
-    this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
+    this.id = id
     keep(STORAGE_KEY, this.id)
+    return false
   }
 
   /** Whether to answer a system asking for more contrast, which happens once or not

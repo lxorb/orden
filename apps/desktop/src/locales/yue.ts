@@ -908,6 +908,7 @@ export const yue: Dictionary = {
   Hidden: '隱藏',
   'High contrast': '高對比',
   Glass: '玻璃',
+  Classic: '經典',
   'Go to the mark': '跳去標記',
   'Go to the definition': '跳去註腳內容',
   'Nothing points at this one': '冇嘢指向呢個',

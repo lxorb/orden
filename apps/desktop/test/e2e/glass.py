@@ -405,6 +405,26 @@ def first_look(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}-first-look")
     done_with(page)
 
+    # An install an older build left on the built-in, with an accent of its own: moved to
+    # glass once, keeping the accent, and left alone after that.
+    context = browser.new_context(color_scheme=scheme, first_look=True)
+    context.add_init_script(
+        "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
+        " localStorage.setItem('nib:theme', 'default');"
+        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'teal' } })) } }"
+        " catch {}"
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    read = "() => [window.nibApp.theme.id, window.nibApp.theme.accent]"
+    shows(f"[{scheme}] an older install on the built-in moves to glass", page.evaluate(read), ["glass", "teal"])
+    page.evaluate("() => window.nibApp.theme.select('default')")
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
+    done_with(page)
+
 
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
