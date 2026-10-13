@@ -11,8 +11,9 @@
  *  it reads on the ground, so a part the theme leaves out, or colours for words Orden
  *  does not write there, falls to the next nearest and at last to the scheme's own.
  *  What a browser has no part for at all is mixed from the ground and the ink beside
- *  it (`DERIVED`). A see-through colour is laid over the scheme's page: a theme
- *  file stands on nothing else. Pure; see browser.test.ts. */
+ *  it (`DERIVED`). A see-through colour is laid over the scheme's page, and kept as it
+ *  was written for the window that is see-through itself (`GLASS`). Pure; see
+ *  browser.test.ts. */
 
 import { BODY } from '../content-ground'
 import { AA, hexOf, inkFor, luminance, over, ratio, type Rgb, rgbOf } from '../legibility'
@@ -33,7 +34,7 @@ type Parts = Record<string, string[]>
 const BLACK: Rgb = [0, 0, 0]
 const WHITE: Rgb = [255, 255, 255]
 const GREY: Rgb = [128, 128, 128]
-const NAMED: Record<string, string> = { black: '#000', white: '#fff' }
+const NAMED: Record<string, string> = { black: '#000', white: '#fff', transparent: 'rgba(0,0,0,0)' }
 const SCHEMES: Scheme[] = ['light', 'dark']
 
 const PAGE = ['ntp_background', 'tab_selected', 'toolbar', 'frame']
@@ -55,6 +56,27 @@ const GROUNDS: Record<string, string[]> = {
   '--surface': ['toolbar', 'popup', 'frame'],
   '--tab-frame': ['frame', 'toolbar'],
   '--side-bar-bg-color': ['sidebar'],
+}
+
+/** What stands on the desk where the window is see-through, as glass.css says it: the
+ *  shell the frame is on, the paper and the list, each in the alpha the theme wrote. A
+ *  frame the theme sees through altogether is a shell that is clear; any other part
+ *  that clear is not there. */
+const GLASS: Record<string, string[]> = {
+  '--shell-ground': ['frame', 'toolbar'],
+  '--content-ground': PAGE,
+  '--side-bar-bg-color': ['sidebar'],
+}
+
+/** And what follows from standing there: the frame is the shell's and so is a pane
+ *  with nothing open, the open tab and a terminal are the paper, and a row under the
+ *  pointer is a lift of what it is on. */
+const ON_GLASS: Record<string, string> = {
+  '--tab-frame': 'transparent',
+  '--empty-ground': 'transparent',
+  '--paper': 'var(--content-ground)',
+  '--terminal-ground': 'var(--content-ground)',
+  '--item-hover-bg-color': 'color-mix(in srgb, var(--text) 8%, transparent)',
 }
 
 /** What no browser has a part for, in the steps the built-in palette takes between
@@ -177,18 +199,25 @@ function partsOfManifest(source: string): Parts {
   return Object.fromEntries(Object.entries(colors).map(([key, value]) => [key, [written(value)]]))
 }
 
-/** A colour laid over what is under it, or null for what is not one or is not there
- *  at all: `transparent` says the part shows whatever is behind it. */
-function solid(said: string, under: Rgb): Rgb | null {
+/** A colour and how much of it there is, or null for what is not a colour. */
+function parsed(said: string): [Rgb, number] | null {
   const text = said.trim().toLowerCase()
   const hex = /^#([0-9a-f]{4}|[0-9a-f]{8})$/.exec(text)?.[1] ?? ''
   const cut = (hex.length * 3) / 4
   const last = hex.slice(cut).padEnd(2, hex.slice(-1))
 
-  const rgb = rgbOf(hex ? `#${hex.slice(0, cut)}` : (NAMED[text] ?? text))
-  const fourth = hex ? `${Number.parseInt(last, 16) / 2.55}%` : text.match(/[\d.]+%?/g)?.[3]
+  const named = NAMED[text] ?? text
+  const rgb = rgbOf(hex ? `#${hex.slice(0, cut)}` : named)
+  const fourth = hex ? `${Number.parseInt(last, 16) / 2.55}%` : named.match(/[\d.]+%?/g)?.[3]
   const alpha = fourth ? Number.parseFloat(fourth) / (fourth.endsWith('%') ? 100 : 1) : 1
-  return rgb && alpha > 0 ? over(rgb, alpha, under) : null
+  return rgb && [rgb, alpha]
+}
+
+/** That colour laid over what is under it, or null for one that is not there at all:
+ *  `transparent` says the part shows whatever is behind it. */
+function solid(said: string, under: Rgb): Rgb | null {
+  const [rgb, alpha] = parsed(said) ?? [BLACK, 0]
+  return alpha > 0 ? over(rgb, alpha, under) : null
 }
 
 /** Every colour a theme says for any of some keys, the nearest key's first. */
@@ -223,9 +252,23 @@ function tokensOf(parts: Parts, scheme: Scheme): Record<string, string> {
   return { ...tokens, ...inked, ...ACCENTED }
 }
 
+/** The tokens a theme states over the desk, or none for one that is solid throughout. */
+function glassOf(parts: Parts): Record<string, string> {
+  const tokens: Record<string, string> = {}
+  for (const [token, keys] of Object.entries(GLASS)) {
+    const said = keys.flatMap((key) => parts[key] ?? []).map(parsed)
+    const found = said.find((one) => one !== null && (one[1] > 0 || token === '--shell-ground'))
+    if (found) tokens[token] = `rgb(${found[0].join(' ')} / ${found[1].toFixed(3)})`
+  }
+
+  const clear = Object.values(tokens).some((one) => !one.endsWith('/ 1.000)'))
+  return clear ? { ...tokens, ...ON_GLASS } : {}
+}
+
 /** The theme as a sheet Orden wears, a block for each scheme it states, or nothing
  *  for a theme that colours no ground. One that says nothing of schemes is one look:
- *  whichever side of grey its ground lands on. */
+ *  whichever side of grey its ground lands on. A second block is for the window that
+ *  is see-through, and stands unread where the platform has nothing to see through. */
 export function ordenCss(theme: BrowserTheme): string {
   const said = theme.css ? [...saidIn(theme.source)] : []
   const partsFor = (scheme: Scheme) =>
@@ -235,12 +278,15 @@ export function ordenCss(theme: BrowserTheme): string {
   const [ground] = coloursOf(partsFor('dark'), PAGE, GREY)
   const lone: Scheme = ground && luminance(ground) < luminance(GREY) ? 'dark' : 'light'
 
+  const block = (selector: string, tokens: Record<string, string>) => {
+    const lines = Object.entries(tokens).map(([token, value]) => `  ${token}: ${value};`)
+    return lines.length ? `${selector} {\n${lines.join('\n')}\n}\n` : ''
+  }
   return (stated.length ? stated : [lone])
     .map((scheme) => {
-      const lines = Object.entries(tokensOf(partsFor(scheme), scheme)).map(
-        ([token, value]) => `  ${token}: ${value};`,
-      )
-      return lines.length ? `:root[data-theme='${scheme}'] {\n${lines.join('\n')}\n}\n` : ''
+      const parts = partsFor(scheme)
+      const worn = block(`:root[data-theme='${scheme}']`, tokensOf(parts, scheme))
+      return worn && worn + block(`:root[data-translucent][data-theme='${scheme}']`, glassOf(parts))
     })
     .join('')
 }

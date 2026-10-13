@@ -23,6 +23,7 @@ describe('a browser theme as an Orden theme', () => {
     const css = ordenCss({ name: 'Dusk', source, css: false })
 
     expect(css).not.toContain("data-theme='light'")
+    expect(css).not.toContain('data-translucent')
     expect(tokens(css, 'dark')).toMatchObject({
       '--bg': '#101010',
       '--surface': '#28323c',
@@ -65,5 +66,12 @@ describe('a browser theme as an Orden theme', () => {
       '--text': '#0a0a0a',
     })
     expect(css).not.toContain('--accent')
+
+    // And over the desk it is what it was written as: a strip that is not there, a
+    // tab that is a breath of white, a list that is two fifths black.
+    const glass = /data-translucent\]\[data-theme='dark'\] \{([^}]*)\}/.exec(css)?.[1]
+    expect(glass).toContain('--shell-ground: rgb(0 0 0 / 0.000);')
+    expect(glass).toContain('--content-ground: rgb(242 242 242 / 0.063);')
+    expect(glass).toContain('--side-bar-bg-color: rgb(0 0 0 / 0.400);')
   })
 })

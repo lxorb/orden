@@ -254,13 +254,21 @@ mod material {
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 mod material {
     use super::Kind;
-    use tauri::Window;
+    use tauri::utils::config::Color;
+    use tauri::{Manager, Window};
 
-    pub fn apply(
-        _window: &Window,
-        _dark: Option<bool>,
-        _kind: Kind,
-    ) -> Result<&'static str, String> {
+    pub fn apply(window: &Window, _dark: Option<bool>, kind: Kind) -> Result<&'static str, String> {
+        // The desk itself is the one thing every compositor has: the window is
+        // transparent already, and whether what shows is blurred is the desktop's. The
+        // webview is said to be clear outright, because the runtime reads no colour at
+        // all as white there.
+        if kind == Kind::Clear {
+            if let Some(view) = window.app_handle().get_webview_window(window.label()) {
+                let _ = view.set_background_color(Some(Color(0, 0, 0, 0)));
+            }
+            return Ok("clear");
+        }
+
         Err("this platform has no translucency to turn on".to_string())
     }
 

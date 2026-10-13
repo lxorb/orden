@@ -480,6 +480,8 @@ class Themes {
         // spelled it rather than worked out from the file name.
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
+        // A file that says what it is over the desk is asking to stand on it.
+        ...(css.includes('[data-translucent]') ? { translucent: true } : {}),
         ...(whole ? { css } : {}),
       }
     })
@@ -729,7 +731,8 @@ class Themes {
     if (!__EVEN_PLUGIN__ && isDesktop && (translucent || this.material)) {
       this.material = true
       const dark = this.current === 'dark'
-      const kind = this.materialAsked()
+      // A file brings its own tints, so what it asks for under them is the desk.
+      const kind = theme.path ? 'clear' : this.materialAsked()
       void import('./material').then(({ wearMaterial }) =>
         wearMaterial(translucent, dark, kept, kind),
       )

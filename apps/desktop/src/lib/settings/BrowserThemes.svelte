@@ -105,7 +105,7 @@
   >
     {#each found[shown] ?? [] as one (one)}
       <button type="button" class="card" onclick={() => keep(one, shown ?? '')}>
-        <Mini looks={one.looks} />
+        <Mini looks={one.looks} desk={one.css.includes('[data-translucent]')} />
         <span class="name">{one.name}</span>
       </button>
     {/each}
