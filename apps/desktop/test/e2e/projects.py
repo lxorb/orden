@@ -10,6 +10,8 @@ What this drives, against the real files:
   * Pressing Inbox, then Today, then a project takes over one tab rather than opening
     three.
   * A task dropped on a project moves there.
+  * The plus's own menu makes a project from a template; a project's menu duplicates it
+    and saves it as Todoist's CSV.
 
     python apps/desktop/test/e2e/projects.py
 
@@ -39,6 +41,7 @@ FILES = [
     ["Projects/Uni/Uni.md", "- [ ] Enrol\n"],
     ["Projects/Uni/Analysis.md", "- [ ] Sheet 3\n- [ ] Sheet 4\n- [x] Sheet 2\n"],
     ["Meetings/Monday.md", "# Monday\n\n- [ ] Send the minutes\n"],
+    ["Templates/Trip.md", "## Pack\n- [ ] Passport\n\n## Book\n- [ ] Train\n"],
 ]
 
 WRITE = """async ([files]) => {
@@ -128,6 +131,37 @@ def one_tab(page: Page) -> None:
         wrong("each press in the panel opened a tab of its own")
 
 
+def templates_and_csv(page: Page) -> None:
+    page.locator(".tasks .plus[aria-label='Add project']").click(button="right")
+    page.locator(".menu [role=menuitem]", has_text="Trip").click()
+    wait_for(page, "document.activeElement?.matches('.tasks input.field')", "the name for a project from a template")
+    page.keyboard.type("Rome", delay=10)
+    page.keyboard.press("Enter")
+    wait_for(
+        page,
+        "() => window.tasks.rows.of().some((one) => one.task?.text === 'Passport' && one.path === 'Projects/Rome.md')",
+        "the project made from the template",
+    )
+
+    page.locator(".tasks .project .nib-row", has_text="Rome").click(button="right")
+    page.locator(".menu [role=menuitem]", has_text="Duplicate").click()
+    wait_for(
+        page,
+        "() => window.tasks.rows.of().filter((one) => one.task?.text === 'Passport').length === 2",
+        "the project duplicated",
+    )
+
+    page.locator(".tasks .project .nib-row", has_text="Rome").first.click(button="right")
+    with page.expect_download() as caught:
+        page.locator(".menu [role=menuitem]", has_text="Save as CSV").click()
+    with open(caught.value.path(), encoding="utf-8") as file:
+        csv = file.read()
+    say(f"[csv] {csv.splitlines()[:3]}")
+    if not csv.startswith("TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT") or "section,Pack" not in csv:
+        wrong("the project was not saved as Todoist's CSV")
+    shot(page, "04-from-template")
+
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -136,6 +170,7 @@ def drive(browser: Browser) -> None:
     add_project(page)
     one_tab(page)
     shot(page, "03-project")
+    templates_and_csv(page)
 
 
 if __name__ == "__main__":

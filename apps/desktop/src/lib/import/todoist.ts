@@ -158,16 +158,27 @@ interface Kept {
 
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order
 
-/** The notes an account makes: a note a project, in its parent's folder. */
-export function planOf(account: Account): ImportPlan & { inbox?: string } {
+/** The notes an account makes: a project a note in the space's projects folder (`into`),
+ *  where the Tasks panel lists it (rows/projects.ts), and one with projects inside it a
+ *  folder with its note as its namesake, the file list's own nesting; the Inbox a note
+ *  at the top of the space, which becomes its inbox. */
+export function planOf(account: Account, into = 'Projects'): ImportPlan & { inbox?: string } {
   const kept: Kept = { words: 0 }
   const projects = new Map(account.projects.map((one) => [one.id, one]))
-  const pathOf = (project: Project, seen = new Set<string>()): string => {
+  const parents = new Set(account.projects.flatMap((one) => (one.parent ? [one.parent] : [])))
+  const folderOf = (project: Project, seen = new Set<string>()): string => {
     const parent = project.parent ? projects.get(project.parent) : undefined
     const name = safeName(project.name) || 'Todoist'
     if (!parent || seen.has(parent.id)) return name
     seen.add(project.id)
-    return `${pathOf(parent, seen)}/${name}`
+    return `${folderOf(parent, seen)}/${name}`
+  }
+  const pathOf = (project: Project): string => {
+    const name = safeName(project.name) || 'Todoist'
+    if (project.inbox) return name
+    const folder = folderOf(project)
+    const at = parents.has(project.id) ? `${folder}/${name}` : folder
+    return into ? `${into}/${at}` : at
   }
 
   const children = new Map<string, Task[]>()

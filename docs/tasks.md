@@ -504,6 +504,9 @@ readable. A test holds the writer to the Tasks plugin's own examples.
   own (`views/filters.ts`, `views/FilterSheet.svelte`). A label's menu renames it or takes
   it off every task (`retagNotes`). Completed (the done lines, by day) narrows to one
   project from Display.
+- A project's menu in the panel also duplicates it and saves it as Todoist's CSV, the file
+  Todoist imports into a project (`views/todoist-csv.ts`); the Projects plus's own menu
+  (a press with the other button) makes a project from a note of the templates folder.
 - A project's **head** is its name, whose menu renames the note (and its title with it),
   adds a section and opens the note; under it, the words at the top of the note are the
   project's description. An open project follows its note when it is renamed or moved
@@ -1436,8 +1439,8 @@ An importer beside the others in `apps/desktop/src/lib/import/`, offered in the 
 AUTHOR, RESPONSIBLE, DATE, DATE_LANG, TIMEZONE`, and the deadline and duration columns
   newer exports carry), or a backup ZIP of such CSVs.
 
-What becomes what: a project a note (`Todoist/<Folder>/<Project>.md`, or into the space's
-root if the reader chooses), a section a heading, a task a line with its sub-tasks indented,
+What becomes what: a project a note in the space's projects folder (`Projects/<Project>.md`,
+or `Projects/<Project>/<Project>.md` for one with projects inside it), a section a heading, a task a line with its sub-tasks indented,
 its description and comments indented under it with their dates, attachments downloaded
 beside the note (account import only), labels tags, priority the emoji (Todoist's API counts
 4 as p1, which the importer turns round), the due date and time, `every` and `every!` (the

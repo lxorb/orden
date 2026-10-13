@@ -22,6 +22,7 @@ import { writeFile } from '../workspace/write-file'
 import { rewriteNotes } from './act'
 import { type ProjectNode, projectNodes } from './project-tree'
 import { retitled } from './sections'
+import { templateWords } from './templates'
 
 /** A file name a project may have: the words, without what a file name cannot hold. */
 function projectName(words: string): string | null {
@@ -34,19 +35,20 @@ function projectName(words: string): string | null {
 
 /** A new, empty project in a folder, under the first free name its words make; answers
  *  its note on this disk, or null where the words make no name. */
-async function made(folder: string, words: string): Promise<string | null> {
+async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
   if (name === null) return null
   const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
-  await writeFile(path, '')
+  const text = template === undefined ? '' : await templateWords(template, name)
+  await writeFile(path, text)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
   return path
 }
 
-/** A project at the top of the space's projects folder. */
-export function addProject(root: string, words: string): Promise<string | null> {
-  return made(projectsFolder(root), words)
+/** A project at the top of the space's projects folder: empty, or from a template. */
+export function addProject(root: string, words: string, template?: string): Promise<string | null> {
+  return made(projectsFolder(root), words, template)
 }
 
 /** A project inside another. A project that is a folder already takes it in; one that
@@ -95,7 +97,7 @@ export function spaceProjects(root: string, count: (note: string) => number): Pr
 
 /** A project's note written empty where it is not there yet: a folder's namesake, which
  *  the panel shows before anything is in it. */
-export async function ensureProject(note: string): Promise<void> {
+async function ensureProject(note: string): Promise<void> {
   if (workspace.notes.some((one) => samePath(one.path, note))) return
   await writeFile(note, '')
   await workspace.loadTree()

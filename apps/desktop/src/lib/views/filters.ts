@@ -13,7 +13,7 @@ import { writeFile } from '../workspace/write-file'
 import { contextFor } from './context'
 
 /** The folder a space's filters are made in. */
-export const FILTERS = 'Filters'
+const FILTERS = 'Filters'
 
 interface Reading {
   lang?: string

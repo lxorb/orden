@@ -201,9 +201,9 @@
 
   /** The row a project's name is being typed into: a new one at the top of the
    *  projects, a new one inside another, or one named again. */
-  let naming = $state<{ kind: 'new' } | { kind: 'inside' | 'rename'; node: ProjectNode } | null>(
-    null,
-  )
+  let naming = $state<
+    { kind: 'new'; template?: string } | { kind: 'inside' | 'rename'; node: ProjectNode } | null
+  >(null)
   let name = $state('')
 
   async function named() {
@@ -217,7 +217,9 @@
       return
     }
     const made =
-      asked.kind === 'new' ? await addProject(root, said) : await addSubproject(asked.node, said)
+      asked.kind === 'new'
+        ? await addProject(root, said, asked.template)
+        : await addSubproject(asked.node, said)
     if (made) openProject(space.name, relativeTo(root, made), undefined, { preview: true })
   }
 
@@ -230,6 +232,24 @@
   }
 
   let panel = $state<HTMLElement>()
+
+  /** The plus's own menu, Todoist's project templates the nib way: a new project made
+   *  from a note of the space's templates folder, named as the reader types. */
+  function templateMenu(event: MouseEvent) {
+    event.preventDefault()
+    void import('./templates').then(async ({ templates }) => {
+      const found = await templates()
+      if (!found.length) return
+      menu.show(
+        event,
+        found.map((one) => ({
+          label: one.name.replace(/.md$/i, ''),
+          run: () => startNaming({ kind: 'new', template: one.path }),
+        })),
+        { title: t('New note from template') },
+      )
+    })
+  }
 
   function twist(note: string) {
     folded = toggled(folded, note)
@@ -246,6 +266,12 @@
       DIVIDER,
       { label: t('Add sub-project'), run: () => startNaming({ kind: 'inside', node }) },
       { label: t('Rename'), run: () => startNaming({ kind: 'rename', node }, node.name) },
+      { label: t('Duplicate'), run: () => void workspace.duplicate(folder ?? node.note) },
+      {
+        label: t('Save as CSV'),
+        run: () =>
+          void import('./todoist-csv').then((one) => one.saveProjectCsv(node.note, node.name)),
+      },
       ...iconEntries(node.note),
       ...bookmarkEntry({ kind: 'note', path: relative, text: '' }),
       DIVIDER,
@@ -518,6 +544,7 @@
         aria-label={t('Add project')}
         title={t('Add project')}
         onclick={() => startNaming({ kind: 'new' })}
+        oncontextmenu={templateMenu}
         ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
       >
     </div>

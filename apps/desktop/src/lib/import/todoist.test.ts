@@ -189,7 +189,11 @@ describe('from the account', () => {
   test('every project a note, in its parent', async () => {
     const { get, asked } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { completed: true, now: NOW }))
-    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Work.md', 'Work/Thesis.md'])
+    expect(plan.files.map((one) => one.path)).toEqual([
+      'Inbox.md',
+      'Projects/Work/Work.md',
+      'Projects/Work/Thesis.md',
+    ])
     expect(plan.inbox).toBe('Inbox.md')
     // Every request carried the token, and nothing else was told it.
     expect(asked.every((one) => one.auth === 'Bearer secret')).toBe(true)
@@ -199,7 +203,7 @@ describe('from the account', () => {
   test('a task with all it carries, priority turned round, sub-task under it', async () => {
     const { get } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { now: NOW }))
-    const work = plan.files.find((one) => one.path === 'Work.md')
+    const work = plan.files.find((one) => one.path === 'Projects/Work/Work.md')
     expect(work?.kind === 'note' ? work.text : '').toBe(
       [
         '- [ ] Call the bank [time:: 16:00] [duration:: 30m] [deadline:: 2026-10-10] [remind:: 15m, 2026-10-06 09:00] [assignee:: Lucile] #admin #phone-calls 🔺 📅 2026-10-06',
@@ -256,7 +260,7 @@ describe('from a CSV', () => {
     const plan = planOf(csvProject('Launch', CSV, 0))
     expect(plan.lost).toEqual([{ text: 'Some repeating dates stay as words under their tasks' }])
     const note = plan.files[0]
-    expect(note?.path).toBe('Launch.md')
+    expect(note?.path).toBe('Projects/Launch.md')
     expect(note?.kind === 'note' ? note.text : '').toBe(
       [
         '- [ ] Plan the launch #work [duration:: 1h] [deadline:: 2026-10-09] 🔺 📅 2026-10-06',
@@ -281,7 +285,7 @@ describe('from a CSV', () => {
       sourceOf('Work [2203306141].csv', encoded(CSV)),
       sourceOf('readme.txt', encoded('not a project')),
     ])
-    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Work.md'])
+    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Projects/Work.md'])
     expect(plan.inbox).toBe('Inbox.md')
   })
 })

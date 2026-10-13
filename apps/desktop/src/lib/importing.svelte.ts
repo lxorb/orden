@@ -337,6 +337,9 @@ function saidBy(error: unknown): string {
  *  that is the name the reader recognises, and after the app it came out of when
  *  the file's name is one an exporter made up. */
 export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
+  // Todoist's projects go where the Tasks panel lists projects, so its plan is written
+  // from the top of the space (import/todoist.ts).
+  if (format === 'todoist') return ''
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
   // Obsidian makes no exports, so a vault's name is always one its owner gave it:
@@ -382,7 +385,7 @@ function nameOfFormat(format: FormatId): string {
     case 'pdf-pages':
       return 'Papers'
     case 'todoist':
-      return 'Todoist'
+      return ''
     case 'table':
     case 'markdown':
     case 'pandoc':
