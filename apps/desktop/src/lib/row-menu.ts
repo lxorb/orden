@@ -41,6 +41,19 @@ import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
+/** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
+export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
+  if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
+  const path = entry.path
+  return [
+    {
+      label: t('Web data'),
+      keep: true,
+      run: () => void import('./web-tab/own-data').then((one) => one.showWebData(path)),
+    },
+  ]
+}
+
 export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)
   if (several) return several
@@ -78,6 +91,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...coverEntries(marked.path),
     ...wallpaperEntry(entry),
     ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
+    ...webDataEntry(entry),
     // Only for a row already left out of search, so nothing stays out with no way
     // back; see `searchAgainEntry`.
     ...searchAgainEntry(entry.path),
