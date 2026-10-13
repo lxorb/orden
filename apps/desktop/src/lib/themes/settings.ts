@@ -19,14 +19,7 @@
  *  another says so - is not something a stylesheet can declare. */
 
 import type { Scheme } from '../theme.svelte'
-
-/** A row's two colours of the reader's own: which values are such a pair, the two
- *  colours any of the row's values shows as, and two picked as the value kept. */
-interface OwnPair {
-  accepts(held: string): boolean
-  colours(held: string, scheme: Scheme): readonly [string, string]
-  of(first: string, second: string): string
-}
+import type { OwnPair } from './own-pair'
 
 /** What a control gives back: a choice or a colour, a number, a switch. */
 export type ThemeValue = string | number | boolean
@@ -67,8 +60,6 @@ export type ThemeSetting = Common &
         kind: 'colour'
         options: Swatch[]
         initial: string
-        /** Two colours of the reader's own the row also holds besides its swatches:
-         *  glass's pair, picked by hand. */
         pair?: OwnPair
       }
     | {
