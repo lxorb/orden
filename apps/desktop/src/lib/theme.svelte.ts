@@ -148,6 +148,10 @@ const GLASS: ThemeInfo = {
   own: () => import('./glass/settings').then((module) => module.glassSettings),
 }
 
+/** What an install opens in until a look is chosen (Emil, 2026-10-12). The theme stays
+ *  unwritten until then; the accent is kept at once, as it follows the reader. */
+const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'yellow' }
+
 /** And wallpaper: the reader's picture, in its sheet (wallpaper/sheet.ts). */
 const WALLPAPER: ThemeInfo = {
   id: 'wallpaper',
@@ -268,9 +272,10 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
+    const unopened = storedText(STORAGE_KEY) === null
     this.restoreChoice()
     this.offerTheContrastTheme()
-    this.restoreSettings()
+    this.restoreSettings(unopened)
     this.early = earlySheet()
     // What the crate put back behind the window before the page started, said on the
     // first frame; and a launch that stood on it, or cannot tell, asks for it off
@@ -306,7 +311,7 @@ class Themes {
 
   /** Every answer, the accent's old key read into the app's drawer and left for an
    *  older build. Nothing is trusted: `valueOf` reads each against its setting. */
-  private restoreSettings() {
+  private restoreSettings(unopened: boolean) {
     const drawers: ChosenSettings = Object.fromEntries(
       Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
         owner,
@@ -319,7 +324,18 @@ class Themes {
       drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
+    if (FIRST_LOOK && unopened && drawers[SHARED]?.accent === undefined) {
+      drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
+      keep(SETTINGS_KEY, JSON.stringify(drawers))
+    }
+
     this.chosen = drawers
+    this.trying = {}
+  }
+
+  /** Whether the theme was chosen: older builds wrote the built-in down for everybody. */
+  private chose(): boolean {
+    return storedText(STORAGE_KEY) !== null && this.id !== DEFAULT_ID
   }
 
   /** A reader who had the old Translucency switch on under the built-in is given glass;
@@ -335,17 +351,21 @@ class Themes {
    *  a scheme, so that is what they are read as.
    *
    *  Written back in the new spelling at once, so nothing further along has to
-   *  know there was an old one. */
+   *  know there was an old one. Nothing at all is the first look. */
   private restoreChoice() {
-    const saved = storedText(STORAGE_KEY) ?? ''
+    const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
 
     this.scheme = isChoice(chosen) ? chosen : isChoice(saved) ? saved : 'system'
+    keep(SCHEME_KEY, this.scheme)
+
+    if (saved === null) {
+      this.id = FIRST_LOOK?.theme ?? DEFAULT_ID
+      return
+    }
 
     this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
-
     keep(STORAGE_KEY, this.id)
-    keep(SCHEME_KEY, this.scheme)
   }
 
   /** Whether to answer a system asking for more contrast, which happens once or not
@@ -375,7 +395,7 @@ class Themes {
     // their screen looks, and repainting it because their system asks for contrast
     // would be the app overruling them. The question is marked answered: High contrast
     // is a row in Appearance and in the palette, there whenever they want it.
-    if (this.id !== DEFAULT_ID) {
+    if (this.chose()) {
       keep(OFFERED_KEY, 'yes')
       return
     }

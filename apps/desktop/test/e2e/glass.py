@@ -23,7 +23,9 @@ scripts/glass-probe.py, which photographs the probe build.
 
 And the rest of what the theme promises: the paper under the note is opaque, the tab
 that is open runs down into it, the reader's accent is still the reader's, and
-Appearance has no Translucency row left, since glass is what it meant.
+Appearance has no Translucency row left, since glass is what it meant. And it is what a
+new reader opens in, in yellow and following the system (`FIRST_LOOK` in
+theme.svelte.ts), which every other drive is kept off by harness.py's `BUILT_IN`.
 
 Run it from the repository root:
 
@@ -364,10 +366,44 @@ def read_over(page: Page, where: str, unders: list[str]) -> None:
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("dark", "light"):
+            first_look(browser, scheme)
             drive(browser, scheme)
         scrolling(browser)
 
     return DRIVE.verdict("every reading held")
+
+
+def first_look(browser: Browser, scheme: str) -> None:
+    """A browser that has never opened nib: glass, the yellow accent, the system's
+    scheme, with glass's sheet worn and the theme not yet written down as a choice."""
+    context = browser.new_context(
+        viewport={"width": 1240, "height": 760},
+        color_scheme=scheme,
+        device_scale_factor=1,
+        reduced_motion="reduce",
+        first_look=True,
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(
+        page,
+        "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",
+        "glass's sheet",
+    )
+    look = page.evaluate(
+        "() => ({ id: window.nibApp.theme.id, accent: window.nibApp.theme.accent,"
+        " scheme: window.nibApp.theme.scheme, current: window.nibApp.theme.current,"
+        " kept: localStorage.getItem('nib:theme') })"
+    )
+    shows(f"[{scheme}] a first launch is glass", look["id"], "glass")
+    shows(f"[{scheme}] in yellow", look["accent"], "yellow")
+    shows(f"[{scheme}] following the system", look["scheme"], "system")
+    shows(f"[{scheme}] which here is {scheme}", look["current"], scheme)
+    shows(f"[{scheme}] and nothing is written down as chosen", look["kept"], None)
+    page.wait_for_timeout(400)
+    shot(page, f"{scheme}-first-look")
+    done_with(page)
 
 
 def drive(browser: Browser, scheme: str) -> None:

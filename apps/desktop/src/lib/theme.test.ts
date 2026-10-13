@@ -212,6 +212,9 @@ function installed(id: string, name: string, css: string, version = '1.0.0') {
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
+  // An install that has been opened before, on the built-in, which is what every test
+  // here is about but the first look's own; see 'a first launch'.
+  kept.setItem('nib:theme', 'default')
 
   folder.files.clear()
   folder.listing = true
@@ -439,10 +442,11 @@ describe('what an older device wrote down', () => {
     expect(theme.scheme).toBe('system')
   })
 
-  test('nothing written down at all means the same', () => {
+  test('nothing written down at all is a first launch, and not the built-in', () => {
+    kept.removeItem('nib:theme')
     theme.init()
 
-    expect(theme.id).toBe('default')
+    expect(theme.id).toBe('glass')
     expect(theme.scheme).toBe('system')
   })
 
@@ -674,6 +678,87 @@ const settled = async (done?: () => boolean) => {
     if (!done || done()) return
   }
 }
+
+/** Emil, 2026-10-12: glass, in yellow, following the system is what nib opens in until
+ *  somebody chooses otherwise, and nobody who has chosen anything is moved off it. */
+describe('a first launch', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme')
+  })
+
+  test('is glass, in yellow, following the system', async () => {
+    theme.init()
+    await settled(() => injected() === glassCss)
+
+    expect(theme.id).toBe('glass')
+    expect(theme.scheme).toBe('system')
+    expect(theme.accent).toBe('yellow')
+    expect(injected()).toBe(glassCss)
+    expect(painted['--accent']).toBe('#e5b23c')
+    // On the material, where there is one.
+    expect(host.asked.at(-1)?.on).toBe(true)
+  })
+
+  test('writes the accent down and not the theme, which nobody has chosen yet', () => {
+    theme.init()
+
+    expect(kept.getItem('nib:theme')).toBe(null)
+    expect(kept.getItem('nib:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'yellow' } }))
+  })
+
+  test('and the next launch is the same look', () => {
+    theme.init()
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('keeps the yellow on any theme chosen after it, since the accent is the reader’s', () => {
+    theme.init()
+    theme.select('default')
+    theme.init()
+
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('and an accent chosen on it outlives the next launch', () => {
+    theme.init()
+    theme.setAccent('teal')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('teal')
+  })
+
+  test('is not what an install from before it opens in: that one keeps what it had', () => {
+    kept.setItem('nib:theme', 'default')
+    theme.init()
+
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('violet')
+    expect(kept.getItem('nib:theme-settings')).toBe(null)
+  })
+
+  test('nor over an accent an older device kept under a key of its own', () => {
+    kept.setItem('nib:accent', 'green')
+    theme.init()
+
+    expect(theme.accent).toBe('green')
+  })
+
+  test('still offers the contrast theme to a system that asks for it, then or later', () => {
+    theme.init()
+    expect(theme.offerContrast).toBe(false)
+
+    media.contrast = true
+    theme.init()
+
+    expect(theme.offerContrast).toBe(true)
+    expect(theme.id).toBe('contrast')
+  })
+})
 
 /** A theme that declares one dial of its own, and the answer the cascade would
  *  give for it. Both halves, because a declaration is a name in the file and a

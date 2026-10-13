@@ -285,6 +285,12 @@ the app's look, and the system's own Transparency effects or Reduce transparency
 it off everywhere. So the glass theme is the translucent one; a reader who had the row on
 under the built-in theme is given glass once.
 
+And glass is what nib opens in: a first launch is glass, in yellow, following the system
+(Emil, 2026-10-12). The theme is not written down until somebody chooses one, so an
+install that never has stays on that look and can still be offered the contrast theme;
+the accent is, because it follows the reader to whatever theme they choose next. An
+install from before keeps everything it had. See `FIRST_LOOK` in theme.svelte.ts.
+
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the
 scheme the page is in. The chrome (the bar with the tabs, the list, the foot row) stands

@@ -131,6 +131,16 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 #: (`about:blank`, a `data:` frame) refuses the setter.
 ANSWERED = "try { localStorage.setItem('nib:first-visit', 'answered') } catch {}"
 
+#: And the look it chose: the built-in theme, unless it has chosen another since. A first
+#: launch is glass in yellow (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive
+#: but the one about that look photographs and measures the built-in palette, so each
+#: browser is a reader who opened nib before that was the first look. A context made with
+#: `first_look=True` is a new reader's.
+BUILT_IN = (
+    "try { if (localStorage.getItem('nib:theme') === null)"
+    " localStorage.setItem('nib:theme', 'default') } catch {}"
+)
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
@@ -188,15 +198,20 @@ def answering(browser: Any) -> Any:
     made_context = browser.new_context
     made_page = browser.new_page
 
-    def new_context(*args: Any, **options: Any) -> Any:
-        context = made_context(*args, **options)
+    def answered(context: Any, first_look: bool) -> None:
         context.add_init_script(ANSWERED)
+        if not first_look:
+            context.add_init_script(BUILT_IN)
+
+    def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
+        context = made_context(*args, **options)
+        answered(context, first_look)
         return context
 
-    def new_page(*args: Any, **options: Any) -> Any:
+    def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
         # Nothing is loaded in the page yet, so a script added now runs before the app.
         page = made_page(*args, **options)
-        page.context.add_init_script(ANSWERED)
+        answered(page.context, first_look)
         return page
 
     browser.new_context = new_context
@@ -725,6 +740,7 @@ class Drive:
         options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
         context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         context.add_init_script(ANSWERED)
+        context.add_init_script(BUILT_IN)
         return context
 
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
