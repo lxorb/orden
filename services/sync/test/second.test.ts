@@ -109,8 +109,8 @@ describe('the codes themselves', () => {
   test('are offered to an app as a URI it knows', () => {
     const uri = otpauth(newSecret(), 'a@b.dev')
 
-    expect(uri.startsWith('otpauth://totp/nib%3Aa%40b.dev?secret=')).toBe(true)
-    expect(uri).toContain('issuer=nib')
+    expect(uri.startsWith('otpauth://totp/Orden%3Aa%40b.dev?secret=')).toBe(true)
+    expect(uri).toContain('issuer=Orden&')
     expect(uri).toContain('digits=6')
   })
 

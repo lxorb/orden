@@ -66,7 +66,7 @@ mcp.post('/', async (context) => {
       return reply({
         protocolVersion: PROTOCOL,
         capabilities: { tools: {} },
-        serverInfo: { name: 'nib', version: '1.0.0' },
+        serverInfo: { name: 'orden', version: '1.0.0' },
       })
 
     // Notifications carry no id and expect no answer.

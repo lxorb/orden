@@ -61,7 +61,7 @@ describe('while a space is private', () => {
   test('its subdomain sends the visitor to the app', async () => {
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe('https://nibeditor.com')
+    expect(response.headers.get('location')).toBe('https://orden.so')
   })
 
   test('a disabled blog stops serving', async () => {
@@ -76,7 +76,7 @@ describe('a name nobody has taken', () => {
   test('forwards to the app, whatever the path', async () => {
     const response = await call(env, '/some/note', { host: 'unused.nibeditor.com' })
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe('https://nibeditor.com')
+    expect(response.headers.get('location')).toBe('https://orden.so')
   })
 
   test('the root itself is not forwarded', async () => {
@@ -140,7 +140,7 @@ describe('publishing', () => {
 
     expect(response.json.dns).toHaveLength(2)
     expect(response.json.dns[0]!.type).toBe('CNAME')
-    expect(response.json.dns[0]!.value).toMatch(/\.nibeditor\.com$/)
+    expect(response.json.dns[0]!.value).toMatch(/\.orden\.so$/)
     expect(response.json.dns[1]!.type).toBe('TXT')
   })
 

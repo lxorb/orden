@@ -255,11 +255,11 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     NOTES: notes as unknown as R2Bucket,
     // The service's names as wrangler.jsonc gives them, so every test runs
     // where both are answered on; see src/hosts.ts and test/hosts.test.ts.
-    BLOG_ROOT: 'nibeditor.com',
-    OTHER_BLOG_ROOTS: 'orden.so',
-    BLOG_CNAME_TARGET: 'cname.nibeditor.com',
-    APP_ORIGIN: 'https://nibeditor.com',
-    OTHER_ORIGINS: 'https://orden.so',
+    BLOG_ROOT: 'orden.so',
+    OTHER_BLOG_ROOTS: 'nibeditor.com',
+    BLOG_CNAME_TARGET: 'cname.orden.so',
+    APP_ORIGIN: 'https://orden.so',
+    OTHER_ORIGINS: 'https://nibeditor.com',
     MACHINE_DOMAIN: 'nibeditor.com',
     ...overrides,
     db: database,

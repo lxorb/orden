@@ -389,7 +389,7 @@ export async function callTool(
 
     case 'write_note': {
       if (token.read_only)
-        return 'This token may only read. Allow writing in nibeditor’s settings first.'
+        return 'This token may only read. Allow writing in Orden’s settings first.'
 
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space

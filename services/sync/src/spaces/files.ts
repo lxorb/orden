@@ -29,7 +29,7 @@ const MOST = 200
 
 const HASH = /^[a-f0-9]{64}$/
 
-/** What a space may record. A PDF is the one file Nib itself opens, and the one
+/** What a space may record. A PDF is the one file Orden itself opens, and the one
  *  a published note can point a reader at; anything else beside a note belongs
  *  to that note and is carried inside it.
  *

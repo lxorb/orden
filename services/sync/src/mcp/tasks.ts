@@ -278,7 +278,7 @@ async function spaceOf(env: Env, token: TokenRow, args: Args): Promise<Space> {
 /** The space a write names, refused where the token or the share may not write. */
 async function writableSpace(env: Env, token: TokenRow, args: Args): Promise<Space> {
   if (token.read_only)
-    throw new Said('This token may only read. Allow writing in nibeditor’s settings first.')
+    throw new Said('This token may only read. Allow writing in Orden’s settings first.')
   const space = await spaceOf(env, token, args)
   if (space.role === 'read')
     throw new Said(`${space.name} was shared with you to read, not to write.`)

@@ -153,7 +153,7 @@ describe('what a client can find out on its own', () => {
       expect(response.json.resource).toBe(`${ORIGIN}/mcp`)
       expect(response.json.authorization_servers).toEqual([ORIGIN])
       expect(response.json.scopes_supported).toContain('notes:read')
-      expect(response.json.resource_name).toBe('nibeditor')
+      expect(response.json.resource_name).toBe('Orden')
     }
   })
 

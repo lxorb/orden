@@ -135,14 +135,14 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
  *  Which is a real cost, and worth writing down rather than leaving as an
  *  assumption. A hash is the same for the same bytes whoever holds them, and it
  *  is derivable from the bytes: anybody who already has a copy of a document can
- *  work out its hash and ask this route whether Nib is holding it, and be given
+ *  work out its hash and ask this route whether Orden is holding it, and be given
  *  it. And a hash learned once - out of a note somebody was shown, off a
  *  published page, out of a proxy log - keeps working for ever, including for
  *  somebody who has since been taken out of the space it came from. Two ways out
  *  of that were considered:
  *
  *  **A salt per account in the key.** `blobs/<sha256(salt + hash)>` would make one
- *  account's URL unrelated to another's, which closes the "does Nib hold this
+ *  account's URL unrelated to another's, which closes the "does Orden hold this
  *  document" question: knowing the bytes is no longer knowing the address. It
  *  costs the deduplication - the same picture in two accounts becomes two objects
  *  in R2, and the quota counts it twice - and it costs a migration of every object

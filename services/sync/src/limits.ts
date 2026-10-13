@@ -3,9 +3,9 @@
  *  Three of the ways in here cost the service something it cannot take back:
  *  mail leaves the building, a registration writes a row, an owner is told
  *  somebody is waiting. Each already had a gate on the one person it is about -
- *  an address hears from Nib at most every thirty seconds - and none of them had
+ *  an address hears from Orden at most every thirty seconds - and none of them had
  *  a ceiling on the whole: one machine could ask for a code for ten thousand
- *  addresses, and every one of those sends is Nib's reputation as a sender.
+ *  addresses, and every one of those sends is Orden's reputation as a sender.
  *
  *  So this module holds the ceilings. `within` is the general one, counting
  *  arrivals per scope and key inside a window; `mailCeilings` is the set that
@@ -30,7 +30,7 @@ const A_DAY = 24 * AN_HOUR
 const MAIL_FROM_ONE_MACHINE = 20
 
 /** How many people the service writes to in a day. Every address that has heard
- *  from Nib today counts once, however often it heard; past this, an address
+ *  from Orden today counts once, however often it heard; past this, an address
  *  that has not heard yet waits for tomorrow. */
 const ADDRESSES_A_DAY = 500
 
@@ -103,7 +103,7 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
     .bind(day, address)
     .first<{ many: number; held: number | null }>()
 
-  // Somebody who has already heard from Nib today is not one more person to
+  // Somebody who has already heard from Orden today is not one more person to
   // write to, so the ceiling has nothing to say about them.
   if (!counted?.held && (counted?.many ?? 0) >= ADDRESSES_A_DAY) return false
 
@@ -136,10 +136,10 @@ export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
 /** How many questions one account may ask the model in an hour, and how many
  *  utterances it may have turned into words.
  *
- *  These cost somebody money - the account's own OpenAI credit, or Nib's own Workers
+ *  These cost somebody money - the account's own OpenAI credit, or Orden's own Workers
  *  AI allowance where an account has no key - and the Worker is what spends it now
  *  that the key never leaves the Worker. So the ceiling is not
- *  about Nib's reputation like the mail ones; it is about a bug, or a phone in a
+ *  about Orden's reputation like the mail ones; it is about a bug, or a phone in a
  *  pocket, not being able to run through a month's credit in an afternoon.
  *
  *  Sixty questions is far more than a person walking around asks and far less than a

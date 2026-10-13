@@ -9,7 +9,7 @@
  *  It is short because it has one job, which is to show what markdown does
  *  here: bold, italic, a highlight, code, maths, a fenced block and a table. */
 
-const EN = `# Welcome to nibeditor
+const EN = `# Welcome to Orden
 
 Your notes live in your account, so they follow you to every device you sign in on.
 
@@ -27,7 +27,7 @@ const hello = 'world'
 | Everything you write | your account |
 `
 
-const DE = `# Willkommen bei nibeditor
+const DE = `# Willkommen bei Orden
 
 Deine Notizen liegen in deinem Konto und sind auf jedem Gerät da, an dem du dich anmeldest.
 
@@ -45,7 +45,7 @@ const hello = 'world'
 | Alles, was du schreibst | dein Konto |
 `
 
-const GSW = `# Willkomme bi nibeditor
+const GSW = `# Willkomme bi Orden
 
 Dini Notize liege i dim Konto und sind uf jedem Grät da, wo du di aamäldisch.
 
@@ -63,7 +63,7 @@ const hello = 'world'
 | Alles, wo du schriibsch | dis Konto |
 `
 
-const FR = `# Bienvenue dans nibeditor
+const FR = `# Bienvenue dans Orden
 
 Vos notes vivent dans votre compte, elles vous suivent donc sur chaque appareil où vous vous connectez.
 
@@ -81,7 +81,7 @@ const hello = 'world'
 | Tout ce que vous écrivez | votre compte |
 `
 
-const JA = `# nibeditor へようこそ
+const JA = `# Orden へようこそ
 
 ノートはアカウントに保存され、サインインしたすべての端末に届きます。
 

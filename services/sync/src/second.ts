@@ -120,12 +120,13 @@ export function newSecret(): string {
 }
 
 /** What the app shows for somebody to scan or paste. The label is what an
- *  authenticator app lists it under. */
+ *  authenticator app lists it under. An entry made before the rename keeps its
+ *  `nib` label: a code is checked against the secret, never the label. */
 export function otpauth(secretHex: string, email: string): string {
   const secret = base32(fromHex(secretHex))
-  const label = encodeURIComponent(`nib:${email}`)
+  const label = encodeURIComponent(`Orden:${email}`)
 
-  return `otpauth://totp/${label}?secret=${secret}&issuer=nib&algorithm=SHA1&digits=${DIGITS}&period=30`
+  return `otpauth://totp/${label}?secret=${secret}&issuer=Orden&algorithm=SHA1&digits=${DIGITS}&period=30`
 }
 
 /** The code a secret stands at, for one step. */

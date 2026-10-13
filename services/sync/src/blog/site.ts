@@ -49,7 +49,7 @@ export const LONGEST_ICON = 8 * 1024
  *  a page here writes one - a browser runs no script and fetches nothing anyway,
  *  but the address is a link like any other and somebody may open it on its own:
  *  a tab icon is `/favicon.svg`, and a diagram is `/i/<hash>.svg`. Then it is a
- *  document on a `nibeditor.com` host, drawn out of text somebody wrote. So it is
+ *  document on one of the service's hosts, drawn out of text somebody wrote. So it is
  *  sandboxed into an origin of its own with nothing allowed but the styles the
  *  picture's own colours are written in.
  *

@@ -45,11 +45,11 @@ describe('the names', () => {
   test('a request is answered in the name it used, or in the one links name', () => {
     expect(originAt(env, 'https://orden.so/.well-known/x')).toBe(NEW)
     expect(originAt(env, 'https://nibeditor.com/oauth/token')).toBe(OLD)
-    expect(originAt(env, 'https://notes.example.com/')).toBe(OLD)
+    expect(originAt(env, 'https://notes.example.com/')).toBe(NEW)
   })
 
   test('every name is a blog root, and the longest one a host is under wins', () => {
-    expect(blogRoots(env)).toEqual(['nibeditor.com', 'orden.so'])
+    expect(blogRoots(env)).toEqual(['orden.so', 'nibeditor.com'])
     expect(blogRootOf(env, 'field.orden.so')).toBe('orden.so')
     expect(blogRootOf(env, 'orden.so')).toBe('orden.so')
     expect(blogRootOf(env, 'field.nibeditor.com.orden.so')).toBe('orden.so')
@@ -117,7 +117,7 @@ describe('a published site', () => {
   test('a name nobody publishes under sends the visitor to the app', async () => {
     const response = await call(env, '/some/note', { host: 'unused.orden.so' })
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe(OLD)
+    expect(response.headers.get('location')).toBe(NEW)
   })
 
   test('the new name itself is the app, not a site', async () => {
