@@ -45,20 +45,8 @@ vi.mock('./sharing.svelte', () => ({
   shareThisFile: () => undefined,
 }))
 
-const copied: string[] = []
-vi.mock('./clipboard', () => ({
-  copyText: (text: string) => {
-    copied.push(text)
-    return Promise.resolve()
-  },
-}))
-
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
-// Copy link fetches the code that spells a link the first time it is pressed. Fetched
-// here, so the press waits on no module's first load: on a busy machine that alone is
-// longer than a wait for the clipboard.
-await (await import('@nib/editor')).noteLinksCode()
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {
@@ -150,7 +138,6 @@ describe('a note', () => {
       'Set cover',
       'Bookmark',
       'Archive',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -200,7 +187,6 @@ describe('a paper', () => {
       'Move',
       'Bookmark',
       'Archive',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -225,7 +211,6 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -248,7 +233,6 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -266,7 +250,6 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -278,14 +261,7 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual([
-      'Open all',
-      'Move',
-      'Bookmark',
-      'Archive',
-      'Copy link',
-      'Delete 2 items',
-    ])
+    expect(labels(loose)).toEqual(['Open all', 'Move', 'Bookmark', 'Archive', 'Delete 2 items'])
   })
 
   test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
@@ -303,19 +279,6 @@ describe('a row that is part of a selection of several', () => {
 
     press('Remove bookmark')
     expect(workspace.bookmarks.list).toEqual([])
-  })
-
-  test('and copies a link a line, in the spelling the Links setting asks for', async () => {
-    workspace.select('/s/loose.md')
-    workspace.toggleSelect('/s/A')
-    copied.length = 0
-
-    rowMenu(loose)
-      .find((one) => one?.label === 'Copy link')
-      ?.run()
-    await vi.waitFor(() => {
-      expect(copied).toEqual(['[[loose]]\n[[A]]'])
-    })
   })
 
   test('while a selection of one is an ordinary row', () => {

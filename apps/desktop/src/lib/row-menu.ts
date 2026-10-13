@@ -16,14 +16,10 @@
  *  moment it is opened: which rows are selected, what is archived and what a row
  *  can be moved into are all true only then. */
 
-import { noteLinksCode } from '@nib/editor'
 import { foreignCopy } from '@nib/sync-core/foreign'
 import { account } from './account.svelte'
-import { copyText } from './clipboard'
-import { pickedLink } from './composer'
-import { folderNote, linkedFiles, nestedIn } from './folder-notes'
+import { folderNote, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
-import { links } from './link-index.svelte'
 import {
   archiveEntry,
   bookmarkEntry,
@@ -93,9 +89,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    // A link to the row, spelled the way the Links setting says and the `[[`
-    // popup writes it, to paste into any note.
-    { label: t('Copy link'), run: () => void copyLinks([entry.path]) },
     ...sendEntry(marked),
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
@@ -151,7 +144,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
     { label: t('Move'), run: () => void moveAllTo(paths) },
     ...bookmarkAll(paths),
     ...archiveAll(paths),
-    { label: t('Copy link'), run: () => void copyLinks(paths) },
     DIVIDER,
     {
       label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
@@ -242,18 +234,6 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
           run: () => void import('./archiving').then(({ archive }) => archive(paths)),
         },
       ]
-}
-
-/** A link to each row, a line each, written through the app's one writer; see
- *  composer.ts. From nowhere in particular, so a relative link starts at the top of
- *  the space. */
-async function copyLinks(rows: readonly string[]) {
-  const root = workspace.activeSpace?.root
-  if (!root) return
-
-  const paths = linkedFiles(workspace.tree, root, rows)
-  const { noteLinks } = await noteLinksCode()
-  if (paths.length) await copyText(noteLinks(links.index(null), paths, pickedLink))
 }
 
 /** Moving a row, said rather than dragged.
