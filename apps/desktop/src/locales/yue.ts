@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: '已完成',
+  'Remove date': '移除日期',
+  'Next task': '下一個任務',
+  'Previous task': '上一個任務',
+  'Add task at the top': '喺最頂加任務',
+  '{count} selected': '揀咗 {count} 個',
   // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',

@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Đã xong',
+  'Remove date': 'Bỏ ngày',
+  'Next task': 'Việc sau',
+  'Previous task': 'Việc trước',
+  'Add task at the top': 'Thêm việc lên đầu',
+  '{count} selected': 'Đã chọn {count}',
   // Tasks: the Display menu
   Display: 'Hiển thị',
   'Completed tasks': 'Việc đã xong',

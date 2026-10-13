@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: '已完成',
+  'Remove date': '移除日期',
+  'Next task': '下一个任务',
+  'Previous task': '上一个任务',
+  'Add task at the top': '在顶部添加任务',
+  '{count} selected': '已选 {count} 项',
   // Tasks: the Display menu
   Display: '显示',
   'Completed tasks': '已完成任务',

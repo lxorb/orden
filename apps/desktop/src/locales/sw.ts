@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Imekamilika',
+  'Remove date': 'Ondoa tarehe',
+  'Next task': 'Kazi inayofuata',
+  'Previous task': 'Kazi iliyopita',
+  'Add task at the top': 'Ongeza kazi juu',
+  '{count} selected': '{count} zimechaguliwa',
   // Tasks: the Display menu
   Display: 'Mwonekano',
   'Completed tasks': 'Kazi zilizokamilika',

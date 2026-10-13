@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: '完了',
+  'Remove date': '日付を外す',
+  'Next task': '次のタスク',
+  'Previous task': '前のタスク',
+  'Add task at the top': '先頭にタスクを追加',
+  '{count} selected': '{count} 件を選択',
   // Tasks: the Display menu
   Display: '表示',
   'Completed tasks': '完了したタスク',

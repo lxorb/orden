@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const mr: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'पूर्ण झाले',
+  'Remove date': 'तारीख काढा',
+  'Next task': 'पुढील कार्य',
+  'Previous task': 'मागील कार्य',
+  'Add task at the top': 'वर कार्य जोडा',
+  '{count} selected': '{count} निवडली',
   // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूर्ण कार्ये',

@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'เสร็จแล้ว',
+  'Remove date': 'เอาวันที่ออก',
+  'Next task': 'งานถัดไป',
+  'Previous task': 'งานก่อนหน้า',
+  'Add task at the top': 'เพิ่มงานไว้บนสุด',
+  '{count} selected': 'เลือกแล้ว {count}',
   // Tasks: the Display menu
   Display: 'การแสดงผล',
   'Completed tasks': 'งานที่เสร็จแล้ว',

@@ -17,11 +17,9 @@
   import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
   import { archiveEntry, bookmarkEntry, DIVIDER, iconEntries, menu } from '../menu.svelte'
-  import { projectsFolder } from '../rows/projects'
   import { rows } from '../rows/rows.svelte'
   import { insideSpace, relativeTo, samePath } from '../space-paths'
   import { invoke } from '../tauri'
-  import { entryAt } from '../tree-edits'
   import Twist from '../Twist.svelte'
   import { workspace } from '../workspace.svelte'
   import { dropRow } from './act'
@@ -45,8 +43,8 @@
   import { openBaseFile, openBuiltin, openLabel, openProject } from './open'
   import { EMPTY, toggled } from './list-items'
   import { NOTES_SHOWN, openByPath, panelCounts } from './panel'
-  import { addProject, addSubproject, renameProject } from './project-actions'
-  import { type ProjectNode, projectNodes, projectNotes, projectRows } from './project-tree'
+  import { addProject, addSubproject, renameProject, spaceProjects } from './project-actions'
+  import { type ProjectNode, projectNotes, projectRows } from './project-tree'
   import { builtinBase } from './source'
   import { type Builtin, readSpec } from './spec'
   import { builtinName } from './words'
@@ -73,16 +71,9 @@
   const openIn = $derived(openByPath(counts.notes, space?.name))
 
   /** The projects: the projects folder's notes, as the file list has them. */
-  const nodes = $derived.by((): ProjectNode[] => {
-    if (root === null) return []
-    const folder = entryAt(workspace.tree, projectsFolder(root))
-    if (!folder?.is_dir) return []
-    return projectNodes(
-      folder,
-      (path) => workspace.arranged.listOf(path),
-      (note) => openIn.get(relativeTo(root, note)) ?? 0,
-    )
-  })
+  const nodes = $derived(
+    root === null ? [] : spaceProjects(root, (note) => openIn.get(relativeTo(root, note)) ?? 0),
+  )
   let folded = $state.raw<ReadonlySet<string>>(EMPTY)
   const shownProjects = $derived(projectRows(nodes, folded))
   const inProjects = $derived(

@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Rampung',
+  'Remove date': 'Busak tanggal',
+  'Next task': 'Tugas sabanjure',
+  'Previous task': 'Tugas sadurunge',
+  'Add task at the top': 'Tambah tugas ing ndhuwur',
+  '{count} selected': '{count} dipilih',
   // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas rampung',

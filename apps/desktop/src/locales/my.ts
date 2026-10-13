@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'ပြီးစီးပြီ',
+  'Remove date': 'ရက်စွဲ ဖယ်ရှားရန်',
+  'Next task': 'နောက် လုပ်ငန်း',
+  'Previous task': 'ရှေ့ လုပ်ငန်း',
+  'Add task at the top': 'အပေါ်တွင် လုပ်ငန်း ထည့်ရန်',
+  '{count} selected': '{count} ခု ရွေးထားသည်',
   // Tasks: the Display menu
   Display: 'ပြသပုံ',
   'Completed tasks': 'ပြီးစီးသော လုပ်ငန်းများ',

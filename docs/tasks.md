@@ -28,7 +28,7 @@ Nothing here loosens any of them.
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
    every date, priority and recurrence nib wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
-   16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever.
+16:00]`, which Dataview reads and Tasks keeps as words. No store of nib's own, ever.
 2. **A project is a note, a section is a heading, a label is a tag, a sub-task is an
    indented task.** Comments and descriptions are the indented lines under a task, and an
    attachment is an embed there. Each space has an `Inbox.md`. Nothing has to be learned:
@@ -49,7 +49,7 @@ Nothing here loosens any of them.
    view in a tab, the way the graph opens. The panel is navigation, the tab is the work.
 7. **Quick add from anywhere**: a global key opens a one-line field over whatever is in
    front, and the palette has the same field. `Call mum tomorrow 4pm #family p1 every
-   sunday` becomes chips as it is typed, in English and German, and a chip pressed turns
+sunday` becomes chips as it is typed, in English and German, and a chip pressed turns
    back into words.
 8. **Every view edits.** A box ticks, a cell edits the front matter through the one write
    path every other surface uses, a card dragged to another column changes the property the
@@ -100,40 +100,40 @@ Todoist's own help centre, read 2026-10-03. The plan column is what Todoist char
 ([pricing][td-pricing]): Beginner is free with 5 projects, 3 filters, one week of activity
 and no calendar layout.
 
-| feature | what Todoist does | plan | done well | done badly |
-| --- | --- | --- | --- | --- |
-| Quick Add | one field; `#Project`, `/Section`, `%label` (`@` until the end of 2026), `p1`-`p3`, `+assignee`, `!reminder`, `{deadline}`, `for 30 min`, dates and recurrences in natural language; a recognised word is highlighted and a click makes it plain text again ([quick add][td-quickadd]) | all; `!` and `{}` Pro | the highlight-as-you-type, the one-click undo of a misread word, a global shortcut on the desktop | `@` changing meaning to `%` in 2026 broke muscle memory; tokens only in some languages |
-| Dates | `tomorrow at 4 PM`, `every other Tuesday starting March 3`; a date is when you plan to start ([dates][td-dates]) | all | reads like speech | no start date, no "later": a date is the only way to hide a task |
-| Recurring | `every`, `every!` (from completion), `every other`, `every workday`, `every last day`, `every 2, 15, 27`, `starting`/`until`/`for 3 weeks`; only future dates ([recurring][td-recurring]) | all | `every!` is the feature people miss elsewhere | completing an occurrence leaves no line behind; history is only in the activity log |
-| Deadlines | `{next Friday}`, beside the date, one-off only ([deadlines][td-deadlines]) | Pro | separates "when I do it" from "when it must be done" | not recurring, Pro only |
-| Duration | `for 45 min`, needs a time, at most 24 h ([duration][td-duration]) | Pro | feeds the calendar's time blocks | Pro only |
-| Reminders | automatic at the due time, custom absolute or relative, recurring, push, desktop and email ([reminders][td-reminders]); location on arrive or leave, phones only ([location][td-location]) | custom ones Pro | arrives on every device, actions in the notification | location needs persistent location access |
-| Inbox, Today, Upcoming | the three fixed views; Today folds in overdue; Upcoming is days with a week strip ([glossary][td-glossary]) | all | Today with overdue on top is the daily habit | Upcoming is a list, not a planner, until the calendar layout |
-| Filters | `today & %email`, `(p1 \| p2) & 7 days`, `#Work`, `##Work` with sub-projects, `/Section`, `assigned to: me`, `created before:`, `recurring`, `subtask`, `search:`, `,` for several lists ([filters][td-filters]) | 3 free, 150 Pro | a small language people actually learn; `,` to stack lists | 3 on the free plan; Filter Assist only in English and Spanish |
-| Layouts | list, board, calendar (week, 3 days, month, a no-date sidebar, drag to reschedule) on any project, label, filter, Today or Upcoming ([calendar][td-calendar]) | calendar Pro | one layout switch for every view | calendar Pro; no time grid beyond the week |
-| Projects, sections, sub-tasks | 5 projects free, 300 Pro; sections split a project; sub-tasks nest | | sections as columns on the board | everything lives in Todoist's database |
-| Comments, attachments | a thread per task, files 5 MB free, 100 MB Pro | | | a note's worth of context squeezed into a comment box |
-| Productivity, Karma | daily and weekly goals, streaks, vacation mode, Karma levels ([productivity][td-productivity]) | all | | gamification many turn off |
-| Activity | who did what; one week free, full on Pro | | | the only record of a recurring task's past |
-| Templates | projects exported and imported as CSV (`TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT, ...`), a gallery ([CSV][td-csv]) | shared templates Business | CSV is a real format | the CSV is the only portable shape Todoist offers |
-| Collaboration | shared projects, assignees, a team workspace with roles and guests | Business | | |
-| Email to task | a project's address; the subject becomes the task, the body a comment; Email Assist turns mail into tasks ([email][td-email]) | Assist Pro | | |
-| Ramble | dictation that writes tasks as you speak, "actually I meant", 40+ languages, Wear OS ([ramble][td-ramble]) | 10 sessions a month free | correcting by speaking | metered |
-| Assist | Filter Assist (words to a filter), Task Assist (break down, reword) ([assist][td-assist]) | Pro | | |
-| API, MCP | REST and `/sync` ([API][td-api]); an official MCP server at `ai.todoist.net/mcp` | all | an agent can already reach Todoist | the agent's tools are Todoist's, outside the notes |
-| Offline, mobile, widgets | every platform, widgets, a share sheet | all | | offline edits wait for the server's word |
+| feature                       | what Todoist does                                                                                                                                                                                                                                                                      | plan                      | done well                                                                                         | done badly                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Quick Add                     | one field; `#Project`, `/Section`, `%label` (`@` until the end of 2026), `p1`-`p3`, `+assignee`, `!reminder`, `{deadline}`, `for 30 min`, dates and recurrences in natural language; a recognised word is highlighted and a click makes it plain text again ([quick add][td-quickadd]) | all; `!` and `{}` Pro     | the highlight-as-you-type, the one-click undo of a misread word, a global shortcut on the desktop | `@` changing meaning to `%` in 2026 broke muscle memory; tokens only in some languages |
+| Dates                         | `tomorrow at 4 PM`, `every other Tuesday starting March 3`; a date is when you plan to start ([dates][td-dates])                                                                                                                                                                       | all                       | reads like speech                                                                                 | no start date, no "later": a date is the only way to hide a task                       |
+| Recurring                     | `every`, `every!` (from completion), `every other`, `every workday`, `every last day`, `every 2, 15, 27`, `starting`/`until`/`for 3 weeks`; only future dates ([recurring][td-recurring])                                                                                              | all                       | `every!` is the feature people miss elsewhere                                                     | completing an occurrence leaves no line behind; history is only in the activity log    |
+| Deadlines                     | `{next Friday}`, beside the date, one-off only ([deadlines][td-deadlines])                                                                                                                                                                                                             | Pro                       | separates "when I do it" from "when it must be done"                                              | not recurring, Pro only                                                                |
+| Duration                      | `for 45 min`, needs a time, at most 24 h ([duration][td-duration])                                                                                                                                                                                                                     | Pro                       | feeds the calendar's time blocks                                                                  | Pro only                                                                               |
+| Reminders                     | automatic at the due time, custom absolute or relative, recurring, push, desktop and email ([reminders][td-reminders]); location on arrive or leave, phones only ([location][td-location])                                                                                             | custom ones Pro           | arrives on every device, actions in the notification                                              | location needs persistent location access                                              |
+| Inbox, Today, Upcoming        | the three fixed views; Today folds in overdue; Upcoming is days with a week strip ([glossary][td-glossary])                                                                                                                                                                            | all                       | Today with overdue on top is the daily habit                                                      | Upcoming is a list, not a planner, until the calendar layout                           |
+| Filters                       | `today & %email`, `(p1 \| p2) & 7 days`, `#Work`, `##Work` with sub-projects, `/Section`, `assigned to: me`, `created before:`, `recurring`, `subtask`, `search:`, `,` for several lists ([filters][td-filters])                                                                       | 3 free, 150 Pro           | a small language people actually learn; `,` to stack lists                                        | 3 on the free plan; Filter Assist only in English and Spanish                          |
+| Layouts                       | list, board, calendar (week, 3 days, month, a no-date sidebar, drag to reschedule) on any project, label, filter, Today or Upcoming ([calendar][td-calendar])                                                                                                                          | calendar Pro              | one layout switch for every view                                                                  | calendar Pro; no time grid beyond the week                                             |
+| Projects, sections, sub-tasks | 5 projects free, 300 Pro; sections split a project; sub-tasks nest                                                                                                                                                                                                                     |                           | sections as columns on the board                                                                  | everything lives in Todoist's database                                                 |
+| Comments, attachments         | a thread per task, files 5 MB free, 100 MB Pro                                                                                                                                                                                                                                         |                           |                                                                                                   | a note's worth of context squeezed into a comment box                                  |
+| Productivity, Karma           | daily and weekly goals, streaks, vacation mode, Karma levels ([productivity][td-productivity])                                                                                                                                                                                         | all                       |                                                                                                   | gamification many turn off                                                             |
+| Activity                      | who did what; one week free, full on Pro                                                                                                                                                                                                                                               |                           |                                                                                                   | the only record of a recurring task's past                                             |
+| Templates                     | projects exported and imported as CSV (`TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT, ...`), a gallery ([CSV][td-csv])                                                                                                                                                                 | shared templates Business | CSV is a real format                                                                              | the CSV is the only portable shape Todoist offers                                      |
+| Collaboration                 | shared projects, assignees, a team workspace with roles and guests                                                                                                                                                                                                                     | Business                  |                                                                                                   |                                                                                        |
+| Email to task                 | a project's address; the subject becomes the task, the body a comment; Email Assist turns mail into tasks ([email][td-email])                                                                                                                                                          | Assist Pro                |                                                                                                   |                                                                                        |
+| Ramble                        | dictation that writes tasks as you speak, "actually I meant", 40+ languages, Wear OS ([ramble][td-ramble])                                                                                                                                                                             | 10 sessions a month free  | correcting by speaking                                                                            | metered                                                                                |
+| Assist                        | Filter Assist (words to a filter), Task Assist (break down, reword) ([assist][td-assist])                                                                                                                                                                                              | Pro                       |                                                                                                   |                                                                                        |
+| API, MCP                      | REST and `/sync` ([API][td-api]); an official MCP server at `ai.todoist.net/mcp`                                                                                                                                                                                                       | all                       | an agent can already reach Todoist                                                                | the agent's tools are Todoist's, outside the notes                                     |
+| Offline, mobile, widgets      | every platform, widgets, a share sheet                                                                                                                                                                                                                                                 | all                       |                                                                                                   | offline edits wait for the server's word                                               |
 
 ### 2.2 The others
 
-| product | does well | does badly |
-| --- | --- | --- |
-| **TickTick** ([features][tt]) | timeline (Gantt) with drag; Eisenhower matrix; Pomodoro and habits in the same app; calendar subscriptions | Premium for the views that matter; a crowded interface |
-| **Things 3** ([concepts][things]) | When (Today, This Evening, Someday) apart from Deadline; Anytime and Someday as places a task waits; headings in projects; a Logbook; Quick Entry with Autofill from the app in front; a beautiful, calm interface | Apple only; no collaboration; repeating to-dos live in a separate template |
-| **Apple Reminders** ([organize][apple-rem], [smart lists][apple-smart]) | sections shown as columns; smart lists by tag, date, location, flag and priority; reminders in the Calendar app; auto-categorised grocery lists; free | Apple only; no real query language; no export |
-| **Microsoft To Do** ([My Day][mstodo]) | My Day resets every night and suggests what to add: overdue, due soon, left over from yesterday | steps are one level; no board or calendar; the Planned list is all it has for dates |
+| product                                                                                                                         | does well                                                                                                                                                                                                                                                            | does badly                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TickTick** ([features][tt])                                                                                                   | timeline (Gantt) with drag; Eisenhower matrix; Pomodoro and habits in the same app; calendar subscriptions                                                                                                                                                           | Premium for the views that matter; a crowded interface                                                                                          |
+| **Things 3** ([concepts][things])                                                                                               | When (Today, This Evening, Someday) apart from Deadline; Anytime and Someday as places a task waits; headings in projects; a Logbook; Quick Entry with Autofill from the app in front; a beautiful, calm interface                                                   | Apple only; no collaboration; repeating to-dos live in a separate template                                                                      |
+| **Apple Reminders** ([organize][apple-rem], [smart lists][apple-smart])                                                         | sections shown as columns; smart lists by tag, date, location, flag and priority; reminders in the Calendar app; auto-categorised grocery lists; free                                                                                                                | Apple only; no real query language; no export                                                                                                   |
+| **Microsoft To Do** ([My Day][mstodo])                                                                                          | My Day resets every night and suggests what to add: overdue, due soon, left over from yesterday                                                                                                                                                                      | steps are one level; no board or calendar; the Planned list is all it has for dates                                                             |
 | **Obsidian Tasks** ([emoji format][tasks-emoji], [Dataview format][tasks-dv], [recurring][tasks-recur], [queries][tasks-query]) | tasks are lines in notes; a written format with created, start, scheduled, due, done and cancelled dates, five priorities, `🔁 every week when done`, ids and dependencies; queries with `group by` and `sort by`; recurrence leaves the done line behind as history | no times, durations or reminders; the emoji make the source hard to read; queries are code blocks a reader writes by hand; views are lists only |
-| **Logseq** ([queries][logseq]) | `TODO`/`DOING`/`NOW`/`LATER` markers on any block; `SCHEDULED` and `DEADLINE`; the journal shows what is due | Datalog queries for anything beyond the defaults; tasks are blocks in an outliner other apps cannot read |
-| **Notion tasks** ([dependencies][notion-deps]) | a task is a page in a database with status, assignee, dates, sub-items and blocked-by; timeline with dependency arrows and date shifting | a database page is heavy for "buy milk"; no natural-language capture; online first |
+| **Logseq** ([queries][logseq])                                                                                                  | `TODO`/`DOING`/`NOW`/`LATER` markers on any block; `SCHEDULED` and `DEADLINE`; the journal shows what is due                                                                                                                                                         | Datalog queries for anything beyond the defaults; tasks are blocks in an outliner other apps cannot read                                        |
+| **Notion tasks** ([dependencies][notion-deps])                                                                                  | a task is a page in a database with status, assignee, dates, sub-items and blocked-by; timeline with dependency arrows and date shifting                                                                                                                             | a database page is heavy for "buy milk"; no natural-language capture; online first                                                              |
 
 ### 2.3 Databases
 
@@ -199,106 +199,106 @@ added, property edited or a schedule; forms that write rows.
 **must** ships in the first round of lanes, **should** in the same lanes after the musts,
 **later** waits for a reason given, **drop** is a decision.
 
-| # | Todoist feature | nib | mark | why |
-| --- | --- | --- | --- | --- |
-| 1 | Quick Add in the app | the quick add field from the palette and its key (5.6) | must | the core habit |
-| 2 | Global Quick Add shortcut | a system-wide key opens a small quick add window over any app (5.6) | must | capture from anywhere is the point |
-| 3 | Natural-language dates and times | `tomorrow 4pm`, `next fri`, `in 3 days`, `end of month`, `16:00` (5.6) | must | |
-| 4 | Dates in other languages | English and German first; the grammar is a table per language, more follow by adding rows | must for en and de, later for the rest | 40 catalogues cannot all have a date grammar on day one |
-| 5 | Click a recognised word to keep it as text; turn smart dates off | a chip pressed becomes words; Settings has the switch | must | misreads happen |
-| 6 | `#Project` and `/Section` | `>Note /Heading`, with completion; `#` stays a tag | must | `#` is a tag in every markdown file (decision 8.1) |
-| 7 | Labels (`%`, `@`) | `#tag`; `%` and `@` typed in quick add are read as tags too | must | |
-| 8 | Priorities `p1`-`p4` | `p1` 🔺, `p2` ⏫, `p3` 🔼, `p4` none; Tasks' 🔽 and ⏬ read as low | must | |
-| 9 | `+assignee` | `+Name` from the members of a shared space, `[assignee:: Name]` | should | only meaningful in shared spaces |
-| 10 | `!reminder` in quick add | `!30m`, `!9:00`, `!tomorrow 9am` | should | the time already reminds by default |
-| 11 | `{deadline}` | `{fri}`, `[deadline:: 2026-10-10]` | should | Pro in Todoist, rarely used, but real |
-| 12 | `for 30 min` duration | `for 30m`, `[duration:: 30m]` | should | feeds the calendar |
-| 13 | Description while adding | Shift+Enter opens a second line, written indented under the task | must | |
-| 14 | Ramble | the microphone in quick add: dictation through the existing recorder, the same parser, and with a model connected the AI splits a ramble into several tasks | should | dictation exists; the split needs a provider |
-| 15 | Forward email to a project or a task | a private address per account; the Worker appends the mail to the Inbox note | later | needs inbound mail routing on the Worker (8.5) |
-| 16 | Browser extension: add a page as a task | the clipper's menu gains "As a task", a line in the Inbox with the link | should | the clipper exists |
-| 17 | Share sheet on the phone | "Add as task" beside the existing share into a note | should | |
-| 18 | Widgets | the Android widget gains a Today list with boxes | should | the widget exists |
-| 19 | Quick settings tile | "Add task" tile next to New note | should | three lines of Kotlin |
-| 20 | Wear OS | none | drop | no watch build; the glasses are nib's wearable |
-| 21 | Siri, Google Assistant | an App Shortcut on Android for "add task" | later | needs an intent filter per assistant |
-| 22 | Inbox | `Inbox.md` at each space's root, made on the first quick add | must | |
-| 23 | Projects | a note with tasks is a project; the panel lists them (5.5) | must | |
-| 24 | Sub-projects and folders | folders, and a note's tasks under its folder | must | the tree already is this |
-| 25 | Sections | the headings of a project note | must | |
-| 26 | Sub-tasks | indented tasks, to any depth | must | |
-| 27 | Labels view | a view per tag (5.5) | must | |
-| 28 | Priorities shown and sorted | the flag's colour on the box, sort and filter by `p1`-`p4` | must | |
-| 29 | Favorites | bookmarks hold notes, views and tags; the panel shows them first | must | bookmarks exist |
-| 30 | Project colours and icons | the note's icon and colour | must | they exist |
-| 31 | Archive a project | the archive that exists; archived notes leave every view | should | |
-| 32 | Reorder by dragging | drag a task within a note or a view grouped by note; one move of lines | must | |
-| 33 | Move a task to another project | drag onto a note in the tree or panel; `>Note` in the edit field; the line moves with its sub-tasks and lines | must | |
-| 34 | Duplicate a task | the row's menu | should | |
-| 35 | Comments | the indented non-task lines under a task, shown folded under it in views | must | a comment is a line of the note |
-| 36 | Attachments | an embed under the task; a drop on a task row puts the file beside the note and the embed under the task | should | assets exist |
-| 37 | Description | the first indented paragraph under the task | must | |
-| 38 | Templates (project CSV, gallery) | a note is a template (5.13); Todoist's CSV imports as a note | should, gallery drop | a template gallery is content, not code |
-| 39 | Links and markdown in task names | the line is markdown | must | free |
-| 40 | Due date | `📅 2026-10-06` | must | |
-| 41 | Due time | `[time:: 16:00]` with the due date | must | Tasks has no time field |
-| 42 | `every` recurrence | `🔁 every week on Monday` | must | |
-| 43 | `every!` | `🔁 every 3 months when done` (Tasks' own words for it) | must | |
-| 44 | `starting`, `until`, `for N times` | in the rule: `every day until 2026-12-24`; `starting` sets the first date | should | |
-| 45 | Deadlines | `[deadline:: date]`, its own chip and sort, warned in Today from three days before | should | |
-| 46 | Duration | `[duration:: 45m]` | should | |
-| 47 | Time zones | a time is floating (local wherever you are) unless written with a zone, `[time:: 16:00 Europe/Zurich]` | should | travelling readers |
-| 48 | Reschedule: drag, postpone, all overdue to today | a date chip's menu (today, tomorrow, next week, pick), drag in Upcoming and the calendar, "Overdue to today" in Today's head | must | |
-| 49 | Skip an occurrence; stop a recurrence | the box's menu: skip (moves the date, no done line), end (removes `🔁`) | should | |
-| 50 | Today, with overdue | the built-in Today view (5.4) | must | |
-| 51 | Upcoming | the built-in Upcoming view, days with a week strip, drag between days | must | |
-| 52 | Filter query language | Todoist's language, compiled to the engine's tree (5.8) | must | people know it |
-| 53 | Saved filters | a filter saved is a `.base` file; unlimited | must | |
-| 54 | Label view | yes | must | |
-| 55 | Project list layout | the note itself, and the project view (5.5) | must | |
-| 56 | Board layout | for every view; tasks grouped by section, status, priority, date or any field (5.9) | must | |
-| 57 | Calendar layout | month, week, three days and day, a no-date tray, drag (5.9) | must | free here |
-| 58 | Group and sort per view | by date, priority, note, folder, tag, assignee, status, any property; manual order within a note | must | |
-| 59 | Show completed | a toggle on every view; done tasks dim and sink | must | |
-| 60 | Search tasks | the search's `task:`, `task-todo:`, `task-done:` (they exist) | must | |
-| 61 | Filter Assist | `/tasks` with words in the AI sidebar writes the filter | should | needs a provider |
-| 62 | Completed tasks | a Logbook view over `✅` dates | must | the done line is the record |
-| 63 | Automatic reminder at the due time | on for every task with a time; a setting for how long before | must | |
-| 64 | Custom reminders, several per task | `[remind:: 15m, 2026-10-06 09:00]` | must | |
-| 65 | Recurring reminders | a reminder on a recurring task moves with it; a reminder that recurs on its own | later | rare beyond the first case, which is must with 42 |
-| 66 | Location reminders | none | later | needs background location on phones nib does not ask for |
-| 67 | Desktop notifications | the system's, with Done and Snooze (5.10) | must | |
-| 68 | Mobile notifications | local alarms the phone holds (must); push from the Worker (should, 8.5) | must, should | |
-| 69 | Email reminders | the Worker mails the reader's own verified address | later | after push, if asked |
-| 70 | Snooze or complete from the notification | Done, Snooze 15 min, Tomorrow | should | |
-| 71 | Shared projects | a shared space or a shared note (they exist) | must | |
-| 72 | Assignees | `+Name`, a view per person, "assigned to me" | should | |
-| 73 | Comments with mentions and notifications | none beyond the note's own words | later | needs per-person notifications |
-| 74 | Activity history | the note's versions with who wrote each, and the done lines | should | versions exist |
-| 75 | Team workspace, roles, guests | the sharing roles that exist | drop | nib shares spaces and notes; an admin console is another product |
-| 76 | Productivity: completed per day and week, goals | a Logbook header with counts per day | later | after the views |
-| 77 | Karma | none | drop | points for ticking boxes is the opposite of calm |
-| 78 | Vacation mode, days off | none | drop | belongs to Karma |
-| 79 | Calendar sync (Google, Outlook) | an ICS feed of dated tasks from the Worker, read-only | later | a feed is cheap; two-way is a product |
-| 80 | 100+ integrations | `nib mcp`, the account connector, the CLI and `nib://` | drop | one surface agents and scripts already use |
-| 81 | API | the CLI's `tasks` verbs and `nib://add-task` (5.15) | must | |
-| 82 | MCP server | `nib mcp` and the account connector (5.15) | must | Emil's ask |
-| 83 | Offline | files | must | free |
-| 84 | Sync | nib sync, tasks being notes | must | free |
-| 85 | Mobile apps | the phone build with the panel and quick add | must | |
-| 86 | Themes | the theme store | must | exists |
-| 87 | Keyboard shortcuts | the keys of 5.16, rebindable | must | |
-| 88 | Backups | versions, Recently deleted, the files | must | exist |
-| 89 | Import from Todoist | API and CSV (5.17) | must | the way in |
-| 90 | Export CSV | any view's menu: Copy as CSV, Save as CSV | should | Bases has it |
-| 91 | Undo a completion | Ctrl+Z, and the toast's Undo | must | exists |
-| 92 | Task Assist (break down, reword) | the AI sidebar on a task: "Break down" writes sub-tasks into the note for review | should | needs a provider |
-| 93 | Email Assist | none | later | after 15 |
-| 94 | Interface languages | the 40 catalogues | must | exists |
-| 95 | Manual order within Today | Today keeps its own order per day in the device's store, by task anchor | later | a list across notes has no single file to order |
-| 96 | Time blocking | drag a task onto an hour in the calendar's week or day; it gets `[time::]` and keeps its duration | should | |
-| 97 | Collapse sub-tasks; hide completed sub-tasks | a twist on every parent row | must | |
-| 98 | Counts in the sidebar, overdue marked | every panel row has its count; overdue in the danger tone | must | |
+| #   | Todoist feature                                                  | nib                                                                                                                                                         | mark                                   | why                                                              |
+| --- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| 1   | Quick Add in the app                                             | the quick add field from the palette and its key (5.6)                                                                                                      | must                                   | the core habit                                                   |
+| 2   | Global Quick Add shortcut                                        | a system-wide key opens a small quick add window over any app (5.6)                                                                                         | must                                   | capture from anywhere is the point                               |
+| 3   | Natural-language dates and times                                 | `tomorrow 4pm`, `next fri`, `in 3 days`, `end of month`, `16:00` (5.6)                                                                                      | must                                   |                                                                  |
+| 4   | Dates in other languages                                         | English and German first; the grammar is a table per language, more follow by adding rows                                                                   | must for en and de, later for the rest | 40 catalogues cannot all have a date grammar on day one          |
+| 5   | Click a recognised word to keep it as text; turn smart dates off | a chip pressed becomes words; Settings has the switch                                                                                                       | must                                   | misreads happen                                                  |
+| 6   | `#Project` and `/Section`                                        | `>Note /Heading`, with completion; `#` stays a tag                                                                                                          | must                                   | `#` is a tag in every markdown file (decision 8.1)               |
+| 7   | Labels (`%`, `@`)                                                | `#tag`; `%` and `@` typed in quick add are read as tags too                                                                                                 | must                                   |                                                                  |
+| 8   | Priorities `p1`-`p4`                                             | `p1` 🔺, `p2` ⏫, `p3` 🔼, `p4` none; Tasks' 🔽 and ⏬ read as low                                                                                          | must                                   |                                                                  |
+| 9   | `+assignee`                                                      | `+Name` from the members of a shared space, `[assignee:: Name]`                                                                                             | should                                 | only meaningful in shared spaces                                 |
+| 10  | `!reminder` in quick add                                         | `!30m`, `!9:00`, `!tomorrow 9am`                                                                                                                            | should                                 | the time already reminds by default                              |
+| 11  | `{deadline}`                                                     | `{fri}`, `[deadline:: 2026-10-10]`                                                                                                                          | should                                 | Pro in Todoist, rarely used, but real                            |
+| 12  | `for 30 min` duration                                            | `for 30m`, `[duration:: 30m]`                                                                                                                               | should                                 | feeds the calendar                                               |
+| 13  | Description while adding                                         | Shift+Enter opens a second line, written indented under the task                                                                                            | must                                   |                                                                  |
+| 14  | Ramble                                                           | the microphone in quick add: dictation through the existing recorder, the same parser, and with a model connected the AI splits a ramble into several tasks | should                                 | dictation exists; the split needs a provider                     |
+| 15  | Forward email to a project or a task                             | a private address per account; the Worker appends the mail to the Inbox note                                                                                | later                                  | needs inbound mail routing on the Worker (8.5)                   |
+| 16  | Browser extension: add a page as a task                          | the clipper's menu gains "As a task", a line in the Inbox with the link                                                                                     | should                                 | the clipper exists                                               |
+| 17  | Share sheet on the phone                                         | "Add as task" beside the existing share into a note                                                                                                         | should                                 |                                                                  |
+| 18  | Widgets                                                          | the Android widget gains a Today list with boxes                                                                                                            | should                                 | the widget exists                                                |
+| 19  | Quick settings tile                                              | "Add task" tile next to New note                                                                                                                            | should                                 | three lines of Kotlin                                            |
+| 20  | Wear OS                                                          | none                                                                                                                                                        | drop                                   | no watch build; the glasses are nib's wearable                   |
+| 21  | Siri, Google Assistant                                           | an App Shortcut on Android for "add task"                                                                                                                   | later                                  | needs an intent filter per assistant                             |
+| 22  | Inbox                                                            | `Inbox.md` at each space's root, made on the first quick add                                                                                                | must                                   |                                                                  |
+| 23  | Projects                                                         | a note with tasks is a project; the panel lists them (5.5)                                                                                                  | must                                   |                                                                  |
+| 24  | Sub-projects and folders                                         | folders, and a note's tasks under its folder                                                                                                                | must                                   | the tree already is this                                         |
+| 25  | Sections                                                         | the headings of a project note                                                                                                                              | must                                   |                                                                  |
+| 26  | Sub-tasks                                                        | indented tasks, to any depth                                                                                                                                | must                                   |                                                                  |
+| 27  | Labels view                                                      | a view per tag (5.5)                                                                                                                                        | must                                   |                                                                  |
+| 28  | Priorities shown and sorted                                      | the flag's colour on the box, sort and filter by `p1`-`p4`                                                                                                  | must                                   |                                                                  |
+| 29  | Favorites                                                        | bookmarks hold notes, views and tags; the panel shows them first                                                                                            | must                                   | bookmarks exist                                                  |
+| 30  | Project colours and icons                                        | the note's icon and colour                                                                                                                                  | must                                   | they exist                                                       |
+| 31  | Archive a project                                                | the archive that exists; archived notes leave every view                                                                                                    | should                                 |                                                                  |
+| 32  | Reorder by dragging                                              | drag a task within a note or a view grouped by note; one move of lines                                                                                      | must                                   |                                                                  |
+| 33  | Move a task to another project                                   | drag onto a note in the tree or panel; `>Note` in the edit field; the line moves with its sub-tasks and lines                                               | must                                   |                                                                  |
+| 34  | Duplicate a task                                                 | the row's menu                                                                                                                                              | should                                 |                                                                  |
+| 35  | Comments                                                         | the indented non-task lines under a task, shown folded under it in views                                                                                    | must                                   | a comment is a line of the note                                  |
+| 36  | Attachments                                                      | an embed under the task; a drop on a task row puts the file beside the note and the embed under the task                                                    | should                                 | assets exist                                                     |
+| 37  | Description                                                      | the first indented paragraph under the task                                                                                                                 | must                                   |                                                                  |
+| 38  | Templates (project CSV, gallery)                                 | a note is a template (5.13); Todoist's CSV imports as a note                                                                                                | should, gallery drop                   | a template gallery is content, not code                          |
+| 39  | Links and markdown in task names                                 | the line is markdown                                                                                                                                        | must                                   | free                                                             |
+| 40  | Due date                                                         | `📅 2026-10-06`                                                                                                                                             | must                                   |                                                                  |
+| 41  | Due time                                                         | `[time:: 16:00]` with the due date                                                                                                                          | must                                   | Tasks has no time field                                          |
+| 42  | `every` recurrence                                               | `🔁 every week on Monday`                                                                                                                                   | must                                   |                                                                  |
+| 43  | `every!`                                                         | `🔁 every 3 months when done` (Tasks' own words for it)                                                                                                     | must                                   |                                                                  |
+| 44  | `starting`, `until`, `for N times`                               | in the rule: `every day until 2026-12-24`; `starting` sets the first date                                                                                   | should                                 |                                                                  |
+| 45  | Deadlines                                                        | `[deadline:: date]`, its own chip and sort, warned in Today from three days before                                                                          | should                                 |                                                                  |
+| 46  | Duration                                                         | `[duration:: 45m]`                                                                                                                                          | should                                 |                                                                  |
+| 47  | Time zones                                                       | a time is floating (local wherever you are) unless written with a zone, `[time:: 16:00 Europe/Zurich]`                                                      | should                                 | travelling readers                                               |
+| 48  | Reschedule: drag, postpone, all overdue to today                 | a date chip's menu (today, tomorrow, next week, pick), drag in Upcoming and the calendar, "Overdue to today" in Today's head                                | must                                   |                                                                  |
+| 49  | Skip an occurrence; stop a recurrence                            | the box's menu: skip (moves the date, no done line), end (removes `🔁`)                                                                                     | should                                 |                                                                  |
+| 50  | Today, with overdue                                              | the built-in Today view (5.4)                                                                                                                               | must                                   |                                                                  |
+| 51  | Upcoming                                                         | the built-in Upcoming view, days with a week strip, drag between days                                                                                       | must                                   |                                                                  |
+| 52  | Filter query language                                            | Todoist's language, compiled to the engine's tree (5.8)                                                                                                     | must                                   | people know it                                                   |
+| 53  | Saved filters                                                    | a filter saved is a `.base` file; unlimited                                                                                                                 | must                                   |                                                                  |
+| 54  | Label view                                                       | yes                                                                                                                                                         | must                                   |                                                                  |
+| 55  | Project list layout                                              | the note itself, and the project view (5.5)                                                                                                                 | must                                   |                                                                  |
+| 56  | Board layout                                                     | for every view; tasks grouped by section, status, priority, date or any field (5.9)                                                                         | must                                   |                                                                  |
+| 57  | Calendar layout                                                  | month, week, three days and day, a no-date tray, drag (5.9)                                                                                                 | must                                   | free here                                                        |
+| 58  | Group and sort per view                                          | by date, priority, note, folder, tag, assignee, status, any property; manual order within a note                                                            | must                                   |                                                                  |
+| 59  | Show completed                                                   | a toggle on every view; done tasks dim and sink                                                                                                             | must                                   |                                                                  |
+| 60  | Search tasks                                                     | the search's `task:`, `task-todo:`, `task-done:` (they exist)                                                                                               | must                                   |                                                                  |
+| 61  | Filter Assist                                                    | `/tasks` with words in the AI sidebar writes the filter                                                                                                     | should                                 | needs a provider                                                 |
+| 62  | Completed tasks                                                  | a Logbook view over `✅` dates                                                                                                                              | must                                   | the done line is the record                                      |
+| 63  | Automatic reminder at the due time                               | on for every task with a time; a setting for how long before                                                                                                | must                                   |                                                                  |
+| 64  | Custom reminders, several per task                               | `[remind:: 15m, 2026-10-06 09:00]`                                                                                                                          | must                                   |                                                                  |
+| 65  | Recurring reminders                                              | a reminder on a recurring task moves with it; a reminder that recurs on its own                                                                             | later                                  | rare beyond the first case, which is must with 42                |
+| 66  | Location reminders                                               | none                                                                                                                                                        | later                                  | needs background location on phones nib does not ask for         |
+| 67  | Desktop notifications                                            | the system's, with Done and Snooze (5.10)                                                                                                                   | must                                   |                                                                  |
+| 68  | Mobile notifications                                             | local alarms the phone holds (must); push from the Worker (should, 8.5)                                                                                     | must, should                           |                                                                  |
+| 69  | Email reminders                                                  | the Worker mails the reader's own verified address                                                                                                          | later                                  | after push, if asked                                             |
+| 70  | Snooze or complete from the notification                         | Done, Snooze 15 min, Tomorrow                                                                                                                               | should                                 |                                                                  |
+| 71  | Shared projects                                                  | a shared space or a shared note (they exist)                                                                                                                | must                                   |                                                                  |
+| 72  | Assignees                                                        | `+Name`, a view per person, "assigned to me"                                                                                                                | should                                 |                                                                  |
+| 73  | Comments with mentions and notifications                         | none beyond the note's own words                                                                                                                            | later                                  | needs per-person notifications                                   |
+| 74  | Activity history                                                 | the note's versions with who wrote each, and the done lines                                                                                                 | should                                 | versions exist                                                   |
+| 75  | Team workspace, roles, guests                                    | the sharing roles that exist                                                                                                                                | drop                                   | nib shares spaces and notes; an admin console is another product |
+| 76  | Productivity: completed per day and week, goals                  | a Logbook header with counts per day                                                                                                                        | later                                  | after the views                                                  |
+| 77  | Karma                                                            | none                                                                                                                                                        | drop                                   | points for ticking boxes is the opposite of calm                 |
+| 78  | Vacation mode, days off                                          | none                                                                                                                                                        | drop                                   | belongs to Karma                                                 |
+| 79  | Calendar sync (Google, Outlook)                                  | an ICS feed of dated tasks from the Worker, read-only                                                                                                       | later                                  | a feed is cheap; two-way is a product                            |
+| 80  | 100+ integrations                                                | `nib mcp`, the account connector, the CLI and `nib://`                                                                                                      | drop                                   | one surface agents and scripts already use                       |
+| 81  | API                                                              | the CLI's `tasks` verbs and `nib://add-task` (5.15)                                                                                                         | must                                   |                                                                  |
+| 82  | MCP server                                                       | `nib mcp` and the account connector (5.15)                                                                                                                  | must                                   | Emil's ask                                                       |
+| 83  | Offline                                                          | files                                                                                                                                                       | must                                   | free                                                             |
+| 84  | Sync                                                             | nib sync, tasks being notes                                                                                                                                 | must                                   | free                                                             |
+| 85  | Mobile apps                                                      | the phone build with the panel and quick add                                                                                                                | must                                   |                                                                  |
+| 86  | Themes                                                           | the theme store                                                                                                                                             | must                                   | exists                                                           |
+| 87  | Keyboard shortcuts                                               | the keys of 5.16, rebindable                                                                                                                                | must                                   |                                                                  |
+| 88  | Backups                                                          | versions, Recently deleted, the files                                                                                                                       | must                                   | exist                                                            |
+| 89  | Import from Todoist                                              | API and CSV (5.17)                                                                                                                                          | must                                   | the way in                                                       |
+| 90  | Export CSV                                                       | any view's menu: Copy as CSV, Save as CSV                                                                                                                   | should                                 | Bases has it                                                     |
+| 91  | Undo a completion                                                | Ctrl+Z, and the toast's Undo                                                                                                                                | must                                   | exists                                                           |
+| 92  | Task Assist (break down, reword)                                 | the AI sidebar on a task: "Break down" writes sub-tasks into the note for review                                                                            | should                                 | needs a provider                                                 |
+| 93  | Email Assist                                                     | none                                                                                                                                                        | later                                  | after 15                                                         |
+| 94  | Interface languages                                              | the 40 catalogues                                                                                                                                           | must                                   | exists                                                           |
+| 95  | Manual order within Today                                        | Today keeps its own order per day in the device's store, by task anchor                                                                                     | later                                  | a list across notes has no single file to order                  |
+| 96  | Time blocking                                                    | drag a task onto an hour in the calendar's week or day; it gets `[time::]` and keeps its duration                                                           | should                                 |                                                                  |
+| 97  | Collapse sub-tasks; hide completed sub-tasks                     | a twist on every parent row                                                                                                                                 | must                                   |                                                                  |
+| 98  | Counts in the sidebar, overdue marked                            | every panel row has its count; overdue in the danger tone                                                                                                   | must                                   |                                                                  |
 
 **Count: 58 must, 25 should, 10 later, 5 drop** (rows 4, 38 and 68 counted at their first
 mark). All of it is free. Of the musts, Todoist charges for the calendar layout, more than 3
@@ -310,122 +310,122 @@ deadlines, a full activity log, unlimited dictation and the AI features.
 One table, Obsidian's and Notion's features side by side. "Bases" and "Notion" say whether
 each has it (✓), partly (~) or not (-).
 
-| feature | Bases | Notion | nib | how |
-| --- | --- | --- | --- | --- |
-| **Rows and files** | | | | |
-| a row is a note | ✓ | ✓ (a page) | must | the rows index (5.3) |
-| a row is a task line | - | ~ (a page) | must | `nib: { rows: tasks }` on a view (5.11) |
-| a base as a file | ✓ `.base` | - | must | Obsidian's YAML, read and written without losing a key nib does not know |
-| a base inside a note | ✓ ` ```base ` | ✓ inline database | must | the fence, drawn in the editor and the reading view |
-| embed a base or one view | ✓ `![[x.base#View]]` | ✓ linked view | must | the embed widget |
-| new row from a view | ✓ | ✓ | must | a note made in the folder the filter names, with the filter's properties written in (the bug Bases has) |
-| a row opened in a side peek | - | ✓ | should | a click opens the note in a split on the right; Ctrl+click in a tab |
-| **Properties (columns)** | | | | |
-| text | ✓ | ✓ | must | the Properties panel's controls, in the cell |
-| number, with formats (currency, percent, progress bar) | ✓ (number) | ✓ | must, formats should | `nib.properties.<key>.format` |
-| checkbox | ✓ | ✓ | must | |
-| date, date and time | ✓ | ✓ | must | |
-| date range | - | ✓ | should | two properties, or `start`/`end` named in the view; one bar on the timeline |
-| list | ✓ | ✓ multi-select | must | chips |
-| select with options and colours | ~ (text) | ✓ | must | `nib.properties.<key>.options`, colours from the six tones |
-| status with groups | - | ✓ | must | a select whose options are in three groups; tasks have it by their box |
-| person | - | ✓ | should | a property whose values are members of the shared space |
-| files and media | ~ (link) | ✓ | must | a link or embed; the gallery's cover |
-| URL, email, phone | ~ (text) | ✓ | should | text that opens the link, the mail, the dialler |
-| tags | ✓ | - | must | `file.tags` and `tags` |
-| formula | ✓ | ✓ | must | Bases' expression language (5.12) |
-| relation, one-way | ~ (a link) | ✓ | must | a property holding wikilinks |
-| relation, two-way | - | ✓ | must | the reverse is the link index's backlinks, never a second stored column |
-| relation limited to one | - | ✓ | should | `nib.properties.<key>.one: true` |
-| rollup | ~ (formula) | ✓ | must | a formula over the related notes, built from a picker (5.12) |
-| created time, edited time | ✓ `file.ctime`, `file.mtime` | ✓ | must | |
-| created by, edited by | - | ✓ | later | from sync v2's per-version author, once it is kept per file |
-| unique ID with a prefix | - | ✓ | should | `nib.id: { property: id, prefix: BUG }`; the next number is written into a new row |
-| button | - | ✓ | should | a column whose press runs a palette command or sets properties (5.13) |
-| place | ✓ (Maps) | ✓ | later | with the map view |
-| verification | - | ✓ (wikis) | drop | a wiki workflow, not a database feature |
-| AI autofill of a property | - | ✓ | should | the AI sidebar fills a column for review (5.15) |
-| property display names | ✓ | ✓ | must | Bases' `properties.<key>.displayName` |
-| hide, reorder, resize columns | ✓ | ✓ | must | `order`, and `nib` widths |
-| **Views** | | | | |
-| table | ✓ | ✓ | must | virtualised rows |
-| list | ✓ | ✓ | must | |
-| cards / gallery, with a cover | ✓ | ✓ | must | Bases' image property, fit and ratio |
-| board / kanban, drag changes the property | ✓ (1.14) | ✓ | must | |
-| manual card order within a column | - | ✓ | should | `nib.order: [paths]` per column, kept in the base |
-| board columns for empty groups, hidden groups, column order | ~ | ✓ | must | the group's options decide the columns, not the rows present |
-| calendar (month, week, day) | - | ✓ | must | `type: calendar` (nib) |
-| timeline / Gantt | - | ✓ | must | `type: timeline` (nib) |
-| dependency arrows on the timeline | - | ✓ | should | Tasks' `🆔` and `⛔` for tasks, a `blocked-by` relation for notes |
-| chart (bar, line, donut, number) | - | ✓ | should | `type: chart` (nib), drawn as SVG |
-| feed | - | ✓ | later | a list of whole notes, one under the other; the reading view can almost do it |
-| form | - | ✓ | should | `type: form` (nib): fields for the view's properties; Submit makes the note |
-| public form | - | ✓ | later | through publishing, answers come in through the Worker |
-| map | ✓ (plugin) | ✓ | later | tiles are a third party: loads on a press, and needs a place property |
-| dashboard | - | ✓ | drop | a note that embeds several views is a dashboard already |
-| **Filtering** | | | | |
-| and, or, not, nested | ✓ | ✓ (three deep) | must | any depth |
-| filters on the base and on each view | ✓ | ✓ | must | |
-| functions in filters | ✓ | ~ | must | |
-| `this`, the embedding note | ✓ | ~ (self-referencing templates) | must | |
-| a quick search inside a view | ✓ | ✓ | must | the view's own field, words only |
-| Todoist filter language | - | - | must | compiled to the same tree (5.8) |
-| filter builder without typing | ~ | ✓ | must | rows of property, operator, value; the YAML underneath |
-| **Sorting, grouping, summaries** | | | | |
-| several sorts | ✓ | ✓ | must | |
-| group by | ✓ | ✓ | must | |
-| sub-group | - | ✓ | should | `nib.subGroupBy` |
-| collapse groups, hide empty, reorder groups | ✓ (1.14) | ✓ | must | |
-| limit, load more | ✓ | ✓ | must | |
-| summaries under columns (count, sum, average, median, min, max, range, earliest, latest, checked, empty, filled, unique) | ✓ | ✓ | must | Bases' defaults and custom summary formulas |
-| summaries per group | ~ | ✓ | should | the same row under each group |
-| conditional colour | - | ✓ | should | `nib.colour: <expression returning a tone>` per view |
-| wrap cells, row height, freeze the first column | - | ✓ | should | view options |
-| **Templates, buttons, automations** | | | | |
-| templates for new rows | - (core Templates) | ✓ | must | a note in the templates folder; Obsidian's `{{date}}`, `{{time}}`, `{{title}}` |
-| a default template per base and per view | - | ✓ | must | `nib.template: "[[Templates/Bug]]"` |
-| repeating templates | - | ✓ | should | a template with `🔁` makes a note on its schedule when nib runs (5.13) |
-| buttons in a page | - | ✓ | should | the button column, and a ` ```button ` fence later |
-| automation: property set when another changes | - | ✓ | should | rules in `nib.automations`, run where nib runs |
-| automation: notification | - | ✓ | should | a reminder to the reader |
-| automation: webhook, Slack, mail | - | ✓ | later | needs the Worker to run it while nib is closed |
-| automation on a schedule | - | ✓ | later | with repeating templates on the Worker |
-| **Structure** | | | | |
-| sub-items | - | ✓ | must | nested tasks; for notes a `parent` relation, shown as a tree |
-| dependencies, blocked-by | - | ✓ | should | as above; a blocked task dims and says why on hover |
-| shift dependent dates | - | ✓ | later | after the timeline lands |
-| lock a view or a base | - | ✓ | should | `nib.locked: true`; edits to the view ask first |
-| copy as CSV, save as CSV | ✓ | ✓ | should | |
-| import CSV as a base | - | ✓ | should | each row a note, columns as properties (CSV import exists) |
-| duplicate a view | ✓ | ✓ | must | |
-| **Formula language** | | | | |
-| arithmetic, comparison, `&&`, `\|\|`, `!` | ✓ | ✓ | must | |
-| date arithmetic `+ "1d"`, `relative()` | ✓ | ✓ | must | |
-| `if`, `now`, `today`, `date`, `duration`, `number`, `list`, `link`, `file`, `max`, `min` | ✓ | ✓ | must | |
-| string, number, list, date, link, file, object and regexp methods | ✓ | ✓ | must | the functions page, every one |
-| `image`, `icon`, `html` | ✓ | ~ | must, html should | `html` is escaped outside the reader's own spaces (trust.ts) |
-| `let`, `lets`, user functions | - | ✓ | later | Bases has none; a nib-only formula would not open in Obsidian |
-| `random` | ✓ | - | must | |
-| **Platform** | | | | |
-| 10,000 rows | ~ | ~ | must | 5.17 |
-| offline | ✓ | ~ | must | files |
-| on the phone | ✓ | ✓ | must | the views at phone width (5.18) |
-| agents read and edit | - | ✓ (Notion AI) | must | 5.15 |
-| sync and share | ✓ (Sync) | ✓ | must | they are notes |
-| version history | ✓ | ✓ | must | the note's versions |
+| feature                                                                                                                  | Bases                        | Notion                         | nib                  | how                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Rows and files**                                                                                                       |                              |                                |                      |                                                                                                         |
+| a row is a note                                                                                                          | ✓                            | ✓ (a page)                     | must                 | the rows index (5.3)                                                                                    |
+| a row is a task line                                                                                                     | -                            | ~ (a page)                     | must                 | `nib: { rows: tasks }` on a view (5.11)                                                                 |
+| a base as a file                                                                                                         | ✓ `.base`                    | -                              | must                 | Obsidian's YAML, read and written without losing a key nib does not know                                |
+| a base inside a note                                                                                                     | ✓ ` ```base `                | ✓ inline database              | must                 | the fence, drawn in the editor and the reading view                                                     |
+| embed a base or one view                                                                                                 | ✓ `![[x.base#View]]`         | ✓ linked view                  | must                 | the embed widget                                                                                        |
+| new row from a view                                                                                                      | ✓                            | ✓                              | must                 | a note made in the folder the filter names, with the filter's properties written in (the bug Bases has) |
+| a row opened in a side peek                                                                                              | -                            | ✓                              | should               | a click opens the note in a split on the right; Ctrl+click in a tab                                     |
+| **Properties (columns)**                                                                                                 |                              |                                |                      |                                                                                                         |
+| text                                                                                                                     | ✓                            | ✓                              | must                 | the Properties panel's controls, in the cell                                                            |
+| number, with formats (currency, percent, progress bar)                                                                   | ✓ (number)                   | ✓                              | must, formats should | `nib.properties.<key>.format`                                                                           |
+| checkbox                                                                                                                 | ✓                            | ✓                              | must                 |                                                                                                         |
+| date, date and time                                                                                                      | ✓                            | ✓                              | must                 |                                                                                                         |
+| date range                                                                                                               | -                            | ✓                              | should               | two properties, or `start`/`end` named in the view; one bar on the timeline                             |
+| list                                                                                                                     | ✓                            | ✓ multi-select                 | must                 | chips                                                                                                   |
+| select with options and colours                                                                                          | ~ (text)                     | ✓                              | must                 | `nib.properties.<key>.options`, colours from the six tones                                              |
+| status with groups                                                                                                       | -                            | ✓                              | must                 | a select whose options are in three groups; tasks have it by their box                                  |
+| person                                                                                                                   | -                            | ✓                              | should               | a property whose values are members of the shared space                                                 |
+| files and media                                                                                                          | ~ (link)                     | ✓                              | must                 | a link or embed; the gallery's cover                                                                    |
+| URL, email, phone                                                                                                        | ~ (text)                     | ✓                              | should               | text that opens the link, the mail, the dialler                                                         |
+| tags                                                                                                                     | ✓                            | -                              | must                 | `file.tags` and `tags`                                                                                  |
+| formula                                                                                                                  | ✓                            | ✓                              | must                 | Bases' expression language (5.12)                                                                       |
+| relation, one-way                                                                                                        | ~ (a link)                   | ✓                              | must                 | a property holding wikilinks                                                                            |
+| relation, two-way                                                                                                        | -                            | ✓                              | must                 | the reverse is the link index's backlinks, never a second stored column                                 |
+| relation limited to one                                                                                                  | -                            | ✓                              | should               | `nib.properties.<key>.one: true`                                                                        |
+| rollup                                                                                                                   | ~ (formula)                  | ✓                              | must                 | a formula over the related notes, built from a picker (5.12)                                            |
+| created time, edited time                                                                                                | ✓ `file.ctime`, `file.mtime` | ✓                              | must                 |                                                                                                         |
+| created by, edited by                                                                                                    | -                            | ✓                              | later                | from sync v2's per-version author, once it is kept per file                                             |
+| unique ID with a prefix                                                                                                  | -                            | ✓                              | should               | `nib.id: { property: id, prefix: BUG }`; the next number is written into a new row                      |
+| button                                                                                                                   | -                            | ✓                              | should               | a column whose press runs a palette command or sets properties (5.13)                                   |
+| place                                                                                                                    | ✓ (Maps)                     | ✓                              | later                | with the map view                                                                                       |
+| verification                                                                                                             | -                            | ✓ (wikis)                      | drop                 | a wiki workflow, not a database feature                                                                 |
+| AI autofill of a property                                                                                                | -                            | ✓                              | should               | the AI sidebar fills a column for review (5.15)                                                         |
+| property display names                                                                                                   | ✓                            | ✓                              | must                 | Bases' `properties.<key>.displayName`                                                                   |
+| hide, reorder, resize columns                                                                                            | ✓                            | ✓                              | must                 | `order`, and `nib` widths                                                                               |
+| **Views**                                                                                                                |                              |                                |                      |                                                                                                         |
+| table                                                                                                                    | ✓                            | ✓                              | must                 | virtualised rows                                                                                        |
+| list                                                                                                                     | ✓                            | ✓                              | must                 |                                                                                                         |
+| cards / gallery, with a cover                                                                                            | ✓                            | ✓                              | must                 | Bases' image property, fit and ratio                                                                    |
+| board / kanban, drag changes the property                                                                                | ✓ (1.14)                     | ✓                              | must                 |                                                                                                         |
+| manual card order within a column                                                                                        | -                            | ✓                              | should               | `nib.order: [paths]` per column, kept in the base                                                       |
+| board columns for empty groups, hidden groups, column order                                                              | ~                            | ✓                              | must                 | the group's options decide the columns, not the rows present                                            |
+| calendar (month, week, day)                                                                                              | -                            | ✓                              | must                 | `type: calendar` (nib)                                                                                  |
+| timeline / Gantt                                                                                                         | -                            | ✓                              | must                 | `type: timeline` (nib)                                                                                  |
+| dependency arrows on the timeline                                                                                        | -                            | ✓                              | should               | Tasks' `🆔` and `⛔` for tasks, a `blocked-by` relation for notes                                       |
+| chart (bar, line, donut, number)                                                                                         | -                            | ✓                              | should               | `type: chart` (nib), drawn as SVG                                                                       |
+| feed                                                                                                                     | -                            | ✓                              | later                | a list of whole notes, one under the other; the reading view can almost do it                           |
+| form                                                                                                                     | -                            | ✓                              | should               | `type: form` (nib): fields for the view's properties; Submit makes the note                             |
+| public form                                                                                                              | -                            | ✓                              | later                | through publishing, answers come in through the Worker                                                  |
+| map                                                                                                                      | ✓ (plugin)                   | ✓                              | later                | tiles are a third party: loads on a press, and needs a place property                                   |
+| dashboard                                                                                                                | -                            | ✓                              | drop                 | a note that embeds several views is a dashboard already                                                 |
+| **Filtering**                                                                                                            |                              |                                |                      |                                                                                                         |
+| and, or, not, nested                                                                                                     | ✓                            | ✓ (three deep)                 | must                 | any depth                                                                                               |
+| filters on the base and on each view                                                                                     | ✓                            | ✓                              | must                 |                                                                                                         |
+| functions in filters                                                                                                     | ✓                            | ~                              | must                 |                                                                                                         |
+| `this`, the embedding note                                                                                               | ✓                            | ~ (self-referencing templates) | must                 |                                                                                                         |
+| a quick search inside a view                                                                                             | ✓                            | ✓                              | must                 | the view's own field, words only                                                                        |
+| Todoist filter language                                                                                                  | -                            | -                              | must                 | compiled to the same tree (5.8)                                                                         |
+| filter builder without typing                                                                                            | ~                            | ✓                              | must                 | rows of property, operator, value; the YAML underneath                                                  |
+| **Sorting, grouping, summaries**                                                                                         |                              |                                |                      |                                                                                                         |
+| several sorts                                                                                                            | ✓                            | ✓                              | must                 |                                                                                                         |
+| group by                                                                                                                 | ✓                            | ✓                              | must                 |                                                                                                         |
+| sub-group                                                                                                                | -                            | ✓                              | should               | `nib.subGroupBy`                                                                                        |
+| collapse groups, hide empty, reorder groups                                                                              | ✓ (1.14)                     | ✓                              | must                 |                                                                                                         |
+| limit, load more                                                                                                         | ✓                            | ✓                              | must                 |                                                                                                         |
+| summaries under columns (count, sum, average, median, min, max, range, earliest, latest, checked, empty, filled, unique) | ✓                            | ✓                              | must                 | Bases' defaults and custom summary formulas                                                             |
+| summaries per group                                                                                                      | ~                            | ✓                              | should               | the same row under each group                                                                           |
+| conditional colour                                                                                                       | -                            | ✓                              | should               | `nib.colour: <expression returning a tone>` per view                                                    |
+| wrap cells, row height, freeze the first column                                                                          | -                            | ✓                              | should               | view options                                                                                            |
+| **Templates, buttons, automations**                                                                                      |                              |                                |                      |                                                                                                         |
+| templates for new rows                                                                                                   | - (core Templates)           | ✓                              | must                 | a note in the templates folder; Obsidian's `{{date}}`, `{{time}}`, `{{title}}`                          |
+| a default template per base and per view                                                                                 | -                            | ✓                              | must                 | `nib.template: "[[Templates/Bug]]"`                                                                     |
+| repeating templates                                                                                                      | -                            | ✓                              | should               | a template with `🔁` makes a note on its schedule when nib runs (5.13)                                  |
+| buttons in a page                                                                                                        | -                            | ✓                              | should               | the button column, and a ` ```button ` fence later                                                      |
+| automation: property set when another changes                                                                            | -                            | ✓                              | should               | rules in `nib.automations`, run where nib runs                                                          |
+| automation: notification                                                                                                 | -                            | ✓                              | should               | a reminder to the reader                                                                                |
+| automation: webhook, Slack, mail                                                                                         | -                            | ✓                              | later                | needs the Worker to run it while nib is closed                                                          |
+| automation on a schedule                                                                                                 | -                            | ✓                              | later                | with repeating templates on the Worker                                                                  |
+| **Structure**                                                                                                            |                              |                                |                      |                                                                                                         |
+| sub-items                                                                                                                | -                            | ✓                              | must                 | nested tasks; for notes a `parent` relation, shown as a tree                                            |
+| dependencies, blocked-by                                                                                                 | -                            | ✓                              | should               | as above; a blocked task dims and says why on hover                                                     |
+| shift dependent dates                                                                                                    | -                            | ✓                              | later                | after the timeline lands                                                                                |
+| lock a view or a base                                                                                                    | -                            | ✓                              | should               | `nib.locked: true`; edits to the view ask first                                                         |
+| copy as CSV, save as CSV                                                                                                 | ✓                            | ✓                              | should               |                                                                                                         |
+| import CSV as a base                                                                                                     | -                            | ✓                              | should               | each row a note, columns as properties (CSV import exists)                                              |
+| duplicate a view                                                                                                         | ✓                            | ✓                              | must                 |                                                                                                         |
+| **Formula language**                                                                                                     |                              |                                |                      |                                                                                                         |
+| arithmetic, comparison, `&&`, `\|\|`, `!`                                                                                | ✓                            | ✓                              | must                 |                                                                                                         |
+| date arithmetic `+ "1d"`, `relative()`                                                                                   | ✓                            | ✓                              | must                 |                                                                                                         |
+| `if`, `now`, `today`, `date`, `duration`, `number`, `list`, `link`, `file`, `max`, `min`                                 | ✓                            | ✓                              | must                 |                                                                                                         |
+| string, number, list, date, link, file, object and regexp methods                                                        | ✓                            | ✓                              | must                 | the functions page, every one                                                                           |
+| `image`, `icon`, `html`                                                                                                  | ✓                            | ~                              | must, html should    | `html` is escaped outside the reader's own spaces (trust.ts)                                            |
+| `let`, `lets`, user functions                                                                                            | -                            | ✓                              | later                | Bases has none; a nib-only formula would not open in Obsidian                                           |
+| `random`                                                                                                                 | ✓                            | -                              | must                 |                                                                                                         |
+| **Platform**                                                                                                             |                              |                                |                      |                                                                                                         |
+| 10,000 rows                                                                                                              | ~                            | ~                              | must                 | 5.17                                                                                                    |
+| offline                                                                                                                  | ✓                            | ~                              | must                 | files                                                                                                   |
+| on the phone                                                                                                             | ✓                            | ✓                              | must                 | the views at phone width (5.18)                                                                         |
+| agents read and edit                                                                                                     | -                            | ✓ (Notion AI)                  | must                 | 5.15                                                                                                    |
+| sync and share                                                                                                           | ✓ (Sync)                     | ✓                              | must                 | they are notes                                                                                          |
+| version history                                                                                                          | ✓                            | ✓                              | must                 | the note's versions                                                                                     |
 
 **Count: 57 must, 24 should, 9 later, 2 drop** (where a row has two marks, its first).
 
 **Still open after lane 7** (2026-10-05), every other must and should row being built by
 lanes 1, 4 and 7:
 
-| row | mark | why it waits |
-| --- | --- | --- |
-| person | should | needs the shared space's members as choices, which the sharing store does not hand the views yet |
-| relation limited to one | should | `nib.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
-| AI autofill of a property | should | the AI sidebar's job (5.15); no column command there yet |
-| `html` drawn | should | `html()` is evaluated and escaped by the engine; no layout draws it as markup yet |
-| move to a folder as one undo | (5.13) | an automation's move is a file operation and undoes on its own, after the edit it followed |
+| row                          | mark   | why it waits                                                                                                            |
+| ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| person                       | should | needs the shared space's members as choices, which the sharing store does not hand the views yet                        |
+| relation limited to one      | should | `nib.properties.<key>.one` is read and kept; a cell still edits a relation as words, with no link picker to hold to one |
+| AI autofill of a property    | should | the AI sidebar's job (5.15); no column command there yet                                                                |
+| `html` drawn                 | should | `html()` is evaluated and escaped by the engine; no layout draws it as markup yet                                       |
+| move to a folder as one undo | (5.13) | an automation's move is a file operation and undoes on its own, after the edit it followed                              |
 
 ## 5. The design
 
@@ -437,8 +437,9 @@ lanes 1, 4 and 7:
 
 ```md
 ## Errands
+
 - [ ] Call the bank about the card [time:: 16:00] [remind:: 15m] #admin ⏫ 📅 2026-10-06
-  Their number is on the back of the old card.
+      Their number is on the back of the old card.
   - [ ] Find the old card
 - [ ] Water the plants 🔁 every 3 days when done 📅 2026-10-04
 - [x] Water the plants 🔁 every 3 days when done 📅 2026-10-01 ✅ 2026-10-01
@@ -460,24 +461,24 @@ Why this and not a store of nib's own:
 **The fields.** nib reads all of the Tasks format and Dataview's bracket form, and writes
 one canonical form so a round trip through Obsidian changes no byte.
 
-| field | written | read too | notes |
-| --- | --- | --- | --- |
-| status | `[ ]` open, `[x]` done, `[/]` doing, `[-]` cancelled | any one character, as the box already reads it | `[>]` and others are kept and shown as open with their mark |
-| due date | `📅 2026-10-06` | `[due:: 2026-10-06]` | Todoist's date |
-| scheduled | `⏳ 2026-10-08` | `[scheduled:: ]` | "do it on", Things' When |
-| start | `🛫 2026-10-08` | `[start:: ]` | hidden from Today and Upcoming until then, Things' Anytime |
-| created | `➕ 2026-10-03` | `[created:: ]` | written by quick add when Settings says so (off by default) |
-| done | `✅ 2026-10-03` | `[completion:: ]` | written on ticking |
-| cancelled | `❌ 2026-10-03` | `[cancelled:: ]` | written on cancelling |
-| priority | `🔺` p1, `⏫` p2, `🔼` p3, none p4 | `🔽`, `⏬`, `[priority:: ]` | the two low ones are kept and sort last |
-| recurrence | `🔁 every week on Monday`, `... when done` | `[repeat:: ]` | always written in English, the words Tasks parses; shown in the reader's language |
-| id, depends on | `🆔 a1b2c3`, `⛔ a1b2c3` | `[id:: ]`, `[dependsOn:: ]` | written when a dependency is drawn |
-| tags | `#admin` | | Todoist's labels |
-| time | `[time:: 16:00]` | `[time:: 16:00 Europe/Zurich]` | nib's; the due or scheduled date's time |
-| duration | `[duration:: 45m]` | `1h30m`, `90m` | nib's |
-| deadline | `[deadline:: 2026-10-20]` | | nib's; Todoist's deadline |
-| reminders | `[remind:: 15m, 2026-10-06 09:00]` | | nib's; relative to the due time, or absolute |
-| assignee | `[assignee:: Lucile]` | `+Lucile` in quick add | nib's |
+| field          | written                                              | read too                                       | notes                                                                             |
+| -------------- | ---------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| status         | `[ ]` open, `[x]` done, `[/]` doing, `[-]` cancelled | any one character, as the box already reads it | `[>]` and others are kept and shown as open with their mark                       |
+| due date       | `📅 2026-10-06`                                      | `[due:: 2026-10-06]`                           | Todoist's date                                                                    |
+| scheduled      | `⏳ 2026-10-08`                                      | `[scheduled:: ]`                               | "do it on", Things' When                                                          |
+| start          | `🛫 2026-10-08`                                      | `[start:: ]`                                   | hidden from Today and Upcoming until then, Things' Anytime                        |
+| created        | `➕ 2026-10-03`                                      | `[created:: ]`                                 | written by quick add when Settings says so (off by default)                       |
+| done           | `✅ 2026-10-03`                                      | `[completion:: ]`                              | written on ticking                                                                |
+| cancelled      | `❌ 2026-10-03`                                      | `[cancelled:: ]`                               | written on cancelling                                                             |
+| priority       | `🔺` p1, `⏫` p2, `🔼` p3, none p4                   | `🔽`, `⏬`, `[priority:: ]`                    | the two low ones are kept and sort last                                           |
+| recurrence     | `🔁 every week on Monday`, `... when done`           | `[repeat:: ]`                                  | always written in English, the words Tasks parses; shown in the reader's language |
+| id, depends on | `🆔 a1b2c3`, `⛔ a1b2c3`                             | `[id:: ]`, `[dependsOn:: ]`                    | written when a dependency is drawn                                                |
+| tags           | `#admin`                                             |                                                | Todoist's labels                                                                  |
+| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the due or scheduled date's time                                           |
+| duration       | `[duration:: 45m]`                                   | `1h30m`, `90m`                                 | nib's                                                                             |
+| deadline       | `[deadline:: 2026-10-20]`                            |                                                | nib's; Todoist's deadline                                                         |
+| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the due time, or absolute                                      |
+| assignee       | `[assignee:: Lucile]`                                | `+Lucile` in quick add                         | nib's                                                                             |
 
 **Order on the line**: words, then nib's bracket fields, then tags, then the emoji fields in
 Tasks' own order. Tasks reads its fields from the end of the line backwards and stops at the
@@ -600,15 +601,15 @@ reaches the link index, and no other way: the rows add no watcher of their own.
 
 The built-in views are bases the app carries:
 
-| view | rows | filter | group, sort |
-| --- | --- | --- | --- |
-| Inbox | tasks | open, in a space's inbox note | by space; note order |
-| Today | tasks | open, due or scheduled on or before today, started | Overdue first, then Today; priority, time |
-| Upcoming | tasks | open, dated after today, started | by day; time, priority |
-| Logbook | tasks | done or cancelled | by `✅` day, newest first |
-| Project | tasks | in this note | by heading; note order |
-| Label | tasks and notes | carry this tag | by note |
-| Assigned to me | tasks | assignee is the signed-in person | by date |
+| view           | rows            | filter                                             | group, sort                               |
+| -------------- | --------------- | -------------------------------------------------- | ----------------------------------------- |
+| Inbox          | tasks           | open, in a space's inbox note                      | by space; note order                      |
+| Today          | tasks           | open, due or scheduled on or before today, started | Overdue first, then Today; priority, time |
+| Upcoming       | tasks           | open, dated after today, started                   | by day; time, priority                    |
+| Logbook        | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
+| Project        | tasks           | in this note                                       | by heading; note order                    |
+| Label          | tasks and notes | carry this tag                                     | by note                                   |
+| Assigned to me | tasks           | assignee is the signed-in person                   | by date                                   |
 
 "Copy to a base" on any of them writes it as a `.base` file the reader then changes.
 
@@ -705,18 +706,18 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   priority, reminder, duration), each one a picker for somebody who would rather click.
 - **The grammar**, English and German, one table per language in `@nib/bases`:
 
-  | what | English | German |
-  | --- | --- | --- |
-  | day | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `wednesday next week`, `next weekend`, `end of month`, `on the 15th`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Mittwoch nächste Woche`, `nächstes Wochenende`, `Monatsende`, `am 15.`, `6. Okt`, `6.10.` |
-  | time | `16:00`, `4pm`, `at 4`, `noon`, `tonight`, `tomorrow morning at 7` | `16:00`, `16 Uhr`, `um 4`, `um 15.30`, `mittags`, `heute Abend`, `am Abend` |
-  | repeat | `every day`, `every weekday`, `every other week`, `every 2nd week`, `every 2nd monday`, `every first monday`, `every 3 months`, `every morning`, `every!` | `jeden Tag`, `werktags`, `jede zweite Woche`, `jede 2. Woche`, `alle zwei Wochen`, `jeden 2. Montag`, `jeden ersten Montag`, `alle 3 Monate`, `jeden Morgen`, `jeden!` |
-  | priority | `p1`...`p4`, `!!!` | the same |
-  | where | `>Note`, `>Note /Heading`, `>Folder/Note` | the same |
-  | tag | `#tag`, `@tag`, `%tag` | the same |
-  | assignee | `+Name` | the same |
-  | reminder | `!30m`, `!9am`, `!tomorrow 9am` | `!30m`, `!9 Uhr` |
-  | deadline | `{fri}` | `{Fr}` |
-  | duration | `for 45m`, `for 1h30` | `für 45 Min`, `1,5 Std` |
+  | what     | English                                                                                                                                                                                        | German                                                                                                                                                                                      |
+  | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | day      | `today`, `tod`, `tomorrow`, `tmr`, `mon`...`sunday`, `next fri`, `in 3 days`, `next week`, `wednesday next week`, `next weekend`, `end of month`, `on the 15th`, `oct 6`, `6/10`, `2026-10-06` | `heute`, `morgen`, `übermorgen`, `Mo`...`Sonntag`, `nächsten Fr`, `in 3 Tagen`, `nächste Woche`, `Mittwoch nächste Woche`, `nächstes Wochenende`, `Monatsende`, `am 15.`, `6. Okt`, `6.10.` |
+  | time     | `16:00`, `4pm`, `at 4`, `noon`, `tonight`, `tomorrow morning at 7`                                                                                                                             | `16:00`, `16 Uhr`, `um 4`, `um 15.30`, `mittags`, `heute Abend`, `am Abend`                                                                                                                 |
+  | repeat   | `every day`, `every weekday`, `every other week`, `every 2nd week`, `every 2nd monday`, `every first monday`, `every 3 months`, `every morning`, `every!`                                      | `jeden Tag`, `werktags`, `jede zweite Woche`, `jede 2. Woche`, `alle zwei Wochen`, `jeden 2. Montag`, `jeden ersten Montag`, `alle 3 Monate`, `jeden Morgen`, `jeden!`                      |
+  | priority | `p1`...`p4`, `!!!`                                                                                                                                                                             | the same                                                                                                                                                                                    |
+  | where    | `>Note`, `>Note /Heading`, `>Folder/Note`                                                                                                                                                      | the same                                                                                                                                                                                    |
+  | tag      | `#tag`, `@tag`, `%tag`                                                                                                                                                                         | the same                                                                                                                                                                                    |
+  | assignee | `+Name`                                                                                                                                                                                        | the same                                                                                                                                                                                    |
+  | reminder | `!30m`, `!9am`, `!tomorrow 9am`                                                                                                                                                                | `!30m`, `!9 Uhr`                                                                                                                                                                            |
+  | deadline | `{fri}`                                                                                                                                                                                        | `{Fr}`                                                                                                                                                                                      |
+  | duration | `for 45m`, `for 1h30`                                                                                                                                                                          | `für 45 Min`, `1,5 Std`                                                                                                                                                                     |
 
   The grammar is nib's own table rather than a library: [chrono][chrono], the usual one,
   has German only in part and no recurrences at all, and a table is what a third language
@@ -726,6 +727,7 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
   "tomorrow" is understood too. Dates are ambiguous across locales (`6/10`); the app's
   language decides the order, and the chip shows the result spelled out, so a misread is
   seen before Enter.
+
 - **Enter** writes the line, the field stays open for the next (Todoist's habit); **Escape**
   closes; **Shift+Enter** a second line for the description; **Ctrl+Enter** writes and opens
   the note at the line. No toast: the new row slides into whatever view is open.
@@ -838,21 +840,21 @@ A view's filter field takes Todoist's language as typed, and `@nib/bases` compil
 expression tree; the toolbar's Filter button shows the same tree as rows to click. Saved, it
 is written as Bases YAML, so Obsidian reads the filter as well.
 
-| Todoist | nib reads it as |
-| --- | --- |
-| `today`, `tomorrow`, `overdue`, `od`, `no date`, `7 days`, `next 7 days`, `next week` | due (or scheduled) on, before or within |
-| `date: oct 6`, `date before: fri`, `date after: today` | the same, on the due date |
-| `deadline: ...`, `no deadline`, `deadline before: ...` | on `[deadline::]` |
-| `p1`...`p4`, `no priority` | priority |
-| `#Note`, `##Folder` | in that note; under that folder |
-| `/Heading` | under that heading |
-| `%tag`, `@tag`, `#tag` where no note has that name, `no labels` | tags |
-| `assigned to: me`, `assigned to: Lucile`, `assigned`, `shared` | assignee; in a shared space |
-| `created: ...`, `created before: ...` | the `➕` date, else the note's creation time |
-| `recurring`, `!recurring`, `subtask`, `!subtask` | recurrence; has a parent task |
-| `search: words` | the words of the line |
-| `&`, `\|`, `!`, `( )`, `*`, `\` | and, or, not, grouping, wildcard, escape |
-| `a, b` | two lists, one under the other, each with its own head (Todoist's comma) |
+| Todoist                                                                               | nib reads it as                                                          |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `today`, `tomorrow`, `overdue`, `od`, `no date`, `7 days`, `next 7 days`, `next week` | due (or scheduled) on, before or within                                  |
+| `date: oct 6`, `date before: fri`, `date after: today`                                | the same, on the due date                                                |
+| `deadline: ...`, `no deadline`, `deadline before: ...`                                | on `[deadline::]`                                                        |
+| `p1`...`p4`, `no priority`                                                            | priority                                                                 |
+| `#Note`, `##Folder`                                                                   | in that note; under that folder                                          |
+| `/Heading`                                                                            | under that heading                                                       |
+| `%tag`, `@tag`, `#tag` where no note has that name, `no labels`                       | tags                                                                     |
+| `assigned to: me`, `assigned to: Lucile`, `assigned`, `shared`                        | assignee; in a shared space                                              |
+| `created: ...`, `created before: ...`                                                 | the `➕` date, else the note's creation time                             |
+| `recurring`, `!recurring`, `subtask`, `!subtask`                                      | recurrence; has a parent task                                            |
+| `search: words`                                                                       | the words of the line                                                    |
+| `&`, `\|`, `!`, `( )`, `*`, `\`                                                       | and, or, not, grouping, wildcard, escape                                 |
+| `a, b`                                                                                | two lists, one under the other, each with its own head (Todoist's comma) |
 
 `#` in a filter means a note when a note has that name and a tag otherwise, with the chip
 saying which, because filters are where Todoist users will type `#Work` from habit. Quick
@@ -1008,14 +1010,14 @@ rather than adding a second one.
 
 **Where it fires**:
 
-| where | nib running | nib closed |
-| --- | --- | --- |
-| Windows | a toast from the notification plugin | **scheduled toasts**: the scheduler hands each to the system (`ToastNotifier.AddToSchedule` under nib's app id, through the `windows` crate already in the build), which shows it at the time with nib not running; the actions start nib |
-| macOS | a notification | a `UNCalendarNotificationTrigger` request, which the system fires with nib quit |
-| Linux | a notification | nothing unless nib is in the tray (8.6); said once in Settings |
-| Android | a notification | **local alarms**: the page hands the list to Kotlin, which sets `AlarmManager` alarms, keeps the list in the app's own storage and sets them again after a reboot. No sync and no credential in Kotlin, so `docs/mobile.md`'s rule against a second sync implementation holds |
-| browser build | a Web Notification while the tab is open | push from the Worker (8.5) |
-| Even glasses | the phone's notification, which the Even app shows on the glasses like any other it is allowed to | the same, from the phone's alarm |
+| where         | nib running                                                                                       | nib closed                                                                                                                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows       | a toast from the notification plugin                                                              | **scheduled toasts**: the scheduler hands each to the system (`ToastNotifier.AddToSchedule` under nib's app id, through the `windows` crate already in the build), which shows it at the time with nib not running; the actions start nib                                     |
+| macOS         | a notification                                                                                    | a `UNCalendarNotificationTrigger` request, which the system fires with nib quit                                                                                                                                                                                               |
+| Linux         | a notification                                                                                    | nothing unless nib is in the tray (8.6); said once in Settings                                                                                                                                                                                                                |
+| Android       | a notification                                                                                    | **local alarms**: the page hands the list to Kotlin, which sets `AlarmManager` alarms, keeps the list in the app's own storage and sets them again after a reboot. No sync and no credential in Kotlin, so `docs/mobile.md`'s rule against a second sync implementation holds |
+| browser build | a Web Notification while the tab is open                                                          | push from the Worker (8.5)                                                                                                                                                                                                                                                    |
+| Even glasses  | the phone's notification, which the Even app shows on the glasses like any other it is allowed to | the same, from the phone's alarm                                                                                                                                                                                                                                              |
 
 **Actions** on every notification that has them: **Done** (ticks it through the same write a
 box does, starting nib in the background where it has to), **Snooze** (15 minutes, or until
@@ -1070,9 +1072,9 @@ reading reminder times), and Emil decided to build it (8.5).
   (and while the quick add key is held, which lane 3 says through `residency.quickAdd`),
   a switch in Settings, Windows and macOS only. One tray with the agents' (`tray_keep` in
   `agents/shell.rs`): Open, the stop while agents are connected, Quit.
-- **Android**: `Reminders.kt` and `AlarmList.kt`; see docs/mobile.md, *Alarms*.
+- **Android**: `Reminders.kt` and `AlarmList.kt`; see docs/mobile.md, _Alarms_.
 - **The Worker**: `services/sync/src/push` and `0044_push.sql`; see docs/mobile.md,
-  *Push*, for what it sends, what is still the client's (lane 6 of docs/chats.md) and
+  _Push_, for what it sends, what is still the client's (lane 6 of docs/chats.md) and
   the keys Emil has to make. Dry-run under `wrangler dev --test-scheduled`: a due row in
   a local D1 was claimed by the minute's cron.
 
@@ -1123,7 +1125,7 @@ views:
       and:
         - '!task.done'
 nib:
-  template: "[[Templates/Bug]]"
+  template: '[[Templates/Bug]]'
   id:
     property: id
     prefix: BUG
@@ -1314,15 +1316,15 @@ window as the note verbs are, `apps/desktop/src/lib/agents/workspace/notes.ts`) 
 marked, the account connector (`services/sync/src/mcp/tools.ts`, reading the account's notes
 with nib closed):
 
-| tool | arguments | what it does | connector |
-| --- | --- | --- | --- |
-| `list_tasks` | `view`? (`inbox`, `today`, `upcoming`, `logbook`, a `.base` path), `filter`? (Todoist's language), `space`?, `limit`? | rows with their anchors, note, heading, fields | yes |
-| `add_task` | `text` (quick add grammar) or `fields`; `note`?, `under`? (a heading), `space`? | writes the line, answers its anchor | yes |
-| `update_task` | `at`, any of `done`, `status`, `text`, `due`, `time`, `scheduled`, `start`, `priority`, `recurrence`, `remind`, `duration`, `deadline`, `assignee`, `tags`, `move_to` (note and heading) | one edit; ticking a recurring task writes its next line | yes |
-| `query_base` | `path` or `yaml`, `view`? | the view's groups, rows and summaries | yes |
-| `add_row` | `base`, `properties`, `title`? | a note made where the base says, from its template | yes |
-| `edit_rows` | `base`?, `paths`, `properties` | front matter on several notes, one transaction per note | no |
-| `edit_base` | `path`, `ops`: `add_view`, `edit_view`, `remove_view`, `set_filter`, `add_formula`, `add_property` | a base edited as YAML, every unknown key kept | no |
+| tool          | arguments                                                                                                                                                                                | what it does                                            | connector |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------- |
+| `list_tasks`  | `view`? (`inbox`, `today`, `upcoming`, `logbook`, a `.base` path), `filter`? (Todoist's language), `space`?, `limit`?                                                                    | rows with their anchors, note, heading, fields          | yes       |
+| `add_task`    | `text` (quick add grammar) or `fields`; `note`?, `under`? (a heading), `space`?                                                                                                          | writes the line, answers its anchor                     | yes       |
+| `update_task` | `at`, any of `done`, `status`, `text`, `due`, `time`, `scheduled`, `start`, `priority`, `recurrence`, `remind`, `duration`, `deadline`, `assignee`, `tags`, `move_to` (note and heading) | one edit; ticking a recurring task writes its next line | yes       |
+| `query_base`  | `path` or `yaml`, `view`?                                                                                                                                                                | the view's groups, rows and summaries                   | yes       |
+| `add_row`     | `base`, `properties`, `title`?                                                                                                                                                           | a note made where the base says, from its template      | yes       |
+| `edit_rows`   | `base`?, `paths`, `properties`                                                                                                                                                           | front matter on several notes, one transaction per note | no        |
+| `edit_base`   | `path`, `ops`: `add_view`, `edit_view`, `remove_view`, `set_filter`, `add_formula`, `add_property`                                                                                       | a base edited as YAML, every unknown key kept           | no        |
 
 `set_task` stays as the one-box verb it is. Every write is a note edit, so the AI sidebar's
 review (keep, undo, rewind) covers tasks with nothing added, and the grant's note scopes
@@ -1371,21 +1373,37 @@ takes the words and a space and nothing else.
 
 ### 5.16 Keys
 
-| key | where | what |
-| --- | --- | --- |
-| Ctrl+Alt+Space | anywhere, the system | quick add window (rebindable, can be off) |
-| Ctrl+Alt+Space, Q | in nib; Q only where no field has the keyboard | quick add |
-| Ctrl+Shift+Y | in nib | the Tasks panel (the next free letter; registry decides) |
-| Ctrl+Enter | a task line, a row | tick (exists) |
-| T, Shift+T, Shift+M | a row in a view | date: today, tomorrow, next Monday |
-| 1 2 3 4 | a row in a view | priority |
-| Alt+↑ / Alt+↓ | a row | move it up or down within its note |
-| Tab, Shift+Tab | a row | make it a sub-task, or lift it out |
-| Space | a row | open the note at the line beside the view |
-| G then T, U, I | a view or the panel | go to Today, Upcoming, Inbox (Todoist's own) |
+| key                          | where                                          | what                                                      |
+| ---------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| Ctrl+Alt+Space               | anywhere, the system                           | quick add window (rebindable, can be off)                 |
+| Ctrl+Alt+Space, Q            | in nib; Q only where no field has the keyboard | quick add                                                 |
+| Ctrl+Shift+Y                 | in nib                                         | the Tasks panel (the next free letter; registry decides)  |
+| Ctrl+Enter                   | a task line                                    | tick (exists)                                             |
+| ↑ ↓, j k                     | a row in a view                                | the row below, above                                      |
+| Enter, Space                 | a row                                          | the task's own view; the note at the line beside the view |
+| e, Ctrl+Enter                | a row                                          | complete                                                  |
+| t, Shift+T                   | a row                                          | the scheduler; the date taken away                        |
+| y, 1 2 3 4                   | a row                                          | priority: its menu, or one of them                        |
+| l, v, .                      | a row                                          | labels, move to a project or the Inbox, the task's menu   |
+| x, Esc                       | a row                                          | select it; let the selection go                           |
+| Ctrl+E                       | a row                                          | the inline editor                                         |
+| Ctrl+] Ctrl+[, Tab Shift+Tab | a row                                          | make it a sub-task, or lift it out                        |
+| Ctrl+↑ ↓, Alt+↑ ↓            | a row                                          | move it up or down within its note                        |
+| Shift+E                      | a row                                          | fold its sub-tasks                                        |
+| Shift+Delete, Ctrl+Shift+C   | a row                                          | delete; copy its link                                     |
+| a, Shift+A                   | a view                                         | add a task at the end, at the top                         |
+| G then T, U, I               | a view or the panel                            | go to Today, Upcoming, Inbox (Todoist's own)              |
 
-Every key in `apps/desktop/src/lib/shortcuts/registry.ts`, shown in tooltips through
-`shortcuts.tooltip`.
+The row keys act on every selected row where any are selected (Ctrl or Cmd and a press,
+Shift and a press for a range, `x`), and the bulk bar at the foot of the list does the
+same with a pointer: date, project, labels, priority, and ⋯ (complete, duplicate, copy
+links, delete), each one write and one undo. On a touch screen a row swiped right is
+completed and swiped left is scheduled; its menu offers Select. The undo toast says what
+a view did: Completed, Scheduled, Moved, Deleted.
+
+Every key in the shortcuts registry, shown in the settings and rebindable: the app's in
+`apps/desktop/src/lib/shortcuts/registry.ts`, a view's rows' in `views/task-keys.ts`,
+which joins the registry with the first view rather than the first paint.
 
 ### 5.17 Importing from Todoist
 
@@ -1395,7 +1413,7 @@ An importer beside the others in `apps/desktop/src/lib/import/`, offered in the 
   Integrations > Developer in Todoist), nib reads `/api/v1` once (projects, sections, tasks,
   labels, comments, reminders, completed tasks if asked) and forgets the token.
 - **From files**: a project's CSV export (`TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT,
-  AUTHOR, RESPONSIBLE, DATE, DATE_LANG, TIMEZONE`, and the deadline and duration columns
+AUTHOR, RESPONSIBLE, DATE, DATE_LANG, TIMEZONE`, and the deadline and duration columns
   newer exports carry), or a backup ZIP of such CSVs.
 
 What becomes what: a project a note (`Todoist/<Folder>/<Project>.md`, or into the space's
@@ -1576,15 +1594,15 @@ reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 
 ### 7.2 The lanes
 
-| lane | owns | builds | tests | wave |
-| --- | --- | --- | --- | --- |
-| **1 `rows-engine`** | `@nib/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1 |
-| **2 `rows-index`** | `lib/rows/` (new); `apps/desktop/src-tauri/src/links.rs` (the scan's two new fields); `apps/desktop/src/lib/scan-note.ts`; the space's `inbox` setting | task lines and raw front matter on the scan (crate and browser); rows built and kept current through `file-ops.ts` and saves; every space scanned after the launch order; the one write path (`lib/rows/write.ts`) for properties and task fields; the inbox note; the cache only if 5.3's measure says so | cargo tests for the scan's fields; store tests for created, moved, removed, saved and a note open with unsaved words; a perf test with 5,000 notes and 10,000 tasks (scan cost, memory, update time); `weight.test.ts` unchanged; a draft-PR CI for the crate | 1 |
-| **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file) | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only | 2 |
-| **4 `views`** | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones) | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured | 2 |
-| **5 `reminders`** | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5) | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list | 2 |
-| **6 `tasks-everywhere`** | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the clipper's "As a task" and the share sheet's | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines | 2 |
-| **7 `database-extras`** | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new) | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts | 3 |
+| lane                         | owns                                                                                                                                                                                                                                                                                                                                                       | builds                                                                                                                                                                                                                                                                                                                                                                                                                                     | tests                                                                                                                                                                                                                                                                                                                                                 | wave |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| **1 `rows-engine`**          | `@nib/bases` (new, in packages/bases); `packages/markdown/src/tasks.ts` and its test; the `tasks` fence's reading                                                                                                                                                                                                                                          | the types above; the task line reader and writer (5.1), canonical order, every Tasks and Dataview field; recurrence (5.2) with next occurrence; Bases YAML read and write with every unknown key kept; the expression language (parser, compiler, every function and method of the functions page); filters, sort, group, sub-group, limit, summaries (the defaults and custom); Todoist's filter language (5.8); the built-in views (5.4) | the Tasks plugin's documented examples round-trip byte for byte; Bases' documented example reads and writes unchanged; every function against Obsidian's documented results; 10,000 rows answered under 20 ms in a perf test; Todoist's documented filters compile to the expected trees; recurrence over month ends, leap days, `when done`, `until` | 1    |
+| **2 `rows-index`**           | `lib/rows/` (new); `apps/desktop/src-tauri/src/links.rs` (the scan's two new fields); `apps/desktop/src/lib/scan-note.ts`; the space's `inbox` setting                                                                                                                                                                                                     | task lines and raw front matter on the scan (crate and browser); rows built and kept current through `file-ops.ts` and saves; every space scanned after the launch order; the one write path (`lib/rows/write.ts`) for properties and task fields; the inbox note; the cache only if 5.3's measure says so                                                                                                                                 | cargo tests for the scan's fields; store tests for created, moved, removed, saved and a note open with unsaved words; a perf test with 5,000 notes and 10,000 tasks (scan cost, memory, update time); `weight.test.ts` unchanged; a draft-PR CI for the crate                                                                                         | 1    |
+| **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
+| **4 `views`**                | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones)                                             | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts                                                                                                                       | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured                                             | 2    |
+| **5 `reminders`**            | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting                                                                                                                                                                                           | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5)                                                                                                                                                                                                               | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list                                       | 2    |
+| **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the clipper's "As a task" and the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
+| **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
 
 **Wave 1** is lanes 1 and 2 together: one is a pure package, the other the crate and the
 store, meeting at 7.1's types. **Wave 2** is lanes 3, 4, 5 and 6 together once lane 1's

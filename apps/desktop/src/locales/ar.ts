@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'اكتملت',
+  'Remove date': 'إزالة التاريخ',
+  'Next task': 'المهمة التالية',
+  'Previous task': 'المهمة السابقة',
+  'Add task at the top': 'إضافة مهمة في الأعلى',
+  '{count} selected': 'تم تحديد {count}',
   // Tasks: the Display menu
   Display: 'العرض',
   'Completed tasks': 'المهام المكتملة',

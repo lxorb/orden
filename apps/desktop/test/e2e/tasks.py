@@ -183,11 +183,10 @@ def today_and_upcoming(page: Page) -> None:
     open_builtin(page, "upcoming")
     words = texts(page, ".view-tab .task .words")
     say(f"[upcoming] {json.dumps(words, ensure_ascii=False)}")
-    for wanted in ["Milk", "Draft the talk"]:
+    # Todoist's Upcoming: every day from today on, today's tasks first.
+    for wanted in ["Water the plants", "Milk", "Draft the talk"]:
         if wanted not in words:
             wrong(f"Upcoming does not hold {wanted}")
-    if "Water the plants" in words:
-        wrong("Upcoming holds a task of today")
     shot(page, "03-upcoming")
 
 

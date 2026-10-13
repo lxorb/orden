@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'انجام شد',
+  'Remove date': 'حذف تاریخ',
+  'Next task': 'کار پسین',
+  'Previous task': 'کار پیشین',
+  'Add task at the top': 'افزودن کار در بالا',
+  '{count} selected': '{count} گزیده',
   // Tasks: the Display menu
   Display: 'نمایش',
   'Completed tasks': 'کارهای انجام‌شده',

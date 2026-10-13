@@ -129,6 +129,20 @@ export function toggled(set: ReadonlySet<string>, key: string): Set<string> {
   return next
 }
 
+/** The rows selected once one more is pressed: it alone toggled, or with `from` (the
+ *  last one pressed, in `order`) every row between the two put in. */
+export function withPicked(
+  picked: ReadonlySet<string>,
+  order: readonly string[],
+  id: string,
+  from: string | null,
+): ReadonlySet<string> {
+  const at = order.indexOf(id)
+  const start = from === null ? -1 : order.indexOf(from)
+  if (start === -1 || at === -1) return toggled(picked, id)
+  return new Set([...picked, ...order.slice(Math.min(start, at), Math.max(start, at) + 1)])
+}
+
 /** A board's swimlanes: every key the columns' sub-groups have, in the order they first
  *  come. */
 export function laneKeys(groups: readonly Group[]): Group['key'][] {

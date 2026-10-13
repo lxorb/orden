@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Tamamlandı',
+  'Remove date': 'Tarihi kaldır',
+  'Next task': 'Sonraki görev',
+  'Previous task': 'Önceki görev',
+  'Add task at the top': 'En üste görev ekle',
+  '{count} selected': '{count} seçildi',
   // Tasks: the Display menu
   Display: 'Görünüm',
   'Completed tasks': 'Tamamlanan görevler',

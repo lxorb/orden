@@ -17,10 +17,12 @@ import { taskLine as lineWords } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
 import { changed, type RowChange } from '../rows/write'
+import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
 import { insideSpace, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
+import { type Said, undoToast } from '../undo-toast.svelte'
 import { dayOf } from './days'
 import type { Drop } from './drop'
 import {
@@ -31,6 +33,7 @@ import {
   movedBeside,
   movedBlock,
   movedUnder,
+  outermost,
   withLines,
   withoutBlock,
 } from './lines'
@@ -43,16 +46,28 @@ function pathOf(row: Row): string | null {
 }
 
 /** One note written from what it said to what it says now; false where nothing
- *  changed or the note could not be read. */
-async function rewrite(path: string, after: (before: string) => string | null): Promise<boolean> {
+ *  changed or the note could not be read. `said` is what the undo toast calls it. */
+async function rewrite(
+  path: string,
+  after: (before: string) => string | null,
+  said?: Said,
+): Promise<boolean> {
   const before = await noteText(workspace, path)
   if (before === null) return false
   const next = after(before)
   if (next === null) return false
   const edit = oneEdit(before, next)
   if (!edit) return false
-  await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  await replaced([changeOf(path, before, [edit])], said)
   return true
+}
+
+/** A write of notes, as one undo; `said` is the word the undo toast offers it back
+ *  under, where it is one a view's tasks were given (undo-toast.svelte.ts). */
+async function replaced(changes: readonly Change[], said?: Said): Promise<void> {
+  await replaceInNotes(workspace, changes)
+  const last = workspace.undone.last
+  if (said && last) undoToast.tell(last, said, workspace.undone.stack)
 }
 
 /** A property of a row's note or a field of its task: the one write path. */
@@ -67,6 +82,7 @@ export function writeRow(row: Row, change: RowChange): Promise<boolean> {
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
   join = false,
+  said?: Said,
 ): Promise<boolean> {
   const byNote = new Map<string, { row: Row; change: RowChange }[]>()
   for (const pair of pairs) {
@@ -84,7 +100,7 @@ export async function writeEach(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaceInNotes(workspace, changes)
+  await replaced(changes, said)
   if (join) (await import('../workspace/undo-join')).joinLast(workspace.undone)
   return true
 }
@@ -95,12 +111,16 @@ export async function tickRow(row: Row, today = dayOf(new Date())): Promise<bool
   const anchor = row.anchor
   const path = pathOf(row)
   if (!anchor || path === null) return false
-  return rewrite(path, (before) => {
-    const line = lineOfAnchor(before, anchor)
-    if (line === null) return null
-    const edits = tick(before, line, today)
-    return edits.length ? appliedEdits(before, edits) : null
-  })
+  return rewrite(
+    path,
+    (before) => {
+      const line = lineOfAnchor(before, anchor)
+      if (line === null) return null
+      const edits = tick(before, line, today)
+      return edits.length ? appliedEdits(before, edits) : null
+    },
+    row.task && !row.task.done ? 'done' : undefined,
+  )
 }
 
 /** Alt+↑ and Alt+↓: the task and everything under it past its sibling. */
@@ -129,36 +149,117 @@ export async function moveBeside(row: Row, target: Row, after: boolean): Promise
   return rewrite(path, (before) => movedBeside(before, anchor, there, after))
 }
 
-/** Many tasks deleted as one write, so one undo brings all of them back: the bulk
- *  bar's Delete. Each note is cut from its last task up, so the lines above a cut are
- *  where the anchors say. */
-export async function deleteRows(many: readonly Row[]): Promise<boolean> {
-  const byNote = new Map<string, Row[]>()
+/** Many tasks' notes, each with the rows it holds; a row of a space no longer here or
+ *  of no line left out. */
+function byNote(many: readonly Row[]): Map<string, Anchored[]> {
+  const out = new Map<string, Anchored[]>()
   for (const row of many) {
     const path = pathOf(row)
-    if (path !== null && row.anchor) byNote.set(path, [...(byNote.get(path) ?? []), row])
+    const anchor = row.anchor
+    if (path !== null && anchor) out.set(path, [...(out.get(path) ?? []), { row, anchor }])
   }
+  return out
+}
+
+interface Anchored {
+  row: Row
+  anchor: { line: number; hash: string }
+}
+
+/** Each note of many tasks rewritten by `after`, as one write: one undo. */
+async function rewriteEach(
+  many: readonly Row[],
+  after: (before: string, inNote: Anchored[]) => string,
+  said?: Said,
+): Promise<boolean> {
   const changes = []
-  for (const [path, inNote] of byNote) {
+  for (const [path, inNote] of byNote(many)) {
     const before = await noteText(workspace, path)
     if (before === null) continue
-    let after = before
-    const upward = [...inNote].sort((a, b) => (b.anchor?.line ?? 0) - (a.anchor?.line ?? 0))
-    for (const row of upward) if (row.anchor) after = withoutBlock(after, row.anchor) ?? after
-    const edit = oneEdit(before, after)
+    const edit = oneEdit(before, after(before, inNote))
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaceInNotes(workspace, changes)
+  await replaced(changes, said)
   return true
 }
 
-/** A task written again just under itself, with everything under it: Duplicate. */
-export async function duplicateRow(row: Row): Promise<boolean> {
-  const anchor = row.anchor
-  const path = pathOf(row)
-  if (!anchor || path === null) return false
-  return rewrite(path, (before) => duplicatedBlock(before, anchor))
+/** Many tasks ticked as one write, from the last of each note up, so a recurring task's
+ *  next occurrence written above one leaves the lines above it where the anchors say. */
+export function tickRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const opening = many.some((row) => row.task && !row.task.done)
+  return rewriteEach(
+    many,
+    (before, inNote) => {
+      let text = before
+      const upward = [...inNote].sort((a, b) => b.anchor.line - a.anchor.line)
+      for (const { anchor } of upward) {
+        const line = lineOfAnchor(text, anchor)
+        const edits = line === null ? [] : tick(text, line, today)
+        if (edits.length) text = appliedEdits(text, edits)
+      }
+      return text
+    },
+    opening ? 'done' : undefined,
+  )
+}
+
+/** Many tasks deleted as one write, so one undo brings all of them back: the bulk
+ *  bar's Delete. Each note is cut from its last task up, so the lines above a cut are
+ *  where the anchors say. */
+export function deleteRows(many: readonly Row[]): Promise<boolean> {
+  return rewriteEach(
+    many,
+    (before, inNote) =>
+      outermost(before, inNote).reduce(
+        (text, { anchor }) => withoutBlock(text, anchor) ?? text,
+        before,
+      ),
+    'deleted',
+  )
+}
+
+/** Tasks written again just under themselves, with everything under them: Duplicate. */
+export function duplicateRows(many: readonly Row[]): Promise<boolean> {
+  return rewriteEach(many, (before, inNote) =>
+    outermost(before, inNote).reduce(
+      (text, { anchor }) => duplicatedBlock(text, anchor) ?? text,
+      before,
+    ),
+  )
+}
+
+/** Many tasks moved to the end of one note (`target`, on this disk), each with its
+ *  lines, in the order they stood: the bulk bar's and the row menu's Move to, and `v`.
+ *  The note has to be there. Every note written as one write, so one undo puts all of
+ *  them back. */
+export async function moveRowsTo(many: readonly Row[], target: string): Promise<boolean> {
+  const was = await noteText(workspace, target)
+  if (was === null) return false
+  let there = was
+  const changes = []
+  for (const [path, inNote] of byNote(many)) {
+    if (samePath(path, target)) continue
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    let rest = before
+    const blocks: string[][] = []
+    for (const { anchor } of outermost(before, inNote)) {
+      const cut = cutBlock(rest, anchor)
+      if (!cut) continue
+      rest = cut.rest
+      blocks.unshift(cut.block)
+    }
+    const leave = oneEdit(before, rest)
+    if (!leave) continue
+    changes.push(changeOf(path, before, [leave]))
+    there = withLines(there, blocks.flat())
+  }
+  const arrive = oneEdit(was, there)
+  if (arrive) changes.push(changeOf(target, was, [arrive]))
+  if (!changes.length) return false
+  await replaced(changes, 'moved')
+  return true
 }
 
 /** The link to a task, Obsidian's block reference: the task's block name, given it the
@@ -202,7 +303,7 @@ async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Pro
   if (target === null || samePath(target, from)) {
     if (to.heading === undefined) return false
     const heading = to.heading
-    return rewrite(from, (before) => movedUnder(before, anchor, heading))
+    return rewrite(from, (before) => movedUnder(before, anchor, heading), 'moved')
   }
 
   const [before, there] = await Promise.all([
@@ -219,7 +320,7 @@ async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Pro
   const arrive = oneEdit(there ?? '', after)
   if (leave) changes.push(changeOf(from, before, [leave]))
   if (arrive) changes.push(changeOf(target, there ?? '', [arrive]))
-  await replaceInNotes(workspace, changes)
+  await replaced(changes, 'moved')
   return true
 }
 

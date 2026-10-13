@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'بشپړ شو',
+  'Remove date': 'نېټه لرې کړئ',
+  'Next task': 'راتلونکې دنده',
+  'Previous task': 'پخوانۍ دنده',
+  'Add task at the top': 'پورته دنده ورزيات کړئ',
+  '{count} selected': '{count} ټاکل شوي',
   // Tasks: the Display menu
   Display: 'ښودنه',
   'Completed tasks': 'بشپړې دندې',

@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Completata',
+  'Remove date': 'Rimuovi data',
+  'Next task': 'Attività successiva',
+  'Previous task': 'Attività precedente',
+  'Add task at the top': 'Aggiungi attività in cima',
+  '{count} selected': '{count} selezionate',
   // Tasks: the Display menu
   Display: 'Visualizzazione',
   'Completed tasks': 'Attività completate',

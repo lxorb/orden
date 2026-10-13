@@ -40,8 +40,14 @@
   import { viewport } from '../../viewport.svelte'
   import { addSubtask, writeRow } from '../act'
   import { notePath } from '../kit'
-  import { hasMeta, labelsOf, lineCount, subtaskCounts, taskKey } from '../task-meta'
-  import { priorityEntries, scheduleDeadline, scheduleRows, taskMenu } from '../task-actions'
+  import { hasMeta, lineCount, subtaskCounts, taskKey } from '../task-meta'
+  import {
+    labelEntries,
+    priorityEntries,
+    scheduleDeadline,
+    scheduleRows,
+    taskMenu,
+  } from '../task-actions'
   import TaskBox from '../TaskBox.svelte'
   import TaskRow from '../TaskRow.svelte'
   import Description from './Description.svelte'
@@ -198,25 +204,15 @@
 
   /** The labels a task can be given: every tag the space's tasks carry, its own ticked. */
   function labelMenu(event: MouseEvent) {
-    if (!row || !task) return
-    const current = row
-    const own = task.tags
-    const tags = labelsOf(all)
+    if (!row) return
+    const tags = labelEntries([row])
     if (!tags.length) {
       labelling = true
       void tick().then(() => labelField?.focus())
       return
     }
     menu.show(event, [
-      ...tags.map((tag) => ({
-        label: `#${tag}`,
-        checked: own.includes(tag),
-        keep: true,
-        run: () =>
-          void writeRow(current, {
-            task: { tags: own.includes(tag) ? own.filter((one) => one !== tag) : [...own, tag] },
-          }),
-      })),
+      ...tags,
       null,
       {
         label: t('New label'),
@@ -257,7 +253,7 @@
   }
 
   function moreMenu(event: MouseEvent) {
-    if (row) taskMenu(event, row, kit)
+    if (row) taskMenu(event, [row], kit)
   }
 
   /** A sub-task's own sub-tasks, counted. */

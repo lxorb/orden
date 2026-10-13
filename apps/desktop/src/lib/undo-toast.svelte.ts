@@ -16,9 +16,25 @@
 
 import type { FileAction } from './workspace/undo.svelte'
 
-/** What the toast is about: a delete, a move, or a row archived or taken back out.
- *  Everything else on the stack is taken back from the menus. */
-type Offered = FileAction & { kind: 'delete' | 'move' | 'archive' | 'unarchive' }
+/** What a view's write to tasks was: completed, scheduled, moved, deleted. */
+export type Said = 'done' | 'scheduled' | 'moved' | 'deleted'
+
+/** The writes a view told the toast about (`tell`), with the word for each. Kept here
+ *  rather than on the action, so the undo stack, which the first paint carries, stays
+ *  as it was. */
+const told = new WeakMap<FileAction, Said>()
+
+/** What the toast is about: a delete, a move, a row archived or taken back out, or what
+ *  a view did to tasks. Everything else on the stack is taken back from the menus. */
+type Offered = FileAction & { kind: 'delete' | 'move' | 'archive' | 'unarchive' | 'replace' }
+
+/** The word the toast says, one for each thing it can take back. */
+type Told = 'delete' | 'move' | 'archive' | 'unarchive' | Said
+
+/** What one offered action is told as. */
+function toldOf(action: Offered): Told {
+  return action.kind === 'replace' ? (told.get(action) ?? 'done') : action.kind
+}
 
 /** How long it stays, unless the pointer is on it. Long enough to read one word and
  *  reach for it; Gmail's is about the same. Here rather than in backoff.ts because
@@ -30,7 +46,8 @@ function offered(action: FileAction): action is Offered {
     action.kind === 'delete' ||
     action.kind === 'move' ||
     action.kind === 'archive' ||
-    action.kind === 'unarchive'
+    action.kind === 'unarchive' ||
+    (action.kind === 'replace' && told.has(action))
   )
 }
 
@@ -50,7 +67,7 @@ export function nextBatch(
 
   for (const action of fresh) {
     if (!offered(action)) next = []
-    else if (next[0]?.kind === action.kind) next = [...next, action]
+    else if (next[0] && toldOf(next[0]) === toldOf(action)) next = [...next, action]
     else next = [action]
   }
 
@@ -73,13 +90,25 @@ class UndoToast {
   private timer: ReturnType<typeof setTimeout> | undefined
 
   /** Which kind the toast is about, or null when it is not up. */
-  get kind(): Offered['kind'] | null {
-    return this.batch[0]?.kind ?? null
+  get kind(): Told | null {
+    const first = this.batch[0]
+    return first ? toldOf(first) : null
   }
 
   /** What was on the stack before anybody did anything: none of it is news. */
   know(stack: readonly FileAction[]) {
     for (const action of stack) this.seen.add(action)
+  }
+
+  /** A view's write, on the stack already, and the word for it: offered now, beside
+   *  others of its word still up. The stack heard of it first, before it had one. */
+  tell(action: FileAction, said: Said, stack: readonly FileAction[]) {
+    told.set(action, said)
+    if (stack.at(-1) !== action) return
+    const first = this.batch[0]
+    const along = first && toldOf(first) === said && stack.includes(first)
+    this.batch = along ? [...this.batch, action as Offered] : [action as Offered]
+    this.linger()
   }
 
   /** The stack has changed. */

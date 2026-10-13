@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'ಪೂರ್ಣಗೊಂಡಿದೆ',
+  'Remove date': 'ದಿನಾಂಕ ತೆಗೆದುಹಾಕಿ',
+  'Next task': 'ಮುಂದಿನ ಕಾರ್ಯ',
+  'Previous task': 'ಹಿಂದಿನ ಕಾರ್ಯ',
+  'Add task at the top': 'ಮೇಲೆ ಕಾರ್ಯ ಸೇರಿಸಿ',
+  '{count} selected': '{count} ಆಯ್ಕೆಯಾಗಿವೆ',
   // Tasks: the Display menu
   Display: 'ಪ್ರದರ್ಶನ',
   'Completed tasks': 'ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು',

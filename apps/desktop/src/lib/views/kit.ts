@@ -3,17 +3,15 @@
  *  view itself. A layout draws the engine's answer and calls these; it never filters,
  *  sorts or writes a file of its own (docs/tasks.md 5.9). */
 
-import { addDays, type Base, BUTTON, type Row, type Value } from '@nib/bases'
+import { type Base, BUTTON, type Row, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
-import { dropRow, indentRow, moveRow, tickRow, writeRow } from './act'
+import { dropRow, tickRow, writeRow } from './act'
 import { addNote, openQuickAdd, type Prefill, prefillOf } from './add'
 import { dropInto } from './drop'
-import { nextMonday } from './days'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
-import type { RowKey } from './row-keys'
 import type { ViewSpec } from './spec'
 
 export interface Kit {
@@ -111,43 +109,4 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
   }
   return kit
-}
-
-/** A key pressed on a row, done (row-keys.ts). Answers whether it was one of a row's
- *  own, so the layout keeps the key from going further; stepping and adding are the
- *  layout's, which knows what is above and below. */
-export function runKey(kit: Kit, row: Row, key: RowKey): boolean {
-  switch (key.kind) {
-    case 'open':
-      kit.open(row, key.tab ? 'tab' : 'aside')
-      return true
-    case 'tick':
-      if (row.task) kit.tick(row)
-      return row.task !== undefined
-    case 'due': {
-      if (!row.task) return false
-      const today = kit.live.today
-      const due =
-        key.when === 'today'
-          ? today
-          : key.when === 'tomorrow'
-            ? addDays(today, 1)
-            : nextMonday(today)
-      kit.write(row, { task: { due } })
-      return true
-    }
-    case 'priority':
-      if (row.task) kit.write(row, { task: { priority: key.priority } })
-      return row.task !== undefined
-    case 'move':
-      if (row.task) void moveRow(row, key.up)
-      return row.task !== undefined
-    case 'indent':
-      if (row.task) void indentRow(row, key.deeper)
-      return row.task !== undefined
-    case 'step':
-    case 'add':
-    case 'edit':
-      return false
-  }
 }

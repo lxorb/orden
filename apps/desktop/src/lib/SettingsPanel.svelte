@@ -26,6 +26,8 @@
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  // A view's keys are in the list from the first view on; here they are in it anyway.
+  import './views/task-keys'
   import { runnable } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { NOTHING, pull } from './pull.svelte'

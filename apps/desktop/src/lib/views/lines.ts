@@ -198,3 +198,20 @@ export function duplicatedBlock(text: string, anchor: Anchor): string | null {
   const copy = lines.slice(from, to).map((one) => one.text.replace(/\s\^[\w-]+\s*$/, ''))
   return spliced(lines, to, to, copy)
 }
+
+/** Of many tasks of one note, the ones not inside another's block, last first: what a
+ *  move or a duplicate of all of them takes, since a parent carries its sub-tasks, and
+ *  in the order that keeps the lines above each cut where the anchors say. */
+export function outermost<T extends { anchor: Anchor }>(text: string, many: readonly T[]): T[] {
+  const lines = linesOf(text)
+  const placed = many.flatMap((one) => {
+    const index = lineOfAnchor(text, one.anchor)
+    return index === null ? [] : [{ one, span: blockAt(lines, index) }]
+  })
+  return placed
+    .filter(
+      ({ span }) => !placed.some((other) => other.span[0] < span[0] && span[1] <= other.span[1]),
+    )
+    .sort((a, b) => b.span[0] - a.span[0])
+    .map(({ one }) => one)
+}

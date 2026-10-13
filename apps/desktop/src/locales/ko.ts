@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: '완료됨',
+  'Remove date': '날짜 제거',
+  'Next task': '다음 작업',
+  'Previous task': '이전 작업',
+  'Add task at the top': '맨 위에 할 일 추가',
+  '{count} selected': '{count}개 선택됨',
   // Tasks: the Display menu
   Display: '보기',
   'Completed tasks': '완료된 작업',

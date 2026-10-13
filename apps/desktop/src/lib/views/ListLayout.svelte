@@ -7,7 +7,9 @@
    *  of what is on screen without measuring a row: a Logbook of ten thousand lines
    *  mounts thirty (`Heights`, the chat's own). The three heights a line can be are
    *  read off a probe once, and again when the box is resized. The keyboard walks the
-   *  rows and every key of row-keys.ts works on the one it is on. A row carried onto
+   *  rows and every key of row-keys.ts works on the one it is on, or on every one
+   *  selected (x, Ctrl or Shift and a press), with the bulk bar at the foot of the list
+   *  for the same with a pointer. A row carried onto
    *  another group is written into it; onto another task of its own note, it moves its
    *  lines there. */
   import { groupName, type Row, rowId, type Value } from '@nib/bases'
@@ -15,20 +17,22 @@
   import { Heights } from '../chats/view/window'
   import { without } from '../records'
   import { t } from '../i18n.svelte'
-  import { currentPlatform } from '../keys'
   import { ListView, tokenRow } from '../row-window.svelte'
   import Twist from '../Twist.svelte'
+  import { shortcuts } from '../shortcuts.svelte'
   import { samePath } from '../space-paths'
   import { viewport } from '../viewport.svelte'
   import { moveBeside } from './act'
   import AddRow from './AddRow.svelte'
+  import BulkBar from './BulkBar.svelte'
   import { droppable, type Point } from './drag.svelte'
-  import { type Kit, runKey } from './kit'
-  import { EMPTY, listItems, toggled, withEveryDay } from './list-items'
+  import type { Kit } from './kit'
+  import { EMPTY, listItems, toggled, withEveryDay, withPicked } from './list-items'
   import { parentOf } from './columns'
   import { rowKey } from './row-keys'
+  import './task-keys'
   import RowLine from './RowLine.svelte'
-  import { scheduleRows } from './task-actions'
+  import { runKey, scheduleRows } from './task-actions'
   import { hasMeta, lineCount, subtaskCounts, taskKey } from './task-meta'
   import TaskRow from './TaskRow.svelte'
   import { dayHead, groupLabel } from './words'
@@ -66,6 +70,9 @@
   let selected = $state<string | null>(null)
   /** The row whose task is being changed in its own field, Todoist's inline editor. */
   let editing = $state<string | null>(null)
+  /** The rows selected, by item, and the one a Shift and a press counts from. */
+  let picked = $state.raw<ReadonlySet<string>>(EMPTY)
+  let pickedFrom: string | null = null
   /** The add row Q asked for, by group name, and how many times; see AddRow's `asked`. */
   let adding = $state({ group: '', count: 0 })
 
@@ -86,6 +93,20 @@
     ),
   )
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
+  /** The rows selected that are still in the list: a task completed out of it goes. */
+  const pickedRows = $derived(picked.size ? rows.filter((one) => picked.has(one.id)) : [])
+
+  /** A row selected or let go; `range` selects every row from the last one pressed. */
+  function pick(id: string, range: boolean) {
+    const order = rows.map((one) => one.id)
+    picked = withPicked(picked, order, id, range ? pickedFrom : null)
+    pickedFrom = id
+  }
+
+  function unpick() {
+    picked = EMPTY
+    pickedFrom = null
+  }
 
   /** Every task's sub-tasks, counted over all the rows the view is over. */
   const subtasks = $derived(subtaskCounts(live.rows))
@@ -198,9 +219,23 @@
   }
 
   function keydown(event: KeyboardEvent) {
-    const key = rowKey(event, currentPlatform() === 'mac')
+    const key = rowKey(event, (id) => shortcuts.keyFor(id), shortcuts.platform)
     if (!key) return
     const at = rows.findIndex((one) => one.id === selected)
+    if (key.kind === 'unpick') {
+      if (!picked.size) return
+      event.preventDefault()
+      unpick()
+      return
+    }
+    const here = rows[at]
+    if (key.kind === 'pick' || key.kind === 'fold') {
+      if (!here) return
+      event.preventDefault()
+      if (key.kind === 'pick') pick(here.id, false)
+      else if (here.twist) shut = toggled(shut, rowId(here.row))
+      return
+    }
     if (key.kind === 'add') {
       event.preventDefault()
       const adds = items.filter((item) => item.kind === 'add')
@@ -228,8 +263,12 @@
       if (next) select(next.id)
       return
     }
-    const row = rows[at]?.row
-    if (row && runKey(kit, row, key)) event.preventDefault()
+    if (!here) return
+    const many = pickedRows.length ? pickedRows.map((one) => one.row) : [here.row]
+    const box = list?.querySelector(`[data-item="${CSS.escape(here.id)}"]`)?.getBoundingClientRect()
+    if (!box || !runKey(kit, many, key, box)) return
+    event.preventDefault()
+    if (key.kind === 'tick' || key.kind === 'delete') unpick()
   }
 
   function select(id: string) {
@@ -238,6 +277,27 @@
       list?.querySelector<HTMLElement>(`[data-item="${CSS.escape(id)}"] [role=option]`)?.focus(),
     )
   }
+
+  /** Where the keyboard's row was, so a row that leaves the list - completed out of
+   *  Today, its date taken away - hands the keyboard to the one that takes its place,
+   *  as Todoist's does, rather than to nothing, where no key of the view is heard. */
+  let selectedAt = 0
+  $effect(() => {
+    const now = rows
+    untrack(() => {
+      if (selected === null) return
+      const at = now.findIndex((one) => one.id === selected)
+      if (at !== -1) {
+        selectedAt = at
+        return
+      }
+      const next = now[Math.min(selectedAt, now.length - 1)]
+      const held = document.activeElement
+      const lost = !held || held === document.body || (list?.contains(held) ?? false)
+      if (next && lost) select(next.id)
+      else if (!next) selected = null
+    })
+  })
 </script>
 
 <div
@@ -315,6 +375,9 @@
               ontwist={() => (shut = toggled(shut, rowId(row)))}
               selected={selected === item.id}
               onselect={() => (selected = item.id)}
+              picked={picked.has(item.id)}
+              picking={picked.size > 0}
+              onpick={(range: boolean) => pick(item.id, range)}
             />
           {:else}
             <RowLine
@@ -341,6 +404,9 @@
     </div>
   {/each}
 </div>
+{#if pickedRows.length}
+  <BulkBar rows={pickedRows.map((one) => one.row)} {kit} onclear={unpick} />
+{/if}
 
 <style>
   /* A task's three heights: the line of its words, each line under them, and the room

@@ -10,10 +10,12 @@
 
 import { folderFor } from '../folder-notes'
 import { projectsFolder } from '../rows/projects'
-import { folderOf, nameOf } from '../space-paths'
+import { folderOf, nameOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
+import { entryAt } from '../tree-edits'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
+import { type ProjectNode, projectNodes } from './project-tree'
 
 /** A file name a project may have: the words, without what a file name cannot hold. */
 function projectName(words: string): string | null {
@@ -66,4 +68,21 @@ export async function renameProject(
   if (name === null) return
   if (project.folder !== null) await workspace.rename(project.folder, name)
   else await workspace.rename(project.note, `${name}.md`)
+}
+
+/** The projects of a space, as the panel draws them; `count` answers a note's open
+ *  tasks. */
+export function spaceProjects(root: string, count: (note: string) => number): ProjectNode[] {
+  const folder = entryAt(workspace.tree, projectsFolder(root))
+  if (!folder?.is_dir) return []
+  return projectNodes(folder, (path) => workspace.arranged.listOf(path), count)
+}
+
+/** A project's note written empty where it is not there yet: a folder's namesake, which
+ *  the panel shows before anything is in it. */
+export async function ensureProject(note: string): Promise<void> {
+  if (workspace.notes.some((one) => samePath(one.path, note))) return
+  await writeFile(note, '')
+  await workspace.loadTree()
+  await workspace.fileCame(note, 'file')
 }

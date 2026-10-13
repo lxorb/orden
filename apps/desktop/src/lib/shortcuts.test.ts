@@ -1356,3 +1356,22 @@ describe('off a Mac', () => {
     expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('F8')
   })
 })
+
+describe('a view’s keys', () => {
+  /** Put in with the first view rather than the first paint (views/task-keys.ts), and
+   *  held to everything the rest of the list is held to once they are in. */
+  test('join the list when a view is drawn, named, grouped and on ids of their own', async () => {
+    expect(registry.SHORTCUTS.some((one) => one.id === 'tasks.complete')).toBe(false)
+    await import('./views/task-keys')
+    const ids = registry.SHORTCUTS.map((one) => one.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const groups = new Set(registry.CATEGORIES.map((one) => one.id))
+    const tasks = registry.SHORTCUTS.filter((one) => one.id.startsWith('tasks.'))
+    expect(tasks.length).toBeGreaterThan(20)
+    for (const one of tasks) {
+      expect(groups.has(one.category), one.id).toBe(true)
+      expect(one.label(), one.id).not.toBe(one.id)
+    }
+    expect(registry.shortcuts.keyFor('tasks.complete')).toBe('e')
+  })
+})

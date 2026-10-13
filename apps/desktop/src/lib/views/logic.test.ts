@@ -23,10 +23,13 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems } from './list-items'
+import { listItems, withPicked } from './list-items'
 import { panelCounts } from './panel'
+import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
+import './task-keys'
 import { readSpec, sameView, writeSpec } from './spec'
+import { swiped } from './swipe-row'
 import { barOf, dragged, spanOf } from './timeline'
 
 const TODAY = '2026-10-04'
@@ -243,6 +246,40 @@ describe('a task’s lines moved', () => {
     expect(withLines('', ['- [ ] New'])).toBe('- [ ] New\n')
     expect(withLines('# P\n\n- [ ] A\n\n', ['- [ ] New'])).toBe('# P\n\n- [ ] A\n- [ ] New\n\n')
   })
+
+  test('many at once take a parent with its sub-tasks, from the last up', async () => {
+    const { outermost } = await import('./lines')
+    const note = '- [ ] A\n  - [ ] A1\n- [ ] B\n'
+    const anchor = (line: string, at: number) => {
+      const found = taskRow('P.md', line, at).anchor
+      if (!found) throw new Error('fixture')
+      return found
+    }
+    const a = { id: 'a', anchor: anchor('- [ ] A', 0) }
+    const a1 = { id: 'a1', anchor: anchor('  - [ ] A1', 1) }
+    const b = { id: 'b', anchor: anchor('- [ ] B', 2) }
+    expect(outermost(note, [a1, a, b]).map((one) => one.id)).toEqual(['b', 'a'])
+    expect(outermost(note, [a1]).map((one) => one.id)).toEqual(['a1'])
+  })
+})
+
+describe('selecting rows', () => {
+  const order = ['a', 'b', 'c', 'd']
+
+  test('a press toggles one, and Shift takes in every row from the last one', () => {
+    const one = withPicked(new Set(), order, 'b', null)
+    expect([...one]).toEqual(['b'])
+    expect([...withPicked(one, order, 'b', null)]).toEqual([])
+    expect([...withPicked(one, order, 'd', 'b')].sort()).toEqual(['b', 'c', 'd'])
+    expect([...withPicked(one, order, 'a', 'gone')].sort()).toEqual(['a', 'b'])
+  })
+
+  test('a swipe is done a third of the way across, or a hand’s breadth', () => {
+    expect(swiped(100, 300)).toBe('right')
+    expect(swiped(-100, 300)).toBe('left')
+    expect(swiped(99, 300)).toBeNull()
+    expect(swiped(130, 1200)).toBe('right')
+  })
 })
 
 describe('the filter builder', () => {
@@ -433,21 +470,45 @@ describe('the keys of a row', () => {
     ...extra,
   })
 
+  const keyFor = (id: string) => shortcuts.defaultFor(id)
+  const on = (key: string, extra: Partial<KeyboardEvent> = {}, mac = false) =>
+    rowKey(press(key, extra), keyFor, mac ? 'mac' : 'win')
+
   test('are Todoist’s', () => {
-    expect(rowKey(press('t'), false)).toEqual({ kind: 'due', when: 'today' })
-    expect(rowKey(press('T', { shiftKey: true }), false)).toEqual({ kind: 'due', when: 'tomorrow' })
-    expect(rowKey(press('M', { shiftKey: true }), false)).toEqual({ kind: 'due', when: 'monday' })
-    expect(rowKey(press('2'), false)).toEqual({ kind: 'priority', priority: 2 })
-    expect(rowKey(press('Enter', { ctrlKey: true }), false)).toEqual({ kind: 'tick' })
-    expect(rowKey(press('Enter', { metaKey: true }), true)).toEqual({ kind: 'tick' })
-    expect(rowKey(press('ArrowUp', { altKey: true }), false)).toEqual({ kind: 'move', up: true })
-    expect(rowKey(press('Tab', { shiftKey: true }), false)).toEqual({
-      kind: 'indent',
-      deeper: false,
-    })
-    expect(rowKey(press('q'), false)).toEqual({ kind: 'add' })
-    expect(rowKey(press('5'), false)).toBeNull()
-    expect(rowKey(press('t', { ctrlKey: true }), false)).toBeNull()
+    expect(on('ArrowDown')).toEqual({ kind: 'step', by: 1 })
+    expect(on('k')).toEqual({ kind: 'step', by: -1 })
+    expect(on('Enter')).toEqual({ kind: 'open' })
+    expect(on(' ')).toEqual({ kind: 'note' })
+    expect(on('e')).toEqual({ kind: 'tick' })
+    expect(on('Enter', { ctrlKey: true })).toEqual({ kind: 'tick' })
+    expect(on('Enter', { metaKey: true }, true)).toEqual({ kind: 'tick' })
+    expect(on('t')).toEqual({ kind: 'schedule' })
+    expect(on('T', { shiftKey: true })).toEqual({ kind: 'undate' })
+    expect(on('2')).toEqual({ kind: 'priority', priority: 2 })
+    expect(on('y')).toEqual({ kind: 'priorities' })
+    expect(on('l')).toEqual({ kind: 'labels' })
+    expect(on('v')).toEqual({ kind: 'project' })
+    expect(on('.')).toEqual({ kind: 'more' })
+    expect(on('x')).toEqual({ kind: 'pick' })
+    expect(on('Escape')).toEqual({ kind: 'unpick' })
+    expect(on('e', { ctrlKey: true })).toEqual({ kind: 'edit' })
+    expect(on(']', { ctrlKey: true })).toEqual({ kind: 'indent', deeper: true })
+    expect(on('Tab', { shiftKey: true })).toEqual({ kind: 'indent', deeper: false })
+    expect(on('ArrowUp', { altKey: true })).toEqual({ kind: 'move', up: true })
+    expect(on('ArrowDown', { ctrlKey: true })).toEqual({ kind: 'move', up: false })
+    expect(on('E', { shiftKey: true })).toEqual({ kind: 'fold' })
+    expect(on('Delete', { shiftKey: true })).toEqual({ kind: 'delete' })
+    expect(on('C', { ctrlKey: true, shiftKey: true })).toEqual({ kind: 'link' })
+    expect(on('q')).toEqual({ kind: 'add' })
+    expect(on('A', { shiftKey: true })).toEqual({ kind: 'add', where: 'top' })
+    expect(on('5')).toBeNull()
+    expect(on('t', { ctrlKey: true })).toBeNull()
+  })
+
+  test('follow a key put somewhere else', () => {
+    const moved = (id: string) => (id === 'tasks.complete' ? 'd' : keyFor(id))
+    expect(rowKey(press('d'), moved, 'win')).toEqual({ kind: 'tick' })
+    expect(rowKey(press('e'), moved, 'win')).toBeNull()
   })
 })
 

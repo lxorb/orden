@@ -61,6 +61,7 @@ export type Category =
   | 'pages'
   | 'table'
   | 'picture'
+  | 'tasks'
   | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [

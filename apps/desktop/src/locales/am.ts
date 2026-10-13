@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'ተጠናቋል',
+  'Remove date': 'ቀኑን አስወግድ',
+  'Next task': 'ቀጣይ ተግባር',
+  'Previous task': 'ቀዳሚ ተግባር',
+  'Add task at the top': 'ከላይ ተግባር አክል',
+  '{count} selected': '{count} ተመርጠዋል',
   // Tasks: the Display menu
   Display: 'አቀራረብ',
   'Completed tasks': 'የተጠናቀቁ ተግባራት',

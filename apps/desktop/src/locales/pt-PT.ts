@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Concluída',
+  'Remove date': 'Remover data',
+  'Next task': 'Tarefa seguinte',
+  'Previous task': 'Tarefa anterior',
+  'Add task at the top': 'Adicionar tarefa no topo',
+  '{count} selected': '{count} selecionadas',
   // Tasks: the Display menu
   Display: 'Visualização',
   'Completed tasks': 'Tarefas concluídas',

@@ -1,6 +1,13 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Tasks: keys, selection and the undo toast
+  Completed: 'పూర్తయింది',
+  'Remove date': 'తేదీ తీసివేయి',
+  'Next task': 'తదుపరి పని',
+  'Previous task': 'మునుపటి పని',
+  'Add task at the top': 'పైన పని జోడించు',
+  '{count} selected': '{count} ఎంచుకోబడ్డాయి',
   // Tasks: the Display menu
   Display: 'ప్రదర్శన',
   'Completed tasks': 'పూర్తయిన పనులు',
