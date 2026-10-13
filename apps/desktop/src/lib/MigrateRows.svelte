@@ -13,6 +13,7 @@
    *  with its profiles, where it keeps more than one. */
   import { t } from './i18n.svelte'
   import { migrating } from './migrating.svelte'
+  import { takingOver } from './web/taking-over.svelte'
   import { isDesktop, isMobile } from './tauri'
 
   /** A phone hands over files one at a time and never a folder; see
@@ -92,6 +93,27 @@
     </button>
   </div>
 {:else}
+  <!-- At the browser build's new address the old address comes first of all, because
+       that is where somebody who wrote in a browser left their notes; see
+       web/taking-over.svelte.ts. -->
+  {#if takingOver.offered}
+    <div class="nib-setting">
+      <span class="name">{t('Notes from nibeditor.com')}</span>
+      {#if takingOver.state === 'nothing'}
+        <span class="value">{t('Nothing there')}</span>
+      {:else}
+        <button
+          class="nib-button is-quiet is-soft"
+          type="button"
+          disabled={takingOver.state === 'asking' || migrating.working}
+          onclick={() => takingOver.bring()}
+        >
+          {t('Import')}
+        </button>
+      {/if}
+    </div>
+  {/if}
+
   {#if folders}
     <div class="nib-setting">
       <span class="name">{OBSIDIAN}</span>
@@ -167,6 +189,14 @@
     font-size: var(--text-row);
     font-weight: var(--weight-row);
     color: var(--text);
+  }
+
+  /* What the old address answered, where its button was: the row's value. */
+  .value {
+    flex: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
   }
 
   .pair {

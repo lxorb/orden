@@ -1,9 +1,9 @@
 /** The row on the browser build's first visit that brings the notes over from the
  *  old address; handoff.ts says how, and why it has to be a popup.
  *
- *  Offered only at the new address, only on the visit that has nothing yet (the
- *  space chooser is up for that visit alone; see first-visit.svelte.ts), and only
- *  while nobody is signed in, so what it writes over is never somebody's. A
+ *  Offered in Settings > Import, which the welcome note links to, only at the new
+ *  address, only on the visit that has nothing yet (see first-visit.svelte.ts), and
+ *  only while nobody is signed in, so what it writes over is never somebody's. A
  *  person who never used the old address presses it once and is told there is
  *  nothing there. */
 
@@ -26,7 +26,7 @@ class TakingOver {
       typeof location !== 'undefined' &&
       location.origin === WEB &&
       !account.signedIn &&
-      firstVisit.asking
+      firstVisit.fresh
     )
   }
 

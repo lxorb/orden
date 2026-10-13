@@ -741,7 +741,8 @@ class Workspace {
     // wants a welcome note. See welcome.ts.
     if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
-      await seed()
+      // What the old address's handoff waits for; see first-visit.svelte.ts.
+      if (await seed()) (await import('./first-visit.svelte')).firstVisit.seeded()
     }
 
     const state = readSession(stored(STORAGE_KEY))

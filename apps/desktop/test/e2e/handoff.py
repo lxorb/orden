@@ -2,10 +2,10 @@
 
 The web build moved from nibeditor.com to orden.so, and a browser keeps each origin's
 storage apart: notes written at the old address and never synced are not visible at
-the new one (see src/lib/web/handoff.ts). The new address's first visit offers one
-row, "Notes from nibeditor.com", which opens the old address's /handoff page as a
-popup; that page hands over everything its origin holds, and the new address starts
-again from it.
+the new one (see src/lib/web/handoff.ts). On the new address's first visit, Settings >
+Import - where the welcome note's last line goes - offers one row, "Notes from
+nibeditor.com", which opens the old address's /handoff page as a popup; that page hands
+over everything its origin holds, and the new address starts again from it.
 
 Both addresses are played by one build on two local origins, `rebrand-old.localhost`
 and `rebrand-new.localhost` on this drive's port, which the build is told about
@@ -13,7 +13,7 @@ and `rebrand-new.localhost` on this drive's port, which the build is told about
 
 - the old address offers nothing of the kind, and a note written there is a note;
 - at the new address the row is there, and pressing it brings the note, the session
-  and the settings over, signed in as before, with the question answered;
+  and the settings over, signed in as before, and the first visit is over;
 - a browser that never used the old address is told "Nothing there";
 - a page on any other origin that opens /handoff is handed nothing.
 
@@ -43,9 +43,9 @@ ELSEWHERE = f"http://rebrand-elsewhere.localhost:{PORT}"
 #: The row, by the words it shows.
 ROW = '.nib-setting:has-text("Notes from nibeditor.com")'
 
-#: After the harness has answered the first-visit question for every context: this
-#: drive is about the first visit, so the question is asked again - on a tab's first
-#: page only, so the answer the handoff writes outlives the page starting again.
+#: This drive is about the first visit, so whatever a context remembers of one is taken
+#: back - on a tab's first page only, so what the handoff writes outlives the page
+#: starting again.
 UNANSWERED = (
     "try { if (!sessionStorage.getItem('drive-unanswered')) {"
     " sessionStorage.setItem('drive-unanswered', '1');"
@@ -107,8 +107,11 @@ def opened(made: Any, origin: str) -> Page:
     return page
 
 
-def chooser(page: Page) -> None:
-    wait_for(page, "document.querySelector('.nib-screen [data-lands]')", "the first visit's question")
+def import_pane(page: Page) -> None:
+    """Settings > Import, the way a reader gets there: the welcome note's last line,
+    followed with the modifier, as every link in a note is."""
+    page.get_by_text("Import from Obsidian or Notion").first.click(modifiers=["ControlOrMeta"])
+    wait_for(page, "!!document.querySelector('[role=dialog]')", "Settings > Import")
 
 
 def files(page: Page) -> list[str]:
@@ -122,11 +125,10 @@ def brought(browser: Browser) -> None:
 
     say("the old address: a first visit, a note written, a session kept")
     old = opened(made, OLD)
-    chooser(old)
+    import_pane(old)
     if old.locator(ROW).count():
         wrong("the old address offers to bring notes from itself")
-    old.locator(".nib-screen [data-lands]").click()
-    wait_for(old, "!document.querySelector('.nib-screen')", "the question to be answered")
+    old.keyboard.press("Escape")
     DRIVE.seed(old, "# Carried over\n\nWritten at the old address.\n")
     old.evaluate("(session) => localStorage.setItem('nib:session', session)", SESSION)
     old.evaluate("() => localStorage.setItem('nib:font-size', '19')")
@@ -137,7 +139,7 @@ def brought(browser: Browser) -> None:
 
     say("the new address: the row, pressed")
     new = opened(made, NEW)
-    chooser(new)
+    import_pane(new)
     row = new.locator(ROW)
     if not row.count():
         wrong("the new address does not offer the old address's notes")
@@ -155,7 +157,6 @@ def brought(browser: Browser) -> None:
     # a new one comes up.
     wait_for(new, "localStorage.getItem('nib:font-size') === '19' && !window.nibApp", "the page to start again")
     DRIVE.ready(new)
-    wait_for(new, "!document.querySelector('.nib-screen')", "the question to stay answered")
 
     after = files(new)
     if not any(name.startswith("Carried over") for name in after):
@@ -166,7 +167,10 @@ def brought(browser: Browser) -> None:
     if new.evaluate("() => localStorage.getItem('nib:font-size')") != "19":
         wrong("the settings did not come over")
     if new.evaluate("() => localStorage.getItem('nib:first-visit')") != "answered":
-        wrong("the first visit's question is not answered after the handoff")
+        wrong("the first visit is not over after the handoff")
+    import_pane(new)
+    if new.locator(ROW).count():
+        wrong("the row is offered again over the notes it brought")
     shot(new, "02-brought")
     made.close()
 
@@ -175,7 +179,7 @@ def nothing(browser: Browser) -> None:
     say("a browser that never used the old address")
     made = context(browser)
     new = opened(made, NEW)
-    chooser(new)
+    import_pane(new)
     with new.expect_popup():
         new.locator(ROW).locator("button").click()
     said = new.locator(ROW).locator(".value")
