@@ -30,7 +30,7 @@ export interface Ground {
 export interface Worn {
   scheme: Scheme
   tint: string
-  /** The bottom right corner's colour, where the frame is glass's own pair. */
+  /** Glass's own pair's second colour. */
   second?: string
   wash: number
   paper?: number
@@ -204,14 +204,8 @@ class Chrome {
   /** The colour on the root, touched only when it changes: the root's style is what
    *  every rule under it is worked out from. */
   private paint(worn: Worn): void {
-    const root = document.documentElement
-    const style = root.style
-    // A pair is a blend across the window (glass.css), one colour a wash of it.
-    const paired = worn.second !== undefined
-    if (paired !== (root.dataset.paired !== undefined)) {
-      if (paired) root.dataset.paired = ''
-      else delete root.dataset.paired
-    }
+    const style = document.documentElement.style
+    document.documentElement.toggleAttribute('data-paired', worn.second !== undefined)
     const said: Record<(typeof PAINTED)[number], string> = {
       '--glass-tint': worn.tint,
       '--glass-tint-2': worn.second ?? worn.tint,
