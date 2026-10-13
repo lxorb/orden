@@ -123,3 +123,63 @@ test('a zoom made inside the page is the size the site is kept at', () => {
   expect(page.zoom).toBe(1.25)
   expect(sites.zoomOf('example.com')).toBe(1.25)
 })
+
+test('reads how a page arrived, and why it did not', () => {
+  expect(readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: null })).toEqual(
+    { tab: 'a', said: 'arrived', url: 'https://a.example/', failure: null },
+  )
+  expect(
+    readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'unreachable' }),
+  ).toEqual({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'unreachable' })
+  // A word the crate never says reads as no failure rather than as a reason to act.
+  expect(readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'x' })).toEqual({
+    tab: 'a',
+    said: 'arrived',
+    url: 'https://a.example/',
+    failure: null,
+  })
+  expect(readSaid({ tab: 'a', said: 'arrived' })).toBe(null)
+})
+
+/** Emil, 2026-10-13 (#235): a host typed with no scheme, given https, and nothing
+ *  answering there - plain http next, once. */
+test('an upgrade nothing answered goes to plain http, once', () => {
+  const page = on('https://example.com')
+  page.upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
+  const went: [string, string][] = []
+  const go = (tab: string, url: string) => void went.push([tab, url])
+
+  // The page the tab was on, finishing as it left, is not the upgrade.
+  heard(page, { tab: 'a', said: 'arrived', url: 'https://svelte.dev/', failure: null }, go)
+  expect(went).toEqual([])
+  expect(page.upgrade).not.toBeNull()
+
+  heard(
+    page,
+    { tab: 'a', said: 'arrived', url: 'https://example.com/', failure: 'unreachable' },
+    go,
+  )
+  expect(went).toEqual([['a', 'http://example.com']])
+  expect(page.upgrade).toBeNull()
+
+  // Settled: the next failure is shown as it is.
+  heard(
+    page,
+    { tab: 'a', said: 'arrived', url: 'https://example.com/', failure: 'unreachable' },
+    go,
+  )
+  expect(went).toHaveLength(1)
+})
+
+test('a wrong certificate, or a page that arrived, settles an upgrade where it is', () => {
+  for (const failure of ['certificate', null] as const) {
+    const page = on('https://example.com')
+    page.upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
+    const went: string[] = []
+    heard(page, { tab: 'a', said: 'arrived', url: 'https://example.com/', failure }, (_, url) =>
+      went.push(url),
+    )
+    expect(went).toEqual([])
+    expect(page.upgrade).toBeNull()
+  }
+})

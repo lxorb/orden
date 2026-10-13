@@ -1101,12 +1101,34 @@ origin is shown plainly either way**, with `www.` dropped the way every browser
 drops it, and an `http:` page keeps its scheme in front of the host, because that
 is the one thing about an address worth warning somebody about.
 
-What somebody types is read once, in `web-tab/address.ts`: a host gets `https:`
-(`localhost:1425` is a host and not a scheme, which is the special case every
-browser makes), a scheme is taken as written so `javascript:` never opens, and
-words are a search - Google, because that is the answer most hands expect from an
-address bar, and a browser that quietly searches somewhere else reads as one that
-found nothing. It was DuckDuckGo, for asking the least.
+What somebody types is read once, in `web-tab/address.ts`: a host gets the scheme
+Chrome would give it (`localhost:1425` is a host and not a scheme, which is the special
+case every browser makes), a scheme is taken as written so `http://` stays `http://` and
+`javascript:` never opens, and words are a search - Google, because that is the answer
+most hands expect from an address bar, and a browser that quietly searches somewhere else
+reads as one that found nothing. It was DuckDuckGo, for asking the least.
+
+**A host is tried the way Chrome tries it.** Emil, 2026-10-13 (#235): _"when i input
+localhost:8765 ... it only tries https"_ - every host was given `https:` and nothing else,
+so a dev server, which serves plain http, opened on the engine's error page.
+
+- This machine and the network it is on go over plain http at once: `localhost` and
+  anything under it, `127.0.0.1` and the rest of loopback, `[::1]`, the private and
+  link-local ranges (`10.`, `172.16-31.`, `192.168.`, `169.254.`, `fc00::/7`, `fe80::`),
+  `.local`, `.lan`, `.internal`, `.home.arpa`, and one word with a port (`nas:5000`). None
+  of them can have a certificate, and Chrome never upgrades them. So does a port of its
+  own on any host (`example.com:8080`), which Chrome does not upgrade either.
+- Any other host is tried over https first and, **when the connection itself fails** -
+  refused, reset, timed out, something on the other end that does not speak TLS - over
+  plain http next, once (`web-tab/upgrade.ts`). A certificate that is wrong is shown, never
+  stepped round, and a server that answered at all (a 404, a 500) is a server that
+  answered. The same holds for a host the field completed to a page once visited over
+  https, which is how a dev server stays broken after one visit that never arrived.
+- The engine says how each navigation of a page's own frame ended (`Arrived` in
+  `src-tauri/src/web_page.rs`). Measured on `WebView2` 154: a refused connection, a server
+  that does not speak TLS, a 404 and a 500 are all `UNKNOWN`, so the HTTP status the
+  server answered with is what tells them apart. `WebView2`'s alone: elsewhere, and on
+  nib's own Chromium, a host that is not this machine's or the network's stays on https.
 
 **The field finishes what is typed from the pages already opened**, the way Chrome's
 omnibox does. Emil, 2026-09-27: _"if I already opened moodle-app2.let.ethz.ch then it
@@ -2097,6 +2119,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
 | `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                           |
 | `apps/desktop/src/lib/web-tab/address.ts`             | what somebody typed, and the origin plainly. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/upgrade.ts`             | https first and plain http when nothing answers there, for a host typed with no scheme. Pure, tested                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                          |
 | `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                        |
 | `apps/desktop/src/lib/web-tab/place.ts`               | where each note was left, per device: the offset and the trail. Tested                                                                                                                                                                                 |

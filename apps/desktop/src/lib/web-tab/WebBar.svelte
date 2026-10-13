@@ -87,7 +87,7 @@
     onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
     /** A right click or a held finger on an arrow: the pages that way, as a list. */
     onhistory: (forward: boolean, event: MouseEvent) => void
-    onaddress: (typed: string, aside: boolean) => void
+    onaddress: (said: string, aside: boolean, typed: string) => void
     onclip: () => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void

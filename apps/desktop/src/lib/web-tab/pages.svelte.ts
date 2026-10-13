@@ -35,6 +35,7 @@ import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
+import type { Upgrade } from './upgrade'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -366,6 +367,11 @@ export class Page {
   /** Where the page was last placed and what was over it, while it is under one of the
    *  app's layers. Not drawn. */
   under: { pane: Rect; over: Over } | null = null
+
+  /** The https address the bar chose for a host typed with no scheme, while the page has
+   *  not yet arrived there: plain http is tried when nothing answers. Not drawn; see
+   *  upgrade.ts. */
+  upgrade: Upgrade | null = null
 
   /** Set while the address field is being typed in, so the page reporting a new
    *  title does not rewrite what somebody is halfway through typing. */
@@ -1117,10 +1123,13 @@ class Pages {
   }
 
   /** Somewhere else, in this tab. */
-  async go(tabId: string, url: string): Promise<void> {
+  async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
 
+    // Only the visit the bar chose https for may fall back from it; any other is the
+    // address it says. See upgrade.ts.
+    page.upgrade = upgrade
     page.url = url
     page.openable = true
     // The title, the mark and the picture all belonged to the page that was there.
@@ -1161,6 +1170,8 @@ class Pages {
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
+    // Back, forward or reload is a visit of its own; see `go`.
+    page.upgrade = null
 
     // Nor is a refused step; see `place`.
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
@@ -1420,8 +1431,14 @@ class Pages {
         )
       }
     })
-    // Sound, full screen, zoom and find; see heard.ts.
-    await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
+    // Sound, full screen, zoom and find, and a page that did not arrive; see heard.ts.
+    await (
+      await import('./heard')
+    ).listening(
+      listen,
+      (tab) => this.held.get(tab),
+      (tab, url) => void this.go(tab, url),
+    )
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return

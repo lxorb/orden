@@ -37,6 +37,7 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin, webAddress } from './address'
+  import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
@@ -756,19 +757,23 @@
         else void pages.step(tab.id, step)
       }}
       onhistory={showTrail}
-      onaddress={(typed: string, aside: boolean) => {
-        const url = webAddress(typed, searchEngine.url)
+      onaddress={(said: string, aside: boolean, typed: string) => {
+        const url = webAddress(said, searchEngine.url)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
         if (!page.inPrivate) visited.typed(book, url)
+        // A host typed with no scheme, given https: plain http where nothing answers
+        // there. See upgrade.ts.
+        const upgrade = upgradeOf(typed || said, url)
         // Alt+Enter: a tab of its own, in front, and this one left where it was.
         if (aside) {
-          workspace.openPage(url, 'front', tab.id)
+          const opened = workspace.openPage(url, 'front', tab.id)
+          if (opened) pages.of(opened).upgrade = upgrade
           return
         }
-        void pages.go(tab.id, url)
+        void pages.go(tab.id, url, upgrade)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.
         void workspace.webAimed(tab, url)

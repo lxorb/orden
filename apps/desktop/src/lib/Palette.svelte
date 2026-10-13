@@ -56,6 +56,7 @@
   import { viewport } from './viewport.svelte'
   import { shownAddress } from './web-tab/omnibox'
   import { pages } from './web-tab/pages.svelte'
+  import { upgradeOf } from './web-tab/upgrade'
   import { visited } from './web-tab/visited'
   import { visitKey } from './web-tab/visits'
   import { webData } from './web-tab/web-data.svelte'
@@ -430,7 +431,11 @@
   const hands: Hands = {
     openEntry: (path, how) => void workspace.openEntry(path, how),
     openAside: (path) => void workspace.openAside(path),
-    openPage: (url, ask) => workspace.openPage(url, ask),
+    openPage: (url, ask) => {
+      const opened = workspace.openPage(url, ask)
+      // A host typed with no scheme, given https: plain http where nothing answers.
+      if (opened) pages.of(opened).upgrade = upgradeOf(term, url)
+    },
     activate: (tab) => workspace.activate(tab),
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
     openAtBlock: (target, how) => void workspace.openAtBlock(target, how),

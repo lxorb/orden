@@ -47,8 +47,9 @@
     /** Which history it offers from, which is its space's; see web-data.ts. */
     book: string
     /** Somebody pressed Enter on something: an address, or words for the tab to make
-     *  one of - and `aside` when it was Alt+Enter, which wants a tab of its own. */
-    onenter: (said: string, aside: boolean) => void
+     *  one of - and `aside` when it was Alt+Enter, which wants a tab of its own; `typed`
+     *  is what was typed before the field finished it. */
+    onenter: (said: string, aside: boolean, typed: string) => void
     ontyping: (on: boolean) => void
   } = $props()
 
@@ -213,7 +214,9 @@
   }
 
   function go(said: string, aside = false) {
-    onenter(said, aside)
+    // What was typed beside where it went: a host the field completed may still fall
+    // back to plain http; see upgrade.ts.
+    onenter(said, aside, typed)
     field?.blur()
   }
 
