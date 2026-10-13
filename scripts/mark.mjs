@@ -92,31 +92,70 @@ function chunk(type, data) {
   return Buffer.concat([length, body, crc])
 }
 
-function encode(size, channels, raw) {
+/** The PNG around rows of samples: `type` is PNG's colour type, `palette` and
+   `alpha` the PLTE and tRNS of an indexed picture. */
+function encode(size, type, raw, palette, alpha) {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(size, 0)
   ihdr.writeUInt32BE(size, 4)
   ihdr[8] = 8
-  ihdr[9] = channels === 4 ? 6 : 4
+  ihdr[9] = type
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
+    ...(palette ? [chunk('PLTE', palette), chunk('tRNS', alpha)] : []),
+    chunk('IDAT', deflateSync(raw, { level: 9, memLevel: 9 })),
     chunk('IEND', Buffer.alloc(0)),
   ])
+}
+
+/** The same picture with a palette of at most 256 entries, a byte a pixel instead of
+   four. The wash runs along one line between its two colours and coverage comes in
+   sixteenths, so few colours are ever drawn. Each channel is rounded to a step of
+   three (more where an edge still brings too many): bands a third of what the eye
+   tells apart on a pastel, and long runs of one index for deflate to fold up. */
+function indexed(size, rgba) {
+  for (let step = 3; ; step++) {
+    const round = (v) => Math.min(255, Math.round(v / step) * step)
+    const index = new Map()
+    const raw = Buffer.alloc(size * (size + 1))
+    let fits = true
+    for (let y = 0; y < size && fits; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4
+        const a = rgba[i + 3]
+        const key = a
+          ? [round(rgba[i]), round(rgba[i + 1]), round(rgba[i + 2]), a].join()
+          : '0,0,0,0'
+        let at = index.get(key)
+        if (at === undefined) {
+          if (index.size === 256) {
+            fits = false
+            break
+          }
+          at = index.size
+          index.set(key, at)
+        }
+        raw[y * (size + 1) + 1 + x] = at
+      }
+    }
+    if (!fits) continue
+    const colours = [...index.keys()].map((key) => key.split(',').map(Number))
+    const palette = Buffer.from(colours.flatMap(([r, g, b]) => [r, g, b]))
+    const alpha = Buffer.from(colours.map((c) => c[3]))
+    return encode(size, 3, raw, palette, alpha)
+  }
 }
 
 const SS = 4
 
 /** Draws `at(x, y)` (a colour on the 1024 grid, or null for nothing) into a
    square PNG `size` wide, supersampled four by four. `grey` writes grey plus
-   alpha and expects `at` to return one number. */
-export function png(size, at, { grey = false } = {}) {
-  const channels = grey ? 2 : 4
-  const raw = Buffer.alloc(size * (size * channels + 1))
-  let cursor = 0
+   alpha and expects `at` to return one number; `small` writes the palette form,
+   for the files a download carries. */
+export function png(size, at, { grey = false, small = false } = {}) {
+  const rgba = Buffer.alloc(size * size * 4)
   for (let y = 0; y < size; y++) {
-    raw[cursor++] = 0
     for (let x = 0; x < size; x++) {
       const sum = [0, 0, 0]
       let hits = 0
@@ -127,19 +166,31 @@ export function png(size, at, { grey = false } = {}) {
             ((y + (sy + 0.5) / SS) / size) * GRID,
           )
           if (found === null) continue
-          const c = grey ? [found, 0, 0] : found
+          const c = grey ? [found, found, found] : found
           sum[0] += c[0]
           sum[1] += c[1]
           sum[2] += c[2]
           hits++
         }
       }
-      const alpha = (hits / (SS * SS)) * 255
-      const take = (v) => (hits ? Math.round(v / hits) : 0)
-      if (grey) raw[cursor++] = take(sum[0])
-      else for (const v of sum) raw[cursor++] = take(v)
-      raw[cursor++] = Math.round(alpha)
+      const i = (y * size + x) * 4
+      for (let k = 0; k < 3; k++) rgba[i + k] = hits ? Math.round(sum[k] / hits) : 0
+      rgba[i + 3] = Math.round((hits / (SS * SS)) * 255)
     }
   }
-  return encode(size, channels, raw)
+  if (small) return indexed(size, rgba)
+  const channels = grey ? 2 : 4
+  const raw = Buffer.alloc(size * (size * channels + 1))
+  for (let y = 0; y < size; y++) {
+    const row = y * (size * channels + 1)
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4
+      const out = row + 1 + x * channels
+      if (grey) {
+        raw[out] = rgba[i]
+        raw[out + 1] = rgba[i + 3]
+      } else rgba.copy(raw, out, i, i + 4)
+    }
+  }
+  return encode(size, grey ? 4 : 6, raw)
 }
