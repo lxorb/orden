@@ -136,6 +136,7 @@ const ops = await import('./tab-strip/ops')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
 const { STARTS_RIGHT } = await import('./workspace/panels')
+const { shown: pad } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -563,6 +564,86 @@ describe('the right side’s button', () => {
 
     expect(workspace.openOn('left')).toBe('tree')
     expect(workspace.openOn('right')).toBe('links')
+  })
+})
+
+/** Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". The
+ *  scratchpad's card is the quick one, so it goes over the right side and the side comes
+ *  back as the card goes; the side asked for, by any road, puts the card away. */
+describe('the right side and the scratchpad take turns', () => {
+  beforeEach(() => {
+    workspace.right = [...STARTS_RIGHT]
+    workspace.rightPanel = null
+    workspace.lastRight = null
+    workspace.panel = null
+    pad.on = false
+  })
+
+  afterEach(() => {
+    pad.on = false
+  })
+
+  test('the card over the side hides it, and the side is back as the card goes', () => {
+    workspace.showPanel('outline')
+    pad.show(false)
+    expect(workspace.openOn('right')).toBeNull()
+
+    pad.hide()
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+
+  test("the side's button, a panel's own command and its tab each put the card away", () => {
+    const roads = [
+      () => workspace.toggleSidebar('right'),
+      () => workspace.showPanel('links'),
+      () => workspace.togglePanel('links'),
+    ]
+    for (const road of roads) {
+      workspace.rightPanel = null
+      pad.show(false)
+      road()
+      expect(pad.on).toBe(false)
+      expect(workspace.openOn('right')).not.toBeNull()
+    }
+  })
+
+  test('the button over a kept panel shows that panel, never shuts it', () => {
+    workspace.showPanel('ask')
+    pad.show(false)
+    workspace.toggleSidebar('right')
+    expect(pad.on).toBe(false)
+    expect(workspace.openOn('right')).toBe('ask')
+  })
+
+  test('the card does not come back when the side shuts', () => {
+    pad.show(false)
+    workspace.showPanel('outline')
+    workspace.closePanel('right')
+    expect(pad.on).toBe(false)
+    expect(workspace.openOn('right')).toBeNull()
+  })
+
+  test('the left side has nothing to do with it', () => {
+    pad.show(false)
+    workspace.showPanel('tree')
+    workspace.toggleSidebar()
+    expect(pad.on).toBe(true)
+  })
+
+  test('shutting the side under the card is nothing to shut', () => {
+    workspace.showPanel('outline')
+    pad.show(false)
+    workspace.closePanel('right')
+    pad.hide()
+    expect(workspace.openOn('right')).toBe('outline')
+  })
+
+  test('a layout written with both open comes back with only the card', () => {
+    // What a session and the card's own record say after a build that let both stand.
+    workspace.rightPanel = 'outline'
+    pad.on = true
+    expect(workspace.openOn('right')).toBeNull()
+    expect(workspace.holdablePanel).toBeNull()
   })
 })
 

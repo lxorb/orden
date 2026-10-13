@@ -58,7 +58,7 @@ class Drawer {
 
   /** Which panel is open on this side, or nothing. */
   get panel(): Panel | null {
-    return this.side === 'left' ? workspace.panel : workspace.rightPanel
+    return workspace.openOn(this.side)
   }
 
   /** Whether this side has a drawer to pull out at all. The left always has the

@@ -60,7 +60,6 @@
     recordingPill,
     renameNotice,
     rewriteSheet,
-    scratchpadCard,
     settingsSheet,
     shareSheet,
     signInSheet,
@@ -84,9 +83,7 @@
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { saveFront } from './lib/save-place/door'
-  import { shown as pad } from './lib/scratchpad/is.svelte'
-  import { scale } from 'svelte/transition'
-  import { LAYER } from './lib/motion'
+  import PadColumn from './lib/scratchpad/PadColumn.svelte'
   import { isDraft } from './lib/workspace/drafts'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
@@ -364,7 +361,7 @@
   // The same for the other side, which is a drawer over the note wherever the
   // left one is; see the right-hand rules in the stylesheet below.
   $effect(() =>
-    viewport.drawer && workspace.rightPanel
+    viewport.drawer && workspace.openOn('right')
       ? overlays.show(() => workspace.closePanel('right'))
       : undefined,
   )
@@ -382,7 +379,7 @@
   // only wakes what reads it when its own value changes, so a drawer that stays
   // open through three panels is one layer and one entry.
   const covered = $derived(!!workspace.panel)
-  const coveredRight = $derived(!!workspace.rightPanel)
+  const coveredRight = $derived(!!workspace.openOn('right'))
 
   $effect(() => closeOnBack(covered, () => workspace.closePanel()))
   $effect(() => closeOnBack(coveredRight, () => workspace.closePanel('right')))
@@ -941,7 +938,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
+      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !fullscreen.on}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -950,7 +947,7 @@
              was drawn over the drawer it was meant to be under. -->
         <div
           class="scrim"
-          class:over={!!workspace.rightPanel}
+          class:over={!!workspace.openOn('right')}
           class:held={drawer.held || rightDrawer.held}
           class:dragging={drawer.at !== null || rightDrawer.at !== null}
           style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
@@ -1010,15 +1007,8 @@
         </div>
 
         <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if pad.on && !fullscreen.on && !filled && !__EVEN_PLUGIN__}
-          <div
-            class="pad"
-            data-scratchpad
-            style:width="{pad.width}px"
-            transition:scale={{ duration: LAYER.rise, start: LAYER.start }}
-          >
-            {#await scratchpadCard() then Card}<Card />{/await}
-          </div>
+        {#if !fullscreen.on && !filled && !__EVEN_PLUGIN__}
+          <PadColumn />
         {/if}
 
         {#if workspace.right.length && !fullscreen.on && !filled}
@@ -1026,8 +1016,8 @@
             class="panels right"
             data-chrome="end"
             data-theme={chrome.theme}
-            inert={viewport.drawer && !workspace.rightPanel}
-            class:open={!!workspace.rightPanel}
+            inert={viewport.drawer && !workspace.openOn('right')}
+            class:open={!!workspace.openOn('right')}
             class:held={rightDrawer.held}
             class:dragging={rightDrawer.at !== null}
             class:settling={rightDrawer.settle !== null}
@@ -1293,14 +1283,6 @@
     min-width: 0;
     min-height: 0;
     display: flex;
-  }
-
-  .pad {
-    transform-origin: top right;
-  }
-
-  :global([dir='rtl']) .pad {
-    transform-origin: top left;
   }
 
   /* Positioned, so the line that says the app is busy draws along the top of

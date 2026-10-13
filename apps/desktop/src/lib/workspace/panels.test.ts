@@ -148,6 +148,45 @@ describe('what each side shows', () => {
   })
 })
 
+/** Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". The
+ *  card goes over the right side and keeps its panel for when it goes; the side asked
+ *  for puts the card away. */
+describe('the scratchpad over the right side', () => {
+  const under: Sides = { panel: 'tree', rightPanel: 'outline', right: ['outline'], covered: true }
+
+  test('shows nothing there, and keeps the panel for when the card goes', () => {
+    expect(openOn(under, 'right')).toBeNull()
+    expect(openOn({ ...under, covered: false }, 'right')).toBe('outline')
+    expect(openOn(under, 'left')).toBe('tree')
+  })
+
+  test('asking for the panel kept under it shows that panel rather than shutting it', () => {
+    expect(showing(under, 'outline')).toEqual({ ...under, covered: false })
+  })
+
+  test('asking for another panel on the right shows that one, and the card goes', () => {
+    const two: Sides = { ...under, right: ['outline', 'links'] }
+    expect(showing(two, 'links')).toEqual({ ...two, rightPanel: 'links', covered: false })
+  })
+
+  test('a panel on the left leaves the card where it is', () => {
+    expect(showing(under, 'search')).toEqual({ ...under, panel: 'search' })
+    expect(closing(under, 'left').covered).toBe(true)
+  })
+
+  test('a panel moved over while it is being read takes the edge from the card', () => {
+    const reading: Sides = { panel: 'search', rightPanel: null, right: [], covered: true }
+    expect(moving(reading, 'search', 'right')).toEqual({
+      panel: null,
+      rightPanel: 'search',
+      right: ['search'],
+      covered: false,
+    })
+    // One that was not being read arrives shut, under the card.
+    expect(moving(under, 'links', 'right').covered).toBe(true)
+  })
+})
+
 describe('where a panel lives until somebody moves it', () => {
   test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
     expect(rightFrom(undefined)).toEqual([

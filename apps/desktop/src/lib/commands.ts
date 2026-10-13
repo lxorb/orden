@@ -1675,7 +1675,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'right-sidebar',
-      label: workspace.rightPanel ? t('Hide right sidebar') : t('Show right sidebar'),
+      label: workspace.openOn('right') ? t('Hide right sidebar') : t('Show right sidebar'),
       hint: shortcuts.hint('app.right-sidebar'),
       disabled: !workspace.right.length,
       run: () => workspace.toggleSidebar('right'),

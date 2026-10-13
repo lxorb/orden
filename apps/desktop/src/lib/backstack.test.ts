@@ -28,7 +28,7 @@ test('the drawer is registered on whether a side is covered, not on which panel'
   expect(app).toContain('const covered = $derived(!!workspace.panel)')
   expect(app).toContain('closeOnBack(covered, () => workspace.closePanel())')
 
-  expect(app).toContain('const coveredRight = $derived(!!workspace.rightPanel)')
+  expect(app).toContain("const coveredRight = $derived(!!workspace.openOn('right'))")
   expect(app).toContain("closeOnBack(coveredRight, () => workspace.closePanel('right'))")
 })
 
