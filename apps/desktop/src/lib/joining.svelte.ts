@@ -26,7 +26,6 @@ import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
-import { settleLocalNotes } from './settling'
 import { sharedWithYou } from './sharing.svelte'
 import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
@@ -180,10 +179,10 @@ class Joining {
     if (joined.token) await account.arrive(joined.token, joined)
     else if (joined.guest) account.guest = joined.guest
 
-    // A link that opened an account meets whatever this machine already holds,
-    // the same question the emailed code asks and before the space arrives: the
-    // answer to it can be to erase what is here. A guest is not asked.
-    if (joined.user) await settleLocalNotes()
+    // A link that opened an account meets whatever this machine already holds, the
+    // same question the emailed code asks and before the space arrives: the answer can
+    // rename a space here. A guest is not asked. Fetched here, as one launch in many.
+    if (joined.user) await (await import('./settling')).settleLocalNotes()
 
     if (joined.waiting) {
       this.wait()

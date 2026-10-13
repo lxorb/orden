@@ -136,13 +136,6 @@ export function savedRecord(saved: unknown): Saved | null {
   }
 }
 
-/** Every mirror the record holds for an account, and none of another account's. */
-export function savedMirrors(saved: unknown, accountId: string | null): Mirror[] {
-  const record = savedRecord(saved)
-  if (!record || (record.whose !== null && record.whose !== accountId)) return []
-  return Object.values(record.mirrors)
-}
-
 /** One mirror as it was written down, once it reads as one. A mirror with no
  *  space to point at is worse than none: the next pass would sync a folder
  *  against nothing and read every note in it as deleted. */

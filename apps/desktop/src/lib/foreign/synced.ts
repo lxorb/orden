@@ -15,7 +15,7 @@ import { account } from '../account.svelte'
 import { api, ApiError } from '../api'
 import { log } from '../log'
 import { stored } from '../stored'
-import { savedMirrors } from '../sync/mirror'
+import { type Mirror, savedRecord } from '../sync/mirror'
 import { STORAGE_KEY, sync } from '../sync.svelte'
 import type { Engine, ForeignCopies } from '../sync2/asking.svelte'
 
@@ -68,4 +68,11 @@ async function deleted(token: string, id: string) {
     if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return
     log('warn', `sync: a conflict copy ${id} stayed on the account - ${String(error)}`)
   }
+}
+
+/** Every mirror the record holds for an account, and none of another account's. */
+function savedMirrors(saved: unknown, accountId: string | null): Mirror[] {
+  const record = savedRecord(saved)
+  if (!record || (record.whose !== null && record.whose !== accountId)) return []
+  return Object.values(record.mirrors)
 }
