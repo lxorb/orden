@@ -162,19 +162,12 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
 
-    # From the space's own mark in the title bar, which a press left the keyboard on:
-    # Ctrl+Space is the switcher there too, never a click on the mark.
+    # With the panel shut, where the title bar holds no space of its own: the key is
+    # the way to another space there, and it is the same switcher.
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
-    mark = page.locator("[data-space-drop='switcher']").first
-    if mark.count():
-        mark.focus()
-        opened(page, scheme, "from the title bar's mark")
-        if page.locator(".nib-layer.spaces").count():
-            wrong(f"[{scheme}] Ctrl+Space on the mark dropped the title bar's list")
-        page.keyboard.press("Escape")
-        gone(page, scheme, "from the mark")
-    else:
-        say(f"[{scheme}] no title-bar mark to stand on; skipped")
+    opened(page, scheme, "with the panel shut")
+    page.keyboard.press("Escape")
+    gone(page, scheme, "with the panel shut")
 
 
 def drive(browser: Browser) -> None:

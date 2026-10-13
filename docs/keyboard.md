@@ -147,7 +147,7 @@ down are untouched: a list still runs down the screen. See `steppedKey` in
 `apps/desktop/src/lib/direction.ts`, which is the one place that says so.
 
 The space switcher has two places and one list. A press on the space's mark drops
-it out of the panel header or the title bar; Ctrl+Space (and Ctrl+Shift+Space)
+it out of the panel header; Ctrl+Space (and Ctrl+Shift+Space)
 stands the same rows in the middle of the window, where a hand on the keyboard is
 looking, and the key again puts it away. Either way a digit goes to that space at
 once, Alt and a digit too, letters find a name and wait for Enter, Backspace takes

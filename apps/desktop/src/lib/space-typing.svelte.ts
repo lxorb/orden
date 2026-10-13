@@ -2,7 +2,7 @@
  *  may be in.
  *
  *  No field holds it: the letters show in the rows as the hits they are, and Backspace
- *  takes one back. One of these per open list, the title bar's and the ones in the
+ *  takes one back. One of these per open list, the panel header's and the ones in the
  *  middle of the window alike, so a key does the same in each. What a key means is
  *  space-pick.ts; this is the part with a clock.
  *

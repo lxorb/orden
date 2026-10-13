@@ -3,7 +3,6 @@
 All of it is a pixel or a glyph rather than a behaviour, so the run measures rather
 than clicks:
 
-  - the title bar's label for the open space wears the space's own mark;
   - every mark in a badge is centred in it, optically, emoji and stroke alike;
   - a shared space and a shared note wear a shared mark, not a dot;
   - the sidebar button is one glyph whichever state it is in - the same shapes in
@@ -221,7 +220,6 @@ BAR = """
   const want = [
     ['the menu', 'header > :first-child button, header > button:first-child'],
     ['the sidebar button', 'header .toggle'],
-    ['the space label', 'header .space'],
     ['the first tab', 'header .tab, header [role=tab], header .strip button'],
   ]
 
@@ -242,20 +240,6 @@ BAR = """
     height: Math.round(box.height * 100) / 100,
     token: getComputedStyle(document.documentElement).getPropertyValue('--header-height').trim(),
     parts,
-  }
-}
-"""
-
-# The label beside the sidebar button: does it carry the space's own mark.
-LABEL = """
-() => {
-  const label = document.querySelector('header .space')
-  if (!label) return null
-
-  return {
-    text: label.textContent.trim(),
-    marks: label.querySelectorAll('svg, .glyph, .nib-badge').length,
-    html: label.innerHTML.slice(0, 200),
   }
 }
 """
@@ -899,20 +883,12 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         placed = [one for one in bar["parts"] if not one.get("missing")]
         check(
             len(placed) >= 3,
-            f"[{label}] the bar holds the menu, the button, the label and a tab",
+            f"[{label}] the bar holds the menu, the button and a tab",
         )
         for one in placed:
             check(
                 abs(one["off"]) <= SLACK,
                 f"[{label}] {one['name']} is on the bar's centre line (off by {one['off']}px)",
-            )
-
-        label_seen = page.evaluate(LABEL)
-        say(f"[{label}] the space label: {label_seen}")
-        if label_seen:
-            check(
-                label_seen["marks"] >= 1,
-                f"[{label}] the space label wears the space's own mark",
             )
 
         shut = page.evaluate(TOGGLE)

@@ -115,7 +115,6 @@ export const ha: Dictionary = {
   'New window': 'Sabon taga',
   New: 'Sabo',
   'New space': 'Sabon wuri',
-  '{name}: switch space': '{name}: sauya wuri',
   Untitled: 'Babu suna',
   Space: 'Wuri',
   'Name the space': 'Sa suna ga wurin',

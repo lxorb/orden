@@ -114,7 +114,6 @@ export const am: Dictionary = {
   'New window': 'አዲስ መስኮት',
   New: 'አዲስ',
   'New space': 'አዲስ ቦታ',
-  '{name}: switch space': '{name}: ቦታ ቀይር',
   Untitled: 'ርዕስ የለውም',
   Space: 'ቦታ',
   'Name the space': 'ለቦታው ስም ስጥ',

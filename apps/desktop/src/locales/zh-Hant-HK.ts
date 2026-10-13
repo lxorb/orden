@@ -115,7 +115,6 @@ export const zhHantHK: Dictionary = {
   'New window': '新增視窗',
   New: '新增',
   'New space': '新增空間',
-  '{name}: switch space': '{name}：切換空間',
   Untitled: '未命名',
   Space: '空間',
   'Name the space': '空間名稱',

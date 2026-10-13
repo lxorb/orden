@@ -5,7 +5,6 @@
   import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
-  import SpaceSwitcher from './SpaceSwitcher.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -120,14 +119,6 @@
        panel then. Asked of the workspace, since the chooser is fetched with its card. -->
   {#if !listless}
     <SidebarToggle />
-  {/if}
-
-  <!-- With the list shut, the space's mark stands here: the switcher, bare, and
-       outside the drag region so a press on it is never a drag. -->
-  {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
-    <div class="space">
-      <SpaceSwitcher bare />
-    </div>
   {/if}
 
   {#if viewport.touch}
@@ -318,16 +309,6 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
-
-  /* The bar's height and positioned: the list of spaces drops from its bottom edge. */
-  .space {
-    position: relative;
-    flex: none;
-    display: flex;
-    align-items: center;
-    /* So it does not read as the first tab. */
-    margin-inline-end: var(--space-2);
   }
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows

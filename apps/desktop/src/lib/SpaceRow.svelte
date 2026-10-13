@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** What a space's row in a list of spaces says, wherever the list is: the title bar's
+  /** What a space's row in a list of spaces says, wherever the list is: the panel header's
    *  menu and the switcher in the middle of the window draw the same row, so there is
    *  one switcher in two places and not two of them.
    *

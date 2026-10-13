@@ -1,20 +1,18 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import SpaceSwitcher from '../../src/lib/SpaceSwitcher.svelte'
 import Titlebar from '../../src/lib/Titlebar.svelte'
-import { shortcuts } from '../../src/lib/shortcuts.svelte'
 import { spacesMenu } from '../../src/lib/surfaces.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
-/** The space in the title bar while the panel is shut.
+/** The space switcher in the panel's header, and the title bar without one.
  *
- *  Emil, 2026-09-30, of the badge and the word "VIS" beside it: *"that should be
- *  clickable to be able to select the space. also it shouldn't display the entire
- *  name of the current space there"*. So the bar shows the space's mark and no
- *  words, and the mark is the switcher itself: a press on it is the list of spaces
- *  the panel's header opens. Where it sits and how it drops is paint, which the
- *  drive in a real browser looks at; this asks what is in the bar and what a press
- *  on it does.
+ *  The header names the space and a press on it is the list of spaces. The title bar
+ *  wore the space's mark too while the panel was shut, until Emil, 2026-10-13:
+ *  *"remove this space switcher here"*. With the panel shut, Ctrl+Space and the
+ *  palette reach every space. Where the list drops is paint, which the drive in a real
+ *  browser looks at; this asks what a press does.
  *
  *  In the jsdom project because mounting a component needs a document. */
 
@@ -40,7 +38,7 @@ Element.prototype.animate = () => {
 /** The row the keyboard lands on is kept in view, and jsdom has no view. */
 Element.prototype.scrollIntoView = () => undefined
 
-/** The tab strip beside the mark measures itself, and jsdom lays nothing out. */
+/** The title bar's tab strip measures itself, and jsdom lays nothing out. */
 class NoLayout {
   observe() {
     // Nothing to measure.
@@ -84,6 +82,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+function head() {
+  const made = mount(SpaceSwitcher, { target })
+  flushSync()
+  close = () => void unmount(made, { outro: false })
+}
+
 function bar() {
   const made = mount(Titlebar, {
     target,
@@ -93,10 +97,10 @@ function bar() {
   close = () => void unmount(made, { outro: false })
 }
 
-const mark = () => target.querySelector<HTMLButtonElement>('header .space button')
+const mark = () => target.querySelector<HTMLButtonElement>('[data-space-drop="switcher"]')
 const list = () => target.querySelector('[role="menu"]')
 
-/** A press on the mark, and the list it drops once it is here: fetched with the first
+/** A press on the header, and the list it drops once it is here: fetched with the first
  *  press (see SpaceMenu.svelte), which the launch's last turn has usually done already.
  *  Waits for that fetch itself, not for a while: compiling the menu on a cold cache
  *  took longer than `waitFor`'s second on a loaded machine. The markup's `{#await}`
@@ -118,30 +122,17 @@ async function settled() {
   }
 }
 
-test('the shut panel leaves the space’s mark in the bar, and not its name', () => {
+test('the shut panel leaves no space in the title bar', () => {
   bar()
 
-  const button = mark()
-  expect(button).not.toBe(null)
-  // The badge and nothing else: the name is not written anywhere in the bar.
-  expect(button?.querySelector('.nib-badge')).not.toBe(null)
-  expect(target.querySelector('header .space')?.textContent.trim()).toBe('V')
+  expect(target.querySelector('header [data-space-drop]')).toBe(null)
+  expect(target.querySelector('header .nib-badge')).toBe(null)
   expect(target.querySelector('header')?.textContent).not.toContain('VIS')
-  // Where the name went: the tooltip, with the key that does the same, and what a
-  // screen reader hears, with what a press does.
-  expect(button?.getAttribute('title')).toBe(
-    `VIS: switch space (${shortcuts.hint('space.switcher') ?? ''})`,
-  )
-  expect(button?.getAttribute('aria-label')).toBe('VIS: switch space')
-  expect(button?.getAttribute('aria-haspopup')).toBe('menu')
-  // Its own element, beside the stretch the window is dragged by, so a press on it
-  // is never a drag.
-  expect(button?.closest('[data-tauri-drag-region]')).toBe(null)
 })
 
-test('a press on the mark opens the switcher, and a row in it changes space', async () => {
+test('a press on the header opens the switcher, and a row in it changes space', async () => {
   const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
-  bar()
+  head()
 
   expect(list()).toBe(null)
   await dropped()
@@ -166,7 +157,7 @@ test('a press on the mark opens the switcher, and a row in it changes space', as
 
 test('the list wears no numbers, and a digit typed into it still goes there', async () => {
   const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
-  bar()
+  head()
 
   await dropped()
   // Emil, 2026-10-04: a number by every space was noise. They come with a digit or Alt,
@@ -183,7 +174,7 @@ test('the list wears no numbers, and a digit typed into it still goes there', as
 })
 
 test('a second press puts the list away again', async () => {
-  bar()
+  head()
 
   await dropped()
   expect(list()).not.toBe(null)
@@ -192,11 +183,4 @@ test('a second press puts the list away again', async () => {
   await settled()
   expect(list()).toBe(null)
   expect(mark()?.getAttribute('aria-expanded')).toBe('false')
-})
-
-test('with the panel out, the bar leaves the space to the panel’s header', () => {
-  workspace.panel = 'tree'
-  bar()
-
-  expect(target.querySelector('header .space')).toBe(null)
 })

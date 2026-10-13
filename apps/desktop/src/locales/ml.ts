@@ -115,7 +115,6 @@ export const ml: Dictionary = {
   'New window': 'പുതിയ വിൻഡോ',
   New: 'പുതിയത്',
   'New space': 'പുതിയ സ്പേസ്',
-  '{name}: switch space': '{name}: സ്പേസ് മാറ്റുക',
   Untitled: 'പേരില്ലാത്തത്',
   Space: 'സ്പേസ്',
   'Name the space': 'സ്പേസിന്റെ പേര്',

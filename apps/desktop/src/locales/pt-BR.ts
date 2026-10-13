@@ -115,7 +115,6 @@ export const ptBR: Dictionary = {
   'New window': 'Nova janela',
   New: 'Novo',
   'New space': 'Novo espaço',
-  '{name}: switch space': '{name}: trocar de espaço',
   Untitled: 'Sem título',
   Space: 'Espaço',
   'Name the space': 'Nomear o espaço',

@@ -874,10 +874,9 @@ switcher Ctrl+Space stands in the middle of the window both draw: the badge, wea
 the space's number at its corner only once a digit is typed or while Alt is held
 (`.nib-keytip`, the tab's Alt number's own look, so it moves nothing as it comes), the
 name with what was typed in bold, and the shared mark -
-an eye instead where the space is somebody else's and yours only to read. The title bar is that same switcher, bare: the badge and no
-name, because the badge already says which space it is and the tabs want the room,
-and a press on it drops the same list from the bar's bottom edge at the panel's
-width. The name is in its tooltip and in what a screen reader hears. Changing space crosses the header's mark into the next one
+an eye instead where the space is somebody else's and yours only to read. The title bar names no space (Emil, 2026-10-13: "remove this
+space switcher here"): with the panel shut, Ctrl+Space and the palette are the way
+to another space. Changing space crosses the header's mark into the next one
 rather than swapping the drawing between two frames: `arrive` and `leave` with
 nothing to slip, in the box the two share so the name beside them does not move.
 
@@ -1188,7 +1187,7 @@ a home:
 
 | What the rail did | Where it is now |
 | --- | --- |
-| Which space you are in | The panel's header, and the space's badge in the title bar while the panel is shut, which opens the same switcher |
+| Which space you are in | The panel's header; with the panel shut, Ctrl+Space and the palette |
 | Switching to another one | Rows in that header's switcher, each with the space's own mark and a dot where somebody else is in it |
 | Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette, as before |
 | A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |

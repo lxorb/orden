@@ -115,7 +115,6 @@ export const ko: Dictionary = {
   'New window': '새 창',
   New: '새로 만들기',
   'New space': '새 공간',
-  '{name}: switch space': '{name}: 공간 바꾸기',
   Untitled: '제목 없음',
   Space: '공간',
   'Name the space': '공간 이름 지정',

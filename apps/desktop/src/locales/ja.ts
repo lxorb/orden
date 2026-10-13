@@ -115,7 +115,6 @@ export const ja: Dictionary = {
   'New window': '新しいウィンドウ',
   New: '新規',
   'New space': '新しいスペース',
-  '{name}: switch space': '{name}: スペースを切り替え',
   Untitled: '無題',
   Space: 'スペース',
   'Name the space': 'スペースに名前を付ける',

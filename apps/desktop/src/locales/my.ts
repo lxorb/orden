@@ -115,7 +115,6 @@ export const my: Dictionary = {
   'New window': 'ဝင်းဒိုးအသစ်',
   New: 'အသစ်',
   'New space': 'အလုပ်ခွင်အသစ်',
-  '{name}: switch space': '{name}: အလုပ်ခွင်ပြောင်း',
   Untitled: 'အမည်မရှိ',
   Space: 'အလုပ်ခွင်',
   'Name the space': 'အလုပ်ခွင်အမည်ပေး',

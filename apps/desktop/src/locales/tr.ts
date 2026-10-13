@@ -115,7 +115,6 @@ export const tr: Dictionary = {
   'New window': 'Yeni pencere',
   New: 'Yeni',
   'New space': 'Yeni alan',
-  '{name}: switch space': '{name}: alanı değiştir',
   Untitled: 'Adsız',
   Space: 'Alan',
   'Name the space': 'Alana ad ver',

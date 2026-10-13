@@ -25,7 +25,7 @@
   import { trap } from './trap'
   import { type Space, workspace } from './workspace.svelte'
 
-  const { bare = false, close }: { bare?: boolean; close: () => void } = $props()
+  const { close }: { close: () => void } = $props()
 
   function choose(space: Space) {
     close()
@@ -80,7 +80,6 @@
      Tab; see roving.ts and trap.ts. -->
 <div
   class="nib-layer spaces"
-  class:bare
   data-spaces-open
   role="menu"
   aria-label={t('Spaces')}
@@ -181,14 +180,6 @@
     max-height: 60vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-  }
-
-  /* From the title bar: under the mark, as wide as the panel would have been. */
-  .spaces.bare {
-    left: auto;
-    right: auto;
-    inset-inline-start: 0;
-    width: calc(var(--sidebar-width) - 2 * var(--space-1));
   }
 
   .catch {

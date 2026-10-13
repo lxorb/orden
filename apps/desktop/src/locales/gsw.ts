@@ -115,7 +115,6 @@ export const gsw: Dictionary = {
   'New window': 'Nöis Fänschter',
   New: 'Nöi',
   'New space': 'Nöii Ablag',
-  '{name}: switch space': '{name}: Ablag wächsle',
   Untitled: 'Ohni Titel',
   Space: 'Ablag',
   'Name the space': 'Ablag benänne',

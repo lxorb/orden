@@ -115,7 +115,6 @@ export const jv: Dictionary = {
   'New window': 'Jendhela anyar',
   New: 'Anyar',
   'New space': 'Papan anyar',
-  '{name}: switch space': '{name}: ganti papan',
   Untitled: 'Tanpa irah-irahan',
   Space: 'Papan',
   'Name the space': 'Jenengi papan',

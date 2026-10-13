@@ -115,7 +115,6 @@ export const sw: Dictionary = {
   'New window': 'Dirisha jipya',
   New: 'Mpya',
   'New space': 'Nafasi mpya',
-  '{name}: switch space': '{name}: badili nafasi',
   Untitled: 'Bila jina',
   Space: 'Nafasi',
   'Name the space': 'Pa nafasi jina',

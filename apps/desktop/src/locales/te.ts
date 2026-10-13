@@ -115,7 +115,6 @@ export const te: Dictionary = {
   'New window': 'కొత్త విండో',
   New: 'కొత్తది',
   'New space': 'కొత్త స్పేస్',
-  '{name}: switch space': '{name}: స్పేస్ మార్చు',
   Untitled: 'పేరు లేనిది',
   Space: 'స్పేస్',
   'Name the space': 'స్పేస్ పేరు',

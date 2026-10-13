@@ -287,7 +287,7 @@ describe('the button that holds a panel on a note', () => {
 /** The space in the panel's header, which is the list of spaces shut.
  *
  *  A space is named with its mark everywhere else it is named - its row in the
- *  switcher, the title bar while the panel is away - and the header over the file
+ *  switcher, the tab card - and the header over the file
  *  list is where it is named most. That header said the word alone, so the one place
  *  a space is always written was the one place it was never drawn. Emil: *"in the top
  *  left in the space select, you should see the icon of the current space."*

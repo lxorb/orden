@@ -115,7 +115,6 @@ export const fr: Dictionary = {
   'New window': 'Nouvelle fenêtre',
   New: 'Nouveau',
   'New space': 'Nouvel espace',
-  '{name}: switch space': '{name} : changer d’espace',
   Untitled: 'Sans titre',
   Space: 'Espace',
   'Name the space': 'Nommer l’espace',
