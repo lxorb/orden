@@ -74,6 +74,7 @@ export const ru: Dictionary = {
     'Нажмите {key}, чтобы найти что угодно: заметки и команды.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показывать Markdown при наборе',
+  'Open notes in source mode': 'Открывать заметки в режиме исходного кода',
   Pointer: 'Указатель',
   'Pointing hand on buttons': 'Указывающая рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

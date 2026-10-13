@@ -114,6 +114,22 @@ describe('reading one tab', () => {
     })
   })
 
+  test('brings back whether it showed the markdown as written, either way', () => {
+    expect(readDraft({ path: null, name: 'a', doc: '', source: true })).toMatchObject({
+      source: true,
+    })
+    // False is an answer too: a tab may have left source mode where new tabs open in it.
+    expect(readDraft({ path: null, name: 'a', doc: '', source: false })).toMatchObject({
+      source: false,
+    })
+    // Absent, from a build with one switch for the window: the tab opens where
+    // Settings says, which is where that switch was left.
+    expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('source')
+    expect(readDraft({ path: null, name: 'a', doc: '', source: 'yes' })).not.toHaveProperty(
+      'source',
+    )
+  })
+
   test('is being written in unless it says otherwise', () => {
     // Absent rather than false, so a tab that was being written in - which is
     // nearly every tab - costs the entry nothing.

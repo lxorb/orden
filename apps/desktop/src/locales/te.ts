@@ -74,6 +74,7 @@ export const te: Dictionary = {
     'నోట్‌లు, ఆదేశాలు, ఏదైనా కనుగొనడానికి {key} నొక్కండి.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'రాస్తున్నప్పుడు మార్క్‌డౌన్ చూపించు',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'పాయింటర్',
   'Pointing hand on buttons': 'బటన్‌లపై సూచించే చేయి',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

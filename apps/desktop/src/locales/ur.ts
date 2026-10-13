@@ -74,6 +74,7 @@ export const ur: Dictionary = {
     'نوٹس اور کمانڈز، کچھ بھی تلاش کرنے کے لیے {key} دبائیں۔',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'لکھتے وقت مارک ڈاؤن دکھائیں',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'پوائنٹر',
   'Pointing hand on buttons': 'بٹنوں پر اشارہ کرتا ہاتھ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

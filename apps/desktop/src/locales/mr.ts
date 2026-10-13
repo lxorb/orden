@@ -74,6 +74,7 @@ export const mr: Dictionary = {
     'नोट्स आणि आदेश, काहीही शोधण्यासाठी {key} दाबा.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'लिहिताना मार्कडाउन दाखवा',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'पॉइंटर',
   'Pointing hand on buttons': 'बटणांवर निर्देश करणारा हात',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

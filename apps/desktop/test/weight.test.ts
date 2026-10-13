@@ -605,8 +605,14 @@ function holds(tail: string): boolean {
  *  link-rewrite.ts): a link to a heading keeps the words it shows, a shortest link to a
  *  name two files share keeps its folder, and a target with a bracket in its name is
  *  written out so the bracket does not end the link. The Obsidian import that found them
- *  is behind its door. Measured 3,225,105 and 378. */
-const BUDGET = 3_225_500
+ *  is behind its door. Measured 3,225,105 and 378.
+ *
+ *  Raised 2026-10-13, to 3,227,500, from a main at 3,225,414 (86 bytes under) for source
+ *  mode per tab (issue #232): which tab each pane's editor shows, the face a restored tab
+ *  is dressed in before its first frame, and where a new tab starts. No module more; the
+ *  1,707 bytes are in modes.svelte.ts, Editor.svelte and the tab and its session.
+ *  Measured 3,227,121 and 379. */
+const BUDGET = 3_227_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

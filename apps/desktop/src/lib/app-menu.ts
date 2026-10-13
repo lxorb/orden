@@ -438,7 +438,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Source mode'),
           ...keyed('app.source'),
-          checked: modes.source,
+          checked: modes.sourceIn(view),
           run: () => modes.toggleSource(view),
         },
         {

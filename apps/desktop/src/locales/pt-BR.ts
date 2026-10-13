@@ -74,6 +74,7 @@ export const ptBR: Dictionary = {
     'Pressione {key} para encontrar qualquer coisa, notas e comandos.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostrar Markdown ao escrever',
+  'Open notes in source mode': 'Abrir notas no modo fonte',
   Pointer: 'Ponteiro',
   'Pointing hand on buttons': 'Mão apontando nos botões',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

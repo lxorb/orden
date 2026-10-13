@@ -930,6 +930,7 @@ class Workspace {
     tab.anchor = draft.anchor
     tab.folds = draft.folds
     tab.reading = draft.reading === true
+    if (draft.source !== undefined) tab.source = draft.source
     tab.pinned = draft.pinned === true
     tab.page = draft.page
     tab.zoom = draft.zoom
@@ -1117,6 +1118,7 @@ class Workspace {
       // one note rather than as two copies of it.
       share: tab.note.key,
       ...(tab.reading ? { reading: true } : {}),
+      ...(tab.kind === 'note' ? { source: tab.source } : {}),
       ...(tab.pinned ? { pinned: true } : {}),
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
@@ -4268,6 +4270,8 @@ class Workspace {
     beside.scroll = tab.scroll
     beside.anchor = tab.anchor
     beside.folds = tab.folds
+    // As Obsidian's split does.
+    beside.source = tab.source
 
     this.add(beside)
     this.persist()

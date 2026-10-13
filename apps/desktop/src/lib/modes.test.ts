@@ -42,12 +42,22 @@ vi.stubGlobal('document', { documentElement: root })
 /** What the two modes under test were last told. The editor's own side of
  *  them is tested in packages/editor; what matters here is that the store
  *  says the same thing to a view as it says in the menu. */
-const told = vi.hoisted(() => ({ calls: [] as { mode: string; on: boolean }[] }))
+const told = vi.hoisted(() => ({
+  calls: [] as { mode: string; on: boolean }[],
+  /** The same, with the view each was said to, for the modes that are a pane's own. */
+  views: [] as { view: unknown; mode: string; on: boolean }[],
+}))
 
 vi.mock('@nib/editor', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@nib/editor')>()),
-  setReadOnlyMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'read-only', on }),
-  setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
+  setReadOnlyMode: (view: unknown, on: boolean) => {
+    told.calls.push({ mode: 'read-only', on })
+    told.views.push({ view, mode: 'read-only', on })
+  },
+  setSourceMode: (view: unknown, on: boolean) => {
+    told.calls.push({ mode: 'source', on })
+    told.views.push({ view, mode: 'source', on })
+  },
   setVim: (_view: unknown, on: boolean) => told.calls.push({ mode: 'vim', on }),
   // A view built later takes every mode at once rather than one at a time, so
   // this is where the store says what it holds to a fresh editor.
@@ -125,6 +135,7 @@ async function restarted() {
 beforeEach(async () => {
   localStorage.clear()
   told.calls = []
+  told.views = []
   modes = await restarted()
 })
 
@@ -391,7 +402,7 @@ describe('modal editing', () => {
     test('through a restart after every other mode was turned on', async () => {
       modes.toggleFocus()
       modes.toggleTypewriter()
-      modes.toggleSource()
+      modes.toggleOpensInSource()
       modes.setLigatures('all')
 
       const store = await restarted()
@@ -446,34 +457,156 @@ describe('the pointing hand', () => {
   })
 })
 
-describe('read-only mode and source mode', () => {
-  test('are never both on', () => {
+describe('source mode, per tab', () => {
+  /** A tab as far as source mode goes, and the session writes it asked for. */
+  function tab(source = false) {
+    return { source, written: 0 }
+  }
+
+  /** A pane's view, told which tab it is showing, as Editor.svelte tells it. */
+  function showing(one: ReturnType<typeof tab>) {
+    const view = surface()
+    modes.apply(view)
+    modes.shows(view, one, () => (one.written += 1))
+    return view
+  }
+
+  /** What one view was last told about source mode, read off the calls to it. */
+  function lastSource(view: EditorView): boolean | undefined {
+    return told.views.filter((one) => one.view === view && one.mode === 'source').at(-1)?.on
+  }
+
+  test('turns in the one view it is asked of, even with the same note beside it', () => {
+    const left = tab()
+    const right = tab()
+    const leftView = showing(left)
+    const rightView = showing(right)
+
+    modes.toggleSource(rightView)
+
+    expect(right.source).toBe(true)
+    expect(left.source).toBe(false)
+    expect(modes.sourceIn(rightView)).toBe(true)
+    expect(modes.sourceIn(leftView)).toBe(false)
+    expect(lastSource(rightView)).toBe(true)
+    expect(lastSource(leftView)).not.toBe(true)
+  })
+
+  test('writes the tab down and leaves where new tabs open alone', async () => {
+    const one = tab()
+    modes.toggleSource(showing(one))
+
+    expect(one.written).toBe(1)
+    expect(modes.opensInSource).toBe(false)
+    expect((await restarted()).opensInSource).toBe(false)
+  })
+
+  test('does nothing where there is no editor to turn', () => {
     modes.toggleSource()
-    modes.toggleReadOnly()
+    modes.toggleSource(surface())
+
+    expect(told.views.filter((one) => one.mode === 'source')).toEqual([])
+  })
+
+  test('dresses a view in the face of the tab it shows', () => {
+    const raw = tab(true)
+    const view = surface()
+    modes.shows(view, raw, () => undefined)
+    modes.apply(view)
+
+    expect(modes.settingsFor(raw).source).toBe(true)
+    expect(modes.settingsFor(tab()).source).toBe(false)
+    expect(told.calls.at(-2)).toEqual({ mode: 'source', on: true })
+  })
+
+  test('starts a new tab where Settings says, and remembers that across a restart', async () => {
+    const { Tab, opening } = await import('./workspace/documents.svelte')
+    const note = { kind: 'note' } as unknown as ConstructorParameters<typeof Tab>[0]
+    expect(new Tab(note, 'p1').source).toBe(false)
+
+    modes.toggleOpensInSource()
+
+    expect(opening.source).toBe(true)
+    expect(new Tab(note, 'p1').source).toBe(true)
+
+    const restored = await restarted()
+    const fresh = await import('./workspace/documents.svelte')
+    expect(restored.opensInSource).toBe(true)
+    expect(new fresh.Tab(note, 'p1').source).toBe(true)
+  })
+
+  test('opens where the one switch for the window was left by an older build', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ source: true }))
+
+    expect((await restarted()).opensInSource).toBe(true)
+  })
+})
+
+describe('read-only mode and source mode', () => {
+  function tab(source = false) {
+    return { source }
+  }
+
+  function showing(one: { source: boolean }) {
+    const view = surface()
+    modes.apply(view)
+    modes.shows(view, one, () => undefined)
+    return view
+  }
+
+  test('are never both on in a view', () => {
+    const raw = tab(true)
+    const view = showing(raw)
+
+    modes.toggleReadOnly(view)
 
     expect(modes.readOnly).toBe(true)
-    expect(modes.source).toBe(false)
+    expect(modes.sourceIn(view)).toBe(false)
 
-    modes.toggleSource()
+    modes.toggleSource(view)
 
-    expect(modes.source).toBe(true)
+    expect(modes.sourceIn(view)).toBe(true)
     expect(modes.readOnly).toBe(false)
   })
 
-  test('cannot both come back from a hand-edited entry', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ source: true, readOnly: true }))
+  test('source mode turned on under the lock takes it off every pane', () => {
+    const raw = tab(true)
+    const written = tab()
+    const rawView = showing(raw)
+    const writtenView = showing(written)
+    modes.toggleReadOnly(writtenView)
 
-    const restored = await restarted()
-    expect(restored.source).toBe(true)
-    expect(restored.readOnly).toBe(false)
+    modes.toggleSource(writtenView)
+
+    expect(modes.readOnly).toBe(false)
+    expect(modes.sourceIn(writtenView)).toBe(true)
+    // The pane that was raw before the lock is raw again under it lifting.
+    expect(modes.sourceIn(rawView)).toBe(true)
   })
 
-  test('the one that was on is the one that comes back', async () => {
+  test('each tab goes back to its own face when the lock comes off', () => {
+    const raw = tab(true)
+    const written = tab()
+    const rawView = showing(raw)
+    const writtenView = showing(written)
+
+    modes.toggleReadOnly(rawView)
+    expect(modes.sourceIn(rawView)).toBe(false)
+    expect(modes.settingsFor(raw).source).toBe(false)
+
+    modes.toggleReadOnly(rawView)
+    expect(modes.sourceIn(rawView)).toBe(true)
+    expect(modes.sourceIn(writtenView)).toBe(false)
+  })
+
+  test('the lock comes back as it was left, beside a default of source mode', async () => {
+    modes.toggleOpensInSource()
     modes.toggleReadOnly()
 
     const restored = await restarted()
     expect(restored.readOnly).toBe(true)
-    expect(restored.source).toBe(false)
+    expect(restored.opensInSource).toBe(true)
+    expect(restored.settings.source).toBe(false)
   })
 })
 

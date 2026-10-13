@@ -74,6 +74,7 @@ export const ja: Dictionary = {
     '{key} を押すと、ノートもコマンドも何でも探せます。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '入力中に Markdown を表示',
+  'Open notes in source mode': 'ノートをソースモードで開く',
   Pointer: 'ポインタ',
   'Pointing hand on buttons': 'ボタン上で指差しカーソル',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

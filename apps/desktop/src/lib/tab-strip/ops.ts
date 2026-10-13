@@ -29,6 +29,7 @@ export function duplicateTab(id: string) {
   copy.at = tab.at
   copy.pinned = tab.pinned
   copy.reading = tab.reading
+  copy.source = tab.source
   copy.camera = tab.camera
   copy.page = tab.page
   copy.zoom = tab.zoom

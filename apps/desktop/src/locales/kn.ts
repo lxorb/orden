@@ -74,6 +74,7 @@ export const kn: Dictionary = {
     'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಆಜ್ಞೆಗಳು, ಏನನ್ನಾದರೂ ಹುಡುಕಲು {key} ಒತ್ತಿ.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ಬರೆಯುವಾಗ ಮಾರ್ಕ್‌ಡೌನ್ ತೋರಿಸಿ',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ಪಾಯಿಂಟರ್',
   'Pointing hand on buttons': 'ಬಟನ್‌ಗಳ ಮೇಲೆ ಸೂಚಿಸುವ ಕೈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

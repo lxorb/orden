@@ -74,6 +74,7 @@ export const ta: Dictionary = {
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'எழுதும்போது மார்க்டவுனைக் காட்டு',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'சுட்டி',
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

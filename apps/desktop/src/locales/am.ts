@@ -73,6 +73,7 @@ export const am: Dictionary = {
   'Press {key} to find anything, notes and commands alike.': 'ማስታወሻዎችንም ትዕዛዞችንም ለማግኘት {key} ይጫኑ።',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ማርክዳውን በመጻፍ ጊዜ አሳይ',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ጠቋሚ',
   'Pointing hand on buttons': 'በአዝራሮች ላይ የሚጠቁም እጅ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

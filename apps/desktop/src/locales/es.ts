@@ -74,6 +74,7 @@ export const es: Dictionary = {
     'Pulsa {key} para encontrar cualquier cosa, notas y comandos por igual.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostrar Markdown al escribir',
+  'Open notes in source mode': 'Abrir las notas en modo fuente',
   Pointer: 'Puntero',
   'Pointing hand on buttons': 'Mano señaladora en los botones',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

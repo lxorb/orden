@@ -74,6 +74,7 @@ export const fa: Dictionary = {
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'نمایش مارک‌داون هنگام نوشتن',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'اشاره‌گر',
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

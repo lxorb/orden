@@ -74,6 +74,7 @@ export const gsw: Dictionary = {
     'Drück {key}, zum alles finde, Notize wie Befähl.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Markdown bim Schriibe zeige',
+  'Open notes in source mode': 'Notize im Quälltextmodus öffne',
   Pointer: 'Muuszeiger',
   'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

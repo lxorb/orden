@@ -74,6 +74,7 @@ export const pl: Dictionary = {
     'Naciśnij {key}, aby znaleźć wszystko, notatki i polecenia.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Pokazuj Markdown podczas pisania',
+  'Open notes in source mode': 'Otwieraj notatki w trybie źródłowym',
   Pointer: 'Wskaźnik',
   'Pointing hand on buttons': 'Wskazująca dłoń nad przyciskami',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

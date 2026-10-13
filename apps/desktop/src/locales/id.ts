@@ -74,6 +74,7 @@ export const id: Dictionary = {
     'Tekan {key} untuk menemukan apa saja, catatan maupun perintah.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Tampilkan Markdown saat menulis',
+  'Open notes in source mode': 'Buka catatan dalam mode sumber',
   Pointer: 'Penunjuk',
   'Pointing hand on buttons': 'Tangan penunjuk pada tombol',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

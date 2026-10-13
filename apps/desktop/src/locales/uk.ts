@@ -74,6 +74,7 @@ export const uk: Dictionary = {
     'Натисніть {key}, щоб знайти будь-що: нотатки й команди.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показувати Markdown під час набору',
+  'Open notes in source mode': 'Відкривати нотатки в режимі вихідного коду',
   Pointer: 'Вказівник',
   'Pointing hand on buttons': 'Вказівна рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

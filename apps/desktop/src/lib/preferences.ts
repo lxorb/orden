@@ -997,6 +997,15 @@ export function preferences(view?: EditorView): Pane[] {
               set: () => modes.toggleQuietMarks(view),
             },
             {
+              // Obsidian's "Default editing mode"; #232.
+              kind: 'switch',
+              label: t('Open notes in source mode'),
+              words: ['source mode', 'raw', 'plain text', 'default editing mode'],
+              initial: false,
+              get: () => modes.opensInSource,
+              set: () => modes.toggleOpensInSource(),
+            },
+            {
               kind: 'switch',
               label: t('Strict CommonMark'),
               hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),

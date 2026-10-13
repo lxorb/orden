@@ -74,6 +74,7 @@ export const pa: Dictionary = {
     'ਨੋਟ ਅਤੇ ਕਮਾਂਡਾਂ, ਕੁਝ ਵੀ ਲੱਭਣ ਲਈ {key} ਦਬਾਓ।',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ਲਿਖਦੇ ਸਮੇਂ ਮਾਰਕਡਾਊਨ ਦਿਖਾਓ',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ਪੁਆਇੰਟਰ',
   'Pointing hand on buttons': 'ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

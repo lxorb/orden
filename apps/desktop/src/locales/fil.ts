@@ -74,6 +74,7 @@ export const fil: Dictionary = {
     'Pindutin ang {key} para mahanap ang kahit ano, mga tala man o mga command.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Ipakita ang Markdown habang nagsusulat',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Pointer',
   'Pointing hand on buttons': 'Nakaturong kamay sa mga button',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

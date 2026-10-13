@@ -74,6 +74,7 @@ export const it: Dictionary = {
     'Premi {key} per trovare qualsiasi cosa, note e comandi.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostra il Markdown durante la scrittura',
+  'Open notes in source mode': 'Apri le note in modalità sorgente',
   Pointer: 'Puntatore',
   'Pointing hand on buttons': 'Mano che indica sui pulsanti',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

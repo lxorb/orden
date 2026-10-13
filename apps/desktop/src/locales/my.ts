@@ -74,6 +74,7 @@ export const my: Dictionary = {
     'မှတ်စုနှင့် အမိန့်များ အားလုံးကို ရှာရန် {key} ကိုနှိပ်ပါ။',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ရေးနေစဉ် Markdown ကိုပြပါ',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ညွှန်ပြချက်',
   'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

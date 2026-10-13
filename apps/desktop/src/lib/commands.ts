@@ -1381,7 +1381,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'source',
-      label: modes.source ? t('Leave source mode') : t('Source mode'),
+      label: modes.sourceIn(view) ? t('Leave source mode') : t('Source mode'),
       hint: shortcuts.hint('app.source'),
       run: () => modes.toggleSource(view),
     },

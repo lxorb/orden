@@ -74,6 +74,7 @@ export const bn: Dictionary = {
     'নোট ও কমান্ড, যেকোনো কিছু খুঁজতে {key} চাপুন।',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'লেখার সময় মার্কডাউন দেখান',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'পয়েন্টার',
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

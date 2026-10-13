@@ -74,6 +74,7 @@ export const zhHans: Dictionary = {
     '按 {key} 查找任何内容,笔记和命令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '书写时显示 Markdown',
+  'Open notes in source mode': '以源码模式打开笔记',
   Pointer: '指针',
   'Pointing hand on buttons': '按钮上显示手形指针',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

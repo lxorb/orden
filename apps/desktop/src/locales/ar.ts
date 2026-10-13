@@ -74,6 +74,7 @@ export const ar: Dictionary = {
     'اضغط {key} للعثور على أي شيء، ملاحظات وأوامر على حد سواء.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'إظهار ماركداون أثناء الكتابة',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'المؤشر',
   'Pointing hand on buttons': 'يد مشيرة فوق الأزرار',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

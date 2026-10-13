@@ -74,6 +74,7 @@ export const tr: Dictionary = {
     'Notlar ve komutlar, her şeyi bulmak için {key} tuşlarına basın.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Yazarken Markdown’u göster',
+  'Open notes in source mode': 'Notları kaynak kipinde aç',
   Pointer: 'İşaretçi',
   'Pointing hand on buttons': 'Düğmelerde işaret eden el',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

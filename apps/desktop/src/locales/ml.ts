@@ -74,6 +74,7 @@ export const ml: Dictionary = {
     'കുറിപ്പുകളും കമാൻഡുകളും, എന്തും കണ്ടെത്താൻ {key} അമർത്തുക.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'എഴുതുമ്പോൾ മാർക്ക്ഡൗൺ കാണിക്കുക',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'പോയിന്റർ',
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

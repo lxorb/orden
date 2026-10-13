@@ -1170,6 +1170,40 @@ describe('a note in two panes', () => {
     expect(split.fraction).toBeCloseTo(0.31)
   })
 
+  /** Issue #232: source mode is each pane's own, Obsidian's way. A split starts as
+   *  the tab it was made from, and from then on the two are two. */
+  test('splits off in the face the note was in, and each keeps its own', async () => {
+    await workspace.open('/space/a.md')
+    const [left] = workspace.tabs
+    if (!left) throw new Error('nothing opened')
+    left.source = true
+
+    workspace.split('row')
+    const right = workspace.active
+    if (!right) throw new Error('the split did not happen')
+    expect(right.source).toBe(true)
+
+    right.source = false
+    expect(left.source).toBe(true)
+  })
+
+  test('brings each pane back in its own face after a restart', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    const [left, right] = workspace.tabs
+    if (!left || !right) throw new Error('the split did not happen')
+    right.source = true
+
+    const written = workspace.layout()
+    onePane()
+    await workspace.applyLayout(written, false)
+
+    const [first, second] = workspace.panes.all
+    expect(workspace.showing(first?.id ?? '')?.source).toBe(false)
+    expect(workspace.showing(second?.id ?? '')?.source).toBe(true)
+    expect(workspace.showing(first?.id ?? '')?.note).toBe(workspace.showing(second?.id ?? '')?.note)
+  })
+
   test('splits no further than a 2x2', async () => {
     await workspace.open('/space/a.md')
     workspace.split('row')

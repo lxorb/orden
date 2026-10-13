@@ -52,6 +52,7 @@ import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
+import { opening } from './workspace/documents.svelte'
 
 const STORAGE_KEY = 'nib:modes'
 
@@ -246,13 +247,19 @@ function wordsOf(value: unknown): Record<string, string> {
   return out
 }
 
+interface Shown {
+  tab: { source: boolean }
+  kept: () => void
+}
+
 class Modes {
-  source = $state(false)
+  /** Where a new tab starts; stored as the old window-wide `source`. */
+  opensInSource = $state(false)
   /** The note laid out as it reads, with nothing that writes to it. The reading
    *  view is a different thing - the note through the renderer, per tab; this is
-   *  the editor with its doors locked. Never on at the same time as source mode,
-   *  and never shared with the account: whether a note is open for writing this
-   *  minute is not a preference. */
+   *  the editor with its doors locked, over every tab's source mode. Never shared
+   *  with the account: whether a note is open for writing this minute is not a
+   *  preference. */
   readOnly = $state(false)
   focus = $state(false)
   /** The formatting marks kept out of sight while writing, so a note edits the way a
@@ -462,11 +469,10 @@ class Modes {
     // reads as neither on nor off should simply be the default.
     const saved = stored(STORAGE_KEY)
     if (isRecord(saved)) {
-      this.source = saved.source === true
-      // Both at once is a state the app cannot get into; a hand-edited entry
-      // can say it anyway, and source mode is the one that was written last.
+      this.opensInSource = saved.source === true
+      opening.source = this.opensInSource
       // `reading` is what a build before the reading view called this.
-      this.readOnly = (saved.readOnly === true || saved.reading === true) && !this.source
+      this.readOnly = saved.readOnly === true || saved.reading === true
       this.focus = saved.focus === true
       this.typewriter = saved.typewriter === true
       this.quietMarks = saved.quietMarks === true
@@ -602,6 +608,18 @@ class Modes {
    *  two different notes to look at - so a change reaches all of them. */
   private readonly views = new Set<EditorView>()
 
+  /** Which tab each view shows; see Editor.svelte. */
+  private readonly shown = new WeakMap<EditorView, Shown>()
+
+  shows(view: EditorView, tab: Shown['tab'], kept: () => void) {
+    this.shown.set(view, { tab, kept })
+  }
+
+  sourceIn(view: EditorView | undefined): boolean {
+    const tab = view ? this.shown.get(view)?.tab : undefined
+    return !!tab?.source && !this.readOnly
+  }
+
   /** The one the caller had in mind, and every other one there is. A view is
    *  built fresh for every tab, so the set is what keeps the panes in step; the
    *  argument is what makes a brand new view take the modes on the way up. */
@@ -614,7 +632,7 @@ class Modes {
    *  of them on in one transaction; see `modeEffects`. */
   get settings(): ModeSettings {
     return {
-      source: this.source,
+      source: this.opensInSource && !this.readOnly,
       readOnly: this.readOnly,
       focus: this.focus,
       quietMarks: this.quietMarks,
@@ -636,6 +654,10 @@ class Modes {
     }
   }
 
+  settingsFor(tab: Shown['tab']): ModeSettings {
+    return { ...this.settings, source: tab.source && !this.readOnly }
+  }
+
   /** Re-applies every mode to a freshly created view, and keeps it.
    *
    *  One transaction for the seventeen of them: a view that took them one at a
@@ -645,7 +667,8 @@ class Modes {
   apply(view: EditorView) {
     this.views.add(view)
 
-    view.dispatch({ effects: modeEffects(this.settings) })
+    const tab = this.shown.get(view)?.tab
+    view.dispatch({ effects: modeEffects(tab ? this.settingsFor(tab) : this.settings) })
     setMeasure(view, this.width)
     setLineHeight(view, this.lineHeight)
   }
@@ -656,21 +679,42 @@ class Modes {
     this.vimModes.delete(view)
   }
 
+  /** In this view's tab alone (#232); going on, it lifts read-only. */
   toggleSource(view?: EditorView) {
-    this.source = !this.source
-    if (this.source) this.readOnly = false
-    this.each(view, (one) => setSourceMode(one, this.source))
+    const shown = view ? this.shown.get(view) : undefined
+    if (!view || !shown) return
+
+    const on = !this.sourceIn(view)
+    shown.tab.source = on
+    shown.kept()
+    if (!on || !this.readOnly) {
+      setSourceMode(view, on)
+      return
+    }
+
+    this.lock(false, view)
     this.persist()
   }
 
-  /** The editor keeps the same rule on its side, in setReadOnlyMode: the two
-   *  are opposite answers to the same question, so one going on takes the
-   *  other off. Here it is the ticks in the menu that have to agree. */
-  toggleReadOnly(view?: EditorView) {
-    this.readOnly = !this.readOnly
-    if (this.readOnly) this.source = false
-    this.each(view, (one) => setReadOnlyMode(one, this.readOnly))
+  /** Open tabs keep theirs, as in Obsidian. */
+  toggleOpensInSource() {
+    this.opensInSource = !this.opensInSource
+    opening.source = this.opensInSource
     this.persist()
+  }
+
+  toggleReadOnly(view?: EditorView) {
+    this.lock(!this.readOnly, view)
+    this.persist()
+  }
+
+  /** Off, each tab is back in its own source mode. */
+  private lock(on: boolean, view?: EditorView) {
+    this.readOnly = on
+    this.each(view, (one) => {
+      setReadOnlyMode(one, on)
+      if (!on && this.shown.get(one)?.tab.source) setSourceMode(one, true)
+    })
   }
 
   toggleFocus(view?: EditorView) {
@@ -1348,7 +1392,7 @@ class Modes {
 
   private persist() {
     const state: Saved = {
-      source: this.source,
+      source: this.opensInSource,
       readOnly: this.readOnly,
       focus: this.focus,
       quietMarks: this.quietMarks,

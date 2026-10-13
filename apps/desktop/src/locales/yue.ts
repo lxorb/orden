@@ -74,6 +74,7 @@ export const yue: Dictionary = {
     '撳 {key} 就搵到任何嘢,筆記同指令都得。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '寫嘢嗰陣顯示 Markdown',
+  'Open notes in source mode': '用源代碼模式打開筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

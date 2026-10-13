@@ -74,6 +74,7 @@ export const gu: Dictionary = {
     'નોંધો અને આદેશો, કંઈપણ શોધવા {key} દબાવો.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'લખતી વખતે માર્કડાઉન બતાવો',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'પોઇન્ટર',
   'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

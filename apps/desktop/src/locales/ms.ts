@@ -74,6 +74,7 @@ export const ms: Dictionary = {
     'Tekan {key} untuk mencari apa sahaja, nota dan arahan.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Tunjukkan Markdown semasa menulis',
+  'Open notes in source mode': 'Buka nota dalam mod sumber',
   Pointer: 'Penuding',
   'Pointing hand on buttons': 'Tangan menuding pada butang',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

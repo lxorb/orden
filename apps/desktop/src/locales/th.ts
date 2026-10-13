@@ -74,6 +74,7 @@ export const th: Dictionary = {
     'กด {key} เพื่อค้นหาทุกอย่าง ทั้งโน้ตและคำสั่ง',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'แสดง Markdown ขณะเขียน',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ตัวชี้',
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

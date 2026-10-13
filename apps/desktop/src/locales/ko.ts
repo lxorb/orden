@@ -74,6 +74,7 @@ export const ko: Dictionary = {
     '{key}를 누르면 노트와 명령을 모두 찾을 수 있어요.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '작성 중 마크다운 표시',
+  'Open notes in source mode': '노트를 소스 모드로 열기',
   Pointer: '포인터',
   'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

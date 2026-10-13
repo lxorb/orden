@@ -74,6 +74,7 @@ export const zhHant: Dictionary = {
     '按 {key} 尋找任何內容,筆記和指令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '書寫時顯示 Markdown',
+  'Open notes in source mode': '以原始碼模式開啟筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '按鈕上顯示手形指標',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

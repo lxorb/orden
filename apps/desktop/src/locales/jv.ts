@@ -74,6 +74,7 @@ export const jv: Dictionary = {
     'Pencet {key} kanggo nemokake apa wae, cathetan utawa prentah.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Tampilaké Markdown nalika nulis',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Penuding',
   'Pointing hand on buttons': 'Tangan nuding ing tombol',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

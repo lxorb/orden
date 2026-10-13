@@ -139,7 +139,7 @@ function signature(context: MenuBarContext): unknown[] {
     workspace.panel,
     workspace.panes.count,
     modes.readOnly,
-    modes.source,
+    active?.source,
     modes.typewriter,
     modes.focus,
     modes.alwaysOnTop,

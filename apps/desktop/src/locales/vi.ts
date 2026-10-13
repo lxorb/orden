@@ -74,6 +74,7 @@ export const vi: Dictionary = {
     'Nhấn {key} để tìm mọi thứ, cả ghi chú lẫn lệnh.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Hiện Markdown khi viết',
+  'Open notes in source mode': 'Mở ghi chú ở chế độ nguồn',
   Pointer: 'Con trỏ',
   'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

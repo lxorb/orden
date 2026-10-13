@@ -74,6 +74,7 @@ export const ps: Dictionary = {
     'د هر څه موندلو لپاره، یادښتونه او امرونه، {key} کېکاږئ.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'د لیکلو پر مهال مارک ډاون ښکاره کړه',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'نښه ګر',
   'Pointing hand on buttons': 'په تڼیو باندې اشاره کوونکی لاس',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

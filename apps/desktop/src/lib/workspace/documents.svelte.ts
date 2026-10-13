@@ -23,6 +23,9 @@ import { draftName, shownName, TITLE_CHARS } from '../note-name'
  *  file to take its name from its words; see drafts.ts. */
 export const UNTITLED = 'Untitled'
 
+/** Where a new tab starts; modes.svelte.ts writes it. */
+export const opening = { source: false }
+
 /** What a tab holds. Almost always a note. The graph of the space is a tab
  *  without one, because a picture of the notes belongs beside them rather than in
  *  a panel; a PDF is a tab without one because a paper someone is reading belongs
@@ -415,6 +418,9 @@ export class Tab {
    *  written in another, and because which face is up is about this sitting with
    *  this note - a note always opens for writing. */
   reading = $state(false)
+
+  /** Source mode, per tab as in Obsidian (#232). */
+  source = $state(opening.source)
 
   /** Whether this tab is holding a place for a note whose words have not come
    *  down yet: a row the account's first pass named and the pass has not fetched.

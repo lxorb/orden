@@ -74,6 +74,7 @@ export const ha: Dictionary = {
     'Danna {key} don nemo komai, bayanai da umarni duka.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Nuna Markdown yayin rubutu',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Mai nuni',
   'Pointing hand on buttons': 'Hannun nuni a kan maɓallai',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

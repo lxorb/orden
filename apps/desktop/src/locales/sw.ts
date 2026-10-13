@@ -74,6 +74,7 @@ export const sw: Dictionary = {
     'Bonyeza {key} kupata chochote, madokezo na amri pia.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Onyesha Markdown unapoandika',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Kielekezi',
   'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   // Tasks: quick add, its controls and its pickers, and the chips in a note

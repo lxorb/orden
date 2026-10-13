@@ -176,8 +176,8 @@
   /** The modes and the keys as one string, which changes whenever any of them
    *  does. Read off what the app holds rather than counted, so a mode nobody
    *  thought to count cannot go missing. */
-  function dressing(): string {
-    return JSON.stringify([modes.settings, shortcuts.forEditor])
+  function dressing(one: Tab): string {
+    return JSON.stringify([modes.settingsFor(one), shortcuts.forEditor])
   }
 
   /** What the app has to say about a note that is not already in its state, in
@@ -194,7 +194,7 @@
     index: NoteIndex | undefined,
     trusted: boolean,
   ): StateEffect<unknown>[] {
-    const stamp = dressing()
+    const stamp = dressing(one)
     const dressed = states.fitted(one) === stamp
     states.fit(one, stamp)
 
@@ -204,7 +204,7 @@
       // arriving in it takes an interactive block's card away again, and neither
       // touches anything else in this state.
       trustedMarkupEffect(trusted),
-      ...(dressed ? [] : modeEffects(modes.settings)),
+      ...(dressed ? [] : modeEffects(modes.settingsFor(one))),
       ...(dressed ? [] : [shortcutEffect(shortcuts.forEditor)]),
     ]
   }
@@ -303,6 +303,8 @@
     const trusted = trustsHtmlIn(showing.note)
 
     untrack(() => {
+      // Before the swap: the view is dressed in this tab's source mode.
+      modes.shows(current, showing, () => workspace.scheduleSession())
       states.show(current, showing, () => build(showing), fitting(showing, index, trusted))
 
       // Another note is another length and another place in it, so the bar
