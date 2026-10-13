@@ -1,4 +1,4 @@
-import { MOST_EMS } from '@nib/markdown'
+import { MOST_EMS } from '@nib/markdown/engines'
 import { chartFigure } from '@nib/markdown/chart'
 import { DIAGRAM_LANGUAGES } from '@nib/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@nib/markdown/engines'

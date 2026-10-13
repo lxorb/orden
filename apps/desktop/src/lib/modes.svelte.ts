@@ -29,7 +29,7 @@ import {
   type VimMode,
   type EditorView,
 } from '@nib/editor'
-import { setHardBreaks } from '@nib/markdown'
+import { setHardBreaks } from '@nib/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
 import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'

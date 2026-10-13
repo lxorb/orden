@@ -1,4 +1,5 @@
 import { Marked, Renderer } from 'marked'
+import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
@@ -114,28 +115,9 @@ export interface RenderOptions {
   headings?: Heading[]
 }
 
-/** Whether a single newline breaks the line, for every caller that has no answer
- *  of its own.
- *
- *  Here rather than threaded through two dozen call sites, because the point of
- *  the setting is that a note cannot look different on two surfaces: the reading
- *  view, an export, a card on a canvas, the clipboard's HTML flavour and a hover
- *  preview all go through this module, and all of them should say the same thing
- *  without each remembering to ask. The app sets it once; see modes.svelte.ts.
- *
- *  A deck passes `breaks: true` and is unaffected either way, and the Worker that
- *  publishes a note passes the author's answer per request rather than setting it
- *  here - one isolate serves many readers, and a global would leak between
- *  them. */
-let hard = false
-
-export function setHardBreaks(on: boolean) {
-  hard = on
-}
-
-export function hardBreaks(): boolean {
-  return hard
-}
+/** Whether a single newline breaks the line, for every caller with no answer of its
+ *  own: its own module, so the app can set it at launch without this renderer. */
+export { hardBreaks, setHardBreaks } from './breaks'
 
 export interface CodeBlock {
   language: string
@@ -498,7 +480,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
-  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hard })
+  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hardBreaks() })
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
@@ -617,7 +599,7 @@ export { withoutComments } from './comments'
  *  needs as well: one number, so a note that will not fit the panel in the app
  *  does not fit the page either. The extensions themselves are not passed on -
  *  they are this renderer's own parts. */
-export { MOST_EMS } from './extensions'
+export { MOST_EMS } from './engines'
 
 /** The link grammar is its own module - `@nib/markdown/links` - so the editor can
  *  have it without the renderer that stands on it, and everything that wants the

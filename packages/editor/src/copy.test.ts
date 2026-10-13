@@ -1,6 +1,10 @@
 import { EditorSelection, EditorState } from '@codemirror/state'
-import { describe, expect, test } from 'vitest'
-import { copiedFlavours } from './copy'
+import { beforeAll, describe, expect, test } from 'vitest'
+import { copiedFlavours, readyToCopy } from './copy'
+
+// The renderer a copy writes its HTML with is fetched by the first selection; a test
+// has none, so it waits for it here.
+beforeAll(() => readyToCopy())
 
 function state(doc: string, from: number, to: number, readOnly = false) {
   return EditorState.create({
