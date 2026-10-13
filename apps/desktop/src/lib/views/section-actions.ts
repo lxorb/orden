@@ -17,6 +17,7 @@ import {
   cutSection,
   duplicatedSection,
   movedSection,
+  placedSection,
   renamedSection,
   withBlock,
   withSection,
@@ -47,6 +48,16 @@ export function addSection(kit: Kit, name: string, after: string | null = null):
   void rewriteNotes([
     { path: project.path, after: (text) => withSection(text, name, after, project.name) },
   ])
+}
+
+/** A section carried to just before or after another: a board's column dropped. */
+export function placeSection(kit: Kit, name: string, target: string, after: boolean): void {
+  const project = projectOf(kit)
+  if (!project) return
+  void rewriteNotes(
+    [{ path: project.path, after: (text) => placedSection(text, name, target, after) }],
+    'moved',
+  )
 }
 
 /** A section named again. */

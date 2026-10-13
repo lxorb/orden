@@ -51,7 +51,7 @@
     renameProject,
     spaceProjects,
   } from './project-actions'
-  import { projectDrag } from './project-drag'
+  import { reorderDrag } from './reorder-drag'
   import { type ProjectNode, projectNotes, projectRows } from './project-tree'
   import { builtinBase } from './source'
   import { queryOf } from './filters'
@@ -395,7 +395,7 @@
     ])
   }
 
-  /** A project carried onto another, landing just above or below it (project-drag.ts). */
+  /** A project carried onto another, landing just above or below it (reorder-drag.ts). */
   function place(moving: string, target: string, after: boolean) {
     const all = projectRows(nodes, EMPTY)
     const from = all.find((one) => samePath(one.note, moving))
@@ -610,7 +610,7 @@
           style:--depth={node.depth}
           data-project={node.note}
           use:droppable={takeInto(node)}
-          use:projectDrag={{ id: node.note, place }}
+          use:reorderDrag={{ id: node.note, among: 'project', place }}
         >
           <button
             type="button"

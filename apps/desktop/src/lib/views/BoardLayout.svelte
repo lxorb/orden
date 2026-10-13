@@ -35,9 +35,11 @@
     addSection,
     projectOf,
     renameSection,
+    placeSection,
     sectionMenu,
     sectionsHere,
   } from './section-actions'
+  import { reorderDrag } from './reorder-drag'
   import { isTitle } from './sections'
   import { ADD_MARK } from './marks'
 
@@ -195,10 +197,25 @@
 {/snippet}
 
 {#snippet column(group: Group, laneKey: Value | undefined, rows: readonly Row[])}
-  <div class="column" use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}>
+  {@const section = laneKey === undefined ? sectionOf(group) : null}
+  <div
+    class="column"
+    data-section={section ?? undefined}
+    use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}
+  >
     {#if laneKey === undefined}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="head" oncontextmenu={(event) => columnMenu(event, group)}>
+      <div
+        class="head"
+        class:carries={section !== null}
+        oncontextmenu={(event) => columnMenu(event, group)}
+        use:reorderDrag={{
+          id: section ?? '',
+          among: 'section',
+          across: true,
+          place: (moving, target, after) => placeSection(kit, moving, target, after),
+        }}
+      >
         <span
           class="dot"
           style:background={live.base && property && typeof group.key === 'string'
@@ -356,6 +373,40 @@
       background: var(--surface-2);
       color: var(--text);
     }
+  }
+
+  /* A section's column is carried by its head; where it would land, a line on that side. */
+  .head.carries {
+    cursor: grab;
+  }
+
+  .column:global(.is-carried) {
+    opacity: 0.45;
+  }
+
+  .column:global(.is-before),
+  .column:global(.is-after) {
+    position: relative;
+  }
+
+  .column:global(.is-before)::before,
+  .column:global(.is-after)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  .column:global(.is-before)::before {
+    left: calc(var(--space-3) / -2 - 1px);
+  }
+
+  .column:global(.is-after)::after {
+    right: calc(var(--space-3) / -2 - 1px);
   }
 
   .column:global(.is-taking) {

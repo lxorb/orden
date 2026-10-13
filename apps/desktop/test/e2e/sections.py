@@ -173,6 +173,26 @@ def board(page: Page) -> None:
     if not page.locator(".view-tab .add-column").count():
         wrong("the board has no Add section")
     shot(page, "04-board")
+
+    # The Attic's column carried by its head to before Garden's: its section moves up the note.
+    attic = page.locator(".view-tab .board .column[data-section='Attic'] .head").bounding_box()
+    garden = page.locator(".view-tab .board .column[data-section='Garden']").bounding_box()
+    if not attic or not garden:
+        wrong("the columns to carry are not on screen")
+    else:
+        page.mouse.move(attic["x"] + 30, attic["y"] + attic["height"] / 2)
+        page.mouse.down()
+        page.mouse.move(attic["x"] + 40, attic["y"] + attic["height"] / 2, steps=3)
+        page.mouse.move(garden["x"] + 20, garden["y"] + 60, steps=10)
+        shot(page, "04b-carrying-column")
+        page.mouse.up()
+        wait_for(
+            page,
+            f"async () => {{ const t = await ({READ})('Home.md'); return t.indexOf('## Attic') < t.indexOf('## Garden') }}",
+            "Attic's section before Garden's in the note",
+        )
+        names = [one.lower() for one in page.locator(".view-tab .board .column .head .name").all_inner_texts()]
+        say(f"[columns after] {names}")
     page.evaluate("() => { const ws = window.nibApp.workspace; ws.close(ws.activeTabId) }")
     open_home(page)
     if not page.locator(".view-tab .board").count():

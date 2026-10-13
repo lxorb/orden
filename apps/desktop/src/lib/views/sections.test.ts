@@ -5,6 +5,7 @@ import {
   duplicatedSection,
   isTitle,
   movedSection,
+  placedSection,
   renamedSection,
   retitled,
   withBlock,
@@ -92,5 +93,20 @@ describe('a project named again', () => {
     )
     expect(retitled('## Home\n', 'Home', 'House')).toBeNull()
     expect(retitled('# Other\n', 'Home', 'House')).toBeNull()
+  })
+})
+
+describe('a section carried', () => {
+  const three = '# Home\n\n## A\n- [ ] a\n\n## B\n- [ ] b\n\n## C\n- [ ] c\n'
+
+  test('lands before or after any other, its tasks with it', () => {
+    expect(placedSection(three, 'C', 'A', false)).toBe(
+      '# Home\n\n## C\n- [ ] c\n\n## A\n- [ ] a\n\n## B\n- [ ] b\n',
+    )
+    expect(placedSection(three, 'A', 'C', true)).toBe(
+      '# Home\n\n## B\n- [ ] b\n\n## C\n- [ ] c\n\n## A\n- [ ] a\n',
+    )
+    expect(placedSection(three, 'A', 'A', true)).toBeNull()
+    expect(placedSection(three, 'A', 'Nowhere', true)).toBeNull()
   })
 })

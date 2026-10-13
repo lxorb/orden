@@ -188,3 +188,32 @@ export function retitled(text: string, from: string, to: string): string | null 
   lines[at] = `# ${to.trim()}`
   return lines.join('\n')
 }
+
+/** The note with a section and what it holds put just before or after another, at any
+ *  distance: a board's column carried to another place. Null where either is not there,
+ *  or the one is inside the other. */
+export function placedSection(
+  text: string,
+  name: string,
+  target: string,
+  after: boolean,
+): string | null {
+  if (name === target) return null
+  const lines = text.split('\n')
+  const all = sectionsOf(lines)
+  const moving = all.find((one) => one.text === name)
+  const beside = all.find((one) => one.text === target)
+  if (!moving || !beside) return null
+  if (beside.at >= moving.at && beside.at < moving.end) return null
+  if (moving.at >= beside.at && moving.at < beside.end && after) return null
+  const block = settled(lines.slice(moving.at, moving.end))
+  const rest = [...lines.slice(0, moving.at), ...lines.slice(moving.end)]
+  const there = sectionsOf(rest).find((one) => one.text === target)
+  if (!there) return null
+  const at = after ? there.end : there.at
+  const head = settled(rest.slice(0, at))
+  const tail = rest.slice(at)
+  const out = [...head, ...block, ...tail]
+  while (out.length > 1 && out.at(-1) === '' && out.at(-2) === '') out.pop()
+  return out.join('\n')
+}

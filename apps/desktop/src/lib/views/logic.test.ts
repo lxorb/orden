@@ -291,7 +291,7 @@ describe('selecting rows', () => {
   })
 
   test('a project carried onto another lands on the half it is over', async () => {
-    const { landsAfter } = await import('./project-drag')
+    const { landsAfter } = await import('./reorder-drag')
     expect(landsAfter(5, 0, 28)).toBe(false)
     expect(landsAfter(20, 0, 28)).toBe(true)
   })
