@@ -2303,4 +2303,11 @@ export const pa: Dictionary = {
   'Search this chat': 'ਇਸ ਚੈਟ ਵਿੱਚ ਖੋਜੋ',
   'Add as task': 'ਕੰਮ ਵਜੋਂ ਜੋੜੋ',
   'Save as note': 'ਨੋਟ ਵਜੋਂ ਸੰਭਾਲੋ',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ਸਵੇਰ',
+  Lagoon: 'ਲੈਗੂਨ',
+  Lilac: 'ਲਾਇਲੈਕ',
+  Peach: 'ਆੜੂ',
+  Sage: 'ਸੇਜ',
+  Mist: 'ਧੁੰਦ',
 }

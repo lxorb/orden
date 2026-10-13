@@ -2319,4 +2319,11 @@ export const ml: Dictionary = {
   'Search this chat': 'ഈ ചാറ്റിൽ തിരയുക',
   'Add as task': 'ജോലിയായി ചേർക്കുക',
   'Save as note': 'കുറിപ്പായി സംരക്ഷിക്കുക',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'പുലരി',
+  Lagoon: 'കായൽ',
+  Lilac: 'ലൈലാക്',
+  Peach: 'പീച്ച്',
+  Sage: 'സേജ്',
+  Mist: 'മൂടൽമഞ്ഞ്',
 }

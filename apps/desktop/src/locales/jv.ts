@@ -2282,4 +2282,11 @@ export const jv: Dictionary = {
   'Search this chat': 'Golek ing obrolan iki',
   'Add as task': 'Tambahake minangka tugas',
   'Save as note': 'Simpen minangka cathetan',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Esuk',
+  Lagoon: 'Laguna',
+  Lilac: 'Lila',
+  Peach: 'Persik',
+  Sage: 'Sage',
+  Mist: 'Pedhut',
 }

@@ -2300,4 +2300,11 @@ export const mr: Dictionary = {
   'Search this chat': 'या चॅटमध्ये शोधा',
   'Add as task': 'काम म्हणून जोडा',
   'Save as note': 'नोंद म्हणून जतन करा',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'पहाट',
+  Lagoon: 'खाडी',
+  Lilac: 'लायलॅक',
+  Peach: 'पीच',
+  Sage: 'सेज',
+  Mist: 'धुके',
 }

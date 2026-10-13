@@ -2286,4 +2286,11 @@ export const ja: Dictionary = {
   'Search this chat': 'このチャットを検索',
   'Add as task': 'タスクとして追加',
   'Save as note': 'ノートとして保存',
+  // Appearance: glass's own pairs of colours
+  Dawn: '夜明け',
+  Lagoon: 'ラグーン',
+  Lilac: 'ライラック',
+  Peach: 'ピーチ',
+  Sage: 'セージ',
+  Mist: 'ミスト',
 }

@@ -2327,4 +2327,11 @@ export const ha: Dictionary = {
   'Search this chat': 'Bincika wannan hira',
   'Add as task': 'Ƙara a matsayin aiki',
   'Save as note': 'Ajiye a matsayin bayani',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Alfijir',
+  Lagoon: 'Lagon',
+  Lilac: 'Lila',
+  Peach: 'Peach',
+  Sage: 'Sage',
+  Mist: 'Hazo',
 }

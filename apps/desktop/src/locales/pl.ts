@@ -2381,4 +2381,11 @@ export const pl: Dictionary = {
   'Search this chat': 'Szukaj na tym czacie',
   'Add as task': 'Dodaj jako zadanie',
   'Save as note': 'Zapisz jako notatkę',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Świt',
+  Lagoon: 'Laguna',
+  Lilac: 'Liliowy',
+  Peach: 'Brzoskwinia',
+  Sage: 'Szałwia',
+  Mist: 'Mgła',
 }

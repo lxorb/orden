@@ -2404,4 +2404,11 @@ export const ar: Dictionary = {
   'Search this chat': 'البحث في هذه الدردشة',
   'Add as task': 'إضافة كمهمة',
   'Save as note': 'حفظ كملاحظة',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'فجر',
+  Lagoon: 'بحيرة',
+  Lilac: 'ليلكي',
+  Peach: 'خوخي',
+  Sage: 'مريمية',
+  Mist: 'ضباب',
 }

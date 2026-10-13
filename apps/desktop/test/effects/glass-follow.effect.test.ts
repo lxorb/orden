@@ -105,6 +105,13 @@ function tint(): string {
   return document.documentElement.style.getPropertyValue('--glass-tint')
 }
 
+/** The frame's two colours where it is glass's own pair, and null where it is one. */
+function pair(): [string, string] | null {
+  const root = document.documentElement
+  if (!root.hasAttribute('data-paired')) return null
+  return [tint(), root.style.getPropertyValue('--glass-tint-2')]
+}
+
 beforeEach(async () => {
   localStorage.clear()
   viewport.device = 'desktop'
@@ -163,7 +170,7 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   expect(tints).toEqual(['#ffffff'])
   expect(chrome.theme).toBeUndefined()
 
-  // A note: a tone of the accent in the reader's own scheme, and its tab is the paper.
+  // A note: glass's own pair in the reader's own scheme, and its tab is the paper.
   tints = []
   workspace.activate(note)
   await settle()
@@ -171,6 +178,57 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   expect(tints[0]).toMatch(/^#[0-9a-f]{6}$/)
   expect(chrome.theme).toBeUndefined()
   expect(active()?.style.getPropertyValue('--web-ground')).toBe('')
+})
+
+// lxorb, 2026-10-13: "two colors with some sort of very very nice looking blur ... light
+// blue at the top left and at the opposite corner the other one".
+test('a note and an empty pane wear glass’s own pair, a page its own colour', async () => {
+  const black = workspace.openPage(BLACK) ?? ''
+  grounds.said(black, BLACK, '#0f0f0f')
+  workspace.openBlank('Notes', '# Notes')
+  const note = workspace.active?.id ?? ''
+  await settle()
+  expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
+  expect(chrome.theme).toBeUndefined()
+
+  workspace.activate(black)
+  await settle()
+  expect(pair()).toBeNull()
+  expect(tint()).toBe('#0f0f0f')
+
+  // A tab with no page in it yet is an empty pane.
+  workspace.activate(workspace.openPage('') ?? note)
+  await settle()
+  expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
+})
+
+test('the pair is the reader’s to choose, and with the frame not following it is everywhere', async () => {
+  const black = workspace.openPage(BLACK) ?? ''
+  grounds.said(black, BLACK, '#0f0f0f')
+  workspace.activate(black)
+  await settle()
+  expect(pair()).toBeNull()
+
+  theme.set('follow', false)
+  await settle()
+  expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
+
+  theme.set('pair', 'lagoon')
+  await settle()
+  expect(pair()).toEqual(['#d1f0e7', '#d1dff9'])
+
+  // Two of the reader's own, worn as picked where the words read on them.
+  theme.set('pair', '#dfe5ec #e9e4ec')
+  await settle()
+  expect(pair()).toEqual(['#dfe5ec', '#e9e4ec'])
+
+  theme.setScheme('dark')
+  await settle()
+  expect(pair()?.every((one) => /^#[0-3][0-9a-f]/.test(one))).toBe(true)
+  theme.setScheme('light')
+  theme.set('follow', true)
+  theme.set('pair', 'dawn')
+  await settle()
 })
 
 // lxorb, issue #238: no detour through the site's mark while a page loads somewhere new.
@@ -256,6 +314,22 @@ test('the next launch opens on the colour it was left on, before anything is wor
   expect(tint()).toBe('#0f0f0f')
   expect(fresh.theme).toBe('dark')
   expect(fresh.barOf(black)?.colour).toBe('#0f0f0f')
+  fresh.sleep()
+})
+
+test('the next launch opens on the pair it was left on', async () => {
+  workspace.openBlank('Notes', '# Notes')
+  await settle()
+  const kept = localStorage.getItem('nib:glass-chrome')
+  expect(kept).toContain('#eed7f2')
+
+  chrome.sleep()
+  expect(pair()).toBeNull()
+  vi.resetModules()
+  localStorage.setItem('nib:glass-chrome', kept ?? '')
+  const fresh = (await import('../../src/lib/glass/chrome.svelte')).chrome
+  fresh.wake('light')
+  expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
   fresh.sleep()
 })
 

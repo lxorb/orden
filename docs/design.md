@@ -324,10 +324,25 @@ or the points disagree - the top rows of the still the window already took as th
 landed. The frame is that colour over the material, and the web bar and the open tab are it
 solid, so tab, bar and page are one surface: the active web tab does take the page's colour,
 as Safari's compact tab does, because in nib the bar between the tab and the page takes it
-too, and a neutral tab over a coloured bar would cut the one surface in two. A mark is Chrome's
-and Arc's: a note's cover, its icon's colour, a site's favicon while its page has said
-nothing, else the accent, as a tone mixed into the scheme's own chrome, so a note's frame
-stays calm. Orden's spaces have no colour of their own, so there is no space step.
+too, and a neutral tab over a coloured bar would cut the one surface in two. A site's favicon,
+while its page has said nothing, is Chrome's and Arc's: a tone of it mixed into the scheme's
+own chrome. Orden's spaces have no colour of their own, so there is no space step.
+
+**Everywhere else glass is its own two colours** (lxorb, 2026-10-13: *"two colors with some
+sort of very very nice looking blur ... light blue at the top left and at the opposite corner
+the other one ... it should not be too aufdringlich though"*). A note, a canvas, a chat, the
+settings and an empty pane stand on a soft diagonal: the first colour in the top left corner,
+the second in the bottom right, under a faint glow of each in its own corner and a grain that
+keeps an eight-bit screen from drawing the blend in bands - a Mac's wallpaper behind its
+translucent windows, Arc's space gradients, iOS's mesh gradients. One picture painted once on
+`main`, nothing per frame. The default, Dawn, is a light blue to a soft pink-purple
+(`#d2e7fc` to `#eed7f2`; at night `#1d2a3d` to `#30243d`, deeper and greyer), the app icon's
+pair; Tint colour offers five more, the accent, and two dots that open the platform's colour
+picker for two of one's own. Each pair is as strong as it can be while the quietest word on
+a hovered row reads at AA over every colour of the blend with the grain on it, and while no
+more than four fifths of it lies over Mica, so the material still shows (`glass/pairs.ts`,
+`pairFor` in `glass/tint.ts`, held by `tint.test.ts` and read back by `test/e2e/glass.py`).
+With Follow the page off, the pair is everywhere.
 
 Words always read. The frame wears whichever scheme's words read on the colour - `data-theme`
 on the title bar, the strips, the side panels, the foot row and the web bar, so every token

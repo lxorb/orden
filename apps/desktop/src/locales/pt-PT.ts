@@ -2348,4 +2348,11 @@ export const ptPT: Dictionary = {
   'Search this chat': 'Pesquisar nesta conversa',
   'Add as task': 'Adicionar como tarefa',
   'Save as note': 'Guardar como nota',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Madrugada',
+  Lagoon: 'Lagoa',
+  Lilac: 'Lilás',
+  Peach: 'Pêssego',
+  Sage: 'Salva',
+  Mist: 'Névoa',
 }

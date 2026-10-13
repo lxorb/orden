@@ -2299,4 +2299,11 @@ export const fa: Dictionary = {
   'Search this chat': 'جستجو در این گفتگو',
   'Add as task': 'افزودن به‌عنوان کار',
   'Save as note': 'ذخیره به‌عنوان یادداشت',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'سپیده‌دم',
+  Lagoon: 'مرداب',
+  Lilac: 'یاسی',
+  Peach: 'هلو',
+  Sage: 'مریم‌گلی',
+  Mist: 'مه',
 }

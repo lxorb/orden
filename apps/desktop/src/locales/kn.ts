@@ -2316,4 +2316,11 @@ export const kn: Dictionary = {
   'Search this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಹುಡುಕಿ',
   'Add as task': 'ಕೆಲಸವಾಗಿ ಸೇರಿಸಿ',
   'Save as note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಿ',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ಮುಂಜಾನೆ',
+  Lagoon: 'ಲಗೂನ್',
+  Lilac: 'ಲೈಲಾಕ್',
+  Peach: 'ಪೀಚ್',
+  Sage: 'ಸೇಜ್',
+  Mist: 'ಮಂಜು',
 }

@@ -2246,4 +2246,11 @@ export const zhHans: Dictionary = {
   'Search this chat': '在此聊天中搜索',
   'Add as task': '添加为任务',
   'Save as note': '保存为笔记',
+  // Appearance: glass's own pairs of colours
+  Dawn: '黎明',
+  Lagoon: '泻湖',
+  Lilac: '丁香',
+  Peach: '蜜桃',
+  Sage: '鼠尾草',
+  Mist: '薄雾',
 }

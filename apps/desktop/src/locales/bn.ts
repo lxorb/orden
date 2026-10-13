@@ -2297,4 +2297,11 @@ export const bn: Dictionary = {
   'Search this chat': 'এই চ্যাটে খুঁজুন',
   'Add as task': 'কাজ হিসেবে যোগ করুন',
   'Save as note': 'নোট হিসেবে সংরক্ষণ করুন',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ভোর',
+  Lagoon: 'উপহ্রদ',
+  Lilac: 'লাইলাক',
+  Peach: 'পিচ',
+  Sage: 'সেজ',
+  Mist: 'কুয়াশা',
 }

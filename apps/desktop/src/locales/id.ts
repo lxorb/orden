@@ -2290,4 +2290,11 @@ export const id: Dictionary = {
   'Search this chat': 'Cari di obrolan ini',
   'Add as task': 'Tambahkan sebagai tugas',
   'Save as note': 'Simpan sebagai catatan',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Fajar',
+  Lagoon: 'Laguna',
+  Lilac: 'Lila',
+  Peach: 'Persik',
+  Sage: 'Sage',
+  Mist: 'Kabut',
 }

@@ -2291,4 +2291,11 @@ export const ms: Dictionary = {
   'Search this chat': 'Cari dalam sembang ini',
   'Add as task': 'Tambah sebagai tugasan',
   'Save as note': 'Simpan sebagai nota',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Fajar',
+  Lagoon: 'Lagun',
+  Lilac: 'Lilak',
+  Peach: 'Pic',
+  Sage: 'Sage',
+  Mist: 'Kabus',
 }

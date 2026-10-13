@@ -2306,4 +2306,11 @@ export const tr: Dictionary = {
   'Search this chat': 'Bu sohbette ara',
   'Add as task': 'Görev olarak ekle',
   'Save as note': 'Not olarak kaydet',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Şafak',
+  Lagoon: 'Lagün',
+  Lilac: 'Leylak',
+  Peach: 'Şeftali',
+  Sage: 'Adaçayı',
+  Mist: 'Sis',
 }
