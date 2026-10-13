@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Попередній тиждень',
   // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Додати проєкт вище',
   'Add project below': 'Додати проєкт нижче',

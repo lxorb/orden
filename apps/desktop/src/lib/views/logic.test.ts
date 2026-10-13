@@ -23,7 +23,7 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems, withPicked } from './list-items'
+import { listItems, withEveryDay, withinDays, withPicked } from './list-items'
 import { panelCounts } from './panel'
 import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
@@ -260,6 +260,23 @@ describe('a task’s lines moved', () => {
     const b = { id: 'b', anchor: anchor('- [ ] B', 2) }
     expect(outermost(note, [a1, a, b]).map((one) => one.id)).toEqual(['b', 'a'])
     expect(outermost(note, [a1]).map((one) => one.id)).toEqual(['a1'])
+  })
+})
+
+describe('Upcoming as a board', () => {
+  test('is a column for every day of its two weeks, what is overdue first', () => {
+    const groups = [
+      { key: 'overdue', rows: [], summaries: {} },
+      { key: { kind: 'date' as const, iso: '2026-10-04' }, rows: [], summaries: {} },
+      { key: { kind: 'date' as const, iso: '2026-10-30' }, rows: [], summaries: {} },
+    ]
+    const days = withinDays(
+      withEveryDay(groups, '2026-10-11', '2026-10-24'),
+      '2026-10-11',
+      '2026-10-24',
+    )
+    expect(days).toHaveLength(15)
+    expect(days[0]?.key).toBe('overdue')
   })
 })
 

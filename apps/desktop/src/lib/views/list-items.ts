@@ -209,3 +209,12 @@ export function withEverySection(
   }
   return [...out, ...named.values()]
 }
+
+/** Every-day groups cut to the days from one through another: a board of two weeks has
+ *  no column outside them. A group that is no day, what is overdue, stays. */
+export function withinDays(groups: readonly Group[], from: string, through: string): Group[] {
+  return groups.filter((group) => {
+    const day = dayIn(group.key)
+    return day === null || (day >= from && day <= through)
+  })
+}

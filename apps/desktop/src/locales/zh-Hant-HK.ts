@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Tasks: Upcoming's weeks
+  'Previous week': '上一星期',
   // Tasks: projects placed in the panel, and their folder
   'Add project above': '在上方新增項目',
   'Add project below': '在下方新增項目',

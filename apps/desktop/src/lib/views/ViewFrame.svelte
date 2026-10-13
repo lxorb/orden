@@ -121,8 +121,8 @@
         class:fills={layout === 'kanban' || layout === 'calendar' || layout === 'timeline'}
         in:arrive
       >
-        {#if layout === 'list' && kit.spec.builtin === 'upcoming'}
-          <UpcomingLayout {kit} />
+        {#if (layout === 'list' || layout === 'kanban') && kit.spec.builtin === 'upcoming'}
+          <UpcomingLayout {kit} board={layout === 'kanban'} />
         {:else if layout === 'list' || (layout === 'timeline' && phone)}
           <ListLayout {kit} where={!project} />
         {:else if layout === 'table'}

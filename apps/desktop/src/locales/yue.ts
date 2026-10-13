@@ -1,6 +1,8 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: Upcoming's weeks
+  'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder
   'Add project above': '喺上面加項目',
   'Add project below': '喺下面加項目',

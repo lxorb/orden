@@ -116,6 +116,55 @@ def upcoming(page: Page, days: dict[str, str]) -> None:
         wrong(f"the empty days have no add row ({adds})")
     shot(page, "03-upcoming")
 
+    # Shift and an arrow walk the strip a week at a time.
+    first = "() => document.querySelector('.view-tab .strip .day .number')?.textContent"
+    before = page.evaluate(first)
+    page.locator(".view-tab .upcoming .task").first.focus()
+    page.keyboard.press("Shift+ArrowRight")
+    wait_for(page, f"() => ({first})() !== '{before}'", "the strip a week on")
+    page.keyboard.press("Shift+ArrowLeft")
+    wait_for(page, f"() => ({first})() === '{before}'", "the strip back")
+
+
+COLUMNS = "() => [...document.querySelectorAll('.view-tab .board .column .head .name')].map((one) => one.textContent.trim())"
+
+
+def upcoming_board(page: Page, days: dict[str, str]) -> None:
+    page.locator(".view-tab [aria-label='Display']").click()
+    wait_for(page, "document.querySelector('.view-tab .display')", "the Display menu")
+    page.locator(".view-tab .display [role=radio]", has_text="Board").click()
+    page.keyboard.press("Escape")
+    wait_for(page, "document.querySelector('.view-tab .upcoming .board .column')", "Upcoming as a board")
+    columns = page.evaluate(COLUMNS)
+    say(f"[columns] {json.dumps(columns[:4], ensure_ascii=False)} ... {len(columns)}")
+    if not columns or not columns[0].startswith("Overdue"):
+        wrong("the board does not start with what is overdue")
+    if len(columns) != 15:
+        wrong(f"the board does not have a column for each of two weeks ({len(columns)})")
+    shot(page, "04-upcoming-board")
+
+    # A card carried to the column of the day after tomorrow is given that day.
+    water = page.locator(".view-tab .board .card", has_text="Water the plants").bounding_box()
+    third = page.locator(".view-tab .board .column").nth(3).bounding_box()
+    if water and third:
+        page.mouse.move(water["x"] + 20, water["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(water["x"] + 40, water["y"] + 20, steps=4)
+        page.mouse.move(third["x"] + 60, third["y"] + 120, steps=10)
+        page.mouse.up()
+        wait_for(
+            page,
+            "() => { const t = window.tasks.rows.of().find((one) => one.task?.text === 'Water the plants')?.task; const d = new Date(); d.setDate(d.getDate() + 2); const two = (v) => String(v).padStart(2, '0'); return t?.due === `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}` }",
+            "the card given its column's day",
+        )
+
+    before = page.evaluate(COLUMNS)[1]
+    page.locator(".view-tab .strip [aria-label='Forward']").click()
+    page.wait_for_timeout(500)
+    strip = page.evaluate("() => document.querySelector('.view-tab .strip .day .number')?.textContent")
+    say(f"[after forward] {json.dumps(page.evaluate(COLUMNS)[:3], ensure_ascii=False)} strip {strip}")
+    wait_for(page, f"() => ({COLUMNS})()[1] !== {json.dumps(before)}", "the columns a week on")
+
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -123,6 +172,7 @@ def drive(browser: Browser) -> None:
     days = seed(page)
     display(page)
     upcoming(page, days)
+    upcoming_board(page, days)
 
 
 if __name__ == "__main__":

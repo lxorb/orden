@@ -40,6 +40,8 @@ const TASK_ENTRIES: Shortcut[] = (
     ['tasks.link', () => t('Copy link'), 'Mod-Shift-c'],
     ['tasks.add', () => t('Add task'), 'a'],
     ['tasks.add-top', () => t('Add task at the top'), 'Shift-a'],
+    ['tasks.week-back', () => t('Previous week'), 'Shift-ArrowLeft'],
+    ['tasks.week-on', () => t('Next week'), 'Shift-ArrowRight'],
   ] as const
 ).map(([id, label, key]) => ({
   id,

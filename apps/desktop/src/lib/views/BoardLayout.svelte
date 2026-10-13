@@ -26,10 +26,10 @@
   import { dropInto } from './drop'
   import { setHidden, setManualOrder } from './edit'
   import { plain } from './inline'
-  import { laneKeys, withEverySection } from './list-items'
+  import { laneKeys, withEveryDay, withEverySection, withinDays } from './list-items'
   import type { Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
-  import { groupLabel } from './words'
+  import { dayHead, groupLabel } from './words'
   import BoardColumn from './BoardColumn.svelte'
   import {
     addSection,
@@ -43,7 +43,14 @@
   import { isTitle } from './sections'
   import { ADD_MARK } from './marks'
 
-  const { kit }: { kit: Kit } = $props()
+  const {
+    kit,
+    days,
+  }: {
+    kit: Kit
+    /** Every day from one through another a column, empty ones too: Upcoming's board. */
+    days?: { from: string; through: string } | undefined
+  } = $props()
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
@@ -55,7 +62,13 @@
   const groups = $derived(
     project
       ? withEverySection(live.answer?.groups ?? [], sectionsHere(project.relative), project.name)
-      : (live.answer?.groups ?? []),
+      : days
+        ? withinDays(
+            withEveryDay(live.answer?.groups ?? [], days.from, days.through),
+            days.from,
+            days.through,
+          )
+        : (live.answer?.groups ?? []),
   )
   const shownGroups = $derived(groups.filter((group) => !hidden.includes(groupName(group.key))))
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
@@ -80,6 +93,7 @@
   /** What a column is called: a project's tasks in no section are that, not its title. */
   function columnName(group: Group): string {
     if (project && sectionOf(group) === null) return t('None')
+    if (days) return dayHead(group.key, live.today)
     return groupLabel(property, group.key, live.today)
   }
 
