@@ -12,11 +12,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A newer push to main supersedes the build of an older one: only the newest
-# is worth finishing. A tag is a release of its own and is never cancelled.
+# A build of main is never cancelled by a newer push: pushes came faster than a
+# build takes, so none ever finished and edge stood still. The running one
+# finishes, and only the newest push waits behind it. A tag is a release of its
+# own and is never cancelled; a dispatch on another branch is a trial, and the
+# newer one replaces it.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
 # The floor, so a job added below without a block of its own still only reads.
 # Every job states its own as well, because what a job may do is part of what the
