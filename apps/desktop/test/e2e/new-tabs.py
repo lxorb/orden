@@ -8,8 +8,8 @@ What it proves, in order:
 * **Paragraph needs no chord**: Ctrl+1 on a line that is already a first-level heading
   turns it back into prose, and again makes it a heading. That is what freed
   Ctrl+Shift+P for the palette.
-* **Ctrl+T is a new tab** (Emil, issue #213): a web tab whose address field has the
-  keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
+* **Ctrl+T is a new tab** (Emil, issue #213), called New tab (issue #241): a web tab
+  whose address field has the keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
   A letter typed is the address field's; once Escape has let go of the field, the letter
   makes its kind, in the new tab's place. The plus makes the same tab, and hangs no menu.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
@@ -116,6 +116,15 @@ NEW_TAB = """
     letters: here ? [...here.querySelectorAll('.kind kbd')].map((one) => one.textContent) : [],
     menu: !!document.querySelector('.menu'),
   }
+}
+"""
+
+# What the tab in front is called, in the strip and on the window.
+CALLED = """
+() => {
+  const id = window.nibApp.workspace.active?.id
+  const label = document.querySelector(`[data-tab="${id}"] .label`)?.textContent.trim()
+  return { label, title: document.title.split(' - ')[0] }
 }
 """
 
@@ -264,6 +273,13 @@ def chooser(page) -> None:
         say(f"the lines              -> {new['lines']}")
     if new["letters"] != ["N", "C", "P", "O", "W"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
+    # Issue #241: called what it is, in the strip and on the window, as a browser's is.
+    settles(page, f"() => ({CALLED})().title === 'New tab'")
+    called = page.evaluate(CALLED)
+    if called != {"label": "New tab", "title": "New tab"}:
+        wrong(f"the new tab is not called New tab: {called}")
+    else:
+        say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
 
     # A letter typed is the address's, and makes nothing.

@@ -260,8 +260,10 @@ function unfetched(): void {
 /** Whether a tab is worth remembering once closed: not a new tab with nothing in it,
  *  which would put back something nobody ever wrote. See workspace/drafts.ts. */
 function worthReopening(tab: Tab): boolean {
-  // A private tab is forgotten the moment it closes; see web-tab/private.ts.
-  return !tab.inPrivate && (!isDraft(tab.note) || hasWords(tab.note))
+  // A private tab is forgotten the moment it closes; see web-tab/private.ts. And a new
+  // tab that never went anywhere had nothing on it, so Ctrl+Shift+T reaches past it to
+  // the tab before, as Chrome's and Firefox's do.
+  return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
 }
 
 class Workspace {
@@ -296,7 +298,7 @@ class Workspace {
     tab.note = this.document({
       kind: 'web',
       path: null,
-      name: url ? plainOrigin(url) : t('Website'),
+      name: url ? plainOrigin(url) : t('New tab'),
       text: '',
       dirty: false,
       home: this.spaceOf(keeper.note),
@@ -1510,13 +1512,7 @@ class Workspace {
    *  is where the kinds are offered. A private one is a page somebody asked for on
    *  purpose, and has only its address field. See WebTab.svelte. */
   isNewTab(tab: Tab): boolean {
-    return (
-      tab.kind === 'web' &&
-      tab.path === null &&
-      !tab.inPrivate &&
-      !tab.address &&
-      !pages.addressOf(tab.id)
-    )
+    return tab.nowhere && !tab.inPrivate && !pages.addressOf(tab.id)
   }
 
   /** The tab a tab asked for beside another is opened from: the one in front of its
@@ -1899,7 +1895,7 @@ class Workspace {
     const file = this.document({
       kind: 'web',
       path: null,
-      name: t('Website'),
+      name: t('New tab'),
       text: '',
       dirty: false,
       home: this.activeSpaceId,
@@ -2008,6 +2004,9 @@ class Workspace {
   webWalked(tab: Tab, url: string) {
     if (tab.address === url) return
 
+    // A new tab going somewhere is called after the site until the page says what it
+    // is called, as a tab a link opened is; see `openPage` and `webNamed`.
+    if (tab.nowhere && !pages.of(tab.id).title) tab.name = plainOrigin(url)
     tab.address = url
     this.scheduleSession()
   }

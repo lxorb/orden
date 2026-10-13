@@ -2148,6 +2148,35 @@ describe('a new tab', () => {
     expect(tab && workspace.isNewTab(tab)).toBe(true)
   })
 
+  /** Issue #241: a browser's new tab is a New tab, not a "Website" - and so is one a
+   *  sitting before wrote down under that name. */
+  test('and is called New tab until it goes somewhere', () => {
+    workspace.newTab()
+    const tab = workspace.active
+    if (!tab) throw new Error('no new tab')
+
+    expect(tab.shown).toBe('New tab')
+    tab.name = 'Website'
+    expect(tab.shown).toBe('New tab')
+
+    workspace.webWalked(tab, 'https://www.example.com/a')
+    expect(tab.shown).toBe('example.com')
+
+    workspace.webNamed(tab, 'Example Domain')
+    expect(tab.shown).toBe('Example Domain')
+  })
+
+  /** Chrome's and Firefox's Ctrl+Shift+T reach past a new tab nothing was done in. */
+  test('and closed with nothing on it, is not brought back', async () => {
+    workspace.close(workspace.openPage('https://example.com/') ?? '')
+    workspace.newTab()
+    workspace.close(workspace.active?.id ?? '')
+    expect(workspace.closed.stack.map((one) => one.draft.address)).toEqual(['https://example.com/'])
+
+    await workspace.reopenClosed()
+    expect(workspace.tabs.map((one) => one.address)).toEqual(['https://example.com/'])
+  })
+
   /** Chrome's new tab page: what is chosen on it is opened in its place. */
   test('and a kind chosen on it takes its place in the strip, leaving nothing behind', async () => {
     await workspace.newCanvas()
