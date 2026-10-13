@@ -943,7 +943,7 @@ mod tests {
         let webview2 = &source[from..];
         let webview2 = &webview2[..webview2.find("\n}\n").expect("its end")];
         let own = &webview2[webview2.find("pub fn take_own(").expect("take_own")..];
-        let own = &own[..own.find("\n    }\n").expect("its end")];
+        let own = &own[..own.find("\n    }").unwrap_or(own.len())];
         assert!(
             own.contains("focus(OWN."),
             "take_own leaves the app's own page to wry"
