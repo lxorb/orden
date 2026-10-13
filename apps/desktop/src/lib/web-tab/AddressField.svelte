@@ -28,7 +28,7 @@
   import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import Suggest from '../Suggest.svelte'
-  import { dotCom } from './address'
+  import { dotCom } from './typed'
   import { shownAddress } from './omnibox'
   import { visited } from './visited'
   import type { Visit } from './visits'
@@ -250,7 +250,7 @@
     if (event.key === 'Enter') {
       event.preventDefault()
       // Ctrl+Enter is the `.com` press every browser has, and it is about what was
-      // typed rather than what the field offered after it; see `dotCom` in address.ts.
+      // typed rather than what the field offered after it; see `dotCom` in typed.ts.
       const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
       go(row?.url ?? dotted ?? resolved(box.value), event.altKey)
       return

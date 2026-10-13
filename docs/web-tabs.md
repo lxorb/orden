@@ -1101,7 +1101,7 @@ origin is shown plainly either way**, with `www.` dropped the way every browser
 drops it, and an `http:` page keeps its scheme in front of the host, because that
 is the one thing about an address worth warning somebody about.
 
-What somebody types is read once, in `web-tab/address.ts`: a host gets the scheme
+What somebody types is read once, in `web-tab/typed.ts`: a host gets the scheme
 Chrome would give it (`localhost:1425` is a host and not a scheme, which is the special
 case every browser makes), a scheme is taken as written so `http://` stays `http://` and
 `javascript:` never opens, and words are a search - Google, because that is the answer
@@ -2118,7 +2118,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/capabilities/default.json`    | webviews, not windows                                                                                                                                                                                                                                  |
 | `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
 | `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                           |
-| `apps/desktop/src/lib/web-tab/address.ts`             | what somebody typed, and the origin plainly. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/address.ts`             | which addresses a tab may open, and the origin plainly. Pure, tested                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/typed.ts`               | what somebody typed: an address with the scheme Chrome gives it, or words. Pure, tested                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/upgrade.ts`             | https first and plain http when nothing answers there, for a host typed with no scheme. Pure, tested                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                          |
 | `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                        |

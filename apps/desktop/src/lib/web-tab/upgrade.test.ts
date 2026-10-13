@@ -2,7 +2,7 @@
  *  Chrome's HTTPS-Upgrades, typed navigations only. See upgrade.ts. */
 
 import { expect, test } from 'vitest'
-import { webAddress } from './address'
+import { webAddress } from './typed'
 import { settled, upgradeOf } from './upgrade'
 
 const typed = (said: string) => upgradeOf(said, webAddress(said) ?? '')

@@ -70,7 +70,7 @@ export function readFound(value: unknown): Found | null {
 /** Where a page that did not arrive is sent instead: the tab and the address. */
 export type Go = (tab: string, url: string) => void
 
-export function heard(page: Page, said: Said, go: Go = () => {}): void {
+export function heard(page: Page, said: Said, go?: Go): void {
   switch (said.said) {
     case 'sound': {
       // When it fell quiet, which a page out of sight is not frozen for a while after;
@@ -100,7 +100,7 @@ export function heard(page: Page, said: Said, go: Go = () => {}): void {
       const now = settled(upgrade, said.url, said.failure)
       if (now === 'unrelated') return
       page.upgrade = null
-      if (now === 'fallback') go(said.tab, upgrade.fallback)
+      if (now === 'fallback') go?.(said.tab, upgrade.fallback)
       return
     }
   }

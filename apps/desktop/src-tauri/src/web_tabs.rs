@@ -626,7 +626,7 @@ pub enum Step {
 /// system knows would hand the page to another application, and the app's own
 /// origins would put nib inside the tab with the site's script beside it. What
 /// somebody typed is turned into an address by the window (see
-/// `lib/web-tab/address.ts`); this is the rule that cannot be talked round,
+/// `lib/web-tab/typed.ts`); this is the rule that cannot be talked round,
 /// because it is also what every link inside the page is judged by, and every
 /// link another program hands nib as the browser (`web_handed.rs`).
 pub(crate) fn allowed(url: &Url) -> bool {

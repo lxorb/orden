@@ -13,7 +13,7 @@
  *  Pure: the bar keeps what this answers on the tab's page (`Page.upgrade`) and the
  *  engine's word on how the page arrived (`arrived` in heard.ts) settles it. */
 
-import { typedAddress } from './address'
+import { typedAddress } from './typed'
 
 /** Why a page did not arrive, as the crate says it (web_page.rs): nothing answered on the
  *  connection, the certificate was wrong, or anything else. */
@@ -27,7 +27,7 @@ export interface Upgrade {
 }
 
 /** What happens when a page arrives while an upgrade is pending. */
-export type Settled = 'fallback' | 'done' | 'unrelated'
+type Settled = 'fallback' | 'done' | 'unrelated'
 
 const SECURE = 'https://'
 

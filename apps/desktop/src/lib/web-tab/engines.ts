@@ -3,14 +3,15 @@
  *  Emil's browser vision (2026-09-13) keeps the search engine choice inside the browser,
  *  where Chrome keeps it: Settings, one row, the engines Chrome offers for the reader's
  *  region and a custom one written with `%s` where the words go. Google stays the first
- *  and the default, which was Emil's call; see `SEARCH` in address.ts.
+ *  and the default, which was Emil's call; see `SEARCH` in typed.ts.
  *
  *  The addresses are the ones Chrome's own prepopulated list sends a search to
  *  (components/search_engines/prepopulated_engines.json), with `{searchTerms}` written
  *  as the `%s` Chrome's own custom engines use. Pure, so the list and what a choice
  *  makes of a few words are tested apart from any setting. */
 
-import { isWebAddress, SEARCH, WORDS } from './address'
+import { isWebAddress } from './address'
+import { SEARCH, WORDS } from './typed'
 
 /** One engine: what it is called and where its search goes. */
 export interface Engine {

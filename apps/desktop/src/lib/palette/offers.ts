@@ -23,8 +23,8 @@ export function makeable(term: string, taken: ReadonlySet<string>): NoteToMake |
 }
 
 /** The address something typed is, and nothing for words: a few words in the palette
- *  are a search for a note, not for the web. See web-tab/address.ts. */
-export { typedAddress } from '../web-tab/address'
+ *  are a search for a note, not for the web. See web-tab/typed.ts. */
+export { typedAddress } from '../web-tab/typed'
 
 /** `found` with the two offers where they belong. `address` is what `term` goes to
  *  when it is an address, and `shown` how that reads. */

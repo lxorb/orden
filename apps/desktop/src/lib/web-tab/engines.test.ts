@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { SEARCH } from './address'
+import { SEARCH } from './typed'
 import { engineById, enginesFor, isEngineAddress } from './engines'
 
 describe("Chrome's list", () => {

@@ -1,13 +1,13 @@
 /** The search engine this device's address field sends words to: Settings' one row.
  *
- *  Google until somebody chooses otherwise (Emil's call; see address.ts), one of Chrome's
+ *  Google until somebody chooses otherwise (Emil's call; see typed.ts), one of Chrome's
  *  list for the reader's region, or a custom address with `%s` where the words go. This
  *  device's, like Memory saver beside it: Chrome keeps it with the profile, and nib's
  *  profile is the machine's. What the list is and what a choice makes of the words is
  *  engines.ts. */
 
 import { isRecord, isString, keep, stored } from '../stored'
-import { SEARCH } from './address'
+import { SEARCH } from './typed'
 import { engineById, isEngineAddress } from './engines'
 
 const KEY = 'nib:search-engine'
