@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: '건너뛰기',
+  'Complete forever': '영구 완료',
   // Tasks: comments
   Comments: '댓글',
   // Tasks: filters

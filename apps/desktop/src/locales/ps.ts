@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'تېر شئ',
+  'Complete forever': 'د تل لپاره بشپړ کړئ',
   // Tasks: comments
   Comments: 'تبصرې',
   // Tasks: filters

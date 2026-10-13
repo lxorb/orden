@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Atla',
+  'Complete forever': 'Kalıcı olarak tamamla',
   // Tasks: comments
   Comments: 'Yorumlar',
   // Tasks: filters

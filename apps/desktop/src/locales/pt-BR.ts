@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Pular',
+  'Complete forever': 'Concluir para sempre',
   // Tasks: comments
   Comments: 'Comentários',
   // Tasks: filters

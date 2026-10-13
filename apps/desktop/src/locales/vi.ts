@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Bỏ qua',
+  'Complete forever': 'Hoàn thành vĩnh viễn',
   // Tasks: comments
   Comments: 'Bình luận',
   // Tasks: filters

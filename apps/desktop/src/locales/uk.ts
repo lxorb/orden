@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Пропустити',
+  'Complete forever': 'Виконати назавжди',
   // Tasks: comments
   Comments: 'Коментарі',
   // Tasks: filters

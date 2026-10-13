@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'છોડો',
+  'Complete forever': 'હંમેશ માટે પૂર્ણ કરો',
   // Tasks: comments
   Comments: 'ટિપ્પણીઓ',
   // Tasks: filters

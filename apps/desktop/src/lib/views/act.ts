@@ -9,7 +9,7 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { taskHash, tick } from '@nib/bases'
+import { finish, skip, taskHash, tick } from '@nib/bases'
 import type { Row, TaskChange } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
 import { blockIds, freeBlockId } from '@nib/markdown/links'
@@ -32,6 +32,7 @@ import {
   lineOfAnchor,
   movedBeside,
   movedBlock,
+  editedLines,
   movedUnder,
   outermost,
   withLines,
@@ -222,6 +223,38 @@ export function tickRows(many: readonly Row[], today = dayOf(new Date())): Promi
     },
     opening ? 'done' : undefined,
   )
+}
+
+/** Each of many tasks' lines rewritten by `edit` (edits of the line alone, offsets in
+ *  it), as one write: one undo. */
+function editLines(
+  many: readonly Row[],
+  edit: (line: string) => { from: number; to: number; insert: string }[],
+  said?: Said,
+): Promise<boolean> {
+  return rewriteEach(
+    many,
+    (before, inNote) =>
+      editedLines(
+        before,
+        inNote.map((one) => one.anchor),
+        edit,
+      ),
+    said,
+  )
+}
+
+/** Recurring tasks moved on to their next occurrence without being done: Todoist's
+ *  Skip (Postpone, in its scheduler). */
+export function skipRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const repeating = many.filter((row) => row.task?.recurrence)
+  return editLines(repeating, (line) => skip(line, today), 'scheduled')
+}
+
+/** Recurring tasks done for good: ticked, the rule taken off, no next occurrence. */
+export function finishRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const repeating = many.filter((row) => row.task?.recurrence)
+  return editLines(repeating, (line) => finish(line, today), 'done')
 }
 
 /** Many tasks deleted as one write, so one undo brings all of them back: the bulk

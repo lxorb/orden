@@ -18,6 +18,7 @@
   import Check from 'lucide/dist/esm/icons/check.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
   import ListTree from 'lucide/dist/esm/icons/list-tree.mjs'
+  import Grip from 'lucide/dist/esm/icons/grip-vertical.mjs'
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
   import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
@@ -174,6 +175,8 @@
       onauxclick={aux}
     >
       <div class="head">
+        <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. -->
+        <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
         {#if twist}
           <button
             type="button"
@@ -215,6 +218,18 @@
             aria-label={t('Schedule')}
             title={shortcuts.tooltip(t('Schedule'), 'tasks.schedule')}
             onclick={schedule}><Glyph icon={Calendar} /></button
+          >
+          <button
+            type="button"
+            class="act"
+            tabindex="-1"
+            aria-label={t('Comment')}
+            title={shortcuts.tooltip(t('Comment'), 'tasks.comment')}
+            onclick={(event) => {
+              event.stopPropagation()
+              onselect?.()
+              kit.openTask(row, true)
+            }}><Glyph icon={Message} /></button
           >
           <button
             type="button"
@@ -386,6 +401,30 @@
     gap: var(--space-2);
     height: var(--task-head, var(--row-height));
     min-width: 0;
+  }
+
+  .grip {
+    position: absolute;
+    inset-inline-start: calc(var(--depth) * var(--row-indent) - 2px);
+    top: calc((var(--task-head, var(--row-height)) - var(--icon-md)) / 2);
+    display: grid;
+    place-items: center;
+    width: var(--row-pad);
+    height: var(--icon-md);
+    color: var(--muted);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .task:hover .grip {
+      opacity: 0.7;
+    }
+  }
+
+  :global([data-touch]) .grip {
+    display: none;
   }
 
   .twist {

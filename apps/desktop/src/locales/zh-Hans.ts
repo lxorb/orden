@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: '跳过',
+  'Complete forever': '永久完成',
   // Tasks: comments
   Comments: '评论',
   // Tasks: filters

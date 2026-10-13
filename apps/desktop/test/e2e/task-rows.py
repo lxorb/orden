@@ -57,6 +57,8 @@ ERRANDS = """# Errands
   - Called again.
 - [ ] Water the plants 🔁 every 3 days when done 📅 {today}
 - [ ] Pay the dentist 📅 {yesterday}
+- [ ] Take the vitamins 🔁 every day 📅 {today}
+- [ ] Stretch 🔁 every day 📅 {today}
 """
 
 WRITE = """async ([files]) => {
@@ -209,6 +211,47 @@ def menu(page: Page) -> None:
     )
 
 
+def repeating(page: Page, days: dict[str, str]) -> None:
+    """A repeating task skipped from the scheduler, and one done for good from its menu."""
+    open_today(page)
+    vitamins = row(page, "Take the vitamins")
+    page.locator(vitamins).hover()
+    page.locator(f"{vitamins} .act[aria-label='Schedule']").click()
+    wait_for(page, "document.querySelector('.scheduler')", "the scheduler")
+    page.locator(".scheduler .quick .nib-row", has_text="Skip").click()
+    wait_for(
+        page,
+        f"() => ({TASK})('Take the vitamins')?.due === '{days['tomorrow']}' && !({TASK})('Take the vitamins')?.done",
+        "Skip moving it to tomorrow, unticked",
+    )
+    found = task(page, "Take the vitamins") or {}
+    if not found.get("recurrence"):
+        wrong("Skip took the repeat away")
+
+    stretch = row(page, "Stretch")
+    page.locator(stretch).hover()
+    page.locator(f"{stretch} .act[aria-label='More']").click()
+    page.locator(".menu [role=menuitem]", has_text="Complete forever").click()
+    wait_for(
+        page,
+        "() => { const all = window.tasks.rows.of().filter((one) => one.task?.text === 'Stretch'); return all.length === 1 && all[0].task.done && !all[0].task.recurrence }",
+        "Stretch done for good, with no next one",
+    )
+
+
+def comment_button(page: Page) -> None:
+    """The row's comment button opens its view with the comment field ready."""
+    open_today(page)
+    bank = row(page, "Call the bank")
+    page.locator(bank).hover()
+    page.locator(f"{bank} .act[aria-label='Comment']").click()
+    wait_for(page, "document.activeElement?.matches('.sheet .composer')", "the comment field")
+    shot(page, "04b-comment")
+    page.keyboard.press("Escape")
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('.sheet')", "the view put away")
+
+
 # A phone says it is one in its user agent and under a finger (deviceFor in
 # viewport.svelte.ts); the width alone is a narrow desktop window.
 PHONE_AGENT = (
@@ -246,6 +289,8 @@ def drive(browser: Browser) -> None:
     scheduler(page, days)
     reschedule(page, days)
     menu(page)
+    repeating(page, days)
+    comment_button(page)
     page.close()
     phone(browser)
 

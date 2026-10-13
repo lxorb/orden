@@ -215,3 +215,26 @@ export function outermost<T extends { anchor: Anchor }>(text: string, many: read
     .sort((a, b) => b.span[0] - a.span[0])
     .map(({ one }) => one)
 }
+
+/** The note with each of these tasks' lines changed by `edit`, which answers edits of
+ *  the line alone (offsets into it), from the last task up so the lines above each are
+ *  where the anchors say. */
+export function editedLines(
+  text: string,
+  anchors: readonly Anchor[],
+  edit: (line: string) => readonly { from: number; to: number; insert: string }[],
+): string {
+  let out = text
+  for (const anchor of [...anchors].sort((a, b) => b.line - a.line)) {
+    const index = lineOfAnchor(out, anchor)
+    if (index === null) continue
+    const line = linesOf(out)[index]
+    if (!line) continue
+    const own = line.text.replace(/\r$/, '')
+    const edits = [...edit(own)].sort((a, b) => b.from - a.from)
+    for (const one of edits) {
+      out = out.slice(0, line.from + one.from) + one.insert + out.slice(line.from + one.to)
+    }
+  }
+  return out
+}

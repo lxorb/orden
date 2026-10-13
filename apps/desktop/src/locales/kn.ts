@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'ಬಿಟ್ಟುಬಿಡಿ',
+  'Complete forever': 'ಶಾಶ್ವತವಾಗಿ ಪೂರ್ಣಗೊಳಿಸಿ',
   // Tasks: comments
   Comments: 'ಕಾಮೆಂಟ್‌ಗಳು',
   // Tasks: filters

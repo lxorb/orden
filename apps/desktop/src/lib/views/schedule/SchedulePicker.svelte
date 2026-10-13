@@ -16,6 +16,7 @@
   import ChevronLeft from 'lucide/dist/esm/icons/chevron-left.mjs'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import CircleSlash from 'lucide/dist/esm/icons/circle-slash.mjs'
+  import SkipForward from 'lucide/dist/esm/icons/skip-forward.mjs'
   import Clock from 'lucide/dist/esm/icons/clock.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Sofa from 'lucide/dist/esm/icons/sofa.mjs'
@@ -106,11 +107,23 @@
     'next-week': { icon: ArrowRight, label: t('Next week') },
   }
   const quick = $derived(quickDays(today))
-  /** Every row the arrows walk: the quick days, then No date where there is a date. */
-  const rows: { icon: IconNode; label: string; day: string | null }[] = $derived([
+  /** Every row the arrows walk: Skip for a repeating task (Todoist's Postpone, its date
+   *  moved to the next occurrence), the quick days, then No date where there is a date. */
+  const rows: { icon: IconNode; label: string; day: string | null; skip?: true }[] = $derived([
+    ...(asked.skip
+      ? [{ icon: SkipForward, label: t('Skip'), day: null, skip: true as const }]
+      : []),
     ...quick.map((one) => ({ ...QUICK[one.kind], day: one.day })),
     ...(due ? [{ icon: CircleSlash, label: t('No date'), day: null }] : []),
   ])
+
+  /** A quick row pressed: its day, or the skip. */
+  function choose(row: (typeof rows)[number]) {
+    if (row.skip && asked.skip) {
+      asked.skip()
+      onclose()
+    } else pick({ due: row.day })
+  }
 
   const DURATIONS = [15, 30, 45, 60, 90, 120, 180]
 
@@ -248,7 +261,7 @@
         data-row={index}
         tabindex="-1"
         onfocus={() => (cursor = index)}
-        onclick={() => pick({ due: row.day })}
+        onclick={() => choose(row)}
       >
         <span class="nib-row-mark"><Glyph icon={row.icon} /></span>
         <span class="nib-row-label">{row.label}</span>

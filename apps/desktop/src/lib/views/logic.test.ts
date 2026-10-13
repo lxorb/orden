@@ -263,6 +263,22 @@ describe('a task’s lines moved', () => {
   })
 })
 
+describe('a repeating task', () => {
+  test('is skipped to its next day, or done for good, each line on its own', async () => {
+    const { editedLines } = await import('./lines')
+    const { finish, skip } = await import('@nib/bases')
+    const note = '- [ ] Water 🔁 every week 📅 2026-10-12\n- [ ] Read\n'
+    const water = taskRow('P.md', '- [ ] Water 🔁 every week 📅 2026-10-12', 0).anchor
+    if (!water) throw new Error('fixture')
+    expect(editedLines(note, [water], (line) => skip(line, '2026-10-13'))).toBe(
+      '- [ ] Water 🔁 every week 📅 2026-10-19\n- [ ] Read\n',
+    )
+    expect(editedLines(note, [water], (line) => finish(line, '2026-10-13'))).toBe(
+      '- [x] Water 📅 2026-10-12 ✅ 2026-10-13\n- [ ] Read\n',
+    )
+  })
+})
+
 describe('selecting rows', () => {
   const order = ['a', 'b', 'c', 'd']
 

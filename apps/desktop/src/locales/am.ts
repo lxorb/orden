@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'ዝለል',
+  'Complete forever': 'ለዘለቄታው አጠናቅ',
   // Tasks: comments
   Comments: 'አስተያየቶች',
   // Tasks: filters

@@ -18,10 +18,12 @@ import { workspace } from '../workspace.svelte'
 import {
   deleteRows,
   duplicateRows,
+  finishRows,
   indentRow,
   linkToRow,
   moveRow,
   moveRowsTo,
+  skipRows,
   tickRows,
   writeEach,
 } from './act'
@@ -59,6 +61,9 @@ export function scheduleRows(
         'scheduled',
       ),
     ...(closed ? { closed } : {}),
+    ...(tasks.every((row) => row.task?.recurrence)
+      ? { skip: () => void skipRows(tasks, kit.live.today) }
+      : {}),
   })
 }
 
@@ -167,6 +172,13 @@ export function taskMenu(
     ...(select ? [{ label: t('Select'), run: select }, DIVIDER] : []),
     { label: open ? t('Complete') : t('Reopen'), run: () => void tickRows(tasks, kit.live.today) },
     { label: t('Schedule'), asks: true, run: () => scheduleRows(tasks, at, kit) },
+    // A repeating task's own two: on to the next occurrence, or done for good.
+    ...(tasks.every((row) => row.task?.recurrence) && open
+      ? [
+          { label: t('Skip'), run: () => void skipRows(tasks, kit.live.today) },
+          { label: t('Complete forever'), run: () => void finishRows(tasks, kit.live.today) },
+        ]
+      : []),
     more(t('Priority'), () =>
       priorityEntries(one ? task.priority : 0, (priority) => void prioritise(tasks, priority)),
     ),

@@ -126,9 +126,11 @@
   let subField = $state<HTMLInputElement>()
   /** The comments, whose field `c` gives the keyboard to. */
   let comments = $state<{ focus: () => void }>()
+  /** Opened with `c` or the row's comment button: the field takes the keyboard once the
+   *  sheet has, and again for each task the view steps to while it was asked for. */
   $effect(() => {
     const field = comments
-    if (shown.comment && field) untrack(() => field.focus())
+    if (shown.comment && field) untrack(() => void tick().then(() => field.focus()))
   })
 
   async function writeSubtask() {
@@ -146,7 +148,9 @@
 
   onMount(() => {
     const before = document.activeElement
-    void tick().then(() => layer?.focus())
+    void tick().then(() => {
+      if (!untrack(() => shown.comment)) layer?.focus()
+    })
     return () => {
       if (before instanceof HTMLElement && before.isConnected) before.focus({ preventScroll: true })
     }
