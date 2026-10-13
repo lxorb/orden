@@ -40,20 +40,18 @@ cannot read a list of four thousand notes.
 ## Coming from another app
 
 The import above is for notes arriving in a space somebody already writes in.
-Somebody arriving *themselves* is asked first, on the first screen: the iPhone's
-"Transfer Your Apps & Data", one row per place the notes could come from and the
-fresh start under them. Obsidian, Notion, and every other app as one row, since
-the format is read off the file either way. Each brings its notes in as a space of
-their own, named after what came in, and lands in it.
+Somebody arriving *themselves* brings theirs in through Settings > Import: the
+iPhone's "Transfer Your Apps & Data", one row per place the notes could come from.
+Obsidian, Notion, and every other app as one row, since the format is read off the
+file either way. Each brings its notes in as a space of their own, named after what
+came in, and lands in it.
 
-- **Where it is asked.** The space chooser on the desktop and the phone, which is
-  up while there is no space; the browser build's first visit, beside the welcome
-  note's space, where "Start fresh" stays on that note and a browser that has
-  answered is not asked again (`first-visit.svelte.ts`; every drive's browser has
-  answered, see `ANSWERED` in `test/e2e/harness.py`).
-  Later, the same rows are Settings > Import (Notion's place for them) and the
-  palette's Import from Obsidian and Import from Notion. See `MigrateRows.svelte`
-  and `migrating.svelte.ts`.
+- **Where it is.** Nothing asks on the way in. Emil, 2026-10-13: "rather welcome
+  note instead of the where do your notes come from". A fresh start opens on the
+  welcome note, in a space made for it (`fresh-start.ts`, `first-space.svelte.ts`),
+  and the note's last line is a link to Settings > Import (`nib://settings/import`,
+  see `settingsPane` in `open-link.ts`). The same rows are the palette's Import from
+  Obsidian and Import from Notion. See `MigrateRows.svelte` and `migrating.svelte.ts`.
 - **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults
   Obsidian itself lists in `obsidian.json`, newest first, the way Arc's first run
   lists the browsers it found. The crate reads a vault only when Obsidian lists it,

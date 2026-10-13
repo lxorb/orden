@@ -79,9 +79,8 @@ export const yue: Dictionary = {
   Reopen: '重新打開',
   Schedule: '排期',
   'Open in note': '喺筆記度打開',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 app',
-  'Start fresh': '重新開始',
   'Import from Obsidian': '由 Obsidian 匯入',
   'Import from Notion': '由 Notion 匯入',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const yue: Dictionary = {
   'Loading…': '載入中…',
   'Create a space': '建立空間',
   'Import a folder': '匯入資料夾',
-  'Sign in to sync': '登入嚟同步',
-  'Create account': '開帳戶',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
   'Every note in this space is deleted from your computer.':

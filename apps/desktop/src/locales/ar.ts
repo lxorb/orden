@@ -79,9 +79,8 @@ export const ar: Dictionary = {
   Reopen: 'إعادة الفتح',
   Schedule: 'جدولة',
   'Open in note': 'فتح في الملاحظة',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'تطبيق آخر',
-  'Start fresh': 'ابدأ من جديد',
   'Import from Obsidian': 'استيراد من Obsidian',
   'Import from Notion': 'استيراد من Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ar: Dictionary = {
   'Loading…': 'جارٍ التحميل…',
   'Create a space': 'إنشاء مساحة',
   'Import a folder': 'استيراد مجلد',
-  'Sign in to sync': 'سجّل الدخول للمزامنة',
-  'Create account': 'إنشاء حساب',
   'Delete space': 'حذف المساحة',
   'Delete {name}?': 'حذف {name}؟',
   'Every note in this space is deleted from your computer.':

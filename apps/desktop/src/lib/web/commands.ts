@@ -1062,8 +1062,7 @@ async function hasContent(): Promise<boolean> {
  *  down, and written down whichever way this went: a device that already had notes
  *  has been introduced too. See seeded.ts and welcome.ts.
  *
- *  Answers whether it wrote the note just now, which is what a first visit is; see
- *  first-visit.svelte.ts. */
+ *  Answers whether it wrote the note just now, which is what a first visit is. */
 export async function seed(): Promise<boolean> {
   if (await wasSeeded()) return false
 

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The space chooser's Create row, and the welcome note it puts in the first space.
+/** A fresh start: the first space, made without a question, open on the welcome note.
  *
- *  Obsidian opens a new vault on a note of its own. nib does the same with the note
- *  the browser build has always given a first visit - once per device, by the same
- *  rule: a reader who has been introduced is not introduced again with their next
- *  space, and an untouched welcome never travels to an account. See welcome.ts. */
+ *  Emil, 2026-10-13: "rather welcome note instead of the where do your notes come
+ *  from". The note is the one the browser build has always given a first visit, once
+ *  per device by the same rule: a reader who has been introduced is not introduced
+ *  again, and an untouched welcome never travels to an account. See welcome.ts. */
 
 const notes = new Map<string, string>()
 const made: { name: string; path: string }[] = []
@@ -51,13 +51,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The name question, answered from here. */
-const asked = { name: 'Journal' as string | null }
-
-vi.mock('./prompt.svelte', () => ({
-  prompt: { ask: () => Promise.resolve(asked.name) },
-}))
-
 // A pass is nudged once a space is made; nothing here is about syncing.
 vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
@@ -79,13 +72,12 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('./import/sources')
-const { WELCOME, WELCOME_NAME, isUntouchedWelcome } = await import('./welcome')
+const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('./welcome')
 const { AGENTS_NAME, AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed')
 
 beforeEach(() => {
   notes.clear()
   made.length = 0
-  asked.name = 'Journal'
   localStorage.clear()
   workspace.spaces = []
   workspace.activeSpaceId = null
@@ -93,53 +85,45 @@ beforeEach(() => {
   workspace.tabs = []
 })
 
-describe('creating the first space', () => {
-  test('writes the welcome note into it and opens it', async () => {
-    await firstSpace.create()
+describe('a fresh start', () => {
+  const welcome = `/spaces/${WELCOME_SPACE}/${WELCOME_NAME}`
 
-    expect(workspace.spaces.map((one) => one.name)).toEqual(['Journal'])
-    expect(notes.get(`/spaces/Journal/${WELCOME_NAME}`)).toBe(WELCOME)
-    expect(workspace.active?.path).toBe(`/spaces/Journal/${WELCOME_NAME}`)
+  test('makes the first space and opens it on the welcome note', async () => {
+    await firstSpace.start()
+
+    expect(workspace.spaces.map((one) => one.name)).toEqual([WELCOME_SPACE])
+    expect(notes.get(welcome)).toBe(WELCOME)
+    expect(workspace.active?.path).toBe(welcome)
   })
 
-  test('once per device: the next space gets none', async () => {
-    await firstSpace.create()
-    workspace.tabs = []
-    asked.name = 'Work'
+  test('asks nothing, and makes one space however often it is asked at once', async () => {
+    await Promise.all([firstSpace.start(), firstSpace.start()])
 
-    await firstSpace.create()
-
-    expect(notes.has(`/spaces/Work/${WELCOME_NAME}`)).toBe(false)
+    expect(made).toHaveLength(1)
   })
 
-  test('and none on a device that was introduced before', async () => {
+  test('makes nothing once there is a space', async () => {
+    await firstSpace.start()
+    await firstSpace.start()
+
+    expect(made).toHaveLength(1)
+  })
+
+  test('on a device introduced before, a space and no welcome note', async () => {
     localStorage.setItem('nib:seeded', 'yes')
 
-    await firstSpace.create()
+    await firstSpace.start()
 
     expect(workspace.spaces).toHaveLength(1)
-    expect(notes.has(`/spaces/Journal/${WELCOME_NAME}`)).toBe(false)
+    expect(notes.has(welcome)).toBe(false)
   })
 
-  /** Every space made from here, the first and the next, starts with the few lines an
-   *  assistant working in it is to read; see agents-seed.ts. */
-  test('and every space gets its AGENTS.md', async () => {
-    await firstSpace.create()
-    workspace.tabs = []
-    asked.name = 'Work'
-    await firstSpace.create()
+  /** Every space made from here starts with the few lines an assistant working in it
+   *  is to read; see agents-seed.ts. */
+  test('and the space gets its AGENTS.md', async () => {
+    await firstSpace.start()
 
-    expect(notes.get(`/spaces/Journal/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
-    expect(notes.get(`/spaces/Work/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
-  })
-
-  test('makes nothing when the name is not given', async () => {
-    asked.name = null
-
-    await firstSpace.create()
-
-    expect(made).toEqual([])
-    expect(localStorage.getItem('nib:seeded')).toBeNull()
+    expect(notes.get(`/spaces/${WELCOME_SPACE}/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
   })
 })
 
@@ -210,6 +194,23 @@ describe('the welcome note, untouched', () => {
 
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, earlier)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
+  })
+
+  /** Every seed before the welcome note linked to Settings > Import was written
+   *  without that line, and is no more the reader's writing for missing it. */
+  test('nor the one written before it linked to Import', () => {
+    const before = WELCOME.replace(
+      '\n[Import from Obsidian or Notion](nib://settings/import)\n',
+      '',
+    )
+
+    expect(before).not.toBe(WELCOME)
+    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, before)).toBe(true)
+    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${before}mine\n`)).toBe(false)
+  })
+
+  test('points to Settings > Import, where notes from another app come in', () => {
+    expect(WELCOME).toContain('](nib://settings/import)')
   })
 
   test('says nothing about which build it is in', () => {

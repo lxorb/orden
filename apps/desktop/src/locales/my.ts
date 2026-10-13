@@ -79,9 +79,8 @@ export const my: Dictionary = {
   Reopen: 'ပြန်ဖွင့်',
   Schedule: 'အချိန်သတ်မှတ်',
   'Open in note': 'မှတ်စုတွင် ဖွင့်',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'အခြားအက်ပ်',
-  'Start fresh': 'အသစ်စတင်ပါ',
   'Import from Obsidian': 'Obsidian မှ သွင်းပါ',
   'Import from Notion': 'Notion မှ သွင်းပါ',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const my: Dictionary = {
   'Loading…': 'တင်နေသည်…',
   'Create a space': 'အလုပ်ခွင်ဖန်တီး',
   'Import a folder': 'ဖိုင်တွဲသွင်းပါ',
-  'Sign in to sync': 'ချိန်ကိုက်ရန် အကောင့်ဝင်',
-  'Create account': 'အကောင့်ဖန်တီး',
   'Delete space': 'အလုပ်ခွင်ဖျက်',
   'Delete {name}?': '{name} ဖျက်မလား?',
   'Every note in this space is deleted from your computer.':

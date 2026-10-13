@@ -79,9 +79,8 @@ export const ru: Dictionary = {
   Reopen: 'Открыть снова',
   Schedule: 'Запланировать',
   'Open in note': 'Открыть в заметке',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Другое приложение',
-  'Start fresh': 'Начать с нуля',
   'Import from Obsidian': 'Импорт из Obsidian',
   'Import from Notion': 'Импорт из Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ru: Dictionary = {
   'Loading…': 'Загрузка…',
   'Create a space': 'Создать пространство',
   'Import a folder': 'Импорт папки',
-  'Sign in to sync': 'Войти для синхронизации',
-  'Create account': 'Создать аккаунт',
   'Delete space': 'Удалить пространство',
   'Delete {name}?': 'Удалить {name}?',
   'Every note in this space is deleted from your computer.':

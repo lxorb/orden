@@ -79,9 +79,8 @@ export const hi: Dictionary = {
   Reopen: 'फिर से खोलें',
   Schedule: 'तय करें',
   'Open in note': 'नोट में खोलें',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'कोई और ऐप',
-  'Start fresh': 'नए सिरे से शुरू करें',
   'Import from Obsidian': 'Obsidian से इंपोर्ट करें',
   'Import from Notion': 'Notion से इंपोर्ट करें',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const hi: Dictionary = {
   'Loading…': 'लोड हो रहा है…',
   'Create a space': 'स्पेस बनाएँ',
   'Import a folder': 'फ़ोल्डर इंपोर्ट करें',
-  'Sign in to sync': 'सिंक के लिए साइन इन',
-  'Create account': 'खाता बनाएँ',
   'Delete space': 'स्पेस हटाएँ',
   'Delete {name}?': '{name} हटाएँ?',
   'Every note in this space is deleted from your computer.':

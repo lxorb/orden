@@ -79,9 +79,8 @@ export const ko: Dictionary = {
   Reopen: '다시 열기',
   Schedule: '일정 잡기',
   'Open in note': '노트에서 열기',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '다른 앱',
-  'Start fresh': '새로 시작',
   'Import from Obsidian': 'Obsidian에서 가져오기',
   'Import from Notion': 'Notion에서 가져오기',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ko: Dictionary = {
   'Loading…': '불러오는 중…',
   'Create a space': '공간 만들기',
   'Import a folder': '폴더 가져오기',
-  'Sign in to sync': '로그인하여 동기화',
-  'Create account': '계정 만들기',
   'Delete space': '공간 삭제',
   'Delete {name}?': '{name}을 삭제할까요？',
   'Every note in this space is deleted from your computer.':

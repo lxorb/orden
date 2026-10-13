@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte'
   import { t } from './lib/i18n.svelte'
-  import { firstVisit } from './lib/first-visit.svelte'
+  import { startsFresh } from './lib/fresh-start'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -64,7 +64,7 @@
     shareSheet,
     signInSheet,
     slidesStage,
-    spaceChooserCard,
+    firstSpaceDoor,
     menuBarDoor,
     undoToastNotice,
   } from './lib/surfaces.svelte'
@@ -78,7 +78,7 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { invoke, isDesktop, platform } from './lib/tauri'
+  import { invoke, isDesktop, isNative, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
@@ -246,6 +246,24 @@
     return () => {
       views.onSelection = null
     }
+  })
+
+  // A fresh start opens on the welcome note, in a space made for it without a question;
+  // see fresh-start.ts. Fetched only then, and never in the plugin, whose build does not
+  // carry it.
+  $effect(() => {
+    if (__EVEN_PLUGIN__) return
+    const fresh = startsFresh({
+      native: isNative,
+      plugin: false,
+      restored: workspace.restored,
+      spaces: workspace.spaces.length,
+      restoring: account.restoring,
+      signedIn: account.signedIn,
+      invited: joining.invitation !== null || joining.step !== null,
+      tabs: workspace.tabs.length,
+    })
+    if (fresh) void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start())
   })
 
   // Ctrl and the wheel over the note, which a trackpad pinch also arrives as.
@@ -1134,14 +1152,6 @@
 {#if paletteDoor.asked}
   {#await paletteDoor.asked then Palette}
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
-  {/await}
-{/if}
-<!-- What a fresh install opens on, until there is a space. Fetched only then; the card
-     decides the rest itself, and the plugin never shows it, so its build does not
-     carry it. See SpaceChooser.svelte and space-choice.ts. -->
-{#if !__EVEN_PLUGIN__ && workspace.restored && (!workspace.spaces.length || firstVisit.asking)}
-  {#await spaceChooserCard() then SpaceChooser}
-    <SpaceChooser />
   {/await}
 {/if}
 {#if quickAddSheet.asked}

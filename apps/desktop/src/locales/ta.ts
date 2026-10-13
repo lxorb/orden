@@ -79,9 +79,8 @@ export const ta: Dictionary = {
   Reopen: 'மீண்டும் திற',
   Schedule: 'திட்டமிடு',
   'Open in note': 'குறிப்பில் திற',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'வேறு ஆப்',
-  'Start fresh': 'புதிதாகத் தொடங்கு',
   'Import from Obsidian': 'Obsidian-இலிருந்து இறக்குமதி செய்',
   'Import from Notion': 'Notion-இலிருந்து இறக்குமதி செய்',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ta: Dictionary = {
   'Loading…': 'ஏற்றுகிறது…',
   'Create a space': 'இடத்தை உருவாக்கு',
   'Import a folder': 'கோப்புறையை இறக்குமதி செய்',
-  'Sign in to sync': 'ஒத்திசைக்க உள்நுழை',
-  'Create account': 'கணக்கை உருவாக்கு',
   'Delete space': 'இடத்தை நீக்கு',
   'Delete {name}?': '{name} நீக்கவா?',
   'Every note in this space is deleted from your computer.':

@@ -79,9 +79,8 @@ export const vi: Dictionary = {
   Reopen: 'Mở lại',
   Schedule: 'Lên lịch',
   'Open in note': 'Mở trong ghi chú',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Ứng dụng khác',
-  'Start fresh': 'Bắt đầu mới',
   'Import from Obsidian': 'Nhập từ Obsidian',
   'Import from Notion': 'Nhập từ Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const vi: Dictionary = {
   'Loading…': 'Đang tải…',
   'Create a space': 'Tạo không gian',
   'Import a folder': 'Nhập một thư mục',
-  'Sign in to sync': 'Đăng nhập để đồng bộ',
-  'Create account': 'Tạo tài khoản',
   'Delete space': 'Xoá không gian',
   'Delete {name}?': 'Xoá {name}?',
   'Every note in this space is deleted from your computer.':

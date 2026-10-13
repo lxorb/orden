@@ -407,14 +407,13 @@ export const menuBarDoor = () =>
     ? Promise.reject(new Error('no menu bar in the Even Realities plugin'))
     : import('./native-menu-bar.svelte')
 
-/** The card a fresh install opens on; see space-chooser.svelte.ts. The plugin never
- *  shows it (see space-choice.ts), and a fetch that is only never called still puts
- *  its chunk in the package, so that build is not given one to call. */
-export const spaceChooserCard = held(() =>
+/** What a fresh start does; see fresh-start.ts. The plugin never starts fresh, and a
+ *  fetch that is only never called still puts its chunk in the package, so that build
+ *  is not given one to call. */
+export const firstSpaceDoor = () =>
   __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no space chooser in the Even Realities plugin'))
-    : import('./SpaceChooser.svelte'),
-)
+    ? Promise.reject(new Error('no fresh start in the Even Realities plugin'))
+    : import('./first-space.svelte')
 
 /** The doors a key can reach at any moment, opened once the launch has nothing left to
  *  do.

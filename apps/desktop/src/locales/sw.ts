@@ -79,9 +79,8 @@ export const sw: Dictionary = {
   Reopen: 'Fungua tena',
   Schedule: 'Panga',
   'Open in note': 'Fungua kwenye dokezo',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Programu nyingine',
-  'Start fresh': 'Anza upya',
   'Import from Obsidian': 'Ingiza kutoka Obsidian',
   'Import from Notion': 'Ingiza kutoka Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const sw: Dictionary = {
   'Loading…': 'Inapakia…',
   'Create a space': 'Unda nafasi',
   'Import a folder': 'Ingiza folda',
-  'Sign in to sync': 'Ingia ili kusawazisha',
-  'Create account': 'Unda akaunti',
   'Delete space': 'Futa nafasi',
   'Delete {name}?': 'Futa {name}?',
   'Every note in this space is deleted from your computer.':

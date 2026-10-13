@@ -79,9 +79,8 @@ export const tr: Dictionary = {
   Reopen: 'Yeniden aç',
   Schedule: 'Planla',
   'Open in note': 'Notta aç',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Başka bir uygulama',
-  'Start fresh': 'Sıfırdan başla',
   'Import from Obsidian': 'Obsidian’dan içe aktar',
   'Import from Notion': 'Notion’dan içe aktar',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const tr: Dictionary = {
   'Loading…': 'Yükleniyor…',
   'Create a space': 'Alan oluştur',
   'Import a folder': 'Klasör içe aktar',
-  'Sign in to sync': 'Eşitlemek için oturum aç',
-  'Create account': 'Hesap oluştur',
   'Delete space': 'Alanı sil',
   'Delete {name}?': '{name} silinsin mi?',
   'Every note in this space is deleted from your computer.':

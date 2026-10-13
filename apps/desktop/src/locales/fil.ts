@@ -79,9 +79,8 @@ export const fil: Dictionary = {
   Reopen: 'Buksan muli',
   Schedule: 'Iiskedyul',
   'Open in note': 'Buksan sa tala',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Ibang app',
-  'Start fresh': 'Magsimula nang bago',
   'Import from Obsidian': 'Mag-import mula sa Obsidian',
   'Import from Notion': 'Mag-import mula sa Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const fil: Dictionary = {
   'Loading…': 'Ikinakarga…',
   'Create a space': 'Gumawa ng espasyo',
   'Import a folder': 'Mag-import ng folder',
-  'Sign in to sync': 'Mag-sign in para mag-sync',
-  'Create account': 'Gumawa ng account',
   'Delete space': 'Tanggalin ang espasyo',
   'Delete {name}?': 'Tanggalin ang {name}?',
   'Every note in this space is deleted from your computer.':

@@ -79,9 +79,8 @@ export const de: Dictionary = {
   Reopen: 'Wieder öffnen',
   Schedule: 'Planen',
   'Open in note': 'In der Notiz öffnen',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Andere App',
-  'Start fresh': 'Neu anfangen',
   'Import from Obsidian': 'Aus Obsidian importieren',
   'Import from Notion': 'Aus Notion importieren',
   // Hints: Silent mode and the cards that point at a feature
@@ -215,10 +214,7 @@ export const de: Dictionary = {
   'Use the plain mark instead': 'Stattdessen das einfache Zeichen verwenden',
   'Loading…': 'Wird geladen…',
   'Create a space': 'Bereich erstellen',
-  // The first launch's space chooser; see SpaceChooser.svelte.
   'Import a folder': 'Ordner importieren',
-  'Sign in to sync': 'Anmelden zum Synchronisieren',
-  'Create account': 'Konto erstellen',
   'Delete space': 'Bereich löschen',
   'Delete {name}?': '{name} löschen?',
   'Every note in this space is deleted from your computer.':

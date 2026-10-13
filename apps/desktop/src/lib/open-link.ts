@@ -75,8 +75,21 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 
+/** The settings pane a link is to, or null: `nib://settings/import`, which the welcome
+ *  note points at for bringing notes over from another app (welcome.ts). The one pane a
+ *  note has a reason to name, so the one a link may open; not in the plugin, which has
+ *  no Import. */
+export function settingsPane(href: string): 'import' | null {
+  return !__EVEN_PLUGIN__ && /^nib:\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
+}
+
 /** A link the reader pressed, followed. What every surface hands its own event to. */
 export function followHref(href: string, press: LinkPress): void {
+  const pane = settingsPane(href)
+  if (pane) {
+    void import('./settings.svelte').then(({ settings }) => settings.show(pane))
+    return
+  }
   const ask = tabAsk(press, true)
   // A chat's message (docs/chats.md 4.13).
   if (/^nib:\/\/chat\//i.test(href)) {

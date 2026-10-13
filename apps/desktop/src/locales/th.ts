@@ -79,9 +79,8 @@ export const th: Dictionary = {
   Reopen: 'เปิดอีกครั้ง',
   Schedule: 'กำหนดเวลา',
   'Open in note': 'เปิดในโน้ต',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'แอปอื่น',
-  'Start fresh': 'เริ่มใหม่',
   'Import from Obsidian': 'นำเข้าจาก Obsidian',
   'Import from Notion': 'นำเข้าจาก Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const th: Dictionary = {
   'Loading…': 'กำลังโหลด…',
   'Create a space': 'สร้างพื้นที่',
   'Import a folder': 'นำเข้าโฟลเดอร์',
-  'Sign in to sync': 'เข้าสู่ระบบเพื่อซิงก์',
-  'Create account': 'สร้างบัญชี',
   'Delete space': 'ลบพื้นที่',
   'Delete {name}?': 'ลบ {name}?',
   'Every note in this space is deleted from your computer.':

@@ -79,9 +79,8 @@ export const pa: Dictionary = {
   Reopen: 'ਮੁੜ ਖੋਲ੍ਹੋ',
   Schedule: 'ਸਮਾਂ ਤੈਅ ਕਰੋ',
   'Open in note': 'ਨੋਟ ਵਿੱਚ ਖੋਲ੍ਹੋ',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ਕੋਈ ਹੋਰ ਐਪ',
-  'Start fresh': 'ਨਵੇਂ ਸਿਰੇ ਤੋਂ ਸ਼ੁਰੂ ਕਰੋ',
   'Import from Obsidian': 'Obsidian ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Import from Notion': 'Notion ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const pa: Dictionary = {
   'Loading…': 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…',
   'Create a space': 'ਥਾਂ ਬਣਾਓ',
   'Import a folder': 'ਫੋਲਡਰ ਅੰਦਰ ਲਿਆਓ',
-  'Sign in to sync': 'ਸਮਕਾਲ ਲਈ ਸਾਈਨ ਇਨ',
-  'Create account': 'ਖਾਤਾ ਬਣਾਓ',
   'Delete space': 'ਥਾਂ ਮਿਟਾਓ',
   'Delete {name}?': '{name} ਮਿਟਾਉਣਾ ਹੈ?',
   'Every note in this space is deleted from your computer.':

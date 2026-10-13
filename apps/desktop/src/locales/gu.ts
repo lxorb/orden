@@ -79,9 +79,8 @@ export const gu: Dictionary = {
   Reopen: 'ફરી ખોલો',
   Schedule: 'સમય નક્કી કરો',
   'Open in note': 'નોંધમાં ખોલો',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'બીજી એપ',
-  'Start fresh': 'નવેસરથી શરૂ કરો',
   'Import from Obsidian': 'Obsidian માંથી આયાત કરો',
   'Import from Notion': 'Notion માંથી આયાત કરો',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const gu: Dictionary = {
   'Loading…': 'લાવી રહ્યું છે…',
   'Create a space': 'જગ્યા બનાવો',
   'Import a folder': 'ફોલ્ડર આયાત કરો',
-  'Sign in to sync': 'સમન્વય માટે સાઇન ઇન',
-  'Create account': 'ખાતું બનાવો',
   'Delete space': 'જગ્યા કાઢી નાખો',
   'Delete {name}?': '{name} કાઢી નાખવું?',
   'Every note in this space is deleted from your computer.':

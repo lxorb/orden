@@ -79,9 +79,8 @@ export const ptBR: Dictionary = {
   Reopen: 'Reabrir',
   Schedule: 'Agendar',
   'Open in note': 'Abrir na nota',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Outro app',
-  'Start fresh': 'Começar do zero',
   'Import from Obsidian': 'Importar do Obsidian',
   'Import from Notion': 'Importar do Notion',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ptBR: Dictionary = {
   'Loading…': 'Carregando…',
   'Create a space': 'Criar um espaço',
   'Import a folder': 'Importar uma pasta',
-  'Sign in to sync': 'Entre para sincronizar',
-  'Create account': 'Criar conta',
   'Delete space': 'Excluir espaço',
   'Delete {name}?': 'Excluir {name}?',
   'Every note in this space is deleted from your computer.':

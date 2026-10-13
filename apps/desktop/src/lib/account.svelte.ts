@@ -44,24 +44,11 @@ class Session {
   deletedSpaces = $state<string[]>([])
 
   /** Sign-in dialog state. One surface serves both signing in and signing up. */
-  #open = $state(false)
-  /** Which door the sheet was opened through, as Obsidian's first launch offers
-   *  both: only its heading differs. Reset on close. */
-  mode = $state<'sign-in' | 'create'>('sign-in')
+  open = $state(false)
 
-  get open(): boolean {
-    return this.#open
-  }
-
-  set open(value: boolean) {
-    this.#open = value
-    if (!value) this.mode = 'sign-in'
-  }
-
-  /** Opens the sheet for one of the two; see `mode`. */
-  ask(mode: 'sign-in' | 'create') {
-    this.mode = mode
-    this.#open = true
+  /** Opens the sheet. */
+  ask() {
+    this.open = true
   }
   step = $state<Step>('email')
   email = $state('')

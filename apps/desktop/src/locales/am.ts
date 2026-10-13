@@ -79,9 +79,8 @@ export const am: Dictionary = {
   Reopen: 'እንደገና ክፈት',
   Schedule: 'መድብ',
   'Open in note': 'በማስታወሻው ውስጥ ክፈት',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ሌላ መተግበሪያ',
-  'Start fresh': 'አዲስ ጀምር',
   'Import from Obsidian': 'ከObsidian አምጣ',
   'Import from Notion': 'ከNotion አምጣ',
   // Hints: Silent mode and the cards that point at a feature
@@ -214,8 +213,6 @@ export const am: Dictionary = {
   'Loading…': 'በመጫን ላይ…',
   'Create a space': 'ቦታ ፍጠር',
   'Import a folder': 'አቃፊ አምጣ',
-  'Sign in to sync': 'ለማመሳሰል ግባ',
-  'Create account': 'መለያ ፍጠር',
   'Delete space': 'ቦታ አጥፋ',
   'Delete {name}?': '{name} ይጥፋ?',
   'Every note in this space is deleted from your computer.':

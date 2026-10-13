@@ -79,9 +79,8 @@ export const zhHantHK: Dictionary = {
   Reopen: '重新開啟',
   Schedule: '安排',
   'Open in note': '在筆記中開啟',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 App',
-  'Start fresh': '重新開始',
   'Import from Obsidian': '從 Obsidian 匯入',
   'Import from Notion': '從 Notion 匯入',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const zhHantHK: Dictionary = {
   'Loading…': '載入中…',
   'Create a space': '建立空間',
   'Import a folder': '匯入資料夾',
-  'Sign in to sync': '登入以同步',
-  'Create account': '建立帳戶',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
   'Every note in this space is deleted from your computer.':

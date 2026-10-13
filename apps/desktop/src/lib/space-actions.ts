@@ -10,7 +10,7 @@ const choices = () => import('./space-choices')
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
  *  so that is the only question. Answers the space, or nothing where the question
- *  was dismissed; the space chooser goes on to put a first note in it. */
+ *  was dismissed. */
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: t('Name the space'),
@@ -18,7 +18,12 @@ export async function newSpace(): Promise<Space | undefined> {
     confirmLabel: key('Create'),
   })
 
-  if (!name) return
+  return name ? madeSpace(name) : undefined
+}
+
+/** Makes a space called `name`, with what every new space starts with: the menu's
+ *  New space and a fresh start (first-space.svelte.ts) alike. */
+export async function madeSpace(name: string): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
   if (!__EVEN_PLUGIN__) await (await import('./agents-seed')).seedAgents(space.root)

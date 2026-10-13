@@ -31,11 +31,13 @@ export const linkOpener = Facet.define<
 /** What a link's target is to a browser, or null when it is not one: a
  *  relative path or a `#heading` belongs to the note, not to the web. A bare
  *  `www.` address is how people write a web address without its scheme. A chat's
- *  message link (`nib://chat/`) is the host's to follow. */
+ *  message link (`nib://chat/`) and the welcome note's way to Settings > Import
+ *  (`nib://settings/import`) are the host's to follow. */
 export function hrefOf(target: string): string | null {
   const trimmed = target.trim()
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
   if (/^nib:\/\/chat\//i.test(trimmed)) return trimmed
+  if (/^nib:\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
   if (/^www\./i.test(trimmed)) return `https://${trimmed}`
   return null
 }

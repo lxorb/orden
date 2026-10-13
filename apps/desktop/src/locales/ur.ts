@@ -79,9 +79,8 @@ export const ur: Dictionary = {
   Reopen: 'دوبارہ کھولیں',
   Schedule: 'وقت مقرر کریں',
   'Open in note': 'نوٹ میں کھولیں',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'کوئی اور ایپ',
-  'Start fresh': 'نئے سرے سے شروع کریں',
   'Import from Obsidian': 'Obsidian سے امپورٹ کریں',
   'Import from Notion': 'Notion سے امپورٹ کریں',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ur: Dictionary = {
   'Loading…': 'لوڈ ہو رہا ہے…',
   'Create a space': 'اسپیس بنائیں',
   'Import a folder': 'فولڈر امپورٹ کریں',
-  'Sign in to sync': 'سنک کے لیے سائن ان',
-  'Create account': 'اکاؤنٹ بنائیں',
   'Delete space': 'اسپیس حذف کریں',
   'Delete {name}?': '{name} حذف کریں؟',
   'Every note in this space is deleted from your computer.':

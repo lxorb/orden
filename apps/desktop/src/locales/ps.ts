@@ -79,9 +79,8 @@ export const ps: Dictionary = {
   Reopen: 'بیا پرانیزئ',
   Schedule: 'مهالویش',
   'Open in note': 'په یادښت کې پرانیزئ',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'بل اپ',
-  'Start fresh': 'له سره پیل کړئ',
   'Import from Obsidian': 'له Obsidian څخه واردول',
   'Import from Notion': 'له Notion څخه واردول',
   // Hints: Silent mode and the cards that point at a feature
@@ -216,8 +215,6 @@ export const ps: Dictionary = {
   'Loading…': 'د راوړلو په حال کې…',
   'Create a space': 'ځای جوړول',
   'Import a folder': 'فولډر واردول',
-  'Sign in to sync': 'د همغږۍ لپاره ننوتل',
-  'Create account': 'حساب جوړول',
   'Delete space': 'ځای ړنګول',
   'Delete {name}?': '{name} ړنګ شي؟',
   'Every note in this space is deleted from your computer.':
