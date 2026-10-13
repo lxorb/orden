@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: filters
+  Filters: 'Vichujio',
+  'Add filter': 'Ongeza kichujio',
+  'Edit filter': 'Hariri kichujio',
   // Tasks: a project's sections
   'Add section': 'Ongeza sehemu',
   '{name} (copy)': '{name} (nakala)',
@@ -2110,7 +2114,6 @@ export const sw: Dictionary = {
   Layout: 'Mpangilio',
   Overdue: 'Zimechelewa',
   Upcoming: 'Zijazo',
-  Logbook: 'Kumbukumbu',
   Project: 'Mradi',
   Label: 'Lebo',
   List: 'Orodha',

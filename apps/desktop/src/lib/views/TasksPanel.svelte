@@ -46,6 +46,8 @@
   import { addProject, addSubproject, renameProject, spaceProjects } from './project-actions'
   import { type ProjectNode, projectNotes, projectRows } from './project-tree'
   import { builtinBase } from './source'
+  import { queryOf } from './filters'
+  import { prompt } from '../prompt.svelte'
   import { type Builtin, readSpec } from './spec'
   import { builtinName } from './words'
 
@@ -264,6 +266,71 @@
     ])
   }
 
+  /** Todoist's Add filter: a name and a query, in its sheet (FilterSheet.svelte). */
+  function addFilter() {
+    void import('./filter-sheet.svelte').then((one) =>
+      one.showFilter({ path: null, name: '', query: '' }),
+    )
+  }
+
+  /** A saved view's menu: a filter is changed in its sheet, as it was typed; any view can
+   *  be a favourite and be deleted. */
+  function viewMenu(event: MouseEvent, one: { path: string; name: string; relative: string }) {
+    const base = read[one.path]
+    const query = base ? queryOf(base) : null
+    menu.show(event, [
+      { label: t('Open'), run: () => openBaseFile(one.path) },
+      ...(query === null
+        ? []
+        : [
+            {
+              label: t('Edit filter'),
+              asks: true,
+              run: () =>
+                void import('./filter-sheet.svelte').then((sheet) =>
+                  sheet.showFilter({ path: one.path, name: one.name, query }),
+                ),
+            },
+          ]),
+      ...bookmarkEntry({ kind: 'note', path: one.relative, text: '' }),
+      DIVIDER,
+      { label: t('Delete'), danger: true, run: () => void workspace.remove(one.path, false) },
+    ])
+  }
+
+  /** A label's menu: named again, or taken off every task, in every note of the space,
+   *  as one undo (`retagNotes`). */
+  function labelMenu(event: MouseEvent, tag: string) {
+    menu.show(event, [
+      { label: t('Open'), run: () => openLabel(tag) },
+      {
+        label: t('Rename'),
+        asks: true,
+        run: () =>
+          void prompt
+            .ask({ title: t('Rename'), value: tag, confirmLabel: t('Rename') })
+            .then((words) => {
+              const next = words?.trim().replace(/^#+/, '')
+              if (next && next !== tag && !/\s/.test(next)) void workspace.retagNotes(tag, next)
+            }),
+      },
+      DIVIDER,
+      {
+        label: t('Delete'),
+        danger: true,
+        asks: true,
+        run: () =>
+          void prompt
+            .confirm({
+              title: t('Delete {name}?', { name: `#${tag}` }),
+              confirmLabel: t('Delete'),
+              danger: true,
+            })
+            .then((sure) => (sure ? void workspace.retagNotes(tag, null) : undefined)),
+      },
+    ])
+  }
+
   /** A task let go over a project: it moves there, its lines and all. */
   function takeInto(node: ProjectNode) {
     return (carried: Row) => {
@@ -420,18 +487,28 @@
       {/each}
     {/if}
 
-    {#if bases.length}
-      <p class="nib-section">{t('Views')}</p>
-      {#each bases as one (one.path)}
-        {@render row(
-          VIEW_MARK,
-          one.name,
-          baseCount(one.path),
-          front?.path !== undefined && samePath(front.path, one.path),
-          (event) => openBaseFile(one.path, how(event)),
-        )}
-      {/each}
-    {/if}
+    <div class="head">
+      <p class="nib-section">{t('Filters')}</p>
+      <button
+        type="button"
+        class="nib-glyph plus"
+        aria-label={t('Add filter')}
+        title={t('Add filter')}
+        onclick={addFilter}
+        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
+      >
+    </div>
+    {#each bases as one (one.path)}
+      {@render row(
+        VIEW_MARK,
+        one.name,
+        baseCount(one.path),
+        front?.path !== undefined && samePath(front.path, one.path),
+        (event) => openBaseFile(one.path, how(event)),
+        false,
+        (event) => viewMenu(event, one),
+      )}
+    {/each}
 
     <div class="head">
       <p class="nib-section">{t('Projects')}</p>
@@ -509,8 +586,14 @@
     {#if counts.labels.length}
       <p class="nib-section">{t('Labels')}</p>
       {#each counts.labels as one (one.tag)}
-        {@render row(LABEL_MARK, one.tag, one.count, isOn('label', { tag: one.tag }), (event) =>
-          openLabel(one.tag, how(event)),
+        {@render row(
+          LABEL_MARK,
+          one.tag,
+          one.count,
+          isOn('label', { tag: one.tag }),
+          (event) => openLabel(one.tag, how(event)),
+          false,
+          (event) => labelMenu(event, one.tag),
         )}
       {/each}
     {/if}

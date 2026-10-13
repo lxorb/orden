@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: filters
+  Filters: 'ตัวกรอง',
+  'Add filter': 'เพิ่มตัวกรอง',
+  'Edit filter': 'แก้ไขตัวกรอง',
   // Tasks: a project's sections
   'Add section': 'เพิ่มส่วน',
   '{name} (copy)': '{name} (สำเนา)',
@@ -2042,7 +2046,6 @@ export const th: Dictionary = {
   Layout: 'เค้าโครง',
   Overdue: 'เลยกำหนด',
   Upcoming: 'ที่จะมาถึง',
-  Logbook: 'บันทึกงานที่ทำ',
   Project: 'โปรเจกต์',
   Label: 'ป้าย',
   List: 'รายการ',

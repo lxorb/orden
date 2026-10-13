@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Tasks: filters
+  Filters: 'عوامل التصفية',
+  'Add filter': 'إضافة عامل تصفية',
+  'Edit filter': 'تعديل عامل التصفية',
   // Tasks: a project's sections
   'Add section': 'إضافة قسم',
   '{name} (copy)': '{name} (نسخة)',
@@ -2188,7 +2192,6 @@ export const ar: Dictionary = {
   Layout: 'التخطيط',
   Overdue: 'متأخرة',
   Upcoming: 'القادمة',
-  Logbook: 'السجل',
   Project: 'مشروع',
   Label: 'تسمية',
   List: 'قائمة',

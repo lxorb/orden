@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Tasks: filters
+  Filters: 'Фільтри',
+  'Add filter': 'Додати фільтр',
+  'Edit filter': 'Змінити фільтр',
   // Tasks: a project's sections
   'Add section': 'Додати розділ',
   '{name} (copy)': '{name} (копія)',
@@ -2156,7 +2160,6 @@ export const uk: Dictionary = {
   Layout: 'Макет',
   Overdue: 'Прострочено',
   Upcoming: 'Найближчі',
-  Logbook: 'Журнал',
   Project: 'Проєкт',
   Label: 'Мітка',
   List: 'Список',

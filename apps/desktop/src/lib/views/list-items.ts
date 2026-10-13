@@ -6,7 +6,7 @@
  *  under the note its `parent` property links to, Notion's sub-items, the same way
  *  (docs/tasks.md 4, "sub-items"). One flat list
  *  of same-height rows is what the window arithmetic needs (row-window.ts), so a
- *  Logbook of ten thousand done lines mounts the thirty on screen. Pure. */
+ *  Completed view of ten thousand done lines mounts the thirty on screen. Pure. */
 
 import { addDays, type Group, groupName, type Row, rowId } from '@nib/bases'
 import { dayIn } from './values'

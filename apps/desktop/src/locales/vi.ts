@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: filters
+  Filters: 'Bộ lọc',
+  'Add filter': 'Thêm bộ lọc',
+  'Edit filter': 'Sửa bộ lọc',
   // Tasks: a project's sections
   'Add section': 'Thêm mục',
   '{name} (copy)': '{name} (bản sao)',
@@ -2061,7 +2065,6 @@ export const vi: Dictionary = {
   Layout: 'Bố cục',
   Overdue: 'Quá hạn',
   Upcoming: 'Sắp tới',
-  Logbook: 'Nhật ký',
   Project: 'Dự án',
   Label: 'Nhãn',
   List: 'Danh sách',

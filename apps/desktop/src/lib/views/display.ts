@@ -8,7 +8,7 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import type { Base, Filter, View } from '@nib/bases'
+import type { Base, Filter, Row, View } from '@nib/bases'
 
 export type Grouping = 'default' | 'none' | 'note' | 'section' | 'date' | 'deadline' | 'priority'
 export type Sorting = 'default' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note'
@@ -47,6 +47,17 @@ export interface Only {
   priority?: 1 | 2 | 3 | 4
   label?: string
   date?: 'overdue' | 'today' | 'week' | 'none'
+  /** A note, by its path in its space: Todoist's project filter on Completed. */
+  project?: string
+}
+
+/** The notes a view's rows are in, by name, for the project it can be narrowed to. */
+export function notesIn(rows: readonly Row[]): { path: string; name: string }[] {
+  const seen = new Map<string, string>()
+  for (const row of rows) if (row.task) seen.set(row.path, row.file.basename)
+  return [...seen]
+    .map(([path, name]) => ({ path, name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -147,7 +158,9 @@ export function onlyOf(view: View): Only {
   const priority = priorityOf(Reflect.get(kept, 'priority'))
   const label: unknown = Reflect.get(kept, 'label')
   const date = dateOf(Reflect.get(kept, 'date'))
+  const project: unknown = Reflect.get(kept, 'project')
   return {
+    ...(typeof project === 'string' && project ? { project } : {}),
     ...(priority === undefined ? {} : { priority }),
     ...(typeof label === 'string' && label ? { label } : {}),
     ...(date === undefined ? {} : { date }),
@@ -173,6 +186,7 @@ export function onlyFilter(only: Only): string | null {
   else if (only.date === 'today') parts.push('task.date == today()')
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
   else if (only.date === 'none') parts.push('!task.date')
+  if (only.project !== undefined) parts.push(`file.path == ${JSON.stringify(only.project)}`)
   return parts.length ? parts.join(' && ') : null
 }
 

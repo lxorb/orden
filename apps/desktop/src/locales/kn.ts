@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: filters
+  Filters: 'ಫಿಲ್ಟರ್‌ಗಳು',
+  'Add filter': 'ಫಿಲ್ಟರ್ ಸೇರಿಸಿ',
+  'Edit filter': 'ಫಿಲ್ಟರ್ ಸಂಪಾದಿಸಿ',
   // Tasks: a project's sections
   'Add section': 'ವಿಭಾಗ ಸೇರಿಸಿ',
   '{name} (copy)': '{name} (ನಕಲು)',
@@ -2099,7 +2103,6 @@ export const kn: Dictionary = {
   Layout: 'ವಿನ್ಯಾಸ',
   Overdue: 'ಗಡುವು ಮೀರಿದ',
   Upcoming: 'ಮುಂಬರುವ',
-  Logbook: 'ಲಾಗ್‌ಬುಕ್',
   Project: 'ಯೋಜನೆ',
   Label: 'ಲೇಬಲ್',
   List: 'ಪಟ್ಟಿ',

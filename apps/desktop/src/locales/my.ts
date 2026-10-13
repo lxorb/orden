@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: filters
+  Filters: 'စစ်ထုတ်မှုများ',
+  'Add filter': 'စစ်ထုတ်မှု ထည့်ရန်',
+  'Edit filter': 'စစ်ထုတ်မှု ပြင်ရန်',
   // Tasks: a project's sections
   'Add section': 'အပိုင်း ထည့်ရန်',
   '{name} (copy)': '{name} (မိတ္တူ)',
@@ -2066,7 +2070,6 @@ export const my: Dictionary = {
   Layout: 'အပြင်အဆင်',
   Overdue: 'သတ်မှတ်ရက် ကျော်',
   Upcoming: 'လာမည့်',
-  Logbook: 'မှတ်တမ်းစာအုပ်',
   Project: 'ပရောဂျက်',
   Label: 'တံဆိပ်',
   List: 'စာရင်း',

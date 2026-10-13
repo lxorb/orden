@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: filters
+  Filters: 'ማጣሪያዎች',
+  'Add filter': 'ማጣሪያ አክል',
+  'Edit filter': 'ማጣሪያ አርትዕ',
   // Tasks: a project's sections
   'Add section': 'ክፍል አክል',
   '{name} (copy)': '{name} (ቅጂ)',
@@ -2056,7 +2060,6 @@ export const am: Dictionary = {
   Layout: 'አቀማመጥ',
   Overdue: 'ያለፈባቸው',
   Upcoming: 'የሚመጡ',
-  Logbook: 'መዝገብ',
   Project: 'ፕሮጀክት',
   Label: 'መለያ',
   List: 'ዝርዝር',

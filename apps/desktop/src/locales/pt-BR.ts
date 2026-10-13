@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Tasks: filters
+  Filters: 'Filtros',
+  'Add filter': 'Adicionar filtro',
+  'Edit filter': 'Editar filtro',
   // Tasks: a project's sections
   'Add section': 'Adicionar seção',
   '{name} (copy)': '{name} (cópia)',
@@ -2118,7 +2122,6 @@ export const ptBR: Dictionary = {
   Layout: 'Layout',
   Overdue: 'Atrasadas',
   Upcoming: 'Próximas',
-  Logbook: 'Registro',
   Project: 'Projeto',
   Label: 'Etiqueta',
   List: 'Lista',

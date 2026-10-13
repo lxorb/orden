@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Tasks: filters
+  Filters: 'Matattara',
+  'Add filter': 'Ƙara matattara',
+  'Edit filter': 'Gyara matattara',
   // Tasks: a project's sections
   'Add section': 'Ƙara sashe',
   '{name} (copy)': '{name} (kwafi)',
@@ -2109,7 +2113,6 @@ export const ha: Dictionary = {
   Layout: 'Tsari',
   Overdue: 'Lokaci ya wuce',
   Upcoming: 'Masu zuwa',
-  Logbook: 'Littafin tarihi',
   Project: 'Aikin gaba ɗaya',
   Label: 'Lakabi',
   List: 'Jeri',

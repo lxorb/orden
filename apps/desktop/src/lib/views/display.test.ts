@@ -5,6 +5,7 @@ import { contextFor } from './context'
 import {
   displayed,
   groupingOf,
+  notesIn,
   onlyFilter,
   onlyOf,
   sortingOf,
@@ -78,6 +79,9 @@ describe('the Display menu', () => {
     const view = narrowed.views[0]
     if (!view) throw new Error('no view')
     expect(onlyOf(view)).toEqual({ priority: 2 })
+    expect(words(withOnly(today, 0, { project: 'Errands.md' }))).toHaveLength(3)
+    expect(words(withOnly(today, 0, { project: 'Elsewhere.md' }))).toEqual([])
+    expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
     expect(withOnly(narrowed, 0, {}).views[0]?.nib.kept.only).toBeUndefined()
   })
 })

@@ -12,6 +12,7 @@
     GROUPINGS,
     groupingOf,
     type Only,
+    notesIn,
     onlyOf,
     type Sorting,
     sortingOf,
@@ -45,6 +46,8 @@
   const sorting = $derived(view ? sortingOf(view, original) : UNSORTED)
   const only = $derived(view ? onlyOf(view) : {})
   const labels = $derived(labelsOf(live.rows))
+  /** The projects a view of more than one can be narrowed to: not a project's own. */
+  const notes = $derived(kit.spec.builtin === 'project' ? [] : notesIn(live.rows))
 
   const GROUP_NAMES: Record<Grouping, string> = {
     default: t('Default'),
@@ -67,7 +70,7 @@
   const ANY = ''
 
   /** The view narrowed by one choice more, or by one less where All was chosen. */
-  function narrow(change: { priority?: string; label?: string; date?: string }) {
+  function narrow(change: { priority?: string; label?: string; date?: string; project?: string }) {
     const next: Only = { ...only }
     if (change.priority !== undefined) {
       const level = Number(change.priority)
@@ -82,6 +85,10 @@
       const day = change.date
       if (day === 'overdue' || day === 'today' || day === 'week' || day === 'none') next.date = day
       else delete next.date
+    }
+    if (change.project !== undefined) {
+      if (change.project === ANY) delete next.project
+      else next.project = change.project
     }
     kit.change((base, at) => withOnly(base, at, next))
   }
@@ -164,6 +171,20 @@
   </div>
 
   <p class="nib-section">{t('Filter')}</p>
+  {#if notes.length > 1 || only.project !== undefined}
+    <div class="pair">
+      <span class="name">{t('Project')}</span>
+      <Select
+        label={t('Project')}
+        value={only.project ?? ANY}
+        options={[
+          { value: ANY, label: t('All') },
+          ...notes.map((one) => ({ value: one.path, label: one.name })),
+        ]}
+        onchange={(next: string) => narrow({ project: next })}
+      />
+    </div>
+  {/if}
   <div class="pair">
     <span class="name">{t('Priority')}</span>
     <Select

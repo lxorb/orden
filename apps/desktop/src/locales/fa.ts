@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: filters
+  Filters: 'پالایه‌ها',
+  'Add filter': 'افزودن پالایه',
+  'Edit filter': 'ویرایش پالایه',
   // Tasks: a project's sections
   'Add section': 'افزودن بخش',
   '{name} (copy)': '{name} (رونوشت)',
@@ -2081,7 +2085,6 @@ export const fa: Dictionary = {
   Layout: 'چیدمان',
   Overdue: 'عقب‌افتاده',
   Upcoming: 'پیش رو',
-  Logbook: 'دفتر ثبت',
   Project: 'پروژه',
   Label: 'برچسب',
   List: 'فهرست',

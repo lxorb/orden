@@ -497,6 +497,13 @@ readable. A test holds the writer to the Tasks plugin's own examples.
   deletes it (asked first when it holds tasks): each one write, one undo
   (`views/sections.ts`, `views/section-actions.ts`). Which sections are folded, and how a
   project is laid out, are kept on the device (`views/kept-views.ts`).
+- A **filter** is a `.base` file in the space's `Filters/`, made from the Tasks panel's
+  Filters plus: a name and a query in Todoist's language, counted as it is typed and marked
+  where it cannot be read, read into Bases' filter with the words kept beside it
+  (`nib.todoist`) so its menu edits it as it was typed; each comma list is a view of its
+  own (`views/filters.ts`, `views/FilterSheet.svelte`). A label's menu renames it or takes
+  it off every task (`retagNotes`). Completed (the done lines, by day) narrows to one
+  project from Display.
 - A project's **head** is its name, whose menu renames the note (and its title with it),
   adds a section and opens the note; under it, the words at the top of the note are the
   project's description. An open project follows its note when it is renamed or moved

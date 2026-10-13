@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Tasks: filters
+  Filters: '篩選器',
+  'Add filter': '新增篩選器',
+  'Edit filter': '編輯篩選器',
   // Tasks: a project's sections
   'Add section': '新增分區',
   '{name} (copy)': '{name}（副本）',
@@ -2030,7 +2034,6 @@ export const zhHantHK: Dictionary = {
   Layout: '版面',
   Overdue: '已逾期',
   Upcoming: '即將到來',
-  Logbook: '紀錄',
   Project: '專案',
   Label: '標籤',
   List: '清單',

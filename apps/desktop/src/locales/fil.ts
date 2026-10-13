@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // Tasks: filters
+  Filters: 'Mga filter',
+  'Add filter': 'Magdagdag ng filter',
+  'Edit filter': 'I-edit ang filter',
   // Tasks: a project's sections
   'Add section': 'Magdagdag ng seksyon',
   '{name} (copy)': '{name} (kopya)',
@@ -2120,7 +2124,6 @@ export const fil: Dictionary = {
   Layout: 'Layout',
   Overdue: 'Lampas na sa takdang araw',
   Upcoming: 'Darating',
-  Logbook: 'Talaan',
   Project: 'Proyekto',
   Label: 'Label',
   List: 'Listahan',

@@ -81,7 +81,7 @@ def the_panel(page: Page) -> None:
 
 
 def add_project(page: Page) -> None:
-    page.locator(".tasks .plus").click()
+    page.locator(".tasks .plus[aria-label='Add project']").click()
     wait_for(page, "document.activeElement?.matches('.tasks input.field')", "the new project's name field")
     page.keyboard.type("Garden", delay=10)
     page.keyboard.press("Enter")

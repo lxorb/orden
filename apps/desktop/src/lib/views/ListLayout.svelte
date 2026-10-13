@@ -4,7 +4,7 @@
    *
    *  A task is Todoist's row of up to three lines (TaskRow.svelte), and how many is
    *  arithmetic over what it carries (task-meta.ts), so the list still keeps a window
-   *  of what is on screen without measuring a row: a Logbook of ten thousand lines
+   *  of what is on screen without measuring a row: a Completed of ten thousand lines
    *  mounts thirty (`Heights`, the chat's own). The three heights a line can be are
    *  read off a probe once, and again when the box is resized. The keyboard walks the
    *  rows and every key of row-keys.ts works on the one it is on, or on every one

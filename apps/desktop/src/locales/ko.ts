@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: filters
+  Filters: '필터',
+  'Add filter': '필터 추가',
+  'Edit filter': '필터 편집',
   // Tasks: a project's sections
   'Add section': '섹션 추가',
   '{name} (copy)': '{name} (사본)',
@@ -2054,7 +2058,6 @@ export const ko: Dictionary = {
   Layout: '레이아웃',
   Overdue: '기한 지남',
   Upcoming: '다가오는 일',
-  Logbook: '기록',
   Project: '프로젝트',
   Label: '라벨',
   List: '목록',

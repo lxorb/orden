@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Tasks: filters
+  Filters: 'ഫിൽട്ടറുകൾ',
+  'Add filter': 'ഫിൽട്ടർ ചേർക്കുക',
+  'Edit filter': 'ഫിൽട്ടർ തിരുത്തുക',
   // Tasks: a project's sections
   'Add section': 'വിഭാഗം ചേർക്കുക',
   '{name} (copy)': '{name} (പകർപ്പ്)',
@@ -2101,7 +2105,6 @@ export const ml: Dictionary = {
   Layout: 'ലേഔട്ട്',
   Overdue: 'കാലാവധി കഴിഞ്ഞവ',
   Upcoming: 'വരാനിരിക്കുന്നവ',
-  Logbook: 'ലോഗ്ബുക്ക്',
   Project: 'പ്രോജക്റ്റ്',
   Label: 'ലേബൽ',
   List: 'പട്ടിക',

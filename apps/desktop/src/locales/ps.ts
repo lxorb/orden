@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: filters
+  Filters: 'چاڼونه',
+  'Add filter': 'چاڼ ورزيات کړئ',
+  'Edit filter': 'چاڼ سم کړئ',
   // Tasks: a project's sections
   'Add section': 'برخه ورزيات کړئ',
   '{name} (copy)': '{name} (کاپي)',
@@ -2083,7 +2087,6 @@ export const ps: Dictionary = {
   Layout: 'ترتیب',
   Overdue: 'ځنډېدلې',
   Upcoming: 'راتلونکې',
-  Logbook: 'د کارونو کتاب',
   Project: 'پروژه',
   Label: 'لیبل',
   List: 'لړلیک',

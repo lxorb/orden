@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: filters
+  Filters: '篩選',
+  'Add filter': '加篩選',
+  'Edit filter': '改篩選',
   // Tasks: a project's sections
   'Add section': '加分區',
   '{name} (copy)': '{name}（副本）',
@@ -2030,7 +2034,6 @@ export const yue: Dictionary = {
   Layout: '版面',
   Overdue: '過咗期',
   Upcoming: '就嚟',
-  Logbook: '紀錄',
   Project: '專案',
   Label: '標籤',
   List: '清單',

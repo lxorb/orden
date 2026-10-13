@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Tasks: filters
+  Filters: 'ફિલ્ટર',
+  'Add filter': 'ફિલ્ટર ઉમેરો',
+  'Edit filter': 'ફિલ્ટર સંપાદિત કરો',
   // Tasks: a project's sections
   'Add section': 'વિભાગ ઉમેરો',
   '{name} (copy)': '{name} (નકલ)',
@@ -2072,7 +2076,6 @@ export const gu: Dictionary = {
   Layout: 'લેઆઉટ',
   Overdue: 'મુદત વીતી',
   Upcoming: 'આગામી',
-  Logbook: 'લૉગબુક',
   Project: 'પ્રોજેક્ટ',
   Label: 'લેબલ',
   List: 'યાદી',
