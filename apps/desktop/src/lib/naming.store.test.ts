@@ -773,9 +773,9 @@ describe('a name two kinds share', () => {
   })
 })
 
-/** What the row's own menu offers to take back, which sits under the row and has to
- *  call the file what the row calls it. */
-describe('the undo a row offers', () => {
+/** What the palette offers to take back, which has to call the file what the row
+ *  calls it. */
+describe('the undo the palette offers', () => {
   test('names the file the way the row names it', async () => {
     files.set('/space/Sketch.pages', '{}')
     await workspace.loadTree()

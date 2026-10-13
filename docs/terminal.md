@@ -21,8 +21,6 @@ exception is an online terminal, whose shell is a machine of the reader's in the
   See docs/keyboard.md, _Ctrl+T is a new tab_.
 - **An empty pane**: the same card.
 - **The palette**: _New terminal_.
-- **A row of the file list**: _Open in terminal_, in the row's folder - VS Code's _Open
-  in Integrated Terminal_, Explorer's _Open in Terminal_.
 - **A terminal's own tab**: _Open another_, beside it in the same folder; the chevron
   lists the other shells.
 - **Split right, Split down** on a terminal's tab: another shell in the new pane, in the

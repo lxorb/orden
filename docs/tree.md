@@ -167,9 +167,9 @@ the names still read as one column. See `move-targets.ts`.
 **A delete or a move can be taken back at once.** For six seconds after one, a
 toast under the list says `Deleted` or `Moved` beside `Undo`, the way Gmail and
 Notion do, and stays while the pointer is on it. Deleting or moving a selection is
-one gesture, so Undo takes the whole selection back. It is the same undo as the
-row menu's last row, off the same stack, so an undo from either takes the toast
-away. A folder deleted with what it held is not offered: there is no snapshot of a
+one gesture, so Undo takes the whole selection back. It is the same undo as Ctrl+Z
+on the list and the palette's row, off the same stack, so an undo from any of them
+takes the toast away. A folder deleted with what it held is not offered: there is no snapshot of a
 folder to put back. See `undo-toast.svelte.ts`.
 
 ## Copying something

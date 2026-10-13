@@ -149,7 +149,6 @@ describe('a note', () => {
       'Choose an icon',
       'Set cover',
       'Bookmark',
-      'Leave out of search',
       'Archive',
       'Copy link',
       'Duplicate',
@@ -200,7 +199,6 @@ describe('a paper', () => {
       'Rename',
       'Move',
       'Bookmark',
-      'Leave out of search',
       'Archive',
       'Copy link',
       'Duplicate',
@@ -225,7 +223,6 @@ describe('a file the account has a copy of', () => {
       'Choose an icon',
       'Set cover',
       'Bookmark',
-      'Leave out of search',
       'Archive',
       'Share',
       'Copy link',
@@ -249,7 +246,6 @@ describe('a file the account has a copy of', () => {
       'Choose an icon',
       'Set cover',
       'Bookmark',
-      'Leave out of search',
       'Archive',
       'Share',
       'Copy link',
@@ -268,7 +264,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Move',
       'Bookmark',
-      'Leave out of search',
       'Archive',
       'Share',
       'Copy link',
@@ -399,5 +394,44 @@ describe('another sync tool’s copy', () => {
 
   test('is the plain menu once the note it was made of has gone', () => {
     expect(labels(orphan)).toEqual(labels(loose))
+  })
+})
+
+/** Nothing on a row leaves it out of search any more; Archive puts a note out of the
+ *  way. A row a space left out before keeps the way back, so nothing stays out with
+ *  none. See `searchAgainEntry`. */
+describe('search', () => {
+  test('is never left out from a row', () => {
+    for (const entry of [nested, plain, loose, paper]) {
+      expect(labels(entry)).not.toContain('Search here again')
+    }
+  })
+
+  test('but a row left out before can be searched again, and only that row', () => {
+    workspace.excluded.toggle(plain.path)
+    const inside = plain.children[0]
+
+    expect(labels(plain)).toContain('Search here again')
+    expect(inside && labels(inside)).not.toContain('Search here again')
+
+    rowMenu(plain)
+      .find((one) => one?.label === 'Search here again')
+      ?.run()
+    expect(workspace.excluded.has(plain.path)).toBe(false)
+    expect(labels(plain)).not.toContain('Search here again')
+  })
+})
+
+/** Undo is Ctrl+Z on the list, the toast and the palette's row, never a row of
+ *  this menu. */
+describe('the undo', () => {
+  test('is not in a row’s menu, nor a selection’s', () => {
+    const undo = vi.spyOn(workspace, 'undoLabel', 'get').mockReturnValue('Undo deleting plan')
+
+    expect(labels(loose).at(-1)).toBe('Delete')
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/paper.pdf')
+    expect(labels(loose).at(-1)).toBe('Delete 2 items')
+    undo.mockRestore()
   })
 })

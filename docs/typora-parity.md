@@ -954,8 +954,9 @@ Features Typora does not have, which are the reason this exists.
 - [x] A space leaves notes and folders out of what it says about itself: the
       search does not walk them, the picture of its links does not draw them, and
       the mentions of a note do not count them. They are still there to open and
-      still sync; the space has simply stopped asking them things. The way in is a
-      row's own menu, and the rows say so quietly. Paths rather than patterns,
+      still sync; the space has simply stopped asking them things. The way in was a
+      row's own menu; since #252 a row offers only the way back, and Archive is how
+      a note is put out of the way. Paths rather than patterns,
       because a row always names a note or a folder and a folder stands for
       everything under it, which is the only pattern a file tree needs; a glob
       would be a second language beside the search's own, in a settings pane

@@ -120,9 +120,9 @@ export class FileActions {
   /** What undoing would do, phrased for a menu. Null when there is nothing.
    *
    *  The name as the row beside it says the name, which is without the ending a
-   *  document is known by: the menu this appears in is the row's own menu, and
-   *  "Undo renaming Plan.md" under a row that reads `Plan` is the list disagreeing
-   *  with itself. See note-name.ts. */
+   *  document is known by: the palette and a tag's menu say it beside the file
+   *  list, and "Undo renaming Plan.md" beside a row that reads `Plan` is the app
+   *  disagreeing with itself. See note-name.ts. */
   get label(): string | null {
     const action = this.last
     if (!action) return null

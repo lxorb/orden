@@ -1,13 +1,13 @@
 /** The short "Undo" that follows a file somebody deleted or moved.
  *
  *  The way Gmail and Notion do it: the thing is gone at once, and for a few seconds
- *  one press brings it back. Until now the only way back was the Undo row at the foot
+ *  one press brings it back. Before it, the only way back was an Undo row at the foot
  *  of a row's menu, which nobody looks for straight after a delete they did not mean.
  *
  *  Nothing is kept here that the undo stack does not already keep. The toast offers
  *  the actions at the top of `workspace.undone`, and taking them back is the same
- *  `undoFileAction` the menu row runs - so the toast and the row can never disagree,
- *  and an undo from the row takes the toast's action off it too.
+ *  `undoFileAction` Ctrl+Z and the palette run - so the toast and they can never
+ *  disagree, and an undo from either takes the toast's action off it too.
  *
  *  One press for one gesture. Deleting or moving a selection records one action per
  *  file, one after another, so actions of the same kind arriving while the toast is up
