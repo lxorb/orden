@@ -968,7 +968,7 @@ export const ps: Dictionary = {
   'No footnotes in this note': 'په دې یادښت کې لمنلیک نشته',
   'Stack tabs': 'ټوپونه په ستنو کې کېښکېنه',
   'Unstack tabs': 'د ټوپونو ستنې لرې کړه',
-  'High contrast': 'لوړ تضاد',
+  Contrast: 'تضاد',
   Glass: 'ښیښه',
   Classic: 'کلاسیک',
   'Front matter': 'سرمنځپانګه',

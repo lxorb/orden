@@ -989,7 +989,7 @@ export const it: Dictionary = {
   'No footnotes in this note': 'Nessuna nota a piè di pagina in questa nota',
   'Stack tabs': 'Impila le schede',
   'Unstack tabs': 'Separa le schede',
-  'High contrast': 'Contrasto elevato',
+  Contrast: 'Contrasto',
   Glass: 'Vetro',
   Classic: 'Classico',
   'Front matter': 'Intestazione YAML',

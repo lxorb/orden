@@ -967,7 +967,7 @@ export const id: Dictionary = {
   'No footnotes in this note': 'Tidak ada catatan kaki di catatan ini',
   'Stack tabs': 'Tumpuk tab',
   'Unstack tabs': 'Lepas tumpukan tab',
-  'High contrast': 'Kontras tinggi',
+  Contrast: 'Kontras',
   Glass: 'Kaca',
   Classic: 'Klasik',
   'Front matter': 'Front matter',

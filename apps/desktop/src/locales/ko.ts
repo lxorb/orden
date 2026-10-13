@@ -962,7 +962,7 @@ export const ko: Dictionary = {
   'No footnotes in this note': '이 노트에 각주가 없습니다',
   'Stack tabs': '탭을 나란히',
   'Unstack tabs': '탭 나란히 해제',
-  'High contrast': '고대비',
+  Contrast: '대비',
   Glass: '유리',
   Classic: '클래식',
   'Front matter': '프런트 매터',

@@ -954,7 +954,7 @@ export const yue: Dictionary = {
     '屬性用列嘅形式顯示同就地編輯；原始碼係輸入時嘅 YAML。',
   Source: '原始碼',
   Hidden: '隱藏',
-  'High contrast': '高對比',
+  Contrast: '對比',
   Glass: '玻璃',
   Classic: '經典',
   'Go to the mark': '跳去標記',

@@ -967,7 +967,7 @@ export const ms: Dictionary = {
   'No footnotes in this note': 'Tiada nota kaki dalam nota ini',
   'Stack tabs': 'Susun tab',
   'Unstack tabs': 'Buang susunan tab',
-  'High contrast': 'Kontras tinggi',
+  Contrast: 'Kontras',
   Glass: 'Kaca',
   Classic: 'Klasik',
   'Front matter': 'Front matter',

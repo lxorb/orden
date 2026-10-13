@@ -970,7 +970,7 @@ export const tr: Dictionary = {
   'No footnotes in this note': 'Bu notta dipnot yok',
   'Stack tabs': 'Sekmeleri yan yana diz',
   'Unstack tabs': 'Sekme dizilişini kaldır',
-  'High contrast': 'Yüksek karşıtlık',
+  Contrast: 'Karşıtlık',
   Glass: 'Cam',
   Classic: 'Klasik',
   'Front matter': 'Ön bilgi',

@@ -986,7 +986,7 @@ export const fr: Dictionary = {
   'No footnotes in this note': 'Aucune note de bas de page dans cette note',
   'Stack tabs': 'Empiler les onglets',
   'Unstack tabs': 'Désempiler les onglets',
-  'High contrast': 'Contraste élevé',
+  Contrast: 'Contraste',
   Glass: 'Verre',
   Classic: 'Classique',
   'Front matter': 'En-tête YAML',

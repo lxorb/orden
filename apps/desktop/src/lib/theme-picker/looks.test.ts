@@ -96,7 +96,7 @@ describe('a theme on top of the tokens', () => {
   })
 })
 
-describe('the high contrast theme', () => {
+describe('the contrast theme', () => {
   test('is black and white, in its own accent', () => {
     expect(lookOf([tokens, contrastCss], 'dark').ground).toBe('#000000')
     expect(lookOf([tokens, contrastCss], 'light').ground).toBe('#ffffff')

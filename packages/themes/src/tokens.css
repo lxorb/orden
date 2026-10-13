@@ -435,7 +435,7 @@
   /* What is written or drawn on a fill of the accent: a button's words, the plus
      that makes a note, the letter in the badge of the space you are in, the knob
      of a switch that is on. Not white on this side: white on #7c6bf5 is 3.98 to
-     one, and on the High contrast theme's lighter accent it was 2.67. An accent
+     one, and on the Contrast theme's lighter accent it was 2.67. An accent
      bright enough to be read on a dark page is too bright to carry white, so the
      ink is the page's own darkest, the way Material's `onPrimary` is on a dark
      scheme: 4.89 on the accent at rest and more on its hover and its press, and

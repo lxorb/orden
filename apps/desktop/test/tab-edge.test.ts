@@ -204,7 +204,7 @@ describe('the open tab', () => {
 
   test.each([
     ['the built-in', () => opaque('built-in', null)],
-    ['high contrast', () => opaque('high contrast', contrastCss)],
+    ['contrast', () => opaque('contrast', contrastCss)],
     ['glass', glass],
     ['wallpaper', wallpaper],
   ])('stands out of the frame in %s, on every frame it can stand on', (_name, seen) => {

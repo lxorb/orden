@@ -954,7 +954,7 @@ export const zhHant: Dictionary = {
   'No footnotes in this note': '這則筆記沒有註腳',
   'Stack tabs': '並排標籤頁',
   'Unstack tabs': '取消並排標籤頁',
-  'High contrast': '高對比',
+  Contrast: '對比',
   Glass: '玻璃',
   Classic: '經典',
   'Front matter': '前置資料',

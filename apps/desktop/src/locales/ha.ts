@@ -977,7 +977,7 @@ export const ha: Dictionary = {
   'No footnotes in this note': 'Babu bayanin ƙasa a wannan rubutu',
   'Stack tabs': 'Tara shafuka a ginshiƙi',
   'Unstack tabs': 'Warware tarin shafuka',
-  'High contrast': 'Bambanci mai ƙarfi',
+  Contrast: 'Bambanci',
   Glass: 'Gilashi',
   Classic: 'Na gargajiya',
   'Front matter': 'Front matter',

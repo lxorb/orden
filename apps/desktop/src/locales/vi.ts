@@ -962,7 +962,7 @@ export const vi: Dictionary = {
   'No footnotes in this note': 'Ghi chú này không có chú thích cuối trang',
   'Stack tabs': 'Xếp thẻ thành cột',
   'Unstack tabs': 'Bỏ xếp cột thẻ',
-  'High contrast': 'Tương phản cao',
+  Contrast: 'Tương phản',
   Glass: 'Kính',
   Classic: 'Cổ điển',
   'Front matter': 'Phần đầu tệp',

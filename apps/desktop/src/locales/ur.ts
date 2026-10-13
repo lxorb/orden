@@ -968,7 +968,7 @@ export const ur: Dictionary = {
   'No footnotes in this note': 'اس نوٹ میں کوئی حاشیہ نہیں',
   'Stack tabs': 'ٹیبز کو کالموں میں رکھیں',
   'Unstack tabs': 'ٹیب کالم ہٹائیں',
-  'High contrast': 'زیادہ تضاد',
+  Contrast: 'تضاد',
   Glass: 'شیشہ',
   Classic: 'کلاسیک',
   'Front matter': 'ابتدائی ڈیٹا',

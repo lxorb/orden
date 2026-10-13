@@ -977,7 +977,7 @@ export const ml: Dictionary = {
   'No footnotes in this note': 'ഈ കുറിപ്പിൽ അടിക്കുറിപ്പുകളില്ല',
   'Stack tabs': 'ടാബുകൾ അടുക്കുക',
   'Unstack tabs': 'ടാബ് അടുക്കൽ മാറ്റുക',
-  'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
+  Contrast: 'കോൺട്രാസ്റ്റ്',
   Glass: 'ഗ്ലാസ്',
   Classic: 'ക്ലാസിക്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',

@@ -372,18 +372,18 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Custom fonts (via a theme)
 - [x] Custom CSS injection separate from themes
 - [x] Code block themes
-- [x] A high contrast mode, which is a theme the app ships with. Asking for more
+- [x] A contrast mode, which is a theme the app ships with. Asking for more
       contrast asks for a different look, so it is a whole palette rather than a
-      switch beside the mode: `High contrast` in the Style row and `Theme: High
-      contrast` in the palette, one of the two themes that are always there, with no
+      switch beside the mode: `Contrast` in the Style row and `Theme: Contrast` in
+      the palette, one of the two themes that are always there, with no
       file to fetch and nothing to install. Measured against the page it is read on -
       text at 21:1 in both schemes, the muted words at 8 and 11.5, the hairlines at
       3.6 and up, an accent of its own at 7.9 and 9.2 - and measured by a drive that
       reads the ratios back off the real page rather than by a claim in a file; see
       apps/desktop/test/e2e/contrast.py. It states the four `--syntax-*` tokens too,
-      so the syntax inside a fence is a theme's to answer as well. The same palette
-      is published as `contrast` in the theme store for anybody who wants to update it
-      separately, and installing that copy still works. A fresh install whose system
+      so the syntax inside a fence is a theme's to answer as well. It is the one
+      Contrast: the theme store's copy is gone, and one still installed is read as
+      it. A fresh install whose system
       asks for more contrast is answered with the theme itself, chosen there and then
       and shown in Appearance so putting it back is one press - once, and never asked
       again; a reader who has already chosen a theme is not overruled by their system

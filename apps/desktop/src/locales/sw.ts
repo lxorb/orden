@@ -975,7 +975,7 @@ export const sw: Dictionary = {
   'No footnotes in this note': 'Hakuna tanbihi katika dokezo hili',
   'Stack tabs': 'Panga vichupo safu',
   'Unstack tabs': 'Ondoa safu za vichupo',
-  'High contrast': 'Utofautishaji wa juu',
+  Contrast: 'Utofautishaji',
   Glass: 'Kioo',
   Classic: 'Asili',
   'Front matter': 'Front matter',

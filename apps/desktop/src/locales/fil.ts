@@ -979,7 +979,7 @@ export const fil: Dictionary = {
   'No footnotes in this note': 'Walang talababa sa notang ito',
   'Stack tabs': 'Isalansan ang mga tab',
   'Unstack tabs': 'Alisin ang salansan ng tab',
-  'High contrast': 'Mataas na kontrast',
+  Contrast: 'Kontrast',
   Glass: 'Salamin',
   Classic: 'Klasiko',
   'Front matter': 'Front matter',

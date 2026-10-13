@@ -968,7 +968,7 @@ export const bn: Dictionary = {
   'No footnotes in this note': 'এই নোটে কোনো পাদটীকা নেই',
   'Stack tabs': 'ট্যাব স্তূপ করুন',
   'Unstack tabs': 'ট্যাব স্তূপ সরান',
-  'High contrast': 'উচ্চ বৈসাদৃশ্য',
+  Contrast: 'বৈসাদৃশ্য',
   Glass: 'কাচ',
   Classic: 'ক্লাসিক',
   'Front matter': 'ফ্রন্ট ম্যাটার',

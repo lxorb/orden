@@ -1,6 +1,6 @@
 import contrast from './contrast.css?raw'
 
-/** The high contrast theme, as text: a whole palette of its own on both sides,
+/** The contrast theme, as text: a whole palette of its own on both sides,
  *  stated in the tokens any other theme states. The app injects it the way it
  *  injects a theme read from a file, so a built-in theme and an installed one are
  *  applied by one road. See contrast.css, and theme.svelte.ts.

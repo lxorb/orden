@@ -968,7 +968,7 @@ export const gu: Dictionary = {
   'No footnotes in this note': 'આ નોંધમાં કોઈ ફૂટનોટ નથી',
   'Stack tabs': 'ટેબ થપ્પી કરો',
   'Unstack tabs': 'ટેબ થપ્પી હટાવો',
-  'High contrast': 'ઉચ્ચ કોન્ટ્રાસ્ટ',
+  Contrast: 'કોન્ટ્રાસ્ટ',
   Glass: 'કાચ',
   Classic: 'ક્લાસિક',
   'Front matter': 'Front matter',

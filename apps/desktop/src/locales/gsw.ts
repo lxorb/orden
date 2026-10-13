@@ -971,7 +971,7 @@ export const gsw: Dictionary = {
   'No footnotes in this note': 'Kei Fuessnote i dere Notiz',
   'Stack tabs': 'Tabs stapla',
   'Unstack tabs': 'Tabs nöd stapla',
-  'High contrast': 'Hohe Kontrascht',
+  Contrast: 'Kontrascht',
   Glass: 'Glas',
   Classic: 'Klassisch',
   'Front matter': 'Chopfdate',

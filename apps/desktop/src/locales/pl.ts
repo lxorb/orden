@@ -1003,7 +1003,7 @@ export const pl: Dictionary = {
   'No footnotes in this note': 'Brak przypisów w tej notatce',
   'Stack tabs': 'Ułóż karty w kolumny',
   'Unstack tabs': 'Rozłóż karty',
-  'High contrast': 'Wysoki kontrast',
+  Contrast: 'Kontrast',
   Glass: 'Szkło',
   Classic: 'Klasyczny',
   'Front matter': 'Nagłówek YAML',

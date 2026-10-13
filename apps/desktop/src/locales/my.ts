@@ -962,7 +962,7 @@ export const my: Dictionary = {
   'No footnotes in this note': 'ဤမှတ်စုတွင် အောက်ခြေမှတ်စု မရှိပါ',
   'Stack tabs': 'တက်ဗ်များ အတန်းစီရန်',
   'Unstack tabs': 'တက်ဗ် အတန်းစီမှု ဖျက်ရန်',
-  'High contrast': 'အရောင်ကွာဟမှု မြင့်',
+  Contrast: 'အရောင်ကွာဟမှု',
   Glass: 'မှန်',
   Classic: 'ဂန္ထဝင်',
   'Front matter': 'Front matter',

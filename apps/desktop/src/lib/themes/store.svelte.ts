@@ -9,7 +9,7 @@
 
 import { message, t } from '../i18n.svelte'
 import { log } from '../log'
-import { theme } from '../theme.svelte'
+import { isBuiltIn, theme } from '../theme.svelte'
 import { invoke } from '../tauri'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'
 import { stamped } from './stamp'
@@ -133,7 +133,8 @@ class Store {
       performance.clearMarks(`${PAINT}:index`)
       performance.mark(`${PAINT}:index`)
 
-      this.themes = readIndex(body)
+      // A card for a theme the app ships with would be a second of it; see `isBuiltIn`.
+      this.themes = readIndex(body).filter((one) => !isBuiltIn(one.id))
       this.fetchedAt = Date.now()
     } catch (error) {
       this.error = message(error, 'could not reach the theme store')

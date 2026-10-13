@@ -966,7 +966,7 @@ export const ja: Dictionary = {
   'No footnotes in this note': 'このノートに脚注はありません',
   'Stack tabs': 'タブを並べる',
   'Unstack tabs': 'タブを並べない',
-  'High contrast': 'ハイコントラスト',
+  Contrast: 'コントラスト',
   Glass: 'ガラス',
   Classic: 'クラシック',
   'Front matter': 'フロントマター',
