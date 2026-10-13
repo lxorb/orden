@@ -238,6 +238,9 @@ mod zen_profiles;
 // browser_themes.rs.
 #[cfg(desktop)]
 mod browser_themes;
+// And what such a theme says of the pages in web tabs; see page_style.rs.
+#[cfg(desktop)]
+mod page_style;
 
 use paths::Picked;
 use tauri::Manager;
@@ -392,6 +395,7 @@ macro_rules! desktop_commands {
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
             browser_themes::browser_themes,
+            page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
             handed_pdfs::bring_in_pdf,

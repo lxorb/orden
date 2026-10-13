@@ -1,7 +1,8 @@
 //! The themes Chrome and Firefox wear on this machine, as each browser holds them:
-//! the `theme` of an extension's manifest, and Firefox's `userChrome.css` with every
-//! sheet it imports written into it. Chrome has had no stylesheet of the reader's own
-//! since version 32, so a manifest is all there is to read of it.
+//! the `theme` of an extension's manifest, and Firefox's `userChrome.css` and
+//! `userContent.css` with every sheet they import written into them. Chrome has had
+//! no stylesheet of the reader's own since version 32, so a manifest is all there is
+//! to read of it.
 //!
 //! Found by walking every folder either browser keeps profiles in, on every desktop
 //! and in every packaging, rather than by asking which is installed: a folder that is
@@ -21,6 +22,8 @@ pub struct BrowserTheme {
     source: String,
     /// Whether `source` is a stylesheet rather than a manifest's `theme`.
     css: bool,
+    /// What the profile's `userContent.css` says of pages, read as `source` is.
+    pages: String,
 }
 
 /// Where Firefox keeps its profile folders, under the home folder or either of the
@@ -92,6 +95,7 @@ fn firefox_themes(profile: &Path) -> Vec<BrowserTheme> {
         name: format!("userChrome ({name})"),
         source: inlined(&sheet, 8),
         css: true,
+        pages: inlined(&profile.join("chrome/userContent.css"), 8),
     });
 
     let add_ons = entries(&profile.join("extensions"));
@@ -120,6 +124,7 @@ fn theme_of(manifest: &str) -> Option<BrowserTheme> {
         name: read.get("name")?.as_str()?.to_string(),
         source: read.get("theme")?.to_string(),
         css: false,
+        pages: String::new(),
     })
 }
 
@@ -203,6 +208,10 @@ mod tests {
         let sheet = "/*\n@import url('colors/light.css');\n*/\n@import url('colors/dark.css');\n#nav-bar {}";
         write(profile.join("chrome/userChrome.css"), sheet.as_bytes());
         write(
+            profile.join("chrome/userContent.css"),
+            b"body { color: red; }",
+        );
+        write(
             profile.join("extensions/fox.xpi"),
             &packed(r#"{"name":"Fox","theme":{"colors":{}}}"#),
         );
@@ -215,8 +224,11 @@ mod tests {
             br#"{"name":"Black","theme":{"colors":{}}}"#,
         );
 
+        let bases = [home.path().to_path_buf()];
+        let pages = themes_under(&bases, true).into_iter().map(|one| one.pages);
+        assert_eq!(pages.collect::<Vec<_>>(), ["", "body { color: red; }"]);
         let found = |firefox| {
-            let themes = themes_under(&[home.path().to_path_buf()], firefox);
+            let themes = themes_under(&bases, firefox);
             themes
                 .into_iter()
                 .map(|one| (one.name, one.source))

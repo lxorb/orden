@@ -785,6 +785,8 @@ class Themes {
     if (css === null) return
 
     this.inject(css)
+    // And what it says of the pages in web tabs, which is the crate's to put there.
+    if (isDesktop) void invoke('wear_page_styles', { css }).catch(() => undefined)
     const sheet = css.replace(STAMP_LINE, '')
     // A sheet read again keeps its dials until they are read again.
     if (sheet !== this.sheet && (this.wearing !== this.id || !declares(sheet))) this.declared = []

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ordenCss } from './browser'
+import { ordenCss, paged } from './browser'
 
 /** The tokens of one scheme's block, by name. */
 function tokens(css: string, scheme: string): Record<string, string> {
@@ -20,7 +20,7 @@ describe('a browser theme as an Orden theme', () => {
         sidebar: 'white',
       },
     })
-    const css = ordenCss({ name: 'Dusk', source, css: false })
+    const css = ordenCss({ name: 'Dusk', source, css: false, pages: '' })
 
     expect(css).not.toContain("data-theme='light'")
     expect(css).not.toContain('data-translucent')
@@ -34,7 +34,32 @@ describe('a browser theme as an Orden theme', () => {
     })
     // A white list under light words is a ground that cannot carry the ink.
     expect(css).not.toContain('--side-bar-bg-color')
-    expect(ordenCss({ name: 'Pictures', source: '{"images":{}}', css: false })).toBe('')
+    expect(ordenCss({ name: 'Pictures', source: '{"images":{}}', css: false, pages: '' })).toBe('')
+  })
+
+  test('a userContent.css is a line of pages, each block with its addresses', () => {
+    const line = paged(`
+      body { background-color: #22242a80 !important; }
+      @-moz-document url(about:blank), url-prefix("https://www.google.") { img { filter: none; } }
+      @-moz-document domain(example.org) { p { color: red; } }`)
+    const said = JSON.parse(/nib-pages (.*) \*\/\n$/.exec(line)?.[1] ?? '') as {
+      clear: boolean
+      sheets: { match: string; css: string }[]
+    }
+
+    expect(said.clear).toBe(true)
+    expect(said.sheets.map((one) => one.match)).toEqual([
+      '',
+      '^about:blank$|^https://www\\.google\\.',
+      '^[a-z-]+://([^/]*\\.)?example\\.org[/:]',
+    ])
+    expect(new RegExp(said.sheets[1]?.match ?? '').test('https://www.google.de/search')).toBe(true)
+    expect(new RegExp(said.sheets[2]?.match ?? '').test('https://sub.example.org/a')).toBe(true)
+    expect(new RegExp(said.sheets[2]?.match ?? '').test('https://notexample.org/')).toBe(false)
+    expect(said.sheets[1]?.css.trim()).toBe('img { filter: none; }')
+    // Nothing a comment could end on, and nothing at all where nothing is said.
+    expect(line.slice(3, -4)).not.toContain('*/')
+    expect(paged('')).toBe('')
   })
 
   test('a stylesheet is read by its cascade, a scheme to a block', () => {
@@ -50,7 +75,7 @@ describe('a browser theme as an Orden theme', () => {
       toolbar#nav-bar:hover { background: red; }
       #TabsToolbar { background: transparent !important; }
       toolbar#nav-bar { background-color: rgba(0, 0, 0, 0.4) !important; }`
-    const css = ordenCss({ name: 'userChrome', source, css: true })
+    const css = ordenCss({ name: 'userChrome', source, css: true, pages: '' })
 
     // The see-through strip is no frame, so the frame is the toolbar's.
     expect(tokens(css, 'dark')).toMatchObject({

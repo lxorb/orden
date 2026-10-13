@@ -46,7 +46,7 @@ use tauri::{
 /// What a web tab's webview is labelled: this in front of the tab's own id, so a
 /// label says which tab it belongs to and nothing else in the window can be
 /// mistaken for one.
-const LABEL: &str = "web-";
+pub(crate) const LABEL: &str = "web-";
 
 /// Whether a webview is one of the web's own - a tab's page, or the page that holds
 /// the session open - rather than the app's.
@@ -1062,7 +1062,7 @@ fn page_built(
             PhysicalPosition::new(left, top),
             PhysicalSize::new(width, height),
         )
-        .map(|_| ())
+        .map(|view| crate::page_style::worn(&view))
         .map_err(|error| format!("that page could not be opened: {error}"))
 }
 
@@ -1212,7 +1212,7 @@ pub async fn web_open(
     // nib's own scripts for the page, and where the page is built: on the blank page, and
     // sent to the site once the runtime's scripts are off it and these are in nib's own
     // world, on either engine (see `listening` and web_worlds.rs).
-    let scripts = opening(revived.place, &url);
+    let scripts = crate::page_style::with(opening(revived.place, &url));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
@@ -1381,6 +1381,7 @@ fn reporting(
         if loading {
             return;
         }
+        crate::page_style::worn(&view);
 
         // Every step of a sign-in that goes through pages ends here, so this is where
         // a login it left in a session cookie is made to last; see web_cookies.rs.

@@ -26,6 +26,8 @@ export interface BrowserTheme {
   name: string
   source: string
   css: boolean
+  /** A Firefox profile's `userContent.css`, or nothing. */
+  pages: string
 }
 
 /** A theme's keys, each with every colour said for it, the likeliest first. */
@@ -36,6 +38,8 @@ const WHITE: Rgb = [255, 255, 255]
 const GREY: Rgb = [128, 128, 128]
 const NAMED: Record<string, string> = { black: '#000', white: '#fff', transparent: 'rgba(0,0,0,0)' }
 const SCHEMES: Scheme[] = ['light', 'dark']
+/** Short of what `write_theme` takes, by the room a stamp needs; see themes.rs. */
+const MOST = 60_000
 
 const PAGE = ['ntp_background', 'tab_selected', 'toolbar', 'frame']
 const WORDS = [
@@ -265,6 +269,44 @@ function glassOf(parts: Parts): Record<string, string> {
   return clear ? { ...tokens, ...ON_GLASS } : {}
 }
 
+/** The addresses each function of `@-moz-document` is for, as a pattern. */
+const escaped = (said: string) => said.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const ADDRESSED: Record<string, (said: string) => string> = {
+  url: (said) => `^${escaped(said)}$`,
+  'url-prefix': (said) => `^${escaped(said)}`,
+  domain: (said) => `^[a-z-]+://([^/]*\\.)?${escaped(said)}[/:]`,
+  regexp: (said) => `^(?:${said.replace(/\\\\/g, '\\')})$`,
+}
+
+/** A `userContent.css` as the line a theme file says its pages on, or nothing for one
+ *  that says nothing: each `@-moz-document` block with the addresses it is for, and
+ *  the rest for every page. `clear` is whether every page's own ground is seen
+ *  through, which is what makes its webview clear; see page_style.rs. */
+export function paged(css: string): string {
+  const sheets = [{ match: '', css: '' }]
+  let start = 0
+
+  for (let open = css.indexOf('{'); open >= 0; open = css.indexOf('{', start)) {
+    const close = closes(css, open)
+    const prelude = css.slice(start, open)
+    const whole = css.slice(start, close + 1)
+    start = close + 1
+
+    const said = [...prelude.matchAll(/(url-prefix|url|domain|regexp)\(\s*(['"]?)(.*?)\2\s*\)/g)]
+    const match = said.map(([, kind, , text]) => ADDRESSED[kind ?? '']?.(text ?? '')).join('|')
+    if (!prelude.includes('@-moz-document') && sheets[0]) sheets[0].css += whole
+    else if (match) sheets.push({ match, css: css.slice(open + 1, close) })
+  }
+
+  const grounds = [...saidIn(sheets[0]?.css ?? '')].filter((one) =>
+    /^(:root|html|body) background$/.test(one.name),
+  )
+  const clear = grounds.some((one) => (parsed(one.value)?.[1] ?? 1) < 1)
+  const worth = sheets.filter((one) => one.css.trim())
+  if (!worth.length) return ''
+  return `/*! nib-pages ${JSON.stringify({ clear, sheets: worth }).replace(/\//g, '\\/')} */\n`
+}
+
 /** The theme as a sheet Orden wears, a block for each scheme it states, or nothing
  *  for a theme that colours no ground. One that says nothing of schemes is one look:
  *  whichever side of grey its ground lands on. A second block is for the window that
@@ -289,4 +331,12 @@ export function ordenCss(theme: BrowserTheme): string {
       return worn && worn + block(`:root[data-translucent][data-theme='${scheme}']`, glassOf(parts))
     })
     .join('')
+}
+
+/** The whole file an import writes: the sheet, and under it what the theme says of
+ *  pages, where both fit in what a theme file may be. */
+export function ordenTheme(theme: BrowserTheme): string {
+  const css = ordenCss(theme)
+  const pages = css && paged(theme.pages)
+  return css.length + pages.length < MOST ? css + pages : css
 }

@@ -18,7 +18,7 @@
   import { type Scheme, theme } from '../theme.svelte'
   import { type Look, lookOf } from '../theme-picker/looks'
   import Mini from '../theme-picker/Mini.svelte'
-  import { type BrowserTheme, ordenCss } from '../themes/browser'
+  import { type BrowserTheme, ordenTheme } from '../themes/browser'
   import { stamped } from '../themes/stamp'
   import { trap } from '../trap'
 
@@ -39,7 +39,7 @@
     void invoke<BrowserTheme[]>('browser_themes', { browser: browser.toLowerCase() }).then(
       (themes) => {
         found[browser] = themes
-          .map((one) => ({ name: one.name, css: ordenCss(one) }))
+          .map((one) => ({ name: one.name, css: ordenTheme(one) }))
           .filter((one) => one.css)
           .map((one) => ({
             ...one,
