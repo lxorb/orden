@@ -34,6 +34,9 @@ export const WELCOME_NAME = 'Read me.md'
 /** Where the shim writes it, in the virtual file system's own absolute form. */
 export const WELCOME_PATH = `/${WELCOME_SPACE}/${WELCOME_NAME}`
 
+/** The way to Settings > Import, which every seed before 2026-10-13 was without. */
+const IMPORT_LINE = '\n[Import from Obsidian or Notion](nib://settings/import)\n'
+
 /** Written by every build - see first-space.svelte.ts - so it names none. */
 export const WELCOME = `# Welcome to Orden
 
@@ -52,16 +55,7 @@ const hello = 'world'
 | ---- | ----- |
 | Notes | this device |
 | Synced notes | your account |
-
-[Import from Obsidian or Notion](nib://settings/import)
-`
-
-/** The welcome note's way to Settings > Import, the one place notes from another app
- *  come in: the line that stands where a first screen used to ask about them. Every
- *  seed before it was written without it. */
-const IMPORT_LINE = '
-[Import from Obsidian or Notion](nib://settings/import)
-'
+${IMPORT_LINE}`
 
 /** The seed as it was written while the app was called nibeditor, and before that
  *  Nib. Word for word, because that is what an untouched one is. */

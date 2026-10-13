@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte'
   import { t } from './lib/i18n.svelte'
-  import { startsFresh } from './lib/fresh-start'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -248,20 +247,21 @@
     }
   })
 
-  // A fresh start opens on the welcome note; see fresh-start.ts. Fetched only then.
+  // A fresh start opens on the welcome note; see fresh-start.ts. Fetched only with no
+  // space, and what it reads is read here, so a change to any of it asks again.
   $effect(() => {
-    if (__EVEN_PLUGIN__) return
-    const fresh = startsFresh({
+    if (__EVEN_PLUGIN__ || !workspace.restored || workspace.spaces.length) return
+    const now = {
       native: isNative,
       plugin: false,
-      restored: workspace.restored,
-      spaces: workspace.spaces.length,
+      restored: true,
+      spaces: 0,
       restoring: account.restoring,
       signedIn: account.signedIn,
       invited: joining.invitation !== null || joining.step !== null,
       tabs: workspace.tabs.length,
-    })
-    if (fresh) void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start())
+    }
+    void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start(now))
   })
 
   // Ctrl and the wheel over the note, which a trackpad pinch also arrives as.

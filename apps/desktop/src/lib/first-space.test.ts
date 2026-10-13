@@ -75,6 +75,18 @@ const { insideFolder, pickedFolder } = await import('./import/sources')
 const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('./welcome')
 const { AGENTS_NAME, AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed')
 
+/** A desktop with no space, nothing open and nobody signed in. */
+const FRESH = {
+  native: true,
+  plugin: false,
+  restored: true,
+  spaces: 0,
+  restoring: false,
+  signedIn: false,
+  invited: false,
+  tabs: 0,
+}
+
 beforeEach(() => {
   notes.clear()
   made.length = 0
@@ -89,7 +101,7 @@ describe('a fresh start', () => {
   const welcome = `/spaces/${WELCOME_SPACE}/${WELCOME_NAME}`
 
   test('makes the first space and opens it on the welcome note', async () => {
-    await firstSpace.start()
+    await firstSpace.start(FRESH)
 
     expect(workspace.spaces.map((one) => one.name)).toEqual([WELCOME_SPACE])
     expect(notes.get(welcome)).toBe(WELCOME)
@@ -97,14 +109,20 @@ describe('a fresh start', () => {
   })
 
   test('asks nothing, and makes one space however often it is asked at once', async () => {
-    await Promise.all([firstSpace.start(), firstSpace.start()])
+    await Promise.all([firstSpace.start(FRESH), firstSpace.start(FRESH)])
 
     expect(made).toHaveLength(1)
   })
 
+  test('makes nothing where the moment is not a fresh start', async () => {
+    await firstSpace.start({ ...FRESH, signedIn: true })
+
+    expect(made).toEqual([])
+  })
+
   test('makes nothing once there is a space', async () => {
-    await firstSpace.start()
-    await firstSpace.start()
+    await firstSpace.start(FRESH)
+    await firstSpace.start(FRESH)
 
     expect(made).toHaveLength(1)
   })
@@ -112,7 +130,7 @@ describe('a fresh start', () => {
   test('on a device introduced before, a space and no welcome note', async () => {
     localStorage.setItem('nib:seeded', 'yes')
 
-    await firstSpace.start()
+    await firstSpace.start(FRESH)
 
     expect(workspace.spaces).toHaveLength(1)
     expect(notes.has(welcome)).toBe(false)
@@ -121,7 +139,7 @@ describe('a fresh start', () => {
   /** Every space made from here starts with the few lines an assistant working in it
    *  is to read; see agents-seed.ts. */
   test('and the space gets its AGENTS.md', async () => {
-    await firstSpace.start()
+    await firstSpace.start(FRESH)
 
     expect(notes.get(`/spaces/${WELCOME_SPACE}/${AGENTS_NAME}`)).toBe(AGENTS_SEED)
   })
