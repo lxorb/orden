@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Tasks: several lines pasted into quick add
+  'One task': '一个任务',
+  'One per line': '每行一个',
   // Tasks: the projects in the panel
   Favorites: '收藏',
   'Add project': '添加项目',

@@ -10,7 +10,11 @@ const file = (path: string): Entry => ({
   created: 0,
   children: [],
 })
-const folder = (path: string, children: Entry[]): Entry => ({ ...file(path), is_dir: true, children })
+const folder = (path: string, children: Entry[]): Entry => ({
+  ...file(path),
+  is_dir: true,
+  children,
+})
 
 const PROJECTS = folder('/s/Projects', [
   file('/s/Projects/Home.md'),
@@ -19,7 +23,10 @@ const PROJECTS = folder('/s/Projects', [
   file('/s/Projects/picture.png'),
 ])
 
-const COUNTS: Record<string, number> = { '/s/Projects/Home.md': 2, '/s/Projects/Uni/Analysis.md': 1 }
+const COUNTS: Record<string, number> = {
+  '/s/Projects/Home.md': 2,
+  '/s/Projects/Uni/Analysis.md': 1,
+}
 const count = (note: string) => COUNTS[note] ?? 0
 
 describe('the projects the panel lists', () => {
@@ -53,9 +60,12 @@ describe('the projects the panel lists', () => {
       'Analysis',
       'Home',
     ])
-    expect(projectRows(nodes, new Set(['/s/Projects/Uni/Uni.md'])).map((one) => one.name)).toEqual(
-      ['Later', 'Trip', 'Uni', 'Home'],
-    )
+    expect(projectRows(nodes, new Set(['/s/Projects/Uni/Uni.md'])).map((one) => one.name)).toEqual([
+      'Later',
+      'Trip',
+      'Uni',
+      'Home',
+    ])
     expect(projectNotes(nodes)).toContain('/s/Projects/Later/Trip.md')
   })
 })

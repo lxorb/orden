@@ -14,6 +14,7 @@
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
   import ListTree from 'lucide/dist/esm/icons/list-tree.mjs'
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
+  import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
@@ -29,6 +30,7 @@
   import { metaOf, type Subtasks } from './task-meta'
   import { scheduleRows, taskMenu } from './task-actions'
   import TaskBox from './TaskBox.svelte'
+  import TaskEditor from './TaskEditor.svelte'
   import Words from './Words.svelte'
 
   const {
@@ -43,6 +45,9 @@
     selected = false,
     onselect,
     subtasks,
+    editing = false,
+    onedit,
+    onsize,
   }: {
     row: Row
     kit: Kit
@@ -56,6 +61,11 @@
     selected?: boolean
     onselect?: () => void
     subtasks?: Subtasks | undefined
+    /** Whether the task is being changed in its own field over the row. */
+    editing?: boolean
+    onedit?: (on: boolean) => void
+    /** How tall the field standing in the row is, as it changes. */
+    onsize?: (tall: number) => void
   } = $props()
 
   const task = $derived(row.task)
@@ -144,6 +154,20 @@
         <Words words={task.text} />
       </button>
       <span class="actions">
+        {#if onedit}
+          <button
+            type="button"
+            class="act"
+            tabindex="-1"
+            aria-label={t('Edit')}
+            title={t('Edit')}
+            onclick={(event) => {
+              event.stopPropagation()
+              onselect?.()
+              onedit(true)
+            }}><Glyph icon={Pencil} /></button
+          >
+        {/if}
         <button
           type="button"
           class="act"
@@ -200,6 +224,9 @@
           </button>
         {/if}
       </div>
+    {/if}
+    {#if editing}
+      <TaskEditor {kit} {row} {onsize} onclose={() => onedit?.(false)} />
     {/if}
   </div>
 {/if}

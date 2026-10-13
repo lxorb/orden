@@ -13,6 +13,7 @@
   import { groupName, type Row, rowId, type Value } from '@nib/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
+  import { without } from '../records'
   import { t } from '../i18n.svelte'
   import { currentPlatform } from '../keys'
   import { ListView, tokenRow } from '../row-window.svelte'
@@ -53,6 +54,8 @@
   let folded = $state.raw<ReadonlySet<string>>(EMPTY)
   let shut = $state.raw<ReadonlySet<string>>(EMPTY)
   let selected = $state<string | null>(null)
+  /** The row whose task is being changed in its own field, Todoist's inline editor. */
+  let editing = $state<string | null>(null)
   /** The add row Q asked for, by group name, and how many times; see AddRow's `asked`. */
   let adding = $state({ group: '', count: 0 })
 
@@ -104,17 +107,29 @@
     )
   })
 
-  const heights = $derived.by(() => {
+  /** How much taller than its row an item is drawn while a field stands in it: the one
+   *  height measured, the editor's, so the rows under it make room as Todoist's do. */
+  let grown = $state.raw<Record<string, number>>({})
+  function grow(id: string, by: number) {
+    const now = Math.max(0, Math.round(by))
+    if ((grown[id] ?? 0) === now) return
+    grown = now ? { ...grown, [id]: now } : without(grown, id)
+  }
+
+  /** How tall an item is drawn at rest. */
+  function restingHeight(item: (typeof items)[number], many: number): number {
     const row = win.row || 28
     const { head, line, foot } = pitch
-    return new Heights(
-      items.map((item, at) => {
-        const many = lines[at] ?? 1
-        if (item.kind !== 'row' || !item.row.task) return row
-        return head + (many - 1) * line + (many > 1 ? foot : 0)
-      }),
-    )
-  })
+    if (item.kind !== 'row' || !item.row.task) return row
+    return head + (many - 1) * line + (many > 1 ? foot : 0)
+  }
+
+  const heights = $derived.by(
+    () =>
+      new Heights(
+        items.map((item, at) => restingHeight(item, lines[at] ?? 1) + (grown[item.id] ?? 0)),
+      ),
+  )
   const shown = $derived.by(() => {
     const span = heights.span(win.top, win.room || 600, 8 * (win.row || 28))
     return {
@@ -153,8 +168,23 @@
     const at = rows.findIndex((one) => one.id === selected)
     if (key.kind === 'add') {
       event.preventDefault()
+      const adds = items.filter((item) => item.kind === 'add')
       const row = rows[at]
-      adding = { group: row ? groupName(row.group.key) : '', count: adding.count + 1 }
+      const end = key.where === 'end' ? adds.at(-1) : key.where === 'top' ? adds[0] : undefined
+      const name =
+        end?.kind === 'add'
+          ? end.group
+            ? groupName(end.group.key)
+            : ''
+          : row
+            ? groupName(row.group.key)
+            : ''
+      adding = { group: name, count: adding.count + 1 }
+      return
+    }
+    if (key.kind === 'edit') {
+      event.preventDefault()
+      editing = rows[at]?.id ?? null
       return
     }
     if (key.kind === 'step') {
@@ -194,7 +224,11 @@
     <div class="probe-foot"></div>
   </div>
   {#each items.slice(shown.first, shown.last + 1) as item, index (item.id)}
-    <div class="item" data-item={item.id}>
+    <div
+      class="item"
+      data-item={item.id}
+      style:padding-bottom={grown[item.id] ? `${grown[item.id]}px` : undefined}
+    >
       {#if item.kind === 'head'}
         {@const name = groupName(item.group.key)}
         <div class="nib-section head" use:droppable={(row) => kit.drop(row, item.group.key)}>
@@ -231,6 +265,13 @@
               {dated}
               {where}
               lines={lines[shown.first + index] ?? 1}
+              editing={editing === item.id}
+              onedit={(on) => {
+                editing = on ? item.id : null
+                if (!on) grow(item.id, 0)
+              }}
+              onsize={(tall) =>
+                grow(item.id, tall - restingHeight(item, lines[shown.first + index] ?? 1))}
               subtasks={countsOf(row)}
               depth={item.depth}
               twist={item.twist}
@@ -257,6 +298,7 @@
           {kit}
           group={item.group}
           asked={adding.group === (item.group ? groupName(item.group.key) : '') ? adding.count : 0}
+          onsize={(tall) => grow(item.id, tall ? tall - (win.row || 28) : 0)}
         />
       {/if}
     </div>
@@ -306,6 +348,7 @@
   }
 
   .item {
+    position: relative;
     flex: none;
   }
 

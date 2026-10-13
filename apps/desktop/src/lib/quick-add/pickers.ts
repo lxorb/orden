@@ -182,3 +182,19 @@ export function whereRows(
     })),
   ]
 }
+
+/** Labels: every one the space's tasks carry, the task's own ticked, a press giving it
+ *  or taking it away. A label nobody has used yet is typed as `#label`. */
+export function tagRows(
+  current: readonly string[],
+  known: readonly string[],
+  set: (tags: string[]) => void,
+): MenuEntry[] {
+  const all = [...new Set([...current, ...known])].sort((a, b) => a.localeCompare(b))
+  return all.map((tag) => ({
+    label: `#${tag}`,
+    checked: current.includes(tag),
+    run: () =>
+      set(current.includes(tag) ? current.filter((one) => one !== tag) : [...current, tag]),
+  }))
+}

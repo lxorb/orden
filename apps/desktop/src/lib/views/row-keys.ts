@@ -9,6 +9,8 @@
  *    Alt+↑ Alt+↓          up or down among its siblings in the note
  *    Tab, Shift+Tab       a sub-task of the one above, or lifted out
  *    Q                    add a task here
+ *    A, Shift+A           add a task at the end of the list, at its top
+ *    Ctrl+E               change the task in its own field (Todoist's inline editor)
  *
  *  Pure: a keystroke in, an action out, and the layout does it. */
 
@@ -20,7 +22,8 @@ export type RowKey =
   | { kind: 'priority'; priority: 1 | 2 | 3 | 4 }
   | { kind: 'move'; up: boolean }
   | { kind: 'indent'; deeper: boolean }
-  | { kind: 'add' }
+  | { kind: 'add'; where?: 'end' | 'top' }
+  | { kind: 'edit' }
 
 interface Press {
   key: string
@@ -44,7 +47,7 @@ export function rowKey(press: Press, mac: boolean): RowKey | null {
   }
 
   if (press.key === 'Enter') return mod ? { kind: 'tick' } : { kind: 'open', tab: false }
-  if (mod) return null
+  if (mod) return press.key === 'e' && !press.shiftKey ? { kind: 'edit' } : null
 
   switch (press.key) {
     case 'ArrowUp':
@@ -64,6 +67,10 @@ export function rowKey(press: Press, mac: boolean): RowKey | null {
     case 'q':
     case 'Q':
       return press.shiftKey ? null : { kind: 'add' }
+    case 'a':
+      return { kind: 'add', where: 'end' }
+    case 'A':
+      return { kind: 'add', where: 'top' }
     default: {
       const priority = PRIORITY_KEYS[press.key]
       return priority === undefined || press.shiftKey ? null : { kind: 'priority', priority }

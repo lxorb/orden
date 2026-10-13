@@ -53,3 +53,18 @@ export function without(text: string, span: Span): string {
   const after = text.slice(span.to).replace(/^\s+/u, '')
   return before && after ? `${before} ${after}` : before + after
 }
+
+/** The tasks a paste holds, one a line: the lines with words in them, each without the
+ *  list mark or the box it was copied with, so a list copied out of a note or a mail is
+ *  a list of tasks. */
+export function pastedLines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/^\s*(?:[-*+•]|\d{1,9}[.)])\s+/u, '')
+        .replace(/^\[.\]\s+/u, '')
+        .trim(),
+    )
+    .filter(Boolean)
+}

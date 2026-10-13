@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Tasks: several lines pasted into quick add
+  'One task': 'Aiki ɗaya',
+  'One per line': 'Ɗaya kowane layi',
   // Tasks: the projects in the panel
   Favorites: 'Waɗanda aka fi so',
   'Add project': 'Ƙara aiki',

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { carried, piecesOf, without } from './field'
+import { carried, pastedLines, piecesOf, without } from './field'
 
 /** The field's bookkeeping: the line cut into words and chips, the spans pressed back
  *  into words following an edit, and a chip taken out when a control picks its field. */
@@ -43,5 +43,14 @@ describe('a chip taken out', () => {
   test('closes the gap it leaves', () => {
     expect(without('Call mum tomorrow at noon', { from: 9, to: 17 })).toBe('Call mum at noon')
     expect(without('tomorrow call mum', { from: 0, to: 8 })).toBe('call mum')
+  })
+})
+
+describe('a paste of several lines', () => {
+  test('is a task a line, each without the mark it was copied with', () => {
+    expect(
+      pastedLines('- [ ] Milk\r\n* Bread tomorrow\n\n2. Eggs #shop\n   \n• Butter\nplain words'),
+    ).toEqual(['Milk', 'Bread tomorrow', 'Eggs #shop', 'Butter', 'plain words'])
+    expect(pastedLines('one line')).toEqual(['one line'])
   })
 })

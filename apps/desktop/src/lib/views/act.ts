@@ -9,8 +9,8 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { tick } from '@nib/bases'
-import type { Row } from '@nib/bases'
+import { taskHash, tick } from '@nib/bases'
+import type { Row, TaskChange } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
 import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'
@@ -293,4 +293,24 @@ export async function addSubtask(row: Row, line: string): Promise<boolean> {
   const path = pathOf(row)
   if (!anchor || path === null) return false
   return rewrite(path, (before) => withSubtask(before, anchor, line))
+}
+
+/** A task changed the way the field that edits it says: its line and, where the field
+ *  held a description, the words under it, as one edit and so one undo. */
+export async function editTask(
+  row: Row,
+  change: TaskChange,
+  description: string | null,
+): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null || !row.task) return false
+  const words = change.text ?? row.task.text
+  return rewrite(path, (before) => {
+    const after = changed(before, row, { task: change }) ?? before
+    if (description === null) return after
+    return (
+      withDescription(after, { line: anchor.line, hash: taskHash(words) }, description) ?? after
+    )
+  })
 }

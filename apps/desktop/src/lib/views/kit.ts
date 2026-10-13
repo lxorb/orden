@@ -147,6 +147,7 @@ export function runKey(kit: Kit, row: Row, key: RowKey): boolean {
       return row.task !== undefined
     case 'step':
     case 'add':
+    case 'edit':
       return false
   }
 }

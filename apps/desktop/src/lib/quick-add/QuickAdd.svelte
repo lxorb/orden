@@ -9,10 +9,13 @@
    *  words again (Todoist's undo), and Backspace into one takes it apart by changing its
    *  words.
    *
-   *  Enter adds and keeps the field for the next task, Shift+Enter opens a line for the
-   *  description, Ctrl+Enter adds and opens the note at the task, Escape closes. What
-   *  happens to the task is the caller's (`onsubmit`): the sheet writes it, the global
-   *  window hands it to the app. */
+   *  Enter adds and keeps the field for the next task, Shift+Enter or ↓ opens a line for
+   *  the description, Ctrl+Enter adds and opens the note at the task, Escape closes.
+   *  Several lines pasted at once ask whether they are one task or one each, Todoist's
+   *  question. The same field edits a task where a view asks it to (`mode: 'edit'`),
+   *  holding what the task says in its controls; a field in a list (`oncancel`) has the
+   *  Cancel beside its button. What happens to the task is the caller's (`onsubmit`): the
+   *  sheet writes it, a view writes or changes it, the global window hands it to the app. */
   import type { Priority } from '@nib/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@nib/bases/language'
   import { todayOf } from '@nib/bases'
@@ -21,40 +24,51 @@
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
   import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
+  import Tag from 'lucide/dist/esm/icons/tag.mjs'
+  import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
-  import { carried, piecesOf, type Span, without } from './field'
+  import { carried, pastedLines, piecesOf, type Span, without } from './field'
   import Glyph from './Glyph.svelte'
   import { dayWords, durationLabel, priorityTone } from './labels'
   import Picker from './Picker.svelte'
-  import { dayRows, durationRows, priorityRows, remindRows, whereRows } from './pickers'
+  import { dayRows, durationRows, priorityRows, remindRows, tagRows, whereRows } from './pickers'
 
   const {
     langs,
     notes = [],
+    tags = [],
     prefill = {},
     smart = true,
+    mode = 'add',
     onsubmit,
     onclose,
+    oncancel,
     onpicking,
   }: {
     /** The app's language first; English is always read too. */
     langs: readonly string[]
     /** The space's notes by name, for `>` and the where control. */
     notes?: readonly string[]
+    /** The labels the space's tasks already carry, for the labels control. */
+    tags?: readonly string[]
     prefill?: Prefill
     /** Whether typed words are read as fields at all (Settings, Smart dates). */
     smart?: boolean
+    /** Adding a task, or changing the one the prefill says. */
+    mode?: 'add' | 'edit'
     onsubmit: (entry: Entry, open: boolean) => void | Promise<void>
     onclose: () => void
+    /** A field standing in a list: Cancel beside its button. */
+    oncancel?: () => void
     /** A picker opened or put away: the global window grows to hold it. */
     onpicking?: (open: boolean) => void
   } = $props()
 
-  // What the opener knew, taken once: the sheet is made again for every opening.
+  // What the opener knew, taken once: the field is made again for every opening.
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
   /** Spans turned back into words. */
@@ -66,6 +80,8 @@
     priority?: Priority
     remind?: QuickFields['remind']
     duration?: number | null
+    deadline?: string | null
+    tags?: string[]
     note?: string | null
   }>({})
 
@@ -73,6 +89,8 @@
   let mirror = $state<HTMLElement>()
   let words = $state<HTMLTextAreaElement>()
   let asking = $state<{ rows: MenuEntry[]; at: DOMRect } | null>(null)
+  /** Lines pasted at once, waiting for the answer to one task or one each. */
+  let pasted = $state<string[] | null>(null)
 
   /** The line as last seen, so the spans turned back follow an edit. */
   let seen = ''
@@ -87,9 +105,17 @@
 
   /** The fields as they will be written: the prefill, then the words, then the picks. */
   const fields = $derived.by((): QuickFields => {
+    const given = prefill.fields ?? {}
     const out: QuickFields = {
+      ...given,
       ...read.fields,
-      tags: [...(prefill.tags ?? []), ...read.fields.tags],
+      tags: [...(prefill.tags ?? []), ...(given.tags ?? []), ...read.fields.tags],
+      remind: read.fields.remind.length ? read.fields.remind : (given.remind ?? []),
+    }
+    for (const key of ['due', 'time', 'priority', 'deadline', 'duration', 'recurrence'] as const) {
+      if (read.fields[key] === undefined && given[key] !== undefined) {
+        Object.assign(out, { [key]: given[key] })
+      }
     }
     if (out.due === undefined && prefill.due !== undefined) out.due = prefill.due
     if (picked.due === null) delete out.due
@@ -98,8 +124,11 @@
     else if (picked.time !== undefined) out.time = picked.time
     if (picked.duration === null) delete out.duration
     else if (picked.duration !== undefined) out.duration = picked.duration
+    if (picked.deadline === null) delete out.deadline
+    else if (picked.deadline !== undefined) out.deadline = picked.deadline
     if (picked.priority !== undefined) out.priority = picked.priority
     if (picked.remind !== undefined) out.remind = picked.remind
+    if (picked.tags !== undefined) out.tags = [...picked.tags, ...read.fields.tags]
     out.tags = [...new Set(out.tags)]
     return out
   })
@@ -180,12 +209,43 @@
     )
   }
 
+  function askDeadline(event: MouseEvent) {
+    ask(
+      event,
+      dayRows(
+        { due: fields.deadline },
+        today,
+        (when) => {
+          dropChip('deadline')
+          picked = { ...picked, deadline: when.due }
+          input?.focus()
+        },
+        anchor,
+        false,
+      ),
+    )
+  }
+
   function askPriority(event: MouseEvent) {
     ask(
       event,
       priorityRows(fields.priority ?? 4, (priority) => {
         dropChip('priority')
         picked = { ...picked, priority }
+        input?.focus()
+      }),
+    )
+  }
+
+  function askTags(event: MouseEvent) {
+    ask(
+      event,
+      tagRows(fields.tags, tags, (next) => {
+        for (const chip of read.chips.filter((one) => one.kind === 'tag')) {
+          const tag = text.slice(chip.from + 1, chip.to)
+          if (!next.includes(tag)) text = without(text, chip)
+        }
+        picked = { ...picked, tags: next }
         input?.focus()
       }),
     )
@@ -223,37 +283,81 @@
     )
   }
 
-  async function submit(open: boolean) {
-    const words = read.text
-    if (!words) return
-    const entry: Entry = { text: words, fields }
+  /** The entry the field holds now, or null while it holds no words. */
+  function entryOf(said: string, own: QuickFields): Entry | null {
+    if (!said) return null
+    const entry: Entry = { text: said, fields: own }
     if (description?.trim()) entry.description = description
     if (note !== undefined) entry.note = note
-    const heading = picked.note === undefined ? read.heading : undefined
+    const heading = picked.note === undefined ? (read.heading ?? prefill.heading) : undefined
     if (heading !== undefined) entry.heading = heading
+    return entry
+  }
 
+  function clear() {
     text = ''
     seen = ''
     keep = []
     picked = {}
     description = null
     input?.focus()
+  }
+
+  async function submit(open: boolean) {
+    const entry = entryOf(read.text, fields)
+    if (!entry) return
+    if (mode === 'add') clear()
     await onsubmit(entry, open)
+  }
+
+  /** Several lines pasted: one task each, read the way a typed line is, with what the
+   *  controls picked for all of them. */
+  async function submitEach() {
+    const lines = pasted ?? []
+    pasted = null
+    for (const line of lines) {
+      const said = smart ? parseQuickAdd(line, langs, new Date(), { notes }) : null
+      const own: QuickFields = said
+        ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
+        : fields
+      const entry = entryOf(said ? said.text || line : line, own)
+      if (entry) await onsubmit(entry, false)
+    }
+    clear()
+  }
+
+  function onpaste(event: ClipboardEvent) {
+    if (mode !== 'add') return
+    const lines = pastedLines(event.clipboardData?.getData('text/plain') ?? '')
+    if (lines.length < 2) return
+    event.preventDefault()
+    pasted = lines
+  }
+
+  function openDescription() {
+    description ??= ''
+    // The line is drawn on the next turn, and only then can it take the caret.
+    void tick().then(() => words?.focus())
   }
 
   function onkeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
-      onclose()
+      if (pasted) pasted = null
+      else if (oncancel) oncancel()
+      else onclose()
+      return
+    }
+    if (event.key === 'ArrowDown' && event.currentTarget === input && !event.isComposing) {
+      event.preventDefault()
+      openDescription()
       return
     }
     if (event.key !== 'Enter' || event.isComposing) return
     if (event.shiftKey && event.currentTarget === input) {
       event.preventDefault()
-      description ??= ''
-      // The line is drawn on the next turn, and only then can it take the caret.
-      void tick().then(() => words?.focus())
+      openDescription()
       return
     }
     if (event.shiftKey) return
@@ -261,7 +365,8 @@
     void submit(event.ctrlKey || event.metaKey)
   }
 
-  /** Backspace on an empty description takes the line away again. */
+  /** Backspace on an empty description takes the line away again; ↑ at its first line
+   *  goes back to the words. */
   function wordsKey(event: KeyboardEvent) {
     if (event.key === 'Backspace' && description === '') {
       event.preventDefault()
@@ -269,11 +374,16 @@
       input?.focus()
       return
     }
+    if (event.key === 'ArrowUp' && words?.selectionStart === 0) {
+      event.preventDefault()
+      input?.focus()
+      return
+    }
     onkeydown(event)
   }
 </script>
 
-<div class="quick">
+<div class="quick" class:edit={mode === 'edit'}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="line" onpointerdown={pressed}>
     <div class="letters" bind:this={mirror} aria-hidden="true">
@@ -288,6 +398,7 @@
       bind:value={text}
       class="field"
       {onkeydown}
+      {onpaste}
       oninput={follow}
       onscroll={follow}
       onselect={follow}
@@ -305,60 +416,104 @@
       bind:value={description}
       class="words"
       rows="2"
+      placeholder={t('Description')}
       onkeydown={wordsKey}
       aria-label={t('Description')}></textarea>
   {/if}
 
-  <div class="controls">
-    <button type="button" class="control" onclick={askWhere}>
-      <Glyph icon={Inbox} />
-      <span>{note ? (note.split('/').at(-1) ?? note) : t('Inbox')}</span>
-    </button>
-    <span class="gap"></span>
-    <button
-      type="button"
-      class="control"
-      class:set={fields.due !== undefined}
-      onclick={askDay}
-      aria-label={fields.due === undefined ? t('Date') : undefined}
-    >
-      <Glyph icon={fields.recurrence ? Repeat : Calendar} />
-      {#if fields.due !== undefined}<span>{dayWords(fields.due, today, fields.time)}</span>{/if}
-    </button>
-    <button
-      type="button"
-      class="control"
-      class:set={(fields.priority ?? 4) < 4}
-      style:color={priorityTone(fields.priority ?? 4)}
-      onclick={askPriority}
-      aria-label={t('Priority')}
-    >
-      <Glyph icon={Flag} />
-    </button>
-    <button
-      type="button"
-      class="control"
-      class:set={fields.remind.length > 0}
-      onclick={askRemind}
-      aria-label={t('Reminder')}
-    >
-      <Glyph icon={Bell} />
-      {#if fields.remind.length > 1}<span>{fields.remind.length}</span>{/if}
-    </button>
-    <button
-      type="button"
-      class="control"
-      class:set={fields.duration !== undefined}
-      onclick={askDuration}
-      aria-label={fields.duration === undefined ? t('Duration') : undefined}
-    >
-      <Glyph icon={Timer} />
-      {#if fields.duration !== undefined}<span>{durationLabel(fields.duration)}</span>{/if}
-    </button>
-    <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
-      >{t('Add')}</button
-    >
-  </div>
+  {#if pasted}
+    <div class="pasted" role="group">
+      <button type="button" class="control" onclick={() => (pasted = null)}>{t('Cancel')}</button>
+      <span class="gap"></span>
+      <button
+        type="button"
+        class="control"
+        onclick={() => {
+          text = pasted?.join(' ') ?? text
+          pasted = null
+        }}>{t('One task')}</button
+      >
+      <button type="button" class="add" onclick={() => void submitEach()}
+        >{t('One per line')}</button
+      >
+    </div>
+  {:else}
+    <div class="controls">
+      {#if mode === 'add'}
+        <button type="button" class="control" onclick={askWhere}>
+          <Glyph icon={Inbox} />
+          <span class="where">{note ? (note.split('/').at(-1) ?? note) : t('Inbox')}</span>
+        </button>
+      {/if}
+      <span class="gap"></span>
+      <button
+        type="button"
+        class="control"
+        class:set={fields.due !== undefined}
+        onclick={askDay}
+        aria-label={fields.due === undefined ? t('Date') : undefined}
+      >
+        <Glyph icon={fields.recurrence ? Repeat : Calendar} />
+        {#if fields.due !== undefined}<span>{dayWords(fields.due, today, fields.time)}</span>{/if}
+      </button>
+      <button
+        type="button"
+        class="control"
+        class:set={fields.deadline !== undefined}
+        onclick={askDeadline}
+        aria-label={fields.deadline === undefined ? t('Deadline') : undefined}
+      >
+        <Glyph icon={Target} />
+        {#if fields.deadline !== undefined}<span>{dayWords(fields.deadline, today)}</span>{/if}
+      </button>
+      <button
+        type="button"
+        class="control"
+        class:set={(fields.priority ?? 4) < 4}
+        style:color={priorityTone(fields.priority ?? 4)}
+        onclick={askPriority}
+        aria-label={t('Priority')}
+      >
+        <Glyph icon={Flag} />
+      </button>
+      <button
+        type="button"
+        class="control"
+        class:set={fields.tags.length > 0}
+        onclick={askTags}
+        aria-label={t('Labels')}
+      >
+        <Glyph icon={Tag} />
+        {#if fields.tags.length}<span>{fields.tags.length}</span>{/if}
+      </button>
+      <button
+        type="button"
+        class="control"
+        class:set={fields.remind.length > 0}
+        onclick={askRemind}
+        aria-label={t('Reminder')}
+      >
+        <Glyph icon={Bell} />
+        {#if fields.remind.length > 1}<span>{fields.remind.length}</span>{/if}
+      </button>
+      <button
+        type="button"
+        class="control"
+        class:set={fields.duration !== undefined}
+        onclick={askDuration}
+        aria-label={fields.duration === undefined ? t('Duration') : undefined}
+      >
+        <Glyph icon={Timer} />
+        {#if fields.duration !== undefined}<span>{durationLabel(fields.duration)}</span>{/if}
+      </button>
+      {#if oncancel}
+        <button type="button" class="control cancel" onclick={oncancel}>{t('Cancel')}</button>
+      {/if}
+      <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
+        >{mode === 'edit' ? t('Save') : t('Add')}</button
+      >
+    </div>
+  {/if}
 </div>
 
 {#if asking}
@@ -462,7 +617,12 @@
     outline: none;
   }
 
-  .controls {
+  .words::placeholder {
+    color: var(--muted);
+  }
+
+  .controls,
+  .pasted {
     display: flex;
     align-items: center;
     gap: var(--space-1);
@@ -476,6 +636,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
+    min-width: 0;
     min-height: var(--row-height-sm);
     padding: 0 var(--space-2);
     border: 1px solid transparent;
@@ -487,6 +648,13 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
+  }
+
+  .where {
+    overflow: hidden;
+    max-width: 10em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .control:hover {
@@ -502,6 +670,11 @@
     color: var(--accent);
   }
 
+  .cancel {
+    margin-inline-start: var(--space-2);
+    color: var(--text);
+  }
+
   .add {
     min-height: var(--row-height-sm);
     margin-inline-start: var(--space-2);
@@ -514,5 +687,9 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
     transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .cancel + .add {
+    margin-inline-start: 0;
   }
 </style>

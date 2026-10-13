@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // Tasks: several lines pasted into quick add
+  'One task': 'Одна задача',
+  'One per line': 'По одной на строку',
   // Tasks: the projects in the panel
   Favorites: 'Избранное',
   'Add project': 'Добавить проект',

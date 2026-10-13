@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Tasks: several lines pasted into quick add
+  'One task': '1つのタスク',
+  'One per line': '1行に1つ',
   // Tasks: the projects in the panel
   Favorites: 'お気に入り',
   'Add project': 'プロジェクトを追加',

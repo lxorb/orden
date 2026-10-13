@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Tasks: several lines pasted into quick add
+  'One task': 'ఒక పని',
+  'One per line': 'ప్రతి పంక్తికి ఒకటి',
   // Tasks: the projects in the panel
   Favorites: 'ఇష్టమైనవి',
   'Add project': 'ప్రాజెక్ట్ జోడించు',
