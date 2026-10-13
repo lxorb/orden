@@ -7,7 +7,6 @@ import { languageOptions, machineSaid } from './language-options'
 import { method } from './mobile/bridge'
 import { modes, REMIND_BEFORE } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
-import { inLanguageOrder } from '@nib/markdown/language-order'
 import { PROPERTIES_WORDS } from './properties-words'
 import { isPlugin } from './plugin'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
@@ -196,18 +195,19 @@ export interface Group {
 
 /** Dictionaries the browser's checker can be pointed at, named the way their
  *  speakers name them, so they read the same whatever the app's language.
- *  `system` leaves the choice to the browser. */
-const DICTIONARIES = inLanguageOrder([
+ *  `system` leaves the choice to the browser. Written in the order every language
+ *  list keeps (language-order.ts), which the test holds it to. */
+const DICTIONARIES = [
   { id: 'system', name: 'Match the system' },
-  { id: 'en', name: 'English' },
   { id: 'de', name: 'Deutsch' },
-  { id: 'fr', name: 'Français' },
+  { id: 'en', name: 'English' },
   { id: 'es', name: 'Español' },
+  { id: 'fr', name: 'Français' },
   { id: 'it', name: 'Italiano' },
   { id: 'nl', name: 'Nederlands' },
   { id: 'pt', name: 'Português' },
   { id: 'ja', name: '日本語' },
-])
+] as const
 
 /** A control hands its value back as a string, because that is what a control
  *  holds. Following the system is what anything else reads as. */

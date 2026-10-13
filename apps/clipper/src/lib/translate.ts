@@ -14,8 +14,6 @@
  *  common, and the two catalogues hold different rows - so a change to one of the
  *  three belongs in both files. */
 
-import { inLanguageOrder } from '@nib/markdown/language-order'
-
 /** The English string is its own key. A language that has not translated
  *  something falls back to it, so nothing can ever come out blank.
  *
@@ -47,58 +45,58 @@ export interface Language {
  *  put it right. */
 export const CATALOGUES_URL = 'https://github.com/lxorb/orden/tree/main/apps/clipper/src/locales'
 
-/** The same list the app offers, in the same order (language-order.ts), so the
- *  two settings pages read alike.
+/** The same list the app offers, in the same order (language-order.ts, which the
+ *  test holds it to), so the two settings pages read alike.
  *
  *  Chrome's own `_locales` is not what carries these: it has no Swiss German, it
  *  covers only the languages Chrome's own interface is translated into, and it
  *  picks by the browser's UI language rather than by what somebody chose here.
  *  Only the handful of words Chrome itself draws - the tile on chrome://extensions,
  *  the listing in the store and the shortcut list - come from `public/_locales`. */
-export const LANGUAGES: readonly Language[] = inLanguageOrder<Language>([
+export const LANGUAGES: readonly Language[] = [
   { id: 'system', name: 'Match the system' },
-  { id: 'en', name: 'English' },
-  { id: 'de', name: 'Deutsch' },
-  { id: 'gsw', name: 'Schwiizerdütsch' },
-  { id: 'fr', name: 'Français' },
-  { id: 'ja', name: '日本語' },
-  { id: 'am', name: 'አማርኛ', machine: true },
-  { id: 'ar', name: 'العربية', machine: true },
-  { id: 'bn', name: 'বাংলা', machine: true },
-  { id: 'es', name: 'Español', machine: true },
-  { id: 'fa', name: 'فارسی', machine: true },
-  { id: 'fil', name: 'Filipino', machine: true },
-  { id: 'gu', name: 'ગુજરાતી', machine: true },
-  { id: 'ha', name: 'Hausa', machine: true },
-  { id: 'hi', name: 'हिन्दी', machine: true },
   { id: 'id', name: 'Bahasa Indonesia', machine: true },
-  { id: 'it', name: 'Italiano', machine: true },
-  { id: 'jv', name: 'Basa Jawa', machine: true },
-  { id: 'kn', name: 'ಕನ್ನಡ', machine: true },
-  { id: 'ko', name: '한국어', machine: true },
-  { id: 'ml', name: 'മലയാളം', machine: true },
-  { id: 'mr', name: 'मराठी', machine: true },
   { id: 'ms', name: 'Bahasa Melayu', machine: true },
-  { id: 'my', name: 'မြန်မာ', machine: true },
-  { id: 'pa', name: 'ਪੰਜਾਬੀ', machine: true },
+  { id: 'jv', name: 'Basa Jawa', machine: true },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'en', name: 'English' },
+  { id: 'es', name: 'Español', machine: true },
+  { id: 'fil', name: 'Filipino', machine: true },
+  { id: 'fr', name: 'Français' },
+  { id: 'ha', name: 'Hausa', machine: true },
+  { id: 'it', name: 'Italiano', machine: true },
+  { id: 'sw', name: 'Kiswahili', machine: true },
   { id: 'pl', name: 'Polski', machine: true },
-  { id: 'ps', name: 'پښتو', machine: true },
   { id: 'pt-BR', name: 'Português (Brasil)', machine: true },
   { id: 'pt-PT', name: 'Português (Portugal)', machine: true },
-  { id: 'ru', name: 'Русский', machine: true },
-  { id: 'sw', name: 'Kiswahili', machine: true },
-  { id: 'ta', name: 'தமிழ்', machine: true },
-  { id: 'te', name: 'తెలుగు', machine: true },
-  { id: 'th', name: 'ไทย', machine: true },
+  { id: 'gsw', name: 'Schwiizerdütsch' },
+  { id: 'vi', name: 'Tiếng Việt', machine: true },
   { id: 'tr', name: 'Türkçe', machine: true },
+  { id: 'ru', name: 'Русский', machine: true },
   { id: 'uk', name: 'Українська', machine: true },
   { id: 'ur', name: 'اردو', machine: true },
-  { id: 'vi', name: 'Tiếng Việt', machine: true },
-  { id: 'yue', name: '粵語', machine: true },
+  { id: 'ar', name: 'العربية', machine: true },
+  { id: 'ps', name: 'پښتو', machine: true },
+  { id: 'fa', name: 'فارسی', machine: true },
+  { id: 'am', name: 'አማርኛ', machine: true },
+  { id: 'mr', name: 'मराठी', machine: true },
+  { id: 'hi', name: 'हिन्दी', machine: true },
+  { id: 'bn', name: 'বাংলা', machine: true },
+  { id: 'pa', name: 'ਪੰਜਾਬੀ', machine: true },
+  { id: 'gu', name: 'ગુજરાતી', machine: true },
+  { id: 'ta', name: 'தமிழ்', machine: true },
+  { id: 'te', name: 'తెలుగు', machine: true },
+  { id: 'kn', name: 'ಕನ್ನಡ', machine: true },
+  { id: 'ml', name: 'മലയാളം', machine: true },
+  { id: 'th', name: 'ไทย', machine: true },
+  { id: 'my', name: 'မြန်မာ', machine: true },
+  { id: 'ko', name: '한국어', machine: true },
+  { id: 'ja', name: '日本語' },
   { id: 'zh-Hans', name: '简体中文', machine: true },
+  { id: 'yue', name: '粵語', machine: true },
   { id: 'zh-Hant', name: '繁體中文', machine: true },
   { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
-])
+]
 
 /** A catalogue is fetched when it is asked for, not at start: a popup opens on
  *  every click, and forty of them in its first chunk is a hundred kilobytes

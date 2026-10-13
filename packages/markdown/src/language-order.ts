@@ -1,7 +1,14 @@
-/** The one order every language picker keeps: the system default first, then the
- *  Latin names A to Z as a person sorts them (Čeština with the Cs), then every other
- *  script at the foot, one script at a time, CJK last. Read on the first paint, so
- *  kept short. */
+/** The one order every language picker keeps: the app's language, the spelling
+ *  dictionary, the language a rewrite translates into and the clipper's own row.
+ *
+ *  Each language is named the way its own speakers write it, so a reader scans the
+ *  list for a word in their own alphabet, and for most readers that is the Latin
+ *  one: those come first, A to Z as a person sorts them (Čeština with the Cs,
+ *  Español with the Es), and every other script after them, one script at a time,
+ *  CJK last. "Match the system" is not a language and stays at the top.
+ *
+ *  The lists are written out in this order rather than sorted when the app starts,
+ *  so the launch sorts nothing; each one's test holds it to this function. */
 
 const GROUPS: readonly RegExp[] = [
   /\p{Script=Latin}/u,

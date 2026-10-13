@@ -1,4 +1,5 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
+import { inLanguageOrder } from '@nib/markdown/language-order'
 import type { Pane } from './preferences'
 
 /** The declarations the settings panes are drawn from.
@@ -336,6 +337,8 @@ describe('the spelling dictionary', () => {
     const one = field('spelling', 'Language')
     if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
 
+    const shown = one.options.map((option) => ({ id: option.value, name: option.label }))
+    expect(shown).toEqual(inLanguageOrder(shown))
     expect(one.options.map((option) => option.value)).toEqual([
       'system',
       'de',
