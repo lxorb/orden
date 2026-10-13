@@ -1,132 +1,109 @@
-/* Draws the Nib mark to a PNG. Run once, then `pnpm tauri icon` fans it out.
-   Dependency-free so the repo stays clean. */
+/* Draws the Orden mark and fans it out to every icon the apps ship, in one go:
 
-import { deflateSync } from 'node:zlib'
-import { writeFileSync, mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
+     node scripts/make-icon.mjs
 
-const SIZE = 1024
-const SS = 4 // supersample factor
-const ACCENT = [124, 107, 245]
-const INK = [255, 255, 255]
+   Each platform gets the tile it expects, drawn from the shapes in mark.mjs
+   rather than cut from one bitmap:
+   - macOS: the squircle on Apple's grid (824 of 1024, the rest clear), so the
+     Dock shows it the size of its neighbours and Tahoe has nothing to re-mask;
+   - Windows, Linux and the Store tiles: the same squircle filling the square;
+   - iOS: the wash to the very edge, because the system cuts its own corners;
+   - Android: an adaptive pair, the wash behind and the bars in front inside the
+     66 dp circle no launcher mask ever reaches, plus the one-colour layer that
+     themed icons take;
+   - the web app and the clipper: drawn straight at their sizes.
+   `tauri icon` does the encoding (icns, ico, the Android and iOS sets); this
+   script picks from three passes of it what each platform should keep. */
 
-const corner = 224
-const tip = [512, 812]
-const left = [296, 236]
-const right = [728, 236]
-const hole = { x: 512, y: 430, r: 54 }
-const slit = 13
+import { execSync } from 'node:child_process'
+import { copyFileSync, cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { GRID, INK, inSquircle, onBars, png, wash } from './mark.mjs'
 
-function inRoundedSquare(x, y) {
-  const inset = 0
-  const min = inset
-  const max = SIZE - inset
-  const cx = Math.min(Math.max(x, min + corner), max - corner)
-  const cy = Math.min(Math.max(y, min + corner), max - corner)
-  return (
-    (x - cx) ** 2 + (y - cy) ** 2 <= corner ** 2 ||
-    (x >= min &&
-      x <= max &&
-      y >= min &&
-      y <= max &&
-      (Math.abs(x - cx) < corner || Math.abs(y - cy) < corner))
-  )
-}
+const TAURI = 'apps/desktop/src-tauri'
+const ICONS = join(TAURI, 'icons')
+const RES = join(TAURI, 'gen/android/app/src/main/res')
 
-function sign(ax, ay, bx, by, cx, cy) {
-  return (ax - cx) * (by - cy) - (bx - cx) * (ay - cy)
-}
+/** The bars sit on a tile 824 wide on the macOS grid and fill it everywhere else. */
+const MAC = 824
+/** On Android the visible 72 dp of a 108 dp layer is the tile, so the bars are drawn
+   at two thirds of the layer and stay well inside its 66 dp safe circle. */
+const ANDROID = (GRID * 72) / 108
 
-function inTriangle(x, y) {
-  const d1 = sign(x, y, left[0], left[1], right[0], right[1])
-  const d2 = sign(x, y, right[0], right[1], tip[0], tip[1])
-  const d3 = sign(x, y, tip[0], tip[1], left[0], left[1])
-  const neg = d1 < 0 || d2 < 0 || d3 < 0
-  const pos = d1 > 0 || d2 > 0 || d3 > 0
-  return !(neg && pos)
-}
-
-function inHole(x, y) {
-  return (x - hole.x) ** 2 + (y - hole.y) ** 2 <= hole.r ** 2
-}
-
-function inSlit(x, y) {
-  return Math.abs(x - hole.x) <= slit && y >= hole.y && y <= tip[1]
-}
-
-function sample(x, y) {
-  if (!inRoundedSquare(x, y)) return null
-  if (inTriangle(x, y) && !inHole(x, y) && !inSlit(x, y)) return INK
-  return ACCENT
-}
-
-const raw = Buffer.alloc(SIZE * (SIZE * 4 + 1))
-let cursor = 0
-
-for (let y = 0; y < SIZE; y++) {
-  raw[cursor++] = 0 // filter: none
-  for (let x = 0; x < SIZE; x++) {
-    let r = 0
-    let g = 0
-    let b = 0
-    let a = 0
-
-    for (let sy = 0; sy < SS; sy++) {
-      for (let sx = 0; sx < SS; sx++) {
-        const px = sample(x + (sx + 0.5) / SS, y + (sy + 0.5) / SS)
-        if (px) {
-          r += px[0]
-          g += px[1]
-          b += px[2]
-          a += 255
-        }
-      }
-    }
-
-    const n = SS * SS
-    const alpha = a / n
-    raw[cursor++] = alpha ? Math.round(r / n / (alpha / 255)) : 0
-    raw[cursor++] = alpha ? Math.round(g / n / (alpha / 255)) : 0
-    raw[cursor++] = alpha ? Math.round(b / n / (alpha / 255)) : 0
-    raw[cursor++] = Math.round(alpha)
+const tile =
+  (size, shape = inSquircle) =>
+  (x, y) => {
+    if (!shape(x, y, size)) return null
+    return onBars(x, y, size) ? INK : wash(x, y, size)
   }
+const edge = () => true
+
+const work = mkdtempSync(join(tmpdir(), 'orden-icon-'))
+const draw = (name, size, at) => {
+  const path = join(work, name)
+  writeFileSync(path, png(size, at))
+  return path
 }
 
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
-  let c = n
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-  return c >>> 0
-})
+const master = join(TAURI, 'icon-source.png')
+writeFileSync(master, png(GRID, tile(GRID)))
+draw('mac.png', GRID, tile(MAC))
+draw('square.png', GRID, tile(GRID, edge))
+draw('android-bg.png', GRID, (x, y) => wash(x, y, ANDROID))
+draw('android-fg.png', GRID, (x, y) => (onBars(x, y, ANDROID) ? INK : null))
+draw('android-mono.png', GRID, (x, y) => (onBars(x, y, ANDROID) ? [255, 255, 255] : null))
+writeFileSync(
+  join(work, 'mobile.json'),
+  JSON.stringify({
+    default: 'square.png',
+    bg_color: '#BFDDFB',
+    android_bg: 'android-bg.png',
+    android_fg: 'android-fg.png',
+    android_fg_scale: 100,
+    android_monochrome: 'android-mono.png',
+  }),
+)
 
-function crc32(buf) {
-  let c = 0xffffffff
-  for (const byte of buf) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8)
-  return (c ^ 0xffffffff) >>> 0
+// pnpm runs the command inside apps/desktop, so every path it gets is absolute.
+const fan = (input, out) =>
+  execSync(`pnpm --filter @nib/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`, {
+    stdio: 'inherit',
+  })
+const desktop = join(work, 'desktop')
+const mac = join(work, 'mac')
+const mobile = join(work, 'mobile')
+fan(master, desktop)
+fan(join(work, 'mac.png'), mac)
+fan(join(work, 'mobile.json'), mobile)
+
+for (const file of readdirSync(desktop)) {
+  if (file.endsWith('.png') || file === 'icon.ico')
+    copyFileSync(join(desktop, file), join(ICONS, file))
 }
-
-function chunk(type, data) {
-  const length = Buffer.alloc(4)
-  length.writeUInt32BE(data.length)
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data])
-  const crc = Buffer.alloc(4)
-  crc.writeUInt32BE(crc32(body))
-  return Buffer.concat([length, body, crc])
+copyFileSync(join(mac, 'icon.icns'), join(ICONS, 'icon.icns'))
+for (const platform of ['ios', 'android']) {
+  rmSync(join(ICONS, platform), { recursive: true, force: true })
+  cpSync(join(mobile, platform), join(ICONS, platform), { recursive: true })
 }
+// Before Android 8 a launcher shows a plain bitmap; tauri makes it from the front
+// layer alone, so the bars would fill it. Drawn here instead: the tile, and the
+// disc for launchers that ask for a round one.
+const LEGACY = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 }
+const disc = (x, y, size) => Math.hypot(x - GRID / 2, y - GRID / 2) <= size / 2
+for (const [density, size] of Object.entries(LEGACY)) {
+  const dir = join(ICONS, 'android', `mipmap-${density}`)
+  writeFileSync(join(dir, 'ic_launcher.png'), png(size, tile(GRID * 0.84)))
+  writeFileSync(join(dir, 'ic_launcher_round.png'), png(size, tile(GRID * 0.92, disc)))
+}
+// The Android project builds from its own copy of the launcher set.
+cpSync(join(ICONS, 'android'), RES, { recursive: true })
 
-const ihdr = Buffer.alloc(13)
-ihdr.writeUInt32BE(SIZE, 0)
-ihdr.writeUInt32BE(SIZE, 4)
-ihdr[8] = 8 // bit depth
-ihdr[9] = 6 // RGBA
+const web = 'apps/desktop/public'
+for (const size of [256, 512])
+  writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge)))
+for (const size of [16, 32, 48, 128])
+  writeFileSync(`apps/clipper/public/icons/${size}.png`, png(size, tile(GRID)))
 
-const png = Buffer.concat([
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-  chunk('IHDR', ihdr),
-  chunk('IDAT', deflateSync(raw, { level: 9 })),
-  chunk('IEND', Buffer.alloc(0)),
-])
-
-const out = process.argv[2] ?? 'apps/desktop/src-tauri/icon-source.png'
-mkdirSync(dirname(out), { recursive: true })
-writeFileSync(out, png)
-console.log(`${out} ${SIZE}x${SIZE}`)
+rmSync(work, { recursive: true, force: true })
+console.log('the Orden icon, every platform')
