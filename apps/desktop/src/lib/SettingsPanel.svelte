@@ -11,6 +11,7 @@
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import EngineRow from './settings/EngineRow.svelte'
+  import BrowserThemes from './settings/BrowserThemes.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
   import { systemName } from './settings/engine'
   import { enginesFor } from './web-tab/engines'
@@ -1437,6 +1438,7 @@
       <button class="nib-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
+      <BrowserThemes />
 
       {#if isWindows}
         {@render row({

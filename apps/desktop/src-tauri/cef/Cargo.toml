@@ -121,6 +121,7 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls-no-p
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 minisign-verify = "0.2"
 tar = "0.4"
+zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
 x25519-dalek = { version = "2", default-features = false, features = [
   "static_secrets",
   "zeroize",

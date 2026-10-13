@@ -112,7 +112,7 @@ function argumentsOf(value: string, from: number): { end: number; comma: number 
  *  substitutes one: the name if it is set, else the fallback, else the whole value
  *  is invalid, which is null. Ten names deep at most, which is also what ends a
  *  cycle. */
-function substituted(value: string, known: Map<string, string>, depth = 0): string | null {
+export function substituted(value: string, known: Map<string, string>, depth = 0): string | null {
   const start = value.indexOf('var(')
   if (start < 0) return value
   if (depth > 10) return null

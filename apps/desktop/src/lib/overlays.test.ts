@@ -183,6 +183,7 @@ describe('what hides a web page', () => {
     // Only while it would hang over a page, and gone the moment the pointer leaves.
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
+    'lib/settings/BrowserThemes.svelte': 'sheet',
     'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
     'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/views/schedule/SchedulePicker.svelte': "a task's scheduler, beside what asked for it",

@@ -234,6 +234,10 @@ mod web_worlds;
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
 mod zen_profiles;
+// The themes Chrome and Firefox wear, for the Appearance pane's Import row; see
+// browser_themes.rs.
+#[cfg(desktop)]
+mod browser_themes;
 
 use paths::Picked;
 use tauri::Manager;
@@ -387,6 +391,7 @@ macro_rules! desktop_commands {
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
+            browser_themes::browser_themes,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
             handed_pdfs::bring_in_pdf,

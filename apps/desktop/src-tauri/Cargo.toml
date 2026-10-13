@@ -203,6 +203,10 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls-no-p
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 minisign-verify = "0.2"
 tar = "0.4"
+# A Firefox theme is an add-on, and an add-on is a zip: its manifest is read out of it
+# for the Appearance pane's Import row. In the lock file already, through the updater
+# plugin, and inflated by the flate2 above. See src/browser_themes.rs.
+zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
 # A web login carried between computers is sealed on the device and opened only on
 # another of the person's own: an X25519 key pair per computer, the web key wrapped
 # to each one in a sealed box, and every bundle XChaCha20-Poly1305 under a key HKDF
