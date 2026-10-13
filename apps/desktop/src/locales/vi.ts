@@ -2278,4 +2278,11 @@ export const vi: Dictionary = {
   'Search this chat': 'Tìm trong cuộc trò chuyện này',
   'Add as task': 'Thêm thành việc cần làm',
   'Save as note': 'Lưu thành ghi chú',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Bình minh',
+  Lagoon: 'Đầm phá',
+  Lilac: 'Tử đinh hương',
+  Peach: 'Đào',
+  Sage: 'Xô thơm',
+  Mist: 'Sương mù',
 }

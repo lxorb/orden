@@ -2310,4 +2310,11 @@ export const gsw: Dictionary = {
   'Search this chat': 'Dä Chat dursueche',
   'Add as task': 'Als Ufgab hinzuefüege',
   'Save as note': 'Als Notiz speichere',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Morgerot',
+  Lagoon: 'Lagune',
+  Lilac: 'Flieder',
+  Peach: 'Pfirsich',
+  Sage: 'Salbei',
+  Mist: 'Näbel',
 }

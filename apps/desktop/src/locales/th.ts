@@ -2259,4 +2259,11 @@ export const th: Dictionary = {
   'Search this chat': 'ค้นหาในแชทนี้',
   'Add as task': 'เพิ่มเป็นงาน',
   'Save as note': 'บันทึกเป็นโน้ต',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'รุ่งอรุณ',
+  Lagoon: 'ลากูน',
+  Lilac: 'ไลแลค',
+  Peach: 'พีช',
+  Sage: 'เสจ',
+  Mist: 'หมอก',
 }

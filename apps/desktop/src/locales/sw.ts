@@ -2327,4 +2327,11 @@ export const sw: Dictionary = {
   'Search this chat': 'Tafuta katika mazungumzo haya',
   'Add as task': 'Ongeza kama kazi',
   'Save as note': 'Hifadhi kama dokezo',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Alfajiri',
+  Lagoon: 'Ziwa',
+  Lilac: 'Zambarau',
+  Peach: 'Pichi',
+  Sage: 'Sage',
+  Mist: 'Ukungu',
 }

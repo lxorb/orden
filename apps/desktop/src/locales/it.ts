@@ -2359,4 +2359,11 @@ export const it: Dictionary = {
   'Search this chat': 'Cerca in questa chat',
   'Add as task': 'Aggiungi come attività',
   'Save as note': 'Salva come nota',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Alba',
+  Lagoon: 'Laguna',
+  Lilac: 'Lilla',
+  Peach: 'Pesca',
+  Sage: 'Salvia',
+  Mist: 'Nebbia',
 }

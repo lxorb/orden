@@ -2336,4 +2336,11 @@ export const ptBR: Dictionary = {
   'Search this chat': 'Pesquisar nesta conversa',
   'Add as task': 'Adicionar como tarefa',
   'Save as note': 'Salvar como nota',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Amanhecer',
+  Lagoon: 'Lagoa',
+  Lilac: 'Lilás',
+  Peach: 'Pêssego',
+  Sage: 'Sálvia',
+  Mist: 'Névoa',
 }

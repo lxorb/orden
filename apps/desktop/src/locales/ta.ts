@@ -2327,4 +2327,11 @@ export const ta: Dictionary = {
   'Search this chat': 'இந்த அரட்டையில் தேடு',
   'Add as task': 'பணியாகச் சேர்',
   'Save as note': 'குறிப்பாகச் சேமி',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'விடியல்',
+  Lagoon: 'காயல்',
+  Lilac: 'லைலாக்',
+  Peach: 'பீச்',
+  Sage: 'சேஜ்',
+  Mist: 'மூடுபனி',
 }

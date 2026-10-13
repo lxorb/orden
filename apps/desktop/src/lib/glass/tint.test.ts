@@ -1,15 +1,18 @@
 import { glassCss } from '@nib/themes/glass'
 import { describe, expect, test } from 'vitest'
 import { linkOf, type PaperInks } from '../content-ground'
-import { AA, type Rgb, over, ratio, rgbOf, SHARP } from '../legibility'
+import { AA, hexOf, luminance, type Rgb, over, ratio, rgbOf, SHARP } from '../legibility'
 import { paletteOf } from '../wallpaper/floors'
+import { along, DAWN, PAIRS, type Stops, stopsOf } from './pairs'
 import {
   barFor,
   DIALS,
   frameFor,
+  GRAIN,
   type Material,
   MARK_TONE,
   PAGE_WASH,
+  pairFor,
   type Scheme,
   type Sides,
   spanUnder,
@@ -253,5 +256,135 @@ describe("glass's own dials", () => {
     const mica = frameFor(mark, 'dark', 'mica', sides, PAPER.dark, { opacity: 0, strength: 1 })
     const clear = frameFor(mark, 'dark', 'clear', sides, PAPER.dark, { opacity: 0, strength: 1 })
     expect(clear.floor).toBeGreaterThan(mica.floor)
+  })
+})
+
+describe("glass's own pair", () => {
+  const white: Rgb = [255, 255, 255]
+  const black: Rgb = [0, 0, 0]
+
+  /** Whether one side's quietest word reads on a ground with the grain's lightest and
+   *  darkest speck on it: at `aim` on the ground itself, and at AA on the list's layer,
+   *  under a row's lift and both - what the frame's own tests above ask of a colour. */
+  function readsGrained(scheme: Scheme, ground: Rgb, aim: number): boolean {
+    const side = sides[scheme]
+    return [white, black].every((speck) => {
+      const grained = over(speck, GRAIN, ground)
+      const layered = over(side.layer.colour, side.layer.alpha, grained)
+      const stacked = [layered, over(side.text, 0.1, grained), over(side.text, 0.1, layered)]
+      return ratio(side.ink, grained) >= aim && stacked.every((one) => ratio(side.ink, one) >= AA)
+    })
+  }
+
+  const own: Record<string, Stops> = {
+    'white to black': [white, black],
+    'red to green': [
+      [255, 0, 0],
+      [0, 200, 0],
+    ],
+    'yellow to blue': [
+      [255, 230, 0],
+      [0, 60, 255],
+    ],
+  }
+
+  test('starts on a light blue in the top left going to a soft pink-purple', () => {
+    for (const scheme of SCHEMES) {
+      expect(stopsOf(undefined, scheme, 'violet', dark.scrim).map(hexOf)).toEqual(DAWN[scheme])
+    }
+    const [blue, pink] = DAWN.light.map(rgb)
+    // Blue first: more blue than red; pink-purple second: more red than green.
+    expect(blue![2]).toBeGreaterThan(blue![0])
+    expect(pink![0]).toBeGreaterThan(pink![1])
+  })
+
+  test('wears each pair it offers as it is, and over Mica lets the material show', () => {
+    for (const pair of PAIRS) {
+      for (const app of SCHEMES) {
+        const stops = stopsOf(pair.id, app, 'violet', dark.scrim)
+        const solid = pairFor(stops, app, null, sides, PAPER[app])
+        expect([solid.tint, solid.second], `${pair.id}, ${app}`).toEqual(pair[app])
+        expect(solid.scheme).toBe(app)
+        const mica = pairFor(stops, app, 'mica', sides, PAPER[app])
+        expect(mica.floor, `${pair.id}, ${app} over Mica`).toBeLessThanOrEqual(0.8)
+      }
+    }
+  })
+
+  test('is deeper and greyer at night than by day', () => {
+    for (const pair of PAIRS) {
+      for (const at of [0, 1]) {
+        const day = rgb(pair.light[at]!)
+        const night = rgb(pair.dark[at]!)
+        expect(luminance(night), pair.id).toBeLessThan(0.03)
+        expect(luminance(day), pair.id).toBeGreaterThan(0.6)
+      }
+    }
+  })
+
+  test('keeps every word at its aim over every colour of the blend, the grain and the material', () => {
+    const pairs: Record<string, (app: Scheme) => Stops> = {
+      ...Object.fromEntries(
+        PAIRS.map((pair) => [
+          pair.id,
+          (app: Scheme) => stopsOf(pair.id, app, 'violet', dark.scrim),
+        ]),
+      ),
+      accent: (app) => stopsOf('accent', app, 'yellow', dark.scrim),
+      ...Object.fromEntries(Object.entries(own).map(([name, stops]) => [name, () => stops])),
+    }
+    for (const [name, stopsFor] of Object.entries(pairs)) {
+      for (const app of SCHEMES) {
+        for (const material of MATERIALS) {
+          for (const opacity of [0, 0.5, 1]) {
+            for (const strength of [0, 0.5, 1]) {
+              const frame = pairFor(
+                stopsFor(app),
+                app,
+                material,
+                sides,
+                PAPER[app],
+                { opacity, strength },
+                INKS[app],
+              )
+              const what = `${name}, ${app}, ${String(material)}, ${opacity}, ${strength}`
+              expect(frame.wash, what).toBeGreaterThanOrEqual(frame.floor)
+              if (material) expect(frame.wash, what).toBeGreaterThanOrEqual(opacity)
+              const span = spanUnder(material, app, PAPER[app])
+              const aim = material === 'clear' ? SHARP : AA
+              for (const colour of along([rgb(frame.tint), rgb(frame.second)])) {
+                for (const under of [span.least, span.most]) {
+                  const ground = over(colour, frame.wash, under)
+                  expect(readsGrained(app, ground, aim), what).toBe(true)
+
+                  // And the note, on the least paper the Content row may lay over that.
+                  for (const speck of [white, black]) {
+                    const paper = over(INKS[app].bg, frame.paper, over(speck, GRAIN, ground))
+                    expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)
+                    expect(ratio(INKS[app].muted, paper), what).toBeGreaterThanOrEqual(AA)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  test('with no Tint is the chrome alone, and in the reader’s own scheme whatever its colours', () => {
+    const plain = pairFor(own['white to black']!, 'light', 'mica', sides, PAPER.light, {
+      opacity: 0.5,
+      strength: 0,
+    })
+    expect(plain.tint).toBe(plain.second)
+    expect(rgb(plain.tint)).toEqual(sides.light.scrim.map(Math.round))
+    for (const app of SCHEMES) {
+      expect(pairFor(own['red to green']!, app, null, sides, PAPER[app]).scheme).toBe(app)
+    }
+  })
+
+  test('paints exactly the grain the sums count', () => {
+    expect(glassCss).toContain(`intercept='${GRAIN}'`)
   })
 })

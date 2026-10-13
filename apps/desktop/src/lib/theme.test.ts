@@ -1129,7 +1129,7 @@ describe('the glass theme', () => {
     await settled(() => theme.settings.some((one) => one.id === 'opacity'))
 
     const own = theme.settings.filter((one) => one.own === true).map((one) => one.id)
-    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'colour', 'tab', 'content'])
+    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content'])
     const opacity = theme.settings.find((one) => one.id === 'opacity')
     expect(opacity?.kind === 'range' && typeof opacity.least).toBe('function')
   })

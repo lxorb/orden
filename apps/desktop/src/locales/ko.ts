@@ -2269,4 +2269,11 @@ export const ko: Dictionary = {
   'Search this chat': '이 채팅에서 검색',
   'Add as task': '할 일로 추가',
   'Save as note': '노트로 저장',
+  // Appearance: glass's own pairs of colours
+  Dawn: '새벽',
+  Lagoon: '라군',
+  Lilac: '라일락',
+  Peach: '피치',
+  Sage: '세이지',
+  Mist: '안개',
 }

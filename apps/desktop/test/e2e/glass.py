@@ -358,8 +358,17 @@ def stand(page: Page, desk: str, material: str | None) -> None:
 
 
 def read_over(page: Page, where: str, unders: list[str]) -> None:
+    # Where the frame is glass's own pair the shell is a blend, not a colour: every word
+    # on it is read over each of its two corners instead.
+    paired = page.evaluate("() => document.documentElement.hasAttribute('data-paired')")
+    grounds = ["--glass-from", "--glass-to"] if paired else ["--shell-ground"]
+    readings = [
+        (f"{what} ({ground})" if paired else what, ink, [ground if one == "--shell-ground" else one for one in layers])
+        for what, ink, layers in READINGS
+        for ground in grounds
+    ]
     for under in unders:
-        for what, ratio in page.evaluate(MEASURE, [READINGS, under]):
+        for what, ratio in page.evaluate(MEASURE, [readings, under]):
             holds(f"[{where} over {under}] {what}", ratio)
 
 
@@ -514,6 +523,35 @@ def drive(browser: Browser, scheme: str) -> None:
         False,
     )
     shot(page, f"{scheme}-glass-settings")
+
+    # Glass's own pair, chosen in its row: the pairs it offers, the accent, and two dots
+    # for two colours of one's own, each the platform's picker. One picked is kept with
+    # the other as the row showed it, and the frame wears the two at once.
+    row = page.locator(".nib-setting", has_text="Tint colour")
+    shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
+    row.scroll_into_view_if_needed()
+    shot(page, f"{scheme}-glass-pairs", clip=row.bounding_box())
+    row.locator("input[type=color]").first.evaluate(
+        "(one) => { one.value = '#ffd6a5'; one.dispatchEvent(new Event('change', { bubbles: true })) }"
+    )
+    page.wait_for_timeout(300)
+    kept = page.evaluate("() => window.nibApp.theme.values.pair")
+    shows(f"[{scheme}] a colour picked is kept with the other", bool(re.fullmatch(r"#ffd6a5 #[0-9a-f]{6}", str(kept))), True)
+    shows(
+        f"[{scheme}] and both of them are worn as one's own",
+        row.locator(".swatch.picked.active").count(),
+        2,
+    )
+    shot(page, f"{scheme}-glass-pairs-own", clip=row.bounding_box())
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(400)
+    shows(
+        f"[{scheme}] the frame is a pair",
+        page.evaluate("() => document.documentElement.hasAttribute('data-paired')"),
+        True,
+    )
+    shot(page, f"{scheme}-glass-own-pair")
+    page.evaluate("() => window.nibApp.theme.set('pair', 'dawn')")
 
     # A launch that opens on glass wears it from its first frame rather than the
     # built-in's for a moment first. And without the sheet it wore last time it would

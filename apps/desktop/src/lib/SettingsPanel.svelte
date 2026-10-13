@@ -657,6 +657,7 @@
         label={field.label}
         chosen={field.get()}
         onchoose={(value: string) => field.set(value)}
+        pair={field.pair}
       />
     </div>
   {:else if field.kind === 'picture'}

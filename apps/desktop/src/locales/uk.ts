@@ -2374,4 +2374,11 @@ export const uk: Dictionary = {
   'Search this chat': 'Шукати в цьому чаті',
   'Add as task': 'Додати як завдання',
   'Save as note': 'Зберегти як нотатку',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Світанок',
+  Lagoon: 'Лагуна',
+  Lilac: 'Бузок',
+  Peach: 'Персик',
+  Sage: 'Шавлія',
+  Mist: 'Туман',
 }

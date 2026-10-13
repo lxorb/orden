@@ -2380,4 +2380,11 @@ export const ru: Dictionary = {
   'Search this chat': 'Искать в этом чате',
   'Add as task': 'Добавить как задачу',
   'Save as note': 'Сохранить как заметку',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Рассвет',
+  Lagoon: 'Лагуна',
+  Lilac: 'Сирень',
+  Peach: 'Персик',
+  Sage: 'Шалфей',
+  Mist: 'Туман',
 }

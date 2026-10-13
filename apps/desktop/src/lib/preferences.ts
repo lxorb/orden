@@ -88,6 +88,16 @@ export interface SwatchOption {
   colour: string
 }
 
+/** A row's two colours of the reader's own: the two its value shows as now, whether
+ *  they are the reader's own rather than a swatch's, and two picked - tried while the
+ *  picker is open, kept when it closes. */
+export interface PairField {
+  get(): readonly [string, string]
+  own(): boolean
+  preview(first: string, second: string): void
+  set(first: string, second: string): void
+}
+
 /** One choice among a few, drawn as a row rather than opened as a list. Only
  *  where the choices are two or three short words worth seeing at once. */
 export interface Segment {
@@ -143,6 +153,9 @@ export type Field = Common &
         initial?: string
         get(): string
         set(value: string): void
+        /** Two colours of the reader's own after the swatches, each a dot that opens
+         *  the platform's colour picker: glass's pair. */
+        pair?: PairField
       }
     /** The pictures somebody chose: a thumbnail per side of the theme, which opens
      *  the file chooser when pressed and moves the picture's focal point when dragged,
@@ -258,8 +271,19 @@ function themeField(setting: ThemeSetting): Field {
   }
 
   if (setting.kind === 'colour') {
+    const pair = setting.pair
     return {
       ...common,
+      ...(pair
+        ? {
+            pair: {
+              get: () => pair.colours(String(get() ?? setting.initial), theme.current),
+              own: () => pair.accepts(String(get() ?? '')),
+              preview: (first, second) => theme.try(setting.id, pair.of(first, second)),
+              set: (first, second) => theme.set(setting.id, pair.of(first, second)),
+            } satisfies PairField,
+          }
+        : {}),
       kind: 'swatches',
       options: setting.options.map((one) => ({
         value: one.value,

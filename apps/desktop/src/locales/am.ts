@@ -2271,4 +2271,11 @@ export const am: Dictionary = {
   'Search this chat': 'በዚህ ውይይት ፈልግ',
   'Add as task': 'እንደ ተግባር አክል',
   'Save as note': 'እንደ ማስታወሻ አስቀምጥ',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ንጋት',
+  Lagoon: 'ሐይቅ',
+  Lilac: 'ሊላክ',
+  Peach: 'ኮክ',
+  Sage: 'ሴጅ',
+  Mist: 'ጭጋግ',
 }

@@ -2295,4 +2295,11 @@ export const hi: Dictionary = {
   'Search this chat': 'इस चैट में खोजें',
   'Add as task': 'काम के रूप में जोड़ें',
   'Save as note': 'नोट के रूप में सहेजें',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'भोर',
+  Lagoon: 'लैगून',
+  Lilac: 'बकाइन',
+  Peach: 'आड़ू',
+  Sage: 'सेज',
+  Mist: 'धुंध',
 }

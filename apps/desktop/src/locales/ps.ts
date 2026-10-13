@@ -2301,4 +2301,11 @@ export const ps: Dictionary = {
   'Search this chat': 'په دې چټ کې لټون',
   'Add as task': 'د دندې په توګه زیاتول',
   'Save as note': 'د یادښت په توګه ساتل',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'سهار',
+  Lagoon: 'جهيل',
+  Lilac: 'ليلک',
+  Peach: 'شفتالو',
+  Sage: 'سيج',
+  Mist: 'لړه',
 }

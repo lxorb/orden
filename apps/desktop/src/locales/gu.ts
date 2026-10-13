@@ -2289,4 +2289,11 @@ export const gu: Dictionary = {
   'Search this chat': 'આ ચેટમાં શોધો',
   'Add as task': 'કાર્ય તરીકે ઉમેરો',
   'Save as note': 'નોંધ તરીકે સાચવો',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'પરોઢ',
+  Lagoon: 'લગૂન',
+  Lilac: 'લાઇલેક',
+  Peach: 'પીચ',
+  Sage: 'સેજ',
+  Mist: 'ધુમ્મસ',
 }

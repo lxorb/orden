@@ -2282,4 +2282,11 @@ export const my: Dictionary = {
   'Search this chat': 'ဤချက်တွင် ရှာရန်',
   'Add as task': 'လုပ်ငန်းအဖြစ် ထည့်ရန်',
   'Save as note': 'မှတ်စုအဖြစ် သိမ်းရန်',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'အရုဏ်',
+  Lagoon: 'ရေအိုင်',
+  Lilac: 'လီလက်',
+  Peach: 'မက်မွန်',
+  Sage: 'ဆေ့ချ်',
+  Mist: 'မြူ',
 }

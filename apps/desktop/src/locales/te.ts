@@ -2307,4 +2307,11 @@ export const te: Dictionary = {
   'Search this chat': 'ఈ చాట్‌లో వెతుకు',
   'Add as task': 'పనిగా జోడించు',
   'Save as note': 'గమనికగా సేవ్ చేయి',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'వేకువ',
+  Lagoon: 'లగూన్',
+  Lilac: 'లైలాక్',
+  Peach: 'పీచ్',
+  Sage: 'సేజ్',
+  Mist: 'పొగమంచు',
 }

@@ -2244,4 +2244,11 @@ export const yue: Dictionary = {
   'Search this chat': '喺呢個傾偈度搵',
   'Add as task': '加做任務',
   'Save as note': '儲存做筆記',
+  // Appearance: glass's own pairs of colours
+  Dawn: '黎明',
+  Lagoon: '潟湖',
+  Lilac: '丁香',
+  Peach: '蜜桃',
+  Sage: '鼠尾草',
+  Mist: '薄霧',
 }

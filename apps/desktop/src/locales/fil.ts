@@ -2337,4 +2337,11 @@ export const fil: Dictionary = {
   'Search this chat': 'Maghanap sa chat na ito',
   'Add as task': 'Idagdag bilang gawain',
   'Save as note': 'I-save bilang tala',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Bukang-liwayway',
+  Lagoon: 'Lagoon',
+  Lilac: 'Lila',
+  Peach: 'Peach',
+  Sage: 'Sage',
+  Mist: 'Ulap',
 }
