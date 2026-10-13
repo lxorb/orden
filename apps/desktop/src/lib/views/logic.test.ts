@@ -290,6 +290,12 @@ describe('selecting rows', () => {
     expect([...withPicked(one, order, 'a', 'gone')].sort()).toEqual(['a', 'b'])
   })
 
+  test('a project carried onto another lands on the half it is over', async () => {
+    const { landsAfter } = await import('./project-drag')
+    expect(landsAfter(5, 0, 28)).toBe(false)
+    expect(landsAfter(20, 0, 28)).toBe(true)
+  })
+
   test('a swipe is done a third of the way across, or a hand’s breadth', () => {
     expect(swiped(100, 300)).toBe('right')
     expect(swiped(-100, 300)).toBe('left')

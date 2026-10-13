@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'ከላይ ፕሮጀክት አክል',
+  'Add project below': 'ከታች ፕሮጀክት አክል',
+  'Projects folder': 'የፕሮጀክቶች አቃፊ',
   // Tasks: a repeating task skipped or done for good
   Skip: 'ዝለል',
   'Complete forever': 'ለዘለቄታው አጠናቅ',

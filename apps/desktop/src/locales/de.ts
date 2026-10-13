@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Projekt darüber hinzufügen',
+  'Add project below': 'Projekt darunter hinzufügen',
+  'Projects folder': 'Projektordner',
   // Tasks: a repeating task skipped or done for good
   Skip: 'Überspringen',
   'Complete forever': 'Für immer erledigen',

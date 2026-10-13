@@ -40,7 +40,7 @@ function keyOf(all: Record<string, string>, root: string): string | undefined {
 }
 
 /** The projects folder of a space, relative to it. */
-function projectsOf(root: string): string {
+export function projectsOf(root: string): string {
   const all = read()
   const key = keyOf(all, root)
   return (key === undefined ? undefined : all[key]) ?? PROJECTS
@@ -52,8 +52,8 @@ export function projectsFolder(root: string): string {
 }
 
 /** Makes another folder the space's projects folder; the default again where it is
- *  `Projects`. */
-function setProjects(root: string, relative: string) {
+ *  `Projects`. The settings' Projects folder row. */
+export function setProjects(root: string, relative: string) {
   const kept = read()
   const key = keyOf(kept, root)
   const all = key === undefined ? kept : without(kept, key)

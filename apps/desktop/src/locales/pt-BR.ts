@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Adicionar projeto acima',
+  'Add project below': 'Adicionar projeto abaixo',
+  'Projects folder': 'Pasta de projetos',
   // Tasks: a repeating task skipped or done for good
   Skip: 'Pular',
   'Complete forever': 'Concluir para sempre',

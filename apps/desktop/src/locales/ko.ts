@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '위에 프로젝트 추가',
+  'Add project below': '아래에 프로젝트 추가',
+  'Projects folder': '프로젝트 폴더',
   // Tasks: a repeating task skipped or done for good
   Skip: '건너뛰기',
   'Complete forever': '영구 완료',

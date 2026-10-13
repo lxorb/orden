@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'ಮೇಲೆ ಯೋಜನೆ ಸೇರಿಸಿ',
+  'Add project below': 'ಕೆಳಗೆ ಯೋಜನೆ ಸೇರಿಸಿ',
+  'Projects folder': 'ಯೋಜನೆಗಳ ಫೋಲ್ಡರ್',
   // Tasks: a repeating task skipped or done for good
   Skip: 'ಬಿಟ್ಟುಬಿಡಿ',
   'Complete forever': 'ಶಾಶ್ವತವಾಗಿ ಪೂರ್ಣಗೊಳಿಸಿ',

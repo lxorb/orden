@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '在上方新增項目',
+  'Add project below': '在下方新增項目',
+  'Projects folder': '項目資料夾',
   // Tasks: a repeating task skipped or done for good
   Skip: '跳過',
   'Complete forever': '永久完成',

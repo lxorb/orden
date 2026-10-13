@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'အပေါ်တွင် ပရောဂျက် ထည့်ရန်',
+  'Add project below': 'အောက်တွင် ပရောဂျက် ထည့်ရန်',
+  'Projects folder': 'ပရောဂျက်များ ဖိုင်တွဲ',
   // Tasks: a repeating task skipped or done for good
   Skip: 'ကျော်ရန်',
   'Complete forever': 'အပြီးသတ် ပြီးစီးရန်',

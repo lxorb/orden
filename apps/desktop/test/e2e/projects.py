@@ -12,6 +12,8 @@ What this drives, against the real files:
   * A task dropped on a project moves there.
   * The plus's own menu makes a project from a template; a project's menu duplicates it
     and saves it as Todoist's CSV.
+  * A project is added above another from its menu, and carried to the top with the
+    pointer, the file list keeping the same order.
 
     python apps/desktop/test/e2e/projects.py
 
@@ -73,6 +75,10 @@ def rows(page: Page) -> list[str]:
 
 
 def the_panel(page: Page) -> None:
+    for _ in range(50):
+        if not any(one.startswith("Trip") for one in rows(page)):
+            break
+        page.wait_for_timeout(100)
     listed = rows(page)
     say(f"[panel] {json.dumps(listed, ensure_ascii=False)}")
     order = [one for one in listed if one.split(" ")[0] in ("Home", "Uni", "Analysis")]
@@ -80,6 +86,8 @@ def the_panel(page: Page) -> None:
         wrong(f"the projects are not Home, Uni and its Analysis with their counts: {order}")
     if not any(one.startswith("Monday") for one in listed):
         wrong("a note with open tasks outside the projects is not under Notes")
+    if any(one.startswith("Trip") for one in listed):
+        wrong("a template is listed under Notes as work to do")
     shot(page, "01-panel")
 
 
@@ -162,6 +170,52 @@ def templates_and_csv(page: Page) -> None:
     shot(page, "04-from-template")
 
 
+ORDER = """() => [...document.querySelectorAll('.tasks .project[style*="--depth: 0"] .nib-row-label')]
+  .map((one) => one.textContent.trim())"""
+
+
+def placing(page: Page) -> None:
+    """A project added above another, and one carried below another, in the panel."""
+    page.locator(".tasks .project .nib-row", has_text="Garden").click(button="right")
+    page.locator(".menu [role=menuitem]", has_text="Add project above").click()
+    wait_for(page, "document.activeElement?.matches('.tasks input.field')", "the field above Garden")
+    page.keyboard.type("Attic", delay=10)
+    page.keyboard.press("Enter")
+    wait_for(
+        page,
+        f"() => {{ const o = ({ORDER})(); return o.indexOf('Attic') !== -1 && o.indexOf('Attic') === o.indexOf('Garden') - 1 }}",
+        "Attic just above Garden",
+    )
+    say(f"[order] {page.evaluate(ORDER)}")
+
+    # Rome, at the bottom, carried above Home at the top, with the pointer.
+    uni = page.locator(".tasks .project[data-project$='/Rome.md'] .nib-row").first
+    home = page.locator(".tasks .project", has_text="Home").first
+    start = uni.bounding_box()
+    end = home.bounding_box()
+    if not start or not end:
+        wrong("the rows to carry are not on screen")
+        return
+    page.mouse.move(start["x"] + 20, start["y"] + start["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(start["x"] + 20, start["y"] + start["height"] / 2 + 10, steps=3)
+    page.mouse.move(end["x"] + 20, end["y"] + end["height"] * 0.2, steps=8)
+    shot(page, "05-carrying")
+    page.mouse.up()
+    wait_for(
+        page,
+        f"() => ({ORDER})()[0] === 'Rome'",
+        "Rome at the top, above Home",
+    )
+    say(f"[order] {page.evaluate(ORDER)}")
+    if page.evaluate("() => document.querySelector('.view-tab .head .name')?.textContent.includes('Rome')"):
+        wrong("the press that ended the drag opened Rome")
+    listed = page.evaluate("() => window.nibApp.workspace.arranged.listOf(window.nibApp.workspace.activeSpace.root + '/Projects')")
+    say(f"[file list order] {listed}")
+    if not listed or listed[0] != "Rome.md":
+        wrong("the file list does not keep the order the panel was given")
+
+
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -171,6 +225,7 @@ def drive(browser: Browser) -> None:
     one_tab(page)
     shot(page, "03-project")
     templates_and_csv(page)
+    placing(page)
 
 
 if __name__ == "__main__":

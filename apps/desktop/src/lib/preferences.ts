@@ -39,6 +39,8 @@ import { saver } from './web-tab/saver.svelte'
 import { hiddenTabs } from './workspace/hidden-tabs.svelte'
 import { quickAdd } from './quick-add/asked.svelte'
 import { isHiddenTabs } from './workspace/sets'
+import { projectsOf, setProjects } from './rows/projects'
+import { workspace } from './workspace.svelte'
 
 /** One side's picture in the wallpaper's row; see the `picture` kind. */
 export interface PictureSide {
@@ -420,6 +422,19 @@ function terminalGroup(): Group {
 /** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
  *  desktop that has one, the exact alarms on a phone. One line on Linux, where nothing
  *  rings with nib closed. See docs/tasks.md 5.10. */
+/** The folders at the top of a space a Tasks panel can take its projects from, the one
+ *  in force among them even before it is made. */
+function projectFolderChoices(root: string): { value: string; label: string }[] {
+  const here = projectsOf(root)
+  const names =
+    workspace.tree?.children
+      .filter((one) => one.is_dir && !one.name.startsWith('.'))
+      .map((one) => one.name) ?? []
+  return [...new Set([here, ...names])]
+    .sort((a, b) => a.localeCompare(b))
+    .map((one) => ({ value: one, label: one }))
+}
+
 function remindersGroup(): Group {
   const exact = method('exactAlarms')
   const ask = method('askExactAlarms')
@@ -606,6 +621,23 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => quickAdd.smart,
               set: (on) => quickAdd.setSmart(on),
             },
+            // Which folder of the open space the Tasks panel lists as its projects
+            // (rows/projects.ts): any folder at its top, Projects where none was chosen.
+            ...(workspace.activeSpace
+              ? ([
+                  {
+                    kind: 'select',
+                    label: t('Projects folder'),
+                    words: ['tasks', 'projects', 'folder', 'todoist'],
+                    options: projectFolderChoices(workspace.activeSpace.root),
+                    get: () => projectsOf(workspace.activeSpace?.root ?? ''),
+                    set: (value) => {
+                      const root = workspace.activeSpace?.root
+                      if (root !== undefined) setProjects(root, value)
+                    },
+                  },
+                ] satisfies Field[])
+              : []),
             ...(isDesktop && !isMobile
               ? ([
                   {

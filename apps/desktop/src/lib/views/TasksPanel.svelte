@@ -18,7 +18,7 @@
   import { links } from '../link-index.svelte'
   import { archiveEntry, bookmarkEntry, DIVIDER, iconEntries, menu } from '../menu.svelte'
   import { rows } from '../rows/rows.svelte'
-  import { insideSpace, relativeTo, samePath } from '../space-paths'
+  import { insideSpace, relativeTo, samePath, within } from '../space-paths'
   import { invoke } from '../tauri'
   import Twist from '../Twist.svelte'
   import { workspace } from '../workspace.svelte'
@@ -43,7 +43,15 @@
   import { openBaseFile, openBuiltin, openLabel, openProject } from './open'
   import { EMPTY, toggled } from './list-items'
   import { NOTES_SHOWN, openByPath, panelCounts } from './panel'
-  import { addProject, addSubproject, renameProject, spaceProjects } from './project-actions'
+  import {
+    addProject,
+    addProjectBeside,
+    addSubproject,
+    placeProject,
+    renameProject,
+    spaceProjects,
+  } from './project-actions'
+  import { projectDrag } from './project-drag'
   import { type ProjectNode, projectNotes, projectRows } from './project-tree'
   import { builtinBase } from './source'
   import { queryOf } from './filters'
@@ -84,10 +92,27 @@
 
   /** The other notes with open tasks: every space's, but not a project or an inbox. */
   const inboxes = $derived(rows.inboxes())
+  /** The open space's templates folder: a template's tasks are a pattern, not work. */
+  let templatesAt = $state<string | null>(null)
+  $effect(() => {
+    const here = root
+    templatesAt = null
+    if (here === null) return
+    void import('./templates')
+      .then((one) => one.templatesFolder(here))
+      .then((folder) => {
+        if (root === here) templatesAt = folder
+      })
+  })
   const notes = $derived(
     counts.notes.filter(
       (one) =>
         !(one.space === space?.name && inProjects.has(one.path)) &&
+        !(
+          one.space === space?.name &&
+          templatesAt !== null &&
+          within(templatesAt, one.path) !== null
+        ) &&
         !inboxes.some((inbox) => inbox.space === one.space && samePath(inbox.path, one.path)),
     ),
   )
@@ -202,7 +227,10 @@
   /** The row a project's name is being typed into: a new one at the top of the
    *  projects, a new one inside another, or one named again. */
   let naming = $state<
-    { kind: 'new'; template?: string } | { kind: 'inside' | 'rename'; node: ProjectNode } | null
+    | { kind: 'new'; template?: string }
+    | { kind: 'inside' | 'rename'; node: ProjectNode }
+    | { kind: 'beside'; node: ProjectNode; after: boolean }
+    | null
   >(null)
   let name = $state('')
 
@@ -219,7 +247,9 @@
     const made =
       asked.kind === 'new'
         ? await addProject(root, said, asked.template)
-        : await addSubproject(asked.node, said)
+        : asked.kind === 'beside'
+          ? await addProjectBeside(asked.node, said, asked.after)
+          : await addSubproject(asked.node, said)
     if (made) openProject(space.name, relativeTo(root, made), undefined, { preview: true })
   }
 
@@ -264,6 +294,14 @@
       { label: t('Open as board'), run: () => openProject(space.name, relative, 'kanban') },
       { label: t('Open as calendar'), run: () => openProject(space.name, relative, 'calendar') },
       DIVIDER,
+      {
+        label: t('Add project above'),
+        run: () => startNaming({ kind: 'beside', node, after: false }),
+      },
+      {
+        label: t('Add project below'),
+        run: () => startNaming({ kind: 'beside', node, after: true }),
+      },
       { label: t('Add sub-project'), run: () => startNaming({ kind: 'inside', node }) },
       { label: t('Rename'), run: () => startNaming({ kind: 'rename', node }, node.name) },
       { label: t('Duplicate'), run: () => void workspace.duplicate(folder ?? node.note) },
@@ -355,6 +393,14 @@
             .then((sure) => (sure ? void workspace.retagNotes(tag, null) : undefined)),
       },
     ])
+  }
+
+  /** A project carried onto another, landing just above or below it (project-drag.ts). */
+  function place(moving: string, target: string, after: boolean) {
+    const all = projectRows(nodes, EMPTY)
+    const from = all.find((one) => samePath(one.note, moving))
+    const to = all.find((one) => samePath(one.note, target))
+    if (from && to) void placeProject(from, to, after)
   }
 
   /** A task let go over a project: it moves there, its lines and all. */
@@ -553,10 +599,19 @@
     {/if}
     {#each shownProjects as node (node.note)}
       {@const relative = root === null ? node.note : relativeTo(root, node.note)}
+      {#if naming?.kind === 'beside' && !naming.after && naming.node.note === node.note}
+        {@render field(t('Add project above'), node.depth)}
+      {/if}
       {#if naming?.kind === 'rename' && naming.node.note === node.note}
         {@render field(t('Rename'), node.depth)}
       {:else}
-        <div class="project" style:--depth={node.depth} use:droppable={takeInto(node)}>
+        <div
+          class="project"
+          style:--depth={node.depth}
+          data-project={node.note}
+          use:droppable={takeInto(node)}
+          use:projectDrag={{ id: node.note, place }}
+        >
           <button
             type="button"
             class="nib-row"
@@ -587,6 +642,9 @@
       {/if}
       {#if naming?.kind === 'inside' && naming.node.note === node.note}
         {@render field(t('Add sub-project'), node.depth + 1)}
+      {/if}
+      {#if naming?.kind === 'beside' && naming.after && naming.node.note === node.note}
+        {@render field(t('Add project below'), node.depth)}
       {/if}
     {/each}
 
@@ -679,6 +737,31 @@
     align-items: center;
     padding-inline-start: calc(var(--depth) * var(--row-indent));
     border-radius: var(--radius-row);
+  }
+
+  /* Where a carried project would land: a line on the edge it would take. */
+  .project:global(.is-above)::before,
+  .project:global(.is-below)::after {
+    content: '';
+    position: absolute;
+    z-index: var(--z-raised);
+    inset-inline: calc(var(--depth) * var(--row-indent)) 0;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  .project:global(.is-above)::before {
+    top: -1px;
+  }
+
+  .project:global(.is-below)::after {
+    bottom: -1px;
+  }
+
+  .project:global(.is-carried) {
+    opacity: 0.4;
   }
 
   .project:has(.twist) .nib-row-meta {

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'উপরে প্রকল্প যোগ করুন',
+  'Add project below': 'নিচে প্রকল্প যোগ করুন',
+  'Projects folder': 'প্রকল্পের ফোল্ডার',
   // Tasks: a repeating task skipped or done for good
   Skip: 'এড়িয়ে যান',
   'Complete forever': 'চিরতরে সম্পন্ন করুন',

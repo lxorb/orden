@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Ƙara aiki a sama',
+  'Add project below': 'Ƙara aiki a ƙasa',
+  'Projects folder': 'Fayil ɗin ayyuka',
   // Tasks: a repeating task skipped or done for good
   Skip: 'Tsallake',
   'Complete forever': 'Kammala har abada',

@@ -14,7 +14,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { inboxOf } from '../rows/inbox'
 import { inboxNote } from '../rows/inbox-note'
-import { folderOf, insideSpace, nameOf, samePath } from '../space-paths'
+import { folderOf, insideSpace, nameOf, samePath, within } from '../space-paths'
 import { joinPath } from '../tauri'
 import { entryAt } from '../tree-edits'
 import { workspace } from '../workspace.svelte'
@@ -155,4 +155,48 @@ export function projectAt(note: string): { note: string; folder: string | null }
   }
   const found = root === undefined ? undefined : walk(spaceProjects(root, () => 0))
   return { note, folder: found?.folder ?? null }
+}
+
+/** Where a project is in the file list: its folder, or its note. */
+const placeOf = (project: { note: string; folder: string | null }) => project.folder ?? project.note
+
+/** A project put just before or after another, the file list's own Manual order of the
+ *  folder they share (`placedBeside`), so the panel and the file list stay one order. A
+ *  project from another folder is moved into that one first, as a drop there would.
+ *  Nothing happens for a project put beside itself or inside its own sub-projects. */
+export async function placeProject(
+  moving: { note: string; folder: string | null },
+  target: { note: string; folder: string | null },
+  after: boolean,
+): Promise<void> {
+  let path = placeOf(moving)
+  const beside = placeOf(target)
+  if (samePath(path, beside) || within(path, beside) !== null) return
+  const folder = folderOf(beside)
+  if (!samePath(folderOf(path), folder)) {
+    await workspace.moveMany([path], folder)
+    path = joinPath(folder, nameOf(path))
+  }
+  const { placedBeside } = await import('../tree-arranging')
+  const children = entryAt(workspace.tree, folder)?.children ?? []
+  const names = placedBeside(
+    children,
+    workspace.arranged.savedList(folder),
+    [nameOf(path)],
+    nameOf(beside),
+    after,
+  )
+  workspace.arranged.set(folder, names)
+}
+
+/** A new project just above or below another, Todoist's Add project above and below. */
+export async function addProjectBeside(
+  target: { note: string; folder: string | null },
+  words: string,
+  after: boolean,
+): Promise<string | null> {
+  const path = await made(folderOf(placeOf(target)), words)
+  if (path === null) return null
+  await placeProject({ note: path, folder: null }, target, after)
+  return path
 }

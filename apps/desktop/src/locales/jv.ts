@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Tambah proyek ing ndhuwur',
+  'Add project below': 'Tambah proyek ing ngisor',
+  'Projects folder': 'Folder proyek',
   // Tasks: a repeating task skipped or done for good
   Skip: 'Lewati',
   'Complete forever': 'Rampungake saklawase',
