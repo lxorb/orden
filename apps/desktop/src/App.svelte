@@ -248,9 +248,7 @@
     }
   })
 
-  // A fresh start opens on the welcome note, in a space made for it without a question;
-  // see fresh-start.ts. Fetched only then, and never in the plugin, whose build does not
-  // carry it.
+  // A fresh start opens on the welcome note; see fresh-start.ts. Fetched only then.
   $effect(() => {
     if (__EVEN_PLUGIN__) return
     const fresh = startsFresh({

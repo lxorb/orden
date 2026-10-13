@@ -1,39 +1,22 @@
-/** Whether this is a fresh start, which opens straight on the welcome note.
- *
- *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
- *  "rather welcome note instead". So nothing is asked: a desktop or a phone app with no
- *  space makes one and opens it on the welcome note, the way the browser build has
- *  always opened on its own (web/commands.ts). Bringing notes over from Obsidian or
- *  Notion is Settings > Import, and the welcome note links there.
- *
- *  Obsidian's rule still decides when: there is no flag saying "first run". With no
- *  space there is a fresh start, and the moment a space exists there is none, whichever
- *  way it arrived - so it is asked of the state every time rather than remembered.
- *
- *  Pure, so the table of reasons is tested on its own; what a fresh start does is
- *  first-space.svelte.ts. */
+/** Whether this launch starts fresh: a desktop or phone app with no space, which then
+ *  opens on the welcome note in a space made for it, asking nothing (first-space.svelte.ts).
+ *  Obsidian's rule decides when - no flag says "first run": no space is a fresh start,
+ *  and a space, however it arrived, is not. Pure, so the reasons are tested on their own. */
 
 export interface Moment {
-  /** The desktop app or the phone app. The browser build seeds its welcome note
-   *  itself, so it always has a space. */
+  /** The browser build seeds its own welcome note, so only the apps start fresh. */
   native: boolean
-  /** The Even Realities plugin, which never makes anything new. */
   plugin: boolean
-  /** Whether the launch has read the spaces folder yet; before that an empty list
-   *  says nothing. See `restored` in workspace.svelte.ts. */
+  /** Before the spaces folder is read, an empty list says nothing. */
   restored: boolean
   spaces: number
-  /** Whether the account is still being looked for, which on a phone takes
-   *  seconds. Signed out is not the same as not known yet. */
+  /** The account still being looked for; on a phone that takes seconds. */
   restoring: boolean
-  /** A session brings its own spaces down; a space made for somebody whose notes are
-   *  on their way would be one they never asked for. */
+  /** A session brings its own spaces down. */
   signedIn: boolean
-  /** A link somebody followed, being walked through: the space it is about is the
-   *  one they came for. */
+  /** A link being walked through is about the space it came for. */
   invited: boolean
-  /** Tabs open, whatever is in them. A file handed over at launch, from Finder or
-   *  the command line, is what somebody asked to see, and it opens straight to it. */
+  /** A file handed over at launch is what somebody asked to see. */
   tabs: number
 }
 

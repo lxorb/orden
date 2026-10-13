@@ -1,5 +1,9 @@
 /** A fresh start: the first space, made without a question, open on the welcome note.
  *
+ *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
+ *  "rather welcome note instead". Bringing notes over from Obsidian or Notion is
+ *  Settings > Import, and the welcome note's last line links there (welcome.ts).
+ *
  *  What the browser build has always opened on, on every build: a space called what the
  *  browser's is, with the note in it, open, and the file list beside it where there is
  *  room - which is where Obsidian lands after creating a vault. When it happens is
