@@ -1,4 +1,4 @@
-import { frontMatter } from '@nib/markdown'
+import { frontMatter } from '@nib/markdown/front-matter'
 import { folderOf } from './space-paths'
 import { assetUrl, joinPath } from './tauri'
 

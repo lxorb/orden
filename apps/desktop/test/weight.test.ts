@@ -619,8 +619,25 @@ function holds(tail: string): boolean {
  *  version left settings here, which is who is told the name is now Orden
  *  (renamed.svelte.ts, its code and nothing else). The card that says it is behind a
  *  door and fetched for that one launch (RenameNotice.svelte), and the browser build's
- *  handoff is behind the space chooser's. Measured 3,229,321. */
-const BUDGET = 3_230_000
+ *  handoff is behind the space chooser's. Measured 3,229,321.
+ *
+ *  Lowered the same day, to 3,195,000, from that main, which every queued pull request
+ *  was failing by a hundred bytes to seven kilobytes before the raise. Not a raise for
+ *  any of them: room, made by taking the renderer out of the first paint. `@nib/markdown`'s
+ *  own entry and what only it reads - marked's extensions, the block grammars, the
+ *  comments, the wikilinks and the starts they read with, sixty-six kilobytes of source
+ *  over six modules, and the whole of marked in the built figure - was there for five
+ *  small things, none of them a render: the
+ *  line-break switch the app sets as it starts (breaks.ts now), the formulas' size
+ *  ceiling (beside the engine in engines.ts), the front matter an image path is read
+ *  out of (its own module already), a hover preview (async already, so it fetches the
+ *  renderer with the formula engine) and the clipboard's HTML flavour, which is the one
+ *  caller that cannot wait: it is fetched by the first selection, which no copy can
+ *  come before, and the reading view's door brings it at the launch's last turn anyway
+ *  (`warmDoors` in surfaces.svelte.ts). The charts and the web cards stay: the live
+ *  preview draws those itself. Measured 3,163,402 and 375, and the ceiling is one per
+ *  cent over that again. */
+const BUDGET = 3_195_000
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
@@ -978,6 +995,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
+    // And the renderer itself, which no window needs to draw its first frame: what the
+    // launch read off it is in breaks.ts and engines.ts, and the copy, the hover and
+    // the reading view fetch it (copy.ts and wikilink/preview.ts in @nib/editor).
+    ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -990,7 +1011,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/Editor.svelte', 'the editor'],
     ['/lib/Tree.svelte', 'the file list'],
     ['/editor/src/editor.ts', "the editor's own state"],
-    ['/markdown/src/index.ts', 'the renderer'],
+    ['/markdown/src/breaks.ts', 'the line-break switch the renderer reads'],
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
     // The doors of the four above, which are the other half of each claim: a boundary
     // nothing reaches is a subsystem somebody deleted rather than one somebody moved.
@@ -1161,6 +1182,9 @@ describe('what reading a note fetches', () => {
   const READING = fileURLToPath(new URL('../src/lib/reading/render.ts', import.meta.url))
   const SLIDES = fileURLToPath(new URL('../src/lib/slides/render.ts', import.meta.url))
   const EXPORTER = fileURLToPath(new URL('../src/lib/export.ts', import.meta.url))
+  const RENDERER = fileURLToPath(
+    new URL('../../../packages/markdown/src/index.ts', import.meta.url),
+  )
 
   /** The module a surface waits for before it renders, named by its own source. */
   function waitedFor(surface: string): string {
@@ -1181,6 +1205,10 @@ describe('what reading a note fetches', () => {
    *  is on screen before either surface is asked for, so the bundler has it in a chunk
    *  the page already has. What a reader waits for is the part that is new. */
   const already = new Set(graph.files)
+  // And the renderer, which every surface that draws a note fetches first and the
+  // launch's last turn has already brought (the reading view's door): the exporter is
+  // what this is about, and the renderer was in the first paint when it was written.
+  for (const one of eagerGraph(RENDERER).files) already.add(one)
 
   function newBytes(files: readonly string[]): number {
     return files

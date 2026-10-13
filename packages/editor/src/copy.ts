@@ -25,11 +25,17 @@
  *  as its own source in the HTML flavour - which is what the markdown flavour beside
  *  it says anyway, and it only happens where nothing has drawn a formula yet, since
  *  the live preview loads the engine the moment a note has one. See
- *  @nib/markdown/engines. */
+ *  @nib/markdown/engines.
+ *
+ *  The renderer itself is the same kind of thing one size up: marked and everything a
+ *  note can hold, which no window needs to draw its first frame. It is fetched as the
+ *  first words are selected in an editor - a copy is always a selection first, and a
+ *  person takes longer to make one than the disk takes to hand it over - and a copy
+ *  that still beats it carries the markdown alone, as CodeMirror's own copy would. */
 
 import type { EditorState, Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { renderMarkdown } from '@nib/markdown'
+import { door } from '@nib/markdown/door'
 
 /** What the HTML flavour says about itself: that this app drew it, and that the
  *  markdown beside it on the clipboard is what it was drawn from.
@@ -48,6 +54,19 @@ import { renderMarkdown } from '@nib/markdown'
  *  a comment is the kind of thing such a pass drops. A block around blocks changes
  *  nothing about how a word processor lays the words out. */
 const OURS = 'data-nib="markdown"'
+
+/** The renderer, once it is here; see the head of this file. */
+let render: ((source: string) => string) | null = null
+
+const fetchRenderer = door(async () => {
+  render = (await import('@nib/markdown')).renderMarkdown
+})
+
+/** The renderer a copy writes its HTML with, fetched once. A test awaits it; the
+ *  editor asks for it with the first selection. */
+export function readyToCopy(): Promise<void> {
+  return fetchRenderer()
+}
 
 /** The markdown a copy would take: what is selected, or the whole note when
  *  nothing is. */
@@ -68,17 +87,19 @@ export function ourOwn(html: string): boolean {
  *  Null wherever CodeMirror's own handling is the better one, which is where the
  *  key does not mean "these words": an empty selection, which it copies as a whole
  *  line and remembers doing; several selections at once, which it joins line by
- *  line; and a cut out of a note nothing may be written into. */
+ *  line; and a cut out of a note nothing may be written into. The HTML is null in
+ *  the moment before the renderer has arrived. */
 export function copiedFlavours(
   state: EditorState,
   cut = false,
-): { text: string; html: string } | null {
+): { text: string; html: string | null } | null {
   const range = state.selection.main
   if (range.empty || state.selection.ranges.length > 1) return null
   if (cut && state.readOnly) return null
 
   const text = state.doc.sliceString(range.from, range.to)
-  return { text, html: `<div ${OURS}>${renderMarkdown(text)}</div>` }
+  if (!render) void fetchRenderer()
+  return { text, html: render ? `<div ${OURS}>${render(text)}</div>` : null }
 }
 
 /** Puts both flavours on the clipboard, and takes the words out for a cut.
@@ -89,7 +110,7 @@ function carry(event: ClipboardEvent, view: EditorView, cut: boolean): boolean {
   if (!data || !flavours) return false
 
   data.setData('text/plain', flavours.text)
-  data.setData('text/html', flavours.html)
+  if (flavours.html !== null) data.setData('text/html', flavours.html)
   event.preventDefault()
 
   if (cut) {
@@ -106,10 +127,15 @@ function carry(event: ClipboardEvent, view: EditorView, cut: boolean): boolean {
 
 /** Copying markdown out as markdown and as HTML at once. */
 export function richCopy(): Extension {
-  return EditorView.domEventHandlers({
-    copy: (event, view) => carry(event, view, false),
-    cut: (event, view) => carry(event, view, true),
-  })
+  return [
+    EditorView.domEventHandlers({
+      copy: (event, view) => carry(event, view, false),
+      cut: (event, view) => carry(event, view, true),
+    }),
+    EditorView.updateListener.of((update) => {
+      if (!render && update.selectionSet && !update.state.selection.main.empty) void fetchRenderer()
+    }),
+  ]
 }
 
 /** `Ctrl+Shift+C` - the markdown on its own, with no HTML beside it. */

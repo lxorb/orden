@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./addresses": "./src/addresses.ts",
     "./article": "./src/article.ts",
+    "./breaks": "./src/breaks.ts",
     "./callouts": "./src/callouts.ts",
     "./canvas": "./src/canvas.ts",
     "./chart": "./src/chart.ts",
