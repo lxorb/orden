@@ -36,9 +36,9 @@ fn resizes_from_top(maximized: bool, minimized: bool, sizing_frame: bool) -> boo
 /// Keeps this window's top edge honest from now on; see the top of this file. Once per
 /// window, after it is built, and again after its frame is changed, which makes the
 /// strip anew.
-pub fn follow<R: Runtime>(window: &Window<R>) {
+pub fn mind<R: Runtime>(window: &Window<R>) {
     #[cfg(windows)]
-    strip::follow(window);
+    strip::mind(window);
     #[cfg(not(windows))]
     let _ = window;
 }
@@ -64,7 +64,7 @@ mod strip {
         unsafe_code,
         reason = "a window's size and style are heard through a Win32 subclass, which only the Win32 API installs"
     )]
-    pub fn follow<R: Runtime>(window: &Window<R>) {
+    pub fn mind<R: Runtime>(window: &Window<R>) {
         let Ok(hwnd) = window.hwnd() else {
             return;
         };
@@ -74,9 +74,9 @@ mod strip {
             // Safe: a window of this thread, and a procedure that lives for the program;
             // it takes itself off as the window goes.
             unsafe {
-                let _ = SetWindowSubclass(window, Some(heard), OURS, 0);
+                let _ = SetWindowSubclass(window, Some(listened), OURS, 0);
             }
-            kept(window);
+            matched(window);
         });
     }
 
@@ -86,7 +86,7 @@ mod strip {
         unsafe_code,
         reason = "a subclass procedure is called by Windows with the window's own message"
     )]
-    unsafe extern "system" fn heard(
+    unsafe extern "system" fn listened(
         window: HWND,
         message: u32,
         wparam: WPARAM,
@@ -97,10 +97,10 @@ mod strip {
         // Safe: handing the message on is what a subclass owes the window.
         let answer = unsafe { DefSubclassProc(window, message, wparam, lparam) };
         match message {
-            WM_SIZE | WM_STYLECHANGED => kept(window),
+            WM_SIZE | WM_STYLECHANGED => matched(window),
             WM_NCDESTROY => {
                 // Safe: this subclass, taken off its own window as the window goes.
-                let _ = unsafe { RemoveWindowSubclass(window, Some(heard), OURS) };
+                let _ = unsafe { RemoveWindowSubclass(window, Some(listened), OURS) };
             }
             _ => {}
         }
@@ -113,7 +113,7 @@ mod strip {
         unsafe_code,
         reason = "the strip is a Win32 child window that Tauri hands out no handle to"
     )]
-    fn kept(window: HWND) {
+    fn matched(window: HWND) {
         // Safe: questions about a live window of this thread, and its child of the same
         // thread shown or hidden without being activated.
         unsafe {

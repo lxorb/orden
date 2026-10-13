@@ -935,7 +935,7 @@ fn ready(
             // Started by nothing but a reminder's Done: answered without a window on
             // screen, from the tray; see reminders.rs.
             let window = building.visible(false).build()?;
-            top_edge::follow(&window.as_ref().window());
+            top_edge::mind(&window.as_ref().window());
             stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
@@ -945,7 +945,7 @@ fn ready(
                 None => building,
             };
             let window = building.visible(at_once).build()?;
-            top_edge::follow(&window.as_ref().window());
+            top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }

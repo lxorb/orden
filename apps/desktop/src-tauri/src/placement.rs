@@ -297,7 +297,7 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     let window = created_away::during(|| building.build())?;
     #[cfg(not(windows))]
     let window = building.build()?;
-    crate::top_edge::follow(&window.as_ref().window());
+    crate::top_edge::mind(&window.as_ref().window());
     window.set_position(LogicalPosition::new(x, y))?;
     window.show()?;
     Ok(window)
@@ -405,7 +405,7 @@ pub fn built<R: Runtime, M: Manager<R>>(
         return built_away(building, at);
     }
     let window = building.build()?;
-    crate::top_edge::follow(&window.as_ref().window());
+    crate::top_edge::mind(&window.as_ref().window());
     Ok(window)
 }
 
