@@ -99,9 +99,11 @@ for (const [density, size] of Object.entries(LEGACY)) {
 // The Android project builds from its own copy of the launcher set.
 cpSync(join(ICONS, 'android'), RES, { recursive: true })
 
+// The web icons ride in every download of the web app and the Even plugin, so they
+// take the palette form.
 const web = 'apps/desktop/public'
 for (const size of [256, 512])
-  writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge)))
+  writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge), { small: true }))
 for (const size of [16, 32, 48, 128])
   writeFileSync(`apps/clipper/public/icons/${size}.png`, png(size, tile(GRID)))
 

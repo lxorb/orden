@@ -25,7 +25,7 @@ interface Picture {
   alpha: (x: number, y: number) => number
 }
 
-/** Enough of PNG to read the files above: 8-bit RGBA or grey-alpha, any filter. */
+/** Enough of PNG to read the files above: 8-bit RGBA, grey-alpha or indexed, any filter. */
 function decode(bytes: Buffer): Picture {
   let at = 8
   let size = 0
@@ -42,7 +42,7 @@ function decode(bytes: Buffer): Picture {
     if (type === 'IDAT') data.push(body)
     at += 12 + length
   }
-  const channels = colourType === 6 ? 4 : colourType === 4 ? 2 : 3
+  const channels = ({ 6: 4, 4: 2, 3: 1 } as Record<number, number>)[colourType] ?? 3
   const raw = inflateSync(Buffer.concat(data))
   const stride = size * channels
   const out = Buffer.alloc(size * stride)
