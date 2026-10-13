@@ -17,6 +17,7 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
+import { keepProjectView } from './kept-views'
 import type { Source } from './live.svelte'
 import { readSpec, type ViewSpec, writeSpec } from './spec'
 
@@ -98,7 +99,11 @@ export function tabSource(tab: Tab): Source {
     scope: null,
     load: () => Promise.resolve(builtinBase(spec())),
     save(next) {
-      tab.note.replace(writeSpec({ ...spec(), yaml: writeBase(next) }), false)
+      const now = spec()
+      const yaml = writeBase(next)
+      tab.note.replace(writeSpec({ ...now, yaml }), false)
+      // A project is laid out again as it was left, the next time it is opened here.
+      if (now.builtin === 'project') keepProjectView(now.space ?? '', now.path ?? '', yaml)
       workspace.scheduleSession()
       return Promise.resolve()
     },

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'ਭਾਗ ਜੋੜੋ',
+  '{name} (copy)': '{name} (ਨਕਲ)',
+  'Its tasks are deleted with it.': 'ਇਸਦੇ ਕੰਮ ਵੀ ਨਾਲ ਮਿਟ ਜਾਣਗੇ।',
   // Tasks: keys, selection and the undo toast
   Completed: 'ਪੂਰਾ ਹੋਇਆ',
   'Remove date': 'ਤਾਰੀਖ ਹਟਾਓ',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'വിഭാഗം ചേർക്കുക',
+  '{name} (copy)': '{name} (പകർപ്പ്)',
+  'Its tasks are deleted with it.': 'അതിലെ ജോലികളും ഒപ്പം ഇല്ലാതാകും.',
   // Tasks: keys, selection and the undo toast
   Completed: 'പൂർത്തിയായി',
   'Remove date': 'തീയതി നീക്കുക',

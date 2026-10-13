@@ -16,17 +16,32 @@
 
   const { tab }: { tab: Tab } = $props()
 
-  /** Made once per tab: the pane keys this surface by the tab's id. */
-  const made = untrack(() => {
+  /** Which view the tab is: the same tab may come to be about another note, a project
+   *  whose note was renamed (project-follow.ts), and is then made again. */
+  const which = $derived.by(() => {
+    const spec = readSpec(tab.doc) ?? {}
+    return JSON.stringify([spec.builtin, spec.space, spec.path, spec.tag, spec.view])
+  })
+
+  /** Made once per view the tab is: the pane keys this surface by the tab's id. */
+  const made = $derived.by(() => {
+    const view = which
+    return untrack(() => make(view))
+  })
+
+  function make(view: string) {
     const spec = readSpec(tab.doc) ?? {}
     const path = tab.path
     const live = new LiveView(path === null ? tabSource(tab) : fileSource(path, spec.view))
-    return { live, kit: kitFor(live, spec, path, false) }
-  })
+    return { view, live, kit: kitFor(live, spec, path, false) }
+  }
 
   // Untracked: starting reads the base, and what it reads on the way is not something
   // this view should start again for.
-  $effect(() => untrack(() => made.live.start()))
+  $effect(() => {
+    const now = made
+    return untrack(() => now.live.start())
+  })
 
   /** Words changed from outside the view (Open as board on a project already open):
    *  the view reads them again. Its own writes say what it already shows. */
@@ -40,7 +55,9 @@
 </script>
 
 <div class="view-tab" data-region="editor">
-  <ViewFrame kit={made.kit} title={tab.shown} />
+  {#key made}
+    <ViewFrame kit={made.kit} title={tab.shown} />
+  {/key}
 </div>
 
 <style>

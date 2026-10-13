@@ -12,6 +12,8 @@ import { nameOf, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { type Builtin, readSpec, sameView, type ViewSpec, writeSpec } from './spec'
 import { setLayout } from './edit'
+import { keepProjectView, projectView } from './kept-views'
+import './project-follow'
 import { builtinBase } from './source'
 import { builtinName } from './words'
 
@@ -36,7 +38,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-/** A view nib ships: Inbox, Today, Upcoming, Logbook. */
+/** A view nib ships: Inbox, Today, Upcoming, Completed. */
 export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
   return openSpec({ builtin }, builtinName(builtin), null, how)
 }
@@ -45,14 +47,17 @@ export function openBuiltin(builtin: Builtin, how: OpenHow = {}) {
  *  calendar" open with that layout. */
 export function openProject(space: string, path: string, layout?: string, how: OpenHow = {}) {
   const name = nameOf(path).replace(/\.md$/i, '')
-  const spec: ViewSpec = { builtin: 'project', space, path }
+  // Laid out as it was left here, unless a layout is asked for.
+  const kept = layout === undefined ? projectView(space, path) : undefined
+  const spec: ViewSpec = { builtin: 'project', space, path, ...(kept ? { yaml: kept } : {}) }
   const tab = openSpec(spec, name, null, how)
   if (layout) {
     // The tab's own words say the layout, so a tab already open switches to it too and
     // the view in it reads the change (ViewTab.svelte).
     const now = readSpec(tab.doc) ?? spec
-    const base = setLayout(builtinBase(now), 0, layout)
-    tab.note.replace(writeSpec({ ...now, yaml: writeBase(base) }), false)
+    const yaml = writeBase(setLayout(builtinBase(now), 0, layout))
+    tab.note.replace(writeSpec({ ...now, yaml }), false)
+    keepProjectView(space, path, yaml)
     workspace.scheduleSession()
   }
   return tab

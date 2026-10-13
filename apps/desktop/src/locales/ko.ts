@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': '섹션 추가',
+  '{name} (copy)': '{name} (사본)',
+  'Its tasks are deleted with it.': '안의 작업도 함께 삭제됩니다.',
   // Tasks: keys, selection and the undo toast
   Completed: '완료됨',
   'Remove date': '날짜 제거',

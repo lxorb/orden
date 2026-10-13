@@ -62,6 +62,26 @@ async function rewrite(
   return true
 }
 
+/** Notes (on this disk) each written from what it said to what `after` makes of it, as
+ *  one write, so one undo takes all of it back: a section added, renamed, carried to
+ *  another project (sections.ts). A note `after` answers null for is left as it is. */
+export async function rewriteNotes(
+  edits: readonly { path: string; after: (before: string) => string | null }[],
+  said?: Said,
+): Promise<boolean> {
+  const changes = []
+  for (const { path, after } of edits) {
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    const next = after(before)
+    const edit = next === null ? null : oneEdit(before, next)
+    if (edit) changes.push(changeOf(path, before, [edit]))
+  }
+  if (!changes.length) return false
+  await replaced(changes, said)
+  return true
+}
+
 /** A write of notes, as one undo; `said` is the word the undo toast offers it back
  *  under, where it is one a view's tasks were given (undo-toast.svelte.ts). */
 async function replaced(changes: readonly Change[], said?: Said): Promise<void> {

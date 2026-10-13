@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'பகுதியைச் சேர்',
+  '{name} (copy)': '{name} (நகல்)',
+  'Its tasks are deleted with it.': 'அதன் பணிகளும் சேர்ந்து நீக்கப்படும்.',
   // Tasks: keys, selection and the undo toast
   Completed: 'முடிந்தது',
   'Remove date': 'தேதியை நீக்கு',

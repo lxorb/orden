@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Abschnitt hinzufügen',
+  '{name} (copy)': '{name} (Kopie)',
+  'Its tasks are deleted with it.': 'Seine Aufgaben werden mitgelöscht.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Erledigt',
   'Remove date': 'Datum entfernen',

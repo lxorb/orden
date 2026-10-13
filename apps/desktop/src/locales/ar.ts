@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'إضافة قسم',
+  '{name} (copy)': '{name} (نسخة)',
+  'Its tasks are deleted with it.': 'تُحذف مهامه معه.',
   // Tasks: keys, selection and the undo toast
   Completed: 'اكتملت',
   'Remove date': 'إزالة التاريخ',

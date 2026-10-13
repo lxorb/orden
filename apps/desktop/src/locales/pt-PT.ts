@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Adicionar secção',
+  '{name} (copy)': '{name} (cópia)',
+  'Its tasks are deleted with it.': 'As tarefas são eliminadas com ela.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Concluída',
   'Remove date': 'Remover data',

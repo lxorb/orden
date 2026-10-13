@@ -10,12 +10,18 @@
 
 import { folderFor } from '../folder-notes'
 import { projectsFolder } from '../rows/projects'
-import { folderOf, nameOf, samePath } from '../space-paths'
+import { t } from '../i18n.svelte'
+import type { MenuEntry } from '../menu.svelte'
+import { inboxOf } from '../rows/inbox'
+import { inboxNote } from '../rows/inbox-note'
+import { folderOf, insideSpace, nameOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { entryAt } from '../tree-edits'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
+import { rewriteNotes } from './act'
 import { type ProjectNode, projectNodes } from './project-tree'
+import { retitled } from './sections'
 
 /** A file name a project may have: the words, without what a file name cannot hold. */
 function projectName(words: string): string | null {
@@ -66,8 +72,17 @@ export async function renameProject(
 ): Promise<void> {
   const name = projectName(words)
   if (name === null) return
-  if (project.folder !== null) await workspace.rename(project.folder, name)
-  else await workspace.rename(project.note, `${name}.md`)
+  const was = nameOf(project.note).replace(/.md$/i, '')
+  let note: string
+  if (project.folder !== null) {
+    await workspace.rename(project.folder, name)
+    note = joinPath(joinPath(folderOf(project.folder), name), `${name}.md`)
+  } else {
+    await workspace.rename(project.note, `${name}.md`)
+    note = joinPath(folderOf(project.note), `${name}.md`)
+  }
+  // A title that said the old name says the new one: it is the project's name too.
+  await rewriteNotes([{ path: note, after: (text) => retitled(text, was, name) }])
 }
 
 /** The projects of a space, as the panel draws them; `count` answers a note's open
@@ -85,4 +100,57 @@ export async function ensureProject(note: string): Promise<void> {
   await writeFile(note, '')
   await workspace.loadTree()
   await workspace.fileCame(note, 'file')
+}
+
+/** The inbox of a space, on this disk, whether it is there yet or not. */
+const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
+
+/** The places a task or a section can be taken to, as menu rows: the Inbox and every
+ *  project of the open space, a sub-project under its parent's name. `go` is handed the
+ *  note on this disk, made first where it is not there yet; `here` ticks a row. */
+export function placeEntries(
+  go: (note: string) => void,
+  here: (note: string) => boolean = () => false,
+): MenuEntry[] {
+  const root = workspace.activeSpace?.root
+  if (root === undefined) return []
+  const out: MenuEntry[] = [
+    {
+      label: t('Inbox'),
+      checked: here(inboxNoteAt(root)),
+      run: () => void inboxNote(root).then(go),
+    },
+  ]
+  const walk = (nodes: readonly ProjectNode[], above: string) => {
+    for (const node of nodes) {
+      const name = above ? `${above} / ${node.name}` : node.name
+      out.push({
+        label: name,
+        checked: here(node.note),
+        run: () => void ensureProject(node.note).then(() => go(node.note)),
+      })
+      walk(node.children, name)
+    }
+  }
+  walk(
+    spaceProjects(root, () => 0),
+    '',
+  )
+  return out
+}
+
+/** The project a note is, as the panel has it: a folder's namesake renamed with its
+ *  folder. A note that is no project of the open space is one on its own. */
+export function projectAt(note: string): { note: string; folder: string | null } {
+  const root = workspace.activeSpace?.root
+  const walk = (nodes: readonly ProjectNode[]): ProjectNode | undefined => {
+    for (const node of nodes) {
+      if (samePath(node.note, note)) return node
+      const inner = walk(node.children)
+      if (inner) return inner
+    }
+    return undefined
+  }
+  const found = root === undefined ? undefined : walk(spaceProjects(root, () => 0))
+  return { note, folder: found?.folder ?? null }
 }

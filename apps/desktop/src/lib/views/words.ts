@@ -18,7 +18,7 @@ const BUILTIN_NAMES: Record<Builtin, string> = {
   inbox: key('Inbox'),
   today: key('Today'),
   upcoming: key('Upcoming'),
-  logbook: key('Logbook'),
+  logbook: key('Completed'),
   project: key('Project'),
   label: key('Label'),
 }

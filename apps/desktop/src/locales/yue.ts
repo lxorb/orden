@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': '加分區',
+  '{name} (copy)': '{name}（副本）',
+  'Its tasks are deleted with it.': '入面嘅任務會一齊刪除。',
   // Tasks: keys, selection and the undo toast
   Completed: '已完成',
   'Remove date': '移除日期',

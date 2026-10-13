@@ -26,6 +26,7 @@
   import ListLayout from './ListLayout.svelte'
   import { openBuiltin } from './open'
   import PhoneRows from './PhoneRows.svelte'
+  import ProjectAbout from './ProjectAbout.svelte'
   import TableLayout from './TableLayout.svelte'
   import TimelineLayout from './TimelineLayout.svelte'
   import UpcomingLayout from './UpcomingLayout.svelte'
@@ -106,6 +107,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="frame" class:compact={kit.compact} onkeydown={keydown}>
   <ViewHead {kit} {title} onadd={add} />
+  {#if project && !kit.compact}<ProjectAbout {kit} />{/if}
   {#if adding}
     <div class="adding"><AddRow {kit} {asked} onclose={() => (adding = false)} /></div>
   {/if}

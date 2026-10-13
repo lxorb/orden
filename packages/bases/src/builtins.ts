@@ -1,4 +1,4 @@
-/** The views nib ships, as the bases they are: Inbox, Today, Upcoming, Logbook, a
+/** The views nib ships, as the bases they are: Inbox, Today, Upcoming, Completed, a
  *  project, a label, and what is assigned to me. Each is an ordinary Base, so the
  *  engine answers it like any other and "Copy to a base" writes it as a `.base`
  *  file the reader then changes. Group keys are values, never words: Today groups
@@ -90,7 +90,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
       return base(
         {
           type: 'list',
-          name: 'Logbook',
+          name: 'Completed',
           filters: 'task.done || task.cancelled',
           sort: [],
           groupBy: { property: 'formula.day', direction: 'DESC' },

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'برخه ورزيات کړئ',
+  '{name} (copy)': '{name} (کاپي)',
+  'Its tasks are deleted with it.': 'دندې یې هم ورسره ړنګېږي.',
   // Tasks: keys, selection and the undo toast
   Completed: 'بشپړ شو',
   'Remove date': 'نېټه لرې کړئ',

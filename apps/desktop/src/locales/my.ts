@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'အပိုင်း ထည့်ရန်',
+  '{name} (copy)': '{name} (မိတ္တူ)',
+  'Its tasks are deleted with it.': '၎င်း၏ လုပ်ငန်းများလည်း အတူ ဖျက်ပစ်မည်။',
   // Tasks: keys, selection and the undo toast
   Completed: 'ပြီးစီးပြီ',
   'Remove date': 'ရက်စွဲ ဖယ်ရှားရန်',

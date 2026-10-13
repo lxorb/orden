@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'เพิ่มส่วน',
+  '{name} (copy)': '{name} (สำเนา)',
+  'Its tasks are deleted with it.': 'งานในนั้นจะถูกลบไปด้วย',
   // Tasks: keys, selection and the undo toast
   Completed: 'เสร็จแล้ว',
   'Remove date': 'เอาวันที่ออก',

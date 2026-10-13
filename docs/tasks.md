@@ -489,7 +489,18 @@ readable. A test holds the writer to the Tasks plugin's own examples.
 
 - A **project** is a note. Every note with a task is one, and the panel lists the ones with
   open tasks (5.5). A folder is a group of projects, as Todoist's folders are.
-- A **section** is the nearest heading above the task. A board of a project groups by it.
+- A **section** is the nearest heading above the task. A project's list and board group by
+  it, every heading of the note drawn, empty ones too, and an H1 at the note's top named as
+  the note is its title rather than a section. A section is added at the end (the list's
+  Add section, the board's last column) or under another, and its menu renames it, moves it
+  up or down, duplicates it, takes it with its tasks to another project or the Inbox, and
+  deletes it (asked first when it holds tasks): each one write, one undo
+  (`views/sections.ts`, `views/section-actions.ts`). Which sections are folded, and how a
+  project is laid out, are kept on the device (`views/kept-views.ts`).
+- A project's **head** is its name, whose menu renames the note (and its title with it),
+  adds a section and opens the note; under it, the words at the top of the note are the
+  project's description. An open project follows its note when it is renamed or moved
+  (`views/project-follow.ts`).
 - A **sub-task** is a task indented under a task. Ticking a parent ticks its open sub-tasks
   in the same edit, as Todoist completes them with it; one Ctrl+Z opens all of them again.
 - A **description** is the first indented paragraph under a task; a **comment** is any other
@@ -606,7 +617,7 @@ The built-in views are bases the app carries:
 | Inbox          | tasks           | open, in a space's inbox note                      | by space; note order                      |
 | Today          | tasks           | open, due or scheduled on or before today, started | Overdue first, then Today; priority, time |
 | Upcoming       | tasks           | open, dated after today, started                   | by day; time, priority                    |
-| Logbook        | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
+| Completed      | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
 | Project        | tasks           | in this note                                       | by heading; note order                    |
 | Label          | tasks and notes | carry this tag                                     | by note                                   |
 | Assigned to me | tasks           | assignee is the signed-in person                   | by date                                   |
@@ -627,7 +638,7 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
 │  ▢  Inbox                  4   │
 │  ◷  Today                  7   │   7 in the danger tone if any are overdue
 │  ▦  Upcoming                   │
-│  ✓  Logbook                    │
+│  ✓  Completed                  │
 │ VIEWS                          │
 │  ▤  Reading list           31  │   a .base file, its own icon
 │  ▥  Bugs board             12  │

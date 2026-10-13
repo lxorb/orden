@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Thêm mục',
+  '{name} (copy)': '{name} (bản sao)',
+  'Its tasks are deleted with it.': 'Các việc trong đó cũng bị xoá theo.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Đã xong',
   'Remove date': 'Bỏ ngày',

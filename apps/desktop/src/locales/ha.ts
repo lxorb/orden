@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Ƙara sashe',
+  '{name} (copy)': '{name} (kwafi)',
+  'Its tasks are deleted with it.': 'Za a goge ayyukansa tare da shi.',
   // Tasks: keys, selection and the undo toast
   Completed: 'An kammala',
   'Remove date': 'Cire kwanan wata',

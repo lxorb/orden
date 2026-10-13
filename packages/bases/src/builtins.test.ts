@@ -42,7 +42,7 @@ describe('the built-in views', () => {
     ])
   })
 
-  test('Logbook: done and cancelled, newest day first', () => {
+  test('Completed: done and cancelled, newest day first', () => {
     expect(keyed(answer(builtinView('logbook'), 0, rows, context))).toEqual([
       [{ kind: 'date', iso: '2026-10-03' }, ['Water']],
       [{ kind: 'date', iso: '2026-10-02' }, ['Gym old']],

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'ክፍል አክል',
+  '{name} (copy)': '{name} (ቅጂ)',
+  'Its tasks are deleted with it.': 'ተግባራቱ አብረው ይጠፋሉ።',
   // Tasks: keys, selection and the undo toast
   Completed: 'ተጠናቋል',
   'Remove date': 'ቀኑን አስወግድ',

@@ -12,7 +12,6 @@ import type { Priority, Row } from '@nib/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
-import { inboxNote } from '../rows/inbox-note'
 import { rows as store } from '../rows/rows.svelte'
 import { insideSpace, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -27,8 +26,7 @@ import {
   writeEach,
 } from './act'
 import type { Kit } from './kit'
-import { ensureProject, spaceProjects } from './project-actions'
-import type { ProjectNode } from './project-tree'
+import { placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
 import { changeFor, loadByDay } from './schedule/schedule'
 import { type Box, showScheduler } from './schedule/scheduling.svelte'
@@ -130,38 +128,18 @@ export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   })
 }
 
-/** Where these tasks can be moved: the Inbox and every project of the open space, a
- *  sub-project under its parent's name. The note they are all in now is ticked. */
+/** Where these tasks can be moved: the Inbox and every project of the open space. The
+ *  note they are all in now is ticked. */
 export function moveEntries(rows: readonly Row[]): MenuEntry[] {
-  const space = workspace.activeSpace
-  if (!space) return []
-  const root = space.root
   const tasks = rows.filter((row) => row.task)
-  const here = (note: string) =>
-    tasks.every((row) => row.space === space.name && samePath(insideSpace(root, row.path), note))
-  const to = (note: () => Promise<string>) => () =>
-    void note().then((path) => moveRowsTo(tasks, path))
-
-  const out: MenuEntry[] = [{ label: t('Inbox'), run: to(() => inboxNote(root)) }]
-  const walk = (nodes: readonly ProjectNode[], above: string) => {
-    for (const node of nodes) {
-      const name = above ? `${above} / ${node.name}` : node.name
-      out.push({
-        label: name,
-        checked: here(node.note),
-        run: to(async () => {
-          await ensureProject(node.note)
-          return node.note
-        }),
-      })
-      walk(node.children, name)
-    }
-  }
-  walk(
-    spaceProjects(root, () => 0),
-    '',
+  const root = workspace.activeSpace?.root
+  const name = workspace.activeSpace?.name
+  return placeEntries(
+    (path) => void moveRowsTo(tasks, path),
+    (note) =>
+      root !== undefined &&
+      tasks.every((row) => row.space === name && samePath(insideSpace(root, row.path), note)),
   )
-  return out
 }
 
 /** A row that opens rows of its own, worked out when it is opened. */

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const mr: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'विभाग जोडा',
+  '{name} (copy)': '{name} (प्रत)',
+  'Its tasks are deleted with it.': 'त्यातील कार्येही सोबत हटवली जातील.',
   // Tasks: keys, selection and the undo toast
   Completed: 'पूर्ण झाले',
   'Remove date': 'तारीख काढा',

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'ವಿಭಾಗ ಸೇರಿಸಿ',
+  '{name} (copy)': '{name} (ನಕಲು)',
+  'Its tasks are deleted with it.': 'ಅದರ ಕಾರ್ಯಗಳೂ ಜೊತೆಗೆ ಅಳಿಸಲ್ಪಡುತ್ತವೆ.',
   // Tasks: keys, selection and the undo toast
   Completed: 'ಪೂರ್ಣಗೊಂಡಿದೆ',
   'Remove date': 'ದಿನಾಂಕ ತೆಗೆದುಹಾಕಿ',

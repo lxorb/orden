@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ms: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Tambah bahagian',
+  '{name} (copy)': '{name} (salinan)',
+  'Its tasks are deleted with it.': 'Tugasannya turut dipadam.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Selesai',
   'Remove date': 'Buang tarikh',

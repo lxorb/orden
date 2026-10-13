@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'افزودن بخش',
+  '{name} (copy)': '{name} (رونوشت)',
+  'Its tasks are deleted with it.': 'کارهایش هم با آن حذف می‌شوند.',
   // Tasks: keys, selection and the undo toast
   Completed: 'انجام شد',
   'Remove date': 'حذف تاریخ',

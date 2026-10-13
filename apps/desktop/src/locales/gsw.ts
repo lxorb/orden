@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Abschnitt hinzuefüege',
+  '{name} (copy)': '{name} (Kopie)',
+  'Its tasks are deleted with it.': 'Sini Ufgabe wärded mitglöscht.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Erledigt',
   'Remove date': 'Datum entfärne',

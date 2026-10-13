@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Bölüm ekle',
+  '{name} (copy)': '{name} (kopya)',
+  'Its tasks are deleted with it.': 'Görevleri de onunla birlikte silinir.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Tamamlandı',
   'Remove date': 'Tarihi kaldır',

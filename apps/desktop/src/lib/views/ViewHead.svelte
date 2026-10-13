@@ -42,6 +42,10 @@
   import { templates } from './templates'
   import Popover from './Popover.svelte'
   import { copyToBase } from './save'
+  import { focusSoon } from './focus-soon'
+  import { projectAt, renameProject } from './project-actions'
+  import { addSection, projectOf } from './section-actions'
+  import { prompt } from '../prompt.svelte'
   import { type Layout, LAYOUTS, layoutName, layoutOf } from './words'
 
   const {
@@ -71,6 +75,8 @@
   )
 
   let open = $state<'filter' | 'sort' | 'group' | 'display' | null>(null)
+  /** The project the view is of, whose name is its note's. */
+  const project = $derived(projectOf(kit))
   /** A view of tasks wears Todoist's head: its name, the search, Display and the plus;
    *  a base of notes keeps the database's tools. */
   const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
@@ -144,6 +150,22 @@
     if (!base) return
     const views = base.views
     const items: MenuEntry[] = [
+      // A project's own: its note named again, a section added, the note itself.
+      ...(project
+        ? [
+            { label: t('Rename'), run: () => (renaming = true) },
+            {
+              label: t('Add section'),
+              asks: true,
+              run: () =>
+                void prompt
+                  .ask({ title: t('Add section'), confirmLabel: t('Add section') })
+                  .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
+            },
+            { label: t('Open in note'), run: () => void workspace.open(project.path) },
+            DIVIDER,
+          ]
+        : []),
       ...(views.length > 1
         ? [
             ...views.map((one, at) => ({
@@ -154,7 +176,7 @@
             DIVIDER,
           ]
         : []),
-      ...(kit.spec.builtin === undefined || views.length > 1
+      ...(!project && (kit.spec.builtin === undefined || views.length > 1)
         ? [{ label: t('Rename'), run: () => (renaming = true) }]
         : []),
       { label: t('New view'), run: () => kit.change((one, at) => addView(one, at, 'table')) },
@@ -254,12 +276,11 @@
 
 <div class="head" class:compact={kit.compact}>
   {#if renaming}
-    <!-- svelte-ignore a11y_autofocus -->
     <input
       class="nib-field rename"
-      value={view?.name ?? ''}
+      value={project ? named : (view?.name ?? '')}
       aria-label={t('Rename')}
-      autofocus
+      use:focusSoon
       onkeydown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur()
         if (event.key === 'Escape') {
@@ -271,7 +292,10 @@
       onblur={(event) => {
         const name = event.currentTarget.value
         renaming = false
-        kit.change((one, at) => renameView(one, at, name))
+        if (project) {
+          if (name.trim() && name.trim() !== project.name)
+            void renameProject(projectAt(project.path), name)
+        } else kit.change((one, at) => renameView(one, at, name))
       }}
     />
   {:else}

@@ -1,6 +1,10 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Tasks: a project's sections
+  'Add section': 'Tambah bagean',
+  '{name} (copy)': '{name} (salinan)',
+  'Its tasks are deleted with it.': 'Tugas-tugasé uga dibusak.',
   // Tasks: keys, selection and the undo toast
   Completed: 'Rampung',
   'Remove date': 'Busak tanggal',
