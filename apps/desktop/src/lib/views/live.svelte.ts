@@ -25,6 +25,7 @@ import { afterQuiet } from '../timing'
 import { toneColour } from './chips'
 import { columnsOf } from './columns'
 import { contextFor } from './context'
+import { displayed } from './display'
 import { nowHere, todayHere, untilMidnightHere } from './days'
 
 export interface Source {
@@ -141,7 +142,7 @@ export class LiveView {
     const base = this.base
     if (!base) return null
     try {
-      return answered(base, this.at, this.rows, this.context)
+      return answered(displayed(base, this.at), this.at, this.rows, this.context)
     } catch {
       return null
     }

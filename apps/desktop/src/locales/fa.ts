@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'نمایش',
+  'Completed tasks': 'کارهای انجام‌شده',
   // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',

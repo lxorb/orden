@@ -32,8 +32,10 @@ describe('the built-in views', () => {
     ])
   })
 
-  test('Upcoming: by day, started ones only', () => {
+  test('Upcoming: what is overdue, then by day from today, started ones only', () => {
     expect(keyed(answer(builtinView('upcoming'), 0, rows, context))).toEqual([
+      ['overdue', ['Renew passport']],
+      [{ kind: 'date', iso: '2026-10-04' }, ['Gym', 'Call the bank']],
       [{ kind: 'date', iso: '2026-10-05' }, ['Review PR']],
       [{ kind: 'date', iso: '2026-10-06' }, ['Dentist']],
       [{ kind: 'date', iso: '2026-10-20' }, ['Draft talk']],

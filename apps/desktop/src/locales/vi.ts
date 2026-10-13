@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'Hiển thị',
+  'Completed tasks': 'Việc đã xong',
   // Tasks: several lines pasted into quick add
   'One task': 'Một việc',
   'One per line': 'Mỗi dòng một việc',

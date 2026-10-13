@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'Görünüm',
+  'Completed tasks': 'Tamamlanan görevler',
   // Tasks: several lines pasted into quick add
   'One task': 'Tek görev',
   'One per line': 'Satır başına bir',

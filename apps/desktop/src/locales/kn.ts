@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'ಪ್ರದರ್ಶನ',
+  'Completed tasks': 'ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು',
   // Tasks: several lines pasted into quick add
   'One task': 'ಒಂದು ಕಾರ್ಯ',
   'One per line': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು',

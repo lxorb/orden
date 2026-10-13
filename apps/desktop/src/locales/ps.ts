@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'ښودنه',
+  'Completed tasks': 'بشپړې دندې',
   // Tasks: several lines pasted into quick add
   'One task': 'یوه دنده',
   'One per line': 'په هره کرښه کې یوه',

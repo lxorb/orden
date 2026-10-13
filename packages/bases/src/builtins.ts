@@ -69,18 +69,22 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         { overdue: 'task.due < today() || task.scheduled < today()' },
       )
     case 'upcoming':
+      // Todoist's Upcoming: what is overdue on top, then every day from today on. The
+      // days are in the order the rows' dates put them, which puts the overdue first.
       return base(
         {
           type: 'list',
           name: 'Upcoming',
-          filters: { and: ['task.started', 'task.due > today() || task.scheduled > today()'] },
+          filters: { and: ['task.started', 'task.date'] },
           sort: [
+            { property: 'task.date', direction: 'ASC' },
             { property: 'task.time', direction: 'ASC' },
             { property: 'task.priority', direction: 'ASC' },
           ],
           groupBy: { property: 'formula.day', direction: 'ASC' },
+          nib: { rows: 'tasks', groupOrder: 'rows', kept: {} },
         },
-        { day: 'if(task.due > today(), task.due, task.scheduled)' },
+        { day: 'if(task.date < today(), "overdue", task.date)' },
       )
     case 'logbook':
       return base(

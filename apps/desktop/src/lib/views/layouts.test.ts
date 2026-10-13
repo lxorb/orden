@@ -265,14 +265,18 @@ describe('on a phone', () => {
 })
 
 describe('the frame', () => {
-  test('wears the head with its layout switch, its tools and the view', () => {
-    const html = render(ViewFrame, {
+  test('wears Todoist’s head over tasks, and the database’s tools over notes', () => {
+    const tasks = render(ViewFrame, {
       props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
     }).body
-    expect(html.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6)
-    expect(html).toContain('aria-label="Filter"')
-    expect(html).toContain('aria-label="Sort"')
-    expect(html).toContain('aria-label="Group"')
-    expect(html).toContain('Call the bank')
+    expect(tasks).toContain('aria-label="Display"')
+    expect(tasks).not.toContain('aria-label="Filter"')
+    expect(tasks).toContain('Call the bank')
+
+    const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
+    expect(notes.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6)
+    expect(notes).toContain('aria-label="Filter"')
+    expect(notes).toContain('aria-label="Sort"')
+    expect(notes).toContain('aria-label="Group"')
   })
 })

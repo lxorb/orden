@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'প্রদর্শন',
+  'Completed tasks': 'সম্পন্ন কাজ',
   // Tasks: several lines pasted into quick add
   'One task': 'একটি কাজ',
   'One per line': 'প্রতি লাইনে একটি',

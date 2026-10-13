@@ -478,6 +478,8 @@ describe('the switch', () => {
       'lib/settings/ExtensionRows.svelte',
       // An automation of a base on or off.
       'lib/views/AutomationsBuilder.svelte',
+      // Whether a view of tasks keeps its done ones, in its Display menu.
+      'lib/views/DisplayBuilder.svelte',
       // What Delete browsing data takes, a switch a kind.
       'lib/web-tab/WebClear.svelte',
     ])

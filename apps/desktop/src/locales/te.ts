@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'ప్రదర్శన',
+  'Completed tasks': 'పూర్తయిన పనులు',
   // Tasks: several lines pasted into quick add
   'One task': 'ఒక పని',
   'One per line': 'ప్రతి పంక్తికి ఒకటి',

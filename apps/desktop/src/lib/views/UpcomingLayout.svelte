@@ -1,9 +1,11 @@
 <script lang="ts">
-  /** Upcoming as Todoist draws it: a strip of the week across the top, each day with
-   *  how many tasks it holds, then the days down the page as groups, each with its add
-   *  row (docs/tasks.md 5.9). A task carried onto a day of the strip, or onto another
-   *  day's group, is given that day; the arrows walk the strip a week at a time, and a
-   *  day pressed is scrolled to. */
+  /** Upcoming as Todoist draws it: the month and a strip of the week across the top,
+   *  each day with how many tasks it holds; then what is overdue, and every day from
+   *  today down the page, an empty one too, each with its add row - as far as the list
+   *  is scrolled, two years at most (docs/tasks.md 5.9). A task carried onto a day of
+   *  the strip, or onto another day's group, is given that day; the arrows walk the
+   *  strip a week at a time, Today comes back to today, and a day pressed is scrolled to
+   *  wherever it is in the list. */
   import { addDays, groupName } from '@nib/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
@@ -20,21 +22,40 @@
    *  there. */
   let from = $state(untrack(() => kit.live.today))
   const week = $derived(Array.from({ length: 7 }, (_, step) => addDays(from, step)))
+  const month = $derived(i18n.when(dateAt(from), { month: 'long', year: 'numeric' }))
 
   /** How many tasks each day of the answer holds. */
   const counts = $derived(dayCounts(live.answer?.groups ?? []))
 
-  let body = $state<HTMLElement>()
+  /** How far the days go: four weeks to begin with, and four more each time the end of
+   *  the list comes into sight, never past two years. */
+  let through = $state(untrack(() => addDays(kit.live.today, 27)))
+  const furthest = $derived(addDays(live.today, 730))
+  function further() {
+    if (through < furthest) through = addDays(through, 28)
+  }
+
+  /** The day a press on the strip asked to see, and how many times. */
+  let revealing = $state({ id: '', asked: 0 })
 
   function show(day: string) {
-    const head = body?.querySelector<HTMLElement>(
-      `[data-item="head:${CSS.escape(groupName(day))}"]`,
-    )
-    head?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    if (day > through) through = day > furthest ? furthest : day
+    revealing = { id: `head:${groupName({ kind: 'date', iso: day })}`, asked: revealing.asked + 1 }
   }
 </script>
 
 <div class="upcoming">
+  <div class="top">
+    <span class="month">{month}</span>
+    <button
+      type="button"
+      class="nib-chip is-quiet"
+      onclick={() => {
+        from = live.today
+        show(live.today)
+      }}>{t('Today')}</button
+    >
+  </div>
   <div class="strip">
     <button
       type="button"
@@ -67,8 +88,14 @@
       <svg viewBox="0 0 13 13"><path d="m5 2.5 4 4-4 4" /></svg>
     </button>
   </div>
-  <div class="days" bind:this={body}>
-    <ListLayout {kit} dated={false} />
+  <div class="days">
+    <ListLayout
+      {kit}
+      dated={false}
+      days={{ from: live.today, through }}
+      onnearend={further}
+      reveal={revealing}
+    />
   </div>
 </div>
 
@@ -78,6 +105,20 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4) 0;
+  }
+
+  .month {
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+    font-weight: var(--weight-strong);
   }
 
   .strip {

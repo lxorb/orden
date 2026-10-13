@@ -24,25 +24,35 @@
   import AddRow from './AddRow.svelte'
   import { droppable, type Point } from './drag.svelte'
   import { type Kit, runKey } from './kit'
-  import { EMPTY, listItems, toggled } from './list-items'
+  import { EMPTY, listItems, toggled, withEveryDay } from './list-items'
   import { parentOf } from './columns'
   import { rowKey } from './row-keys'
   import RowLine from './RowLine.svelte'
   import { scheduleRows } from './task-actions'
   import { hasMeta, lineCount, subtaskCounts, taskKey } from './task-meta'
   import TaskRow from './TaskRow.svelte'
-  import { groupLabel } from './words'
+  import { dayHead, groupLabel } from './words'
 
   const {
     kit,
     dated = true,
     where = true,
+    days,
+    onnearend,
+    reveal,
   }: {
     kit: Kit
     /** Whether a row says its date: not where the groups are the days. */
     dated?: boolean
     /** Whether a row says which note it is in: not in a project's own view. */
     where?: boolean
+    /** Every day from one through another drawn, empty ones too: Upcoming. */
+    days?: { from: string; through: string } | undefined
+    /** Told when the rows drawn come near the end of the list, for one that grows. */
+    onnearend?: (() => void) | undefined
+    /** An item to scroll to the top, and a count that says each new ask (AddRow's
+     *  `asked`). */
+    reveal?: { id: string; asked: number } | undefined
   } = $props()
 
   const live = $derived(kit.live)
@@ -60,15 +70,20 @@
   let adding = $state({ group: '', count: 0 })
 
   const items = $derived(
-    listItems(live.answer?.groups ?? [], {
-      grouped: property !== undefined,
-      bareNone: property === 'task.section',
-      folded,
-      shut,
-      hidden: view?.nib.hidden ?? [],
-      adding: true,
-      parentOf: (row) => parentOf(row, live.context),
-    }),
+    listItems(
+      days
+        ? withEveryDay(live.answer?.groups ?? [], days.from, days.through)
+        : (live.answer?.groups ?? []),
+      {
+        grouped: property !== undefined,
+        bareNone: property === 'task.section',
+        folded,
+        shut,
+        hidden: view?.nib.hidden ?? [],
+        adding: true,
+        parentOf: (row) => parentOf(row, live.context),
+      },
+    ),
   )
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
 
@@ -130,6 +145,26 @@
         items.map((item, at) => restingHeight(item, lines[at] ?? 1) + (grown[item.id] ?? 0)),
       ),
   )
+  // A list that grows is told as its end comes into the window, not before.
+  $effect(() => {
+    if (onnearend && items.length && shown.last >= items.length - 12) untrack(onnearend)
+  })
+
+  /** Scrolls an item to the top of the box the list scrolls in, whether it is drawn
+   *  yet or not: where it is is arithmetic. */
+  function scrollTo(id: string): void {
+    const at = items.findIndex((item) => item.id === id)
+    const box = win.box
+    if (at === -1 || !box || !list) return
+    const above = list.getBoundingClientRect().top - box.getBoundingClientRect().top
+    box.scrollTo({ top: box.scrollTop + above + heights.top(at), behavior: 'smooth' })
+  }
+
+  $effect(() => {
+    const asked = reveal
+    if (asked && asked.asked > 0) untrack(() => scrollTo(asked.id))
+  })
+
   const shown = $derived.by(() => {
     const span = heights.span(win.top, win.room || 600, 8 * (win.row || 28))
     return {
@@ -239,10 +274,12 @@
             onclick={() => (folded = toggled(folded, name))}
           >
             <span class="twist"><Twist open={!item.folded} /></span>
-            {groupLabel(property, item.group.key, live.today)}
-            <span class="count">{item.count}</span>
+            {days
+              ? dayHead(item.group.key, live.today)
+              : groupLabel(property, item.group.key, live.today)}
+            {#if item.count}<span class="count">{item.count}</span>{/if}
           </button>
-          {#if property === 'formula.overdue' && item.group.key === true && item.count}
+          {#if ((property === 'formula.overdue' && item.group.key === true) || item.group.key === 'overdue') && item.count}
             <button
               type="button"
               class="nib-chip is-quiet act"

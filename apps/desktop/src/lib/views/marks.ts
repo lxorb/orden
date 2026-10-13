@@ -15,6 +15,9 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
   form: 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z',
 }
 
+/** Two sliders: how a view is shown, Todoist's Display. */
+export const DISPLAY_MARK = 'M1.5 4h10M1.5 9h10M4.5 2.5v3M8.5 7.5v3'
+
 /** A funnel: what is let through. */
 export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
 

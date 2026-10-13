@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Tasks: the Display menu
+  Display: '보기',
+  'Completed tasks': '완료된 작업',
   // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',

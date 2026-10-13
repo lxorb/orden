@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const es: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'Visualización',
+  'Completed tasks': 'Tareas completadas',
   // Tasks: several lines pasted into quick add
   'One task': 'Una tarea',
   'One per line': 'Una por línea',

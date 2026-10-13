@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'การแสดงผล',
+  'Completed tasks': 'งานที่เสร็จแล้ว',
   // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',

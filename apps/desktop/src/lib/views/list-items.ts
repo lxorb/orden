@@ -8,7 +8,8 @@
  *  of same-height rows is what the window arithmetic needs (row-window.ts), so a
  *  Logbook of ten thousand done lines mounts the thirty on screen. Pure. */
 
-import { type Group, groupName, type Row, rowId } from '@nib/bases'
+import { addDays, type Group, groupName, type Row, rowId } from '@nib/bases'
+import { dayIn } from './values'
 
 export type Item =
   | { kind: 'head'; id: string; group: Group; count: number; folded: boolean }
@@ -139,3 +140,24 @@ export function laneKeys(groups: readonly Group[]): Group['key'][] {
 
 /** No keys: nothing folded yet. */
 export const EMPTY: ReadonlySet<string> = new Set()
+
+/** Upcoming's days, every one from `from` through `through` whether it holds a task or
+ *  not, so a day can be planned into before anything is in it (Todoist's way): the
+ *  groups that are not days first (what is overdue), then the days, a day nothing is
+ *  due on an empty group of its own, then any later day that holds tasks. */
+export function withEveryDay(groups: readonly Group[], from: string, through: string): Group[] {
+  const days = new Map<string, Group>()
+  const out: Group[] = []
+  for (const group of groups) {
+    const day = dayIn(group.key)
+    if (day !== null && day >= from) days.set(day, group)
+    else out.push(group)
+  }
+  for (let day = from; day <= through; day = addDays(day, 1)) {
+    out.push(days.get(day) ?? { key: { kind: 'date', iso: day }, rows: [], summaries: {} })
+  }
+  for (const [day, group] of [...days].sort(([a], [b]) => a.localeCompare(b))) {
+    if (day > through) out.push(group)
+  }
+  return out
+}

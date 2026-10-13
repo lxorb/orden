@@ -1,6 +1,9 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Tasks: the Display menu
+  Display: 'Mwonekano',
+  'Completed tasks': 'Kazi zilizokamilika',
   // Tasks: several lines pasted into quick add
   'One task': 'Kazi moja',
   'One per line': 'Moja kwa kila mstari',
