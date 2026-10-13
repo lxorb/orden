@@ -88,7 +88,7 @@ import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
-import { isScratchpad } from './scratchpad/is.svelte'
+import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import {
@@ -337,7 +337,8 @@ class Workspace {
   private panelChosen = false
   /** Which panels this window keeps on the right, in the order its strip shows
    *  them, and which of them is open: the homes in workspace/panels.ts until
-   *  somebody moves one, and nothing open until somebody asks.
+   *  somebody moves one, and nothing open until somebody asks. Kept under the
+   *  scratchpad's card, so what shows is `openOn('right')`.
    *
    *  Per window rather than per account: which side a panel sits on is a fact
    *  about this screen, the way the sidebar's width is. */
@@ -597,7 +598,7 @@ class Workspace {
    *  first. Null where neither has, which is what the palette's row reads to know there
    *  is nothing to hold. */
   readonly holdablePanel = $derived.by((): Panel | null => {
-    for (const panel of [this.panel, this.rightPanel]) {
+    for (const panel of [this.panel, this.openOn('right')]) {
       if (this.holdable(panel)) return panel
     }
 
@@ -4146,7 +4147,7 @@ class Workspace {
   /** The three panel fields together, for the rules next door to work out the
    *  next set of; see workspace/panels. */
   private get sides(): Sides {
-    return { panel: this.panel, rightPanel: this.rightPanel, right: this.right }
+    return { panel: this.panel, rightPanel: this.rightPanel, right: this.right, covered: pad.on }
   }
 
   private set sides(next: Sides) {
@@ -4154,6 +4155,8 @@ class Workspace {
     this.rightPanel = next.rightPanel
     this.right = next.right
     if (next.rightPanel) this.lastRight = next.rightPanel
+    // The right side asked for puts the scratchpad away.
+    if (pad.on && !next.covered) pad.hide()
     // Every deliberate showing, shutting and moving of a panel comes through here,
     // which is what makes this the one place a choice is noted; see `panelChosen`.
     this.panelChosen = true
@@ -4166,7 +4169,7 @@ class Workspace {
   }
 
   /** The panel open on one side, which is what that side's tab strip marks and
-   *  what its body draws. */
+   *  what its body draws: none on the right under the scratchpad; see panels.ts. */
   openOn(side: PanelSide): Panel | null {
     return panels.openOn(this.sides, side)
   }

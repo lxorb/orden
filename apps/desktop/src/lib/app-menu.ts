@@ -519,7 +519,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Right sidebar'),
           ...keyed('app.right-sidebar'),
-          checked: !!workspace.rightPanel,
+          checked: !!workspace.openOn('right'),
           disabled: !workspace.right.length,
           run: () => workspace.toggleSidebar('right'),
         },

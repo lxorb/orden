@@ -168,15 +168,12 @@
 </div>
 
 <style>
-  /* The column App.svelte keeps for the card: its width is the card's own. */
+  /* The column PadColumn.svelte keeps for the card, and over the note where the panels
+     are drawers or the window is too narrow for two columns. */
   :global([data-scratchpad]) {
-    flex: none;
     max-width: 60%;
-    padding: var(--space-2);
   }
 
-  /* Where the panels are drawers, or the window is too narrow for two columns, over
-     the note. */
   :global(:is([data-drawer], [data-narrow]) [data-scratchpad]) {
     position: absolute;
     inset-block: 0;
@@ -185,12 +182,19 @@
     max-width: 100%;
   }
 
+  /* Held at its width while the column slides. */
+  :global([data-scratchpad]:is(.moving, .coming)) .card {
+    min-width: calc(var(--pad-width) - 2 * var(--space-2));
+  }
+
   /* A note, so it stands on the paper a note stands on (Pane.svelte), not the surface a
      menu floats on: the page's own ground in every theme, and under glass and the
      wallpaper as see-through as the Content row leaves the note beside it. */
   .card {
     position: relative;
-    height: 100%;
+    flex: none;
+    width: calc(100% - 2 * var(--space-2));
+    margin: var(--space-2);
     display: flex;
     min-width: 0;
     overflow: hidden;

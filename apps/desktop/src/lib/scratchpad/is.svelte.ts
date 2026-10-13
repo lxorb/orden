@@ -13,7 +13,9 @@ export function isScratchpad(path: string | null | undefined): boolean {
   return !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 }
 
-const inCard = () => !!document.activeElement?.closest('[data-scratchpad]')
+// Guarded for the workspace's tests, which have no page.
+const inCard = () =>
+  typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad]')
 
 class Shown {
   on = $state(false)

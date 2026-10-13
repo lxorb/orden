@@ -7,14 +7,16 @@
  *  tab: it is not in a strip, a tab cycle, the closed tabs or the session's tabs, and
  *  opening its file from anywhere shows the card (see `open` in the workspace). Docked
  *  rather than floating, because a web tab's page is a native view that would draw over
- *  a floating card; docked, the page is narrowed instead.
+ *  a floating card; docked, the page is narrowed instead. It takes turns with the right
+ *  side at that edge, never both: up, it goes over the side, and the side is back as it
+ *  goes; see workspace/panels.ts.
  *
  *  It lives beside `custom.css` in the app's own folder (`scratchpad_path` in the
  *  crate's themes.rs, which `openable` admits); the browser build keeps it in a dot
  *  folder of its own store. Its words answer the Search panel from every space, and the
  *  quick question puts an answer on its end when no note is in front; see
- *  search/scratchpad.ts and ai/quick.svelte.ts. Whether the card is up is shown.svelte.ts,
- *  the card ScratchpadCard.svelte. */
+ *  search/scratchpad.ts and ai/quick.svelte.ts. Whether the card is up is is.svelte.ts,
+ *  the column it slides in PadColumn.svelte, the card ScratchpadCard.svelte. */
 
 import type { EditorView } from '@nib/editor'
 import { applied, type Edit } from '../search/replace'
