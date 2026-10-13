@@ -40,7 +40,7 @@ import threading
 import time
 from ctypes import wintypes
 
-from probe_app import close_app, keyboard, run_probe, sized
+from probe_app import close_app, keyboard, main_window, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -74,8 +74,7 @@ def launch(switch, exe: pathlib.Path, identifier: str, errors, unlike: int = 0):
     hwnd = 0
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not hwnd:
-        found = switch.windows_of(running.pid)
-        hwnd = found[0] if found else 0
+        hwnd = main_window(running.pid)
         time.sleep(0.2)
     if not hwnd:
         raise SystemExit("the app never showed a window")
@@ -175,11 +174,10 @@ def main() -> int:
             errors.flush()
             with logged.open("rb") as reading:
                 reading.seek(mark)
-                said["the rule"] = [
-                    line
-                    for line in reading.read().decode("utf-8", "replace").splitlines()
-                    if line.startswith("nib: keyboard:")
-                ]
+                heard = reading.read().decode("utf-8", "replace").splitlines()
+            said["the rule"] = [line for line in heard if line.startswith("nib: keyboard:")]
+            if not said["the rule"]:
+                said["what the app said instead"] = heard[-20:]
 
             ctrl_tab(app)
             time.sleep(1)
