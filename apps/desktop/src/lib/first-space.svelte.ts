@@ -13,6 +13,7 @@
  *  somebody who deleted it and later their last space is given a space again and not
  *  the note; an untouched welcome never travels to an account. See welcome.ts. */
 
+import { type Moment, startsFresh } from './fresh-start'
 import { markSeeded, wasSeeded } from './seeded'
 import { madeSpace } from './space-actions'
 import { joinPath } from './tauri'
@@ -26,8 +27,9 @@ class FirstSpace {
    *  a second space. */
   private working = false
 
-  async start() {
-    if (this.working || workspace.spaces.length) return
+  /** Makes the space, if `now` is a fresh start; see fresh-start.ts. */
+  async start(now: Moment) {
+    if (!startsFresh(now) || this.working || workspace.spaces.length) return
     this.working = true
     try {
       const space = await madeSpace(WELCOME_SPACE)
