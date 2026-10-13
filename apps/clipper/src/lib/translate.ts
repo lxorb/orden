@@ -14,6 +14,8 @@
  *  common, and the two catalogues hold different rows - so a change to one of the
  *  three belongs in both files. */
 
+import { inLanguageOrder } from '@nib/markdown/language-order'
+
 /** The English string is its own key. A language that has not translated
  *  something falls back to it, so nothing can ever come out blank.
  *
@@ -45,15 +47,15 @@ export interface Language {
  *  put it right. */
 export const CATALOGUES_URL = 'https://github.com/lxorb/orden/tree/main/apps/clipper/src/locales'
 
-/** The same list the app offers, in the same order, so the two settings pages
- *  read alike.
+/** The same list the app offers, in the same order (language-order.ts), so the
+ *  two settings pages read alike.
  *
  *  Chrome's own `_locales` is not what carries these: it has no Swiss German, it
  *  covers only the languages Chrome's own interface is translated into, and it
  *  picks by the browser's UI language rather than by what somebody chose here.
  *  Only the handful of words Chrome itself draws - the tile on chrome://extensions,
  *  the listing in the store and the shortcut list - come from `public/_locales`. */
-export const LANGUAGES: readonly Language[] = [
+export const LANGUAGES: readonly Language[] = inLanguageOrder<Language>([
   { id: 'system', name: 'Match the system' },
   { id: 'en', name: 'English' },
   { id: 'de', name: 'Deutsch' },
@@ -96,7 +98,7 @@ export const LANGUAGES: readonly Language[] = [
   { id: 'zh-Hans', name: '简体中文', machine: true },
   { id: 'zh-Hant', name: '繁體中文', machine: true },
   { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
-]
+])
 
 /** A catalogue is fetched when it is asked for, not at start: a popup opens on
  *  every click, and forty of them in its first chunk is a hundred kilobytes

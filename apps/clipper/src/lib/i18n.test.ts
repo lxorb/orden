@@ -135,9 +135,54 @@ describe('the folder, the list and the loader', () => {
     expect(offered).toEqual([...CATALOGUE_IDS].sort())
   })
 
-  test('offer the system default first and English second', () => {
-    expect(LANGUAGES[0]?.id).toBe('system')
-    expect(LANGUAGES[1]?.id).toBe('en')
+  /** The system default, then the Latin names A to Z, then every other script
+   *  at the foot, one script at a time (language-order.ts). Spelled out, so a
+   *  language added anywhere shows up here as the place it landed. */
+  test('offer the system default first, then the Latin names, then the rest', () => {
+    expect(LANGUAGES.map((one) => one.id)).toEqual([
+      'system',
+      'id',
+      'ms',
+      'jv',
+      'de',
+      'en',
+      'es',
+      'fil',
+      'fr',
+      'ha',
+      'it',
+      'sw',
+      'pl',
+      'pt-BR',
+      'pt-PT',
+      'gsw',
+      'vi',
+      'tr',
+      'ru',
+      'uk',
+      'ur',
+      'ar',
+      'ps',
+      'fa',
+      'am',
+      'mr',
+      'hi',
+      'bn',
+      'pa',
+      'gu',
+      'ta',
+      'te',
+      'kn',
+      'ml',
+      'th',
+      'my',
+      'ko',
+      'ja',
+      'zh-Hans',
+      'yue',
+      'zh-Hant',
+      'zh-Hant-HK',
+    ])
   })
 
   /** The four that were written by hand say nothing about themselves; every

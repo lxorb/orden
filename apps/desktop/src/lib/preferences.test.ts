@@ -320,11 +320,32 @@ describe('the language picker', () => {
       .options.filter((one) => !one.note)
       .map((one) => one.value)
 
-    expect(plain).toEqual(['system', 'en', 'de', 'gsw', 'fr', 'ja'])
+    expect(plain).toEqual(['system', 'de', 'en', 'fr', 'gsw', 'ja'])
   })
 
   test('says the same thing on every marked row, in the caption’s own words', () => {
     const said = new Set(row().options.flatMap((one) => (one.note ? [one.note] : [])))
     expect([...said]).toEqual([SAID])
+  })
+})
+
+describe('the spelling dictionary', () => {
+  /** The same order the app's language list keeps: the default, the Latin
+   *  names A to Z, Japanese at the foot. */
+  test('is offered in the order every language list keeps', () => {
+    const one = field('spelling', 'Language')
+    if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
+
+    expect(one.options.map((option) => option.value)).toEqual([
+      'system',
+      'de',
+      'en',
+      'es',
+      'fr',
+      'it',
+      'nl',
+      'pt',
+      'ja',
+    ])
   })
 })

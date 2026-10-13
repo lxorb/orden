@@ -1,5 +1,6 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
 import { setChartLocale } from '@nib/markdown/chart'
+import { inLanguageOrder } from '@nib/markdown/language-order'
 import { type Direction, directionOf, factorOf, isolated } from './direction'
 import { keep, storedText } from './stored'
 
@@ -32,10 +33,9 @@ export interface Language {
  *  that a word is wrong is the only person who can put it right. */
 export const CATALOGUES_URL = 'https://github.com/lxorb/orden/tree/main/apps/desktop/src/locales'
 
-/** Every language with fifty million speakers, and the four that came first.
- *  Read through in order: the hand-written ones, then the rest by their id, so
- *  the list does not reshuffle when a catalogue stops being machine-written. */
-export const LANGUAGES: readonly Language[] = [
+/** Every language with fifty million speakers, and the four that came first,
+ *  offered in the one order every language list keeps: see language-order.ts. */
+export const LANGUAGES: readonly Language[] = inLanguageOrder<Language>([
   { id: 'system', name: 'Match the system' },
   { id: 'en', name: 'English' },
   { id: 'de', name: 'Deutsch' },
@@ -78,7 +78,7 @@ export const LANGUAGES: readonly Language[] = [
   { id: 'zh-Hans', name: '简体中文', machine: true },
   { id: 'zh-Hant', name: '繁體中文', machine: true },
   { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
-]
+])
 
 /** A catalogue is fetched when it is chosen, not at start: forty of them in the
  *  first chunk is two megabytes downloaded to read one. Written out one by one
