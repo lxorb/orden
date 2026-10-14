@@ -1,15 +1,21 @@
 name: aur
 
+# orden-git builds the newest main on the installing machine, so nothing is built
+# here: AUR helpers see new commits on main themselves. This pushes its recipe when
+# the recipe changes. orden-bin, the release package, is publish-linux.yml's.
 on:
   push:
     branches: [main]
+    paths:
+      - .github/workflows/aur.yml
+      - packaging/aur/orden-git/**
   pull_request:
     paths:
       - .github/workflows/aur.yml
-      - packaging/aur/**
+      - packaging/aur/orden-git/**
   workflow_dispatch:
 
-# Keep build numbers and AUR pushes in order; a running build finishes.
+# Keep AUR pushes in order; a running one finishes.
 concurrency:
   group: aur-${{ github.ref }}
   cancel-in-progress: false
@@ -22,145 +28,48 @@ defaults:
     shell: bash
 
 jobs:
-  build:
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { runner: ubuntu-22.04, arch: x64, target: x86_64-unknown-linux-gnu }
-          - { runner: ubuntu-22.04-arm, arch: arm64, target: aarch64-unknown-linux-gnu }
-    runs-on: ${{ matrix.runner }}
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 24
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
-        with:
-          toolchain: stable
-          targets: ${{ matrix.target }}
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
-      - run: pnpm install --frozen-lockfile
-      - id: version
-        run: bash scripts/build-version.sh edge
-      # Pacman manages updates. This build needs no updater signing secret.
-      - name: Build the Linux package
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          TARGET: ${{ matrix.target }}
-        run: |
-          pnpm --filter @nib/desktop exec tauri build --target "$TARGET" --bundles deb \
-            --config "{\"version\":\"$VERSION\",\"bundle\":{\"createUpdaterArtifacts\":false}}"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: aur-deb-${{ matrix.arch }}
-          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-          if-no-files-found: error
-
-  package:
-    needs: build
+  check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      VERSION: ${{ needs.build.outputs.version }}
-      TAG: aur-edge
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          pattern: aur-deb-*
-          merge-multiple: true
-          path: debs
-      - name: Generate the AUR recipe from this build
-        run: |
-          mv debs/*amd64.deb "debs/Orden-$VERSION-linux-x64.deb"
-          mv debs/*arm64.deb "debs/Orden-$VERSION-linux-arm64.deb"
-          cp -r packaging/aur/nib-bin aur-package
-          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
-          X64=$(sha256sum "debs/Orden-$VERSION-linux-x64.deb" | cut -d' ' -f1)
-          ARM64=$(sha256sum "debs/Orden-$VERSION-linux-arm64.deb" | cut -d' ' -f1)
-          DESKTOP=$(sha256sum aur-package/nib.desktop | cut -d' ' -f1)
-          sed -i \
-            -e '1c\# Maintainer: Bendik Arbogast <bendik@arbogast.dev>' \
-            -e 's/^pkgname=.*/pkgname=orden-edge-bin/' \
-            -e "s/^pkgver=.*/pkgver=${VERSION/-/pre}/" \
-            -e 's/^pkgrel=.*/pkgrel=1/' \
-            -e 's/^conflicts=(/conflicts=("orden" /' \
-            -e "s|^url=.*|url=\"https://github.com/$GITHUB_REPOSITORY\"|" \
-            -e "s|^_url=.*|_version=$VERSION\n_url=\"$BASE\"|" \
-            -e 's/Orden-${pkgver}/Orden-${_version}/g' \
-            -e "s/^sha256sums=.*/sha256sums=('$DESKTOP')/" \
-            -e "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('$X64')/" \
-            -e "s/^sha256sums_aarch64=.*/sha256sums_aarch64=('$ARM64')/" \
-            aur-package/PKGBUILD
-      - name: Validate with makepkg without deployment credentials
+      - name: Write .SRCINFO and lint the recipe without deployment credentials
         env:
           ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
         run: |
-          docker run --rm -v "$PWD:/repo" "$ARCH_IMAGE" bash -euo pipefail -c '
-            pacman -Syu --noconfirm --needed sudo desktop-file-utils
+          cp -r packaging/aur/orden-git aur-package
+          docker run --rm -v "$PWD/aur-package:/build" "$ARCH_IMAGE" bash -euo pipefail -c '
+            pacman -Syu --noconfirm --needed namcap
             useradd -m builduser
-            cp -r /repo/aur-package /build
             chown -R builduser: /build
             cd /build
-            sudo -u builduser makepkg --printsrcinfo > /repo/aur-package/.SRCINFO
-            for ARCH in x86_64 aarch64; do
-              case "$ARCH" in x86_64) DEB=x64 ;; aarch64) DEB=arm64 ;; esac
-              cp /repo/debs/*linux-$DEB.deb nib.deb
-              sed "s/^CARCH=.*/CARCH=$ARCH/" /etc/makepkg.conf > /build/makepkg.conf
-              sudo -u builduser makepkg --config /build/makepkg.conf --force --nodeps --noconfirm
-            done
-            desktop-file-validate pkg/orden-edge-bin/usr/share/applications/nib.desktop
-            test -x pkg/orden-edge-bin/usr/bin/nib
-            test -f pkg/orden-edge-bin/usr/share/icons/hicolor/256x256/apps/nib.png
+            sudo -u builduser makepkg --printsrcinfo > .SRCINFO
+            namcap PKGBUILD
           '
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: aur-validated
-          path: |
-            aur-package
-            debs
+          name: aur-checked
+          path: aur-package
           include-hidden-files: true
           if-no-files-found: error
 
   publish:
-    needs: [build, package]
+    needs: check
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: aur
     permissions:
-      contents: write
+      contents: read
     env:
-      VERSION: ${{ needs.build.outputs.version }}
-      TAG: aur-edge
       HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: aur-validated
-      # One rolling prerelease, apart from edge, which release.yml remakes on every push.
-      # Older builds' files stay until the AUR recipe has moved past them.
-      - name: Keep the checked binaries on the rolling prerelease
-        if: env.HAS_KEY == 'true'
-        run: |
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --prerelease --latest=false --target "$GITHUB_SHA" --title 'AUR edge' --notes ''
-          gh release upload "$TAG" debs/*.deb --repo "$GITHUB_REPOSITORY" --clobber
+          name: aur-checked
+          path: aur-package
       - name: Push the checked recipe to AUR
         if: env.HAS_KEY == 'true'
         env:
@@ -174,21 +83,18 @@ jobs:
           unset AUR_SSH_PRIVATE_KEY
           printf '%s\n' 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur-known-hosts"
           export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur-known-hosts"
-          git clone ssh://aur@aur.archlinux.org/orden-edge-bin.git aur-repo
-          cp aur-package/{PKGBUILD,.SRCINFO,nib.desktop} aur-repo/
+          git clone ssh://aur@aur.archlinux.org/orden-git.git aur-repo
+          cp aur-package/{PKGBUILD,.SRCINFO} aur-repo/
           git -C aur-repo config user.name 'Bendik Arbogast'
           git -C aur-repo config user.email 'arbobendik@gmail.com'
-          git -C aur-repo add PKGBUILD .SRCINFO nib.desktop
-          git -C aur-repo commit -m "orden $VERSION"
-          git -C aur-repo push origin HEAD:master
-      - name: Drop the binaries of older builds
-        if: env.HAS_KEY == 'true'
-        run: |
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
-            --jq ".assets[].name | select(startswith(\"Orden-$VERSION-\") | not)" |
-            xargs -r -I{} gh release delete-asset "$TAG" {} --repo "$GITHUB_REPOSITORY" --yes
+          git -C aur-repo add PKGBUILD .SRCINFO
+          # A workflow-only change leaves the recipe as it is on the AUR.
+          if ! git -C aur-repo diff --cached --quiet; then
+            git -C aur-repo commit -m "orden-git from $GITHUB_REPOSITORY@$GITHUB_SHA"
+            git -C aur-repo push origin HEAD:master
+          fi
       - name: No AUR key yet
         if: env.HAS_KEY != 'true'
         run: |
           echo "### AUR not published" >> "$GITHUB_STEP_SUMMARY"
-          echo "The recipe builds, but AUR_SSH_PRIVATE_KEY is not set in the aur environment, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
+          echo "The recipe checks out, but AUR_SSH_PRIVATE_KEY is not set in the aur environment, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
