@@ -725,6 +725,7 @@ export const jv: Dictionary = {
   'That image does not fit in your storage.': 'Gambar kuwi ora cukup ing panyimpenan sampeyan.',
   'out of space': 'panyimpenan entek',
   'Orden {version} is ready to install.': 'Orden {version} wis siyap dipasang.',
+  'Orden {version} is available.': 'Orden {version} wis kasedhiya.',
   'Restart now': 'Wiwiti maneh saiki',
   'Move to Applications': 'Pindhah menyang Aplikasi',
   Later: 'Mengko',

@@ -731,6 +731,7 @@ export const fil: Dictionary = {
   'That image does not fit in your storage.': 'Hindi kasya ang imaheng iyon sa imbakan mo.',
   'out of space': 'walang espasyo',
   'Orden {version} is ready to install.': 'Puwede nang i-install ang Orden {version}.',
+  'Orden {version} is available.': 'Available na ang Orden {version}.',
   'Restart now': 'I-restart ngayon',
   'Move to Applications': 'Ilipat sa Applications',
   Later: 'Mamaya',

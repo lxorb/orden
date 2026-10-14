@@ -728,6 +728,7 @@ export const bn: Dictionary = {
   'That image does not fit in your storage.': 'এই ছবি আপনার স্টোরেজে জায়গা পাবে না।',
   'out of space': 'জায়গা নেই',
   'Orden {version} is ready to install.': 'Orden {version} ইনস্টলের জন্য তৈরি।',
+  'Orden {version} is available.': 'Orden {version} পাওয়া যাচ্ছে।',
   'Restart now': 'এখনই রিস্টার্ট',
   'Move to Applications': 'অ্যাপ্লিকেশনে সরান',
   Later: 'পরে',

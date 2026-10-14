@@ -731,6 +731,7 @@ export const kn: Dictionary = {
   'That image does not fit in your storage.': 'ನಿಮ್ಮ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಆ ಚಿತ್ರ ಹೊಂದುವುದಿಲ್ಲ.',
   'out of space': 'ಸಂಗ್ರಹಣೆ ಇಲ್ಲ',
   'Orden {version} is ready to install.': 'Orden {version} ಸ್ಥಾಪನೆಗೆ ಸಿದ್ಧ.',
+  'Orden {version} is available.': 'Orden {version} ಲಭ್ಯವಿದೆ.',
   'Restart now': 'ಈಗಲೇ ಮರುಪ್ರಾರಂಭಿಸಿ',
   'Move to Applications': 'ಅಪ್ಲಿಕೇಶನ್‌ಗಳಿಗೆ ಸರಿಸಿ',
   Later: 'ನಂತರ',

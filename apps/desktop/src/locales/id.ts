@@ -725,6 +725,7 @@ export const id: Dictionary = {
   'That image does not fit in your storage.': 'Gambar itu tidak cukup di penyimpanan Anda.',
   'out of space': 'penyimpanan penuh',
   'Orden {version} is ready to install.': 'Orden {version} siap dipasang.',
+  'Orden {version} is available.': 'Orden {version} sudah tersedia.',
   'Restart now': 'Mulai ulang sekarang',
   'Move to Applications': 'Pindahkan ke Aplikasi',
   Later: 'Nanti',

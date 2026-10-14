@@ -731,6 +731,7 @@ export const sw: Dictionary = {
   'That image does not fit in your storage.': 'Picha hiyo haitoshi kwenye hifadhi yako.',
   'out of space': 'hifadhi imeisha',
   'Orden {version} is ready to install.': 'Orden {version} iko tayari kusakinishwa.',
+  'Orden {version} is available.': 'Orden {version} inapatikana.',
   'Restart now': 'Anzisha tena sasa',
   'Move to Applications': 'Hamishia kwenye Programu',
   Later: 'Baadaye',

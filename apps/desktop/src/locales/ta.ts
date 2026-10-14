@@ -727,6 +727,7 @@ export const ta: Dictionary = {
   'That image does not fit in your storage.': 'உங்கள் சேமிப்பிடத்தில் அந்தப் படம் அடங்காது.',
   'out of space': 'சேமிப்பிடம் இல்லை',
   'Orden {version} is ready to install.': 'Orden {version} நிறுவத் தயார்.',
+  'Orden {version} is available.': 'Orden {version} கிடைக்கிறது.',
   'Restart now': 'இப்போதே மீள்தொடங்கு',
   'Move to Applications': 'பயன்பாடுகளுக்கு நகர்த்து',
   Later: 'பிறகு',

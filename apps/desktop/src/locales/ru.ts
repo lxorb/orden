@@ -760,6 +760,7 @@ export const ru: Dictionary = {
   'That image does not fit in your storage.': 'Это изображение не помещается в хранилище.',
   'out of space': 'нет места',
   'Orden {version} is ready to install.': 'Orden {version} готов к установке.',
+  'Orden {version} is available.': 'Доступен Orden {version}.',
   'Restart now': 'Перезапустить',
   'Move to Applications': 'Переместить в «Программы»',
   Later: 'Позже',

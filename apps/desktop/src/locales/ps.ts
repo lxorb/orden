@@ -728,6 +728,7 @@ export const ps: Dictionary = {
   'That image does not fit in your storage.': 'هغه انځور ستاسو په زېرمه کې نه ځايېږي.',
   'out of space': 'زېرمه ډکه',
   'Orden {version} is ready to install.': 'Orden {version} د لګولو لپاره تيار دی.',
+  'Orden {version} is available.': 'Orden {version} شته دی.',
   'Restart now': 'اوس بيا پيلول',
   'Move to Applications': 'اپلیکیشنونو ته یې ولېږدوئ',
   Later: 'وروسته',

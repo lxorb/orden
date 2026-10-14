@@ -723,6 +723,7 @@ export const th: Dictionary = {
   'That image does not fit in your storage.': 'ที่เก็บข้อมูลของคุณไม่พอสำหรับรูปนั้น',
   'out of space': 'ที่เก็บข้อมูลเต็ม',
   'Orden {version} is ready to install.': 'Orden {version} พร้อมติดตั้ง',
+  'Orden {version} is available.': 'Orden {version} พร้อมให้ใช้งานแล้ว',
   'Restart now': 'เริ่มใหม่เดี๋ยวนี้',
   'Move to Applications': 'ย้ายไปที่แอปพลิเคชัน',
   Later: 'ภายหลัง',

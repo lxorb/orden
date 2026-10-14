@@ -728,6 +728,7 @@ export const ur: Dictionary = {
   'That image does not fit in your storage.': 'یہ تصویر آپ کے ذخیرے میں نہیں سماتی۔',
   'out of space': 'ذخیرہ ختم',
   'Orden {version} is ready to install.': 'Orden {version} انسٹال کے لیے تیار ہے۔',
+  'Orden {version} is available.': 'Orden {version} دستیاب ہے۔',
   'Restart now': 'ابھی دوبارہ شروع کریں',
   'Move to Applications': 'ایپلیکیشنز میں منتقل کریں',
   Later: 'بعد میں',

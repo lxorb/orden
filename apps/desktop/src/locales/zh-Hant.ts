@@ -721,6 +721,7 @@ export const zhHant: Dictionary = {
   'That image does not fit in your storage.': '儲存空間不足，放不下這張圖片。',
   'out of space': '儲存空間已滿',
   'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
+  'Orden {version} is available.': 'Orden{version}已推出。',
   'Restart now': '立即重新啟動',
   'Move to Applications': '移到「應用程式」',
   Later: '稍後',

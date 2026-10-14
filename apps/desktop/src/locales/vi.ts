@@ -724,6 +724,7 @@ export const vi: Dictionary = {
   'That image does not fit in your storage.': 'Ảnh đó không vừa dung lượng của bạn.',
   'out of space': 'hết dung lượng',
   'Orden {version} is ready to install.': 'Orden {version} đã sẵn sàng để cài.',
+  'Orden {version} is available.': 'Đã có Orden {version}.',
   'Restart now': 'Khởi động lại ngay',
   'Move to Applications': 'Chuyển vào Ứng dụng',
   Later: 'Để sau',

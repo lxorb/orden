@@ -727,6 +727,7 @@ export const te: Dictionary = {
   'That image does not fit in your storage.': 'మీ స్టోరేజ్‌లో ఆ చిత్రం సరిపోదు.',
   'out of space': 'స్టోరేజ్ లేదు',
   'Orden {version} is ready to install.': 'Orden {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
+  'Orden {version} is available.': 'Orden {version} అందుబాటులో ఉంది.',
   'Restart now': 'ఇప్పుడే రీస్టార్ట్',
   'Move to Applications': 'అప్లికేషన్‌లకు తరలించు',
   Later: 'తర్వాత',

@@ -738,6 +738,7 @@ export const fr: Dictionary = {
   'That image does not fit in your storage.': 'Cette image ne tient pas dans votre stockage.',
   'out of space': 'plus d’espace disponible',
   'Orden {version} is ready to install.': 'Orden {version} est prêt à être installé.',
+  'Orden {version} is available.': 'Orden {version} est disponible.',
   'Restart now': 'Redémarrer maintenant',
   'Move to Applications': 'Déplacer dans Applications',
   Later: 'Plus tard',

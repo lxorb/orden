@@ -725,6 +725,7 @@ export const my: Dictionary = {
   'That image does not fit in your storage.': 'သင့်သိုလှောင်မှုတွင်ထိုပုံမဆံ့ပါ။',
   'out of space': 'သိုလှောင်မှုပြည့်',
   'Orden {version} is ready to install.': 'Orden {version} တပ်ဆင်ရန်အသင့်ရှိ။',
+  'Orden {version} is available.': 'Orden {version} ရနိုင်ပါပြီ။',
   'Restart now': 'ယခုပြန်စ',
   'Move to Applications': 'Applications သို့ ရွှေ့ရန်',
   Later: 'နောက်မှ',

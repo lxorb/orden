@@ -728,6 +728,7 @@ export const hi: Dictionary = {
   'That image does not fit in your storage.': 'वह छवि आपके स्टोरेज में नहीं समाती।',
   'out of space': 'जगह नहीं बची',
   'Orden {version} is ready to install.': 'Orden {version} इंस्टॉल के लिए तैयार है।',
+  'Orden {version} is available.': 'Orden {version} उपलब्ध है।',
   'Restart now': 'अभी रीस्टार्ट करें',
   'Move to Applications': 'ऐप्लिकेशन में ले जाएँ',
   Later: 'बाद में',

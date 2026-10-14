@@ -731,6 +731,7 @@ export const pa: Dictionary = {
   'That image does not fit in your storage.': 'ਉਹ ਤਸਵੀਰ ਤੁਹਾਡੀ ਸੰਭਾਲ ਵਿੱਚ ਨਹੀਂ ਸਮਾਉਂਦੀ।',
   'out of space': 'ਸੰਭਾਲ ਭਰ ਗਈ',
   'Orden {version} is ready to install.': 'Orden {version} ਲਾਉਣ ਲਈ ਤਿਆਰ ਹੈ।',
+  'Orden {version} is available.': 'Orden {version} ਉਪਲਬਧ ਹੈ।',
   'Restart now': 'ਹੁਣੇ ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
   'Move to Applications': 'ਐਪਲੀਕੇਸ਼ਨਾਂ ਵਿੱਚ ਲਿਜਾਓ',
   Later: 'ਬਾਅਦ ਵਿੱਚ',
