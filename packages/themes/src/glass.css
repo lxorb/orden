@@ -221,6 +221,138 @@
   initial-value: transparent;
 }
 
+/* ── The shape ──
+
+   What makes glass a material rather than a colour, the way a phone's controls have
+   been drawn since Apple's Liquid Glass and a banking app like Revolut draws its
+   cards: the things that float are frosted panes of the frame with a lit rim, the
+   paper is a card laid on the frame rather than the rest of the window, and every
+   control a finger or a pointer presses is a capsule. Only the shape and the
+   material change here; every colour a word stands on is still one of the palette's,
+   at an opacity that keeps it so, and nothing here moves.
+
+   The two dials a surface reads: how much of the palette a floating pane keeps - enough
+   that the words under a menu never read through it where the blur is not drawn, as
+   it is not in WebKitGTK without compositing - and the rim - a hairline of
+   light round the edge and a brighter one along the top, which is what reads as
+   thickness on glass. */
+:root,
+[data-theme='dark'] {
+  --glass-float: color-mix(in srgb, var(--surface) 88%, transparent);
+  --glass-float-blur: blur(40px) saturate(180%);
+  --glass-edge: rgb(255 255 255 / 0.09);
+  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  --glass-chip: rgb(255 255 255 / 0.1);
+  --glass-chip-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08), 0 1px 2px rgb(0 0 0 / 0.3),
+    0 0 0 0.5px rgb(255 255 255 / 0.06);
+  --glass-card-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+
+  /* Rounder throughout: a corner the eye reads as a pane of something rather than a
+     box drawn round a list. The three steps keep their order, and a row's corner is
+     a capsule's but for the height. */
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-row: 10px;
+}
+
+[data-theme='light'] {
+  --glass-float: color-mix(in srgb, var(--surface) 90%, transparent);
+  --glass-edge: rgb(255 255 255 / 0.7);
+  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --glass-chip: rgb(255 255 255 / 0.78);
+  --glass-chip-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1), 0 1px 3px rgb(16 24 40 / 0.1),
+    0 0 0 0.5px rgb(16 24 40 / 0.08);
+  --glass-card-shadow: 0 0 0 1px rgb(16 24 40 / 0.06), 0 12px 32px -14px rgb(16 24 40 / 0.22);
+}
+
+:root[data-touch] {
+  --radius-row: 16px;
+}
+
+/* The paper, a card on the frame. A desktop only: on a phone the note is the whole
+   screen and a margin round it is room taken from the words. The top stays flush,
+   because the open tab runs down into it; the other three sides stand off the frame
+   by a step, so the frame's colour is round the paper the way a wallpaper is round a
+   window. */
+:root:not([data-touch]) .document > .body {
+  padding: 0 var(--space-2) var(--space-2) var(--space-2);
+}
+
+:root:not([data-touch]) .document > .body .pane {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: var(--glass-card-shadow);
+  overflow: clip;
+}
+
+/* And the hairline between a side panel and the note is the gap now. */
+:root:not([data-touch]) .panels aside {
+  border-inline-color: transparent;
+}
+
+/* What floats: a menu, the palette and the one small modal, a bar over a selection, a
+   word of help, a notice. Frosted rather than solid, under the rim. */
+:root .nib-layer,
+:root .nib-screen,
+:root .nib-bar,
+:root .nib-bubble,
+:root .nib-pill {
+  border-color: var(--glass-edge);
+  background: var(--glass-float);
+  -webkit-backdrop-filter: var(--glass-float-blur);
+  backdrop-filter: var(--glass-float-blur);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+}
+
+:root .nib-bar,
+:root .nib-pill {
+  border-radius: 999px;
+}
+
+:root .nib-bar button {
+  border-radius: 999px;
+}
+
+/* The row you are on: a chip of glass lifted off the list rather than a wash of the
+   accent, which keeps the accent for the mark in front of it. */
+:root .nib-row.is-on {
+  background: var(--glass-chip);
+  box-shadow: var(--glass-chip-shadow);
+}
+
+/* Capsules: a glyph that is a button is a circle, a button and a segmented control a
+   pill, and the thumb that slides along one a chip. */
+:root .nib-glyph,
+:root .nib-glyph.is-on {
+  border-radius: 999px;
+}
+
+:root .nib-button {
+  border-radius: 999px;
+  padding-inline: var(--space-5);
+}
+
+:root .nib-button:not(.is-quiet, .is-danger) {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+:root .nib-segmented {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+:root .nib-segmented button,
+:root .nib-segmented-thumb {
+  border-radius: 999px;
+}
+
+:root .nib-segmented-thumb,
+:root .nib-segmented:not(.has-thumb) button.on {
+  background: var(--glass-chip);
+  box-shadow: var(--glass-chip-shadow);
+}
+
 /* A system asking for less transparency is answered with none: Windows turns Mica into
    a flat colour by itself, and this makes the page's own chrome flat with it. */
 @media (prefers-reduced-transparency: reduce) {
@@ -237,6 +369,17 @@
     --glass-from: var(--glass-tint);
     --glass-to: var(--glass-tint-2);
     --shell-ground: var(--glass-blend);
+  }
+
+  /* What floats is solid, at the palette's own surface. */
+  :root .nib-layer,
+  :root .nib-screen,
+  :root .nib-bar,
+  :root .nib-bubble,
+  :root .nib-pill {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   /* And the note is on its paper, whatever the Content row says. */
