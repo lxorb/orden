@@ -37,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -51,9 +52,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
       - run: pnpm install --frozen-lockfile
       - id: version
-        run: |
-          BASE=$(node -p "JSON.parse(require('fs').readFileSync('apps/desktop/src-tauri/tauri.conf.json')).version")
-          echo "version=$BASE-$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+        run: bash scripts/build-version.sh edge
       # Pacman manages updates. This build needs no updater signing secret.
       - name: Build the Linux package
         env:
@@ -87,12 +86,12 @@ jobs:
           path: debs
       - name: Generate the AUR recipe from this build
         run: |
-          mv debs/*amd64.deb "debs/Nib-$VERSION-linux-x64.deb"
-          mv debs/*arm64.deb "debs/Nib-$VERSION-linux-arm64.deb"
+          mv debs/*amd64.deb "debs/Orden-$VERSION-linux-x64.deb"
+          mv debs/*arm64.deb "debs/Orden-$VERSION-linux-arm64.deb"
           cp -r packaging/aur/nib-bin aur-package
           BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
-          X64=$(sha256sum "debs/Nib-$VERSION-linux-x64.deb" | cut -d' ' -f1)
-          ARM64=$(sha256sum "debs/Nib-$VERSION-linux-arm64.deb" | cut -d' ' -f1)
+          X64=$(sha256sum "debs/Orden-$VERSION-linux-x64.deb" | cut -d' ' -f1)
+          ARM64=$(sha256sum "debs/Orden-$VERSION-linux-arm64.deb" | cut -d' ' -f1)
           DESKTOP=$(sha256sum aur-package/nib.desktop | cut -d' ' -f1)
           sed -i \
             -e '1c\# Maintainer: Bendik Arbogast <bendik@arbogast.dev>' \
@@ -101,7 +100,7 @@ jobs:
             -e 's/^conflicts=(/conflicts=("orden" /' \
             -e "s|^url=.*|url=\"https://github.com/$GITHUB_REPOSITORY\"|" \
             -e "s|^_url=.*|_version=$VERSION\n_url=\"$BASE\"|" \
-            -e 's/Nib-${pkgver}/Nib-${_version}/g' \
+            -e 's/Orden-${pkgver}/Orden-${_version}/g' \
             -e "s/^sha256sums=.*/sha256sums=('$DESKTOP')/" \
             -e "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('$X64')/" \
             -e "s/^sha256sums_aarch64=.*/sha256sums_aarch64=('$ARM64')/" \
