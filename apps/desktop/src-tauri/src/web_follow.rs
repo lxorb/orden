@@ -232,7 +232,7 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
     target_os = "linux",
     allow(
         clippy::unnecessary_wraps,
-        reason = "placement on other platforms can fail"
+        reason = "the runtime's own placement elsewhere can fail"
     )
 )]
 pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
