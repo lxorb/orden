@@ -146,6 +146,7 @@ jobs:
     env:
       VERSION: ${{ needs.build.outputs.version }}
       TAG: aur-edge
+      HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -154,12 +155,14 @@ jobs:
       # One rolling prerelease, apart from edge, which release.yml remakes on every push.
       # Older builds' files stay until the AUR recipe has moved past them.
       - name: Keep the checked binaries on the rolling prerelease
+        if: env.HAS_KEY == 'true'
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               --prerelease --latest=false --target "$GITHUB_SHA" --title 'AUR edge' --notes ''
           gh release upload "$TAG" debs/*.deb --repo "$GITHUB_REPOSITORY" --clobber
       - name: Push the checked recipe to AUR
+        if: env.HAS_KEY == 'true'
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         run: |
@@ -167,7 +170,7 @@ jobs:
           umask 077
           KEY="$RUNNER_TEMP/aur-key"
           trap 'rm -f "$KEY"' EXIT
-          printf '%s\n' "${AUR_SSH_PRIVATE_KEY:?Set the SSH key in the aur environment}" > "$KEY"
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$KEY"
           unset AUR_SSH_PRIVATE_KEY
           printf '%s\n' 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur-known-hosts"
           export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur-known-hosts"
@@ -179,7 +182,13 @@ jobs:
           git -C aur-repo commit -m "orden $VERSION"
           git -C aur-repo push origin HEAD:master
       - name: Drop the binaries of older builds
+        if: env.HAS_KEY == 'true'
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
             --jq ".assets[].name | select(startswith(\"Orden-$VERSION-\") | not)" |
             xargs -r -I{} gh release delete-asset "$TAG" {} --repo "$GITHUB_REPOSITORY" --yes
+      - name: No AUR key yet
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "### AUR not published" >> "$GITHUB_STEP_SUMMARY"
+          echo "The recipe builds, but AUR_SSH_PRIVATE_KEY is not set in the aur environment, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
