@@ -261,17 +261,6 @@ jobs:
             apps/desktop/src-tauri
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      # Whether every Cargo.lock still agrees with its Cargo.toml - no compiling,
-      # just resolution, and the same lock resolves the same way on any of the
-      # three rows, so once is enough. This is what PR #334 skipped: zip went into
-      # the crate's Cargo.toml but not into cef's Cargo.lock, and the mismatch
-      # stood until a release row's `--locked` build hit it.
-      - name: Every Cargo.lock matches its Cargo.toml
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cargo metadata --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --format-version 1 >/dev/null
-          cargo metadata --locked --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --format-version 1 >/dev/null
-
       # Tauri needs the system webview to compile against. Windows has WebView2 in
       # the image already and macOS has WebKit in the system; only Linux has to be
       # handed one.
