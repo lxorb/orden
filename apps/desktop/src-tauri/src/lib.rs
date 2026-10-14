@@ -552,6 +552,9 @@ pub type Engine = tauri::Wry;
 /// gives - `WebView2` on Windows, `WKWebView` on a
 /// Mac, `WebKitGTK` on Linux. Returns when the last window has closed.
 pub fn run() {
+    // Before GTK and any thread, both of which read what it sets; see linux.rs.
+    #[cfg(target_os = "linux")]
+    linux::prepare();
     run_on(tauri::Builder::default());
 }
 
@@ -569,9 +572,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(target_os = "macos")]
     bundle_name::carry_over();
 
-    // Before GTK and any thread, both of which read what it sets; see linux.rs.
-    #[cfg(target_os = "linux")]
-    linux::prepare();
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
