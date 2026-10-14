@@ -1,4 +1,4 @@
-# A Windows build machine's whole life. ci.sh renders this run's values in and hands
+# A Windows build machine's whole life. machines.sh renders this run's values in and hands
 # it over as the machine's custom data; vm.json's script extension starts it as SYSTEM.
 # It gets the machine ready, starts exactly one job through a just-in-time runner, and
 # deletes the machine afterwards.
@@ -92,14 +92,17 @@ if (`$env:GITHUB_RUN_ID -ne '$runId' -or `$env:GITHUB_REPOSITORY -ne '$repo') {
 & $ps -NoProfile -ExecutionPolicy Bypass -File '$r\reap.ps1'
 "@ | Set-Content "$r\job.ps1"
 
-$jobs | Wait-Job | Receive-Job
-Mark 'tools installed'
-
 # As SYSTEM: the image's policy does not let the task scheduler keep a user's password,
-# and nothing on this machine is anybody's but the job's.
+# and nothing on this machine is anybody's but the job's. Started before the tools are
+# in: a job's first minutes (checkout, Node, Rust, packages) need none of them, and it
+# waits for C:\r\ready before the step that does (release.yml, "The machine's tools").
 Register-ScheduledTask -TaskName nib-runner -User SYSTEM -RunLevel Highest -Force `
   -Action (New-ScheduledTaskAction -Execute $ps -Argument "-NoProfile -ExecutionPolicy Bypass -File $r\job.ps1") `
   -Settings (New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes $lifetime)) | Out-Null
 Start-ScheduledTask -TaskName nib-runner
 Mark 'runner started'
+
+$jobs | Wait-Job | Receive-Job
+Mark 'tools installed'
 Stop-Transcript | Out-Null
+Copy-Item "$r\boot.log" "$r\ready"

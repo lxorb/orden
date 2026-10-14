@@ -36,6 +36,10 @@
     },
     "boot": {
       "type": "securestring"
+    },
+    "spot": {
+      "type": "bool",
+      "defaultValue": false
     }
   },
   "variables": {
@@ -140,6 +144,9 @@
         }
       },
       "properties": {
+        "priority": "[if(parameters('spot'), 'Spot', 'Regular')]",
+        "evictionPolicy": "[if(parameters('spot'), 'Delete', json('null'))]",
+        "billingProfile": "[if(parameters('spot'), createObject('maxPrice', -1), json('null'))]",
         "hardwareProfile": {
           "vmSize": "[parameters('size')]"
         },

@@ -29,6 +29,17 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 LIFETIME_MIN="${NIB_CI_LIFETIME_MIN:-180}"
 read -r -a REGIONS <<<"${NIB_CI_REGIONS:-swedencentral northeurope westeurope germanywestcentral}"
 SIZE="${NIB_CI_SIZE:-Standard_D16ads_v7}"
+VCPUS="$(sed -E 's/^Standard_[A-Z]+([0-9]+).*/\1/' <<<"$SIZE")"
+# The quota a size counts against: Standard_D16ads_v7 is StandardDadsv7Family.
+FAMILY="$(sed -E 's/^Standard_([A-Z]+)[0-9]+([a-z]*)_(v[0-9]+)$/Standard\1\2\3Family/' <<<"$SIZE")"
+# Where a machine is tried, in this order: Spot, at a fifth of the price, in every region,
+# then on demand in every region. NIB_CI_SPOT=off (a run started again after Azure took
+# a Spot machine back mid-job) goes straight to on demand.
+TRIES=()
+for priority in spot regular; do
+  [ "$priority" = regular ] || [ "${NIB_CI_SPOT:-on}" = on ] || continue
+  for region in "${REGIONS[@]}"; do TRIES+=("$priority $region"); done
+done
 IMAGE='{"publisher":"MicrosoftVisualStudio","offer":"visualstudiowsplustools","sku":"vs-latest-comm-ws2025-datacenter-azure-gen2","version":"latest"}'
 ONLINE_WITHIN_S="${NIB_CI_ONLINE_WITHIN_S:-720}"
 
@@ -102,12 +113,25 @@ abandon() { # name runner-prefix
   forget_runners "$2"
 }
 
-# Try $3 (a region, 1-based) of row $1, whose job waits on label $2. Fails, leaving
+# Whether the quota in region $2 has room for one more machine of priority $1, so a
+# try that cannot work costs one call rather than half a deployment.
+room() {
+  local names="'lowPriorityCores'"
+  [ "$1" = spot ] || names="'cores','$FAMILY'"
+  az vm list-usage -l "$2" --query "[?contains([$names], name.value)].[limit, currentValue]" -o tsv |
+    awk -v n="$VCPUS" 'NF == 2 { seen++; if ($1 - $2 < n) short = 1 } END { exit !(seen && !short) }'
+}
+
+# Try $3 (1-based, of TRIES) of row $1, whose job waits on label $2. Fails, leaving
 # nothing behind, when Azure does not take the machine.
 launch() {
-  local row="$1" label="$2" try="$3" os="$4" arch="$5"
-  local region="${REGIONS[$((try - 1))]}" name="nibci-$RUN-$row-$try" runner="$label-$try" jit params
+  local row="$1" label="$2" try="$3" os="$4" arch="$5" priority region
+  read -r priority region <<<"${TRIES[$((try - 1))]}"
+  # The runner's name says what kind of machine it is on (s: Spot, r: on demand), for
+  # the job that tells a machine Azure took back from a build that failed.
+  local name="nibci-$RUN-$row-$try" runner="$label-${priority:0:1}$try" jit params
   [ "$os" = windows ] || { log "$row: no $os machine yet"; return 1; }
+  room "$priority" "$region" || { log "$row: no $priority quota left in $region"; return 1; }
   jit="$(gh api -X POST "repos/$REPO/actions/runners/generate-jitconfig" \
     -f name="$runner" -F runner_group_id=1 -f "labels[]=$label" -f work_folder=_work \
     --jq .encoded_jit_config)"
@@ -115,7 +139,7 @@ launch() {
   params="$(mktemp)"
   NAME="$name" RUN="$RUN" SIZE="$SIZE" OS="$os" IMAGE="$IMAGE" \
     EXPIRES="$(date -u -d "+$LIFETIME_MIN minutes" +%Y-%m-%dT%H:%M:%SZ)" \
-    REAPER="$(az identity show -g "$GROUP" -n nib-ci-reaper --query id -o tsv)" \
+    REAPER="$(az identity show -g "$GROUP" -n nib-ci-reaper --query id -o tsv)" SPOT="$priority" \
     PASSWORD="N1b-$(openssl rand -hex 16)" \
     BOOT="$("$PY" "$(native "$HERE/boot.py")" "$os" "$arch" "$jit" "${RUNNER_URL:?}" "${GITHUB_RUN_ID:?}" "$REPO" "$LIFETIME_MIN" "$row")" \
     "$PY" -c '
@@ -125,9 +149,10 @@ json.dump({
   "name": v(e["NAME"]), "size": v(e["SIZE"]), "os": v(e["OS"]), "image": v(json.loads(e["IMAGE"])),
   "tags": v({"nib-ci": "1", "nib-ci-run": e["RUN"], "nib-ci-vm": e["NAME"], "nib-ci-expires": e["EXPIRES"]}),
   "reaper": v(e["REAPER"]), "password": v(e["PASSWORD"]), "boot": v(e["BOOT"]),
+  "spot": v(e["SPOT"] == "spot"),
 }, open(sys.argv[1], "w"))
 ' "$(native "$params")"
-  log "$row: $SIZE in $region"
+  log "$row: $SIZE ($priority) in $region"
   local ok=1 waited
   az deployment group create -g "$GROUP" -n "$name" --template-file "$(native "$HERE/vm.json")" \
     --parameters "@$(native "$params")" location="$region" --no-wait -o none || ok=0
@@ -150,12 +175,12 @@ json.dump({
   return 1
 }
 
-# Each region from try $3 on, until one takes the machine.
+# Each try from $3 on, until one takes the machine.
 launch_from() {
   local try
-  for ((try = $3; try <= ${#REGIONS[@]}; try++)); do
+  for ((try = $3; try <= ${#TRIES[@]}; try++)); do
     launch "$1" "$2" "$try" "$4" "$5" && return 0
-    log "$1: not in ${REGIONS[$((try - 1))]}"
+    log "$1: not as ${TRIES[$((try - 1))]}"
   done
   return 1
 }
@@ -226,12 +251,13 @@ online() {
 # region, for the same label, so the job waiting on it still gets its runner. When that
 # fails too, this fails, and the workflow hands the run to GitHub's own runners.
 watch_row() {
-  local row="$1" name
+  local row="$1" name next=2
   online "$row" && return 0
   for name in $(az vm list -g "$GROUP" --query "[?starts_with(name, 'nibci-$RUN-$row-')].name" -o tsv); do
+    next=$((${name##*-} + 1))
     abandon "$name" "$(label_of "$row")-"
   done
-  launch_from "$row" "$(label_of "$row")" 2 "$2" "$3" && online "$row"
+  launch_from "$row" "$(label_of "$row")" "$next" "$2" "$3" && online "$row"
 }
 
 cmd_watch() {
