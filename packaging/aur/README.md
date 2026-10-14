@@ -6,9 +6,9 @@ push to `main`, validates both AUR packages with Arch's `makepkg`, then publishe
 Install or update with `yay -S orden-bin`; these builds need no updater signing key.
 App version `0.14.0-12` becomes Arch version `0.14.0pre12`, before `0.14.0`.
 
-Each build keeps its binaries on a separate `aur-<run-id>-<attempt>` GitHub
-prerelease. Keep these releases: AUR recipes pin their URLs and SHA-256 hashes.
-The rolling `edge` release can therefore be replaced independently.
+Builds keep their binaries on one rolling `aur-edge` GitHub prerelease, apart
+from `edge`, which is remade on every push. The AUR recipe pins their URLs and
+SHA-256 hashes, so an older build's files are deleted only after the AUR push.
 
 The GitHub environment `aur` permits only `main`. Its secret `AUR_SSH_PRIVATE_KEY`
 is a dedicated Ed25519 key; add its public half (`~/.ssh/orden_aur_ci.pub`) to
