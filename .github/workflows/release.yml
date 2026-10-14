@@ -128,8 +128,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
-          # shellcheck disable=SC2086
           export NIB_CI_RUNNERS="$RUNNER_TEMP/runners.json"
+          # shellcheck disable=SC2086
           bash .github/azure/machines.sh start $ROWS
           runners=$(cat "$NIB_CI_RUNNERS")
           echo "runners=$(jq -c --arg a "$GITHUB_RUN_ATTEMPT" 'with_entries(.key = "\($a)/\(.key)")' <<<"$runners")" >>"$GITHUB_OUTPUT"
@@ -141,7 +141,7 @@ jobs:
   # its job would otherwise wait for a runner that will never come.
   machines-online:
     needs: machines
-    if: needs.machines.outputs.rows != ''
+    if: ${{ !cancelled() && needs.machines.outputs.rows != '' }}
     runs-on: ubuntu-latest
     environment: azure-ci
     timeout-minutes: 40
