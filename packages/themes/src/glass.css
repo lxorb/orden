@@ -353,6 +353,32 @@
   box-shadow: var(--glass-chip-shadow);
 }
 
+/* A switch is a capsule with a pebble of white in it, lit from above, whichever way
+   it is set: what says on or off is the track, the accent or a lift of the ink, and
+   where the pebble sits. */
+:root .nib-switch {
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+:root .nib-switch.on {
+  background: var(--accent);
+}
+
+:root .nib-switch::after,
+:root .nib-switch.on::after {
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.25),
+    0 0 0 0.5px rgb(0 0 0 / 0.06);
+}
+
+/* A field one line tall is a capsule too; one that takes paragraphs keeps its
+   corners, or a capsule's ends would cut into the words at its edge. */
+:root .nib-field:not(textarea, :has(textarea)) {
+  border-radius: 999px;
+}
+
 /* ── Orden's own ──
 
    What keeps this from being anybody's glass: the app's icon. Four capsules of ink on
