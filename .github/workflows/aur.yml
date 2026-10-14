@@ -74,7 +74,7 @@ jobs:
       contents: read
     env:
       VERSION: ${{ needs.build.outputs.version }}
-      TAG: aur-${{ github.run_id }}-${{ github.run_attempt }}
+      TAG: aur-edge
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -144,18 +144,20 @@ jobs:
       contents: write
     env:
       VERSION: ${{ needs.build.outputs.version }}
-      TAG: aur-${{ github.run_id }}-${{ github.run_attempt }}
+      TAG: aur-edge
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: aur-validated
-      # A versioned release preserves the files after the next edge rebuild.
-      - name: Preserve the checked binaries
-        env:
-          GH_TOKEN: ${{ github.token }}
+      # One rolling prerelease, apart from edge, which release.yml remakes on every push.
+      # Older builds' files stay until the AUR recipe has moved past them.
+      - name: Keep the checked binaries on the rolling prerelease
         run: |
-          gh release create "$TAG" debs/*.deb --repo "$GITHUB_REPOSITORY" \
-            --prerelease --latest=false --target "$GITHUB_SHA" --title "AUR · $VERSION" --notes ''
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --prerelease --latest=false --target "$GITHUB_SHA" --title 'AUR edge' --notes ''
+          gh release upload "$TAG" debs/*.deb --repo "$GITHUB_REPOSITORY" --clobber
       - name: Push the checked recipe to AUR
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
@@ -175,3 +177,8 @@ jobs:
           git -C aur-repo add PKGBUILD .SRCINFO nib.desktop
           git -C aur-repo commit -m "orden $VERSION"
           git -C aur-repo push origin HEAD:master
+      - name: Drop the binaries of older builds
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq ".assets[].name | select(startswith(\"Orden-$VERSION-\") | not)" |
+            xargs -r -I{} gh release delete-asset "$TAG" {} --repo "$GITHUB_REPOSITORY" --yes
