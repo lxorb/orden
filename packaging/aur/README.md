@@ -2,8 +2,9 @@
 
 `.github/workflows/aur.yml` builds x86_64 and aarch64 Debian packages on every
 push to `main`, validates both AUR packages with Arch's `makepkg`, then publishes
-`orden-bin`. Pull requests and branch dispatches validate without publishing.
-Install or update with `yay -S orden-bin`; these builds need no updater signing key.
+`orden-edge-bin`. Pull requests and branch dispatches validate without publishing.
+Install or update with `yay -S orden-edge-bin`; these builds need no updater signing key.
+`orden-bin` stays the stable package, pushed by `publish-linux.yml` on each release.
 App version `0.14.0-12` becomes Arch version `0.14.0pre12`, before `0.14.0`.
 
 Builds keep their binaries on one rolling `aur-edge` GitHub prerelease, apart

@@ -95,6 +95,7 @@ jobs:
           DESKTOP=$(sha256sum aur-package/nib.desktop | cut -d' ' -f1)
           sed -i \
             -e '1c\# Maintainer: Bendik Arbogast <bendik@arbogast.dev>' \
+            -e 's/^pkgname=.*/pkgname=orden-edge-bin/' \
             -e "s/^pkgver=.*/pkgver=${VERSION/-/pre}/" \
             -e 's/^pkgrel=.*/pkgrel=1/' \
             -e 's/^conflicts=(/conflicts=("orden" /' \
@@ -122,9 +123,9 @@ jobs:
               sed "s/^CARCH=.*/CARCH=$ARCH/" /etc/makepkg.conf > /build/makepkg.conf
               sudo -u builduser makepkg --config /build/makepkg.conf --force --nodeps --noconfirm
             done
-            desktop-file-validate pkg/orden-bin/usr/share/applications/nib.desktop
-            test -x pkg/orden-bin/usr/bin/nib
-            test -f pkg/orden-bin/usr/share/icons/hicolor/256x256/apps/nib.png
+            desktop-file-validate pkg/orden-edge-bin/usr/share/applications/nib.desktop
+            test -x pkg/orden-edge-bin/usr/bin/nib
+            test -f pkg/orden-edge-bin/usr/share/icons/hicolor/256x256/apps/nib.png
           '
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -170,7 +171,7 @@ jobs:
           unset AUR_SSH_PRIVATE_KEY
           printf '%s\n' 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur-known-hosts"
           export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur-known-hosts"
-          git clone ssh://aur@aur.archlinux.org/orden-bin.git aur-repo
+          git clone ssh://aur@aur.archlinux.org/orden-edge-bin.git aur-repo
           cp aur-package/{PKGBUILD,.SRCINFO,nib.desktop} aur-repo/
           git -C aur-repo config user.name 'Bendik Arbogast'
           git -C aur-repo config user.email 'arbobendik@gmail.com'
