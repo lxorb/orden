@@ -81,8 +81,12 @@ async function choose(path: string, where: Where): Promise<void> {
 
   // Its open page moves now, before the store it leaves is cleared; see `rehouse`.
   const said = own ? t('This note keeps its own web data now') : t('Back on the shared web data')
+  // The note's tabs, and the tabs with no file that took its web data with them.
   for (const tab of workspace.tabs) {
-    if (tab.kind === 'web' && tab.path === path) await pages.rehouse(tab.id, own, said)
+    if (tab.kind !== 'web') continue
+    const copy = tab.path === null && was !== null && tab.apart === was
+    if (copy) tab.apart = own
+    if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
   if (was !== null && own === null) {

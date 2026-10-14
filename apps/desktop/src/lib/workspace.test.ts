@@ -135,6 +135,7 @@ const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
+const { apartOf, writeShortcut } = await import('./web-tab/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
 const { shown: pad } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -4613,6 +4614,78 @@ describe('an essential', () => {
 
     expect(shown?.essential).toBe('/space/z.md')
     expect(strip()).toEqual([])
+  })
+})
+
+/** #346: a web note that keeps its own web data keeps it as an essential, however it got
+ *  there and when it goes back. */
+describe('an essential of a web note with web data of its own', () => {
+  const SITE = '/space/site.url'
+  const OWN = '3f9a0c17e2b4d685'
+  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
+  const keep = (path: string) =>
+    workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
+  const essentials = () => import('./essentials.svelte')
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    for (const one of [...workspace.bookmarks.list]) workspace.bookmarks.remove(one)
+    notes[SITE] = writeShortcut('https://example.com/', 'Site', new Date(), null, null, OWN)
+    workspace.tabs = []
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/site.url']
+  })
+
+  test('is on the note’s own web data when its tile opens it', async () => {
+    keep(SITE)
+    await (await essentials()).openEssential(SITE)
+
+    expect(workspace.active?.essential).toBe(SITE)
+    expect(apartOf(workspace.active ?? { path: null, doc: '' })).toBe(OWN)
+  })
+
+  test('is the strip’s tab of it, page and web data with it, and goes back as it was', async () => {
+    await workspace.openEntry(SITE)
+    const tab = workspace.active
+    keep(SITE)
+    await (await essentials()).openEssential(SITE)
+
+    expect(workspace.tabs).toEqual([tab])
+    expect(tab?.essential).toBe(SITE)
+    expect(tab?.path).toBe(SITE)
+    expect(strip()).toEqual([])
+
+    keep(SITE)
+    await workspace.bookmarks.offered
+    await new Promise((done) => setTimeout(done))
+
+    expect(strip()).toEqual([SITE])
+    expect(apartOf(tab ?? { path: null, doc: '' })).toBe(OWN)
+  })
+
+  test('a second tab of it takes the web data along', async () => {
+    keep(SITE)
+    await (await essentials()).openEssential(SITE)
+    await (await essentials()).openInStrip(SITE, { beside: true })
+
+    const copy = workspace.tabs.find((one) => one.essential === null)
+    expect(copy?.path).toBeNull()
+    expect(apartOf(copy ?? { path: null, doc: '' })).toBe(OWN)
+  })
+
+  test('a link out of it opens on its web data', async () => {
+    await workspace.openEntry(SITE)
+    const from = workspace.active
+
+    const opened = workspace.openPage('https://example.com/next', 'plain', from?.id)
+    const tab = workspace.tabs.find((one) => one.id === opened)
+
+    expect(apartOf(tab ?? { path: null, doc: '' })).toBe(OWN)
   })
 })
 
