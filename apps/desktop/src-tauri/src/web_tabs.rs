@@ -1024,8 +1024,8 @@ fn page_built(
     #[cfg(not(windows))]
     let _ = (app, store);
 
-    // Linux puts the page in GTK's overlay, which uses the window's layout pixels;
-    // elsewhere the runtime places child webviews in screen pixels.
+    // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    // In GTK's own pixels on Linux, where the page is then laid over the window's.
     let bounds = crate::web_follow::Bounds::from(pane);
     let scale = window.scale_factor().unwrap_or(1.0);
     #[cfg(target_os = "linux")]
