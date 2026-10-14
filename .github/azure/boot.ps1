@@ -9,9 +9,6 @@ $runnerUrl = '__RUNNER_URL__'
 $runId = '__RUN_ID__'
 $repo = '__REPO__'
 $lifetime = [int]'__LIFETIME__'
-$arm64 = '__ARM64__' -eq '1'
-# An installer build makes an MSI, whose WiX 3 runs on .NET 3.5, which the image lacks.
-$msi = '__ROW__' -notlike 'chromium-*'
 
 $r = 'C:\r'
 New-Item -ItemType Directory -Force $r | Out-Null
@@ -39,9 +36,10 @@ Add-MpPreference -ExclusionPath 'C:\'
 Set-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' LongPathsEnabled 1
 Mark 'defender off'
 
-# What the image lacks, side by side with the runner's own download: Python (pack.py),
-# Ninja, for an arm64 build MSVC's arm64 compiler (over five minutes: the slowest part
-# of an arm64 machine), and .NET 3.5 for an installer's WiX.
+# What the image lacks, side by side with the runner's own download: Python (pack.py)
+# and Ninja. Only what a Chromium build of x64 needs: an arm64 build would wait eleven
+# minutes for MSVC's arm64 compiler and LLVM, and an installer for .NET 3.5 (WiX),
+# longer than either job takes on GitHub's own runners.
 $jobs = @()
 $jobs += Start-Job {
   curl.exe -sSfL -o C:\r\python.exe https://www.python.org/ftp/python/3.13.7/python-3.13.7-amd64.exe
@@ -54,21 +52,6 @@ $jobs += Start-Job {
   New-Item -ItemType Directory -Force C:\ninja | Out-Null
   tar.exe -xf C:\r\ninja.zip -C C:\ninja
   'ninja installed: ' + (Test-Path C:\ninja\ninja.exe)
-}
-if ($arm64) {
-  $jobs += Start-Job {
-    $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer"
-    $vs = & "$installer\vswhere.exe" -latest -property installationPath
-    Start-Process "$installer\setup.exe" -Wait -ArgumentList `
-      "modify --installPath `"$vs`" --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --quiet --norestart --nocache"
-    'arm64 compiler installed: ' + (Test-Path "$vs\VC\Tools\MSVC\*\bin\Hostx64\arm64\cl.exe")
-  }
-}
-if ($msi) {
-  $jobs += Start-Job {
-    Enable-WindowsOptionalFeature -Online -FeatureName NetFx3 -All -NoRestart | Out-Null
-    '.NET 3.5: ' + (Get-WindowsOptionalFeature -Online -FeatureName NetFx3).State
-  }
 }
 curl.exe -sSfL -o "$r\runner.zip" $runnerUrl
 tar.exe -xf "$r\runner.zip" -C $r

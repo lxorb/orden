@@ -133,7 +133,8 @@ launch() {
   # The runner's name says what kind of machine it is on (s: Spot, r: on demand), for
   # the job that tells a machine Azure took back from a build that failed.
   local name="nibci-$RUN-$row-$try" runner="$label-${priority:0:1}$try" jit params
-  [ "$os" = windows ] || { log "$row: no $os machine yet"; return 1; }
+  # The one kind of machine that is worth it (boot.ps1 says why).
+  [ "$os/$arch" = windows/x64 ] || { log "$row: no $os/$arch machine"; return 1; }
   room "$priority" "$region" || { log "$row: no $priority quota left in $region"; return 1; }
   jit="$(gh api -X POST "repos/$REPO/actions/runners/generate-jitconfig" \
     -f name="$runner" -F runner_group_id=1 -f "labels[]=$label" -f work_folder=_work \
@@ -144,7 +145,7 @@ launch() {
     EXPIRES="$(date -u -d "+$LIFETIME_MIN minutes" +%Y-%m-%dT%H:%M:%SZ)" \
     REAPER="$(az identity show -g "$GROUP" -n nib-ci-reaper --query id -o tsv)" SPOT="$priority" \
     PASSWORD="N1b-$(openssl rand -hex 16)" \
-    BOOT="$("$PY" "$(native "$HERE/boot.py")" "$os" "$arch" "$jit" "${RUNNER_URL:?}" "${GITHUB_RUN_ID:?}" "$REPO" "$LIFETIME_MIN" "$row")" \
+    BOOT="$("$PY" "$(native "$HERE/boot.py")" "$jit" "${RUNNER_URL:?}" "${GITHUB_RUN_ID:?}" "$REPO" "$LIFETIME_MIN")" \
     "$PY" -c '
 import json, os, sys
 e, v = os.environ, lambda x: {"value": x}

@@ -96,8 +96,10 @@ jobs:
       contents: read
       id-token: write
     env:
-      # Which jobs get a machine; the repository variable NIB_CI_ROWS overrides it.
-      ROWS: ${{ vars.NIB_CI_ROWS || 'windows-x64=windows/x64 windows-arm64=windows/arm64 chromium-windows-x86_64=windows/x64 chromium-windows-aarch64=windows/arm64' }}
+      # Which jobs get a machine; the repository variable NIB_CI_ROWS overrides it. Only
+      # Chromium on x64: the arm64 jobs and the installers would wait longer for what
+      # the image lacks than they take on GitHub's own runners (.github/azure/boot.ps1).
+      ROWS: ${{ vars.NIB_CI_ROWS || 'chromium-windows-x86_64=windows/x64' }}
       # After Azure took a Spot machine back mid-job, the run starts again on demand.
       NIB_CI_SPOT: ${{ inputs.runners == 'ondemand' && 'off' || 'on' }}
     outputs:
@@ -229,6 +231,10 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri
           key: ${{ matrix.target }}
+          # Saved from main only: a cache is read only on the ref that saved it and the
+          # ones below it, and the repository's free 10 GB have nothing to spare for a
+          # tag's or a trial branch's.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       # xdg-utils is what the AppImage bundler copies `xdg-open` from; the x64
       # image happens to ship it, the arm image does not.
@@ -239,19 +245,6 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev patchelf xdg-utils
 
       - run: pnpm install --frozen-lockfile
-
-      # An Azure machine installs what its image lacks while the steps above run
-      # (.github/azure/boot.ps1); this is the first step that needs any of it.
-      - name: The machine's tools
-        if: startsWith(runner.name, 'nib-')
-        shell: pwsh
-        run: |
-          $deadline = (Get-Date).AddMinutes(20)
-          while (-not (Test-Path C:\r\ready)) {
-            if ((Get-Date) -gt $deadline) { Get-Content C:\r\boot.log -ErrorAction SilentlyContinue; throw 'the machine never got its tools' }
-            Start-Sleep 5
-          }
-          Get-Content C:\r\ready
 
       # A Developer ID and notarization, once the secrets exist. Without them the
       # bundle keeps the ad-hoc signature tauri.conf.json asks for, which Apple
@@ -378,6 +371,7 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri/cef -> ${{ runner.os == 'Windows' && '../../../../../t' || 'target' }}
           key: chromium-${{ matrix.target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       # The interface the engine build embeds, as the installers do, and with the number
       # they carry: the Tauri CLI hands `--config` to the frontend build as TAURI_CONFIG,

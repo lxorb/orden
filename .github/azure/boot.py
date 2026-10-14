@@ -1,6 +1,6 @@
 """A build machine's boot script with this run's values in, as the custom data Azure takes.
 
-    boot.py windows <arch> <jit config> <runner url> <run id> <repo> <lifetime min> <row>
+    boot.py <jit config> <runner url> <run id> <repo> <lifetime min>
 """
 
 import base64
@@ -8,15 +8,13 @@ import pathlib
 import re
 import sys
 
-_, arch, jit, url, run_id, repo, lifetime, row = sys.argv[1:9]
+jit, url, run_id, repo, lifetime = sys.argv[1:6]
 values = {
     "JIT": jit,
     "RUNNER_URL": url,
     "RUN_ID": run_id,
     "REPO": repo,
     "LIFETIME": lifetime,
-    "ARM64": "1" if arch == "arm64" else "0",
-    "ROW": row,
 }
 for key, value in values.items():
     # Everything lands inside single quotes in the script.
