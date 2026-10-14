@@ -307,19 +307,22 @@
   // The tab being read is kept in view in a strip too full to show every tab, its
   // feet included, and the strip goes no further than that; see tab-strip/scroll.ts.
   // Read off where the tab is meant to be rather than where it is drawn, which may
-  // still be easing there.
+  // still be easing there. Again as the strip is resized, which may hide it.
   $effect(() => {
     const id = activeId
     const node = strip
-    if (!id || !node) return
+    if (!id || !node || stripWidth <= 0) return
 
     untrack(() => {
       const box = layout.boxes[id]
       if (!box) return
       const at = node.scrollLeft * i18n.factor
-      const to = revealed(at, node.clientWidth, span, box.x, box.x + box.width + 2 * LEAD)
+      const to = revealed(at, stripWidth, span, box.x, box.x + box.width + 2 * LEAD)
       if (Math.abs(to - at) < 1) return
-      node.scrollTo({ left: to * i18n.factor, behavior: stillness() ? 'instant' : 'smooth' })
+      node.scrollTo({
+        left: to * i18n.factor,
+        behavior: stillness() || resizing ? 'instant' : 'smooth',
+      })
     })
   })
 
