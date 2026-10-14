@@ -8,13 +8,15 @@
 # (`down`), the sweeper workflow every half hour (`sweep`), and the machine itself when
 # its one job ends or its lifetime is up (boot.ps1).
 #
-#     machines.sh start <row>=<os>/<arch> ...   a machine per row; prints {"row": "label"}
+#     machines.sh start <row>=<os>/<arch> ...   a machine per row; {"row": "label"} to $NIB_CI_RUNNERS
 #     machines.sh watch <row>=<os>/<arch> ...   until each is online, once more elsewhere
 #     machines.sh down                          every resource of this run
 #     machines.sh sweep                         every resource past its time, or with none
 #
-# A row's job runs on the label `start` printed for it, and on GitHub's own runner when
-# it printed none because no region had room. `start` returns as soon as Azure has
+# A row's job runs on the label `start` wrote for it, and on GitHub's own runner when
+# it wrote none because no region had room. The map goes to a file, not to stdout:
+# stdout is the step's own, which is where each runner registration's ::add-mask::
+# has to go for the runner to hide it. `start` returns as soon as Azure has
 # accepted the machines, so the run's other jobs never wait for one to boot; `watch`
 # makes sure each does. GH_TOKEN needs administration rights on the repository (the CI
 # app's token, for just-in-time runners) and `az` must be signed in (OIDC).
@@ -212,18 +214,17 @@ cmd_start() {
   each_row start_row "$@" || true
   cat "$OUT"/*.log >&2 || true
   # {"row": "label"} for every row Azure took; the others run on GitHub's runners.
-  local spec row sep=''
-  printf '{'
+  local spec row sep='' map='{'
   for spec in "$@"; do
     row="${spec%%=*}"
     if [ -e "$OUT/$row" ]; then
-      printf '%s"%s":"%s"' "$sep" "$row" "$(label_of "$row")"
+      map+="$sep\"$row\":\"$(label_of "$row")\""
       sep=','
     else
       log "$row: no region took it, so it runs on GitHub's own runner"
     fi
   done
-  printf '}\n'
+  echo "$map}" >"${NIB_CI_RUNNERS:?the file start writes its map to}"
   rm -rf "$OUT"
 }
 

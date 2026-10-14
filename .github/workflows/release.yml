@@ -129,7 +129,9 @@ jobs:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
           # shellcheck disable=SC2086
-          runners=$(bash .github/azure/machines.sh start $ROWS)
+          export NIB_CI_RUNNERS="$RUNNER_TEMP/runners.json"
+          bash .github/azure/machines.sh start $ROWS
+          runners=$(cat "$NIB_CI_RUNNERS")
           echo "runners=$(jq -c --arg a "$GITHUB_RUN_ATTEMPT" 'with_entries(.key = "\($a)/\(.key)")' <<<"$runners")" >>"$GITHUB_OUTPUT"
           # The rows that got a machine, for machines-online to wait on.
           echo "rows=$(for spec in $ROWS; do jq -e --arg k "${spec%%=*}" 'has($k)' <<<"$runners" >/dev/null && printf '%s ' "$spec"; done)" >>"$GITHUB_OUTPUT"
