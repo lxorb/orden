@@ -51,7 +51,8 @@ native() { if command -v cygpath >/dev/null; then cygpath -m "$1"; else echo "$1
 
 # --- what is there -------------------------------------------------------------------
 
-# "<type> <id>" of every resource whose tag $1 is $2 ("*": everything not kept).
+# "<type> <id>" of every resource whose tag $1 is $2 (no $2: that has no tag $1; "*":
+# everything not kept).
 tagged() {
   az resource list -g "$GROUP" -o json | "$PY" -c '
 import json, sys
@@ -287,19 +288,8 @@ for r in json.load(sys.stdin):
   for run in $runs; do
     log "past its time: $run"
     if [ "$run" = - ]; then
-      # Without a run, which nothing of ours is: deleted all the same, machines first.
-      local ids
-      ids="$(az resource list -g "$GROUP" -o json | "$PY" -c '
-import json, sys
-for r in json.load(sys.stdin):
-    tags = r.get("tags") or {}
-    if tags.get("nib-ci-keep") != "1" and "nib-ci-run" not in tags and "/extensions/" not in r["id"]:
-        print(r["type"], r["id"])
-')"
-      awk '$1 == "Microsoft.Compute/virtualMachines" { print $2 }' <<<"$ids" |
-        xargs -r az vm delete --yes --force-deletion true -o none --ids || true
-      awk '$1 != "Microsoft.Compute/virtualMachines" { print $2 }' <<<"$ids" |
-        xargs -r az resource delete -o none --ids || true
+      # Without a run, which nothing of ours is: deleted all the same.
+      delete_tagged nib-ci-run || true
     else
       delete_tagged nib-ci-run "$run" || true
     fi
