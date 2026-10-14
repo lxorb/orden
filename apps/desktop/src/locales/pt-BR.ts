@@ -737,6 +737,7 @@ export const ptBR: Dictionary = {
   'That image does not fit in your storage.': 'Essa imagem não cabe no armazenamento.',
   'out of space': 'sem espaço',
   'Orden {version} is ready to install.': 'O Orden {version} está pronto para instalar.',
+  'Orden {version} is available.': 'O Orden {version} está disponível.',
   'Restart now': 'Reiniciar agora',
   'Move to Applications': 'Mover para Aplicativos',
   Later: 'Depois',

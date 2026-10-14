@@ -1108,7 +1108,11 @@
       {/await}
     {/if}
     {#if updates.ready}
-      <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
+      <UpdateNotice
+        version={updates.ready}
+        managed={updates.managed}
+        ondismiss={() => updates.dismiss()}
+      />
     {/if}
     {#if reloading.offered}
       <!-- A chunk the network lost; see reloading.svelte.ts. -->

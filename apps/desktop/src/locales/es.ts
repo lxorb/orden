@@ -738,6 +738,7 @@ export const es: Dictionary = {
   'That image does not fit in your storage.': 'Esa imagen no cabe en el almacenamiento.',
   'out of space': 'sin espacio',
   'Orden {version} is ready to install.': 'Orden {version} está listo para instalarse.',
+  'Orden {version} is available.': 'Orden {version} está disponible.',
   'Restart now': 'Reiniciar ahora',
   'Move to Applications': 'Mover a Aplicaciones',
   Later: 'Más tarde',

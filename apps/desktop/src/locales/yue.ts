@@ -721,6 +721,7 @@ export const yue: Dictionary = {
   'That image does not fit in your storage.': '儲存空間唔夠，放唔落呢張圖片。',
   'out of space': '儲存空間已滿',
   'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
+  'Orden {version} is available.': 'Orden{version}已推出。',
   'Restart now': '即刻重新啟動',
   'Move to Applications': '搬去「應用程式」',
   Later: '遲啲',

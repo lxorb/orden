@@ -723,6 +723,7 @@ export const am: Dictionary = {
   'That image does not fit in your storage.': 'ያ ምስል በማከማቻህ ውስጥ አይገባም።',
   'out of space': 'ማከማቻ ሞልቷል',
   'Orden {version} is ready to install.': 'Orden {version} ለመጫን ተዘጋጅቷል።',
+  'Orden {version} is available.': 'Orden {version} ይገኛል።',
   'Restart now': 'አሁን እንደገና አስነሳ',
   'Move to Applications': 'ወደ መተግበሪያዎች ውሰድ',
   Later: 'ቆይቶ',

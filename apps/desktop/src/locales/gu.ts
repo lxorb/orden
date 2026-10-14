@@ -728,6 +728,7 @@ export const gu: Dictionary = {
   'That image does not fit in your storage.': 'એ ચિત્ર તમારા સંગ્રહમાં સમાતું નથી.',
   'out of space': 'સંગ્રહ ભરાયો',
   'Orden {version} is ready to install.': 'Orden {version} સ્થાપવા તૈયાર છે.',
+  'Orden {version} is available.': 'Orden {version} ઉપલબ્ધ છે.',
   'Restart now': 'હમણાં ફરી શરૂ કરો',
   'Move to Applications': 'ઍપ્લિકેશન્સમાં ખસેડો',
   Later: 'પછી',

@@ -759,6 +759,7 @@ export const uk: Dictionary = {
   'That image does not fit in your storage.': 'Це зображення не вміщується у сховище.',
   'out of space': 'немає місця',
   'Orden {version} is ready to install.': 'Orden {version} готовий до встановлення.',
+  'Orden {version} is available.': 'Доступна версія Orden {version}.',
   'Restart now': 'Перезапустити',
   'Move to Applications': 'Перемістити в «Програми»',
   Later: 'Пізніше',

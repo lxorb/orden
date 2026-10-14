@@ -773,6 +773,7 @@ export const ar: Dictionary = {
   'That image does not fit in your storage.': 'لا تتسع هذه الصورة في تخزينك.',
   'out of space': 'نفدت مساحة التخزين',
   'Orden {version} is ready to install.': 'Orden {version} جاهز للتثبيت.',
+  'Orden {version} is available.': 'Orden {version} متاح.',
   'Restart now': 'إعادة التشغيل الآن',
   'Move to Applications': 'النقل إلى التطبيقات',
   Later: 'لاحقًا',

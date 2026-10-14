@@ -1,6 +1,14 @@
 import { keep, storedText } from './stored'
 import { isDesktop } from './tauri'
-import { asChannel, type Channel, discard, stageUpdate, stagedVersion } from './updater'
+import {
+  announcedVersion,
+  asChannel,
+  type Channel,
+  discard,
+  managedBy,
+  stageUpdate,
+  stagedVersion,
+} from './updater'
 
 /** How often the app looks for a new version while it is running.
  *
@@ -28,6 +36,10 @@ function keepChannel(channel: Channel) {
   keep(CHANNEL_KEY, channel)
 }
 
+/** The last version an install a package manager keeps was told of, so it is told once
+ *  and not on every launch after: the notice there is news, with nothing to press. */
+const TOLD_KEY = 'nib:update-told'
+
 /** How long since the last keystroke before the notice may appear. A box that
  *  arrives between two words is a box in the way; the update is in no hurry, so
  *  it waits for the end of the sentence. */
@@ -41,6 +53,9 @@ const QUIET = 5000
  *  its own. This is only the offer to get there sooner, and dismissing it costs
  *  nothing - what was downloaded is still installed on the way out.
  *
+ *  Except where a package manager keeps the install, which is the manager's to
+ *  update: there the notice only says a newer version is out, once per version.
+ *
  *  Later holds against the looks nobody asked for, and only those. Asking by name
  *  is somebody wanting the answer, so it shows the notice for what is waiting
  *  whatever was pressed before, as VS Code, Chrome's About page and Obsidian do. */
@@ -48,6 +63,10 @@ class Updates {
   /** The version waiting to be installed, once one has been downloaded. Null
    *  when there is nothing new, which is most of the time. */
   ready = $state<string | null>(null)
+
+  /** Whether a package manager keeps this install, so the notice only says what is
+   *  out; see updater.ts. */
+  managed = $state(false)
 
   /** Which stream of releases this machine follows; see updater.ts. Stable, until
    *  somebody asks for the other one on this machine. */
@@ -119,7 +138,7 @@ class Updates {
    *  Nothing waiting says nothing, as it always has. */
   async check() {
     await this.look()
-    const waiting = stagedVersion()
+    const waiting = stagedVersion() ?? announcedVersion()
     if (waiting) this.show(waiting)
   }
 
@@ -163,6 +182,10 @@ class Updates {
       return
     }
 
+    // A package manager's install is told of each version once, across launches.
+    this.managed = (await managedBy()) !== null
+    if (this.managed && storedText(TOLD_KEY) === found) return
+
     // Only ever set, never cleared: a second look answers nothing for the
     // version it downloaded on the first, and clearing the notice then would
     // take away the offer while the update sat there waiting.
@@ -203,6 +226,7 @@ class Updates {
   private show(version: string) {
     clearTimeout(this.waiting)
     this.ready = version
+    if (this.managed) keep(TOLD_KEY, version)
   }
 
   dismiss() {

@@ -730,6 +730,7 @@ export const ha: Dictionary = {
   'That image does not fit in your storage.': "Wannan hoton bai dace a ma'ajinka ba.",
   'out of space': "ma'aji ya ƙare",
   'Orden {version} is ready to install.': 'Orden {version} na shirye don girkawa.',
+  'Orden {version} is available.': 'Orden {version} ya samu.',
   'Restart now': 'Sake kunnawa yanzu',
   'Move to Applications': 'Matsar zuwa Applications',
   Later: 'Daga baya',

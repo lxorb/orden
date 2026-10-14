@@ -721,6 +721,7 @@ export const zhHans: Dictionary = {
   'That image does not fit in your storage.': '存储空间不足，放不下这张图片。',
   'out of space': '存储空间已满',
   'Orden {version} is ready to install.': 'Orden{version}已可安装。',
+  'Orden {version} is available.': 'Orden{version}已发布。',
   'Restart now': '立即重启',
   'Move to Applications': '移到“应用程序”',
   Later: '稍后',

@@ -728,6 +728,7 @@ export const fa: Dictionary = {
   'That image does not fit in your storage.': 'آن تصویر در انبار شما جا نمی‌شود.',
   'out of space': 'انبار پر است',
   'Orden {version} is ready to install.': 'Orden {version} آماده نصب است.',
+  'Orden {version} is available.': 'Orden {version} در دسترس است.',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
   'Move to Applications': 'انتقال به برنامه‌ها',
   Later: 'بعداً',

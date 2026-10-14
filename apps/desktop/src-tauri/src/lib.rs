@@ -139,6 +139,9 @@ mod notices;
 // The vaults Obsidian lists, for the migration's first screen; see obsidian_vaults.rs.
 #[cfg(desktop)]
 mod obsidian_vaults;
+// Which package manager keeps this install, if one does; see package_manager.rs.
+#[cfg(desktop)]
+mod package_manager;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
@@ -446,6 +449,7 @@ macro_rules! desktop_commands {
             terminal::remote::remote_config_open,
             terminal::picture::remote_image,
             updates::check_update,
+            package_manager::install_manager,
             app_place::app_stuck,
             app_place::move_to_applications,
             web_tabs::web_open,

@@ -725,6 +725,7 @@ export const ja: Dictionary = {
   'That image does not fit in your storage.': 'この画像を保存する空き容量がありません。',
   'out of space': '空き容量がありません',
   'Orden {version} is ready to install.': 'Orden {version} をインストールできます。',
+  'Orden {version} is available.': 'Orden {version} が利用可能です。',
   'Restart now': '今すぐ再起動',
   'Move to Applications': 'アプリケーションに移動',
   Later: '後で',

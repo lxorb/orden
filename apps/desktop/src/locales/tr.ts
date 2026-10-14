@@ -728,6 +728,7 @@ export const tr: Dictionary = {
   'That image does not fit in your storage.': 'Bu resim depolamanıza sığmıyor.',
   'out of space': 'yer kalmadı',
   'Orden {version} is ready to install.': 'Orden {version} kurulmaya hazır.',
+  'Orden {version} is available.': 'Orden {version} kullanıma sunuldu.',
   'Restart now': 'Şimdi yeniden başlat',
   'Move to Applications': 'Uygulamalar’a taşı',
   Later: 'Sonra',

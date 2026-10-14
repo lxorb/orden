@@ -728,6 +728,7 @@ export const gsw: Dictionary = {
   'That image does not fit in your storage.': 'Das Bild hät nöd meh Platz i dim Spycher.',
   'out of space': 'kei Platz meh',
   'Orden {version} is ready to install.': 'Orden {version} isch parat zum Installiere.',
+  'Orden {version} is available.': 'Orden {version} isch verfüegbar.',
   'Restart now': 'Jetzt neu starte',
   'Move to Applications': 'In „Programme“ verschiebe',
   Later: 'Spöter',

@@ -27,6 +27,25 @@ export const ready = () => staged !== null
 /** The version waiting to be installed, if one has been downloaded. */
 export const stagedVersion = () => staged?.version ?? null
 
+/** The package manager that keeps this install - `scoop`, `brew` and the rest - or null
+ *  where the app updates itself. Asked once, by the first look rather than the launch;
+ *  see src-tauri/src/package_manager.rs. */
+let keeper: Promise<string | null> | null = null
+
+export function managedBy(): Promise<string | null> {
+  keeper ??= invoke<string | null>('install_manager').then(
+    (name) => name ?? null,
+    () => null,
+  )
+  return keeper
+}
+
+/** The newer version an install a package manager keeps was told of. Never downloaded:
+ *  the manager installs it. */
+let announced: string | null = null
+
+export const announcedVersion = () => announced
+
 /** What `check_update` answers with: the fields the updater plugin builds its own
  *  `Update` from, `rid` being the update itself, kept in the crate. */
 interface Found {
@@ -48,7 +67,8 @@ function found(value: unknown): Found | null {
   return { rid, currentVersion, version, rawJson }
 }
 
-/** Fetches a new version in the background if the channel has one.
+/** Fetches a new version in the background if the channel has one; where a package
+ *  manager keeps the install, only finds it.
  *
  *  Only downloads: installing here would restart the app under whoever is
  *  typing. The installer runs on quit instead, so the new version is simply
@@ -68,6 +88,14 @@ export async function stageUpdate(channel: Channel): Promise<string | null> {
 
     const { Update } = await import('@tauri-apps/plugin-updater')
     const update = new Update(one)
+
+    // Its manager's to install, so only said; and, like a download, said once a run.
+    if (await managedBy()) {
+      void update.close().catch(() => undefined)
+      if (update.version === announced) return null
+      announced = update.version
+      return update.version
+    }
 
     await update.download()
     staged = update
@@ -119,6 +147,7 @@ export function fetchEngineFor(version: string): Promise<unknown> {
 export async function discard() {
   const going = staged
   staged = null
+  announced = null
 
   try {
     await going?.close()
