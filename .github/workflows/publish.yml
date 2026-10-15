@@ -4,10 +4,9 @@ name: publish
 # job per manager, none depending on another, so a rate-limited push or a
 # rejected pull request never holds up the rest.
 #
-# Every push to main replaces a rolling `edge` pre-release, and that fires this
-# same event. None of it should run for those: a package manager wants the
-# release people install, not the build that follows main. The gate below is
-# where that is decided, once, instead of in every job.
+# Only published stable releases are sent to package managers. The rolling
+# `edge` prerelease is built from `unstable` and is deliberately not published
+# through this release channel.
 on:
   release:
     types: [published]

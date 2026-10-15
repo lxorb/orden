@@ -123,6 +123,8 @@ mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;
 mod links;
+#[cfg(target_os = "linux")]
+mod linux;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -203,6 +205,8 @@ mod web_dialogs;
 mod web_find;
 #[cfg(desktop)]
 mod web_follow;
+#[cfg(target_os = "linux")]
+mod web_overlay;
 #[cfg(desktop)]
 mod web_handed;
 #[cfg(desktop)]
@@ -595,6 +599,12 @@ pub const ENGINE_SWIPE: (&str, &str, &str) = engine::ENGINE_SWIPE;
 /// hundred megabytes of Chromium out of the default build's dependency graph
 /// entirely. See src/engine.rs and docs/browser.md.
 pub fn run_on(builder: tauri::Builder<Engine>) {
+    // WebKitGTK's accelerated compositing can flash between the app's rendered frame and
+    // an empty surface on Wayland. Choose its software compositing path before any
+    // WebKitGTK view is created; an explicit environment setting still takes precedence.
+    #[cfg(all(target_os = "linux", not(feature = "cef")))]
+    linux::prepare_rendering();
+
     // Before everything, because a copy under the old folder's name renames it and
     // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]

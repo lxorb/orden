@@ -115,7 +115,7 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
 
-The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the official releases and is where every install starts, **Unstable** takes the build of every push to main and can break. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next push. The web app is the new version the moment you reload it, and the Android app has no updater.
+The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the latest released version and is where every install starts, **Unstable** follows the rolling edge builds from the `unstable` branch and can break. Builds whose version is a prerelease start on Unstable automatically, including edge builds installed through package managers. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next edge build. The website follows `main`, and the Android app has no updater.
 
 ## Motivation
 

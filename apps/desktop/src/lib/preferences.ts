@@ -757,7 +757,7 @@ export function preferences(view?: EditorView): Pane[] {
                     label: t('Release channel'),
                     words: ['beta', 'updates', 'nightly'],
                     hint: t(
-                      'Stable follows the official releases, Unstable every push to main and can break.',
+                      'Stable follows released versions; Unstable follows edge builds and can break.',
                     ),
                     options: [
                       { value: 'stable', label: t('Stable') },

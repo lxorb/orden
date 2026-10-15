@@ -803,8 +803,8 @@ Every device keeps one socket to its account's hub (section 6.2). After any writ
 a space's cursor (a push, a settle, a tree op, a blob list), the Worker tells the hub of every
 account that can reach the space (the owner, members, guests: one query) and the hubs poke
 their devices: `{space, seq}`. A poked device runs a pass for that space at once. Polling
-stays as the fallback at a fixed 5 minutes, and a device whose hub socket is down polls at
-today's cadence.
+stays as the fallback every 30 seconds while the window is visible (every 5 minutes while
+hidden), and a device whose hub socket is down polls at today's cadence.
 
 ### 5.13 In the autosave-only world
 

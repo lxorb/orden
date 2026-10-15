@@ -1052,18 +1052,26 @@ fn page_built(
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = (app, store);
 
-    // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    // Linux puts the page in GTK's overlay, which uses the window's layout pixels;
+    // elsewhere the runtime places child webviews in screen pixels.
+    let bounds = crate::web_follow::Bounds::from(pane);
     let scale = window.scale_factor().unwrap_or(1.0);
-    let (left, top, width, height) =
-        crate::web_follow::edges(crate::web_follow::Bounds::from(pane), scale);
-    window
+    #[cfg(target_os = "linux")]
+    let scale_built = 1.0;
+    #[cfg(not(target_os = "linux"))]
+    let scale_built = scale;
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale_built);
+    let view = window
         .add_child(
             builder,
             PhysicalPosition::new(left, top),
             PhysicalSize::new(width, height),
         )
-        .map(|view| crate::page_style::worn(&view))
-        .map_err(|error| format!("that page could not be opened: {error}"))
+        .map_err(|error| format!("that page could not be opened: {error}"))?;
+    crate::page_style::worn(&view);
+    crate::web_follow::put(&view, bounds, scale)
+        .map_err(|error| format!("that page could not be placed: {error}"))?;
+    Ok(())
 }
 
 /// Starts the browser process every web tab shares while the window's own page is still
@@ -1802,13 +1810,12 @@ pub fn web_place(
     let scale = window
         .scale_factor()
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let placed = crate::web_follow::edges(bounds, scale);
-    let (_, _, width, height) = placed;
+    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
-        view.set_bounds(crate::web_follow::rect_of(placed))
+        crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
@@ -3015,16 +3022,116 @@ mod shot {
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) use shot::png as read_stream;
 
-// Every build but the two system engines that can photograph a page: Linux, and nib's
-// own Chromium. See the two above.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// WebKitGTK takes its own picture of the page, which stands in while an app layer
+// covers the native webview. Without it Linux showed an empty pane each time the
+// page was hidden behind a menu, toast, or other layer.
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
+mod shot {
+    use gtk::cairo;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+    use webkit2gtk::{SnapshotOptions, SnapshotRegion, WebViewExt as _};
+
+    /// Takes the visible page snapshot, then encodes it away from GTK's event thread.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the signature matches the platform implementations, which can fail"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        webview.inner().snapshot(
+            SnapshotRegion::Visible,
+            SnapshotOptions::NONE,
+            None::<&gtk::gio::Cancellable>,
+            move |taken| {
+                let Some(pixels) = taken.ok().and_then(copied) else {
+                    let _ = done.try_send(None);
+                    return;
+                };
+                let _ = std::thread::Builder::new()
+                    .name("web shot".into())
+                    .spawn(move || {
+                        let _ = done.try_send(png(&pixels));
+                    });
+            },
+        );
+        Ok(())
+    }
+
+    /// A Cairo image copied off the GTK thread, in premultiplied BGRA row storage.
+    struct Pixels {
+        width: u32,
+        height: u32,
+        stride: usize,
+        data: Vec<u8>,
+    }
+
+    fn copied(surface: cairo::Surface) -> Option<Pixels> {
+        let image = cairo::ImageSurface::try_from(surface).ok()?;
+        let opaque = match image.format() {
+            cairo::Format::ARgb32 => false,
+            cairo::Format::Rgb24 => true,
+            _ => return None,
+        };
+        let mut data = Vec::new();
+        image.with_data(|bytes| data.extend_from_slice(bytes)).ok()?;
+        if opaque {
+            data.iter_mut().skip(3).step_by(4).for_each(|alpha| *alpha = 255);
+        }
+        Some(Pixels {
+            width: u32::try_from(image.width()).ok()?,
+            height: u32::try_from(image.height()).ok()?,
+            stride: usize::try_from(image.stride()).ok()?,
+            data,
+        })
+    }
+
+    fn png(pixels: &Pixels) -> Option<Vec<u8>> {
+        let width = usize::try_from(pixels.width).ok()?;
+        let height = usize::try_from(pixels.height).ok()?;
+        let mut rgba = Vec::with_capacity(width.checked_mul(height)?.checked_mul(4)?);
+        for row in pixels.data.chunks(pixels.stride.max(1)).take(height) {
+            for one in row.get(..width.checked_mul(4)?)?.chunks_exact(4) {
+                let (blue, green, red, alpha) = (one[0], one[1], one[2], one[3]);
+                let unmixed = |value: u8| {
+                    if alpha == 0 {
+                        0
+                    } else {
+                        u8::try_from(u16::from(value) * 255 / u16::from(alpha)).unwrap_or(255)
+                    }
+                };
+                rgba.extend_from_slice(&[unmixed(red), unmixed(green), unmixed(blue), alpha]);
+            }
+        }
+        if rgba.len() != width.checked_mul(height)?.checked_mul(4)? {
+            return None;
+        }
+
+        let mut out = Vec::new();
+        {
+            let mut encoder = ::png::Encoder::new(&mut out, pixels.width, pixels.height);
+            encoder.set_color(::png::ColorType::Rgba);
+            encoder.set_depth(::png::BitDepth::Eight);
+            encoder.set_compression(::png::Compression::Fastest);
+            let mut writer = encoder.write_header().ok()?;
+            writer.write_image_data(&rgba).ok()?;
+        }
+        Some(out)
+    }
+}
+
+// nib's own Chromium and platforms without a system-engine snapshot API.
+#[cfg(any(
+    feature = "cef",
+    not(any(windows, target_os = "macos", target_os = "linux"))
+))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
-    /// so the window keeps its own ground under an overlay here; see the note on
-    /// `web_shot`.
+    /// No snapshot API is available for this engine.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own

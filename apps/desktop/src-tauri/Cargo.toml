@@ -379,6 +379,7 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 javascriptcore-rs = "=1.1.2"
+gtk = "0.18"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open
