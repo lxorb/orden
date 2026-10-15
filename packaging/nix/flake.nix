@@ -24,10 +24,14 @@
           # This flake lives in packaging/nix, so its own outPath contains
           # only that directory. Fetch the repository root at the same commit
           # so Cargo and pnpm can see the workspace files next to it.
-          source = builtins.fetchGit {
-            url = "https://github.com/lxorb/orden.git";
-            rev = self.rev;
-          };
+          source =
+            if self ? rev then
+              builtins.fetchGit {
+                url = "https://github.com/lxorb/orden.git";
+                rev = self.rev;
+              }
+            else
+              self.outPath;
           gstPlugins = with pkgs.gst_all_1; [
             gstreamer
             gst-plugins-base

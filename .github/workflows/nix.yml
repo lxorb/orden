@@ -100,6 +100,12 @@ jobs:
             flake="$ASKED"
           elif [ "$GITHUB_EVENT_NAME" = push ]; then
             flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
+          elif [ -f "$PWD/flake.nix" ]; then
+            # unstable has a root flake link so a local path includes the full
+            # source tree that the package compiles.
+            flake="path:$PWD"
+          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
           else
             flake="path:$PWD/packaging/nix"
           fi
@@ -182,6 +188,7 @@ jobs:
             nix build --print-build-logs "$FLAKE" -o result
           fi
 
+          test -x "result/bin/$pname"
           find result/bin result/share -type f -o -type l | sort | tee files.txt
           case "$pname" in
             orden)
@@ -196,7 +203,9 @@ jobs:
           # DMA-BUF renderer off on NVIDIA's driver alone.
           cat "result/bin/$pname"
           if grep -n GDK_BACKEND "result/bin/$pname"; then exit 1; fi
-          grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          if [ "$pname" != orden-unstable ]; then
+            grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          fi
           nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
           cat "result/share/applications/$pname.desktop"
