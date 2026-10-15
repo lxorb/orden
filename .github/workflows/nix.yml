@@ -10,8 +10,8 @@ name: nix
 #
 # On a pull request it builds the flake in the checkout. On main, and by hand, it
 # builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
-# does. packaging-bump.yml and nix-edge.yml call it twice each: on the rewritten
-# flake before it lands, and from GitHub after.
+# does. The source-built `orden-unstable` package has its own install assertions;
+# the release flake on main keeps its existing ones.
 on:
   pull_request:
     paths:
@@ -30,8 +30,12 @@ on:
   workflow_dispatch:
     inputs:
       flake:
-        description: The flake to start, as `nix run` takes it
-        default: github:lxorb/orden?dir=packaging/nix
+        description: The flake to start, as `nix run` takes it; empty uses the checked-out branch
+        default: ''
+      resolve_source_hashes:
+        description: Resolve fake Cargo and pnpm hashes during source-flake validation
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       flake:
@@ -42,6 +46,10 @@ on:
         description: An artifact of the calling run laid over packaging/ first
         type: string
         default: ''
+      resolve_source_hashes:
+        description: Resolve fake Cargo and pnpm hashes during source-flake validation
+        type: boolean
+        default: false
 
 concurrency:
   group: nix-${{ github.workflow }}-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
@@ -65,7 +73,7 @@ jobs:
             system: aarch64-linux
             other: x86_64-linux
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 40
+    timeout-minutes: 90
     permissions:
       contents: read
     steps:
@@ -124,19 +132,65 @@ jobs:
       - name: nix build
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
+          RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
         run: |
-          nix build --print-build-logs "$FLAKE" -o result
-          # orden, or orden-edge on the nix-edge branch: every file a profile gets
-          # is named after it, so the two never collide.
+          # orden, orden-edge or orden-unstable: every file a profile gets is
+          # named after it, so installed streams never collide.
           pname=$(nix eval --raw "$FLAKE#default.pname")
           echo "### $pname $(nix eval --raw "$FLAKE#default.version")" >>"$GITHUB_STEP_SUMMARY"
-          find result/bin result/share -type f -o -type l | sort | tee files.txt
-          if [ "$pname" = orden ]; then
-            test "$(readlink result/bin/nib)" = orden
-            expected=2
+
+          if [ "$RESOLVE_HASHES" = true ] && [ "$pname" = orden-unstable ]; then
+            for attempt in 1 2 3; do
+              set +e
+              nix build --print-build-logs "$FLAKE" -o result 2>&1 | tee nix-build.log
+              status=${PIPESTATUS[0]}
+              set -e
+              [ "$status" -eq 0 ] && break
+
+              hash=$(sed -n 's/.*got: *\(sha256-[^[:space:]]*\).*/\1/p' nix-build.log | tail -1)
+              derivation=$(sed -n "s/.*fixed-output derivation '\([^']*\)'.*/\1/p" nix-build.log | head -1)
+              if [ -z "$hash" ] || [ -z "$derivation" ]; then
+                cat nix-build.log
+                exit "$status"
+              fi
+
+              case "$derivation" in
+                *pnpm*) kind=pnpm ;;
+                *vendor*|*cargo*) kind=cargo ;;
+                *) echo "::error::unknown fixed-output input: $derivation"; cat nix-build.log; exit "$status" ;;
+              esac
+              python - "$kind" "$hash" <<'PY'
+          import re, sys
+          from pathlib import Path
+
+          kind, digest = sys.argv[1:]
+          flake = Path('packaging/nix/flake.nix')
+          source = flake.read_text()
+          if kind == 'cargo':
+              source, count = re.subn(r'cargoHash = lib\.fakeHash;', f'cargoHash = "{digest}";', source, count=1)
+          else:
+              source, count = re.subn(r'(pnpmDeps = pkgs\.fetchPnpmDeps \{.*?hash = )lib\.fakeHash;', rf'\1"{digest}";', source, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'could not fill the {kind} hash')
+          flake.write_text(source)
+          print(f'Pinned {kind} dependencies to {digest}')
+          PY
+              echo "Retrying the source build after pinning its $kind hash (attempt $attempt)."
+            done
+            test -x "result/bin/$pname"
           else
-            expected=1
+            nix build --print-build-logs "$FLAKE" -o result
           fi
+
+          find result/bin result/share -type f -o -type l | sort | tee files.txt
+          case "$pname" in
+            orden)
+              test "$(readlink result/bin/nib)" = orden
+              expected=2
+              ;;
+            orden-edge|orden-unstable) expected=1 ;;
+            *) echo "::error::unexpected Nix package name: $pname"; exit 1 ;;
+          esac
           test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"
           # What the wrapper sets: no display backend forced on anyone, and the
           # DMA-BUF renderer off on NVIDIA's driver alone.
@@ -213,4 +267,5 @@ jobs:
             files.txt
             stranger.log
             packaging/nix/flake.lock
+            packaging/nix/flake.nix
           if-no-files-found: warn

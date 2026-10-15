@@ -373,6 +373,15 @@ nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix
 nix profile upgrade --all    # either one moves to its newest build
 ```
 
+For a Nix package built from the current source on the `unstable` branch, rather
+than the rolling binary from `main`, install its separate `orden-unstable`
+package. It compiles the branch source and follows the unstable updater channel
+by default:
+
+```
+nix profile install github:lxorb/orden/unstable?dir=packaging/nix
+```
+
 That branch is main plus one commit carrying the edge pins, force-pushed by
 `.github/workflows/nix-edge.yml` after each build of main replaced the `edge`
 pre-release and the rewritten flake started in CI. Main never carries edge pins:
