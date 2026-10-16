@@ -17,7 +17,7 @@ import { htmlBlockCard, ownMarkup } from './html-block'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
-import { iframeCard, isIframeTag, webCard } from './web-embed'
+import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
 import {
   type EmbedResolver,
   type Embeds,
@@ -336,7 +336,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  points somewhere a note has no business pointing - `javascript:`, a page
        *  of this app's own, a plain http page read over the reader's shoulder -
        *  and its closing half goes the same way, or the card would be followed by
-       *  a stray `</iframe>`.
+       *  a stray `</iframe>`. Only the frame, though: a block runs on to the next
+       *  blank line, and a caption written under the frame is the note's own
+       *  markup, decided about below like any other. See `splitIframe`.
        *
        *  Everything else is the note's own markup, and whether that is markup or
        *  characters is `escapeHtml`: a document of the reader's own is markup, and
@@ -348,10 +350,17 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  block in a frame of its own when pressed - never in the app - and in one
        *  that is not it was already escaped by the line above. See html-block.ts. */
       html(token: Tokens.HTML | Tokens.Tag) {
-        if (isIframeTag(token.text)) return iframeCard(token.text) ?? ''
-        if (options.escapeHtml) return escape(token.text)
+        let text = token.text
+        let cards = ''
+        while (isIframeTag(text)) {
+          const { tag, rest } = splitIframe(text)
+          cards += iframeCard(tag) ?? ''
+          text = rest
+        }
+        if (text !== token.text && !text.trim()) return cards
+        if (options.escapeHtml) return cards + escape(text)
 
-        return htmlBlockCard(token.text) ?? ownMarkup(token.text)
+        return cards + (htmlBlockCard(text) ?? ownMarkup(text))
       },
     },
   })

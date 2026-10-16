@@ -610,6 +610,25 @@ describe('an <iframe> a note wrote', () => {
       expect(running(renderMarkdown(`${tag}\n`, { escapeHtml: true })), tag).toEqual([])
     }
   })
+
+  /** A block of HTML runs on to the next blank line, so a caption written straight
+   *  under the frame is in the same block as it. The card is the frame's, and
+   *  what follows is the note's own markup like any other: words in a document
+   *  from outside, markup in the reader's own - and never simply gone. */
+  test('and what follows the frame in the same block is still there', () => {
+    const source = `${TAG}\n<p>My caption paragraph</p>\n\nnext\n`
+
+    const own = renderMarkdown(source)
+    expect(own).toContain('class="embed-web embed-page"')
+    expect(own).toContain('<p>My caption paragraph</p>')
+    expect(own).toContain('<p>next</p>')
+    expect(own).not.toContain('<iframe')
+
+    const published = renderMarkdown(source, { escapeHtml: true })
+    expect(published).toContain('class="embed-web embed-page"')
+    expect(published).toContain('&lt;p&gt;My caption paragraph&lt;/p&gt;')
+    expect(published).not.toContain('<iframe')
+  })
 })
 
 /** A document of the reader's own is markup, and it is put into the app's own page,

@@ -148,6 +148,27 @@ export function isIframeTag(html: string): boolean {
   return /^\s*<\/?iframe\b/i.test(html)
 }
 
+/** The `<iframe>` a piece of raw HTML starts with, and whatever comes after it.
+ *
+ *  A block of HTML runs on to the next blank line, so the frame is often only the
+ *  first thing in one: a caption written on the line under it is in the same
+ *  block. The frame is the opening tag, what it holds for a browser that cannot
+ *  frame, and its closing tag where the block has one - all of it the card's -
+ *  and the rest is the note's own markup, for the renderer to decide about like
+ *  any other. A quoted `>` inside an attribute does not end the tag. */
+export function splitIframe(html: string): { tag: string; rest: string } {
+  const opening = /^\s*<\/?iframe\b(?:"[^"]*"|'[^']*'|[^'">])*>?/i.exec(html)
+  if (!opening) return { tag: '', rest: html }
+
+  let end = opening[0].length
+  if (!/^\s*<\//.test(opening[0])) {
+    const closing = /<\/iframe\s*>/i.exec(html.slice(end))
+    if (closing) end += closing.index + closing[0].length
+  }
+
+  return { tag: html.slice(0, end), rest: html.slice(end) }
+}
+
 /** The card an `<iframe src="…">` in a note becomes.
  *
  *  The same card, deliberately. A note that writes the tag by hand is asking for
