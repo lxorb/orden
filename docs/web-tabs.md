@@ -1339,7 +1339,12 @@ region - Google, which stays the default, Bing, DuckDuckGo, Ecosia, Brave, Start
 Qwant, Yahoo!, and the region's own (Baidu, Naver, Yahoo! JAPAN, Yandex) - and Custom, an
 address with `%s` where the words go. The address field searches on it
 (`web-tab/engines.ts`, `web-tab/search-engine.svelte.ts`); the palette still treats a few
-words as a search for a note.
+words as a search for a note. **And the Web Note card opens it**: Emil, #354, _"if you
+click on web note in the Ctrl + T menu, then it should open your configured search
+engine"_ - the engine's own page, which is the root of the address its search goes to
+(`engineHome`), since the press was already the choice and a second empty field with the
+same kinds under it again answers nothing. A private tab still starts with nowhere to go,
+as Chrome's Incognito window does.
 
 **A link or a picture dragged out of a page** lands where Chrome's would. On the strip it
 opens as a tab where it was let go (`tab-strip/dropped.ts`). On the file list a link is

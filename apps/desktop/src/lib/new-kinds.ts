@@ -146,13 +146,24 @@ const ROWS: Record<KindName, () => NewKindRow> = {
   // A shell on the reader's own machine in the cloud. O for Online. See
   // docs/online-terminal.md 4.10.
   online: () => onlineRow(),
+  // On the search engine this device chose, which is where a browser's new tab lands.
+  // Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
+  // your configured search engine"*. The press was already a choice of kind, so a
+  // second empty field with the kinds under it again is a press that answered nothing.
+  // The engine is fetched with the press, as a chat's maker is: the choice reaches
+  // typed.ts, which is not in front of the first paint. See web-tab/engines.ts.
   web: () => ({
     kind: 'web',
     line: 'web',
     label: () => kindLabel('web'),
     mark: 'web',
     letter: 'w',
-    make: (paneId) => inPane(paneId, () => workspace.openWebsite()),
+    make: (paneId) =>
+      inPane(paneId, () =>
+        import('./web-tab/search-engine.svelte').then((one) =>
+          workspace.openPage(one.searchEngine.home),
+        ),
+      ),
   }),
   // A private tab, beside the website it is one of. I for Incognito, Chrome's word for
   // it, since P is the page note's. See web-tab/private.ts.
