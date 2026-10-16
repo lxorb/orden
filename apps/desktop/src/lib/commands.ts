@@ -166,7 +166,7 @@ export function exportCommands(): Command[] {
    *  slide. Both come out of the slides code, which builds them from one page. */
   const slidesOut = async (id: 'slides-html' | 'slides-pdf') => {
     const m = await import('./slides/file')
-    const deck = { text: source(), path: note()?.path ?? null }
+    const deck = { text: source(), path: note()?.path ?? null, trusted: target().trusted }
     const options = {
       resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
       ...(await look()),

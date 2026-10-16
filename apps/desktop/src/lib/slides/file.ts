@@ -36,6 +36,10 @@ import type { Scheme } from '../theme.svelte'
 interface Note {
   text: string
   path: string | null
+  /** Whether the note's raw HTML is markup, asked of the document the way the
+   *  reading view and the presenter ask it; see trust.ts and `openTarget` in
+   *  export/context.ts. A deck of somebody else's words is still their words. */
+  trusted: boolean
 }
 
 interface DeckOptions {
@@ -63,6 +67,33 @@ export const DECK_PAPER = {
   height: DECK_HEIGHT / 96,
   margin: 0,
   landscape: false,
+}
+
+/** What a deck file may do: draw itself, and run the one script it was written
+ *  with. The page is opened in whatever browser the reader has, and printed in a
+ *  hidden window of the app's own, and neither should run anything a note put in
+ *  it. The deck's script is let in by a nonce made for this file alone; its styles
+ *  are inline, and its fonts and pictures are `data:` addresses by the time it is
+ *  written. The same rule an exported note carries; see export.ts. */
+function contentPolicy(nonce: string): string {
+  return [
+    "default-src 'none'",
+    `script-src 'nonce-${nonce}'`,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "style-src * 'unsafe-inline'",
+    'img-src * data: blob:',
+    'media-src * data: blob:',
+    'font-src * data:',
+  ].join('; ')
+}
+
+/** A nonce nobody can guess from the note, so a script a slide carries is not the
+ *  deck's. */
+function freshNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 function declarations(tokens: Record<string, string>): string {
@@ -109,12 +140,14 @@ export function buildDeckHtml(
   // itself out: every slide gets a sheet of its own and none of them was ever on
   // screen to be measured, so the one that has to shrink would be cut off.
   const running = options.interactive === false ? DECK_LAYOUT_SCRIPT : DECK_SCRIPT
-  const script = `<script>${running}</script>\n`
+  const nonce = freshNonce()
+  const script = `<script nonce="${nonce}">${running}</script>\n`
 
   return `<!doctype html>
 <html lang="en" data-theme="${scheme}">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${contentPolicy(nonce)}">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="generator" content="Orden">
 <title>${escapeAll(title)}</title>
@@ -140,11 +173,9 @@ async function renderDeck(note: Note, name: string, options: DeckExport): Promis
   // arithmetic and string work - needs nothing of the running app around it.
   const { deckHtml } = await import('./render')
 
-  // Trusting, like every other export: a file somebody asked for and takes away
-  // keeps the HTML the note wrote, which is what the parity list promises and
-  // what every other format here does. The rule about whose HTML runs is about
-  // the app's own surfaces; see trust.ts.
-  const slides = await deckHtml(note, options.scheme ?? 'dark', true)
+  // The same question the presenter asks of the same note: a file of somebody
+  // else's words is not made trustworthy by being saved or printed. See trust.ts.
+  const slides = await deckHtml(note, options.scheme ?? 'dark', note.trusted)
   const html = buildDeckHtml(slides, titleOf(note.text, name), options)
 
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
