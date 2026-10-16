@@ -1074,6 +1074,14 @@ export const tr: Dictionary = {
   'AI account: {name}': 'Yapay zekâ hesabı: {name}',
   Accounts: 'Hesaplar',
   Access: 'Erişim',
+  Set: 'Ayarlı',
+  'Start over': 'Baştan başla',
+  'Sign in here': 'Burada oturum aç',
+  '{device} wants your AI accounts': '{device} yapay zekâ hesaplarını istiyor',
+  'Allow this device on another one': 'Bu cihaza başka bir cihazdan izin verin',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Oturum açtığın her cihazda, uçtan uca şifreli.',
+  'Sign in to have them on every device.': 'Her cihazda olmaları için oturum aç.',
   'Agents on this computer connect on their own':
     'Bu bilgisayardaki ajanlar kendiliğinden bağlanır',
   Helpers: 'Yardımcılar',
@@ -1396,13 +1404,11 @@ export const tr: Dictionary = {
   'OpenAI-compatible': 'OpenAI uyumlu',
   'Base URL': 'Temel URL',
   'API key': 'API anahtarı',
-  'Set on this device': 'Bu aygıtta ayarlı',
   Optional: 'İsteğe bağlı',
   'List models': 'Modelleri getir',
   'Asking…': 'Soruluyor…',
   'No providers yet.': 'Henüz sağlayıcı yok.',
   'Add {name}': '{name} ekle',
-  'Keys stay in the secure store on this device.': 'Anahtarlar bu aygıtın güvenli deposunda kalır.',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
   'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',

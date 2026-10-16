@@ -1082,6 +1082,14 @@ export const ptBR: Dictionary = {
   'AI account: {name}': 'Conta de IA: {name}',
   Accounts: 'Contas',
   Access: 'Acesso',
+  Set: 'Definida',
+  'Start over': 'Recomeçar',
+  'Sign in here': 'Entrar aqui',
+  '{device} wants your AI accounts': '{device} quer suas contas de IA',
+  'Allow this device on another one': 'Permita este dispositivo em outro',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Em todo dispositivo em que você entrar, com criptografia de ponta a ponta.',
+  'Sign in to have them on every device.': 'Entre para tê-las em todos os dispositivos.',
   'Agents on this computer connect on their own':
     'Os agentes deste computador se conectam sozinhos',
   Helpers: 'Ajudantes',
@@ -1419,14 +1427,11 @@ export const ptBR: Dictionary = {
   'OpenAI-compatible': 'Compatível com OpenAI',
   'Base URL': 'URL base',
   'API key': 'Chave de API',
-  'Set on this device': 'Definida neste dispositivo',
   Optional: 'Opcional',
   'List models': 'Listar modelos',
   'Asking…': 'Perguntando…',
   'No providers yet.': 'Ainda sem provedores.',
   'Add {name}': 'Adicionar {name}',
-  'Keys stay in the secure store on this device.':
-    'As chaves ficam no armazenamento seguro deste dispositivo.',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no próprio armazenamento.',
   'AI can be wrong. Check the facts.': 'A IA pode errar. Confira os fatos.',

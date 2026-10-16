@@ -5,6 +5,7 @@
    *  Its own component rather than snippets of AiPane's, because only a desktop has a
    *  plan to offer (see `offeredKinds`), and the glasses' plugin leaves a component out
    *  whole where it would carry a snippet's words and every module behind them. */
+  import { vault } from './vault/start.svelte'
   import { slide } from 'svelte/transition'
   import { USAGE } from './chatgpt'
   import ChatGptMark from './ChatGptMark.svelte'
@@ -136,6 +137,12 @@
               ? t('{plan} plan', { plan: plan.plan })
               : t('Signed in')}
         </span>
+      {:else if vault.seen[provider.id]}
+        <!-- Signed in on another of the reader's devices: who as, and one press here. -->
+        <span class="hint">{vault.seen[provider.id]}</span>
+        <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
+          {t('Sign in here')}
+        </button>
       {:else}
         <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
           {t('Sign in')}
@@ -172,7 +179,8 @@
           {t('Sign out')}
         </button>
       {:else if plans.chatgpt === null}
-        {#if signingIn}<span class="hint">{t('Asking…')}</span>{/if}
+        {#if signingIn}<span class="hint">{t('Asking…')}</span>
+        {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
         <button class="nib-chip continue" onclick={() => void continueWithChatgpt()}>
           <ChatGptMark />
           {t('Continue with ChatGPT')}

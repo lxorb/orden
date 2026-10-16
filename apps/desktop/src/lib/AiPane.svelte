@@ -33,6 +33,7 @@
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
+  import { vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import {
     isLocal,
@@ -185,7 +186,7 @@
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
     const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? plans.of(provider.id).account : null
-    return email ?? accountName(provider)
+    return email ?? vault.seen[provider.id] ?? accountName(provider)
   }
 </script>
 
@@ -199,6 +200,27 @@
 {/snippet}
 
 <h3>{t('Accounts')}</h3>
+
+<!-- This device waiting for another of the reader's devices to give it the accounts, or
+     on an account with none left that could: the six digits the other shows too, and
+     the way to start again from here. See ai/vault/vault.svelte.ts. -->
+{#if vault.standing === 'waiting' || vault.standing === 'stranded'}
+  <div class="card" transition:slide={{ duration: dur(160) }}>
+    <div class="nib-setting setting">
+      <span class="name">
+        {vault.standing === 'waiting' ? t('Allow this device on another one') : t('Start over')}
+      </span>
+      <div class="row">
+        {#if vault.standing === 'waiting'}<span class="hint digits">{vault.digits}</span>{/if}
+        <button
+          class="nib-chip"
+          class:is-quiet={vault.standing === 'waiting'}
+          onclick={() => void vault.startOver()}>{t('Start over')}</button
+        >
+      </div>
+    </div>
+  </div>
+{/if}
 
 {#if ai.accounts.length}
   {#each ai.vendors as vendor (vendor)}
@@ -291,7 +313,7 @@
               <span class="name">{t('API key')}</span>
               {#if keyed[provider.id]}
                 <div class="row">
-                  <span class="hint">{t('Set on this device')}</span>
+                  <span class="hint">{t('Set')}</span>
                   <button class="nib-chip is-quiet" onclick={() => void drop(provider)}
                     >{t('Remove')}</button
                   >
@@ -393,10 +415,12 @@
      wrong. The second is Anthropic's condition for Claude Code inside nib, and true of
      every provider; see docs/ai.md, Your own plan. -->
 <p class="hint caption">
-  {#if keysAreGuarded()}
-    {t('Keys stay in the secure store on this device.')}
-  {:else}
+  {#if vault.standing === 'open'}
+    {t('On every device you sign in to, end-to-end encrypted.')}
+  {:else if !keysAreGuarded()}
     {t('This browser holds the keys in its own storage.')}
+  {:else if vault.standing === 'off'}
+    {t('Sign in to have them on every device.')}
   {/if}
 </p>
 <p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
@@ -491,6 +515,12 @@
   /* A provider's own row over its accounts, and the accounts set in a step under it. */
   .strong {
     font-weight: 600;
+  }
+
+  /* The code both screens show, in figures of one width. */
+  .digits {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
   }
 
   .account {
