@@ -986,6 +986,7 @@ export const gsw: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
+  'Download the app': 'App abelade',
   'Report an issue': 'Problem mälde',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',

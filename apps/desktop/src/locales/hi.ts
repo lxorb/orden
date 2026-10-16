@@ -985,6 +985,7 @@ export const hi: Dictionary = {
   Comment: 'टिप्पणी',
   'Always on top': 'हमेशा ऊपर',
   'What is new': 'नया क्या है',
+  'Download the app': 'ऐप डाउनलोड करें',
   'Report an issue': 'समस्या बताएँ',
   'Move the line up': 'पंक्ति ऊपर ले जाएँ',
   'Move the line down': 'पंक्ति नीचे ले जाएँ',

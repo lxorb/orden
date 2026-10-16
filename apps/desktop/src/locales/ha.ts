@@ -992,6 +992,7 @@ export const ha: Dictionary = {
   Comment: 'Sharhi',
   'Always on top': 'Kullum a sama',
   'What is new': 'Abin da ke sabo',
+  'Download the app': 'Sauke manhajar',
   'Report an issue': 'Bayar da rahoton matsala',
   'Move the line up': 'Matsar da layin sama',
   'Move the line down': 'Matsar da layin ƙasa',

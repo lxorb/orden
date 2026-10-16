@@ -983,6 +983,7 @@ export const ur: Dictionary = {
   Comment: 'تبصرہ',
   'Always on top': 'ہمیشہ اوپر',
   'What is new': 'کیا نیا ہے',
+  'Download the app': 'ایپ ڈاؤن لوڈ کریں',
   'Report an issue': 'مسئلہ رپورٹ کریں',
   'Move the line up': 'سطر اوپر لے جائیں',
   'Move the line down': 'سطر نیچے لے جائیں',

@@ -974,6 +974,7 @@ export const am: Dictionary = {
   Comment: 'አስተያየት',
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
+  'Download the app': 'መተግበሪያውን አውርድ',
   'Report an issue': 'ችግር አሳውቅ',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',

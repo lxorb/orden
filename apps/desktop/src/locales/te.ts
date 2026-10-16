@@ -985,6 +985,7 @@ export const te: Dictionary = {
   Comment: 'వ్యాఖ్య',
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
+  'Download the app': 'యాప్‌ను డౌన్‌లోడ్ చేయండి',
   'Report an issue': 'సమస్య తెలియజేయి',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',

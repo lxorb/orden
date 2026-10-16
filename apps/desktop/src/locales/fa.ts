@@ -985,6 +985,7 @@ export const fa: Dictionary = {
   Comment: 'یادداشت کنار',
   'Always on top': 'همیشه رو',
   'What is new': 'تازه‌ها',
+  'Download the app': 'بارگیری برنامه',
   'Report an issue': 'گزارش مشکل',
   'Move the line up': 'جابه‌جایی خط به بالا',
   'Move the line down': 'جابه‌جایی خط به پایین',

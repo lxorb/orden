@@ -969,6 +969,7 @@ export const yue: Dictionary = {
   Comment: '註釋',
   'Always on top': '永遠喺最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '呢行上移',
   'Move the line down': '呢行下移',

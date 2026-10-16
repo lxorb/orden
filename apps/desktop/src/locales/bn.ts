@@ -983,6 +983,7 @@ export const bn: Dictionary = {
   Comment: 'মন্তব্য',
   'Always on top': 'সবসময় উপরে',
   'What is new': 'কী নতুন',
+  'Download the app': 'অ্যাপটি ডাউনলোড করুন',
   'Report an issue': 'সমস্যা জানান',
   'Move the line up': 'লাইন উপরে সরান',
   'Move the line down': 'লাইন নিচে সরান',

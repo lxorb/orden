@@ -969,6 +969,7 @@ export const zhHantHK: Dictionary = {
   Comment: '註釋',
   'Always on top': '總在最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '此行上移',
   'Move the line down': '此行下移',

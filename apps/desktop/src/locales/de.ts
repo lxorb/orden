@@ -994,6 +994,7 @@ export const de: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer im Vordergrund',
   'What is new': 'Was ist neu',
+  'Download the app': 'App herunterladen',
   'Report an issue': 'Problem melden',
   'Move the line up': 'Zeile nach oben schieben',
   'Move the line down': 'Zeile nach unten schieben',

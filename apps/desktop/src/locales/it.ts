@@ -1004,6 +1004,7 @@ export const it: Dictionary = {
   Comment: 'Commento',
   'Always on top': 'Sempre in primo piano',
   'What is new': 'Novità',
+  'Download the app': "Scarica l'app",
   'Report an issue': 'Segnala un problema',
   'Move the line up': 'Sposta la riga in alto',
   'Move the line down': 'Sposta la riga in basso',

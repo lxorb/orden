@@ -977,6 +977,7 @@ export const my: Dictionary = {
   Comment: 'မှတ်ချက်',
   'Always on top': 'အမြဲအပေါ်တွင်',
   'What is new': 'အသစ်ဘာရှိလဲ',
+  'Download the app': 'အက်ပ်ကို ဒေါင်းလုဒ်လုပ်ရန်',
   'Report an issue': 'ပြဿနာတိုင်ပါ',
   'Move the line up': 'လိုင်းကို အထက်ရွှေ့ပါ',
   'Move the line down': 'လိုင်းကို အောက်ရွှေ့ပါ',

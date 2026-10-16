@@ -988,6 +988,7 @@ export const pa: Dictionary = {
   Comment: 'ਟਿੱਪਣੀ',
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
   'What is new': 'ਨਵਾਂ ਕੀ ਹੈ',
+  'Download the app': 'ਐਪ ਡਾਊਨਲੋਡ ਕਰੋ',
   'Report an issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
   'Move the line up': 'ਲਾਈਨ ਉੱਪਰ ਭੇਜੋ',
   'Move the line down': 'ਲਾਈਨ ਹੇਠਾਂ ਭੇਜੋ',

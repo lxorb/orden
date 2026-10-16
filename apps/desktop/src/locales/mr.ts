@@ -983,6 +983,7 @@ export const mr: Dictionary = {
   Comment: 'टिप्पणी',
   'Always on top': 'नेहमी वर',
   'What is new': 'नवीन काय',
+  'Download the app': 'ॲप डाउनलोड करा',
   'Report an issue': 'अडचण सांगा',
   'Move the line up': 'ओळ वर हलवा',
   'Move the line down': 'ओळ खाली हलवा',

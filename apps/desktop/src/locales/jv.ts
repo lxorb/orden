@@ -980,6 +980,7 @@ export const jv: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Tansah ing ndhuwur',
   'What is new': 'Apa sing anyar',
+  'Download the app': 'Undhuh aplikasine',
   'Report an issue': 'Lapurake masalah',
   'Move the line up': 'Munggahake larike',
   'Move the line down': 'Mudhunake larike',
