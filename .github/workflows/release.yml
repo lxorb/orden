@@ -11,6 +11,12 @@ on:
     tags: ['v*']
     branches: [main]
   workflow_dispatch:
+    inputs:
+      runners:
+        description: 'Where the Windows jobs run: azure when the repository has it on (Spot first, or ondemand), or github'
+        type: choice
+        options: [auto, ondemand, github]
+        default: auto
 
 # A build of main is never cancelled by a newer push: pushes came faster than a
 # build takes, so none ever finished and edge stood still. The running one
@@ -48,8 +54,125 @@ jobs:
         shell: bash
         run: bash scripts/build-version.sh edge
 
+  # With Azure on, a push to main is built only once main has been still for a few
+  # minutes: pushes come in bursts, and a build that a newer one replaces anyway is
+  # money for nothing. The newest push of a burst builds; the others end here, before
+  # any machine exists. A tag, a dispatch or Azure off: no waiting.
+  settle:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.NIB_CI_AZURE == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      newest: ${{ steps.wait.outputs.newest }}
+    steps:
+      - id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SETTLE_S: ${{ vars.NIB_CI_SETTLE_S || '300' }}
+        run: |
+          # From the push, not from now: a run that queued behind another has waited already.
+          pushed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
+          left=$(($(date -d "$pushed" +%s) + SETTLE_S - $(date +%s)))
+          if [ "$left" -gt 0 ]; then sleep "$left"; fi
+          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          echo "newest=$([ "$head" = "$GITHUB_SHA" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
+          [ "$head" = "$GITHUB_SHA" ] || echo "main moved on to $head, which builds instead"
+
+  # Azure machines for the slowest Windows jobs, when the repository variable
+  # NIB_CI_AZURE is `on`; see .github/azure/machines.sh. Done as soon as Azure has
+  # accepted them, so nothing else waits for a machine to boot, and a row no region
+  # took simply runs on GitHub's own runner. A push, a tag or a maintainer's dispatch
+  # only: nothing from a pull request ever reaches these machines.
+  machines:
+    needs: settle
+    if: ${{ !cancelled() && vars.NIB_CI_AZURE == 'on' && inputs.runners != 'github' && needs.settle.outputs.newest != 'false' }}
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Which jobs get a machine; the repository variable NIB_CI_ROWS overrides it. Only
+      # Chromium on x64: the arm64 jobs and the installers would wait longer for what
+      # the image lacks than they take on GitHub's own runners (.github/azure/boot.ps1).
+      ROWS: ${{ vars.NIB_CI_ROWS || 'chromium-windows-x86_64=windows/x64' }}
+      # After Azure took a Spot machine back mid-job, the run starts again on demand.
+      NIB_CI_SPOT: ${{ inputs.runners == 'ondemand' && 'off' || 'on' }}
+    outputs:
+      runners: ${{ steps.start.outputs.runners }}
+      rows: ${{ steps.start.outputs.rows }}
+    steps:
+      - &azure-checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: .github/azure
+      - &azure-login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      # Just-in-time runners are registered with the CI app's token; the runner on a
+      # machine only ever holds its own one-job registration.
+      - &azure-app
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.NIB_CI_APP_ID }}
+          private-key: ${{ secrets.NIB_CI_APP_KEY }}
+      # Keyed by attempt as well: a re-run of one failed job reuses these outputs, and
+      # an earlier attempt's machine is gone by then, so that job goes to GitHub.
+      - id: start
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          export NIB_CI_RUNNERS="$RUNNER_TEMP/runners.json"
+          # shellcheck disable=SC2086
+          bash .github/azure/machines.sh start $ROWS
+          runners=$(cat "$NIB_CI_RUNNERS")
+          echo "runners=$(jq -c --arg a "$GITHUB_RUN_ATTEMPT" 'with_entries(.key = "\($a)/\(.key)")' <<<"$runners")" >>"$GITHUB_OUTPUT"
+          # The rows that got a machine, for machines-online to wait on.
+          echo "rows=$(for spec in $ROWS; do jq -e --arg k "${spec%%=*}" 'has($k)' <<<"$runners" >/dev/null && printf '%s ' "$spec"; done)" >>"$GITHUB_OUTPUT"
+
+  # Until every machine's runner is online. One that never comes gets one more machine
+  # elsewhere; when that fails as well, the run starts again on GitHub's runners, since
+  # its job would otherwise wait for a runner that will never come.
+  machines-online:
+    needs: machines
+    if: ${{ !cancelled() && needs.machines.outputs.rows != '' }}
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+      actions: write
+    steps:
+      - *azure-checkout
+      - *azure-login
+      - *azure-app
+      - name: Wait for the runners
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          # shellcheck disable=SC2086
+          bash .github/azure/machines.sh watch ${{ needs.machines.outputs.rows }}
+      - name: Start again on GitHub's runners
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release.yml --ref "$GITHUB_REF_NAME" -f runners=github
+          gh run cancel "$GITHUB_RUN_ID"
+
   build:
-    needs: version
+    needs: [version, settle, machines]
+    # Whether or not there are machines; not when a newer push builds instead.
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
     # It reads the repository and uploads an artifact, which travels on the
     # runtime's own token rather than on this one.
     permissions:
@@ -77,7 +200,7 @@ jobs:
             label: macos-universal
             rust: aarch64-apple-darwin,x86_64-apple-darwin
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ fromJSON(needs.machines.outputs.runners || '{}')[format('{0}/{1}', github.run_attempt, matrix.label)] || matrix.platform }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -108,6 +231,10 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri
           key: ${{ matrix.target }}
+          # Saved from main only: a cache is read only on the ref that saved it and the
+          # ones below it, and the repository's free 10 GB have nothing to spare for a
+          # tag's or a trial branch's.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       # xdg-utils is what the AppImage bundler copies `xdg-open` from; the x64
       # image happens to ship it, the arm image does not.
@@ -184,7 +311,8 @@ jobs:
   # Windows and a Mac. Not Linux, where the engine's toolkit and the app's cannot share
   # a process (docs/browser.md section 10), so the setting has no row there.
   chromium:
-    needs: version
+    needs: [version, settle, machines]
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
     permissions:
       contents: read
     strategy:
@@ -203,7 +331,7 @@ jobs:
           - runner: macos-latest
             target: x86_64-apple-darwin
             platform: macos-x86_64
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ fromJSON(needs.machines.outputs.runners || '{}')[format('{0}/chromium-{1}', github.run_attempt, matrix.platform)] || matrix.runner }}
     timeout-minutes: 120
     defaults:
       run:
@@ -243,6 +371,7 @@ jobs:
           workspaces: |
             apps/desktop/src-tauri/cef -> ${{ runner.os == 'Windows' && '../../../../../t' || 'target' }}
           key: chromium-${{ matrix.target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       # The interface the engine build embeds, as the installers do, and with the number
       # they carry: the Tauri CLI hands `--config` to the frontend build as TAURI_CONFIG,
@@ -253,6 +382,19 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm --filter @nib/desktop build
+
+      # An Azure machine installs what its image lacks while the steps above run
+      # (.github/azure/boot.ps1); this is the first step that needs any of it.
+      - name: The machine's tools
+        if: startsWith(runner.name, 'nib-')
+        shell: pwsh
+        run: |
+          $deadline = (Get-Date).AddMinutes(20)
+          while (-not (Test-Path C:\r\ready)) {
+            if ((Get-Date) -gt $deadline) { Get-Content C:\r\boot.log -ErrorAction SilentlyContinue; throw 'the machine never got its tools' }
+            Start-Sleep 5
+          }
+          Get-Content C:\r\ready
 
       - name: The engine
         run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
@@ -308,7 +450,9 @@ jobs:
     needs: [version, build, chromium]
     # The installers are the release; Chromium goes with them where it built, and a
     # platform whose engine failed is a release without it rather than no release.
-    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    # Only main and tags: a dispatch on any other branch is a trial and publishes
+    # nothing (it would otherwise replace edge).
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
@@ -444,3 +588,51 @@ jobs:
       - name: Hand the build of main to Nix
         if: needs.version.outputs.rolling == 'true' && github.ref == 'refs/heads/main'
         run: gh workflow run nix-edge.yml
+
+  # A Spot machine is Azure's to take back at any moment, and a job whose machine went
+  # mid-build fails with its runner lost. Then the run starts again with machines on
+  # demand, once: a build that failed on its own merits fails the same way again.
+  machines-again:
+    needs: [machines, build, chromium]
+    if: failure() && needs.machines.result == 'success' && inputs.runners != 'ondemand'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+      checks: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          lost=0
+          # The jobs that failed on a Spot machine (runner nib-<run>-<row>-s<try>).
+          for job in $(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" \
+            --jq '.jobs[] | select(.conclusion == "failure" and ((.runner_name // "") | test("^nib-.*-s[0-9]+$"))) | .id'); do
+            if gh api "repos/$GITHUB_REPOSITORY/check-runs/$job/annotations" --jq '.[].message' |
+              grep -qiE 'lost communication|shutdown signal|runner has received'; then
+              echo "job $job lost its Spot machine"
+              lost=1
+            fi
+          done
+          [ "$lost" = 1 ] || exit 0
+          gh workflow run release.yml --ref "$GITHUB_REF_NAME" -f runners=ondemand
+
+  # The first of the three things that delete the Azure machines (the sweeper and the
+  # machines themselves are the others): whatever the jobs did, failed or cancelled.
+  machines-down:
+    needs: [machines, build, chromium]
+    if: always() && needs.machines.result != 'skipped'
+    runs-on: ubuntu-latest
+    environment: azure-ci
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - *azure-checkout
+      - *azure-login
+      - *azure-app
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: bash .github/azure/machines.sh down
