@@ -814,4 +814,16 @@ describe('a page as markdown', () => {
   test('runs of blank lines are one blank line', () => {
     expect(htmlToMarkdown('<p>one</p><p></p><p></p><p>two</p>')).toBe('one\n\ntwo')
   })
+
+  /** Code is the one place every character is the author's: a diff clipped off a
+   *  page is only a diff while its blank lines and its trailing blanks are where
+   *  they were. The tidying is for the prose around it. */
+  test('the blank lines and trailing blanks inside code are left as they were', () => {
+    const code = 'one  \n\n\n\ntwo\t\n   \nthree'
+
+    expect(htmlToMarkdown(`<pre><code>${code}</code></pre>`)).toBe(`\`\`\`\n${code}\n\`\`\``)
+    expect(htmlToMarkdown(`<p>before</p><pre><code>${code}</code></pre><p>after</p>`)).toBe(
+      `before\n\n\`\`\`\n${code}\n\`\`\`\n\nafter`,
+    )
+  })
 })
