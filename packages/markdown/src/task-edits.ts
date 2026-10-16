@@ -161,26 +161,6 @@ function removal(line: string, from: number, to: number, wordsFrom: number): Tex
   return { from, to: end, insert: '' }
 }
 
-/** The edits that take several spans out of the line, each with its blank, as
- *  edits that never overlap. Spans with nothing but blanks between them go as one:
- *  two fields side by side at the opening of the words would otherwise both claim
- *  the blank between them, the first taking it after itself and the second before,
- *  and the blank after the second would be left in front of the words. */
-function removals(
-  line: string,
-  spans: readonly { from: number; to: number }[],
-  wordsFrom: number,
-): TextEdit[] {
-  const runs: { from: number; to: number }[] = []
-  for (const span of [...spans].sort((a, b) => a.from - b.from)) {
-    const last = runs.at(-1)
-    if (last && line.slice(last.to, Math.max(last.to, span.from)).trim() === '')
-      last.to = Math.max(last.to, span.to)
-    else runs.push({ from: span.from, to: span.to })
-  }
-  return runs.map((run) => removal(line, run.from, run.to, wordsFrom))
-}
-
 /** Two values of a field the same, lists and reminders by what they hold. */
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -245,23 +225,18 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
 
   if (change.tags != null && !same(change.tags, fields.tags)) {
     const next = change.tags
-    // Every place the tag is written, in the fields at the end and among the words:
-    // a tag written twice is one tag to the reading, and a copy left behind would
-    // keep it on the line. Among the words only when the words stay, since new
-    // words are written in their place.
-    const spans: { from: number; to: number }[] = []
     for (const tag of fields.tags.filter((one) => !next.includes(one))) {
-      for (const token of tokens) {
-        if (token.field !== 'tag' || line.slice(token.from + 1, token.to) !== tag) continue
+      const token = tokens.find(
+        (one) => one.field === 'tag' && line.slice(one.from + 1, one.to) === tag,
+      )
+      if (token) {
         gone.add(token)
-        spans.push(token)
-      }
-      if (textChanges) continue
-      for (const at of tagsAmongWords(line, tag, parsed.wordsFrom, parsed.wordsTo)) {
-        spans.push({ from: at, to: at + tag.length + 1 })
+        edits.push(removal(line, token.from, token.to, parsed.wordsFrom))
+      } else if (!textChanges) {
+        const at = tagAmongWords(line, tag, parsed.wordsFrom, parsed.wordsTo)
+        if (at !== null) edits.push(removal(line, at, at + tag.length + 1, parsed.wordsFrom))
       }
     }
-    edits.push(...removals(line, spans, parsed.wordsFrom))
     for (const tag of next.filter((one) => !fields.tags.includes(one))) {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
     }
@@ -282,11 +257,7 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (field === 'priority' && given === null) after.priority = NO_PRIORITY
     if ((field === 'remind' || field === 'dependsOn') && given === null) after[field] = []
 
-    // The last of the field written, because that is the one the reading keeps, as
-    // the Tasks plugin does; see trailingTokens in task-line.ts. A change made to an
-    // earlier one would leave the line saying what it said before.
-    const written = tokens.filter((one) => one.field === field && !gone.has(one))
-    const token = written.at(-1)
+    const token = tokens.find((one) => one.field === field && !gone.has(one))
     const was = token
       ? valueText(field, fields, token.form === 'emoji' ? 'emoji' : 'bracket')
       : null
@@ -295,9 +266,8 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (value === was || (token === undefined && value === null)) continue
 
     if (token && value === null) {
-      // Every one of them, or the one left behind would be read in its place.
-      for (const one of written) gone.add(one)
-      edits.push(...removals(line, written, parsed.wordsFrom))
+      gone.add(token)
+      edits.push(removal(line, token.from, token.to, parsed.wordsFrom))
     } else if (token && value !== null) {
       const whole = field === 'priority' && token.form === 'emoji'
       edits.push(
@@ -350,19 +320,18 @@ function unknownFieldEdits(
   return edits
 }
 
-/** Where each time a tag is written among the words starts. */
-function tagsAmongWords(line: string, tag: string, from: number, to: number): number[] {
+/** Where a tag written among the words starts, or null. */
+function tagAmongWords(line: string, tag: string, from: number, to: number): number | null {
   const words = line.slice(from, to)
-  const found: number[] = []
   let at = words.indexOf(`#${tag}`)
   while (at !== -1) {
     const before = words.charAt(at - 1)
     const after = words.charAt(at + tag.length + 1)
     if ((before === '' || /\s|\(/.test(before)) && !/[\p{L}\p{N}\-_/]/u.test(after))
-      found.push(from + at)
+      return from + at
     at = words.indexOf(`#${tag}`, at + 1)
   }
-  return found
+  return null
 }
 
 /** The insertions for the fields that arrive: each before the first field that

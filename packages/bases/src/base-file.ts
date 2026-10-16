@@ -142,16 +142,11 @@ function readView(raw: unknown, at: number): View {
     nib: readNibView(plain.nib),
     options: rest(plain, VIEW_KEYS),
   }
-  // Filters of a shape nib cannot read and a limit that is not a count (`"10"`) are
-  // kept among the options as written, as the base's own filters are kept, so the
-  // next write gives them back instead of leaving the view showing more rows.
   const filters = readFilter(plain.filters)
   if (filters !== null) view.filters = filters
-  else if (plain.filters !== undefined) view.options.filters = plain.filters
   const groupBy = readSort(plain.groupBy)
   if (groupBy) view.groupBy = groupBy
   if (typeof plain.limit === 'number' && plain.limit > 0) view.limit = plain.limit
-  else if (plain.limit !== undefined) view.options.limit = plain.limit
   return view
 }
 
@@ -259,18 +254,16 @@ function nibViewPlain(nib: NibView): Plain {
 }
 
 function viewPlain(view: View): Plain {
-  // The filters and limit kept as written stand in their own place, and only while
-  // the view has none of its own: one set since replaces what nib could not read.
   return present([
     ['type', view.type],
     ['name', view.name],
-    ['filters', view.filters ?? view.options.filters],
+    ['filters', view.filters],
     ['order', view.order],
     ['sort', view.sort.map(sortPlain)],
     ['groupBy', view.groupBy && sortPlain(view.groupBy)],
-    ['limit', view.limit ?? view.options.limit],
+    ['limit', view.limit],
     ['summaries', view.summaries],
-    ...Object.entries(rest(view.options, ['filters', 'limit'])),
+    ...Object.entries(view.options),
     ['nib', nibViewPlain(view.nib)],
   ])
 }

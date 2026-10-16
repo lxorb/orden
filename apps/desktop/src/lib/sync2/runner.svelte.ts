@@ -681,30 +681,22 @@ class Runner {
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
 
-  /** A device's name, by its id on the account: the account's list, asked for once by
-   *  everyone who wants a name while it is coming, and kept only once it came. A list
-   *  that could not be had is asked for again next time, rather than every device being
-   *  nameless for the rest of the session. */
-  private names: Promise<Map<string, string>> | null = null
+  /** A device's name, by its id on the account. */
+  private names: Map<string, string> | null = null
   private async nameOf(device: string | null): Promise<string> {
     if (!device) return ''
-    const token = account.token
-    if (!token) return ''
     if (!this.names) {
-      const asked = (async () => {
+      this.names = new Map()
+      const token = account.token
+      if (token) {
         const { request } = await import('../api')
         const listed = await request<{ devices?: { id: string; name: string }[] }>('/v2/devices', {
           token,
-        })
-        return new Map((listed.devices ?? []).map((one) => [one.id, one.name]))
-      })()
-      this.names = asked
-      asked.catch(() => {
-        if (this.names === asked) this.names = null
-      })
+        }).catch(() => ({ devices: [] }))
+        for (const one of listed.devices ?? []) this.names.set(one.id, one.name)
+      }
     }
-    const names = await this.names.catch(() => null)
-    return names?.get(device) ?? ''
+    return this.names.get(device) ?? ''
   }
 
   // -------------------------------------------------------------------------

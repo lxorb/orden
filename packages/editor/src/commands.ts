@@ -146,13 +146,7 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-/** Adds the prefix to every selected line, or strips it if all lines have it.
- *
- *  The whitespace a match starts with is the line's indent, which is what nests a
- *  list item under the one above it, so it stays where it is either way: only the
- *  marker after it is traded or taken off. And a task's box goes with the bullet
- *  when the list is taken off, since `[ ]` left in front of the words is neither a
- *  task nor prose; see tasks.ts in @nib/markdown for where the box ends. */
+/** Adds the prefix to every selected line, or strips it if all lines have it. */
 function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
@@ -160,15 +154,11 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
 
     const changes: ChangeSpec[] = lines.map((line) => {
       const existing = pattern.exec(line.text)
-      const matched = existing?.[0] ?? ''
-      const indent = matched.length - matched.trimStart().length
 
       if (allPrefixed && existing) {
-        const task = taskAt(line.text)
-        const end = task ? Math.max(task.marker, matched.length) : matched.length
-        return { from: line.from + indent, to: line.from + end, insert: '' }
+        return { from: line.from, to: line.from + existing[0].length, insert: '' }
       }
-      return { from: line.from + indent, to: line.from + matched.length, insert: prefix }
+      return { from: line.from, to: line.from + (existing?.[0].length ?? 0), insert: prefix }
     })
 
     dispatch(state.update({ changes, userEvent: 'input' }))
@@ -183,21 +173,11 @@ export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
 
-/** The `>` of a quote, as many as it is nested, with the space after each. */
-const QUOTED = /^(?:[ \t]*>[ \t]?)*/
-
 /** The selected lines as tasks, or back to plain lines when all of them already
  *  are. A line that is a bullet or a number keeps its indentation and trades its
- *  marker for a box; a line that is neither gets both.
- *
- *  A line in a quote is read from after its `>`, which says where the line is and
- *  is not part of what the line says: the box goes inside the quote, as `> - [ ]`,
- *  because one in front of the `>` would take the line out of it. */
+ *  marker for a box; a line that is neither gets both. */
 export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
-  const lines = selectedLines(state).map((line) => {
-    const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
-    return { from: line.from + quote, text: line.text.slice(quote) }
-  })
+  const lines = selectedLines(state)
   const allTasks = lines.every((line) => taskAt(line.text) !== null)
 
   const changes: ChangeSpec[] = lines.map((line) => {

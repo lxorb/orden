@@ -7,7 +7,7 @@
  *  Relative words stay relative (`today() + "1d"`), so a saved filter is right on
  *  every day it is read. */
 
-import { civil, isoOf, todayOf } from './dates'
+import { civil, isoOf } from './dates'
 
 export interface DateWordOptions {
   /** The app's language; `en-US` reads `6/10` as June 10, every other one as 6 October. */
@@ -123,9 +123,7 @@ export function dateWords(
   const day = DAYS[text]
   if (day !== undefined) return { expression: weekdayFrom(day, true), clock: false }
 
-  // Today on this machine's clock, not UTC's, which is a day off near midnight and
-  // so a year off on New Year's Eve and Day.
-  const year = Number((options.today ?? todayOf()).slice(0, 4))
+  const year = Number((options.today ?? new Date().toISOString()).slice(0, 4))
   const named =
     /^(?:([a-zäö]+)\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th|\.)? ([a-zäö]+)\.?)(?:,? (\d{4}))?$/.exec(
       text,

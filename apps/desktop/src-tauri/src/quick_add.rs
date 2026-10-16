@@ -136,9 +136,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)
-        .visible(false)
-        // A drop is the page's, and never a pick; see `window_builder` in launch.rs.
-        .disable_drag_drop_handler();
+        .visible(false);
 
     // The same switches as the first window, which runs on the same user data folder
     // and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.

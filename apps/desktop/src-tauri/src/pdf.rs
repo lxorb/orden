@@ -237,8 +237,6 @@ where
         .title("Orden")
         .visible(false)
         .inner_size(900.0, 1200.0)
-        // A drop is never a pick; see `window_builder` in launch.rs.
-        .disable_drag_drop_handler()
         .on_page_load(move |window, payload| {
             if payload.event() != PageLoadEvent::Finished {
                 return;

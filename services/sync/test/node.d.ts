@@ -37,7 +37,7 @@ declare module 'node:path' {
 
 declare module 'node:crypto' {
   interface Hash {
-    update(data: string | Uint8Array, encoding?: 'utf8' | 'latin1'): Hash
+    update(data: string, encoding?: 'utf8' | 'latin1'): Hash
     digest(encoding: 'hex'): string
   }
 

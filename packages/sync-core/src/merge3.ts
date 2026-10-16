@@ -272,14 +272,10 @@ function both(base: string, meeting: Meeting, first: Whose): string {
     }
   }
 
-  // Each point's insertions go before the ancestor character there, and the walk ends
-  // at `to` itself: an insertion at the very end of the passage has no character after
-  // it to go before, and a meeting of insertions at one point covers no ancestor at
-  // all, so `to` is the only place its words are.
   let out = ''
-  for (let at = from; at <= to; at++) {
+  for (let at = from; at < to; at++) {
     out += (inserts.get(at) ?? []).join('')
-    if (at < to && !gone[at - from]) out += base.charAt(at)
+    if (!gone[at - from]) out += base.charAt(at)
   }
   return out
 }

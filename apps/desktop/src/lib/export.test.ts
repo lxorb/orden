@@ -269,63 +269,6 @@ describe('a bare export', () => {
   })
 })
 
-/** An export is the same question the reading view asks: whose words these are.
- *  A collaborator's `<img onerror>` in a shared space is their markup, and a PDF
- *  of it is drawn in a window of the app's own. */
-describe('an export of somebody else\u2019s note', () => {
-  const NOTE = '# Plan\n\n<img src=x onerror="alert(1)">\n'
-
-  test('shows their HTML as the characters it is made of', () => {
-    const html = buildHtml(NOTE, 'Plan.md', { escapeHtml: true })
-
-    expect(html).not.toContain('<img src=x')
-    expect(html).toContain('&lt;img src=x onerror=')
-  })
-
-  test('and the reader\u2019s own is still markup', () => {
-    expect(buildHtml(NOTE, 'Plan.md')).toContain('<img src=x onerror="alert(1)">')
-  })
-})
-
-/** Whatever the trust answer, nothing in an exported page runs: it is printed in
- *  a hidden window off a file, and opened later in whatever browser the reader
- *  has. Everything it needs is inline - styles, fonts, pictures - so the policy
- *  can say no to script outright and still let the page draw. */
-describe('the content policy an exported page carries', () => {
-  const policyOf = (html: string) =>
-    /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(html)?.[1] ?? ''
-
-  test('runs no script, in a styled page and in a bare one', () => {
-    for (const html of [
-      buildHtml(NOTE, 'Handbook.md'),
-      buildHtml(NOTE, 'Handbook.md', { bare: true }),
-    ]) {
-      const policy = policyOf(html)
-
-      expect(policy).toContain("default-src 'none'")
-      expect(policy).toContain("script-src 'none'")
-      expect(policy).toContain("object-src 'none'")
-      expect(policy).toContain("base-uri 'none'")
-    }
-  })
-
-  /** Every picture is a `data:` address by the time the page is written, the
-   *  maths fonts are too, and the styles are one inline sheet; a bare page keeps
-   *  the paths the note wrote. None of them may stop drawing. */
-  test('still lets the page draw what it carries', () => {
-    const policy = policyOf(buildHtml(NOTE, 'Handbook.md'))
-
-    expect(policy).toMatch(/img-src [^;]*data:/)
-    expect(policy).toMatch(/font-src [^;]*data:/)
-    expect(policy).toMatch(/style-src [^;]*'unsafe-inline'/)
-  })
-
-  test('comes before anything in the head it governs', () => {
-    const html = buildHtml(NOTE, 'Handbook.md')
-    expect(html.indexOf('Content-Security-Policy')).toBeLessThan(html.indexOf('<style>'))
-  })
-})
-
 describe('preparing fences', () => {
   const draw = async (code: string, language: string, scheme: string) =>
     `<svg data-language="${language}" data-scheme="${scheme}">${code}</svg>`

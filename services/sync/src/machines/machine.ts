@@ -674,14 +674,9 @@ export class Machine implements DurableObject {
   private opened = new Set<string>()
 
   /** The session open in `nibd`, at the size it should be, once per link - and not while
-   *  the home is being put back, which would leave its shell in the home being replaced.
-   *  Nor for a watcher on a session whose shell ended: `open` on an ended session starts
-   *  its shell again (nibd.ts), which is `start`'s to ask for and refused to whoever may
-   *  not type, so a reader or a link's guest opening the terminal, or coming back to it,
-   *  would otherwise start the owner's program for them. They watch it ended. */
+   *  the home is being put back, which would leave its shell in the home being replaced. */
   private ensureOpen(viewer: Viewer): void {
     if (!this.link || this.restoring || this.opened.has(viewer.session)) return
-    if (!maySocketType(viewer) && this.news.get(viewer.session)?.ended) return
     this.opened.add(viewer.session)
     this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
   }
@@ -790,11 +785,8 @@ export class Machine implements DurableObject {
     if (!this.link || this.restoring) return
     const sessions = new Map<string, Viewer>()
     for (const socket of this.ctx.getWebSockets()) {
-      // Somebody who may type before a watcher, whose `open` an ended session would not take.
       const viewer = viewerOf(socket)
-      const held = viewer && sessions.get(viewer.session)
-      if (viewer && (!held || (!maySocketType(held) && maySocketType(viewer))))
-        sessions.set(viewer.session, viewer)
+      if (viewer && !sessions.has(viewer.session)) sessions.set(viewer.session, viewer)
     }
     for (const viewer of sessions.values()) {
       this.ensureOpen(viewer)

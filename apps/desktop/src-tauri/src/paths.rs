@@ -486,12 +486,10 @@ fn same_path(one: &Path, other: &Path) -> bool {
 /// `assets` folder beside the name picked, and a picked folder itself.
 ///
 /// Heard from the asset protocol's scope, which the dialog plugin adds every pick to
-/// and which nothing else in the app adds to after the launch; see `hear_picks`.
-/// Tauri's own drop handler would - it adds every file dropped on a webview to the
-/// same scope - which is why no webview is built with it on
-/// (`every_webview_takes_its_own_drops` in launch.rs). So a path is here only because
-/// the reader chose it in a window of the system's own, which no note, link or script
-/// can open for them. Held for the run and never written down.
+/// and which nothing else in the app adds to after the launch; see `hear_picks`. So a
+/// path is here only because the reader chose it in a window of the system's own,
+/// which no note, link or script can open for them. Held for the run and never
+/// written down.
 #[derive(Default)]
 pub struct Picked(Mutex<HashSet<PathBuf>>);
 

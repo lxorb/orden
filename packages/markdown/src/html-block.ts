@@ -75,15 +75,13 @@ const ACTS =
   /<(?:script|iframe|frame|frameset|object|embed|applet|meta|base|link|portal)(?=[\s/>]|$)/i
 
 /** A `javascript:` or `vbscript:` target however it is spelled: with character
- *  references, and with the blanks a browser skips inside an address. A decimal
- *  reference ends at the first character that is not a digit, as a browser ends
- *  it - `&#106avascript:` is a `j` and then the rest of the word. */
+ *  references, and with the blanks a browser skips inside an address. */
 function namesScript(html: string): boolean {
   const decoded = html.replace(
-    /&#x([0-9a-f]+);?|&#([0-9]+);?|&(colon|tab|newline);?/gi,
-    (whole, hex, decimal, name) => {
+    /&#(x?)([0-9a-f]+);?|&(colon|tab|newline);?/gi,
+    (whole, x, n, name) => {
       if (name) return { colon: ':', tab: '\t', newline: '\n' }[String(name).toLowerCase()] ?? whole
-      const code = hex ? Number.parseInt(String(hex), 16) : Number.parseInt(String(decimal), 10)
+      const code = Number.parseInt(String(n), x ? 16 : 10)
       return code <= 0x10ffff ? String.fromCodePoint(code) : whole
     },
   )

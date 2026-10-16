@@ -237,30 +237,6 @@ describe('headings and the table of contents', () => {
   test('render nothing for a [toc] in a document without headings', () => {
     expect(renderMarkdown('[toc]\n\ntext', { toc: true })).not.toContain('<nav')
   })
-
-  /** A dollar in a heading is a dollar. The contents are put in where `[toc]` was,
-   *  and a `$&` or a `$'` read as a pattern would put the marker, or the whole of
-   *  the page after it, inside the list. */
-  test('keep a heading that says $& or $’ as it is written', () => {
-    const html = renderMarkdown("# Costs $& prices\n\n[toc]\n\n## Before $' after\n\nText", {
-      toc: true,
-    })
-
-    expect(html).toContain('<a href="#costs-prices">Costs $&amp; prices</a>')
-    expect(html).toContain('<a href="#before-after">Before $&#39; after</a>')
-    expect(html.match(/<p>Text<\/p>/g)).toHaveLength(1)
-  })
-
-  /** The same for a note an embed brings in, which is put in where its marker was. */
-  test('keep an embedded note that says $` or $’ as it is written', () => {
-    const html = renderMarkdown('Before\n\n![[Note]]\n\nAfter', {
-      resolveEmbed: () => "cost $` and $' here\n",
-    })
-
-    expect(html).toContain('cost $` and $&#39; here')
-    expect(html.match(/<p>After<\/p>/g)).toHaveLength(1)
-    expect(html.match(/<p>Before<\/p>/g)).toHaveLength(1)
-  })
 })
 
 describe('code fences', () => {
@@ -610,25 +586,6 @@ describe('an <iframe> a note wrote', () => {
       expect(running(renderMarkdown(`${tag}\n`, { escapeHtml: true })), tag).toEqual([])
     }
   })
-
-  /** A block of HTML runs on to the next blank line, so a caption written straight
-   *  under the frame is in the same block as it. The card is the frame's, and
-   *  what follows is the note's own markup like any other: words in a document
-   *  from outside, markup in the reader's own - and never simply gone. */
-  test('and what follows the frame in the same block is still there', () => {
-    const source = `${TAG}\n<p>My caption paragraph</p>\n\nnext\n`
-
-    const own = renderMarkdown(source)
-    expect(own).toContain('class="embed-web embed-page"')
-    expect(own).toContain('<p>My caption paragraph</p>')
-    expect(own).toContain('<p>next</p>')
-    expect(own).not.toContain('<iframe')
-
-    const published = renderMarkdown(source, { escapeHtml: true })
-    expect(published).toContain('class="embed-web embed-page"')
-    expect(published).toContain('&lt;p&gt;My caption paragraph&lt;/p&gt;')
-    expect(published).not.toContain('<iframe')
-  })
 })
 
 /** A document of the reader's own is markup, and it is put into the app's own page,
@@ -680,9 +637,6 @@ describe('the markup of a document that is the reader’s own', () => {
       '<a href="javascript:parent.ran=1">x</a>\n',
       '<a href="&#106;avascript:parent.ran=1">x</a>\n',
       '<a href="&#x6A;avascript:parent.ran=1">x</a>\n',
-      // No semicolon, and the letter after the number is a hex digit: a browser
-      // ends a decimal reference at the first character that is not a digit.
-      '<a href="&#106avascript:parent.ran=1">x</a>\n',
       '<a href="javascript&colon;parent.ran=1">x</a>\n',
       '<a href="java&Tab;script:parent.ran=1">x</a>\n',
       '<a href="java\tscript:parent.ran=1">x</a>\n',
@@ -786,15 +740,6 @@ describe('abbreviations', () => {
   test('works when the definition comes after the use', () => {
     const html = renderMarkdown('I write HTML.\n\n*[HTML]: HyperText Markup Language\n')
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
-  })
-
-  /** A character reference is one character, written as a word. Wrapping the
-   *  word inside it breaks it into an `&`, a tag and a stray `;`. */
-  test('leaves the name inside a character reference alone', () => {
-    const html = renderMarkdown('*[amp]: ampersand\n\nTom & Jerry, and amp on its own\n')
-    expect(html).toContain('Tom &amp; Jerry')
-    expect(html).toContain('<abbr title="ampersand">amp</abbr> on its own')
-    expect(html.match(/<abbr/g)).toHaveLength(1)
   })
 
   test('leaves code alone', () => {

@@ -65,53 +65,37 @@ function endpointFile() {
  *
  *  `--name value` is a named argument; `--name` on its own is a yes, the same way a
  *  query string writes one. A value may start with dashes - a note's front matter
- *  opens with `---` - so only a word that reads as a flag ends one.
- *
- *  `--help` and `-h` ask for the help only where a flag goes: the value of a flag is
- *  that value, so `orden append log.md --content -h` appends `-h`. And a bare `--` is
- *  the end of the flags, as everywhere else on a command line: every word after it is
- *  a word, whatever it starts with. */
+ *  opens with `---` - so only a word that reads as a flag ends one. */
 const FLAG = /^--[a-z]/i
 
 function parseArgv(argv) {
-  const mine = { json: false, out: null, yes: false, help: false }
+  const mine = { json: false, out: null, yes: false }
   const args = {}
   const rest = []
   let verb = null
-  let flags = true
 
   for (let at = 0; at < argv.length; at++) {
     const word = argv[at]
 
-    if (flags) {
-      if (word === '--') {
-        flags = false
-        continue
-      }
-      if (word === '--help' || word === '-h') {
-        mine.help = true
-        continue
-      }
-      if (word === '--json') {
-        mine.json = true
-        continue
-      }
-      if (word === '--yes' || word === '-y') {
-        mine.yes = true
-        args.yes = true
-        continue
-      }
-      if (word === '--out') {
-        mine.out = argv[++at] ?? null
-        continue
-      }
-      if (word.startsWith('--')) {
-        const [name, ...value] = word.slice(2).split('=')
-        if (value.length) args[name] = value.join('=')
-        else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
-        else args[name] = ''
-        continue
-      }
+    if (word === '--json') {
+      mine.json = true
+      continue
+    }
+    if (word === '--yes' || word === '-y') {
+      mine.yes = true
+      args.yes = true
+      continue
+    }
+    if (word === '--out') {
+      mine.out = argv[++at] ?? null
+      continue
+    }
+    if (word.startsWith('--')) {
+      const [name, ...value] = word.slice(2).split('=')
+      if (value.length) args[name] = value.join('=')
+      else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
+      else args[name] = ''
+      continue
     }
 
     if (verb === null) {
@@ -174,7 +158,7 @@ async function main() {
   const argv = process.argv.slice(2)
   const asked = parseArgv(argv)
 
-  if (!asked.verb || asked.verb === 'help' || asked.help) {
+  if (!asked.verb || asked.verb === 'help' || argv.includes('--help') || argv.includes('-h')) {
     return help()
   }
 

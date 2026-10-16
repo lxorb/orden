@@ -11,7 +11,6 @@ import { imagePath } from '../images'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { settings } from '../settings.svelte'
-import { trustsHtmlIn } from '../sharing.svelte'
 import { theme } from '../theme.svelte'
 import { invoke, isNative } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -23,10 +22,6 @@ export interface Target {
   source: string
   name: string
   path: string | null
-  /** Whether the note's raw HTML is markup, asked of the document the way the
-   *  reading view asks it; see trust.ts. A printed page of somebody else's words
-   *  is still their words. */
-  trusted: boolean
 }
 
 /** The note in front of somebody, read as text.
@@ -41,7 +36,6 @@ export function openTarget(): Target {
     source: note?.doc ?? '',
     name: note?.name ?? 'Untitled.md',
     path: note?.path ?? null,
-    trusted: note ? trustsHtmlIn(note.note) : true,
   }
 }
 
@@ -74,7 +68,6 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
     // A wikilink written out as markdown points at the file it named, relative to
     // this note, so the export reads in any other editor.
     link: (link) => links.relativeTarget(link, target.path),
-    escapeHtml: !target.trusted,
     ...(await look()),
   }
 }

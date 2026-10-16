@@ -378,39 +378,6 @@ describe('notes', () => {
     expect((await addNote('Read me.md', 'two')).status).toBe(409)
   })
 
-  /** A save that moves a note, or brings one back from Recently deleted, onto a path a
-   *  live note already holds ran into the space's unique index and came back as a 500.
-   *  It is the same thing a create onto that path is, and gets the same answer. */
-  test('a save that moves a note onto another one is told it is there', async () => {
-    const a = (await addNote('a.md', 'one')).json.note.id
-    const b = (await addNote('b.md', 'two')).json.note.id
-
-    const moved = await call(env, `/v1/notes/${a}`, {
-      method: 'PUT',
-      token,
-      body: { path: 'b.md', content: 'one', baseVersion: 1 },
-    })
-
-    expect(moved.status).toBe(409)
-    expect(moved.json.error).toBe('a note already lives there')
-    expect(moved.json.note.id).toBe(b)
-  })
-
-  test('and so is one that brings a deleted note back over a new one', async () => {
-    const old = (await addNote('a.md', 'old')).json.note.id
-    await call(env, `/v1/notes/${old}`, { method: 'DELETE', token })
-    const fresh = (await addNote('a.md', 'new')).json.note.id
-
-    const back = await call(env, `/v1/notes/${old}`, {
-      method: 'PUT',
-      token,
-      body: { content: 'old, edited' },
-    })
-
-    expect(back.status).toBe(409)
-    expect(back.json.note.id).toBe(fresh)
-  })
-
   /** The space's unique index is what guarantees it; the read above is only a
    *  courtesy. Two devices creating one path at the same moment both got past
    *  the read, and the one that lost came back as a 500 rather than as the 409

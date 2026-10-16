@@ -48,32 +48,7 @@ export interface HtmlOptions {
   readNote?: (target: string) => Promise<string | null>
   /** The notes an embed names, already read; see `prepareEmbeds`. */
   embed?: (link: Wikilink) => string | null
-  /** Show the note's raw HTML as the characters it is made of rather than as
-   *  markup. The same question the reading view asks, and asked of the same note:
-   *  a page of somebody else's words is not made trustworthy by being printed.
-   *  See trust.ts, and `renderOptions` in export/context.ts, which answers it. */
-  escapeHtml?: boolean
 }
-
-/** What an exported page may do, which is draw itself and nothing more.
- *
- *  The page is printed in a hidden window off a file, and opened afterwards in
- *  whatever the reader opens it in, and neither should run anything a note put in
- *  it: the page has no script of its own to allow. Its styles are one inline
- *  sheet, its fonts and pictures are `data:` addresses by the time it is written,
- *  and a bare page keeps the paths the note wrote - so those may load from
- *  anywhere, and nothing else may load at all. */
-const CONTENT_POLICY = [
-  "default-src 'none'",
-  "script-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "style-src * 'unsafe-inline'",
-  'img-src * data: blob:',
-  'media-src * data: blob:',
-  'font-src * data:',
-].join('; ')
 
 function declarations(tokens: Record<string, string>): string {
   return Object.entries(tokens)
@@ -105,7 +80,6 @@ export function buildBody(source: string, options: HtmlOptions = {}): string {
     // No link resolver: an exported document stands on its own, and a link to a
     // note that is not in it has nowhere to point, so it reads as its own words.
     ...(options.embed ? { resolveEmbed: options.embed } : {}),
-    ...(options.escapeHtml ? { escapeHtml: true } : {}),
   })
 }
 
@@ -142,7 +116,6 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 
   const meta = [
     '<meta charset="utf-8">',
-    `<meta http-equiv="Content-Security-Policy" content="${CONTENT_POLICY}">`,
     author ? `<meta name="author" content="${escapeAll(author)}">` : '',
     `<title>${escapeAll(title)}</title>`,
   ]

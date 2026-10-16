@@ -126,42 +126,6 @@ describe('a change', () => {
     expect(writeTask('- [ ] a', { done: true })).toEqual([{ from: 3, to: 4, insert: 'x' }])
   })
 
-  // The Tasks plugin keeps the last of a field written twice, and so does the
-  // reading; a change made to the first one would leave the line saying what it
-  // said before. And a field taken off goes from everywhere it is written, or the
-  // one left behind would be read in its place.
-  test('of a field written twice is made to the one that is read', () => {
-    const line = '- [ ] a 📅 2026-10-01 📅 2026-10-05'
-    const moved = changedTask(line, { due: '2026-11-01' })
-    expect(moved).toBe('- [ ] a 📅 2026-10-01 📅 2026-11-01')
-    expect(readTask(moved)?.due).toBe('2026-11-01')
-
-    expect(changedTask(line, { due: null })).toBe('- [ ] a')
-    // With no words in front, both would take the blank between them.
-    expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
-  })
-
-  // A date field holds its first ten characters, the date, and what is written
-  // after it is somebody's own - a time, most often - which moving the date keeps.
-  test('of a date written with a time moves the date and keeps the time', () => {
-    expect(changedTask('- [ ] a [due:: 2026-10-06T10:00]', { due: '2026-10-13' })).toBe(
-      '- [ ] a [due:: 2026-10-13T10:00]',
-    )
-    expect(changedTask('- [ ] a [due:: 2026-10-06 10:00] b', { due: '2026-10-13' })).toBe(
-      '- [ ] a [due:: 2026-10-13 10:00] b',
-    )
-  })
-
-  // A tag written twice is one tag to the reading, so taking it off takes off
-  // every time it is written, among the words and in the fields at the end, or the
-  // copy left behind would put it back.
-  test('takes off a tag written twice everywhere it is written', () => {
-    expect(changedTask('- [ ] a #x #x', { tags: [] })).toBe('- [ ] a')
-    expect(changedTask('- [ ] #x a #x', { tags: [] })).toBe('- [ ] a')
-    expect(changedTask('- [ ] #x #x a b', { tags: [] })).toBe('- [ ] a b')
-    expect(changedTask('- [ ] a #x b #x c', { tags: [] })).toBe('- [ ] a b c')
-  })
-
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })

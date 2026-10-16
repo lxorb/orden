@@ -5,7 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeAt } from '../src/second'
-import { call, file, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
+import { call, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
 
 interface LeavingView {
   resendIn?: number
@@ -352,20 +352,18 @@ describe('what is left', () => {
 
   test('a picture another account holds too stays; its own goes', async () => {
     const other = await signIn(env, OTHER)
-    const shared = file(3, 1)
-    const own = file(3, 2)
-    const both = shared.hash
-    const alone = own.hash
+    const both = 'c'.repeat(64)
+    const alone = 'a'.repeat(64)
 
-    for (const [picture, as] of [
-      [shared, token],
-      [shared, other],
-      [own, token],
+    for (const [hash, as] of [
+      [both, token],
+      [both, other],
+      [alone, token],
     ] as const) {
-      await call(env, `/v1/blobs/${picture.hash}`, {
+      await call(env, `/v1/blobs/${hash}`, {
         method: 'PUT',
         token: as,
-        raw: picture.bytes,
+        raw: new Uint8Array([1, 2, 3]),
         headers: { 'content-type': 'image/png' },
       })
     }
@@ -395,13 +393,13 @@ describe('what is left', () => {
       token,
     })
 
-    const pictures = [file(3, 4), file(3, 5)]
-    const [pasted, kept] = pictures.map((one) => one.hash) as [string, string]
-    for (const picture of pictures) {
-      await call(env, `/v1/blobs/${picture.hash}`, {
+    const pasted = 'd'.repeat(64)
+    const kept = 'e'.repeat(64)
+    for (const hash of [pasted, kept]) {
+      await call(env, `/v1/blobs/${hash}`, {
         method: 'PUT',
         token,
-        raw: picture.bytes,
+        raw: new Uint8Array([4, 5, 6]),
         headers: { 'content-type': 'image/png' },
       })
     }

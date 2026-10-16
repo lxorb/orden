@@ -308,13 +308,7 @@ fn window_builder<'a>(
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
         .title("Orden")
         .inner_size(1180.0, 760.0)
-        .min_inner_size(520.0, 400.0)
-        // The page takes its own drops (src/lib/drops.ts), as the first window's
-        // `dragDropEnabled: false` says for it. Tauri's handler would keep them from the
-        // page, and would add every file dropped to the asset protocol's scope, which
-        // `paths::hear_picks` takes for a pick in the system's own dialog: the dropped
-        // file's whole folder would then be written to as though the reader had chosen it.
-        .disable_drag_drop_handler();
+        .min_inner_size(520.0, 400.0);
 
     // Not a Mac: Tauri only offers a Mac a see-through window behind its
     // `macos-private-api` feature, and the first window's `transparent` in the
@@ -588,49 +582,5 @@ mod tests {
         ]);
         assert_eq!(pages.len(), 1);
         assert!(pages[0].starts_with("https://example.com/"));
-    }
-
-    /// Every webview the crate builds takes no drops through Tauri's own handler, as the
-    /// first window's `dragDropEnabled: false` says for it. With the handler on, a file
-    /// dropped on the window is added to the asset protocol's scope, which `hear_picks`
-    /// in paths.rs takes for a pick in the system's own dialog - so the dropped file's
-    /// whole folder would be written to as though the reader had chosen it - and the
-    /// page's own drops (src/lib/drops.ts) are never handed to it. Read off the source,
-    /// counted per file, because a window that forgets is a New window like any other.
-    #[test]
-    fn every_webview_takes_its_own_drops() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
-        let mut taken = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                // Up to its tests, which read these words off the source and build nothing.
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                let built = text.matches("WebviewWindowBuilder::new(").count()
-                    + text.matches("WebviewBuilder::new(").count();
-                if text.matches(".disable_drag_drop_handler()").count() < built {
-                    taken.push(name);
-                }
-            }
-        }
-        taken.sort();
-        assert!(
-            taken.is_empty(),
-            "a webview built with Tauri's drop handler on: {taken:?}"
-        );
     }
 }

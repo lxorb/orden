@@ -761,33 +761,6 @@ describe('a machine', () => {
     expect(owner.of('screen')).toEqual([{ t: 'screen', seq: 0, cols: 80, rows: 24, data: '' }])
   })
 
-  /** `open` on a session whose shell ended starts it again in `nibd` (nibd.ts), which is
-   *  `start`'s to ask for, and `start` is refused to whoever may not type. A reader or a
-   *  link's guest opening the terminal, or coming back to it, watches the ended shell;
-   *  it does not start the owner's program again. */
-  test('a watcher arriving on an ended session does not start it again', async () => {
-    const running = await machine(env, ID, user)
-    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
-    await nibd(running, { t: 'ended', session: 'session-1', code: 0 })
-    running.host.link_?.take()
-
-    const reader = await join(running, { who: 'reader', role: 'read' })
-    await say(running, reader, { t: 'hello', cols: 80, rows: 24 })
-    const guest = await join(running, { who: 'guest', role: 'read', guest: true })
-    await say(running, guest, { t: 'hello', cols: 80, rows: 24 })
-    await say(running, guest, { t: 'start' })
-    expect(guest.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
-    expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([])
-    expect(reader.of('ended')).toEqual([{ t: 'ended', code: 0 }])
-
-    // Its owner coming back does, as before.
-    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
-    expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([
-      { t: 'open', session: 'session-1', cols: 80, rows: 24 },
-    ])
-  })
-
   test('a key and its echo pass through with no storage, no query and no wait', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')

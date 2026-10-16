@@ -149,21 +149,6 @@ describe('writing a change', () => {
     expect(written).toContain('    - categories.contains(link("Books"))\n')
   })
 
-  test("a view's filters and limit nib cannot read stay as written when another key changes", () => {
-    // A filter of a shape the reader does not know, and a limit written as text,
-    // are not nib's to understand but are the file's own: dropping them on the
-    // next write would widen what the view shows in Obsidian too.
-    const source =
-      'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'
-    const base = readBase(source)
-    const view = base.views[0]
-    if (!view) throw new Error('no view')
-    expect(view.filters).toBeUndefined()
-    expect(view.limit).toBeUndefined()
-    view.name = 'B'
-    expect(writeBase(base, source)).toBe(source.replace('name: A', 'name: B'))
-  })
-
   test('a removed view goes, and its neighbours stay', () => {
     const source = fixture('kepano/Books.base')
     const base = readBase(source)

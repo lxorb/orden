@@ -419,33 +419,6 @@ describe('a push the account refuses', () => {
   })
 })
 
-describe('an outbox folded while offline', () => {
-  test('a note moved into a folder made and deleted here is deleted on the account too', async () => {
-    // The folder and its delete cancel before the account hears of either, and what was
-    // only moved into it is deleted instead - a delete the fold makes, under an op id of
-    // its own that no row of the outbox had yet. Left unwritten, it never went, and the
-    // account kept a note this device had thrown away.
-    const account = new ReferenceAccount(new Clock(), SEEDED)
-    const here = await device(account)
-    here.online = false
-
-    await here.disk.mkdir(`${ROOT}/Tmp`)
-    await here.engine.created(`${ROOT}/Tmp`, true)
-    await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Tmp/Plan.md`)
-    await here.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Tmp/Plan.md`)
-    await here.disk.remove(`${ROOT}/Tmp`)
-    await here.engine.removed(`${ROOT}/Tmp`)
-
-    here.online = true
-    await here.engine.pass(SPACE)
-
-    const names = (await account.view()).entries.map((entry) => entry.name)
-    expect(names).toEqual(['Ideas.md'])
-    expect(here.engine.waiting(SPACE)).toBe(false)
-    expect(here.store.rows('outbox')).toEqual([])
-  })
-})
-
 describe('the folder watcher', () => {
   test('hears the engine’s own new folder as that folder, never a second one', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)

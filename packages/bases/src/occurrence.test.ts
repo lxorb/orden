@@ -188,15 +188,6 @@ describe('skip and finish', () => {
     )
   })
 
-  test('a monthly task years overdue comes back next month, not months later', () => {
-    // The search for the next date jumps ahead by a guess at how many periods have
-    // gone by; that guess must never pass the month after today.
-    expect(ticked('- [ ] Report 🔁 every month on the 1st 📅 2023-01-01', 0, '2026-10-16')).toBe(
-      '- [ ] Report 🔁 every month on the 1st 📅 2026-11-01\n' +
-        '- [x] Report 🔁 every month on the 1st 📅 2023-01-01 ✅ 2026-10-16',
-    )
-  })
-
   test('the next occurrence of a task that does not repeat is nothing', () => {
     const task = readTask('- [ ] a 📅 2026-10-04')
     expect(task && nextOccurrence(task, '2026-10-04')).toBeNull()

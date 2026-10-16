@@ -38,9 +38,9 @@ import type { Doc } from './docs'
 import { MINE } from './docs'
 import { foldIn } from './ingest'
 import { fileOfUpdates, judge, shapeOf, turn } from './kinds'
-import { type Outboxed, settle, type SpaceState } from './places'
+import { settle, type SpaceState } from './places'
 import { project } from './project'
-import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
+import { againstBytes, type Merging, outgoingBytes } from './records'
 import { keepLosers, rejoin } from './rejoin'
 import { put, remove, type Change, type EntryRow } from './store'
 import { Refused } from './transport'
@@ -142,38 +142,21 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
         .filter((op): op is Op => op !== null),
     )
     const changes: Change[] = []
-    const kept = new Map(folded.map((op) => [op.op, op]))
-    const queue: Outboxed[] = []
-    for (const one of space.outbox) {
-      if (one.record.t !== 'op' || one.record.sent) {
-        queue.push(one)
-        continue
-      }
-      const id = one.record.op.op
-      const op = kept.get(id)
-      if (op) {
-        one.record = { t: 'op', op }
-        one.row = { ...one.row, op: outgoingBytes(one.record) }
-        changes.push(put('outbox', one.row))
-        queue.push(one)
-      } else {
-        changes.push(remove('outbox', one.row.op_id))
-      }
-      // A folder made and deleted here takes its delete with it, and what was only
-      // moved into it is deleted instead: deletes the fold makes, named after the
-      // delete they came from (`${op}.0`, `.1`), that no row holds yet. Each is a row of
-      // its own, where that delete stood in the queue and as old as it, so it goes in
-      // the same order after a relaunch - or it never goes at all, and the account keeps
-      // what this device threw away.
-      for (const split of folded) {
-        if (!split.op.startsWith(`${id}.`)) continue
-        const record: Outgoing = { t: 'op', op: split }
-        const row = { ...one.row, op_id: split.op, op: outgoingBytes(record) }
-        changes.push(put('outbox', row))
-        queue.push({ row, record })
-      }
+    const kept = new Set(folded.map((op) => op.op))
+    for (const one of waiting) {
+      if (one.record.t !== 'op' || kept.has(one.record.op.op)) continue
+      space.outbox = space.outbox.filter((other) => other !== one)
+      changes.push(remove('outbox', one.row.op_id))
     }
-    space.outbox = queue
+    for (const op of folded) {
+      const one = space.outbox.find(
+        (other) => other.record.t === 'op' && other.record.op.op === op.op,
+      )
+      if (!one) continue
+      one.record = { t: 'op', op }
+      one.row = { ...one.row, op: outgoingBytes(one.record) }
+      changes.push(put('outbox', one.row))
+    }
 
     const batch = space.outbox.filter((one) => one.record.t === 'op').slice(0, OPS_BATCH)
     for (const one of batch) {

@@ -49,7 +49,7 @@ export const NO_SUCH_FILE = 'no such file'
 
 /** Bytes whose hash is not the name they arrived under. A correct client never sends
  *  these, so it reaches no reader and stays English. */
-export const WRONG_BYTES = 'those bytes are not that hash'
+const WRONG_BYTES = 'those bytes are not that hash'
 const NOT_A_HASH = 'that is not a hash'
 const TOO_BIG = 'that file is too big'
 
@@ -80,17 +80,12 @@ function hex(digest: ArrayBuffer): string {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-/** The hash a blob is named by, of bytes in hand. */
-export async function hashOfBytes(bytes: ArrayBuffer): Promise<string> {
-  return hex(await crypto.subtle.digest('SHA-256', bytes))
-}
-
 /** A Worker's streaming hasher, which Node has no equivalent of. */
 type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Promise<ArrayBuffer> }
 
 /** The hash of an object in the bucket, read as a stream where the runtime can hash
  *  one (a Worker's `DigestStream`), and whole where it cannot. */
-export async function hashOf(object: R2ObjectBody): Promise<string> {
+async function hashOf(object: R2ObjectBody): Promise<string> {
   // Read off the runtime rather than its types, which describe only one of the two.
   const Streaming = (crypto as unknown as { DigestStream?: DigestStreaming }).DigestStream
   if (Streaming) {
@@ -99,25 +94,6 @@ export async function hashOf(object: R2ObjectBody): Promise<string> {
     return hex(await stream.digest)
   }
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
-}
-
-/** A Worker's stream that tells R2 how long it is, which Node has no equivalent of. */
-type FixedLength = new (length: number) => TransformStream<Uint8Array, Uint8Array>
-
-/** An object copied to another name, as a stream where the runtime can say how long
- *  one is (a Worker's `FixedLengthStream`, which R2 asks of a stream it is given), and
- *  whole where it cannot - a gigabyte of file never sits in a Worker's memory. */
-async function moveInto(env: Env, from: string, to: string, type: string): Promise<void> {
-  const object = await env.NOTES.get(from)
-  if (!object) return
-  const Fixed = (globalThis as unknown as { FixedLengthStream?: FixedLength }).FixedLengthStream
-  const metadata = { httpMetadata: { contentType: type } }
-  if (Fixed) {
-    const { readable, writable } = new Fixed(object.size)
-    await Promise.all([object.body.pipeTo(writable), env.NOTES.put(to, readable, metadata)])
-    return
-  }
-  await env.NOTES.put(to, await object.arrayBuffer(), metadata)
 }
 
 /** A row saying this account keeps a blob, once its bytes are there. */
@@ -131,7 +107,7 @@ async function keepBlob(env: Env, user: string, hash: string, size: number, type
 }
 
 /** Whether this account keeps a blob already, and whether anybody's bytes are there. */
-export async function held(
+async function held(
   env: Env,
   user: string,
   hash: string,
@@ -162,7 +138,7 @@ v2Blobs.put('/:hash', async (context) => {
 
   const body = await context.req.arrayBuffer()
   if (body.byteLength > ONE_REQUEST) return context.json({ error: TOO_BIG }, 413)
-  if ((await hashOfBytes(body)) !== hash) {
+  if (hex(await crypto.subtle.digest('SHA-256', body)) !== hash) {
     return context.json({ error: WRONG_BYTES }, 400)
   }
   if (!(await fits(context.env, user.id, body.byteLength))) {
@@ -177,10 +153,9 @@ v2Blobs.put('/:hash', async (context) => {
   return context.json({ hash, stored: true }, 201)
 })
 
-/** What a multipart upload in flight remembers: whose, which hash, how big, and where
- *  its parts are put together. Kept in `cached` for a day, as
- *  `user:hash:size:type:staging`, which is also how deleting the account finds it; see
- *  erase.ts. */
+/** What a multipart upload in flight remembers: whose, which hash, how big. Kept in
+ *  `cached` for a day, as `user:hash:size:type`, which is also how deleting the account
+ *  finds it; see erase.ts. */
 const UPLOADS = 'upload'
 const A_DAY = 24 * 60 * 60 * 1000
 
@@ -189,15 +164,6 @@ interface Upload {
   hash: string
   size: number
   type: string
-  /** Where the parts go: never the blob's own name, because the parts are put together
-   *  before anything has checked them, and a copy somebody else finished meanwhile may
-   *  be living there. */
-  staging: string
-}
-
-/** Somewhere of this upload's own for its parts. */
-function stagingKey(hash: string): string {
-  return `uploads/${hash}/${crypto.randomUUID()}`
 }
 
 async function uploadOf(env: Env, id: string, user: string): Promise<Upload | null> {
@@ -206,9 +172,9 @@ async function uploadOf(env: Env, id: string, user: string): Promise<Upload | nu
   )
     .bind(UPLOADS, id, now())
     .first<{ value: string }>()
-  const [owner, hash, size, type, staging] = (row?.value ?? '').split(':')
-  if (owner !== user || !hash || !size || !type || !staging) return null
-  return { user: owner, hash, size: Number(size), type: decodeURIComponent(type), staging }
+  const [owner, hash, size, type] = (row?.value ?? '').split(':')
+  if (owner !== user || !hash || !size || !type) return null
+  return { user: owner, hash, size: Number(size), type: decodeURIComponent(type) }
 }
 
 /** A large file, started: answers the upload to send parts to, and how big a part is;
@@ -225,16 +191,18 @@ v2Blobs.post('/parts', async (context) => {
     return context.json({ error: TOO_BIG }, 413)
   }
 
-  if ((await held(context.env, user.id, hash)).mine) return context.json({ hash, stored: false })
+  const { mine, there } = await held(context.env, user.id, hash)
+  if (mine) return context.json({ hash, stored: false })
   if (!(await fits(context.env, user.id, size))) return context.json({ error: OUT_OF_SPACE }, 507)
 
-  // Sent in full even when somebody else's copy is already here. A row is what lets a
-  // file entry, a face or a post name a blob, so it is had for the bytes and never for
-  // knowing their hash; once they are checked, the copy that is there is kept as it is.
   const declared = typeOf(typeof type === 'string' ? type : undefined)
+  // Somebody else's copy is already here: this account keeps it too, and sends nothing.
+  if (there) {
+    await keepBlob(context.env, user.id, hash, size, declared)
+    return context.json({ hash, stored: false })
+  }
 
-  const staging = stagingKey(hash)
-  const upload = await context.env.NOTES.createMultipartUpload(staging, {
+  const upload = await context.env.NOTES.createMultipartUpload(blobKey(hash), {
     httpMetadata: { contentType: declared },
   })
   await context.env.DB.prepare(
@@ -243,7 +211,7 @@ v2Blobs.post('/parts', async (context) => {
     .bind(
       UPLOADS,
       upload.uploadId,
-      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}:${staging}`,
+      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}`,
       now() + A_DAY,
     )
     .run()
@@ -265,7 +233,7 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
 
   const uploading = context.env.NOTES.resumeMultipartUpload(
-    upload.staging,
+    blobKey(upload.hash),
     context.req.param('upload'),
   )
   const uploaded = await uploading.uploadPart(part, body)
@@ -295,25 +263,21 @@ v2Blobs.post('/parts/:upload', async (context) => {
     parts.push({ partNumber: part, etag })
   }
 
-  await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
+  const key = blobKey(upload.hash)
+  await context.env.NOTES.resumeMultipartUpload(key, id).complete(parts)
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
     .bind(UPLOADS, id)
     .run()
 
-  const staged = await context.env.NOTES.get(upload.staging)
+  const object = await context.env.NOTES.get(key)
   const right =
-    staged !== null && staged.size === upload.size && (await hashOf(staged)) === upload.hash
+    object !== null && object.size === upload.size && (await hashOf(object)) === upload.hash
   if (!right) {
-    await context.env.NOTES.delete(upload.staging)
+    // Only if nobody's row names it: a copy somebody else finished meanwhile stays.
+    if (!(await held(context.env, user.id, upload.hash)).there) await context.env.NOTES.delete(key)
     return context.json({ error: WRONG_BYTES }, 400)
   }
 
-  // Checked, so they go where the blob lives - unless a copy somebody else finished
-  // meanwhile is already there, which is the same bytes and stays as it is.
-  if (!(await held(context.env, user.id, upload.hash)).there) {
-    await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
-  }
-  await context.env.NOTES.delete(upload.staging)
   await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type)
   return context.json({ hash: upload.hash, stored: true }, 201)
 })

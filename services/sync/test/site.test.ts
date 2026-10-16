@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frontOf } from '../src/blog/front'
 import { SITE_ROUNDS } from '../src/blog/gate'
 import { publishes } from '../src/blog/site'
-import { call, file, type ShareView, signIn, testEnv, type TestEnv } from './harness'
+import { call, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 
 /** Whatever an XML parser could not read in a document, by name and place, and an
  *  empty list for one it read whole.
@@ -197,11 +197,11 @@ describe('a site with rules', () => {
    *  its own case, so where it sits is the whole of the answer - and where it sits is
    *  a path somebody can guess, which the hash it redirects to is not. */
   test('and the papers in them, which are asked for by their own path', async () => {
-    const { hash, bytes } = file(64, 4)
+    const hash = 'd'.repeat(64)
     await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
       token,
-      raw: bytes,
+      raw: new Uint8Array(64),
       headers: { 'content-type': 'application/pdf' },
     })
     await call(env, `/v1/spaces/${space}/files`, {
