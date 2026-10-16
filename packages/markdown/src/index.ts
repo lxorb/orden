@@ -484,12 +484,19 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
-  if (options.toc) html = html.replace(TOC_MARK, tableOfContents(headings))
+  // Both put in by a function rather than as a string, because a string is a
+  // pattern: a `$&` or a `$'` in a heading or in an embedded note would be read
+  // as the marker, or as the whole of the page after it.
+  if (options.toc) {
+    const contents = tableOfContents(headings)
+    html = html.replace(TOC_MARK, () => contents)
+  }
 
   // The notes inside embeds, rendered after the document around them so that
   // nothing re-enters the parser mid-parse.
   embeds.sections.forEach((section, at) => {
-    html = html.replace(embeds.marker(at), renderMarkdown(section, inside(options)))
+    const embedded = renderMarkdown(section, inside(options))
+    html = html.replace(embeds.marker(at), () => embedded)
   })
 
   if (options.footnotes) {

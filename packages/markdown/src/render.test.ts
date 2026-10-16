@@ -237,6 +237,30 @@ describe('headings and the table of contents', () => {
   test('render nothing for a [toc] in a document without headings', () => {
     expect(renderMarkdown('[toc]\n\ntext', { toc: true })).not.toContain('<nav')
   })
+
+  /** A dollar in a heading is a dollar. The contents are put in where `[toc]` was,
+   *  and a `$&` or a `$'` read as a pattern would put the marker, or the whole of
+   *  the page after it, inside the list. */
+  test('keep a heading that says $& or $’ as it is written', () => {
+    const html = renderMarkdown("# Costs $& prices\n\n[toc]\n\n## Before $' after\n\nText", {
+      toc: true,
+    })
+
+    expect(html).toContain('<a href="#costs-prices">Costs $&amp; prices</a>')
+    expect(html).toContain('<a href="#before-after">Before $&#39; after</a>')
+    expect(html.match(/<p>Text<\/p>/g)).toHaveLength(1)
+  })
+
+  /** The same for a note an embed brings in, which is put in where its marker was. */
+  test('keep an embedded note that says $` or $’ as it is written', () => {
+    const html = renderMarkdown('Before\n\n![[Note]]\n\nAfter', {
+      resolveEmbed: () => "cost $` and $' here\n",
+    })
+
+    expect(html).toContain('cost $` and $&#39; here')
+    expect(html.match(/<p>After<\/p>/g)).toHaveLength(1)
+    expect(html.match(/<p>Before<\/p>/g)).toHaveLength(1)
+  })
 })
 
 describe('code fences', () => {
