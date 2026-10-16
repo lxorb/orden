@@ -297,8 +297,14 @@ describe('the release channel', () => {
     const hint = row().hint ?? ''
 
     readsAsOneSentence(hint, 'Release channel')
-    // The sentence is the whole warning: it names what unstable follows.
-    expect(hint).toContain('main')
+    // The sentence is the whole warning, so it has to do three things: name both
+    // streams, since the two words in the control are all a reader has, and say
+    // which of them can break. What Unstable follows is the edge build, not a
+    // branch: it is built from unstable, and this used to pin the word `main`
+    // back when that was where it came from.
+    expect(hint).toContain('Stable')
+    expect(hint).toContain('Unstable')
+    expect(hint).toContain('break')
   })
 
   test('is a group of its own under General, where the app itself is set up', () => {
