@@ -141,6 +141,17 @@ describe('a change', () => {
     expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
   })
 
+  // A date field holds its first ten characters, the date, and what is written
+  // after it is somebody's own - a time, most often - which moving the date keeps.
+  test('of a date written with a time moves the date and keeps the time', () => {
+    expect(changedTask('- [ ] a [due:: 2026-10-06T10:00]', { due: '2026-10-13' })).toBe(
+      '- [ ] a [due:: 2026-10-13T10:00]',
+    )
+    expect(changedTask('- [ ] a [due:: 2026-10-06 10:00] b', { due: '2026-10-13' })).toBe(
+      '- [ ] a [due:: 2026-10-13 10:00] b',
+    )
+  })
+
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
