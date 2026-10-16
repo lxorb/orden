@@ -8,10 +8,15 @@ name: nix
 # has to stay up, with nothing in its log about a missing library or a display it
 # could not open.
 #
-# On a pull request it builds the flake in the checkout. On main, and by hand, it
+# On a pull request it builds the flake in the checkout. On a push, and by hand, it
 # builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
-# does. The source-built `orden-unstable` package has its own install assertions;
-# the release flake on main keeps its existing ones.
+# does.
+#
+# One flake now holds both channels: `default` is the release out of its .deb, and
+# `orden-unstable` compiles the sources beside it. The release build is what is
+# started here; `resolve_source_hashes` validates the source one instead. Both
+# branches are watched, because the flake is the same file on each of them and a
+# push to `unstable` is how a change to it arrives.
 on:
   pull_request:
     paths:
@@ -21,7 +26,7 @@ on:
       - .github/workflows/packaging-bump.yml
       - scripts/nix-start.sh
   push:
-    branches: [main]
+    branches: [main, unstable]
     paths:
       - packaging/nix/**
       - scripts/nix-start.sh
@@ -100,8 +105,10 @@ jobs:
           elif [ "$GITHUB_EVENT_NAME" = push ]; then
             flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
           elif [ -f "$PWD/flake.nix" ]; then
-            # unstable has a root flake link so a local path includes the full
-            # source tree that the package compiles.
+            # The root flake.nix is a link to packaging/nix/flake.nix, so a local
+            # path copies the whole source tree with it and orden-unstable has the
+            # workspace it compiles. Pointed straight at packaging/nix instead, the
+            # release outputs still build and the source one says what is missing.
             flake="path:$PWD"
           elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
@@ -139,15 +146,23 @@ jobs:
           FLAKE: ${{ steps.flake.outputs.flake }}
           RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
         run: |
+          # The release build unless the source one was asked for: both live in the
+          # one flake, and they are named apart all the way down, so whichever is
+          # built here the assertions below read off its own pname.
+          if [ "$RESOLVE_HASHES" = true ]; then
+            attr=orden-unstable
+          else
+            attr=default
+          fi
           # orden, orden-edge or orden-unstable: every file a profile gets is
           # named after it, so installed streams never collide.
-          pname=$(nix eval --raw "$FLAKE#default.pname")
-          echo "### $pname $(nix eval --raw "$FLAKE#default.version")" >>"$GITHUB_STEP_SUMMARY"
+          pname=$(nix eval --raw "$FLAKE#$attr.pname")
+          echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
 
-          if [ "$RESOLVE_HASHES" = true ] && [ "$pname" = orden-unstable ]; then
+          if [ "$pname" = orden-unstable ]; then
             for attempt in 1 2 3; do
               set +e
-              nix build --print-build-logs "$FLAKE" -o result 2>&1 | tee nix-build.log
+              nix build --print-build-logs "$FLAKE#$attr" -o result 2>&1 | tee nix-build.log
               status=${PIPESTATUS[0]}
               set -e
               [ "$status" -eq 0 ] && break
@@ -161,30 +176,38 @@ jobs:
 
               case "$derivation" in
                 *pnpm*) kind=pnpm ;;
-                *vendor*|*cargo*) kind=cargo ;;
+                # The Cargo dependencies are vendored out of Cargo.lock itself and
+                # carry no hash, so a mismatch here is something else entirely.
+                *vendor*|*cargo*)
+                  echo "::error::the cargo dependencies have no hash to resolve: $derivation"
+                  cat nix-build.log; exit "$status" ;;
                 *) echo "::error::unknown fixed-output input: $derivation"; cat nix-build.log; exit "$status" ;;
               esac
-              python - "$kind" "$hash" <<'PY'
+              python - "$hash" <<'PY'
           import re, sys
           from pathlib import Path
 
-          kind, digest = sys.argv[1:]
+          digest, = sys.argv[1:]
           flake = Path('packaging/nix/flake.nix')
           source = flake.read_text()
-          if kind == 'cargo':
-              source, count = re.subn(r'cargoHash = lib\.fakeHash;', f'cargoHash = "{digest}";', source, count=1)
-          else:
-              source, count = re.subn(r'(pnpmDeps = pkgs\.fetchPnpmDeps \{.*?hash = )lib\.fakeHash;', rf'\1"{digest}";', source, count=1, flags=re.S)
+          # Whatever stands there: the pinned hash, or a placeholder if one ever does.
+          source, count = re.subn(
+              r'(pnpmDeps = pkgs\.fetchPnpmDeps \{.*?hash = )(?:"[^"]*"|lib\.fakeHash);',
+              rf'\1"{digest}";',
+              source,
+              count=1,
+              flags=re.S,
+          )
           if count != 1:
-              raise SystemExit(f'could not fill the {kind} hash')
+              raise SystemExit('could not fill the pnpm hash')
           flake.write_text(source)
-          print(f'Pinned {kind} dependencies to {digest}')
+          print(f'Pinned pnpm dependencies to {digest}')
           PY
               echo "Retrying the source build after pinning its $kind hash (attempt $attempt)."
             done
             test -x "result/bin/$pname"
           else
-            nix build --print-build-logs "$FLAKE" -o result
+            nix build --print-build-logs "$FLAKE#$attr" -o result
           fi
 
           test -x "result/bin/$pname"

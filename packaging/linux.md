@@ -336,7 +336,16 @@ anything unusual; this one does not, so it should pass automatically.
 
 ## Nix
 
-`nix/flake.nix` takes the program out of the release `.deb` and runs it on
+`nix/flake.nix` is one file holding both channels, and it is the same file on every
+branch: `packages.default` and `packages.orden` are the release out of its `.deb`,
+`packages.orden-unstable` compiles the sources beside the flake. It used to be two
+different files at the one path, the release flake on main and the source flake on
+`unstable`, which meant every release pull request either conflicted here or
+quietly carried the source flake onto main and broke
+`nix profile install github:lxorb/orden?dir=packaging/nix` for everyone already on
+it. Nothing in the flake asks which branch it is on.
+
+The release build takes the program out of the release `.deb` and runs it on
 nixpkgs' own WebKitGTK, GTK and GStreamer, with `autoPatchelfHook` and
 `wrapGAppsHook3`, the way nixpkgs packages other Tauri apps and the way the AUR
 package runs it on Arch's. Up to 0.13 it wrapped the AppImage instead, which broke
@@ -373,15 +382,38 @@ inputs.orden.inputs.nixpkgs.follows = "nixpkgs";
 environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
 ```
 
-For the edge rather than the release, install the `orden-unstable` package from
-the `unstable` branch. It compiles that branch's source and follows the unstable
-updater channel by default, and it has its own command, desktop entry and icons,
-so it installs beside the release rather than over it:
+Under Home Manager the same input goes in `home.packages` instead, as
+`home.packages = [ inputs.orden.packages.${pkgs.system}.default ];`, which puts it
+in one user's profile rather than the system's. There is no Home Manager module
+here, and none is needed: it is a package like any other.
+
+For the edge rather than the release, install the `orden-unstable` package, named
+explicitly, from the `unstable` branch. It compiles that branch's source and follows
+the unstable updater channel by default, and it has its own command, desktop entry
+and icons, so it installs beside the release rather than over it:
 
 ```
-nix profile install github:lxorb/orden/unstable?dir=packaging/nix
+nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable
 nix profile upgrade --all    # either one moves to its newest build
 ```
+
+The attribute has to be named: `default` is the release on every branch now, so
+leaving it off installs the release from a flake fetched off `unstable`. Name the
+repository and not just the directory - `?dir=packaging/nix` is how Nix is handed
+the whole tree with the flake inside it, and the source build needs the workspace
+next to it. `path:packaging/nix`, which copies that directory alone, leaves the
+release outputs working and `orden-unstable` as a derivation that says what is
+missing when somebody builds it.
+
+Its Cargo dependencies are vendored straight out of `Cargo.lock`, so they carry no
+hash to go stale. Its pnpm dependencies need a fixed-output hash, which is pinned in
+the flake and is the same on both architectures (the fetcher runs `pnpm install
+--force`, taking every platform's optional packages). That hash is the one thing in
+the flake that moves with a lockfile rather than with a release: when `pnpm-lock.yaml`
+moves past it the source *build* fails and names the hash it wanted, while
+`nix flake check` and `nix eval` never touch it, so a stale one cannot break the
+release outputs or the check on main. `gh workflow run nix.yml -f resolve_source_hashes=true`
+resolves and validates it on a runner before it is committed here.
 
 Two channels and no third. There is no branch holding a flake pinned to the
 binaries of the `edge` pre-release: that was `nix-edge`, main plus a commit of
@@ -406,8 +438,11 @@ never older than the release.
 and aarch64, and starts Orden out of it twice on each in a headless sway
 (wlroots, like Hyprland), with Mesa where NixOS keeps it: once with Xwayland off
 and no `DISPLAY`, so the window is a native Wayland one, and once on X11 through
-Xwayland (`scripts/nix-start.sh`). On main it builds the flake from GitHub,
-exactly as `nix run` above does.
+Xwayland (`scripts/nix-start.sh`). On a push to main or `unstable` it builds the
+flake from GitHub, exactly as `nix run` above does; both branches are watched,
+because the flake is the same file on each and a push to `unstable` is how a change
+to it arrives. It starts the release build; `-f resolve_source_hashes=true` builds
+`orden-unstable` instead.
 
 ## Refreshing all of it for a new release
 

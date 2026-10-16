@@ -90,8 +90,18 @@ const edit = (path, rewrites) => {
   pending.set(path, text)
 }
 
+// The flake holds two derivations now, the release out of the .deb and the
+// source-built orden-unstable, so `pname = ` and `version = ` each appear more
+// than once in it. Every rewrite below is anchored inside its `release = { ... }`
+// attrset, which is the only part of the file a release moves: the lookbehind
+// cannot cross that attrset's closing brace, so a pattern can never land on the
+// source build's own names. The counts stay at one apiece - a release that
+// matched the source build instead would be a silent wrong rewrite, and a flake
+// whose shape moved still throws here.
+const inRelease = (field) => new RegExp(String.raw`(?<=release = \{[^}]*?)(\s*${field} = )"[^"]*";`)
+
 const flake = readFileSync(join(ROOT, 'packaging/nix/flake.nix'), 'utf8')
-const current = /^\s*version = "([^"]+)";$/m.exec(flake)?.[1]
+const current = /release = \{[^}]*?\s*version = "([^"]+)";/.exec(flake)?.[1]
 if (!edge && current && /^\d+\.\d+\.\d+$/.test(current) && newer(current, version)) {
   throw new Error(`the packaging is on ${current} already, which is newer than ${version}`)
 }
@@ -100,10 +110,10 @@ const debX64 = digest(file('linux-x64', '.deb'))
 const debArm64 = digest(file('linux-arm64', '.deb'))
 
 edit('nix/flake.nix', [
-  [/^(\s*pname = )"[^"]*";$/m, `$1"${edge ? 'orden-edge' : 'orden'}";`],
-  [/^(\s*version = )"[^"]*";$/m, `$1"${version}";`],
-  [/^(\s*tag = )"[^"]*";$/m, `$1"${tag}";`],
-  [/^(\s*asset = )"[^"]*";$/m, `$1"${asset}";`],
+  [inRelease('pname'), `$1"${edge ? 'orden-edge' : 'orden'}";`],
+  [inRelease('version'), `$1"${version}";`],
+  [inRelease('tag'), `$1"${tag}";`],
+  [inRelease('asset'), `$1"${asset}";`],
   [/(suffix = "x64";\s*hash = )"[^"]*";/, `$1"${sri(debX64)}";`],
   [/(suffix = "arm64";\s*hash = )"[^"]*";/, `$1"${sri(debArm64)}";`],
 ])
