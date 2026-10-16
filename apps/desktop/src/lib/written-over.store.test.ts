@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Nothing the app writes lands on a file somebody else's words are in.
  *
@@ -25,6 +25,7 @@ disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
+const { account } = await import('./account.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -67,5 +68,33 @@ describe('a draft saved into a space that is not on screen', () => {
     expect(landed).toBe('/home/Plan 2.md')
     expect(files().get('/home/Plan.md')).toBe('# Plan\nwords that were here first\n')
     expect(files().get('/home/Plan 2.md')).toBe('# Plan\nthe draft\n')
+  })
+})
+
+describe('a delete undone after a note took its name', () => {
+  beforeEach(async () => {
+    files().set('/space/Plan.md', '# Plan\nthe old words\n')
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    await workspace.loadTree()
+
+    // Signed in, a delete is not this device's to keep: the note goes outright and
+    // the undo writes back the words read on the way out.
+    Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(account, 'signedIn')
+  })
+
+  test('puts the old note back beside the new one, which keeps its words', async () => {
+    await workspace.remove('/space/Plan.md', false)
+    files().set('/space/Plan.md', '# Plan\nwritten today\n')
+
+    await workspace.undoFileAction()
+
+    expect(files().get('/space/Plan.md')).toBe('# Plan\nwritten today\n')
+    expect(files().get('/space/Plan 2.md')).toBe('# Plan\nthe old words\n')
+    expect(workspace.undone.stack).toEqual([])
   })
 })

@@ -98,7 +98,12 @@ describe('an entry that goes back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     await undoLastFileAction(ws)
 
-    expect(sent).toEqual([{ command: 'write_note', path: '/s/a.md', content: '# a' }])
+    // Asked first whether anything is at the name now, which nothing is here; see
+    // `writeBeside` in undoing.ts.
+    expect(sent).toEqual([
+      { command: 'file_stamp', path: '/s/a.md', content: '' },
+      { command: 'write_note', path: '/s/a.md', content: '# a' },
+    ])
     expect(ws.undone.stack).toEqual([])
     expect(ws.loaded).toBe(1)
     expect(ws.wrote).toBe(1)
@@ -143,7 +148,7 @@ describe('an entry that cannot go back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a', trashId: 'trash-1' })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => one.command)).toEqual(['restore_trash', 'write_note'])
+    expect(sent.map((one) => one.command)).toEqual(['restore_trash', 'file_stamp', 'write_note'])
     expect(ws.undone.stack).toEqual([])
   })
 })
