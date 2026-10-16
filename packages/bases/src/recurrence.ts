@@ -217,6 +217,14 @@ export function parseRule(written: string): Rule | null {
     return out
   }
 
+  // `every 2 years in March on the 3rd`: months a rule repeats in every few years
+  // cannot stand in for the unit the way `every March` does, so they follow it, in
+  // the words ruleText writes them with (rrule's reader takes `in` as it does `on`).
+  if (rule.unit === 'year' && peek() === 'in' && MONTH_NAMES[words[at + 1] ?? ''] !== undefined) {
+    at++
+    rule.months = readMonths()
+  }
+
   if (peek() === 'on') {
     at++
     if (peek() === 'the') {

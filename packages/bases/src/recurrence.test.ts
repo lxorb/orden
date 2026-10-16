@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { nextDate, parseRule, ruleText } from './recurrence'
+import { nextDate, parseRule, type Rule, ruleText } from './recurrence'
 
 /** The rules of the Tasks plugin's documentation, each read and written back in
  *  its own words. */
@@ -66,6 +66,35 @@ describe('a rule', () => {
     'every month on the',
   ])('%j is not a rule', (text) => {
     expect(parseRule(text)).toBeNull()
+  })
+
+  /** Every shape a yearly rule can take, so each way ruleText can write one is
+   *  read back: a ticked task writes its rule anew, and words the reader cannot
+   *  take would leave the next occurrence with a rule that never repeats. */
+  const YEARLY: Rule[] = [1, 2].flatMap((every) =>
+    [[], [3], [4, 12]].flatMap((months) =>
+      [
+        { monthDays: [], weekdays: [] },
+        { monthDays: [3], weekdays: [] },
+        { monthDays: [1, 24], weekdays: [] },
+        { monthDays: [-1], weekdays: [] },
+        { monthDays: [], weekdays: [{ day: 3, nth: 2 }] },
+        { monthDays: [], weekdays: [{ day: 5, nth: -1 }] },
+      ].map((days) => ({ every, unit: 'year' as const, months, whenDone: false, ...days })),
+    ),
+  )
+
+  test.each(YEARLY.map((rule) => [ruleText(rule), rule] as const))(
+    '%s, a yearly rule as written, reads back as the same rule',
+    (text, rule) => {
+      expect(parseRule(text)).toEqual(rule)
+    },
+  )
+
+  test('every 2 years on 3 March is written in words it reads back', () => {
+    const rule = parseRule('every 2 years on 3 March')
+    expect(rule && ruleText(rule)).toBe('every 2 years in March on the 3rd')
+    expect(rule && parseRule(ruleText(rule))).toEqual(rule)
   })
 
   test('an until written for the plugin has no hyphen, which its reader would stop at', () => {
