@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { asIsland, slugFor } from '../src/blog'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, file, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
@@ -869,8 +869,9 @@ describe('publishing one note instead of the space', () => {
 })
 
 describe('a published note that links a PDF', () => {
-  /** A hash is 64 hex characters; the bytes behind it never matter here. */
-  const PAPER = 'c'.repeat(64)
+  /** A paper, and the hash it is named by. */
+  const PAPER_BYTES = file(2048, 3)
+  const PAPER = PAPER_BYTES.hash
 
   /** The paper goes up as a blob, and the space records where in it the file
    *  sits: the same two steps a sync pass takes. */
@@ -878,7 +879,7 @@ describe('a published note that links a PDF', () => {
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(2048),
+      raw: PAPER_BYTES.bytes,
       headers: { 'content-type': 'application/pdf' },
     })
     await call(env, `/v1/spaces/${space}/files`, {

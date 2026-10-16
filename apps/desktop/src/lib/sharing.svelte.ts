@@ -145,12 +145,16 @@ function sharedAt(path: string | null): boolean {
 /** Where a document's words came from, as much as this side of the wire knows:
  *  who may reach the space it sits in, whether anybody else is in the file right
  *  now, and whether markup has been pasted into it. What the answer means is
- *  trust.ts, which is the one place that decides it. */
+ *  trust.ts, which is the one place that decides it.
+ *
+ *  A file somebody shared on its own has no path to ask, the same as in
+ *  `canWriteIn` above, so its share answers instead: it is one note out of
+ *  somebody else's space, and somebody else wrote it. */
 export function originOfDocument(note: NoteDoc): Origin {
   return originOf({
     guest: account.guest !== null,
     pasted: note.pasted,
-    shared: sharedAt(note.path),
+    shared: note.shared !== null || sharedAt(note.path),
     peers: (rooms.present[note.key] ?? 0) > 0,
   })
 }

@@ -467,6 +467,8 @@ fn page(app: &AppHandle, label: &str, url: &str, y: f64) -> Result<(), String> {
 
     app.run_on_main_thread(move || {
         let builder = tauri::webview::WebviewBuilder::new(&label, WebviewUrl::External(at))
+            // As every webview the app builds; see `window_builder` in launch.rs.
+            .disable_drag_drop_handler()
             .on_document_title_changed(move |_view, title| title_seen(&watching, &title));
         let made = window
             .add_child(
@@ -515,6 +517,7 @@ fn probe_window(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
             // opens, so a picture of the screen has it in it.
             .inner_size(320.0, 200.0)
             .position(30.0, 500.0)
+            .disable_drag_drop_handler()
             .on_document_title_changed(move |_window, title| title_seen(&watching, &title))
             .build()
             .map(|_| ())

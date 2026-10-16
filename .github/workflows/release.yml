@@ -308,7 +308,12 @@ jobs:
     needs: [version, build, chromium]
     # The installers are the release; Chromium goes with them where it built, and a
     # platform whose engine failed is a release without it rather than no release.
-    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    # And only a build of main or of a tag has a release to go on, as in
+    # publish-mobile.yml: build-version.sh calls every other ref `edge` too, so a
+    # manual run on a branch, which is somebody checking that the builds work, would
+    # otherwise remake the signed `edge` out of that branch, and every install on the
+    # unstable channel would update to it.
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
