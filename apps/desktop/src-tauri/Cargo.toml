@@ -37,7 +37,9 @@ missing_docs = "warn"
 # (web_keys.rs), which the runtime offers no event for. And asking the system when it
 # last had input and which window is in front, on Windows and a Mac, so a web login is
 # not handed away from somebody typing in a page (src/presence.rs). And the shape a
-# web tab's page is cut to round the app's layers over it (src/web_cut.rs). None of
+# web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
+# window's top edge strip, shown only while that edge resizes the window
+# (src/top_edge.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
