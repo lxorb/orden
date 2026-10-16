@@ -141,7 +141,11 @@ fn control(app: &AppHandle) -> Option<Webview> {
     }
     let window = app.get_window("main")?;
     let address: tauri::Url = "chrome://extensions/".parse().ok()?;
-    let builder = WebviewBuilder::new(CONTROL, WebviewUrl::External(address)).focused(false);
+    // Off the screen, and a drop is never a pick all the same; see `window_builder` in
+    // launch.rs.
+    let builder = WebviewBuilder::new(CONTROL, WebviewUrl::External(address))
+        .focused(false)
+        .disable_drag_drop_handler();
     let builder = crate::engine::web_store(builder, app, None).ok()?;
     let (made, waiting) = std::sync::mpsc::sync_channel(1);
     app.run_on_main_thread(move || {
