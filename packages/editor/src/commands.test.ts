@@ -215,6 +215,21 @@ describe('line prefixes', () => {
     expect(run(toggleBulletList, '- |item')).toBe('item')
   })
 
+  // The indent is what nests an item under the one above it, so a bullet that is
+  // traded or taken off leaves it where it was: a list made over a selection that
+  // already holds a nested item keeps that item nested.
+  test('keeps a nested bullet nested when the list is made over it', () => {
+    const doc = '- a\n  - b\nc'
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
+  })
+
+  // And a task's box is part of what makes the line a list item, so taking the list
+  // off takes the box with the bullet, rather than leaving `[ ]` in the words.
+  test('takes off a nested bullet and a task box without the indent', () => {
+    const doc = '- a\n  - [ ] b\n  - c'
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
+  })
+
   test('numbers an ordered list across lines', () => {
     expect(run(toggleOrderedList, '[one\ntwo\nthree]')).toBe('1. one\n2. two\n3. three')
   })
