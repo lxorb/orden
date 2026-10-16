@@ -27,7 +27,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
+  import { hiddenKinds, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -739,10 +739,12 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    newTab: () => workspace.openWebsite(),
-    newPrivate: isDesktop
-      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
-      : undefined,
+    newTab: () => workspace.newTab(tab.paneId),
+    get newPrivate() {
+      return hiddenKinds.offers('private')
+        ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+        : undefined
+    },
     history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
     clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
