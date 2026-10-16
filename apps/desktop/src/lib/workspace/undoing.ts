@@ -38,6 +38,9 @@ export interface PutsBack {
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder'): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  /** One file operation on everything open at or under a path, after whatever write
+   *  of any of it is in the air; see `holdingUnder` in workspace/saving.svelte.ts. */
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -223,13 +226,18 @@ function carriedPast(note: { after: string; edits: readonly Edit[] }, now: strin
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
-  await invoke('rename_note', { from: action.to, to: action.from })
 
-  // The rename rewrote every link that pointed at the note; putting the name
-  // back has to put those back too, which is the same rewrite the other way
-  // round - and, again, before anything is told the note moved.
-  if (action.rewrote) await ws.retarget(action.to, action.from)
-  await ws.fileMoved(action.to, action.from, kind)
+  // A move like the one it undoes, so it waits for the writes of what is open in it
+  // the same way; see `move` in workspace.svelte.ts.
+  await ws.holdingUnder(action.to, async () => {
+    await invoke('rename_note', { from: action.to, to: action.from })
+
+    // The rename rewrote every link that pointed at the note; putting the name
+    // back has to put those back too, which is the same rewrite the other way
+    // round - and, again, before anything is told the note moved.
+    if (action.rewrote) await ws.retarget(action.to, action.from)
+    await ws.fileMoved(action.to, action.from, kind)
+  })
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded

@@ -143,6 +143,92 @@ describe('a store the app has never heard of', () => {
   })
 })
 
+describe('a write in the air while a file moves', () => {
+  /** Words typed and on their way down, the write asked for and held open until
+   *  `land` is called: the round trip a write is, with a move landing inside it. */
+  async function typedAndWriting(words: string) {
+    const one = disk.current
+    const original = one?.invoke
+    if (!one || !original) throw new Error('no disk')
+
+    let land = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    let asked = () => {
+      // And this one by the next.
+    }
+    const landed = new Promise<void>((resolve) => (land = resolve))
+    const writeAsked = new Promise<void>((resolve) => (asked = resolve))
+    one.invoke = async (command, args) => {
+      if (command === 'write_note') {
+        one.invoke = original
+        asked()
+        await landed
+      }
+      return original(command, args)
+    }
+
+    workspace.active?.note.live.replace(words, true)
+    const writing = workspace.writeNow()
+    await writeAsked
+    return { land, writing }
+  }
+
+  test('a note moved into a folder waits for it, and the words follow the note', async () => {
+    await workspace.open(`${ROOT}/Plan.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Plan\ntyped before the move\n')
+
+    const moving = workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    land()
+    await Promise.all([writing, moving])
+    await workspace.writesSettled()
+
+    // The move used to go ahead under the write: the file went, the write put the
+    // newest words back at the old path, and the document was told the old path
+    // back after it had followed the move - two files, and the tab on the stale one.
+    expect(note?.path).toBe(`${ROOT}/Work/Plan.md`)
+    expect(disk.current?.files.has(`${ROOT}/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Work/Plan.md`)).toBe('# Plan\ntyped before the move\n')
+  })
+
+  test('and so does a folder renamed with a note open inside it', async () => {
+    await workspace.open(`${ROOT}/Work/Notes.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Notes\ntyped before the rename\n')
+
+    const renaming = workspace.rename(`${ROOT}/Work`, 'Desk')
+    land()
+    await Promise.all([writing, renaming])
+    await workspace.writesSettled()
+
+    expect(note?.path).toBe(`${ROOT}/Desk/Notes.md`)
+    expect(disk.current?.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Desk/Notes.md`)).toBe(
+      '# Notes\ntyped before the rename\n',
+    )
+  })
+
+  test('and so does the undo of a move, which is a move back', async () => {
+    await workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    await workspace.open(`${ROOT}/Work/Plan.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Plan\ntyped before the undo\n')
+
+    // The undo is fetched before it runs, so the write is let go a moment later:
+    // long enough for a move back that did not wait to have happened.
+    const undoing = workspace.undoFileAction()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    land()
+    await Promise.all([writing, undoing])
+    await workspace.writesSettled()
+
+    expect(note?.path).toBe(`${ROOT}/Plan.md`)
+    expect(disk.current?.files.has(`${ROOT}/Work/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Plan.md`)).toBe('# Plan\ntyped before the undo\n')
+  })
+})
+
 describe('the stores the app keeps by path', () => {
   /** Each follower, by the call it answers an operation with. */
   function counted() {

@@ -69,6 +69,8 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
+    // Nothing is open, so a move holds nothing and runs straight away.
+    holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)

@@ -274,24 +274,46 @@ export class Saving {
    *  two round trips but this: a rename landing while a write was still in the air
    *  moved the file, and the write then put the old name back beside it. So each
    *  waits its turn, whoever asked for it - the pause, Ctrl+S, the window going, a
-   *  row renamed in the file list. */
-  holding(note: NoteDoc, run: () => Promise<void>): Promise<void> {
-    const before = this.busy.get(note) ?? Promise.resolve()
+   *  row renamed in the file list.
+   *
+   *  Several documents at once for an operation that moves them all - a folder
+   *  renamed, a space - which waits for every one of them and holds every one of
+   *  them until it is done. */
+  holding(notes: readonly NoteDoc[], run: () => Promise<void>): Promise<void> {
+    const before = Promise.all(notes.map((one) => this.busy.get(one) ?? Promise.resolve()))
     const mine = before.then(run)
-    this.busy.set(
-      note,
-      mine.catch(() => undefined),
-    )
+    for (const one of notes) {
+      this.busy.set(
+        one,
+        mine.catch(() => undefined),
+      )
+    }
 
     this.track(mine)
     return mine
+  }
+
+  /** One file operation on everything at or under `from`, a file or a folder: every
+   *  document open there, and every one still waiting to be written, held as
+   *  `holding` holds one.
+   *
+   *  A move or a folder renamed used to hold nothing, or only the document at the
+   *  path itself. A write in the air for a note inside landed at the old path after
+   *  the files had gone - the note was then in two places, the old one with the
+   *  newest words - and the document was told the old path back with it. */
+  holdingUnder(from: string, run: () => Promise<void>): Promise<void> {
+    const notes = [...this.ws.documents, ...this.waiting].filter(
+      (one, at, all) =>
+        all.indexOf(one) === at && one.path !== null && within(from, one.path) !== null,
+    )
+    return this.holding(notes, run)
   }
 
   /** Writes one document down: a note, a canvas or a page note. Everything that
    *  writes comes through here, so a note open in two panes is written once
    *  however the writing was asked for. */
   write(note: NoteDoc): Promise<void> {
-    return this.holding(note, () => this.writeOne(note))
+    return this.holding([note], () => this.writeOne(note))
   }
 
   /** Whatever is running, known about until it has finished. Whoever started it
@@ -446,6 +468,9 @@ export class Saving {
 
     await invoke('write_note', { path, content })
     note.written(path, nameOf(path), revision)
+    // Moved under the write by something that did not wait for it: the words are
+    // owed again at the path the note is at now; see `written`.
+    if (note.path !== path) this.owed(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it
