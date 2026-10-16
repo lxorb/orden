@@ -13,10 +13,7 @@
     },
     "os": {
       "type": "string",
-      "allowedValues": [
-        "windows",
-        "linux"
-      ]
+      "allowedValues": ["windows", "linux"]
     },
     "image": {
       "type": "object"
@@ -63,14 +60,10 @@
       "name": "[parameters('name')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
-      ],
+      "dependsOn": ["[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"],
       "properties": {
         "addressSpace": {
-          "addressPrefixes": [
-            "10.90.0.0/24"
-          ]
+          "addressPrefixes": ["10.90.0.0/24"]
         },
         "subnets": [
           {
@@ -134,9 +127,7 @@
       "name": "[parameters('name')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', parameters('name'))]"
-      ],
+      "dependsOn": ["[resourceId('Microsoft.Network/networkInterfaces', parameters('name'))]"],
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
@@ -191,9 +182,7 @@
       "name": "[concat(parameters('name'), '/boot')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]"
-      ],
+      "dependsOn": ["[resourceId('Microsoft.Compute/virtualMachines', parameters('name'))]"],
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
