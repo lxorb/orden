@@ -49,7 +49,7 @@ export const NO_SUCH_FILE = 'no such file'
 
 /** Bytes whose hash is not the name they arrived under. A correct client never sends
  *  these, so it reaches no reader and stays English. */
-const WRONG_BYTES = 'those bytes are not that hash'
+export const WRONG_BYTES = 'those bytes are not that hash'
 const NOT_A_HASH = 'that is not a hash'
 const TOO_BIG = 'that file is too big'
 
@@ -80,12 +80,17 @@ function hex(digest: ArrayBuffer): string {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
+/** The hash a blob is named by, of bytes in hand. */
+export async function hashOfBytes(bytes: ArrayBuffer): Promise<string> {
+  return hex(await crypto.subtle.digest('SHA-256', bytes))
+}
+
 /** A Worker's streaming hasher, which Node has no equivalent of. */
 type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Promise<ArrayBuffer> }
 
 /** The hash of an object in the bucket, read as a stream where the runtime can hash
  *  one (a Worker's `DigestStream`), and whole where it cannot. */
-async function hashOf(object: R2ObjectBody): Promise<string> {
+export async function hashOf(object: R2ObjectBody): Promise<string> {
   // Read off the runtime rather than its types, which describe only one of the two.
   const Streaming = (crypto as unknown as { DigestStream?: DigestStreaming }).DigestStream
   if (Streaming) {
@@ -107,7 +112,7 @@ async function keepBlob(env: Env, user: string, hash: string, size: number, type
 }
 
 /** Whether this account keeps a blob already, and whether anybody's bytes are there. */
-async function held(
+export async function held(
   env: Env,
   user: string,
   hash: string,
@@ -138,7 +143,7 @@ v2Blobs.put('/:hash', async (context) => {
 
   const body = await context.req.arrayBuffer()
   if (body.byteLength > ONE_REQUEST) return context.json({ error: TOO_BIG }, 413)
-  if (hex(await crypto.subtle.digest('SHA-256', body)) !== hash) {
+  if ((await hashOfBytes(body)) !== hash) {
     return context.json({ error: WRONG_BYTES }, 400)
   }
   if (!(await fits(context.env, user.id, body.byteLength))) {

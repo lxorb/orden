@@ -4,7 +4,7 @@ import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
-import { BYTES } from './sync2/files'
+import { BYTES, hashOf, hashOfBytes, held, WRONG_BYTES } from './sync2/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -69,25 +69,33 @@ blobs.put('/:hash', async (context) => {
   const declared = Number(context.req.header('content-length') ?? 0)
   if (declared > limit) return context.json({ error: 'that file is too big' }, 413)
 
-  const already = await context.env.DB.prepare(
-    'select hash from blobs where hash = ? and user_id = ?',
-  )
-    .bind(hash, user.id)
-    .first()
-
-  if (already) return context.json({ hash, stored: false })
+  const { mine, there } = await held(context.env, user.id, hash)
+  if (mine) return context.json({ hash, stored: false })
 
   const body = await context.req.arrayBuffer()
   if (!body.byteLength) return context.json({ error: 'nothing to store' }, 400)
   if (body.byteLength > limit) return context.json({ error: 'that file is too big' }, 413)
 
+  // The name is a promise about the bytes, and every account that keeps the same
+  // file is served the one object: bytes that are not that hash would be somebody
+  // else's picture, or their site's stylesheet or script, replaced for all of them.
+  // The one name that is not the hash of what it holds is a drawn diagram's, which
+  // is named by its fence and its space (packages/markdown/src/diagrams.ts) - a
+  // name no page prints, so nobody but the space's own devices can write to it.
+  const verified = (await hashOfBytes(body)) === hash
+  if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
+
   if (!(await fits(context.env, user.id, body.byteLength))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  // The object may already be there from someone else; writing it again is the
-  // same bytes either way, and cheaper than asking first.
-  await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+  // An object already there stays as it is, with the type it was first stored as:
+  // it is the same bytes, and this account keeps it too. Unless it is not the same
+  // bytes - something put there under a hash before the bytes were checked - and
+  // these are: then the right bytes take its place, for everybody who keeps them.
+  if (!there || (verified && !(await holdsItsName(context.env, hash)))) {
+    await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+  }
   // And the row may already be this account's by the time this runs: the check
   // above is not a lock, and a paste that went up twice at once used to answer
   // the second one with a 500. The same bytes under the same hash are the same
@@ -101,6 +109,12 @@ blobs.put('/:hash', async (context) => {
 
   return context.json({ hash, stored: true }, 201)
 })
+
+/** Whether the object under a hash is the bytes that hash names. */
+async function holdsItsName(env: Env, hash: string): Promise<boolean> {
+  const object = await env.NOTES.get(key(hash))
+  return object !== null && (await hashOf(object)) === hash
+}
 
 /** Gives a file back and stops keeping it. The object survives while any other
  *  account still references it. */

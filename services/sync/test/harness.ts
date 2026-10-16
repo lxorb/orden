@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
@@ -636,4 +637,11 @@ export async function signIn(env: Env, email: string, guest?: string): Promise<s
 
   if (verified.status !== 200) throw new Error(`sign-in failed: ${verified.text}`)
   return verified.json.token
+}
+
+/** Bytes and the hash they are named by, the way the app names a file it uploads.
+ *  `seed` makes two files of one size two different files. */
+export function file(size: number, seed = 0): { bytes: Uint8Array; hash: string } {
+  const bytes = new Uint8Array(size).fill(seed)
+  return { bytes, hash: createHash('sha256').update(bytes).digest('hex') }
 }
