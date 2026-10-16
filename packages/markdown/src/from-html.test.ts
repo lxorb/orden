@@ -826,4 +826,10 @@ describe('a page as markdown', () => {
       `before\n\n\`\`\`\n${code}\n\`\`\`\n\nafter`,
     )
   })
+
+  /** Two blanks at the end of a line are how turndown writes a `<br>`, and taking
+   *  them off made the two lines one. */
+  test('a line break inside a paragraph is still a line break', () => {
+    expect(htmlToMarkdown('<p>line one<br>line two</p>')).toBe('line one  \nline two')
+  })
 })

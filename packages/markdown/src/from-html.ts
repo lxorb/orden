@@ -750,7 +750,9 @@ function tidy(markdown: string): string {
 
     fence = /^\s*(`{3,})/.exec(line)?.[1] ?? null
 
-    const tidied = line.replace(/[ \t]+$/, '')
+    // A line of nothing but blanks, and not the blanks after words: two of those
+    // are how turndown writes a `<br>`.
+    const tidied = line.replace(/^[ \t]+$/, '')
     // One blank line between blocks, however many the conversion left there.
     if (fence === null && tidied === '' && kept.at(-1) === '') continue
     kept.push(tidied)
