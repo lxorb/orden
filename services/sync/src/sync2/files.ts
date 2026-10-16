@@ -101,6 +101,25 @@ export async function hashOf(object: R2ObjectBody): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
 }
 
+/** A Worker's stream that tells R2 how long it is, which Node has no equivalent of. */
+type FixedLength = new (length: number) => TransformStream<Uint8Array, Uint8Array>
+
+/** An object copied to another name, as a stream where the runtime can say how long
+ *  one is (a Worker's `FixedLengthStream`, which R2 asks of a stream it is given), and
+ *  whole where it cannot - a gigabyte of file never sits in a Worker's memory. */
+async function moveInto(env: Env, from: string, to: string, type: string): Promise<void> {
+  const object = await env.NOTES.get(from)
+  if (!object) return
+  const Fixed = (globalThis as unknown as { FixedLengthStream?: FixedLength }).FixedLengthStream
+  const metadata = { httpMetadata: { contentType: type } }
+  if (Fixed) {
+    const { readable, writable } = new Fixed(object.size)
+    await Promise.all([object.body.pipeTo(writable), env.NOTES.put(to, readable, metadata)])
+    return
+  }
+  await env.NOTES.put(to, await object.arrayBuffer(), metadata)
+}
+
 /** A row saying this account keeps a blob, once its bytes are there. */
 async function keepBlob(env: Env, user: string, hash: string, size: number, type: string) {
   await env.DB.prepare(
@@ -158,9 +177,10 @@ v2Blobs.put('/:hash', async (context) => {
   return context.json({ hash, stored: true }, 201)
 })
 
-/** What a multipart upload in flight remembers: whose, which hash, how big. Kept in
- *  `cached` for a day, as `user:hash:size:type`, which is also how deleting the account
- *  finds it; see erase.ts. */
+/** What a multipart upload in flight remembers: whose, which hash, how big, and where
+ *  its parts are put together. Kept in `cached` for a day, as
+ *  `user:hash:size:type:staging`, which is also how deleting the account finds it; see
+ *  erase.ts. */
 const UPLOADS = 'upload'
 const A_DAY = 24 * 60 * 60 * 1000
 
@@ -169,6 +189,15 @@ interface Upload {
   hash: string
   size: number
   type: string
+  /** Where the parts go: never the blob's own name, because the parts are put together
+   *  before anything has checked them, and a copy somebody else finished meanwhile may
+   *  be living there. */
+  staging: string
+}
+
+/** Somewhere of this upload's own for its parts. */
+function stagingKey(hash: string): string {
+  return `uploads/${hash}/${crypto.randomUUID()}`
 }
 
 async function uploadOf(env: Env, id: string, user: string): Promise<Upload | null> {
@@ -177,9 +206,9 @@ async function uploadOf(env: Env, id: string, user: string): Promise<Upload | nu
   )
     .bind(UPLOADS, id, now())
     .first<{ value: string }>()
-  const [owner, hash, size, type] = (row?.value ?? '').split(':')
-  if (owner !== user || !hash || !size || !type) return null
-  return { user: owner, hash, size: Number(size), type: decodeURIComponent(type) }
+  const [owner, hash, size, type, staging] = (row?.value ?? '').split(':')
+  if (owner !== user || !hash || !size || !type || !staging) return null
+  return { user: owner, hash, size: Number(size), type: decodeURIComponent(type), staging }
 }
 
 /** A large file, started: answers the upload to send parts to, and how big a part is;
@@ -207,7 +236,8 @@ v2Blobs.post('/parts', async (context) => {
     return context.json({ hash, stored: false })
   }
 
-  const upload = await context.env.NOTES.createMultipartUpload(blobKey(hash), {
+  const staging = stagingKey(hash)
+  const upload = await context.env.NOTES.createMultipartUpload(staging, {
     httpMetadata: { contentType: declared },
   })
   await context.env.DB.prepare(
@@ -216,7 +246,7 @@ v2Blobs.post('/parts', async (context) => {
     .bind(
       UPLOADS,
       upload.uploadId,
-      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}`,
+      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}:${staging}`,
       now() + A_DAY,
     )
     .run()
@@ -238,7 +268,7 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
 
   const uploading = context.env.NOTES.resumeMultipartUpload(
-    blobKey(upload.hash),
+    upload.staging,
     context.req.param('upload'),
   )
   const uploaded = await uploading.uploadPart(part, body)
@@ -268,21 +298,25 @@ v2Blobs.post('/parts/:upload', async (context) => {
     parts.push({ partNumber: part, etag })
   }
 
-  const key = blobKey(upload.hash)
-  await context.env.NOTES.resumeMultipartUpload(key, id).complete(parts)
+  await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
     .bind(UPLOADS, id)
     .run()
 
-  const object = await context.env.NOTES.get(key)
+  const staged = await context.env.NOTES.get(upload.staging)
   const right =
-    object !== null && object.size === upload.size && (await hashOf(object)) === upload.hash
+    staged !== null && staged.size === upload.size && (await hashOf(staged)) === upload.hash
   if (!right) {
-    // Only if nobody's row names it: a copy somebody else finished meanwhile stays.
-    if (!(await held(context.env, user.id, upload.hash)).there) await context.env.NOTES.delete(key)
+    await context.env.NOTES.delete(upload.staging)
     return context.json({ error: WRONG_BYTES }, 400)
   }
 
+  // Checked, so they go where the blob lives - unless a copy somebody else finished
+  // meanwhile is already there, which is the same bytes and stays as it is.
+  if (!(await held(context.env, user.id, upload.hash)).there) {
+    await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
+  }
+  await context.env.NOTES.delete(upload.staging)
   await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type)
   return context.json({ hash: upload.hash, stored: true }, 201)
 })
