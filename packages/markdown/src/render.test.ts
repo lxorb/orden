@@ -680,6 +680,9 @@ describe('the markup of a document that is the reader’s own', () => {
       '<a href="javascript:parent.ran=1">x</a>\n',
       '<a href="&#106;avascript:parent.ran=1">x</a>\n',
       '<a href="&#x6A;avascript:parent.ran=1">x</a>\n',
+      // No semicolon, and the letter after the number is a hex digit: a browser
+      // ends a decimal reference at the first character that is not a digit.
+      '<a href="&#106avascript:parent.ran=1">x</a>\n',
       '<a href="javascript&colon;parent.ran=1">x</a>\n',
       '<a href="java&Tab;script:parent.ran=1">x</a>\n',
       '<a href="java\tscript:parent.ran=1">x</a>\n',
