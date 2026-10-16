@@ -122,6 +122,14 @@ const DATES: [string, string, string, string | null][] = [
   ['every 3 days', '2026-09-01', '2026-10-04', '2026-10-07'],
   ['every week', '2026-09-01', '2026-10-04', '2026-10-06'],
   ['every month', '2025-01-31', '2026-10-04', '2026-10-31'],
+  // Long overdue: years of months behind, the search must still start at or before
+  // the month after `after`, never past it. Months are 28 to 31 days long, so a
+  // jump that took them as 28 ran a month ahead for every year behind.
+  ['every month', '2020-01-01', '2026-01-01', '2026-02-01'],
+  ['every month on the 1st', '2023-01-01', '2026-10-16', '2026-11-01'],
+  ['every month on the last Friday', '2023-01-27', '2026-10-16', '2026-10-30'],
+  ['every 3 months', '2010-01-15', '2026-10-16', '2027-01-15'],
+  ['every year', '1900-03-01', '2026-10-16', '2027-03-01'],
   // Until.
   ['every day until 2026-10-05', '2026-10-04', '2026-10-04', '2026-10-05'],
   ['every day until 2026-10-05', '2026-10-05', '2026-10-05', null],
