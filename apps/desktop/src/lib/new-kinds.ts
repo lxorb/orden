@@ -240,6 +240,11 @@ export function showOthers(
   const others = one.others
   if (!others) return false
 
+  // The rows are a question to the machine - which shells it has - so the menu opens a
+  // moment after the press rather than in it, and at the card rather than at a pointer
+  // this may not have one of. The press is still on its way to the window as it opens,
+  // and the window's own click is what shuts a menu; that the press which opened it is
+  // not the press that shuts it is `shutBy` in menu.svelte.ts (issue #244).
   const box = card.getBoundingClientRect()
   void others(paneId).then((rows) => {
     const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom })
