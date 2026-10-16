@@ -41,6 +41,23 @@ How much does it cost? Well, it's free.
 
 See for yourself: [orden.so](https://orden.so)
 
+## Install
+
+Download an installer from the [latest release](https://github.com/lxorb/orden/releases/latest), open [orden.so](https://orden.so) in a browser, or use a package manager:
+
+| | |
+| --- | --- |
+| Windows, Scoop | `scoop bucket add lxorb https://github.com/lxorb/scoop-bucket` then `scoop install nib` |
+| Windows, Chocolatey | `choco install nib` |
+| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
+| Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
+| Nix, current source from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix` |
+| Debian, Ubuntu | `sudo apt install ./Orden-<version>-linux-x64.deb` |
+| Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
+| Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
+
+The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the latest released version and is where every install starts, **Unstable** follows the rolling edge builds from the `unstable` branch and can break. Builds whose version is a prerelease start on Unstable automatically, including edge builds installed through package managers. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next edge build. The website follows `main`, and the Android app has no updater.
+
 ## Why Orden?
 
 |  | Open source | Built-in MCP | Win, mac, Linux | Web | Android, iOS | Backlinks & graph | Canvas | Pen & pressure | Live collaboration | Free sync | Free publishing |
@@ -99,23 +116,6 @@ See for yourself: [orden.so](https://orden.so)
 - Chrome **clipper**, with an **interpreter** that fills a clip's properties using Claude, OpenAI or a model on your own machine
 - A plugin for **Even Realities G2** glasses
 - **Translated** into German, French, Swiss German and Japanese
-
-## Install
-
-Download an installer from the [latest release](https://github.com/lxorb/orden/releases/latest), open [orden.so](https://orden.so) in a browser, or use a package manager:
-
-| | |
-| --- | --- |
-| Windows, Scoop | `scoop bucket add lxorb https://github.com/lxorb/scoop-bucket` then `scoop install nib` |
-| Windows, Chocolatey | `choco install nib` |
-| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
-| Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
-| Nix, current source from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix` |
-| Debian, Ubuntu | `sudo apt install ./Orden-<version>-linux-x64.deb` |
-| Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
-| Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
-
-The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the latest released version and is where every install starts, **Unstable** follows the rolling edge builds from the `unstable` branch and can break. Builds whose version is a prerelease start on Unstable automatically, including edge builds installed through package managers. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next edge build. The website follows `main`, and the Android app has no updater.
 
 ## Motivation
 
