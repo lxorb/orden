@@ -68,7 +68,7 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
-  import { readWebFile } from './shortcut'
+  import { apartOf } from './shortcut'
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
@@ -380,8 +380,8 @@
   const space = $derived(workspace.spaceOf(tab.note))
   const book = webData.history()
 
-  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
-  const apart = $derived(tab.path !== null ? (readWebFile(tab.path, tab.doc)?.own ?? null) : null)
+  /** The tab's own web data, or null for the shared store; see `apartOf`. */
+  const apart = $derived(apartOf(tab))
 
   // Turned on or off, here or on another computer, a running page moves store.
   $effect(() => {

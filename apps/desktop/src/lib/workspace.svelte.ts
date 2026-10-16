@@ -107,7 +107,7 @@ import { log } from './log'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
-import { readWebFile } from './web-tab/shortcut'
+import { apartOf, readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
@@ -303,6 +303,8 @@ class Workspace {
   /** A tab over a web note made a web tab with no file at `keeper`'s page. */
   asUnsaved(tab: Tab, keeper: Tab) {
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
+    // On the note's web data still, or the page it was on would be signed out of.
+    tab.apart = apartOf(keeper)
     tab.note = this.document({
       kind: 'web',
       path: null,
@@ -982,6 +984,7 @@ class Workspace {
     tab.page = draft.page
     tab.zoom = draft.zoom
     tab.address = draft.address
+    tab.apart = draft.apart ?? null
     return tab
   }
 
@@ -1170,6 +1173,7 @@ class Workspace {
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
+      ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
@@ -2033,6 +2037,8 @@ class Workspace {
     // A link out of a private tab opens privately, as one out of a private window does.
     tab.inPrivate = from?.inPrivate === true
     page.inPrivate = tab.inPrivate
+    // And in its web data, as a link out of a Firefox container stays in the container.
+    tab.apart = from ? apartOf(from) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {

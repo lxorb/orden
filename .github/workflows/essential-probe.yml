@@ -1,0 +1,38 @@
+name: essential probe (temporary)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/essential-probe.yml
+jobs:
+  probe:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.essential
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          save-if: false
+      - run: pnpm install --frozen-lockfile
+      - name: The probe
+        run: |
+          printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$IDENTIFIER" > probe.json
+          pnpm --filter @nib/desktop exec tauri build --no-bundle --config ../../probe.json
+      - name: The drive
+        run: |
+          NIB_PROBE_EXE="$PWD/apps/desktop/src-tauri/target/release/nib.exe" NIB_PROBE_IDENTIFIER="$IDENTIFIER" \
+            python apps/desktop/test/e2e/essential-web-data.py
