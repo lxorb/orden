@@ -282,12 +282,16 @@ describe('previewing every kind of file', () => {
   const OTHER_SITE = '/space/other.url'
   const DECK = '/space/deck.pages'
   const PAPER = '/space/paper.pdf'
+  /** A paper opens its companion page note, which is the tab a click on the paper's
+   *  row lands in; see `openPdf` in workspace.svelte.ts. */
+  const PAPER_PAGES = '/space/paper.pages'
   const PLANE = '/space/plan.canvas'
 
-  /** A single click on a row of the list, whatever the row is. */
-  async function look(path: string) {
+  /** A single click on a row of the list, whatever the row is. `opens` is the file
+   *  the tab ends up at, which is the row itself for every kind but a paper. */
+  async function look(path: string, opens = path) {
     await workspace.openEntry(path, { preview: true })
-    const tab = workspace.tabs.find((one) => one.path === path)
+    const tab = workspace.tabs.find((one) => one.path === opens)
     if (!tab) throw new Error(`${path} did not open`)
     return tab
   }
@@ -298,6 +302,10 @@ describe('previewing every kind of file', () => {
     notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
     notes[OTHER_SITE] = '[InternetShortcut]\r\nURL=https://example.org/\r\n'
     notes[DECK] = '{}'
+    // The paper's page note is already on disk, which is a paper somebody has
+    // opened before: the first open is the one that writes it, out of the sizes
+    // pdf.js reads off the paper, and there is no pdf.js under node.
+    notes[PAPER_PAGES] = '{}'
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
@@ -308,6 +316,7 @@ describe('previewing every kind of file', () => {
     delete notes['/space/site.url']
     delete notes['/space/other.url']
     delete notes['/space/deck.pages']
+    delete notes[PAPER_PAGES]
     vi.restoreAllMocks()
   })
 
@@ -349,8 +358,9 @@ describe('previewing every kind of file', () => {
     await look(DECK)
     expect(paths()).toEqual([DECK])
 
-    const paper = await look(PAPER)
-    expect(paths()).toEqual([PAPER])
+    // A paper previews as the page note it opens, not as a tab of its own.
+    const paper = await look(PAPER, PAPER_PAGES)
+    expect(paths()).toEqual([PAPER_PAGES])
     expect(workspace.previewTabId).toBe(paper.id)
   })
 
@@ -372,11 +382,12 @@ describe('previewing every kind of file', () => {
     expect(workspace.tabs[0]?.id).toBe(tab.id)
   })
 
-  test('the same for a paper, which opens without reading anything', async () => {
-    await look(PAPER)
-    workspace.openPdf(PAPER)
+  test('the same for a paper, whose page note is the tab that is kept', async () => {
+    await look(PAPER, PAPER_PAGES)
+    await workspace.openPdf(PAPER)
 
     expect(workspace.previewTabId).toBeNull()
+    expect(paths()).toEqual([PAPER_PAGES])
   })
 
   test('an address typed into the bar keeps it', async () => {
@@ -2973,13 +2984,24 @@ describe('a canvas that comes back after a restart', () => {
     expect(tab?.note.dirty).toBe(true)
   })
 
-  test('a paper is still not read as words', async () => {
-    // A PDF's tab holds none, so nothing is asked of the file.
-    await workspace.applyLayout(drafted('pdf', '/space/paper.pdf'))
+  /** A sitting written before papers opened as page notes holds a tab of kind
+   *  `pdf`. There is no such surface any more, so the restore brings the paper's
+   *  page note forward in its place; see `restore` in workspace.svelte.ts. */
+  test('a paper from an older sitting comes back as its page note', async () => {
+    notes['/space/paper.pages'] = '{}'
 
-    const tab = workspace.tabs.find((one) => one.path === '/space/paper.pdf')
-    expect(tab?.kind).toBe('pdf')
-    expect(tab?.note.text).toBe('')
+    try {
+      await workspace.applyLayout(drafted('pdf', '/space/paper.pdf'))
+
+      expect(workspace.tabs.find((one) => one.path === '/space/paper.pdf')).toBeUndefined()
+      const tab = workspace.tabs.find((one) => one.path === '/space/paper.pages')
+      expect(tab?.kind).toBe('pages')
+      // The words come off the disk, not out of the sitting: a `pdf` draft never
+      // held any.
+      expect(tab?.note.dirty).toBe(false)
+    } finally {
+      delete notes['/space/paper.pages']
+    }
   })
 
   test('and the session keeps no second copy of a plane that is on disk', async () => {
@@ -3310,12 +3332,18 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  /** A paper is a file from somewhere else with no title behind it, so its name is
-   *  the file's own - the way Obsidian shows one, and the way a picture is shown.
-   *  Which kind the tab holds is the mark on it. */
-  test('is a paper with its extension, which is the whole of its name', () => {
-    workspace.openPdf('/space/paper.pdf')
-    expect(workspace.active?.shown).toBe('paper.pdf')
+  /** A paper has no tab of its own any more: it opens the page note beside it, and
+   *  that note is named the way every page note is. */
+  test('is the page note a paper opens', async () => {
+    notes['/space/paper.pages'] = '{}'
+
+    try {
+      await workspace.openPdf('/space/paper.pdf')
+      expect(workspace.active?.path).toBe('/space/paper.pages')
+      expect(workspace.active?.shown).toBe('paper')
+    } finally {
+      delete notes['/space/paper.pages']
+    }
   })
 
   test('is a draft first heading, so two drafts are two names', () => {
@@ -4244,14 +4272,19 @@ describe('a tab asked for with a modifier', () => {
     }
   })
 
-  test('a paper followed the same way opens behind too', async () => {
+  test('a paper followed the same way opens behind too, as its page note', async () => {
+    notes['/space/paper.pages'] = '{}'
     await workspace.open('/space/a.md')
     const reading = workspace.active
 
-    await workspace.followLink({ ...jump('paper.pdf'), page: 2 }, 'behind')
+    try {
+      await workspace.followLink({ ...jump('paper.pdf'), page: 2 }, 'behind')
 
-    expect(strip()).toEqual(['/space/a.md', '/space/paper.pdf'])
-    expect(workspace.active).toBe(reading)
+      expect(strip()).toEqual(['/space/a.md', '/space/paper.pages'])
+      expect(workspace.active).toBe(reading)
+    } finally {
+      delete notes['/space/paper.pages']
+    }
   })
 
   test('a page a link opened behind lands beside the tab it was pressed in', async () => {
