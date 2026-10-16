@@ -13,6 +13,19 @@ vi.mock('./store', async (importOriginal) => ({
   },
 }))
 
+/** The account's list of devices, as each test answers it. */
+const devices = vi.hoisted(() => ({
+  asked: 0,
+  answer: (): Promise<unknown> => Promise.resolve({ devices: [] }),
+}))
+vi.mock('../api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api')>()),
+  request: () => {
+    devices.asked += 1
+    return devices.answer()
+  },
+}))
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -69,5 +82,36 @@ describe('signing out', () => {
     expect(kept?.account).toBe('u1')
     expect(kept?.mirrors['/Notes']?.spaceId).toBe('s1')
     expect(forgotten).toEqual(['u1'])
+  })
+})
+
+describe("a device's name", () => {
+  const nameOf = (device: string) =>
+    (runner as unknown as { nameOf(device: string): Promise<string> }).nameOf(device)
+
+  test('is asked for once by everyone who wants it at once, and a failure is not kept', async () => {
+    const { account } = await import('../account.svelte')
+    account.token = 't1'
+    Object.assign(runner, { names: null })
+    devices.asked = 0
+
+    // The list is a moment coming. Asked for twice meanwhile, both must wait for it
+    // rather than one of them reading the empty list it is being filled into.
+    let answer: (value: unknown) => void = () => undefined
+    devices.answer = () => new Promise((settle) => (answer = settle))
+    const first = nameOf('d1')
+    const second = nameOf('d1')
+    await new Promise((settle) => setTimeout(settle, 0))
+    answer({ devices: [{ id: 'd1', name: 'Laptop' }] })
+    expect(await Promise.all([first, second])).toEqual(['Laptop', 'Laptop'])
+    expect(devices.asked).toBe(1)
+
+    // An account that could not be reached is asked again next time, rather than every
+    // device being nameless for the rest of the session.
+    Object.assign(runner, { names: null })
+    devices.answer = () => Promise.reject(new Error('offline'))
+    expect(await nameOf('d1')).toBe('')
+    devices.answer = () => Promise.resolve({ devices: [{ id: 'd1', name: 'Laptop' }] })
+    expect(await nameOf('d1')).toBe('Laptop')
   })
 })
