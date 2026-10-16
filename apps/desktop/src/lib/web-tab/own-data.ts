@@ -23,6 +23,7 @@ import { prompt } from '../prompt.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
+import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
 import { readWebFile } from './shortcut'
@@ -55,8 +56,13 @@ export async function showWebData(path: string): Promise<void> {
   )
 }
 
-/** Keeps the note's web data where it was asked to. */
+/** Keeps the note's web data where it was asked to.
+ *
+ *  What the page owes the file is written first: a write waiting on the reading to
+ *  settle is a second writer over the same file, and the two used to land in whichever
+ *  order the pause fell in. See keep.ts and #353. */
 async function choose(path: string, where: Where): Promise<void> {
+  keepNow(path)
   const text = await textOf(path)
   if (text === null) return
   const was = readWebFile(path, text)?.own ?? null

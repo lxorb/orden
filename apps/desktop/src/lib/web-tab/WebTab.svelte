@@ -584,7 +584,7 @@
     untrack(() =>
       keepPage({
         path,
-        text: tab.doc,
+        text: () => tab.doc,
         url,
         icon,
         wrote: (text: string) => tab.note.replace(text, false),
