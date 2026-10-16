@@ -1006,6 +1006,7 @@ export const fr: Dictionary = {
   Comment: 'Commentaire',
   'Always on top': 'Toujours au premier plan',
   'What is new': 'Nouveautés',
+  'Download the app': 'Télécharger l’app',
   'Report an issue': 'Signaler un problème',
   'Move the line up': 'Monter la ligne',
   'Move the line down': 'Descendre la ligne',

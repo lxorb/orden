@@ -1004,6 +1004,7 @@ export const es: Dictionary = {
   Comment: 'Comentario',
   'Always on top': 'Siempre visible',
   'What is new': 'Novedades',
+  'Download the app': 'Descargar la app',
   'Report an issue': 'Informar de un problema',
   'Move the line up': 'Subir la línea',
   'Move the line down': 'Bajar la línea',

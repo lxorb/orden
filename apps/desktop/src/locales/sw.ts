@@ -995,6 +995,7 @@ export const sw: Dictionary = {
   Comment: 'Maoni',
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
+  'Download the app': 'Pakua programu',
   'Report an issue': 'Ripoti tatizo',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',

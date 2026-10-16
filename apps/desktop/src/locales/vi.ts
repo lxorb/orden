@@ -982,6 +982,7 @@ export const vi: Dictionary = {
   Comment: 'Bình luận',
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
+  'Download the app': 'Tải ứng dụng',
   'Report an issue': 'Báo lỗi',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',

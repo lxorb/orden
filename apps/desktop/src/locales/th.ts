@@ -979,6 +979,7 @@ export const th: Dictionary = {
   Comment: 'ความคิดเห็น',
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
+  'Download the app': 'ดาวน์โหลดแอป',
   'Report an issue': 'แจ้งปัญหา',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',

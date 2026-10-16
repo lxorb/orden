@@ -1035,6 +1035,7 @@ export const ar: Dictionary = {
   Comment: 'تعليق',
   'Always on top': 'دائمًا في المقدمة',
   'What is new': 'ما الجديد',
+  'Download the app': 'تنزيل التطبيق',
   'Report an issue': 'الإبلاغ عن مشكلة',
   'Move the line up': 'نقل السطر لأعلى',
   'Move the line down': 'نقل السطر لأسفل',

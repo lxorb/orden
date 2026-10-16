@@ -988,6 +988,7 @@ export const gu: Dictionary = {
   Comment: 'ટિપ્પણી',
   'Always on top': 'હંમેશાં ઉપર',
   'What is new': 'નવું શું છે',
+  'Download the app': 'ઍપ ડાઉનલોડ કરો',
   'Report an issue': 'સમસ્યા જણાવો',
   'Move the line up': 'લીટી ઉપર ખસેડો',
   'Move the line down': 'લીટી નીચે ખસેડો',

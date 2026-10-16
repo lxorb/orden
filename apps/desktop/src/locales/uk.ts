@@ -1024,6 +1024,7 @@ export const uk: Dictionary = {
   Comment: 'Коментар',
   'Always on top': 'Поверх усіх вікон',
   'What is new': 'Що нового',
+  'Download the app': 'Завантажити застосунок',
   'Report an issue': 'Повідомити про проблему',
   'Move the line up': 'Перемістити рядок вище',
   'Move the line down': 'Перемістити рядок нижче',

@@ -987,6 +987,7 @@ export const id: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Selalu di atas',
   'What is new': 'Apa yang baru',
+  'Download the app': 'Unduh aplikasinya',
   'Report an issue': 'Laporkan masalah',
   'Move the line up': 'Pindahkan baris ke atas',
   'Move the line down': 'Pindahkan baris ke bawah',

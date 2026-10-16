@@ -987,6 +987,7 @@ export const ms: Dictionary = {
   Comment: 'Komen',
   'Always on top': 'Sentiasa di atas',
   'What is new': 'Apa yang baharu',
+  'Download the app': 'Muat turun aplikasi',
   'Report an issue': 'Laporkan isu',
   'Move the line up': 'Alihkan baris ke atas',
   'Move the line down': 'Alihkan baris ke bawah',

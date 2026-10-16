@@ -1023,6 +1023,7 @@ export const pl: Dictionary = {
   Comment: 'Komentarz',
   'Always on top': 'Zawsze na wierzchu',
   'What is new': 'Co nowego',
+  'Download the app': 'Pobierz aplikację',
   'Report an issue': 'Zgłoś problem',
   'Move the line up': 'Przenieś wiersz wyżej',
   'Move the line down': 'Przenieś wiersz niżej',

@@ -988,6 +988,7 @@ export const ps: Dictionary = {
   Comment: 'څرګندونه',
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
+  'Download the app': 'اپلیکیشن ښکته کړئ',
   'Report an issue': 'ستونزه راپور کول',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',

@@ -997,6 +997,7 @@ export const ml: Dictionary = {
   Comment: 'കമന്റ്',
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
+  'Download the app': 'ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',

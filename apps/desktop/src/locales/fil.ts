@@ -999,6 +999,7 @@ export const fil: Dictionary = {
   Comment: 'Komento',
   'Always on top': 'Laging nasa itaas',
   'What is new': 'Ano ang bago',
+  'Download the app': 'I-download ang app',
   'Report an issue': 'Mag-ulat ng problema',
   'Move the line up': 'Iakyat ang linya',
   'Move the line down': 'Ibaba ang linya',

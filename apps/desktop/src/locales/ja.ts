@@ -986,6 +986,7 @@ export const ja: Dictionary = {
   Comment: 'コメント',
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
+  'Download the app': 'アプリをダウンロード',
   'Report an issue': '問題を報告',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',

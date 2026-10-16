@@ -974,6 +974,7 @@ export const zhHans: Dictionary = {
   Comment: '注释',
   'Always on top': '始终置顶',
   'What is new': '更新内容',
+  'Download the app': '下载应用',
   'Report an issue': '报告问题',
   'Move the line up': '上移此行',
   'Move the line down': '下移此行',

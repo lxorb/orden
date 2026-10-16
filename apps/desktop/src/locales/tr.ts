@@ -990,6 +990,7 @@ export const tr: Dictionary = {
   Comment: 'Açıklama',
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
+  'Download the app': 'Uygulamayı indir',
   'Report an issue': 'Sorun bildir',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',

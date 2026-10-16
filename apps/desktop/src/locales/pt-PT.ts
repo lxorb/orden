@@ -1004,6 +1004,7 @@ export const ptPT: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre à frente',
   'What is new': 'Novidades',
+  'Download the app': 'Transferir a app',
   'Report an issue': 'Comunicar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',

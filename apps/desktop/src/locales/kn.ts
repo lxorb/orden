@@ -994,6 +994,7 @@ export const kn: Dictionary = {
   Comment: 'ಕಾಮೆಂಟ್',
   'Always on top': 'ಯಾವಾಗಲೂ ಮೇಲೆ',
   'What is new': 'ಹೊಸದೇನು',
+  'Download the app': 'ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
   'Report an issue': 'ಸಮಸ್ಯೆ ತಿಳಿಸಿ',
   'Move the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the line down': 'ಸಾಲನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',

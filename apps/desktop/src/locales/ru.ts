@@ -1025,6 +1025,7 @@ export const ru: Dictionary = {
   Comment: 'Комментарий',
   'Always on top': 'Поверх всех окон',
   'What is new': 'Что нового',
+  'Download the app': 'Скачать приложение',
   'Report an issue': 'Сообщить о проблеме',
   'Move the line up': 'Переместить строку выше',
   'Move the line down': 'Переместить строку ниже',

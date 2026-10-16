@@ -1000,6 +1000,7 @@ export const ptBR: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre na frente',
   'What is new': 'Novidades',
+  'Download the app': 'Baixar o app',
   'Report an issue': 'Relatar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',

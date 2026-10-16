@@ -982,6 +982,7 @@ export const ko: Dictionary = {
   Comment: '주석',
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
+  'Download the app': '앱 다운로드',
   'Report an issue': '문제 신고',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',

@@ -998,6 +998,7 @@ export const ta: Dictionary = {
   Comment: 'கருத்து',
   'Always on top': 'எப்போதும் மேலே',
   'What is new': 'புதியது என்ன',
+  'Download the app': 'செயலியைப் பதிவிறக்கு',
   'Report an issue': 'சிக்கலைத் தெரிவி',
   'Move the line up': 'வரியை மேலே நகர்த்து',
   'Move the line down': 'வரியை கீழே நகர்த்து',
