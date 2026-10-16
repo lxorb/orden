@@ -1,12 +1,10 @@
-/** Where a provider's API key lives on a device.
+/** Where a provider's API key lives, which is on the device and nowhere else.
  *
  *  A key is the reader's own and worth money to whoever takes it, so nib puts it
  *  where the platform puts secrets and keeps it out of everything that can be
- *  copied: not in the note, not in the space, never in a log or an error. It reaches
- *  the reader's other devices only sealed end to end, inside the AI vault, which the
- *  account holds as ciphertext it cannot open (vault/vault.svelte.ts). The account
- *  holds one OpenAI key in the clear for the glasses, a different key for a
- *  different thing; the AI pane says so.
+ *  copied: not in the note, not in the space, not on the account, not in sync, and
+ *  never in a log or an error. The account holds one OpenAI key, for the glasses,
+ *  and that one is a different key for a different thing; the AI pane says so.
  *
  *  Three platforms, three stores, one pair of calls:
  *
@@ -76,46 +74,22 @@ export async function hasKey(id: string): Promise<boolean> {
   return !!(await read(id))
 }
 
-/** Who hears that a key was typed or taken away: the vault, which carries it to the
- *  reader's other devices. Not told of what the vault itself put here. */
-const moved = new Set<() => void>()
-
-/** Hears every key the reader typed or took away. Answers how to stop. */
-export function keysMoved(listener: () => void): () => void {
-  moved.add(listener)
-  return () => moved.delete(listener)
-}
-
-/** `quiet` is the vault's own writing: a key that arrived from another device. */
-export async function writeKey(id: string, secret: string, quiet = false): Promise<void> {
+export async function writeKey(id: string, secret: string): Promise<void> {
   const trimmed = secret.trim()
   if (!trimmed) {
-    await forgetKey(id, quiet)
+    await forgetKey(id)
     return
   }
 
-  await writeSecret(id, trimmed)
-  if (!quiet) for (const one of moved) one()
+  const phone = isMobile ? bridge() : undefined
+  if (phone) phone.secretWrite(await frameWord(), id, trimmed)
+  else await invoke<null>('secret_write', { name: id, secret: trimmed })
 }
 
-export async function forgetKey(id: string, quiet = false): Promise<void> {
+export async function forgetKey(id: string): Promise<void> {
   const phone = isMobile ? bridge() : undefined
   if (phone) phone.secretForget(await frameWord(), id)
   else await invoke<null>('secret_forget', { name: id })
-  if (!quiet) for (const one of moved) one()
-}
-
-/** Any secret of the app's own under a name of its own: a key, or the vault's device
- *  key. */
-export async function writeSecret(id: string, secret: string): Promise<void> {
-  const phone = isMobile ? bridge() : undefined
-  if (phone) phone.secretWrite(await frameWord(), id, secret)
-  else await invoke<null>('secret_write', { name: id, secret })
-}
-
-/** The same, read back. */
-export function readSecret(id: string): Promise<string | null> {
-  return read(id)
 }
 
 /** One read, whichever store answers it. The value crossing the bridge is unknown

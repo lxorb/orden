@@ -1066,14 +1066,6 @@ export const my: Dictionary = {
   'AI account: {name}': 'AI အကောင့်: {name}',
   Accounts: 'အကောင့်များ',
   Access: 'ဝင်ရောက်ခွင့်',
-  Set: 'သတ်မှတ်ပြီး',
-  'Start over': 'အစမှ ပြန်စပါ',
-  'Sign in here': 'ဤနေရာတွင် ဝင်ပါ',
-  '{device} wants your AI accounts': '{device} က သင့် AI အကောင့်များကို တောင်းနေသည်',
-  'Allow this device on another one': 'အခြားစက်တွင် ဤစက်ကို ခွင့်ပြုပါ',
-  'On every device you sign in to, end-to-end encrypted.':
-    'သင်ဝင်သည့် စက်တိုင်းတွင် အစမှအဆုံး ကုဒ်ဝှက်ထားသည်။',
-  'Sign in to have them on every device.': 'စက်တိုင်းတွင် ရရှိရန် ဝင်ပါ။',
   'Agents on this computer connect on their own':
     'ဤကွန်ပျူတာရှိ အေးဂျင့်များ သူ့အလိုလို ချိတ်ဆက်သည်',
   Helpers: 'အကူများ',
@@ -1387,11 +1379,14 @@ export const my: Dictionary = {
   'OpenAI-compatible': 'OpenAI နှင့်တွဲဖက်',
   'Base URL': 'အခြေ URL',
   'API key': 'API သော့',
+  'Set on this device': 'ဤစက်တွင် သတ်မှတ်ထားသည်',
   Optional: 'မရွေးလည်းရ',
   'List models': 'မော်ဒယ်များယူပါ',
   'Asking…': 'မေးနေသည်…',
   'No providers yet.': 'ပေးသူ မရှိသေးပါ။',
   'Add {name}': '{name} ထည့်ပါ',
+  'Keys stay in the secure store on this device.':
+    'သော့များ ဤစက်၏ လုံခြုံသောသိမ်းဆည်းမှုတွင် ကျန်နေသည်။',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
   'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',

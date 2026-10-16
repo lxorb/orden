@@ -62,8 +62,6 @@ export type FromHub =
   /** A session on the account's machine was made or ended, or its shell ended: Settings'
    *  list asks again (docs/online-terminal.md 4.10). Says nothing of which. */
   | { t: 'terms' }
-  /** The account's AI accounts moved (ai/vault.ts): read them again. Says nothing else. */
-  | { t: 'ai' }
   /** A chat this account reaches moved while none of its devices had it open
    *  (docs/chats.md 4.4): `ChatPoke`, which never carries words. */
   | ChatPoke

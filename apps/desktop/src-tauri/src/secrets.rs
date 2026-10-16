@@ -1,9 +1,8 @@
 //! The keys an AI provider is reached with, kept in the machine's own keychain.
 //!
 //! A provider key is the one secret nib holds that is worth money to whoever takes
-//! it, and it is the reader's own. No log ever prints one, and the account never sees
-//! one: it reaches the reader's other devices only sealed end to end, in the AI vault
-//! the window seals (src/lib/ai/vault), which the account holds as ciphertext.
+//! it, and it is the reader's own: it belongs on the device and nowhere else. The
+//! account never sees one, sync never carries one, and no log ever prints one.
 //!
 //! So it goes where the operating system keeps secrets: the Credential Manager on
 //! Windows, the Keychain on macOS, and the Secret Service on Linux, which is
@@ -23,10 +22,6 @@
 //! at all, since the request is made in the webview.
 
 use keyring::{Entry, Error};
-use tauri::AppHandle;
-
-/// The identifier the app ships under: its secrets are filed under their plain names.
-const SHIPPED: &str = "ch.emilvinu.nib";
 
 /// What the keychain files these under. One service for the app, with the
 /// provider's own id as the account, so a reader looking at their keychain sees
@@ -57,22 +52,8 @@ fn named(name: &str) -> Result<String, String> {
     }
 }
 
-/// The keychain account a name is filed under: the name itself for the app that ships,
-/// and the name with `@<identifier>` after it for any other build, a probe or a
-/// development build under an identifier of its own. The keychain is the user's and
-/// outlives every build, so a probe must never read, write or forget the keys of the
-/// app somebody installed; web logins' keys are filed the same way (`web_state/keys.rs`).
-fn filed(name: &str, identifier: &str) -> Result<String, String> {
-    let name = named(name)?;
-    Ok(if identifier == SHIPPED {
-        name
-    } else {
-        format!("{name}@{identifier}")
-    })
-}
-
-fn entry(app: &AppHandle, name: &str) -> Result<Entry, String> {
-    let account = filed(name, &app.config().identifier)?;
+fn entry(name: &str) -> Result<Entry, String> {
+    let account = named(name)?;
     Entry::new(SERVICE, &account).map_err(|error| error.to_string())
 }
 
@@ -80,8 +61,8 @@ fn entry(app: &AppHandle, name: &str) -> Result<Entry, String> {
 /// an error and not an absence: a reader whose keyring is locked should be told
 /// that rather than told their key has gone.
 #[tauri::command(async)]
-pub fn secret_read(app: AppHandle, name: String) -> Result<Option<String>, String> {
-    match entry(&app, &name)?.get_password() {
+pub fn secret_read(name: String) -> Result<Option<String>, String> {
+    match entry(&name)?.get_password() {
         Ok(secret) => Ok(Some(secret)),
         Err(Error::NoEntry) => Ok(None),
         Err(error) => Err(error.to_string()),
@@ -90,8 +71,8 @@ pub fn secret_read(app: AppHandle, name: String) -> Result<Option<String>, Strin
 
 /// Writes one, replacing whatever was there.
 #[tauri::command(async)]
-pub fn secret_write(app: AppHandle, name: String, secret: String) -> Result<(), String> {
-    entry(&app, &name)?
+pub fn secret_write(name: String, secret: String) -> Result<(), String> {
+    entry(&name)?
         .set_password(&secret)
         .map_err(|error| error.to_string())
 }
@@ -99,8 +80,8 @@ pub fn secret_write(app: AppHandle, name: String, secret: String) -> Result<(), 
 /// Takes one away. A key that was never there is not a failure: taking away what
 /// is already gone is what the caller asked for.
 #[tauri::command(async)]
-pub fn secret_forget(app: AppHandle, name: String) -> Result<(), String> {
-    match entry(&app, &name)?.delete_credential() {
+pub fn secret_forget(name: String) -> Result<(), String> {
+    match entry(&name)?.delete_credential() {
         Ok(()) | Err(Error::NoEntry) => Ok(()),
         Err(error) => Err(error.to_string()),
     }
@@ -108,17 +89,7 @@ pub fn secret_forget(app: AppHandle, name: String) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{filed, named};
-
-    #[test]
-    fn a_build_other_than_the_shipped_one_files_its_secrets_apart() {
-        assert_eq!(filed("openai", "ch.emilvinu.nib").as_deref(), Ok("openai"));
-        assert_eq!(
-            filed("openai", "ch.emilvinu.nib.probe.x").as_deref(),
-            Ok("openai@ch.emilvinu.nib.probe.x")
-        );
-        assert!(filed("a b", "ch.emilvinu.nib").is_err());
-    }
+    use super::named;
 
     #[test]
     fn accepts_a_provider_id() {

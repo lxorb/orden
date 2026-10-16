@@ -1083,14 +1083,6 @@ export const fil: Dictionary = {
   'AI account: {name}': 'AI account: {name}',
   Accounts: 'Mga account',
   Access: 'Access',
-  Set: 'Nakatakda',
-  'Start over': 'Magsimula muli',
-  'Sign in here': 'Mag-sign in dito',
-  '{device} wants your AI accounts': 'Gusto ng {device} ang iyong mga AI account',
-  'Allow this device on another one': 'Payagan ang device na ito sa ibang device',
-  'On every device you sign in to, end-to-end encrypted.':
-    'Sa bawat device na pinag-sign in-an mo, end-to-end encrypted.',
-  'Sign in to have them on every device.': 'Mag-sign in para nasa bawat device ang mga ito.',
   'Agents on this computer connect on their own':
     'Kusang kumokonekta ang mga agent sa computer na ito',
   Helpers: 'Mga katulong',
@@ -1423,11 +1415,14 @@ export const fil: Dictionary = {
   'OpenAI-compatible': 'Kompatible sa OpenAI',
   'Base URL': 'Base URL',
   'API key': 'API key',
+  'Set on this device': 'Nakatakda sa device na ito',
   Optional: 'Opsyonal',
   'List models': 'Kunin ang mga modelo',
   'Asking…': 'Nagtatanong…',
   'No providers yet.': 'Wala pang provider.',
   'Add {name}': 'Idagdag ang {name}',
+  'Keys stay in the secure store on this device.':
+    'Nananatili ang key sa ligtas na imbakan ng device na ito.',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
   'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',

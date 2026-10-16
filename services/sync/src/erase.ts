@@ -159,9 +159,6 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['devices', 'delete from devices where user_id = ?1'],
   ['web_states', 'delete from web_states where user_id = ?1'],
   ['web_chunks', 'delete from web_chunks where user_id = ?1'],
-  // Its AI accounts, sealed, and the keys to them wrapped to each device.
-  ['ai_vaults', 'delete from ai_vaults where user_id = ?1'],
-  ['ai_devices', 'delete from ai_devices where user_id = ?1'],
   // Where its devices were pushed to, and the reminders kept to push them.
   ['push_targets', 'delete from push_targets where user_id = ?1'],
   ['push_reminders', 'delete from push_reminders where user_id = ?1'],

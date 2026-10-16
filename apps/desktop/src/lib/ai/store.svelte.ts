@@ -137,20 +137,6 @@ class Ai {
   private synced: Promise<void> | null = null
   /** The last change being written. */
   private writing: Promise<void> = Promise.resolve()
-  /** Who hears a change made in this window: the vault, which carries it on. */
-  private local = new Set<() => void>()
-
-  /** Hears every change made in this window, not one that arrived. Answers how to stop. */
-  onLocalChange(listener: () => void): () => void {
-    this.local.add(listener)
-    return () => this.local.delete(listener)
-  }
-
-  /** The accounts as another device has them, put in place here and in the file
-   *  without counting as a change of this window's. */
-  adopt(state: Accounts): void {
-    this.changed(() => state, true)
-  }
 
   /** What an id answers with now: its provider's active account, or null for an id of
    *  nothing there. The one place a thread, a feature or a helper learns who answers. */
@@ -242,7 +228,7 @@ class Ai {
 
   /** Makes a change once the file has been heard from, so a change made in the first
    *  moment is never written over a file this window has not read yet. */
-  private changed(make: (state: Accounts) => Accounts, quiet = false) {
+  private changed(make: (state: Accounts) => Accounts) {
     // Shown at once; written once the window has read the file, after the change before.
     this.state = make(this.state)
     const before = this.writing
@@ -251,7 +237,6 @@ class Ai {
       await before
       await this.change(make)
     })()
-    if (!quiet) for (const one of this.local) one()
   }
 
   /** The last change made, written: what a question to the crate about an account just
@@ -331,7 +316,3 @@ accountsAre(
 // so a test that loads the module twice reads the same thing twice. See start.ts, which
 // used to call this, and surfaces.svelte.ts for the doors it now comes through.
 ai.restore()
-
-// The accounts on every device of the reader's nib account, end to end: started with the
-// store, after the first paint, and not in the glasses' plugin. See vault/start.svelte.ts.
-if (!__EVEN_PLUGIN__) void import('./vault/start.svelte').then((one) => one.startVault())

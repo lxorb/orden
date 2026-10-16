@@ -35,11 +35,6 @@ use oauth::{Attempt, Callback, Tokens};
 /// provider id can be.
 const REFRESH: &str = "chatgpt.refresh";
 
-/// Where a copy of the installation is kept beside it, so the sign-in outlives the app's
-/// data folder: an uninstall that took the folder with it left the refresh token in the
-/// keychain and the client it belongs to nowhere, which was a sign-in lost.
-const KEPT: &str = "chatgpt.installation";
-
 /// The port the first sign-in listens on, as `OpenAI`'s own example has it; any free port
 /// after that, since only the port may change between sign-ins.
 const PORT: u16 = 1455;
@@ -102,16 +97,6 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
     {
         return Ok(found);
     }
-    // The folder went and the keychain stayed: the installation is the one kept there.
-    if let Some(found) = kept_entry()
-        .ok()
-        .and_then(|entry| entry.get_password().ok())
-        .and_then(|text| serde_json::from_str::<Installation>(&text).ok())
-        .filter(|found| !found.host.is_empty())
-    {
-        let _ = std::fs::write(&file, serde_json::to_vec(&found).unwrap_or_default());
-        return Ok(found);
-    }
     let mut random = [0_u8; 16];
     getrandom::fill(&mut random).map_err(|error| error.to_string())?;
     let made = Installation {
@@ -124,15 +109,7 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
 
 fn keep(app: &AppHandle, installation: &Installation) -> Result<(), String> {
     let text = serde_json::to_vec(installation).map_err(|error| error.to_string())?;
-    // A copy in the keychain first, best effort: the file is what is read.
-    if let (Ok(entry), Ok(words)) = (kept_entry(), std::str::from_utf8(&text)) {
-        let _ = entry.set_password(words);
-    }
     std::fs::write(installation_file(app)?, text).map_err(|error| error.to_string())
-}
-
-fn kept_entry() -> Result<keyring::Entry, String> {
-    keyring::Entry::new(crate::secrets::SERVICE, KEPT).map_err(|error| error.to_string())
 }
 
 fn refresh_entry() -> Result<keyring::Entry, String> {

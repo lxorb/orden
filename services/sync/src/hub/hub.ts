@@ -139,15 +139,6 @@ export class AccountHub implements DurableObject {
       case 'chat':
         this.chat(headers)
         return new Response(null, { status: 204 })
-      case 'ai':
-        // The AI accounts moved (ai/vault.ts): every device of the account but the
-        // one whose change it was reads them again.
-        for (const { socket, attached } of everySocket(this.ctx)) {
-          if (!attached.guest && attached.device !== (headers.get('x-nib-from') ?? '')) {
-            say(socket, { t: 'ai' })
-          }
-        }
-        return new Response(null, { status: 204 })
       default:
         return new Response('not something a hub does', { status: 400 })
     }

@@ -32,7 +32,6 @@ import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { devices } from './hub/devices'
-import { aiVault } from './ai/vault'
 import { hubDoor } from './hub/door'
 import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
@@ -310,8 +309,6 @@ app.route('/v1', notes)
 // hub/devices.ts and spaces/web-store.ts.
 app.route('/v2/web', web)
 app.route('/v2/devices', devices)
-// The reader's AI accounts, end to end between their devices; see ai/vault.ts.
-app.route('/v2/ai', aiVault)
 app.route('/v2/spaces', webStore)
 
 // Sync v2, the documents' half: a space's tree and its feed, documents in batches,
