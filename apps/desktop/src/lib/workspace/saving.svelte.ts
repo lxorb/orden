@@ -15,6 +15,7 @@
  *  both. The workspace holds one of these and hands its calls straight through. */
 
 import { flushTableEdits } from '@nib/editor'
+import { freePath } from '@nib/markdown/paths'
 import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
@@ -308,8 +309,8 @@ export class Saving {
   async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     if (note.path !== null) return null
 
-    const path = joinPath(folder, this.ws.freeName(folder, file))
-    note.path = path
+    const path = await this.claim(note, folder, file)
+    if (path === null) return null
     note.name = nameOf(path)
     // What the tab holds is what the file has to say, typed in or not: an untouched
     // plane is a blank plane's worth of JSON.
@@ -323,6 +324,36 @@ export class Saving {
     this.soon.cancel()
     await this.saveWaiting()
     return path
+  }
+
+  /** A path in `folder` that nothing is at, given to the draft: the name `freeName`
+   *  gives, and the disk asked about it too. Null for a draft given a place some
+   *  other way while the disk was being asked.
+   *
+   *  `freeName` knows the listing of the space on screen, and a draft keeps the space
+   *  it was opened in: switch spaces and save it, and its folder is one no listing
+   *  here has read. `Plan.md` came back free there while the other space had one,
+   *  and the draft's first write replaced it, with no version kept of what it held.
+   *  So each name is stamped before it is claimed, and one with a file stepped past.
+   *  The listing is read again after each round trip and the name claimed in the
+   *  same breath: a draft saved beside this one may have claimed it meanwhile. */
+  private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
+    const found: string[] = []
+    for (;;) {
+      const name = freePath(
+        file,
+        (candidate) =>
+          found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
+      )
+      const path = joinPath(folder, name)
+      const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+      if (note.path !== null) return null
+      if (stamp) found.push(name)
+      else if (this.ws.freeName(folder, name) === name) {
+        note.path = path
+        return path
+      }
+    }
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
