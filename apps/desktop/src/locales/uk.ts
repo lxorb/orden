@@ -1201,6 +1201,12 @@ export const uk: Dictionary = {
   'Export as PNG': 'Експорт у PNG',
   'Export as SVG': 'Експорт у SVG',
   'Export as PDF': 'Експорт у PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Імпорт PDF',
+  'Choose how to add the pages to the canvas.': 'Виберіть, як додати сторінки на полотно.',
+  'Single page': 'Одна сторінка',
+  'All pages': 'Усі сторінки',
+  'Choose a page': 'Вибрати сторінку',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Видалити вибране',
   'Nudge left': 'Зсунути ліворуч',
@@ -1261,8 +1267,8 @@ export const uk: Dictionary = {
   'Release channel': 'Канал випусків',
   Stable: 'Стабільний',
   Unstable: 'Нестабільний',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабільний слідує офіційним випускам, нестабільний - кожному пушу в main і може ламатися.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',

@@ -1160,6 +1160,13 @@ export const my: Dictionary = {
   'Export as PNG': 'PNG အဖြစ်ထုတ်ပါ',
   'Export as SVG': 'SVG အဖြစ်ထုတ်ပါ',
   'Export as PDF': 'PDF အဖြစ်ထုတ်ပါ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF သွင်းပါ',
+  'Choose how to add the pages to the canvas.':
+    'စာမျက်နှာများကို ကန်ဗတ်ပေါ် မည်သို့ထည့်မည်ကို ရွေးပါ။',
+  'Single page': 'စာမျက်နှာ တစ်မျက်နှာ',
+  'All pages': 'စာမျက်နှာအားလုံး',
+  'Choose a page': 'စာမျက်နှာ ရွေးပါ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ရွေးထားသည်ကို ဖျက်ပါ',
   'Nudge left': 'ဘယ်သို့ အနည်းငယ်တွန်းပါ',
@@ -1220,8 +1227,8 @@ export const my: Dictionary = {
   'Release channel': 'ထုတ်လွှင့်လမ်းကြောင်း',
   Stable: 'တည်ငြိမ်',
   Unstable: 'မတည်ငြိမ်',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'တည်ငြိမ်သည် တရားဝင်ထုတ်လွှင့်မှုများကို လိုက်သည်၊ မတည်ငြိမ်သည် main သို့ တင်သမျှကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီးဗားရှင်းများကို လိုက်သည်၊ မတည်ငြိမ်သည် edge build များကို လိုက်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',

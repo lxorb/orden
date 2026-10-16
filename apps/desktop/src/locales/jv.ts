@@ -1160,6 +1160,12 @@ export const jv: Dictionary = {
   'Export as PNG': 'Ekspor minangka PNG',
   'Export as SVG': 'Ekspor minangka SVG',
   'Export as PDF': 'Ekspor minangka PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Impor PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih carane nambahake kaca menyang kanvas.',
+  'Single page': 'Siji kaca',
+  'All pages': 'Kabeh kaca',
+  'Choose a page': 'Pilih kaca',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Busak sing dipilih',
   'Nudge left': 'Sunggi ngiwa',
@@ -1220,8 +1226,8 @@ export const jv: Dictionary = {
   'Release channel': 'Saluran wedalan',
   Stable: 'Mantep',
   Unstable: 'Ora mantep',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Mantep ngetutake wedalan resmi, Ora mantep ngetutake saben dorongan menyang main lan bisa rusak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Mantep ngetutake versi sing wis diwedalake, Ora mantep ngetutake build edge lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',

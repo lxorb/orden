@@ -1200,6 +1200,12 @@ export const pl: Dictionary = {
   'Export as PNG': 'Eksportuj do PNG',
   'Export as SVG': 'Eksportuj do SVG',
   'Export as PDF': 'Eksportuj do PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importuj PDF',
+  'Choose how to add the pages to the canvas.': 'Wybierz, jak dodać strony do kanwy.',
+  'Single page': 'Jedna strona',
+  'All pages': 'Wszystkie strony',
+  'Choose a page': 'Wybierz stronę',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Usuń zaznaczenie',
   'Nudge left': 'Przesuń w lewo',
@@ -1260,8 +1266,8 @@ export const pl: Dictionary = {
   'Release channel': 'Kanał wydań',
   Stable: 'Stabilny',
   Unstable: 'Niestabilny',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabilny idzie za oficjalnymi wydaniami, Niestabilny za każdym pushem na main i może się psuć.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabilny idzie za wydanymi wersjami, Niestabilny za buildami edge i może się psuć.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importuj',

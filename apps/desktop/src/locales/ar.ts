@@ -1210,6 +1210,12 @@ export const ar: Dictionary = {
   'Export as PNG': 'تصدير كـ PNG',
   'Export as SVG': 'تصدير كـ SVG',
   'Export as PDF': 'تصدير كـ PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'استيراد PDF',
+  'Choose how to add the pages to the canvas.': 'اختر كيف تُضاف الصفحات إلى اللوحة.',
+  'Single page': 'صفحة واحدة',
+  'All pages': 'كل الصفحات',
+  'Choose a page': 'اختر صفحة',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف المحدد',
   'Nudge left': 'دفع لليسار',
@@ -1270,8 +1276,8 @@ export const ar: Dictionary = {
   'Release channel': 'قناة الإصدار',
   Stable: 'مستقر',
   Unstable: 'غير مستقر',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'المستقر يتبع الإصدارات الرسمية، وغير المستقر كل دفعة إلى main وقد يتعطل.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'المستقر يتبع الإصدارات المنشورة، وغير المستقر يتبع بُنى الحافة وقد يتعطل.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'استيراد',

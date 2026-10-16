@@ -1157,6 +1157,12 @@ export const ko: Dictionary = {
   'Export as PNG': 'PNG로 내보내기',
   'Export as SVG': 'SVG로 내보내기',
   'Export as PDF': 'PDF로 내보내기',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF 가져오기',
+  'Choose how to add the pages to the canvas.': '페이지를 캔버스에 어떻게 추가할지 고르세요.',
+  'Single page': '한 페이지',
+  'All pages': '모든 페이지',
+  'Choose a page': '페이지 고르기',
   // The canvas: what its own keys are called
   'Delete what is picked': '선택한 것 삭제',
   'Nudge left': '왼쪽으로 조금',
@@ -1217,8 +1223,8 @@ export const ko: Dictionary = {
   'Release channel': '릴리스 채널',
   Stable: '안정',
   Unstable: '불안정',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',

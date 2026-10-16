@@ -1174,6 +1174,13 @@ export const ml: Dictionary = {
   'Export as PNG': 'PNG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as SVG': 'SVG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as PDF': 'PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ഇംപോർട്ട് ചെയ്യുക',
+  'Choose how to add the pages to the canvas.':
+    'പേജുകൾ ക്യാൻവാസിൽ എങ്ങനെ ചേർക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.',
+  'Single page': 'ഒരു പേജ്',
+  'All pages': 'എല്ലാ പേജുകളും',
+  'Choose a page': 'ഒരു പേജ് തിരഞ്ഞെടുക്കുക',
   // The canvas: what its own keys are called
   'Delete what is picked': 'തിരഞ്ഞെടുത്തത് ഇല്ലാതാക്കുക',
   'Nudge left': 'ഇടത്തേക്ക് ചെറുതായി നീക്കുക',
@@ -1234,8 +1241,8 @@ export const ml: Dictionary = {
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
   Unstable: 'അസ്ഥിരം',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',

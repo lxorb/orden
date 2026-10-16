@@ -1171,6 +1171,13 @@ export const kn: Dictionary = {
   'Export as PNG': 'PNG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as SVG': 'SVG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as PDF': 'PDF ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Choose how to add the pages to the canvas.':
+    'ಪುಟಗಳನ್ನು ಕ್ಯಾನ್ವಾಸ್‌ಗೆ ಹೇಗೆ ಸೇರಿಸಬೇಕು ಎಂದು ಆಯ್ಕೆಮಾಡಿ.',
+  'Single page': 'ಒಂದು ಪುಟ',
+  'All pages': 'ಎಲ್ಲಾ ಪುಟಗಳು',
+  'Choose a page': 'ಪುಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ಆಯ್ದದನ್ನು ಅಳಿಸಿ',
   'Nudge left': 'ಎಡಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
@@ -1231,8 +1238,8 @@ export const kn: Dictionary = {
   'Release channel': 'ಬಿಡುಗಡೆ ಚಾನೆಲ್',
   Stable: 'ಸ್ಥಿರ',
   Unstable: 'ಅಸ್ಥಿರ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ಸ್ಥಿರ ಅಧಿಕೃತ ಬಿಡುಗಡೆಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ mainಗೆ ಪ್ರತಿ ಪುಶ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ಆವೃತ್ತಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ ಎಡ್ಜ್ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',

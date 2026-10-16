@@ -1146,6 +1146,12 @@ export const zhHant: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '選擇頁面要怎麼加到畫布上。',
+  'Single page': '單頁',
+  'All pages': '所有頁面',
+  'Choose a page': '選擇一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除選取範圍',
   'Nudge left': '向左微移',
@@ -1206,8 +1212,8 @@ export const zhHant: Dictionary = {
   'Release channel': '發行通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟著正式發行走，開發版跟著main的每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟著已發行的版本，開發版跟著edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',

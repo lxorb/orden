@@ -1167,6 +1167,12 @@ export const hi: Dictionary = {
   'Export as PNG': 'PNG में एक्सपोर्ट करें',
   'Export as SVG': 'SVG में एक्सपोर्ट करें',
   'Export as PDF': 'PDF में एक्सपोर्ट करें',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF इंपोर्ट करें',
+  'Choose how to add the pages to the canvas.': 'पेज कैनवास में कैसे जोड़ें, चुनें।',
+  'Single page': 'एक पेज',
+  'All pages': 'सभी पेज',
+  'Choose a page': 'पेज चुनें',
   // The canvas: what its own keys are called
   'Delete what is picked': 'चुना हुआ हटाएँ',
   'Nudge left': 'ज़रा बाएँ',
@@ -1227,8 +1233,8 @@ export const hi: Dictionary = {
   'Release channel': 'रिलीज़ चैनल',
   Stable: 'स्थिर',
   Unstable: 'अस्थिर',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'स्थिर आधिकारिक रिलीज़ लेता है, अस्थिर main पर हर पुश लेता है और टूट सकता है।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'स्थिर जारी हुए संस्करण लेता है, अस्थिर एज बिल्ड लेता है और टूट सकता है।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'इंपोर्ट',

@@ -1164,6 +1164,12 @@ export const gu: Dictionary = {
   'Export as PNG': 'PNG તરીકે નિકાસ કરો',
   'Export as SVG': 'SVG તરીકે નિકાસ કરો',
   'Export as PDF': 'PDF તરીકે નિકાસ કરો',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF આયાત કરો',
+  'Choose how to add the pages to the canvas.': 'પાનાં કેનવાસમાં કેવી રીતે ઉમેરવાં તે પસંદ કરો.',
+  'Single page': 'એક પાનું',
+  'All pages': 'બધાં પાનાં',
+  'Choose a page': 'પાનું પસંદ કરો',
   // The canvas: what its own keys are called
   'Delete what is picked': 'પસંદ કરેલું કાઢો',
   'Nudge left': 'ડાબે સહેજ ખસેડો',
@@ -1224,8 +1230,8 @@ export const gu: Dictionary = {
   'Release channel': 'પ્રકાશન માર્ગ',
   Stable: 'સ્થિર',
   Unstable: 'અસ્થિર',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'સ્થિર અધિકૃત પ્રકાશન અનુસરે છે, અસ્થિર mainમાં દરેક ધકેલ અનુસરે છે અને તૂટી શકે.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'સ્થિર પ્રકાશિત આવૃત્તિઓ અનુસરે છે, અસ્થિર એજ બિલ્ડ અનુસરે છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',

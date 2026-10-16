@@ -1173,6 +1173,12 @@ export const sw: Dictionary = {
   'Export as PNG': 'Toa kama PNG',
   'Export as SVG': 'Toa kama SVG',
   'Export as PDF': 'Toa kama PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Ingiza PDF',
+  'Choose how to add the pages to the canvas.': 'Chagua jinsi ya kuongeza kurasa kwenye turubai.',
+  'Single page': 'Ukurasa mmoja',
+  'All pages': 'Kurasa zote',
+  'Choose a page': 'Chagua ukurasa',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Futa kilichoteuliwa',
   'Nudge left': 'Sukuma kushoto',
@@ -1233,8 +1239,8 @@ export const sw: Dictionary = {
   'Release channel': 'Njia ya matoleo',
   Stable: 'Imara',
   Unstable: 'Isiyo imara',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',

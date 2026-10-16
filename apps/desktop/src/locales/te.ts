@@ -1168,6 +1168,12 @@ export const te: Dictionary = {
   'Export as PNG': 'PNGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as SVG': 'SVGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as PDF': 'PDFగా ఎక్స్‌పోర్ట్ చేయి',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ఇంపోర్ట్ చేయి',
+  'Choose how to add the pages to the canvas.': 'పేజీలను క్యాన్వాస్‌కు ఎలా జోడించాలో ఎంచుకో.',
+  'Single page': 'ఒక పేజీ',
+  'All pages': 'అన్ని పేజీలు',
+  'Choose a page': 'ఒక పేజీని ఎంచుకో',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ఎంచుకున్నది తొలగించు',
   'Nudge left': 'ఎడమకు జరుపు',
@@ -1228,8 +1234,8 @@ export const te: Dictionary = {
   'Release channel': 'రిలీజ్ ఛానెల్',
   Stable: 'స్థిరం',
   Unstable: 'అస్థిరం',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',

@@ -1158,6 +1158,12 @@ export const vi: Dictionary = {
   'Export as PNG': 'Xuất thành PNG',
   'Export as SVG': 'Xuất thành SVG',
   'Export as PDF': 'Xuất thành PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Nhập PDF',
+  'Choose how to add the pages to the canvas.': 'Chọn cách thêm các trang vào canvas.',
+  'Single page': 'Một trang',
+  'All pages': 'Tất cả các trang',
+  'Choose a page': 'Chọn một trang',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Xoá phần đã chọn',
   'Nudge left': 'Nhích sang trái',
@@ -1218,8 +1224,8 @@ export const vi: Dictionary = {
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
   Unstable: 'Không ổn định',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',

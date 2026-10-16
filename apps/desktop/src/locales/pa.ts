@@ -1170,6 +1170,12 @@ export const pa: Dictionary = {
   'Export as PNG': 'PNG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as SVG': 'SVG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as PDF': 'PDF ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ਅੰਦਰ ਲਿਆਓ',
+  'Choose how to add the pages to the canvas.': 'ਸਫ਼ੇ ਕੈਨਵਸ ਉੱਤੇ ਕਿਵੇਂ ਜੋੜਨੇ ਹਨ, ਚੁਣੋ।',
+  'Single page': 'ਇੱਕ ਸਫ਼ਾ',
+  'All pages': 'ਸਾਰੇ ਸਫ਼ੇ',
+  'Choose a page': 'ਸਫ਼ਾ ਚੁਣੋ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ਚੁਣਿਆ ਮਿਟਾਓ',
   'Nudge left': 'ਖੱਬੇ ਥੋੜ੍ਹਾ ਸਰਕਾਓ',
@@ -1230,8 +1236,8 @@ export const pa: Dictionary = {
   'Release channel': 'ਜਾਰੀ ਰਾਹ',
   Stable: 'ਪੱਕਾ',
   Unstable: 'ਕੱਚਾ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ਪੱਕਾ ਸਰਕਾਰੀ ਜਾਰੀਆਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ main ਵਿੱਚ ਹਰ ਧੱਕੇ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ਪੱਕਾ ਜਾਰੀ ਹੋਈਆਂ ਰੂਪਾਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ ਕਿਨਾਰੇ ਵਾਲੇ ਬਿਲਡਾਂ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',

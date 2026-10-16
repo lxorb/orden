@@ -1164,6 +1164,12 @@ export const bn: Dictionary = {
   'Export as PNG': 'PNG হিসেবে এক্সপোর্ট',
   'Export as SVG': 'SVG হিসেবে এক্সপোর্ট',
   'Export as PDF': 'PDF হিসেবে এক্সপোর্ট',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ইমপোর্ট',
+  'Choose how to add the pages to the canvas.': 'পৃষ্ঠাগুলি ক্যানভাসে কীভাবে যোগ হবে বেছে নিন।',
+  'Single page': 'একটি পৃষ্ঠা',
+  'All pages': 'সব পৃষ্ঠা',
+  'Choose a page': 'পৃষ্ঠা বেছে নিন',
   // The canvas: what its own keys are called
   'Delete what is picked': 'নির্বাচিত অংশ মুছুন',
   'Nudge left': 'বাঁয়ে ঠেলুন',
@@ -1224,8 +1230,8 @@ export const bn: Dictionary = {
   'Release channel': 'রিলিজ চ্যানেল',
   Stable: 'স্টেবল',
   Unstable: 'আনস্টেবল',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'স্টেবল অফিসিয়াল রিলিজ অনুসরণ করে, আনস্টেবল main-এ প্রতিটি পুশ, আর ভেঙে যেতে পারে।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'স্টেবল প্রকাশিত সংস্করণ অনুসরণ করে, আনস্টেবল এজ বিল্ড অনুসরণ করে, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',

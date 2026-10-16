@@ -1146,6 +1146,12 @@ export const zhHans: Dictionary = {
   'Export as PNG': '导出为PNG',
   'Export as SVG': '导出为SVG',
   'Export as PDF': '导出为PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '导入 PDF',
+  'Choose how to add the pages to the canvas.': '选择页面怎么加到画布上。',
+  'Single page': '单页',
+  'All pages': '所有页面',
+  'Choose a page': '选择一页',
   // The canvas: what its own keys are called
   'Delete what is picked': '删除所选',
   'Nudge left': '向左微移',
@@ -1206,8 +1212,8 @@ export const zhHans: Dictionary = {
   'Release channel': '发布通道',
   Stable: '稳定版',
   Unstable: '开发版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '稳定版跟随正式发布，开发版跟随main的每次推送，可能出问题。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '稳定版跟随已发布的版本，开发版跟随edge构建，可能出问题。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '导入',

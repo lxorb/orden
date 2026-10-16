@@ -1163,6 +1163,12 @@ export const ja: Dictionary = {
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
   'Export as PDF': 'PDF で書き出す',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF をインポート',
+  'Choose how to add the pages to the canvas.': 'ページをキャンバスにどう追加するか選びます。',
+  'Single page': '1 ページだけ',
+  'All pages': 'すべてのページ',
+  'Choose a page': 'ページを選ぶ',
   // The canvas: what its own keys are called
   'Delete what is picked': '選択したものを削除',
   'Nudge left': '左へ少し動かす',
@@ -1223,8 +1229,8 @@ export const ja: Dictionary = {
   'Release channel': 'リリースチャンネル',
   Stable: '安定版',
   Unstable: '不安定版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',

@@ -1175,6 +1175,13 @@ export const ta: Dictionary = {
   'Export as PNG': 'PNG ஆக ஏற்றுமதி செய்',
   'Export as SVG': 'SVG ஆக ஏற்றுமதி செய்',
   'Export as PDF': 'PDF ஆக ஏற்றுமதி செய்',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF இறக்குமதி',
+  'Choose how to add the pages to the canvas.':
+    'பக்கங்களை கேன்வாஸில் எப்படி சேர்க்க வேண்டும் என்பதைத் தேர்ந்தெடு.',
+  'Single page': 'ஒரு பக்கம்',
+  'All pages': 'எல்லா பக்கங்களும்',
+  'Choose a page': 'ஒரு பக்கத்தைத் தேர்ந்தெடு',
   // The canvas: what its own keys are called
   'Delete what is picked': 'தேர்ந்ததை நீக்கு',
   'Nudge left': 'இடப்புறம் தள்ளு',
@@ -1235,8 +1242,8 @@ export const ta: Dictionary = {
   'Release channel': 'வெளியீட்டு சேனல்',
   Stable: 'நிலையானது',
   Unstable: 'நிலையற்றது',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'நிலையானது அதிகாரப்பூர்வ வெளியீடுகளைப் பின்தொடரும்; நிலையற்றது main இல் ஒவ்வொரு புஷ்ஷையும் பின்தொடரும், உடையவும் கூடும்.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'நிலையானது வெளியிடப்பட்ட பதிப்புகளைப் பின்தொடரும்; நிலையற்றது edge பில்டுகளைப் பின்தொடரும், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',

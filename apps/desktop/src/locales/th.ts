@@ -1152,6 +1152,12 @@ export const th: Dictionary = {
   'Export as PNG': 'ส่งออกเป็น PNG',
   'Export as SVG': 'ส่งออกเป็น SVG',
   'Export as PDF': 'ส่งออกเป็น PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'นำเข้า PDF',
+  'Choose how to add the pages to the canvas.': 'เลือกวิธีเพิ่มหน้าลงบนแคนวาส',
+  'Single page': 'หน้าเดียว',
+  'All pages': 'ทุกหน้า',
+  'Choose a page': 'เลือกหน้า',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ลบสิ่งที่เลือก',
   'Nudge left': 'ขยับซ้าย',
@@ -1212,8 +1218,8 @@ export const th: Dictionary = {
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
   Unstable: 'ไม่เสถียร',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',

@@ -1165,6 +1165,12 @@ export const ur: Dictionary = {
   'Export as PNG': 'PNG میں ایکسپورٹ کریں',
   'Export as SVG': 'SVG میں ایکسپورٹ کریں',
   'Export as PDF': 'PDF میں ایکسپورٹ کریں',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF امپورٹ کریں',
+  'Choose how to add the pages to the canvas.': 'منتخب کریں کہ صفحات کینوس پر کیسے شامل ہوں۔',
+  'Single page': 'ایک صفحہ',
+  'All pages': 'تمام صفحات',
+  'Choose a page': 'ایک صفحہ منتخب کریں',
   // The canvas: what its own keys are called
   'Delete what is picked': 'منتخب حذف کریں',
   'Nudge left': 'بائیں سرکائیں',
@@ -1225,8 +1231,8 @@ export const ur: Dictionary = {
   'Release channel': 'ریلیز چینل',
   Stable: 'مستحکم',
   Unstable: 'غیر مستحکم',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'مستحکم سرکاری ریلیز کے ساتھ چلتا ہے، غیر مستحکم main پر ہر پش کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'مستحکم جاری کردہ ورژن کے ساتھ چلتا ہے، غیر مستحکم ایج بلڈ کے ساتھ اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',

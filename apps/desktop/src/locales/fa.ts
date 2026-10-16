@@ -1167,6 +1167,12 @@ export const fa: Dictionary = {
   'Export as PNG': 'برون‌بری به PNG',
   'Export as SVG': 'برون‌بری به SVG',
   'Export as PDF': 'برون‌بری به PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'درون‌آوری PDF',
+  'Choose how to add the pages to the canvas.': 'انتخاب کنید صفحه‌ها چطور به بوم اضافه شوند.',
+  'Single page': 'یک صفحه',
+  'All pages': 'همهٔ صفحه‌ها',
+  'Choose a page': 'یک صفحه انتخاب کنید',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف گزیده',
   'Nudge left': 'تکان به چپ',
@@ -1227,8 +1233,8 @@ export const fa: Dictionary = {
   'Release channel': 'کانال انتشار',
   Stable: 'پایدار',
   Unstable: 'ناپایدار',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'پایدار انتشارهای رسمی را پی می‌گیرد، ناپایدار هر فرستادن به main را و می‌تواند بشکند.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'پایدار نسخه‌های منتشرشده را پی می‌گیرد، ناپایدار ساخت‌های لبه را و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',

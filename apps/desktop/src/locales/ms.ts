@@ -1164,6 +1164,12 @@ export const ms: Dictionary = {
   'Export as PNG': 'Eksport sebagai PNG',
   'Export as SVG': 'Eksport sebagai SVG',
   'Export as PDF': 'Eksport sebagai PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Import PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih cara menambah halaman ke kanvas.',
+  'Single page': 'Satu halaman',
+  'All pages': 'Semua halaman',
+  'Choose a page': 'Pilih halaman',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Hapuskan yang dipilih',
   'Nudge left': 'Sesar ke kiri',
@@ -1224,8 +1230,8 @@ export const ms: Dictionary = {
   'Release channel': 'Saluran keluaran',
   Stable: 'Stabil',
   Unstable: 'Tidak stabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil mengikut keluaran rasmi, Tidak stabil mengikut setiap tolakan ke main dan boleh rosak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil mengikut versi yang dikeluarkan, Tidak stabil mengikut binaan edge dan boleh rosak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Import',

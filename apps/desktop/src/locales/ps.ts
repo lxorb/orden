@@ -1164,6 +1164,12 @@ export const ps: Dictionary = {
   'Export as PNG': 'لکه PNG صادرول',
   'Export as SVG': 'لکه SVG صادرول',
   'Export as PDF': 'لکه PDF صادرول',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF واردول',
+  'Choose how to add the pages to the canvas.': 'وټاکه چې مخونه څنګه په تخته کې اضافه شي.',
+  'Single page': 'يو مخ',
+  'All pages': 'ټول مخونه',
+  'Choose a page': 'يو مخ وټاکه',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ټاکل شوی ړنګول',
   'Nudge left': 'کيڼ ته ټېل',
@@ -1224,8 +1230,8 @@ export const ps: Dictionary = {
   'Release channel': 'د خپرونې کانال',
   Stable: 'ټينګ',
   Unstable: 'نا ټينګ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',

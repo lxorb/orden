@@ -1177,6 +1177,13 @@ export const fil: Dictionary = {
   'Export as PNG': 'I-export bilang PNG',
   'Export as SVG': 'I-export bilang SVG',
   'Export as PDF': 'I-export bilang PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'I-import ang PDF',
+  'Choose how to add the pages to the canvas.':
+    'Piliin kung paano idadagdag ang mga pahina sa canvas.',
+  'Single page': 'Isang pahina',
+  'All pages': 'Lahat ng pahina',
+  'Choose a page': 'Pumili ng pahina',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Tanggalin ang pinili',
   'Nudge left': 'Itulak pakaliwa',
@@ -1237,8 +1244,8 @@ export const fil: Dictionary = {
   'Release channel': 'Channel ng release',
   Stable: 'Matatag',
   Unstable: 'Hindi matatag',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Sinusundan ng Matatag ang opisyal na release, ang Hindi matatag ay bawat push sa main at puwedeng masira.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Sinusundan ng Matatag ang mga inilabas na bersyon, ang Hindi matatag ay mga edge build at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',

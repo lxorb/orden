@@ -1202,6 +1202,12 @@ export const ru: Dictionary = {
   'Export as PNG': 'Экспорт в PNG',
   'Export as SVG': 'Экспорт в SVG',
   'Export as PDF': 'Экспорт в PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Импорт PDF',
+  'Choose how to add the pages to the canvas.': 'Выберите, как добавить страницы на полотно.',
+  'Single page': 'Одна страница',
+  'All pages': 'Все страницы',
+  'Choose a page': 'Выбрать страницу',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Удалить выбранное',
   'Nudge left': 'Сдвинуть влево',
@@ -1262,8 +1268,8 @@ export const ru: Dictionary = {
   'Release channel': 'Канал выпусков',
   Stable: 'Стабильный',
   Unstable: 'Нестабильный',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабильный следует официальным выпускам, нестабильный - каждому пушу в main и может ломаться.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабильный следует выпущенным версиям, нестабильный - сборкам edge и может ломаться.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Импорт',

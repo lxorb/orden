@@ -1168,6 +1168,12 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importiere',
+  'Choose how to add the pages to the canvas.': 'Wähl, wie d Siite uf d Liinwand chöme.',
+  'Single page': 'Einzelni Siite',
+  'All pages': 'Alli Siite',
+  'Choose a page': 'Siite uswähle',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
@@ -1228,8 +1234,8 @@ export const gsw: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt de veröffentlichte Versione, Instabil de Edge-Builds und cha kaputt gaa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importiere',

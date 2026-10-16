@@ -1153,6 +1153,12 @@ export const am: Dictionary = {
   'Export as PNG': 'እንደ PNG ላክ',
   'Export as SVG': 'እንደ SVG ላክ',
   'Export as PDF': 'እንደ PDF ላክ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF አምጣ',
+  'Choose how to add the pages to the canvas.': 'ገጾቹ ወደ ሸራው እንዴት እንዲጨመሩ ይምረጡ።',
+  'Single page': 'ነጠላ ገጽ',
+  'All pages': 'ሁሉም ገጾች',
+  'Choose a page': 'ገጽ ይምረጡ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'የተመረጠውን አጥፋ',
   'Nudge left': 'ወደ ግራ ገፋ',
@@ -1213,8 +1219,8 @@ export const am: Dictionary = {
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
   Unstable: 'ያልተረጋጋ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',

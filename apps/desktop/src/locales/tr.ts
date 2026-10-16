@@ -1168,6 +1168,12 @@ export const tr: Dictionary = {
   'Export as PNG': 'PNG olarak aktar',
   'Export as SVG': 'SVG olarak aktar',
   'Export as PDF': 'PDF olarak aktar',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF içe aktar',
+  'Choose how to add the pages to the canvas.': 'Sayfaların tuvale nasıl ekleneceğini seçin.',
+  'Single page': 'Tek sayfa',
+  'All pages': 'Tüm sayfalar',
+  'Choose a page': 'Bir sayfa seçin',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Seçileni sil',
   'Nudge left': 'Sola it',
@@ -1228,8 +1234,8 @@ export const tr: Dictionary = {
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
   Unstable: 'Kararsız',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
