@@ -19,7 +19,6 @@ on:
       - scripts/bump-packaging.mjs
       - .github/workflows/nix.yml
       - .github/workflows/packaging-bump.yml
-      - .github/workflows/nix-edge.yml
       - scripts/nix-start.sh
   push:
     branches: [main]

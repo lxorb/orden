@@ -11,9 +11,11 @@
 // validate-linux-packaging.yml checks what is really shipped. Run by
 // .github/workflows/packaging-bump.yml after every stable release.
 //
-// `--edge` is the rolling build of main instead, for the nix-edge branch
-// (.github/workflows/nix-edge.yml): only the flake moves, onto the .debs on the
-// `edge` pre-release, as the package orden-edge.
+// `--edge` moves only the flake, onto the .debs on the `edge` pre-release, as
+// the package orden-edge. Nothing calls it any more: it existed for the
+// `nix-edge` branch, which is gone, and the edge on Nix is now compiled from
+// the `unstable` branch instead. The mode is kept for a hand-run pin and is due
+// to be removed with the `if (!edge)` block below.
 //
 // Every rewrite has to match exactly as often as it is written to: a manifest
 // whose shape moved fails here, loudly, instead of being left half on the old

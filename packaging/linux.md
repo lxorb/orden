@@ -373,37 +373,30 @@ inputs.orden.inputs.nixpkgs.follows = "nixpkgs";
 environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
 ```
 
-The build of main is on the `nix-edge` branch, as `orden-edge`, with its own
-command, desktop entry and icons, so it installs beside the release rather than
-over it:
-
-```
-nix profile install github:lxorb/orden/nix-edge?dir=packaging/nix
-nix profile upgrade --all    # either one moves to its newest build
-```
-
-For a Nix package built from the current source on the `unstable` branch, rather
-than the rolling binary from `main`, install its separate `orden-unstable`
-package. It compiles the branch source and follows the unstable updater channel
-by default:
+For the edge rather than the release, install the `orden-unstable` package from
+the `unstable` branch. It compiles that branch's source and follows the unstable
+updater channel by default, and it has its own command, desktop entry and icons,
+so it installs beside the release rather than over it:
 
 ```
 nix profile install github:lxorb/orden/unstable?dir=packaging/nix
+nix profile upgrade --all    # either one moves to its newest build
 ```
 
-That branch is main plus one commit carrying the edge pins, force-pushed by
-`.github/workflows/nix-edge.yml` after each build of main replaced the `edge`
-pre-release and the rewritten flake started in CI. Main never carries edge pins:
-it changes only through pull requests, and edge changes on every push. Edge keeps
-only its newest files, so a lock pinned to an older nix-edge commit stops fetching
-once the next build replaces them; `nix profile upgrade` (or `nix flake update
-orden` in a system flake) takes the current one.
+Two channels and no third. There is no branch holding a flake pinned to the
+binaries of the `edge` pre-release: that was `nix-edge`, main plus a commit of
+edge pins, force-pushed on every build, and it is gone. Main carries releases
+and nothing else now, so a flake following main is a flake following the
+release. Someone who wants the edge on Nix compiles the branch, which is the one
+place this differs from the other package managers: everywhere else the edge
+arrives as the same prebuilt .deb the `edge` pre-release carries.
 
-Neither needs a binary cache. Nothing is compiled: the build unpacks a 13 MB .deb,
-points its program at nixpkgs' libraries and writes a shell wrapper, about four
-seconds on a CI runner, plus the download of the .deb from the release, which a
-cache would only replace with a download of the same size. Everything else comes
-from cache.nixos.org already.
+The release package needs no binary cache, and nothing is compiled for it: the
+build unpacks a 13 MB .deb, points its program at nixpkgs' libraries and writes
+a shell wrapper, about four seconds on a CI runner, plus the download of the
+.deb from the release, which a cache would only replace with a download of the
+same size. Everything else comes from cache.nixos.org already. `orden-unstable`
+is the exception, since it builds the app from source.
 
 `flake.lock` pins nixpkgs, because Nix refuses to run a flake from GitHub whose
 lock file it would have to write. Every release moves it (see below), so it is
