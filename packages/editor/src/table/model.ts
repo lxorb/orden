@@ -202,11 +202,12 @@ export type Order = 'up' | 'down'
 /** A cell read as a number, or null when it is not one. Thousands separators and
  *  a leading currency mark are taken off first: a column of prices is a column of
  *  numbers to everybody reading it, and sorting it as words would put 1,000
- *  before 9. */
+ *  before 9. A currency mark and nothing else - a word in front of a number makes
+ *  a name of it, and `Room 5` is a room, not a five. */
 function numberIn(cell: string): number | null {
   const bare = cell
     .trim()
-    .replace(/^[^\d+-]+/, '')
+    .replace(/^[\p{Sc}\s]+/u, '')
     .replace(/,/g, '')
   if (!/^[+-]?\d+(\.\d+)?%?$/.test(bare)) return null
 
@@ -234,13 +235,20 @@ function compareCells(left: string, right: string): number {
   const empty = (one: string) => one.trim() === ''
   if (empty(left) || empty(right)) return empty(left) ? (empty(right) ? 0 : 1) : -1
 
+  // Numbers first, then dates, then words, in a column that mixes them. Each kind
+  // is compared its own way, and two cells of different kinds by their kind alone:
+  // comparing a number to a word as words would let `5x` come before 999 and
+  // after 1,000 while 999 comes before 1,000, and a sort handed an order that goes
+  // round in a circle puts the rows in whatever order they happened to arrive.
   const oneNumber = numberIn(left)
   const otherNumber = numberIn(right)
   if (oneNumber !== null && otherNumber !== null) return oneNumber - otherNumber
+  if (oneNumber !== null || otherNumber !== null) return oneNumber !== null ? -1 : 1
 
   const oneDate = dateIn(left)
   const otherDate = dateIn(right)
   if (oneDate !== null && otherDate !== null) return oneDate - otherDate
+  if (oneDate !== null || otherDate !== null) return oneDate !== null ? -1 : 1
 
   return left.trim().localeCompare(right.trim(), undefined, { numeric: true, sensitivity: 'base' })
 }
