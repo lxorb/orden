@@ -189,6 +189,7 @@ export function exportCommands(): Command[] {
       name: name(),
       path: note()?.path ?? null,
       root: workspace.activeSpace?.root ?? null,
+      trusted: target().trusted,
     })
 
     if (id === 'png') await picture.exportCanvasPng(drawing)

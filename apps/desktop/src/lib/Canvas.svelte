@@ -1392,6 +1392,7 @@
         width,
         height,
         narrowed,
+        trusted: trustsHtmlIn(tab.note),
         onnarrow: () => {
           narrowed = !narrowed
           if (narrowed) store.frame(width, height)
