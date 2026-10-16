@@ -461,6 +461,25 @@ function setField(fields: TaskFields, field: FieldName, value: string): boolean 
   }
 }
 
+/** The fields that hold a date, and only its first ten characters; see setField. */
+const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
+  'due',
+  'scheduled',
+  'start',
+  'created',
+  'completed',
+  'cancelledOn',
+  'deadline',
+])
+
+/** How much of a value as written the field holds. All of it, but for a date: a
+ *  field holds the date, and what is written after it - `[due:: 2026-10-06T10:00]`
+ *  has a time there - is not the field's to rewrite when the date moves. The value
+ *  as matched has no blank in front, so the date is where it starts. */
+function heldLength(field: FieldToken['field'], value: string): number {
+  return DATE_FIELDS.has(field) ? Math.min(10, value.length) : value.length
+}
+
 /** The run of fields at the end of the line, read backwards as the Tasks plugin
  *  reads them. Answers the tokens in line order and where the words end. */
 function trailingTokens(
@@ -492,7 +511,7 @@ function trailingTokens(
       from: start,
       to: start + found[0].length,
       valueFrom,
-      valueTo: valueFrom + valueText.length,
+      valueTo: valueFrom + heldLength(field, valueText),
       inline: false,
     }
     if (key !== undefined) token.key = key
@@ -570,13 +589,14 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
     if (!known) fields.fields[key.trim()] = value.trim()
     const valueFrom =
       value === '' ? start + found[0].length - 1 : start + found[0].lastIndexOf(value)
+    const held = heldLength(known ? field : 'other', value)
     tokens.push({
       field: known ? field : 'other',
       form: bracket ? 'bracket' : 'paren',
       from: start,
       to: start + found[0].length,
       valueFrom,
-      valueTo: value === '' ? valueFrom : valueFrom + value.length,
+      valueTo: value === '' ? valueFrom : valueFrom + held,
       key,
       inline: true,
     })
