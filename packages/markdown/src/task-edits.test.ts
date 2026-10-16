@@ -126,6 +126,21 @@ describe('a change', () => {
     expect(writeTask('- [ ] a', { done: true })).toEqual([{ from: 3, to: 4, insert: 'x' }])
   })
 
+  // The Tasks plugin keeps the last of a field written twice, and so does the
+  // reading; a change made to the first one would leave the line saying what it
+  // said before. And a field taken off goes from everywhere it is written, or the
+  // one left behind would be read in its place.
+  test('of a field written twice is made to the one that is read', () => {
+    const line = '- [ ] a 📅 2026-10-01 📅 2026-10-05'
+    const moved = changedTask(line, { due: '2026-11-01' })
+    expect(moved).toBe('- [ ] a 📅 2026-10-01 📅 2026-11-01')
+    expect(readTask(moved)?.due).toBe('2026-11-01')
+
+    expect(changedTask(line, { due: null })).toBe('- [ ] a')
+    // With no words in front, both would take the blank between them.
+    expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
+  })
+
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })

@@ -161,6 +161,27 @@ function removal(line: string, from: number, to: number, wordsFrom: number): Tex
   return { from, to: end, insert: '' }
 }
 
+/** The edits that take several spans out of the line, each with its blank, as
+ *  edits that never overlap: two fields side by side at the opening of the words
+ *  would otherwise both claim the blank between them, the first taking it after
+ *  itself and the second before. */
+function removals(
+  line: string,
+  spans: readonly { from: number; to: number }[],
+  wordsFrom: number,
+): TextEdit[] {
+  const edits = spans
+    .map((span) => removal(line, span.from, span.to, wordsFrom))
+    .sort((a, b) => a.from - b.from)
+  const merged: TextEdit[] = []
+  for (const edit of edits) {
+    const last = merged.at(-1)
+    if (last && edit.from <= last.to) last.to = Math.max(last.to, edit.to)
+    else merged.push({ ...edit })
+  }
+  return merged
+}
+
 /** Two values of a field the same, lists and reminders by what they hold. */
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -257,7 +278,11 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (field === 'priority' && given === null) after.priority = NO_PRIORITY
     if ((field === 'remind' || field === 'dependsOn') && given === null) after[field] = []
 
-    const token = tokens.find((one) => one.field === field && !gone.has(one))
+    // The last of the field written, because that is the one the reading keeps, as
+    // the Tasks plugin does; see trailingTokens in task-line.ts. A change made to an
+    // earlier one would leave the line saying what it said before.
+    const written = tokens.filter((one) => one.field === field && !gone.has(one))
+    const token = written.at(-1)
     const was = token
       ? valueText(field, fields, token.form === 'emoji' ? 'emoji' : 'bracket')
       : null
@@ -266,8 +291,9 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (value === was || (token === undefined && value === null)) continue
 
     if (token && value === null) {
-      gone.add(token)
-      edits.push(removal(line, token.from, token.to, parsed.wordsFrom))
+      // Every one of them, or the one left behind would be read in its place.
+      for (const one of written) gone.add(one)
+      edits.push(...removals(line, written, parsed.wordsFrom))
     } else if (token && value !== null) {
       const whole = field === 'priority' && token.form === 'emoji'
       edits.push(
