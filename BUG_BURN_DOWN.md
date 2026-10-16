@@ -25,9 +25,9 @@ data loss. **High** - data loss or a security hole on a specific path.
 | Severity | Found | Fixed | Open |
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
-| High | 9 | 3 | 6 |
-| Medium | 20 | 12 | 8 |
-| Low | 7 | 5 | 2 |
+| High | 9 | 6 | 3 |
+| Medium | 20 | 16 | 4 |
+| Low | 7 | 7 | 0 |
 
 Open rows are being fixed; see the status column.
 
@@ -63,15 +63,15 @@ Open rows are being fixed; see the status column.
 | B26 | Medium | The heading rewritten after a rename was never saved | In progress | `replace(…, note.dirty)` is quiet for a clean note | - | - |
 | B27 | Medium | A link rewrite was lost when the linking note had unsaved typing | In progress | `retarget` rewrites the disk copy; the dirty document writes the old link back | - | - |
 | B28 | Medium | Convert syntax could overwrite a change made during its confirm dialog | In progress | Closed notes written from text read before the dialog | - | - |
-| B29 | High | A file shared with you on its own rendered its raw HTML as your own | In progress | `originOfDocument` ignores `note.shared` when `path` is null | - | - |
-| B30 | High | Export and print never asked the trust question, and the hidden-window outputs have no CSP | In progress | `buildBody` never passes `escapeHtml` | - | - |
-| B31 | High | Pasting or clipping HTML collapsed blank lines and stripped trailing spaces inside code blocks | In progress | `tidy()` runs over fenced code | - | - |
-| B32 | Medium | `<br>` lost converting HTML to markdown | In progress | Same `tidy()` strip removes turndown's hard break | - | - |
-| B33 | Medium | `$` patterns in a heading or embed were interpreted by `String.replace` | In progress | Rendered HTML used as a replacement string | - | - |
-| B34 | Medium | An HTML block starting with `<iframe` dropped what followed in the block | In progress | The whole block replaced by the card | - | - |
-| B35 | Medium | ```` ```flow ```` fences could carry `javascript:` links and window-global click hooks | In progress | flowchart.js `:>url` and `:$name` | - | - |
-| B36 | Low | `&#106avascript:` passed the trusted-HTML filter | In progress | Decimal branch of the entity regex eats hex letters | - | - |
-| B37 | Low | An abbreviation could be wrapped inside an entity | In progress | Skip pattern lacked entities | - | - |
+| B29 | High | A file shared with you on its own rendered its raw HTML as your own | Fixed `dc51542d` | `originOfDocument` ignores `note.shared` when `path` is null | A file opened from a share counts as shared whatever its path | `markdown-trust` test for a shared file with no path (failed before) |
+| B30 | High | Export and print never asked the trust question, and the hidden-window outputs have no CSP | Fixed `4b4ca0c1` | `buildBody` never passes `escapeHtml` | `buildBody` passes the trust answer; export and print pages carry a CSP meta | export tests for untrusted HTML and the CSP meta (failed before) |
+| B31 | High | Pasting or clipping HTML collapsed blank lines and stripped trailing spaces inside code blocks | Fixed `80c499a7` | `tidy()` runs over fenced code | `tidy()` skips fenced code | html-to-markdown test with blank lines and trailing spaces in a fence (failed before) |
+| B32 | Medium | `<br>` lost converting HTML to markdown | Fixed `656411db` | Same `tidy()` strip removes turndown's hard break | Hard breaks kept through `tidy()` | `<br>` round-trip test (failed before) |
+| B33 | Medium | `$` patterns in a heading or embed were interpreted by `String.replace` | Fixed `c5297762` | Rendered HTML used as a replacement string | Replacement passed as a function | heading and embed tests with `$&` and `$1` (failed before) |
+| B34 | Medium | An HTML block starting with `<iframe` dropped what followed in the block | Fixed `9c9f1a7f` | The whole block replaced by the card | Only the iframe tag becomes the card; the rest of the block renders | iframe-block test (failed before) |
+| B35 | Medium | ```` ```flow ```` fences could carry `javascript:` links and window-global click hooks | Fixed `11c4e771` | flowchart.js `:>url` and `:$name` | `flow.ts` strips links that are not http(s)/mailto and drops click hooks before flowchart.js sees them | `flow.test.ts` (failed before) |
+| B36 | Low | `&#106avascript:` passed the trusted-HTML filter | Fixed `39946245` | Decimal branch of the entity regex eats hex letters | Decimal and hex branches split in the entity regex | trusted-HTML filter test for `&#106avascript:` (failed before) |
+| B37 | Low | An abbreviation could be wrapped inside an entity | Fixed `6fab63d4` | Skip pattern lacked entities | Entities added to the skip pattern | abbreviation test (failed before) |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
 pipe in tables (text written back unchanged); Todoist `date before: Oct 6, 2026`
