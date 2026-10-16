@@ -152,6 +152,16 @@ describe('a change', () => {
     )
   })
 
+  // A tag written twice is one tag to the reading, so taking it off takes off
+  // every time it is written, among the words and in the fields at the end, or the
+  // copy left behind would put it back.
+  test('takes off a tag written twice everywhere it is written', () => {
+    expect(changedTask('- [ ] a #x #x', { tags: [] })).toBe('- [ ] a')
+    expect(changedTask('- [ ] #x a #x', { tags: [] })).toBe('- [ ] a')
+    expect(changedTask('- [ ] #x #x a b', { tags: [] })).toBe('- [ ] a b')
+    expect(changedTask('- [ ] a #x b #x c', { tags: [] })).toBe('- [ ] a b c')
+  })
+
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
