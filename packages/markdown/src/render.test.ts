@@ -788,6 +788,15 @@ describe('abbreviations', () => {
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
   })
 
+  /** A character reference is one character, written as a word. Wrapping the
+   *  word inside it breaks it into an `&`, a tag and a stray `;`. */
+  test('leaves the name inside a character reference alone', () => {
+    const html = renderMarkdown('*[amp]: ampersand\n\nTom & Jerry, and amp on its own\n')
+    expect(html).toContain('Tom &amp; Jerry')
+    expect(html).toContain('<abbr title="ampersand">amp</abbr> on its own')
+    expect(html.match(/<abbr/g)).toHaveLength(1)
+  })
+
   test('leaves code alone', () => {
     const html = renderMarkdown('*[HTML]: HyperText Markup Language\n\n`HTML` and HTML\n')
     expect(html).toContain('<code>HTML</code>')

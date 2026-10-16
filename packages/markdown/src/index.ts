@@ -587,7 +587,9 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
     .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|')
 
-  const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>/g
+  // Code, tags, and character references: `&amp;` is one character written as a
+  // word, and an abbreviation wrapped around the word would break it in two.
+  const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>|&[#\w]+;/g
   const word = new RegExp(`\\b(${pattern})\\b`, 'g')
 
   let out = ''
