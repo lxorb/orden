@@ -183,7 +183,7 @@ describe('what nib claims to open', () => {
 
   const desktops = {
     'aur/nib-bin/nib.desktop': read('aur', 'nib-bin', 'nib.desktop'),
-    'flathub/ch.emilvinu.nib.desktop': read('flathub', 'ch.emilvinu.nib.desktop'),
+    'flathub/so.orden.Orden.desktop': read('flathub', 'so.orden.Orden.desktop'),
     'nix/orden.desktop': read('nix', 'orden.desktop'),
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
   }
