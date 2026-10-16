@@ -452,8 +452,8 @@ describe('whether somebody else is in a note', () => {
  *  itself is trust.ts; this is the app answering it about a real space. */
 describe('where a document’s words came from', () => {
   /** As much of a document as any of this reads. */
-  const document = (path: string | null, pasted = false) =>
-    ({ path, key: 'k1', pasted }) as unknown as NoteDoc
+  const document = (path: string | null, pasted = false, shared: string | null = null) =>
+    ({ path, key: 'k1', pasted, shared }) as unknown as NoteDoc
 
   test('is the reader’s own, for a note in a space nobody else is in', () => {
     world.mirrors = { Notes: 'space-1' }
@@ -483,6 +483,14 @@ describe('where a document’s words came from', () => {
     account.spaces = [remote('space-1', 'read')]
 
     expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+  })
+
+  /** A file somebody shared on its own has no path here - there is no copy of
+   *  it on this machine - so where it sits cannot say whose it is. Its share
+   *  does: it is one note out of somebody else's space. */
+  test('is the space, for one file somebody shared with the reader on its own', () => {
+    expect(originOfDocument(document(null, false, 'item-1'))).toBe('space')
+    expect(trustsHtmlIn(document(null, false, 'item-1'))).toBe(false)
   })
 
   test('is a paste, once markup has been put in from outside', () => {

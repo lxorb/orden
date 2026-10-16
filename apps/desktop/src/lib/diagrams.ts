@@ -1,4 +1,4 @@
-import { sequenceToMermaid } from '@nib/editor'
+import { flowSource, keepSafeLinks, sequenceToMermaid } from '@nib/editor'
 import type { Scheme } from './theme.svelte'
 
 /** Drawn with the theme's face, which the document names in its stylesheet. */
@@ -86,7 +86,9 @@ async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Pro
 
 /** Typora's legacy ` ```flow ` fences. flowchart.js measures its labels as
  *  it draws, which only works on a page: drawn into a loose element every
- *  word comes out zero wide. So it draws into a corner nobody can see. */
+ *  word comes out zero wide. So it draws into a corner nobody can see - and
+ *  without the hooks and the links a note may not have; see flow.ts in the
+ *  editor, which the live preview draws through too. */
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
   const flowchart = (await import('flowchart.js')).default
   const host = document.createElement('div')
@@ -94,7 +96,7 @@ async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
   document.body.append(host)
 
   try {
-    flowchart.parse(code).drawSVG(host, {
+    flowchart.parse(flowSource(code)).drawSVG(host, {
       'line-width': 1.5,
       'font-family': FONT,
       'font-size': 13,
@@ -102,6 +104,7 @@ async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
       'yes-text': 'yes',
       'no-text': 'no',
     })
+    keepSafeLinks(host)
 
     return host.innerHTML
   } finally {

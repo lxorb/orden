@@ -731,12 +731,34 @@ function converter(options: FromHtmlOptions): TurndownService {
 
 /** Blank lines are how markdown separates blocks, and more than one of them says
  *  nothing extra. Trailing spaces on a line mean a hard break, so only the ones
- *  on otherwise empty lines go. */
+ *  on otherwise empty lines go.
+ *
+ *  None of it inside a fence, where every character is the code's own: a diff
+ *  clipped off a page is only a diff while its blank lines and its trailing
+ *  blanks are where they were. A fence closes on a run of at least as many
+ *  backticks as opened it, which is what `fenceFor` writes. */
 function tidy(markdown: string): string {
-  return markdown
-    .replace(/[ \t]+$/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  const kept: string[] = []
+  let fence: string | null = null
+
+  for (const line of markdown.split('\n')) {
+    if (fence !== null) {
+      kept.push(line)
+      if (new RegExp(`^\\s*${fence}\`*\\s*$`).test(line)) fence = null
+      continue
+    }
+
+    fence = /^\s*(`{3,})/.exec(line)?.[1] ?? null
+
+    // A line of nothing but blanks, and not the blanks after words: two of those
+    // are how turndown writes a `<br>`.
+    const tidied = line.replace(/^[ \t]+$/, '')
+    // One blank line between blocks, however many the conversion left there.
+    if (fence === null && tidied === '' && kept.at(-1) === '') continue
+    kept.push(tidied)
+  }
+
+  return kept.join('\n').trim()
 }
 
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
