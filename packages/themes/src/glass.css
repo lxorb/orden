@@ -450,7 +450,7 @@
   z-index: var(--z-under);
   border: 1px solid var(--glass-edge);
   border-radius: var(--radius-md);
-  background: var(--glass-layer);
+  background: linear-gradient(var(--glass-layer), var(--glass-layer)) var(--glass-pane, transparent);
   box-shadow: var(--glass-rim), var(--shadow-sm);
   pointer-events: none;
 }
@@ -529,4 +529,16 @@
     --content-ground: var(--bg);
     --terminal-ground: var(--bg);
   }
+}
+
+/* Over the platform's material the frame is a light wash, under half on Mica, and a
+   side panel that only added its layer to that was the desk with rows on it. The pane
+   is frosted like what floats, a little lighter, so the list reads as a sheet of glass
+   with the material behind it rather than as the desktop. */
+:root[data-translucent] {
+  --glass-pane: color-mix(in srgb, var(--glass-chrome) 92%, transparent);
+}
+
+:root[data-translucent][data-touch]:not([data-drawer]) .panels aside {
+  background: linear-gradient(var(--glass-layer), var(--glass-layer)) var(--glass-pane);
 }
