@@ -6,8 +6,12 @@
 # fetched while it builds - every crate and every npm tarball is a source below,
 # from the two generated files:
 #
-#   flatpak-cargo-generator.py apps/desktop/src-tauri/Cargo.lock -o cargo-sources.json
-#   flatpak-node-generator pnpm pnpm-lock.yaml -o node-sources.json
+#   flatpak-cargo-generator.py apps/desktop/src-tauri/Cargo.lock -o packaging/flathub/cargo-sources.json
+#   flatpak-node-generator pnpm pnpm-lock.yaml -o packaging/flathub/node-sources.json
+#
+# Both are run from the repository root. The cargo script's own dependencies are
+# aiohttp and tomlkit now, not toml, and neither generator downloads anything:
+# the hashes are the ones already in the lockfiles.
 #
 # Both are pinned to the same commit as the app and have to be regenerated
 # whenever either lockfile moves. See packaging/linux.md.
