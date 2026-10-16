@@ -183,11 +183,21 @@ export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
 
+/** The `>` of a quote, as many as it is nested, with the space after each. */
+const QUOTED = /^(?:[ \t]*>[ \t]?)*/
+
 /** The selected lines as tasks, or back to plain lines when all of them already
  *  are. A line that is a bullet or a number keeps its indentation and trades its
- *  marker for a box; a line that is neither gets both. */
+ *  marker for a box; a line that is neither gets both.
+ *
+ *  A line in a quote is read from after its `>`, which says where the line is and
+ *  is not part of what the line says: the box goes inside the quote, as `> - [ ]`,
+ *  because one in front of the `>` would take the line out of it. */
 export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
-  const lines = selectedLines(state)
+  const lines = selectedLines(state).map((line) => {
+    const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
+    return { from: line.from + quote, text: line.text.slice(quote) }
+  })
   const allTasks = lines.every((line) => taskAt(line.text) !== null)
 
   const changes: ChangeSpec[] = lines.map((line) => {

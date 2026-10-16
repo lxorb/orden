@@ -364,6 +364,14 @@ describe('a task list', () => {
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
   })
 
+  // The `>` says the line is in a quote, and a box in front of it would take the
+  // line out of the quote and make a task of a line that starts with `>`.
+  test('puts the box inside a quote, and takes it off again', () => {
+    expect(run(toggleTaskList, '> |c')).toBe('> - [ ] c')
+    expect(at(toggleTaskList, '> - [ ] c', 8)).toBe('> c')
+    expect(run(toggleTaskList, '> > - |c')).toBe('> > - [ ] c')
+  })
+
   test('makes tasks of every line when only some of them are', () => {
     const doc = '- [x] one\ntwo'
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('- [ ] one\n- [ ] two')
