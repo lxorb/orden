@@ -84,6 +84,9 @@ blobs.put('/:hash', async (context) => {
   // name no page prints, so nobody but the space's own devices can write to it.
   const verified = (await hashOfBytes(body)) === hash
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
+  // Nor is that name a way to claim a drawing somebody else made: a row is what lets
+  // a post or a file entry name a blob, and it is only ever had for the bytes.
+  if (!verified && there) return context.json({ error: WRONG_BYTES }, 400)
 
   if (!(await fits(context.env, user.id, body.byteLength))) {
     return context.json({ error: OUT_OF_SPACE }, 507)

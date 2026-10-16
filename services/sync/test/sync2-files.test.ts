@@ -129,6 +129,24 @@ describe('bytes up', () => {
   /** The parts are put together where the blob would live, and a copy somebody else
    *  finished meanwhile was there: the wrong bytes were left in its place, for them
    *  and everybody who keeps it. Parts are put together somewhere of their own. */
+  /** Knowing a hash is not having the file: a row is what lets a file entry in a space
+   *  of this account's name a blob, and so read it back. */
+  test('in parts, sent in full even when somebody else already keeps them', async () => {
+    const data = bytes(1000, 7)
+    const hash = await hashOf(data)
+    const other = await signIn(env, 'other@example.com')
+    expect((await upload(data, 'audio/webm', other)).status).toBe(201)
+
+    const started = await call<{ upload?: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: 1000 },
+    })
+
+    expect(started.status).toBe(201)
+    expect(started.json.upload).toBeTruthy()
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toHaveLength(1)
+  })
+
   test('in parts that are not the bytes named, never over a copy finished meanwhile', async () => {
     const data = bytes(1000, 5)
     const hash = await hashOf(data)

@@ -199,6 +199,8 @@ describe('bytes under a hash that is not theirs', () => {
 
     const stored = await env.NOTES.get(`blobs/${key}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
+    // And the stranger is given no row for it: a row is what lets a post name a blob.
+    expect(env.db.prepare('select hash from blobs where hash = ?').all(key)).toHaveLength(1)
   })
 })
 

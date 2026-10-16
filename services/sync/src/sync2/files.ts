@@ -225,16 +225,13 @@ v2Blobs.post('/parts', async (context) => {
     return context.json({ error: TOO_BIG }, 413)
   }
 
-  const { mine, there } = await held(context.env, user.id, hash)
-  if (mine) return context.json({ hash, stored: false })
+  if ((await held(context.env, user.id, hash)).mine) return context.json({ hash, stored: false })
   if (!(await fits(context.env, user.id, size))) return context.json({ error: OUT_OF_SPACE }, 507)
 
+  // Sent in full even when somebody else's copy is already here. A row is what lets a
+  // file entry, a face or a post name a blob, so it is had for the bytes and never for
+  // knowing their hash; once they are checked, the copy that is there is kept as it is.
   const declared = typeOf(typeof type === 'string' ? type : undefined)
-  // Somebody else's copy is already here: this account keeps it too, and sends nothing.
-  if (there) {
-    await keepBlob(context.env, user.id, hash, size, declared)
-    return context.json({ hash, stored: false })
-  }
 
   const staging = stagingKey(hash)
   const upload = await context.env.NOTES.createMultipartUpload(staging, {
