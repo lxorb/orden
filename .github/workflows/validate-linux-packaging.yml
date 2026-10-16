@@ -111,7 +111,7 @@ jobs:
         run: |
           desktop-file-validate packaging/aur/nib-bin/nib.desktop
           desktop-file-validate packaging/nix/orden.desktop
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+          desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
   aur:
     runs-on: ubuntu-latest
@@ -217,15 +217,15 @@ jobs:
 
       - name: AppStream and desktop entry on their own
         run: |
-          appstreamcli validate --explain packaging/flathub/ch.emilvinu.nib.metainfo.xml
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+          appstreamcli validate --explain packaging/flathub/so.orden.Orden.metainfo.xml
+          desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
       - name: flatpak-builder-lint on the manifest and the metainfo
         run: |
           flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest \
-            packaging/flathub/ch.emilvinu.nib.yml
+            packaging/flathub/so.orden.Orden.yml
           flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream \
-            packaging/flathub/ch.emilvinu.nib.metainfo.xml
+            packaging/flathub/so.orden.Orden.metainfo.xml
 
       # A copy on the host as well as the one the builder installs for
       # itself, so the next step can look inside the runtime's own files.
@@ -243,12 +243,12 @@ jobs:
           dbus-run-session -- flatpak run org.flatpak.Builder --force-clean --sandbox --user
           --install-deps-from=flathub
           --mirror-screenshots-url=https://dl.flathub.org/media/
-          --repo=repo builddir ch.emilvinu.nib.yml
+          --repo=repo builddir so.orden.Orden.yml
 
       - name: Install it out of the repo it just wrote
         run: |
           flatpak remote-add --user --no-gpg-verify nib-local packaging/flathub/repo
-          flatpak install --user -y --noninteractive nib-local ch.emilvinu.nib
+          flatpak install --user -y --noninteractive nib-local so.orden.Orden
 
       - name: Does the runtime carry webkit2gtk-4.1 at all
         run: |
@@ -258,7 +258,7 @@ jobs:
           echo "::endgroup::"
           # The real gate: every library the binary asks for has to resolve
           # inside the sandbox.
-          flatpak run --devel --command=ldd ch.emilvinu.nib /app/bin/nib | tee ldd.txt
+          flatpak run --devel --command=ldd so.orden.Orden /app/bin/nib | tee ldd.txt
           if grep -q 'not found' ldd.txt; then
             echo "::error::unresolved libraries in the sandbox"
             grep 'not found' ldd.txt
@@ -270,7 +270,7 @@ jobs:
       # the app the sandbox built comes up and stays up.
       - name: It starts and stays up
         run: |
-          xvfb-run -a flatpak run ch.emilvinu.nib > nib.log 2>&1 &
+          xvfb-run -a flatpak run so.orden.Orden > nib.log 2>&1 &
           running=$!
           sleep 30
           if kill -0 "$running" 2>/dev/null; then

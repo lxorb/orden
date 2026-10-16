@@ -54,7 +54,7 @@ apps:
     command: usr/bin/nib
     desktop: usr/share/applications/nib.desktop
     extensions: [gnome]
-    common-id: ch.emilvinu.nib
+    common-id: so.orden.Orden
     plugs:
       - home
       - removable-media

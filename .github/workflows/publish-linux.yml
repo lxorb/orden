@@ -8,7 +8,7 @@ name: publish-linux
 # Not here on purpose:
 #   Flathub  - updates arrive as a pull request from Flathub's own
 #              flatpak-external-data-checker, which reads the x-checker-data in
-#              packaging/flathub/ch.emilvinu.nib.yml. Nothing to push.
+#              packaging/flathub/so.orden.Orden.yml. Nothing to push.
 #   AppImage - the release page is the distribution channel.
 on:
   release:

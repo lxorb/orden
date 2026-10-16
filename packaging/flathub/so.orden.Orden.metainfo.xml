@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>ch.emilvinu.nib</id>
+  <id>so.orden.Orden</id>
 
   <name>Orden</name>
   <summary>Markdown editor with live preview</summary>
@@ -8,7 +8,7 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>AGPL-3.0-only</project_license>
 
-  <developer id="ch.emilvinu">
+  <developer id="so.orden">
     <name>Emil Vinu</name>
   </developer>
 
@@ -34,7 +34,7 @@
     </p>
   </description>
 
-  <launchable type="desktop-id">ch.emilvinu.nib.desktop</launchable>
+  <launchable type="desktop-id">so.orden.Orden.desktop</launchable>
 
   <!-- What a catalogue paints behind the icon. Both are the app's own purple,
        one well above it and one well below, so the mark stays legible on either. -->
@@ -84,6 +84,9 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.15.0" date="2026-10-14">
+      <url type="details">https://github.com/lxorb/orden/releases/tag/v0.15.0</url>
+    </release>
     <release version="0.8.0" date="2026-09-13">
       <url type="details">https://github.com/lxorb/orden/releases/tag/v0.8.0</url>
       <description>

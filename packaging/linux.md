@@ -182,8 +182,8 @@ Build and install it locally exactly the way the workflow does:
 cd packaging/flathub
 flatpak install -y flathub org.flatpak.Builder org.gnome.Platform//50 org.gnome.Sdk//50
 flatpak run org.flatpak.Builder --force-clean --sandbox --user --install \
-  --install-deps-from=flathub --repo=repo builddir ch.emilvinu.nib.yml
-flatpak run ch.emilvinu.nib
+  --install-deps-from=flathub --repo=repo builddir so.orden.Orden.yml
+flatpak run so.orden.Orden
 ```
 
 `--sandbox` is the part that matters: it takes the network and the host
@@ -219,10 +219,19 @@ be a file in this repository and not the GitHub `user-attachments` link it used
 to be - that one answers a GET with a redirect to a signed S3 URL that expires
 in five minutes and refuses HEAD outright.
 
-The name in the metainfo and the desktop entry is `Orden`; the app ID stays
-`ch.emilvinu.nib`, which is the Tauri bundle identifier. Flathub requires the
-matching domain to be yours and to answer over HTTPS. <https://emilvinu.ch>
-does, so the ID stands as it is.
+The name in the metainfo and the desktop entry is `Orden`, and the app ID is
+`so.orden.Orden`. Flathub requires the matching domain to be yours and to
+answer over HTTPS, which <https://orden.so> does.
+
+The app ID is deliberately not the Tauri bundle identifier: that is still
+`ch.emilvinu.nib`, and it names the data directory, the macOS bundle and the
+Windows registry entries of every install already out there, so it is not a
+string to change for packaging's sake. The two only have to meet in one place.
+The single-instance plugin claims a bus name derived from the identifier, and a
+sandbox may own names under its own app ID alone, so the manifest asks for that
+one name with `--own-name`. Aligning the identifier would retire the hole and
+migrate every existing install's data directory; until that is worth doing, the
+`--own-name` lines are the price.
 
 ### Steps to submit it - needs your account
 
@@ -236,11 +245,11 @@ yours to open, and the disclosure belongs in the pull request body.
 
    ```
    git clone --branch=new-pr git@github.com:<you>/flathub.git
-   git checkout -b ch.emilvinu.nib
+   git checkout -b so.orden.Orden
    ```
 
 2. Copy the five files in `packaging/flathub/` to the root of that branch, push,
-   and open the pull request against `new-pr` titled `Add ch.emilvinu.nib`.
+   and open the pull request against `new-pr` titled `Add so.orden.Orden`.
 3. Comment `bot, build` on it to make Flathub's builders build both
    architectures.
 4. Two things worth saying in the pull request itself:
@@ -428,7 +437,7 @@ node scripts/bump-packaging.mjs 0.15.0   # the same rewrite, locally
 
 Flathub is the one it leaves alone, because it builds from source:
 
-- `flathub/ch.emilvinu.nib.yml`: the `tag` and the `commit` on the git source,
-  plus a `<release>` entry in `ch.emilvinu.nib.metainfo.xml`. If either lockfile
+- `flathub/so.orden.Orden.yml`: the `tag` and the `commit` on the git source,
+  plus a `<release>` entry in `so.orden.Orden.metainfo.xml`. If either lockfile
   moved in that release, regenerate `cargo-sources.json` and `node-sources.json`
   as well - a stale one fails the build rather than building the wrong thing.

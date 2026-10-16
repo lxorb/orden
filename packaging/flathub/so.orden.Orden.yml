@@ -17,7 +17,7 @@
 # under a scale-2 directory. The two files next to this manifest replace them,
 # named after the app ID the way Flatpak requires, and the icons are installed
 # from the source tree at the sizes they actually are.
-id: ch.emilvinu.nib
+id: so.orden.Orden
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
@@ -33,6 +33,14 @@ finish-args:
   - --device=dri
   # Syncing, publishing and the MCP server all talk to the network.
   - --share=network
+  # The app ID here is the one Flathub takes; the identifier in tauri.conf.json
+  # is still the old reverse-DNS name, and the single-instance plugin claims a
+  # bus name derived from it, so a second launch finds the first window instead
+  # of opening its own. A sandbox may only own names under its app ID unless it
+  # asks, which is all this asks for. Aligning the identifier would retire it,
+  # at the cost of moving every existing install's data directory.
+  - --own-name=ch.emilvinu.nib
+  - --own-name=ch.emilvinu.nib.*
   # Anything the person picks in a file dialog arrives through the document
   # portal, which needs no permission at all. Documents get a standing one so
   # that reopening what was last edited works without a fresh dialog; wider
@@ -75,22 +83,22 @@ modules:
       - pnpm --filter @nib/desktop build
       - cargo build --offline --release --manifest-path apps/desktop/src-tauri/Cargo.toml
       - install -Dm755 apps/desktop/src-tauri/target/release/nib /app/bin/nib
-      - install -Dm644 ch.emilvinu.nib.desktop /app/share/applications/ch.emilvinu.nib.desktop
-      - install -Dm644 ch.emilvinu.nib.metainfo.xml /app/share/metainfo/ch.emilvinu.nib.metainfo.xml
+      - install -Dm644 so.orden.Orden.desktop /app/share/applications/so.orden.Orden.desktop
+      - install -Dm644 so.orden.Orden.metainfo.xml /app/share/metainfo/so.orden.Orden.metainfo.xml
       # Tauri names the icons after the size it thinks they are; these are the
       # sizes they measure. 128x128@2x.png is a plain 256x256 image.
       - |
         icons=apps/desktop/src-tauri/icons
-        install -Dm644 "$icons/32x32.png"      /app/share/icons/hicolor/32x32/apps/ch.emilvinu.nib.png
-        install -Dm644 "$icons/64x64.png"      /app/share/icons/hicolor/64x64/apps/ch.emilvinu.nib.png
-        install -Dm644 "$icons/128x128.png"    /app/share/icons/hicolor/128x128/apps/ch.emilvinu.nib.png
-        install -Dm644 "$icons/128x128@2x.png" /app/share/icons/hicolor/256x256/apps/ch.emilvinu.nib.png
-        install -Dm644 "$icons/icon.png"       /app/share/icons/hicolor/512x512/apps/ch.emilvinu.nib.png
+        install -Dm644 "$icons/32x32.png"      /app/share/icons/hicolor/32x32/apps/so.orden.Orden.png
+        install -Dm644 "$icons/64x64.png"      /app/share/icons/hicolor/64x64/apps/so.orden.Orden.png
+        install -Dm644 "$icons/128x128.png"    /app/share/icons/hicolor/128x128/apps/so.orden.Orden.png
+        install -Dm644 "$icons/128x128@2x.png" /app/share/icons/hicolor/256x256/apps/so.orden.Orden.png
+        install -Dm644 "$icons/icon.png"       /app/share/icons/hicolor/512x512/apps/so.orden.Orden.png
     sources:
       - type: git
         url: https://github.com/lxorb/orden.git
-        tag: v0.8.0
-        commit: da7799a074c474731cdec17421a54ee38f992e26
+        tag: v0.15.0
+        commit: 2591eb1344c902122da58051022558957d9609e5
         x-checker-data:
           type: json
           url: https://api.github.com/repos/lxorb/orden/releases/latest
@@ -106,6 +114,6 @@ modules:
       - cargo-sources.json
       - node-sources.json
       - type: file
-        path: ch.emilvinu.nib.desktop
+        path: so.orden.Orden.desktop
       - type: file
-        path: ch.emilvinu.nib.metainfo.xml
+        path: so.orden.Orden.metainfo.xml
