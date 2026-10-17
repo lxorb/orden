@@ -657,8 +657,14 @@ function holds(tail: string): boolean {
  *  through: the iframe card's caption and a raw block's trust (web-embed.ts,
  *  html-block.ts), the editor's list, paste and fence commands (commands.ts), a table
  *  sort's currency (table/model.ts) and a file shared on its own read as somebody
- *  else's words (sharing.svelte.ts). Measured 3,204,981. */
-const BUDGET = 3_206_000
+ *  else's words (sharing.svelte.ts). Measured 3,204,981.
+ *
+ *  Raised 2026-10-17, to 3,207,500, from an unstable at 3,205,991 (9 under), for Wayland
+ *  #387: a late still picture stands in under menus (photograph in web-tab/pages.svelte.ts
+ *  keeps a picture that lands after its clock), and Super refused as a global key outside
+ *  a Mac (refuse in shortcuts.svelte.ts, accelerator.ts). Their comments are cut to a line
+ *  each. Measured 3,206,501. */
+const BUDGET = 3_207_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
