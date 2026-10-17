@@ -648,8 +648,17 @@ function holds(tail: string): boolean {
  *  modes: each default said once in DEFAULTS, read on first paint. The store's forty
  *  fields start from that one table and its restore falls back to it, where each wrote
  *  its default twice and some three times; Settings' reset reads it too, off the first
- *  paint. Measured 3,201,397. */
-const BUDGET = 3_202_400
+ *  paint. Measured 3,201,397.
+ *
+ *  Raised 2026-10-17, to 3,206,000, from an unstable at 3,201,397 (1,003 under), for
+ *  bug-burn-down re-landed: security fixes in the first paint. What a flow fence may do
+ *  is fetched with flowchart.js instead (live-preview/flow.ts, 1,735 bytes); what is
+ *  left is the live preview's and the editor's own fixes, which every note is drawn
+ *  through: the iframe card's caption and a raw block's trust (web-embed.ts,
+ *  html-block.ts), the editor's list, paste and fence commands (commands.ts), a table
+ *  sort's currency (table/model.ts) and a file shared on its own read as somebody
+ *  else's words (sharing.svelte.ts). Measured 3,204,981. */
+const BUDGET = 3_206_000
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
