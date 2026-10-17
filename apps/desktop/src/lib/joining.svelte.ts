@@ -26,7 +26,6 @@ import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
-import { sharedWithYou } from './sharing.svelte'
 import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
@@ -112,19 +111,14 @@ class Joining {
    *  and asking again is how anybody finds out they were let in. */
   private async resume() {
     const held = storedText(WAITING_KEY)
-    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) return this.reopen()
+    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) {
+      if (account.guest) await (await import('./one-file')).backToTheFile()
+      return
+    }
 
     this.token = held
     this.invitation = await api.invitation(held).catch(() => null)
     await this.walkThrough()
-  }
-
-  /** A guest's one file again: no tab of it outlives a launch. */
-  private async reopen() {
-    if (account.user || !account.guest || account.spaces.length) return
-
-    const [only, ...more] = sharedWithYou.items
-    if (only && !more.length) await sharedWithYou.open(only)
   }
 
   /** The field is filled in and the button pressed. */
@@ -209,8 +203,7 @@ class Joining {
     // sharing.svelte.ts and docs/sharing.md.
     if (joined.item) {
       this.stopAsking()
-      await sharedWithYou.load()
-      await sharedWithYou.open(joined.item)
+      await (await import('./one-file')).landOn(joined.item)
       this.arrived()
       return
     }
