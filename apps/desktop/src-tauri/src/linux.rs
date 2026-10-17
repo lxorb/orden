@@ -11,10 +11,7 @@ pub fn prepare_rendering() {
     }
 
     let wayland = std::env::var_os("GDK_BACKEND").map_or_else(
-        || {
-            std::env::var_os("WAYLAND_DISPLAY")
-                .is_some_and(|display| !display.is_empty())
-        },
+        || std::env::var_os("WAYLAND_DISPLAY").is_some_and(|display| !display.is_empty()),
         |backend| {
             backend
                 .to_string_lossy()

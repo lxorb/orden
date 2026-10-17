@@ -229,7 +229,10 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
 /// their height; see web_overlay.rs.
 #[cfg_attr(
     target_os = "linux",
-    allow(clippy::unnecessary_wraps, reason = "placement on other platforms can fail")
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "placement on other platforms can fail"
+    )
 )]
 pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
     #[cfg(target_os = "linux")]
@@ -246,7 +249,10 @@ pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<(
 
 /// A page's window as `edges` says it, in the runtime's own terms.
 #[must_use]
-#[cfg_attr(target_os = "linux", allow(dead_code, reason = "GTK uses its own layout pixels"))]
+#[cfg_attr(
+    target_os = "linux",
+    allow(dead_code, reason = "GTK uses its own layout pixels")
+)]
 pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
         position: PhysicalPosition::new(left, top).into(),

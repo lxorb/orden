@@ -3076,9 +3076,14 @@ mod shot {
             _ => return None,
         };
         let mut data = Vec::new();
-        image.with_data(|bytes| data.extend_from_slice(bytes)).ok()?;
+        image
+            .with_data(|bytes| data.extend_from_slice(bytes))
+            .ok()?;
         if opaque {
-            data.iter_mut().skip(3).step_by(4).for_each(|alpha| *alpha = 255);
+            data.iter_mut()
+                .skip(3)
+                .step_by(4)
+                .for_each(|alpha| *alpha = 255);
         }
         Some(Pixels {
             width: u32::try_from(image.width()).ok()?,

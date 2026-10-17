@@ -208,8 +208,6 @@ mod web_dialogs;
 mod web_find;
 #[cfg(desktop)]
 mod web_follow;
-#[cfg(target_os = "linux")]
-mod web_overlay;
 #[cfg(desktop)]
 mod web_handed;
 #[cfg(desktop)]
@@ -218,6 +216,8 @@ mod web_icons;
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
+#[cfg(target_os = "linux")]
+mod web_overlay;
 #[cfg(desktop)]
 mod web_page;
 #[cfg(desktop)]
