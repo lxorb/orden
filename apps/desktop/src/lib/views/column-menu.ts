@@ -149,9 +149,9 @@ export function grouped(
     label,
     more,
     run: () => {
-      // No wait for the press to finish reaching the window, whose click shuts any menu:
-      // a press that began before the menu opened does not shut it (`openedAt` in
-      // menu.svelte.ts), the way the row's chevron already opens these in ContextMenu.
+      // No wait for the press to finish reaching the window: a press that began before
+      // the menu opened does not shut it (`pressed` in overlays.ts), the way the row's
+      // chevron already opens these in ContextMenu.
       if (event) void more().then((rows) => menu.show(event, rows, { title: label }))
     },
   }

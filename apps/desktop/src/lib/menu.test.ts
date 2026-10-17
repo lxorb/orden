@@ -39,44 +39,13 @@ function press(x = 10, y = 20): MouseEvent {
   } as unknown as MouseEvent
 }
 
-/** A press reaching the window, which is read by when it began. */
-function reached(timeStamp: number): Event {
-  return { timeStamp } as unknown as Event
-}
-
 beforeEach(() => {
   menu.hide()
 })
 
-describe('which press shuts a menu', () => {
-  test('a press aimed past it does', () => {
-    menu.show(press(), [{ label: 'Ubuntu', run: () => undefined }])
-    expect(menu.open).toBe(true)
-
-    menu.shutBy(reached(performance.now() + 1000))
-    expect(menu.open).toBe(false)
-  })
-
-  /** The chevron's own click: it began before the shells came back, so the menu it
-   *  asked for is not a menu it dismisses. */
-  test('the press that opened it does not', () => {
-    const began = performance.now()
-    menu.show(press(), [{ label: 'Ubuntu', run: () => undefined }])
-
-    menu.shutBy(reached(began))
-    expect(menu.open).toBe(true)
-  })
-
-  test('and a later press still shuts that one', () => {
-    menu.show(press(), [{ label: 'Ubuntu', run: () => undefined }])
-
-    menu.shutBy(reached(performance.now() - 1))
-    expect(menu.open).toBe(true)
-
-    menu.shutBy(reached(performance.now() + 1000))
-    expect(menu.open).toBe(false)
-  })
-
+// Which press shuts a menu - one past it, and never the one that opened it - is the
+// overlay stack's, as it is for every popup; see `pressed` in overlays.test.ts.
+describe('what opens a menu', () => {
   test('an empty list is no menu at all', () => {
     menu.show(press(), [])
     expect(menu.open).toBe(false)

@@ -62,9 +62,18 @@
     }
   }
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
-  $effect(() => (menu.open ? overlays.show(() => menu.hide()) : undefined))
+  // Escape closes it, like everything else the app puts over a note, and so does a press
+  // past it and the window losing the focus; see overlays.ts. The press that opened it
+  // does not: a menu whose rows had to be asked for opens while that press is still on
+  // its way, and a press is read against the moment the menu opened.
+  $effect(() =>
+    menu.open
+      ? overlays.show(
+          () => menu.hide(),
+          () => [element],
+        )
+      : undefined,
+  )
 
   // A desktop menu opens at the pointer and is flipped back inside the
   // window when it would run off an edge. A phone's callout goes above the
@@ -234,14 +243,7 @@
   }
 </script>
 
-<!-- A press past the menu shuts it, and the press that opened it does not: a menu whose
-     rows had to be asked for opens while that press is still on its way here, so the
-     press is read against the moment the menu opened. See `shutBy` in menu.svelte.ts. -->
-<svelte:window
-  onclick={(event: MouseEvent) => menu.shutBy(event)}
-  onblur={() => menu.hide()}
-  onresize={() => menu.hide()}
-/>
+<svelte:window onresize={() => menu.hide()} />
 
 {#if menu.open}
   {#if viewport.touch}
