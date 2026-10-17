@@ -17,7 +17,8 @@ app that is compiled from source inside its own sandbox.
 managers themselves do - `makepkg` in an Arch container, `flatpak-builder` plus
 `flatpak-builder-lint` against the Flathub runtime, and `snapcraft` in LXD. Run
 it after every release that changes packaging. The flake has its own,
-`.github/workflows/nix.yml`, which runs on every change to it.
+`.github/workflows/nix.yml`, which runs on every pull request into `main` that
+changes it.
 
 `.github/workflows/publish-linux.yml` pushes a published release out to the AUR
 and the Snap Store. Both jobs build and then stop short of uploading until their
@@ -482,10 +483,9 @@ never older than the release.
 and aarch64, and starts Orden out of it twice on each in a headless sway
 (wlroots, like Hyprland), with Mesa where NixOS keeps it: once with Xwayland off
 and no `DISPLAY`, so the window is a native Wayland one, and once on X11 through
-Xwayland (`scripts/nix-start.sh`). On a push to main or `unstable` it builds the
-flake from GitHub, exactly as `nix run` above does; both branches are watched,
-because the flake is the same file on each and a push to `unstable` is how a change
-to it arrives. It starts the release build; `-f resolve_source_hashes=true` builds
+Xwayland (`scripts/nix-start.sh`). On a pull request into `main` it builds the
+flake in the checkout; by hand, and when `packaging-bump.yml` calls it, the flake it
+is handed, from GitHub exactly as `nix run` above does. It starts the release build; `-f resolve_source_hashes=true` builds
 `orden-unstable` instead.
 
 ## Refreshing all of it for a new release

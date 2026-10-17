@@ -1,9 +1,16 @@
 name: check
 
+# On a pull request into main once it is ready for review, and on main itself, which
+# is what the deploy below is gated on. Not on `unstable`: its pushes are built by
+# release.yml, and checked here when they come to main as a pull request.
 on:
   push:
-    branches: [main, unstable]
+    branches: [main]
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: check-${{ github.ref }}
@@ -20,6 +27,8 @@ permissions:
 
 jobs:
   test:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     # Every job in this file says what its token may do, and every one of them
     # only reads: nothing here writes a release, opens a pull request or touches
@@ -50,6 +59,8 @@ jobs:
   # three read the source and nothing else, and one after the other they were a
   # minute and a half of the test job's wall time.
   lint:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -91,6 +102,8 @@ jobs:
   # run walks new seeds (walks.yml). Not in front of the deploy: v2 is behind
   # `sync_version`.
   walks:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -124,6 +137,8 @@ jobs:
   # night in drives.yml, which is far too long for a pull request; the floor is what
   # a pull request can afford. See apps/desktop/test/e2e/smoke.py.
   smoke:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -218,6 +233,8 @@ jobs:
   # On Linux, where WebKit is cheap; the same drives on a Mac's own WebKit are below.
   # See apps/desktop/test/e2e/harness.py and test/webkit.test.ts for the static half.
   webkit:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -253,6 +270,8 @@ jobs:
   # The floor in a Mac's own WebKit, on a Mac: what WKWebView draws with, which the
   # Linux port above is not - its fonts, its scrollbars, its keyboard events.
   webkit-mac:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: macos-latest
     permissions:
       contents: read
@@ -292,6 +311,8 @@ jobs:
   # runner does not compile is code no lint reads and no test runs. No row waits
   # on another: a lint that only fires on one platform should say which.
   rust:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     permissions:
       contents: read
     strategy:
@@ -376,6 +397,8 @@ jobs:
   # first push to a branch all leave nothing to compare against, and spending ten
   # minutes for nothing is cheaper than letting a broken manifest through.
   android-touched:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

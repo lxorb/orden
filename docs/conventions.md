@@ -1,7 +1,8 @@
 # Conventions
 
 What the code is held to, and how to check it before a commit. CI runs the
-same commands on every push to `main`.
+same commands on every pull request into `main` that is ready for review, and on
+every push to `main`; see "CI" below.
 
 ## Product
 
@@ -281,6 +282,33 @@ The Rust crate: `cargo fmt --check`, `cargo clippy -- -D warnings` (the lint
 policy lives in `Cargo.toml`), `cargo test`. It does not compile on every
 machine; CI is the reference.
 
+## CI
+
+What runs, and when. The repository is public, so GitHub's own runners are all of it.
+
+| when | what runs |
+| --- | --- |
+| a pull request into `main`, ready for review | `check.yml`: types, tests, lint, prettier, knip, the sync walks, the smoke, launch and layout drives, WebKit's core drives on Linux and on a Mac, the crate on all three systems, and the Android build where the crate changed. With it, whichever of `nix.yml`, `agents.yml`, `machine.yml`, `mac-update.yml`, `upgrade.yml` and `agent-engines.yml` the change touches the paths of |
+| a draft pull request | nothing |
+| a push to `main` | `check.yml` again, which the deploy of the Worker and the web app waits for; `publish-even.yml` where the glasses' manifest changed |
+| a push to `unstable` | `release.yml` (the `edge` build) and `publish-mobile.yml` (the phones'). Nothing checks it here: `unstable` is checked when it comes to `main` |
+| a tag `v*` | `release.yml` and `publish-mobile.yml`, at once |
+| every night | `drives.yml` (every drive), `walks.yml` (new seeds), `agents.yml`'s scenarios |
+
+**A draft is not checked.** Every pull request workflow skips a draft, and the whole run
+starts the moment it is marked ready for review (`ready_for_review` is one of the events
+each listens for). So a long-lived pull request such as #362 runs nothing until it is
+marked ready, and is checked in full from then on; mark it a draft again to stop.
+
+**A burst of pushes to `unstable` builds once.** `release.yml`'s `settle` waits until the
+branch has been still for `NIB_CI_SETTLE_S` seconds (a repository variable, 300 by
+default), counted from the push, and then builds only if the push is still the branch's
+head: the newest push of a burst builds, and the ones before it end there. A tag or a
+dispatch does not wait. And a push to `unstable` that changes only documents, Markdown
+or tests (`paths-ignore` in `release.yml`) builds nothing at all; a tag always builds.
+
+Most workflows also take a dispatch, `gh workflow run <file>`, for a run by hand.
+
 ## Drives
 
 `apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
@@ -289,8 +317,8 @@ it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exit
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
 instead, in `.github/workflows/drives.yml`, and whenever that workflow is
-dispatched; `smoke.py` and `layout-sweep.py` also run on every change, in
-`check.yml`. The sweep holds every settings pane and the big surfaces, at three
+dispatched; `smoke.py` and `layout-sweep.py` also run on every pull request into
+`main`, in `check.yml`. The sweep holds every settings pane and the big surfaces, at three
 desktop widths and a phone, light and dark, signed out and in, to the facts a layout
 keeps: no word broken across lines, nothing past the window or spilling out of its
 box, nothing drawn over its neighbour, no control at no size, a row's name readable.

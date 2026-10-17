@@ -8,17 +8,19 @@ name: nix
 # has to stay up, with nothing in its log about a missing library or a display it
 # could not open.
 #
-# On a pull request it builds the flake in the checkout. On a push, and by hand, it
-# builds the flake from GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix`
-# does.
+# On a pull request into main it builds the flake in the checkout. By hand, and when
+# packaging-bump.yml calls it, it builds the flake it is handed - from GitHub, the way
+# `nix run github:lxorb/orden?dir=packaging/nix` does - or the checkout's.
 #
 # One flake now holds both channels: `default` is the release out of its .deb, and
 # `orden-unstable` compiles the sources beside it. The release build is what is
-# started here; `resolve_source_hashes` validates the source one instead. Both
-# branches are watched, because the flake is the same file on each of them and a
-# push to `unstable` is how a change to it arrives.
+# started here; `resolve_source_hashes` validates the source one instead.
 on:
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - packaging/nix/**
       - flake.nix
@@ -27,14 +29,6 @@ on:
       - .github/workflows/nix.yml
       - .github/workflows/packaging-bump.yml
       - scripts/nix-start.sh
-  push:
-    branches: [main, unstable]
-    paths:
-      - packaging/nix/**
-      - flake.nix
-      - flake.lock
-      - scripts/nix-start.sh
-      - .github/workflows/nix.yml
   workflow_dispatch:
     inputs:
       flake:
@@ -69,6 +63,8 @@ permissions:
 
 jobs:
   start:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     name: ${{ matrix.system }}
     strategy:
       fail-fast: false
@@ -124,8 +120,6 @@ jobs:
         run: |
           if [ -n "$ASKED" ]; then
             flake="$ASKED"
-          elif [ "$GITHUB_EVENT_NAME" = push ]; then
-            flake="github:$GITHUB_REPOSITORY/$SHA?dir=packaging/nix"
           elif [ -f "$PWD/flake.nix" ]; then
             # The root flake.nix is a link to packaging/nix/flake.nix, so a local
             # path copies the whole source tree with it and orden-unstable has the
