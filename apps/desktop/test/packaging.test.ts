@@ -36,6 +36,17 @@ describe('the snap', () => {
     for (const [, arch, digest] of held) expect(digest, arch).toHaveLength(64)
   })
 
+  /** snapcraft takes no `on <arch>:` list for the checksum, though it does for the source
+   *  (snapcraft 8.11.1: "Input should be a valid string"); the list kept every snap from
+   *  building. One line, then, which the workflow sets per architecture and which holds
+   *  amd64's as committed. */
+  test("checks the .deb with one line snapcraft reads, amd64's as committed", () => {
+    const line = /^ *source-checksum: (.*)$/m.exec(snap)?.[1]
+    const amd64 = /on amd64: (sha256\/[0-9a-f]{64})/.exec(snap)?.[1]
+    expect(line).toBe(amd64)
+    expect(snap).not.toMatch(/source-checksum:\s*\n\s*-/)
+  })
+
   test('and names the same version in the URL as it publishes', () => {
     const version = /^version: '([^']+)'$/m.exec(snap)?.[1]
     expect(version).toMatch(/^\d+\.\d+\.\d+$/)

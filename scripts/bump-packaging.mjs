@@ -130,6 +130,8 @@ edit('snap/snapcraft.yaml', [
   [/^(\s*- on arm64: )https:\/\/.*\.deb$/m, `$1${download}/${file('linux-arm64', '.deb')}`],
   [/(on amd64: sha256\/)[0-9a-f]{64}/, `$1${debX64}`],
   [/(on arm64: sha256\/)[0-9a-f]{64}/, `$1${debArm64}`],
+  // The one line snapcraft reads, which the snap workflow sets per architecture.
+  [/^( *source-checksum: sha256\/)[0-9a-f]{64}$/m, `$1${debX64}`],
 ])
 
 edit('scoop/orden.json', [

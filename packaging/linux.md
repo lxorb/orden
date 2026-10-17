@@ -410,11 +410,12 @@ the two digests in `snap/snapcraft.yaml` with it** - `gh release view v<version>
 --json assets --jq '.assets[] | select(.name | test("linux.*deb$")) | "\(.name)
 \(.digest)"'` prints both.
 
-The two digests are written in the same advanced grammar the `source` above them uses
-(`- on amd64:`), which craft-parts applies to a part's `source*` properties together.
-`snapcraft` is Linux-only, so the first proof of that is the snap job on the next
-release: if it rejects the per-architecture form, the fallback is one `source-checksum`
-line that the workflow fills in for whichever architecture the runner is.
+`source-checksum` is one line, for the architecture being built. snapcraft takes the
+`- on amd64:` grammar for `source` but not for the checksum: snapcraft 8.11.1 refuses
+the list with "Input should be a valid string", so a snap with a digest per
+architecture never built. Both digests are kept as a record in the comment above the
+line, `scripts/bump-packaging.mjs` rewrites both and puts amd64's in the line, and
+`publish-linux.yml` copies its runner's into the line before it builds.
 
 Worth doing because Ubuntu's App Center is the first place a great many Linux
 desktop users look for software, and a snap is the only way to be in it.

@@ -136,6 +136,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     env:
       TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      ARCH: ${{ matrix.arch }}
       HAS_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -162,11 +163,14 @@ jobs:
             fi
           done
 
+          # Both digests into the record, and this runner's into the one line snapcraft reads.
+          if [ "$ARCH" = arm64 ]; then own=$arm64; else own=$amd64; fi
           sed -i \
             -e "s/^version: .*/version: '$version'/" \
             -e "s|/download/v[0-9][^/]*/[A-Za-z]*-[0-9][^-]*-linux-|/download/$TAG/Orden-$version-linux-|g" \
             -e "s|on amd64: sha256/.*|on amd64: sha256/$amd64|" \
             -e "s|on arm64: sha256/.*|on arm64: sha256/$arm64|" \
+            -e "s|^\( *source-checksum: sha256/\).*|\1$own|" \
             snapcraft.yaml
           grep -nE "^version:|releases/download|sha256/" snapcraft.yaml
 
