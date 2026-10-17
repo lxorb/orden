@@ -14,7 +14,10 @@
 #     window comes up either way, floating, as a compositor floats a fixed-size window;
 #   - with DRIVE=1, Orden opened on a page of one colour in a web tab, and
 #     scripts/wayland-drive.py reading where that page is drawn on every screen, with
-#     the tab's menu over it and after a resize.
+#     the tab's menu over it and after a resize, clicking with the compositor's own
+#     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
+#     started again n times, each on another screen and with no address, and the drive
+#     run on the web tab it came back to.
 #
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
@@ -103,6 +106,16 @@ wait_for_views() {
 # With MEDIA=1 the page carries a video as well, so the page's engine starts GStreamer and
 # reads every plugin it is pointed at.
 site_pid=""
+pointer_pid=""
+config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
+# The endpoint open to `eval`, with no port until the app that starts next writes its own.
+endpoint() {
+  mkdir -p "$config"
+  secret=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+  printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$secret" > "$config/automation.json"
+  chmod 600 "$config/automation.json"
+}
+command=("$@")
 if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
@@ -110,12 +123,12 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site_pid=$!
-  config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
-  mkdir -p "$config"
-  secret=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
-  printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$secret" > "$config/automation.json"
-  chmod 600 "$config/automation.json"
+  endpoint
   set -- "$@" http://127.0.0.1:8765/
+fi
+if [ "${DRIVE:-0}" = 1 ]; then
+  python3 "$here/wayland-pointer.py" "$out/pointer.fifo" > "$out/pointer.log" 2>&1 &
+  pointer_pid=$!
 fi
 
 started=$(date +%s%N)
@@ -161,6 +174,31 @@ if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
+# Quit and started again, the way a reader comes back after a restart: no address, so the
+# web tab is the one the last run left, on the next screen round each time.
+if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ] && [ "${COLD:-0}" -gt 0 ]; then
+  screens=$(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))')
+  for run in $(seq "$COLD"); do
+    kill -TERM "$app_pid" 2>/dev/null || true
+    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    screen=$(echo $screens | cut -d' ' -f$(( (run - 1) % $(echo $screens | wc -w) + 1 )))
+    swaymsg focus output "$screen" > /dev/null
+    endpoint
+    "${command[@]}" > "$out/orden-cold-$run.log" 2>&1 &
+    app_pid=$!
+    if ! wait_for_views 1; then
+      echo "::error::no window mapped on start $run"
+      status=1
+      break
+    fi
+    sleep 3
+    echo "started again ($run of $COLD) on $screen:"
+    COLD_RUN=$run python3 "$here/wayland-drive.py" "$out" "$app_pid" cold || status=1
+  done
+fi
+
 if [ "$status" = 0 ] && [ -n "${QUICK_ADD_FLOATS:-}" ]; then
   views | grep -q '| floating |' || { echo "::error::quick add's window is tiled"; status=1; }
 fi
@@ -172,6 +210,7 @@ kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true
 [ -n "$portal_pid" ] && kill "$portal_pid" 2>/dev/null || true
 [ -n "$site_pid" ] && kill "$site_pid" 2>/dev/null || true
+[ -n "$pointer_pid" ] && kill "$pointer_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
 # The app's own log, which says how keys from other apps reach it here.
@@ -191,7 +230,7 @@ fi
 # What a Wayland session must never print: the EGL display the friend's NixOS box could
 # not make, a protocol error, a GTK critical, a display that could not be opened, and
 # GStreamer loading plugins that are not its own.
-if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING' "$out/orden.log" "$out/second.log" 2>/dev/null; then
+if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
   echo "::error::the graphics stack failed"
   status=1
 fi

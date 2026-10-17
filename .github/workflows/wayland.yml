@@ -161,10 +161,13 @@ jobs:
           KEYS: 'the desktop portal, version 2'
           QUICK_ADD_FLOATS: '1'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # Clicked with the compositor's own pointer, so a page over the tab strip takes the
+      # click the way it took #387's; and quit and started again four times, a screen each.
       - name: A web tab's page where its tab is, on every screen, under the app's layers
         env:
           OUT: wayland-out/drive
           DRIVE: '1'
+          COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
