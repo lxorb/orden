@@ -10,6 +10,10 @@ on:
       - .github/workflows/aur.yml
       - packaging/aur/orden-git/**
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - .github/workflows/aur.yml
       - packaging/aur/orden-git/**
@@ -29,6 +33,8 @@ defaults:
 
 jobs:
   check:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
