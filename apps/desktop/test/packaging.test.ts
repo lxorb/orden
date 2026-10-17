@@ -274,10 +274,24 @@ describe('the apt repository', () => {
     )
   })
 
+  /** Called, not dispatched: a dispatch finds only a workflow already on the default
+   *  branch, and apt.yml is written on `unstable` first. */
   test('is written for stable by publish.yml and for unstable by release.yml', () => {
-    expect(repo('.github', 'workflows', 'publish.yml')).toContain('gh workflow run apt.yml')
-    expect(repo('.github', 'workflows', 'publish.yml')).toContain('-f suite=stable')
-    expect(repo('.github', 'workflows', 'release.yml')).toContain('-f suite=unstable -f tag="$TAG"')
+    const publish = repo('.github', 'workflows', 'publish.yml')
+    const release = repo('.github', 'workflows', 'release.yml')
+    for (const [caller, suite] of [
+      [publish, 'stable'],
+      [release, 'unstable'],
+    ] as const) {
+      expect(caller).toMatch(
+        new RegExp(String.raw`uses: \./\.github/workflows/apt\.yml
+\s+with:
+\s+suite: ${suite}
+`),
+      )
+      expect(caller).not.toContain('gh workflow run apt.yml')
+    }
+    expect(repo('.github', 'workflows', 'apt.yml')).toContain('workflow_call:')
   })
 
   test('says its own address where the workflow writes it in', () => {

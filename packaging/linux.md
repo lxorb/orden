@@ -118,9 +118,12 @@ and the lines below.
 
 Two suites, one component, `main`, and both architectures:
 
-- `stable`: the newest release. `publish.yml` dispatches `apt.yml` for every stable tag,
+- `stable`: the newest release. `publish.yml` calls `apt.yml` for every stable tag,
   with the other package managers.
-- `unstable`: the newest `edge` build. `release.yml` dispatches it once edge's files are up.
+- `unstable`: the newest `edge` build. `release.yml` calls it once edge's files are up.
+
+Both call it (`uses:`) rather than dispatching it: a dispatch only finds a workflow that is
+on the default branch already, and `apt.yml` reaches `unstable` first.
 
 **Each suite holds one version, the newest.** A run empties that suite's pool, puts the
 release's two `.deb`s in, writes its `Packages` and `Release` again and signs it; the
@@ -170,8 +173,8 @@ The one-line form, for an apt older than 2.3 that reads no `.sources` file:
 either. The app leaves an install from here to apt and only says when a new version is out
 (`package_manager.rs`).
 
-By hand: `gh workflow run apt.yml -f suite=stable -f tag=v0.15.0`, or
-`-f suite=unstable -f tag=edge`.
+By hand, once `apt.yml` is on main: `gh workflow run apt.yml -f suite=stable -f tag=v0.15.0`,
+or `-f suite=unstable -f tag=edge`.
 
 ## AUR - `orden-bin`
 

@@ -2,8 +2,9 @@ name: apt
 
 # The apt repository, lxorb/apt on GitHub Pages: one suite of it written again from a
 # release's .debs, signed with APT_SIGNING_KEY. `stable` comes from publish.yml, for a
-# stable release, and `unstable` from release.yml, once edge is up; both by dispatch,
-# and by hand the same way:
+# stable release, and `unstable` from release.yml, once edge is up; both call this
+# workflow (`uses:`) rather than dispatching it, because a dispatch only finds a
+# workflow that is on the default branch already. By hand, once it is on main:
 #
 #   gh workflow run apt.yml -f suite=stable -f tag=v0.15.0
 #   gh workflow run apt.yml -f suite=unstable -f tag=edge
@@ -14,6 +15,16 @@ name: apt
 # the other suite - it takes from the repository as it finds it. See scripts/apt-repo.sh
 # and packaging/linux.md, "apt".
 on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Which suite to write, stable or unstable
+        type: string
+        required: true
+      tag:
+        description: The release whose .debs go in, v1.2.3 for stable and edge for unstable
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       suite:
@@ -24,12 +35,6 @@ on:
       tag:
         description: The release whose .debs go in, v1.2.3 for stable and edge for unstable
         required: true
-
-# One writer at a time, from either suite: both push the same branch. A newer run waits
-# rather than cancelling one half way through its push.
-concurrency:
-  group: apt
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -72,6 +77,13 @@ jobs:
     needs: gate
     if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
+    # One writer at a time, from either suite and whichever workflow called this one: both
+    # push the same branch, and a newer run waits rather than cancelling one half way
+    # through its push. On the job rather than the workflow, so the group is this job's
+    # own and never one a caller is holding (release.yml's and publish.yml's are theirs).
+    concurrency:
+      group: apt
+      cancel-in-progress: false
     # The push goes to lxorb/apt on the PACKAGING_TOKEN; this token only downloads the
     # release's .debs.
     permissions:
