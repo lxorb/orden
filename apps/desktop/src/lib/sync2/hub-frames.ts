@@ -30,7 +30,9 @@ export type FromDevice =
   | { t: 'acquire'; key: string; take: boolean }
   | { t: 'release'; key: string }
   | { t: 'flushed'; key: string }
-  | { t: 'want-key'; pub: string }
+  | { t: 'want-key'; commitment: string }
+  | { t: 'answer-key'; to: string; nonce: string; pub: string }
+  | { t: 'reveal-key'; pub: string; nonce: string }
   | { t: 'grant-key'; to: string; wrapped: string; generation: number }
   | { t: 'deny-key'; to: string }
 
@@ -43,7 +45,13 @@ export type FromHub =
   | { t: 'lost'; key: string; device: string; name: string }
   | { t: 'free'; key: string }
   | { t: 'state'; key: string; version: number }
-  | { t: 'key-wanted'; device: string; name: string; pub: string }
+  /** This computer's request for the web key is held: the hub pairs by commitment. */
+  | { t: 'key-asked' }
+  | { t: 'key-wanted'; device: string; name: string; commitment: string }
+  /** A computer from before the commitment asked, and has to be updated to pair. */
+  | { t: 'key-wanted-old'; device: string; name: string }
+  | { t: 'key-answered'; from: string; nonce: string; pub: string }
+  | { t: 'key-revealed'; device: string; pub: string; nonce: string }
   | { t: 'key'; wrapped: string; generation: number }
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
@@ -68,6 +76,9 @@ const whole = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 const opaque = (value: unknown): value is string => text(value) && OPAQUE.test(value)
 const device = (value: unknown): value is string => text(value) && DEVICE.test(value)
+/** A key, a nonce or a commitment: base64, and short. */
+const short = (value: unknown): value is string =>
+  text(value) && value.length <= 128 && /^[A-Za-z0-9+/_=-]+$/.test(value)
 
 /** A frame from the hub, or null for anything that is not one. */
 export function readHubFrame(said: string): FromHub | null {
@@ -117,14 +128,32 @@ export function readHubFrame(said: string): FromHub | null {
         ? { t: 'state', key: one.key, version: one.version }
         : null
 
+    case 'key-asked':
+      return { t: 'key-asked' }
+
     case 'key-wanted':
-      return device(one.device) && text(one.pub) && one.pub.length <= 128
+      return device(one.device) && short(one.commitment)
         ? {
             t: 'key-wanted',
             device: one.device,
             name: text(one.name) ? one.name : '',
-            pub: one.pub,
+            commitment: one.commitment,
           }
+        : null
+
+    case 'key-wanted-old':
+      return device(one.device)
+        ? { t: 'key-wanted-old', device: one.device, name: text(one.name) ? one.name : '' }
+        : null
+
+    case 'key-answered':
+      return device(one.from) && short(one.nonce) && short(one.pub)
+        ? { t: 'key-answered', from: one.from, nonce: one.nonce, pub: one.pub }
+        : null
+
+    case 'key-revealed':
+      return device(one.device) && short(one.pub) && short(one.nonce)
+        ? { t: 'key-revealed', device: one.device, pub: one.pub, nonce: one.nonce }
         : null
 
     case 'key':

@@ -39,7 +39,16 @@ export type FromDevice =
   | { t: 'acquire'; key: string; take: boolean }
   | { t: 'release'; key: string }
   | { t: 'flushed'; key: string }
-  | { t: 'want-key'; pub: string }
+  /** A computer asking for the web key: its commitment to its key and a nonce, which it
+   *  reveals only once a computer with the key has answered (lib/pairing.ts). */
+  | { t: 'want-key'; commitment: string }
+  /** What a computer from before the commitment sends: its public key straight away. Read
+   *  so it can be told to update, and never relayed. */
+  | { t: 'want-key-old' }
+  /** A computer with the key answering one that asked: a nonce of its own, and its key. */
+  | { t: 'answer-key'; to: string; nonce: string; pub: string }
+  /** The asking computer's key and nonce, once it has been answered. */
+  | { t: 'reveal-key'; pub: string; nonce: string }
   | { t: 'grant-key'; to: string; wrapped: string; generation: number }
   | { t: 'deny-key'; to: string }
 
@@ -51,7 +60,16 @@ export type FromHub =
   | { t: 'lost'; key: string; device: string; name: string }
   | { t: 'free'; key: string }
   | { t: 'state'; key: string; version: number }
-  | { t: 'key-wanted'; device: string; name: string; pub: string }
+  /** A request held, to the computer that asked: this hub pairs by commitment. */
+  | { t: 'key-asked' }
+  | { t: 'key-wanted'; device: string; name: string; commitment: string }
+  /** A computer from before the commitment asking, to every computer with the key, so the
+   *  person is told to update it rather than left waiting. */
+  | { t: 'key-wanted-old'; device: string; name: string }
+  /** The answer, to the computer that asked. */
+  | { t: 'key-answered'; from: string; nonce: string; pub: string }
+  /** The reveal, to the computer that answered. */
+  | { t: 'key-revealed'; device: string; pub: string; nonce: string }
   | { t: 'key'; wrapped: string; generation: number }
   | { t: 'key-denied' }
   | { t: 'key-settled'; device: string }
@@ -128,8 +146,22 @@ export function readFrame(said: string): FromDevice | null {
     }
 
     case 'want-key': {
+      const commitment = matching(fields, 'commitment', PUBLIC_KEY)
+      if (commitment) return { t: 'want-key', commitment }
+      return matching(fields, 'pub', PUBLIC_KEY) ? { t: 'want-key-old' } : null
+    }
+
+    case 'answer-key': {
+      const to = matching(fields, 'to', DEVICE)
+      const nonce = matching(fields, 'nonce', PUBLIC_KEY)
       const pub = matching(fields, 'pub', PUBLIC_KEY)
-      return pub ? { t: 'want-key', pub } : null
+      return to && nonce && pub ? { t: 'answer-key', to, nonce, pub } : null
+    }
+
+    case 'reveal-key': {
+      const pub = matching(fields, 'pub', PUBLIC_KEY)
+      const nonce = matching(fields, 'nonce', PUBLIC_KEY)
+      return pub && nonce ? { t: 'reveal-key', pub, nonce } : null
     }
 
     case 'grant-key': {

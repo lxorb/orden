@@ -1252,6 +1252,10 @@ export const ta: Dictionary = {
   'Ask to join': 'சேர அனுமதி கேள்',
   Asking: 'கேட்கிறது',
   'Waiting for {who}': '{who} க்காகக் காத்திருக்கிறது',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'இந்தக் கணினியை இன்னும் இணைக்க முடியாது: கணக்கின் சேவைக்குப் புதுப்பிப்பு தேவை.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} பழைய Orden-ஐ இயக்குகிறது: இணைக்க அங்கே அதைப் புதுப்பிக்கவும்.',
   '{device} offers this computer your web logins':
     '{device} இந்தக் கணினிக்கு உங்கள் வலை உள்நுழைவுகளை வழங்குகிறது',
   '{who} did not let you in': '{who} உங்களை அனுமதிக்கவில்லை',

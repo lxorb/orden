@@ -1249,6 +1249,10 @@ export const ha: Dictionary = {
   'Ask to join': 'Nemi shiga',
   Asking: 'Ana nema',
   'Waiting for {who}': 'Ana jiran {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Ba za a iya haɗa wannan kwamfuta tukuna ba: sabis ɗin asusun yana buƙatar sabuntawa.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} yana amfani da tsohon Orden: sabunta shi a can don haɗa shi.',
   '{device} offers this computer your web logins':
     '{device} yana ba wannan kwamfuta shigarka na yanar gizo',
   '{who} did not let you in': '{who} bai bar ka shiga ba',

@@ -302,12 +302,6 @@ pub fn web_key_device(webview: Webview) -> Result<String, String> {
     Ok(STANDARD.encode(keys::device(&Keychain::of(webview.app_handle()))?.public()))
 }
 
-/// The six digits both screens show while a computer is approved, from its public key.
-#[tauri::command]
-pub fn web_key_digits(public_key: String) -> Result<String, String> {
-    Ok(crypto::digits(&keys::public_key(&public_key)?))
-}
-
 /// The web key, wrapped to another computer's public key, and its generation.
 #[derive(Debug, Serialize)]
 pub struct Wrapped {

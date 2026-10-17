@@ -1220,6 +1220,10 @@ export const yue: Dictionary = {
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    '呢部電腦暫時未可以配對：帳戶嘅服務要更新。',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} 用緊舊版 Orden：喺嗰度更新先可以配對。',
   '{device} offers this computer your web logins': '{device} 將你嘅網頁登入提供畀呢部電腦',
   '{who} did not let you in': '{who}冇讓你加入',
   'What the others in this space see.': '呢個空間入面其他人睇到嘅內容。',

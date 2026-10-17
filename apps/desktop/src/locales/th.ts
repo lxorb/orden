@@ -1226,6 +1226,10 @@ export const th: Dictionary = {
   'Ask to join': 'ขอเข้าร่วม',
   Asking: 'กำลังขอ',
   'Waiting for {who}': 'กำลังรอ {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ยังจับคู่คอมพิวเตอร์เครื่องนี้ไม่ได้ บริการของบัญชีต้องได้รับการอัปเดต',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} ใช้ Orden รุ่นเก่า อัปเดตที่เครื่องนั้นเพื่อจับคู่',
   '{device} offers this computer your web logins':
     '{device} เสนอการเข้าสู่ระบบเว็บของคุณให้คอมพิวเตอร์นี้',
   '{who} did not let you in': '{who} ไม่ให้คุณเข้า',

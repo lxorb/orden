@@ -152,15 +152,6 @@ describe('webState', () => {
 })
 
 describe('webKey', () => {
-  test('the digits are six, and anything else is refused', async () => {
-    world.answer = '048213'
-    await expect(webKey.digits('cHVibGlj')).resolves.toBe('048213')
-    expect(world.asked[0]).toEqual({ command: 'web_key_digits', args: { publicKey: 'cHVibGlj' } })
-
-    world.answer = '48213'
-    await expect(webKey.digits('cHVibGlj')).rejects.toThrow()
-  })
-
   test('a wrap goes back in as it came out', async () => {
     world.answer = { wrapped: 'd3JhcHBlZA==', generation: 2 }
     const wrapped = await webKey.wrap('cHVibGlj')

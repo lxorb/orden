@@ -1241,6 +1241,10 @@ export const hi: Dictionary = {
   'Ask to join': 'जुड़ने को कहें',
   Asking: 'पूछ रहे हैं',
   'Waiting for {who}': '{who} का इंतज़ार',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'इस कंप्यूटर को अभी जोड़ा नहीं जा सकता: खाते की सेवा को अपडेट चाहिए।',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} पर पुराना Orden चल रहा है: जोड़ने के लिए उसे वहीं अपडेट करें।',
   '{device} offers this computer your web logins':
     '{device} इस कंप्यूटर को आपके वेब लॉगिन दे रहा है',
   '{who} did not let you in': '{who} ने अंदर नहीं आने दिया',

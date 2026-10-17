@@ -19,15 +19,15 @@
 //!   naming key (HMAC-SHA256), which names lease keys and chunks without saying what
 //!   they are.
 //!
-//! And the six digits two screens compare while a new computer is approved, from the
-//! new computer's public key: a server that swapped in a key of its own would show
-//! different ones.
+//! The six digits two screens compare while a new computer is approved are not worked
+//! out here: they come out of both computers' keys and a nonce from each, in the page,
+//! the way the AI vault's do (src/lib/pairing.ts).
 
 use chacha20poly1305::aead::{Aead as _, KeyInit as _, Payload};
 use chacha20poly1305::{XChaCha20Poly1305, XNonce};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac as _};
-use sha2::{Digest as _, Sha256};
+use sha2::Sha256;
 use x25519_dalek::{PublicKey, StaticSecret};
 use zeroize::Zeroizing;
 
@@ -330,16 +330,6 @@ pub(crate) fn unwrap(
     Ok(WebKey::from_bytes(bytes, generation))
 }
 
-/// The six digits both screens show while a computer is approved: SHA-256 of its public
-/// key, read as one big-endian number, modulo a million, with its leading zeros.
-pub(crate) fn digits(public: &[u8]) -> String {
-    let hash = Sha256::digest(public);
-    let left = hash.iter().fold(0u32, |left, byte| {
-        (left * 256 + u32::from(*byte)) % 1_000_000
-    });
-    format!("{left:06}")
-}
-
 /// Bytes as lower-case hex.
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
@@ -353,7 +343,7 @@ fn hex(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{digits, unwrap, wrap, Bound, DeviceKey, Kind, WebKey, KEY};
+    use super::{unwrap, wrap, Bound, DeviceKey, Kind, WebKey, KEY};
     use zeroize::Zeroizing;
 
     fn key(fill: u8, generation: u32) -> WebKey {
@@ -484,22 +474,6 @@ mod tests {
         let again = DeviceKey::from_bytes(made.secret_bytes());
         assert_eq!(made.public(), again.public());
         assert_ne!(made.public(), DeviceKey::fresh().expect("another").public());
-    }
-
-    /// Six digits, always, the same for the same key, pinned for one key so the other
-    /// screen's arithmetic (and a change here) can be checked against it.
-    #[test]
-    fn the_digits_are_six_and_stable() {
-        let public = [9u8; KEY];
-        assert_eq!(digits(&public), digits(&public));
-        assert_eq!(digits(&public).len(), 6);
-        assert!(digits(&public).bytes().all(|one| one.is_ascii_digit()));
-        // SHA-256 of thirty-two nines, 0x8c0cc17a..., as one number, modulo a million;
-        // worked out apart from this code, in Python.
-        assert_eq!(digits(&public), "358277");
-        for fill in 0..=255u8 {
-            assert_eq!(digits(&[fill; KEY]).len(), 6);
-        }
     }
 
     /// Names are hex, stable under one key, different under another, and never the

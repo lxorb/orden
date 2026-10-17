@@ -508,7 +508,6 @@ macro_rules! desktop_commands {
             web_state::web_state_file,
             web_state::web_state_put,
             web_state::web_key_device,
-            web_state::web_key_digits,
             web_state::web_key_wrap,
             web_state::web_key_accept,
             web_state::web_key_rotate,

@@ -1257,6 +1257,10 @@ export const ptPT: Dictionary = {
   'Ask to join': 'Pedir para entrar',
   Asking: 'A pedir',
   'Waiting for {who}': 'À espera de {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Este computador ainda não pode ser emparelhado: o serviço da conta precisa de uma atualização.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} usa uma versão antiga do Orden: atualize-o lá para o emparelhar.',
   '{device} offers this computer your web logins':
     '{device} oferece a este computador os seus inícios de sessão na web',
   '{who} did not let you in': '{who} não deu acesso',

@@ -1247,6 +1247,10 @@ export const kn: Dictionary = {
   'Ask to join': 'ಸೇರಲು ಕೇಳಿ',
   Asking: 'ಕೇಳುತ್ತಿದೆ',
   'Waiting for {who}': '{who} ಗಾಗಿ ಕಾಯುತ್ತಿದೆ',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ಈ ಕಂಪ್ಯೂಟರ್ ಅನ್ನು ಇನ್ನೂ ಜೋಡಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ: ಖಾತೆಯ ಸೇವೆಗೆ ಅಪ್‌ಡೇಟ್ ಬೇಕು.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} ಹಳೆಯ Orden ಅನ್ನು ಚಲಾಯಿಸುತ್ತಿದೆ: ಜೋಡಿಸಲು ಅಲ್ಲಿ ಅದನ್ನು ಅಪ್‌ಡೇಟ್ ಮಾಡಿ.',
   '{device} offers this computer your web logins':
     '{device} ಈ ಕಂಪ್ಯೂಟರ್‌ಗೆ ನಿಮ್ಮ ವೆಬ್ ಲಾಗಿನ್‌ಗಳನ್ನು ನೀಡುತ್ತಿದೆ',
   '{who} did not let you in': '{who} ನಿಮ್ಮನ್ನು ಒಳಗೆ ಬಿಡಲಿಲ್ಲ',

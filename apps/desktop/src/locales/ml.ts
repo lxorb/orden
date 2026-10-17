@@ -1251,6 +1251,10 @@ export const ml: Dictionary = {
   'Ask to join': 'ചേരാൻ അനുവാദം ചോദിക്കുക',
   Asking: 'ചോദിക്കുന്നു',
   'Waiting for {who}': '{who}യെ കാത്തിരിക്കുന്നു',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ഈ കമ്പ്യൂട്ടർ ഇപ്പോൾ ജോടിയാക്കാനാകില്ല: അക്കൗണ്ടിന്റെ സേവനം അപ്‌ഡേറ്റ് ചെയ്യണം.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} പഴയ Orden ആണ് ഉപയോഗിക്കുന്നത്: ജോടിയാക്കാൻ അവിടെ അപ്‌ഡേറ്റ് ചെയ്യുക.',
   '{device} offers this computer your web logins':
     '{device} ഈ കമ്പ്യൂട്ടറിന് നിങ്ങളുടെ വെബ് ലോഗിനുകൾ നൽകുന്നു',
   '{who} did not let you in': '{who} നിങ്ങളെ അകത്ത് കടത്തിയില്ല',

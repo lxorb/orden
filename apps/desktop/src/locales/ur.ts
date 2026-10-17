@@ -1239,6 +1239,10 @@ export const ur: Dictionary = {
   'Ask to join': 'شامل ہونے کی درخواست',
   Asking: 'درخواست جا رہی ہے',
   'Waiting for {who}': '{who} کا انتظار',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'اس کمپیوٹر کو ابھی جوڑا نہیں جا سکتا: اکاؤنٹ کی سروس کو اپ ڈیٹ درکار ہے۔',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} پرانا Orden چلا رہا ہے: جوڑنے کے لیے اسے وہیں اپ ڈیٹ کریں۔',
   '{device} offers this computer your web logins':
     '{device} اس کمپیوٹر کو آپ کے ویب لاگ اِن پیش کر رہا ہے',
   '{who} did not let you in': '{who} نے اندر نہیں آنے دیا',

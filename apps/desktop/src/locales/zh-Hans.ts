@@ -1219,6 +1219,10 @@ export const zhHans: Dictionary = {
   'Ask to join': '申请加入',
   Asking: '申请中',
   'Waiting for {who}': '等待{who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    '暂时无法配对此电脑：账户的服务需要更新。',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} 运行的是旧版 Orden：请在那里更新后再配对。',
   '{device} offers this computer your web logins': '{device} 向此电脑提供你的网页登录',
   '{who} did not let you in': '{who}没有让你加入',
   'What the others in this space see.': '此空间中其他人看到的内容。',

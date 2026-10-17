@@ -25,7 +25,17 @@ import type { Env } from '../types'
 import { collectChunks, putState } from './bucket'
 import { markSeen, register } from './devices'
 import { type FromDevice, type FromHub, readFrame, say } from './frames'
-import { denyKey, forgetWant, grantKey, type Relay, wantedOf, wantKey } from './keys'
+import {
+  answerKey,
+  denyKey,
+  forgetWant,
+  grantKey,
+  revealKey,
+  type Relay,
+  wantedOf,
+  wantKey,
+  wantKeyOld,
+} from './keys'
 import { HUB_AWAY } from './reach'
 import { keepPresence, presenceOf } from '../people/presence'
 import {
@@ -223,7 +233,16 @@ export class AccountHub implements DurableObject {
         await this.change(frame.key, (lease, world) => flushed(lease, me.device, world))
         break
       case 'want-key':
-        await wantKey(this.relay(), socket, me, frame.pub)
+        await wantKey(this.relay(), socket, me, frame.commitment)
+        break
+      case 'want-key-old':
+        wantKeyOld(this.relay(), socket, me)
+        break
+      case 'answer-key':
+        await answerKey(this.relay(), socket, me, frame)
+        break
+      case 'reveal-key':
+        await revealKey(this.relay(), socket, me, frame)
         break
       case 'grant-key':
         await grantKey(this.relay(), socket, me, frame)

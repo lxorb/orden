@@ -1239,6 +1239,10 @@ export const ms: Dictionary = {
   'Ask to join': 'Minta menyertai',
   Asking: 'Meminta',
   'Waiting for {who}': 'Menunggu {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Komputer ini belum boleh dipasangkan: perkhidmatan akaun perlu dikemas kini.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} menjalankan Orden versi lama: kemas kininya di sana untuk memasangkannya.',
   '{device} offers this computer your web logins':
     '{device} menawarkan log masuk web anda kepada komputer ini',
   '{who} did not let you in': '{who} tidak membenarkan anda masuk',

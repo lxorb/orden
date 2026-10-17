@@ -1252,6 +1252,10 @@ export const de: Dictionary = {
   'Ask to join': 'Um Zutritt bitten',
   Asking: 'Fragt',
   'Waiting for {who}': 'Wartet auf {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Dieser Computer kann noch nicht gekoppelt werden: Der Dienst des Kontos braucht ein Update.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'Auf {device} läuft ein älteres Orden: Aktualisiere es dort, um es zu koppeln.',
   '{device} offers this computer your web logins':
     '{device} bietet diesem Computer deine Web-Anmeldungen an',
   '{who} did not let you in': '{who} hat dich nicht reingelassen',

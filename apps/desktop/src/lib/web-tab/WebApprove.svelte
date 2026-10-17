@@ -4,10 +4,13 @@
    *
    *  The bubble a site's question is asked in and a program's (WebAsk.svelte,
    *  PairingBubble.svelte), with the same two answers in the same words: a new question
-   *  in an old shape is one nobody has to learn. The six digits are worked out from the
-   *  asking computer's public key, and the asking computer shows the same six under its
-   *  web tab's bar; a server that slipped its own key in would show others. So the
-   *  digits are the whole point, set apart in the figures the app counts in.
+   *  in an old shape is one nobody has to learn. The six digits are worked out from both
+   *  computers' keys and a nonce from each (lib/pairing.ts), and the asking computer shows
+   *  the same six under its web tab's bar; a key slipped in between would show others. So
+   *  the digits are the whole point, set apart in the figures the app counts in.
+   *
+   *  And, with nothing else to ask, a computer from before pairing by commitment that
+   *  asked: said with what to do about it, since there are no digits it could match.
    *
    *  Under the title bar at the right, on the overlay stack, so a page under it is out of
    *  sight while it is up. Escape puts it away without an answer: the computer is still
@@ -28,6 +31,7 @@
   const { approval }: { approval: Approval } = $props()
 
   const asking = $derived(approval.asking[0] ?? null)
+  const older = $derived(asking ? null : (approval.older[0] ?? null))
   const device = $derived(asking?.name ?? '')
   /** Six digits as two groups of three, the way a code is read aloud. */
   const digits = $derived(asking ? `${asking.digits.slice(0, 3)} ${asking.digits.slice(3)}` : '')
@@ -39,6 +43,14 @@
     if (!one) return
     return overlays.show(() => {
       approval.dismiss(one)
+    })
+  })
+
+  $effect(() => {
+    const one = older
+    if (!one) return
+    return overlays.show(() => {
+      approval.dismissOlder(one.device)
     })
   })
 
@@ -74,6 +86,30 @@
         {t('Don’t allow')}
       </button>
       <button class="nib-button" onclick={() => void approval.allow(asking)}>{t('Allow')}</button>
+    </div>
+  </div>
+{:else if older}
+  <div
+    class="approve nib-bubble is-pressable nib-host"
+    role="dialog"
+    aria-label={t('{device} runs an older Orden: update it there to pair it.', {
+      device: older.name,
+    })}
+    tabindex="-1"
+    bind:this={card}
+    transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
+  >
+    <p class="what">
+      <span class="device"
+        >{t('{device} runs an older Orden: update it there to pair it.', {
+          device: older.name,
+        })}</span
+      >
+    </p>
+    <div class="rows">
+      <button class="nib-button" onclick={() => approval.dismissOlder(older.device)}
+        >{t('OK')}</button
+      >
     </div>
   </div>
 {/if}

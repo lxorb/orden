@@ -352,7 +352,7 @@ describe('a lease', () => {
       app: '1',
     })
     await acquire(guest)
-    await send(made, guest, { t: 'want-key', pub: 'p'.repeat(44) })
+    await send(made, guest, { t: 'want-key', commitment: 'p'.repeat(44) })
 
     expect(guest.take()).toEqual([
       { t: 'refused', to: 'acquire', key: KEY, error: 'sign in to do that' },

@@ -523,6 +523,9 @@ class Pages {
   /** The web key offered to this computer, and the Join that takes it; see
    *  web-tab/approval.svelte.ts. */
   offered = $state<{ device: string; join: () => void } | null>(null)
+  /** Whether this computer cannot be paired yet, its account's service being from before
+   *  pairing by commitment; see web-tab/approval.svelte.ts. */
+  unpairable = $state(false)
 
   /** Every tab's page, for the web login to walk. */
   each(): [string, Page][] {

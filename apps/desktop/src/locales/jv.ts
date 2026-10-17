@@ -1235,6 +1235,10 @@ export const jv: Dictionary = {
   'Ask to join': 'Njaluk melu',
   Asking: 'Njaluk',
   'Waiting for {who}': 'Ngenteni {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Komputer iki durung bisa dipasangake: layanan akun kudu dianyari.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} nganggo Orden lawas: anyari ing kana kanggo masangake.',
   '{device} offers this computer your web logins':
     '{device} nawakake login web sampeyan menyang komputer iki',
   '{who} did not let you in': '{who} ora ngulehake sampeyan mlebu',

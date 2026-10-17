@@ -1276,6 +1276,10 @@ export const uk: Dictionary = {
   'Ask to join': 'Попросити доступ',
   Asking: 'Запит',
   'Waiting for {who}': 'Очікування {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Цей комп’ютер поки не можна поєднати: службі облікового запису потрібне оновлення.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'На {device} стара версія Orden: оновіть її там, щоб поєднати.',
   '{device} offers this computer your web logins':
     '{device} пропонує цьому комп’ютеру ваші входи на сайти',
   '{who} did not let you in': '{who} не дав вам доступ',

@@ -1239,6 +1239,10 @@ export const id: Dictionary = {
   'Ask to join': 'Minta ikut',
   Asking: 'Meminta',
   'Waiting for {who}': 'Menunggu {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Komputer ini belum bisa dipasangkan: layanan akun perlu diperbarui.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} menjalankan Orden versi lama: perbarui di sana untuk memasangkannya.',
   '{device} offers this computer your web logins':
     '{device} menawarkan login web Anda ke komputer ini',
   '{who} did not let you in': '{who} tidak mengizinkan Anda masuk',

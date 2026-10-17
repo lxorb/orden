@@ -1253,6 +1253,10 @@ export const fil: Dictionary = {
   'Ask to join': 'Humiling sumali',
   Asking: 'Humihiling',
   'Waiting for {who}': 'Hinihintay si {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Hindi pa maipapares ang computer na ito: kailangang i-update ang serbisyo ng account.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'Lumang Orden ang tumatakbo sa {device}: i-update ito roon para maipares.',
   '{device} offers this computer your web logins':
     'Inaalok ng {device} sa computer na ito ang iyong mga web login',
   '{who} did not let you in': 'Hindi ka pinapasok ni {who}',

@@ -433,8 +433,8 @@ top right, the shape the site-permission bubble uses:
 ```
 
 and on the new computer, where the pages are, a quiet line in the web tab's bar area:
-`Waiting for Laptop  482 913`. The six digits are derived from the new computer's public
-key; they must match on both screens. (Three rows: `{device} wants your web logins`,
+`Waiting for Laptop  482 913`. The six digits come out of both computers' keys and a nonce
+from each, once the other computer has answered (6.6); they must match on both screens. (Three rows: `{device} wants your web logins`,
 `Waiting for {device}`, and the existing `Don't allow` / `Allow`.) Once allowed, the same
 line says `Laptop offers this computer your web logins [ Join ]`, and the key is taken on
 Join (6.6).
@@ -1026,13 +1026,32 @@ and the account holds only ciphertext and opaque names.
 - **Bundles** are XChaCha20-Poly1305 with a random nonce per object and the store, site and
   generation as associated data; lease keys and chunk names are HMAC-SHA256 under a key
   derived from the web key.
-- **A new computer** registers its public key and asks its hub for the web key. The hub
-  relays the request to the account's other computers, which show the approval prompt with
-  six digits derived from the new public key (`SHA-256(pub)` read as a number, mod 10^6),
-  while the new computer shows the same digits. **Allow** wraps the web key to that public
-  key. A server that substituted its own key would show different digits. Until it is
-  approved, a computer takes no leases and uploads nothing (it cannot name a lease without
-  the key): its pages run on its own fresh state, signed out, like a new browser.
+- **A new computer** asks its hub for the web key in three steps, the AI vault's
+  (`lib/pairing.ts`), so that nobody between the two screens - the hub included - can
+  choose a key that shows the same digits:
+  1. It sends a commitment to its public key and a nonce, `SHA-256(pub || nonce)`, and
+     not the key. The hub holds the request (and says so, `key-asked`) and relays it to
+     the account's computers that hold the key.
+  2. One of them answers with a random nonce of its own and its own public key. The
+     first answer stands.
+  3. Only then does the new computer reveal its key and nonce. The hub takes them only
+     if they are what it committed to, and passes them to the computer that answered.
+  Both screens then show the same six digits, `SHA-256` over what they are for, the new
+  key, its nonce, the answering nonce and the answering key, mod 10^6: the new computer
+  under the bar, the answering one in the approval prompt. **Allow** wraps the web key to
+  exactly the key the digits came from, and the hub takes an Allow only of a computer that
+  revealed. A key swapped in had to be committed to before the answering nonce existed, so
+  it shows the same digits one time in a million. Until it is approved, a computer takes
+  no leases and uploads nothing (it cannot name a lease without the key): its pages run on
+  its own fresh state, signed out, like a new browser.
+- **Computers from before the commitment** ask with their public key straight away. A hub
+  that pairs by commitment does not relay that: it tells the computer to update, and tells
+  the computers with the key that it asked, so their bubble says to update it there. A
+  computer that pairs by commitment on a hub from before it is never answered, and after a
+  few seconds says it cannot be paired yet. Computers that already hold the key are not
+  affected either way: they are handed it on every `hello`, and move on a generation, as
+  before. So pairing a new computer needs the hub and both computers to be this version
+  or later.
 - **Joining.** A computer handed the key for the first time does not take it by itself: the
   line in the web tab's bar area says *"Laptop offers this computer your web logins"*, with
   **Join**, and only Join takes the key and so puts this computer's own logins under it. A
@@ -1116,11 +1135,15 @@ parts), because base64 would cost a third more on every update.
 - `GET /v2/hub`, upgraded, with the token and `nib.device.<id>` in the subprotocol. Text
   frames: `beat` (auto-answered `ok`), `{t:'hello', device, name, platform, app}`,
   `{t:'active'}`, `{t:'idle'}`, `{t:'acquire', key, take}`, `{t:'release', key, version}`,
-  `{t:'flushed', key, version}`, `{t:'want-key', pub}`, `{t:'grant-key', to, wrapped,
-  generation}`, `{t:'deny-key', to}`; and from the hub `{t:'poke', space, seq}`,
-  `{t:'granted', key, fence, version}`, `{t:'busy', key, device}`, `{t:'flush', key,
-  fence}`, `{t:'lost', key, device}`, `{t:'free', key}`, `{t:'state', key, version}`,
-  `{t:'key-wanted', device, name, pub}`, `{t:'key', wrapped, generation}`, `{t:'key-denied'}`.
+  `{t:'flushed', key, version}`, `{t:'want-key', commitment}`, `{t:'answer-key', to, nonce,
+  pub}`, `{t:'reveal-key', pub, nonce}`, `{t:'grant-key', to, wrapped, generation}`,
+  `{t:'deny-key', to}`; and from the hub `{t:'poke', space, seq}`, `{t:'granted', key, fence,
+  version}`, `{t:'busy', key, device}`, `{t:'flush', key, fence}`, `{t:'lost', key, device}`,
+  `{t:'free', key}`, `{t:'state', key, version}`, `{t:'key-asked'}`, `{t:'key-wanted', device,
+  name, commitment}`, `{t:'key-answered', from, nonce, pub}`, `{t:'key-revealed', device, pub,
+  nonce}`, `{t:'key-wanted-old', device, name}`, `{t:'key', wrapped, generation}`,
+  `{t:'key-denied'}`. A `want-key` that carries `pub` is a computer from before the
+  commitment, answered `{t:'refused', to:'want-key-old'}`.
 - `PUT /v2/web/:key` (header `x-nib-fence`), the manifest; `PUT /v2/web/chunks/:name`, a
   chunk; `GET` of both. `409 fenced`, `413` past the ceilings, `507` past the web quota.
 - `GET /v2/devices`, `PATCH /v2/devices/:id` (a name), `DELETE /v2/devices/:id` (ends its
@@ -1185,8 +1208,8 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
 - **Keyed means the hub said so.** A computer holds the web key once its hub hands it
   `key`; a key in the keychain the account does not know would name leases no other
   computer can see. The first computer makes the key as its socket opens (a `grant-key`
-  to itself); one on an account where another holds it sends `want-key` and shows the
-  waiting line; the bubble shows on every computer that holds it. Only the window holding
+  to itself); one on an account where another holds it sends `want-key` with its
+  commitment, reveals once answered, and shows the waiting line; the bubble shows on every computer that holds it. Only the window holding
   the socket walks this road and says `active`/`idle`.
 - **Before a page runs.** A held lease answers at once. Otherwise the page waits for the
   hub's answer at most `LEASE_WAITS` (800 ms) and then runs on this computer's state; a

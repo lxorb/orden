@@ -1238,6 +1238,10 @@ export const gu: Dictionary = {
   'Ask to join': 'જોડાવા માંગો',
   Asking: 'માંગે છે',
   'Waiting for {who}': '{who}ની વાટ',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'આ કમ્પ્યુટર હજી જોડી શકાતું નથી: એકાઉન્ટની સેવાને અપડેટની જરૂર છે.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} જૂનું Orden ચલાવે છે: જોડવા માટે ત્યાં અપડેટ કરો.',
   '{device} offers this computer your web logins': '{device} આ કમ્પ્યુટરને તમારા વેબ લૉગિન આપે છે',
   '{who} did not let you in': '{who}એ તમને અંદર આવવા દીધા નહીં',
   'What the others in this space see.': 'આ જગ્યામાં બીજા જે જુએ છે તે.',

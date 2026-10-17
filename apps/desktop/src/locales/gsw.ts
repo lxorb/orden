@@ -1243,6 +1243,10 @@ export const gsw: Dictionary = {
   'Ask to join': 'Um Iilass bitte',
   Asking: 'Fragt',
   'Waiting for {who}': 'Wartet uf {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Dä Computer chan no nöd kopplet wärde: De Dienscht vom Konto bruucht es Update.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'Uf {device} lauft es ältere Orden: Aktualisier s dört, zum s kopple.',
   '{device} offers this computer your web logins':
     '{device} bietet däm Computer dini Web-Aamäldige aa',
   '{who} did not let you in': '{who} hät di nöd iiglaa',

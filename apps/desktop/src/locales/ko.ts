@@ -1231,6 +1231,10 @@ export const ko: Dictionary = {
   'Ask to join': '참여 요청',
   Asking: '요청 중',
   'Waiting for {who}': '{who}를 기다리는 중',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    '이 컴퓨터는 아직 페어링할 수 없습니다. 계정 서비스를 업데이트해야 합니다.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device}에서 이전 버전의 Orden을 사용 중입니다. 페어링하려면 그곳에서 업데이트하세요.',
   '{device} offers this computer your web logins':
     '{device}에서 이 컴퓨터에 웹 로그인을 제공합니다',
   '{who} did not let you in': '{who}가 들여보내지 않았습니다',

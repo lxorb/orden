@@ -1243,6 +1243,10 @@ export const tr: Dictionary = {
   'Ask to join': 'Katılmak için sor',
   Asking: 'Soruluyor',
   'Waiting for {who}': '{who} bekleniyor',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Bu bilgisayar henüz eşleştirilemiyor: hesabın hizmetinin güncellenmesi gerekiyor.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} eski bir Orden çalıştırıyor: eşleştirmek için orada güncelleyin.',
   '{device} offers this computer your web logins':
     '{device}, bu bilgisayara web oturumlarınızı sunuyor',
   '{who} did not let you in': '{who} sizi içeri almadı',

@@ -872,12 +872,20 @@
         {page.notice}
       </p>
     {/if}
-    {#if pages.waiting}
+    {#if pages.unpairable}
+      <!-- The account's service from before pairing by commitment: said, so nobody waits
+           on a request it never held. -->
+      <p class="waiting">
+        {t('This computer can’t be paired yet: the account’s service needs an update.')}
+      </p>
+    {:else if pages.waiting}
       <p class="waiting">
         {t('Waiting for {who}', { who: pages.waiting.device })}
-        <span class="digits"
-          >{pages.waiting.digits.slice(0, 3)} {pages.waiting.digits.slice(3)}</span
-        >
+        {#if pages.waiting.digits}
+          <span class="digits"
+            >{pages.waiting.digits.slice(0, 3)} {pages.waiting.digits.slice(3)}</span
+          >
+        {/if}
       </p>
     {/if}
     <!-- The key offered to this computer: taken, with this computer's own web logins put

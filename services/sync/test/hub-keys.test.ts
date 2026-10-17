@@ -17,6 +17,19 @@ import {
 } from './hub-fakes'
 
 const PUB = 'P'.repeat(44)
+/** The key a computer with the key answers with. */
+const HOLDER = 'H'.repeat(43) + '='
+
+const base64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes))
+
+/** A computer's key and nonce, and its commitment to both, as lib/pairing.ts makes them. */
+async function aKey(): Promise<{ pub: string; nonce: string; commitment: string }> {
+  const pub = crypto.getRandomValues(new Uint8Array(32))
+  const nonce = crypto.getRandomValues(new Uint8Array(32))
+  const both = new Uint8Array([...pub, ...nonce])
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', both))
+  return { pub: base64(pub), nonce: base64(nonce), commitment: base64(digest) }
+}
 const WRAPPED = 'W'.repeat(140)
 const KEY = 'k'.repeat(43)
 const EMAIL = 'keys@example.com'
@@ -40,6 +53,26 @@ describe('the web key', () => {
 
   const hubOf = (one: Computer) => running.of(one.user).hub
 
+  /** The new computer asks, committed. */
+  async function asks(fresh: Computer) {
+    const key = await aKey()
+    await send(hubOf(fresh), fresh.socket, { t: 'want-key', commitment: key.commitment })
+    return key
+  }
+
+  /** And is answered by `holder`, and reveals: what an Allow is then of. */
+  async function asksAndReveals(fresh: Computer, holder: Computer) {
+    const key = await asks(fresh)
+    await send(hubOf(holder), holder.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'N'.repeat(44),
+      pub: HOLDER,
+    })
+    await send(hubOf(fresh), fresh.socket, { t: 'reveal-key', pub: key.pub, nonce: key.nonce })
+    return key
+  }
+
   /** A laptop with the key, a desktop with it too, and a new computer without. */
   async function three(): Promise<{ laptop: Computer; desktop: Computer; fresh: Computer }> {
     const laptop = await computer(env, running, EMAIL, 'Laptop')
@@ -49,28 +82,172 @@ describe('the web key', () => {
     return { laptop, desktop, fresh }
   }
 
-  test('asked for reaches every computer that holds it, and nobody else', async () => {
+  test('asked for reaches every computer that holds it, committed, and nobody else', async () => {
     const { laptop, desktop, fresh } = await three()
     const other = await computer(env, running, EMAIL, 'Tablet', false)
+    const before = env.db.prepare('select public_key from devices where id = ?').get(fresh.id)
 
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    const key = await asks(fresh)
 
-    const wanted = { t: 'key-wanted', device: fresh.id, name: 'Studio', pub: PUB }
+    const wanted = { t: 'key-wanted', device: fresh.id, name: 'Studio', commitment: key.commitment }
     expect(laptop.socket.take()).toEqual([wanted])
     expect(desktop.socket.take()).toEqual([wanted])
     expect(other.socket.take()).toEqual([])
-    expect(fresh.socket.take()).toEqual([])
-    // The key it will be wrapped to is the one the device asked with.
-    expect(env.db.prepare('select public_key from devices where id = ?').get(fresh.id)).toEqual({
-      public_key: PUB,
+    expect(fresh.socket.take()).toEqual([{ t: 'key-asked' }])
+    // No key is taken before it is revealed.
+    expect(env.db.prepare('select public_key from devices where id = ?').get(fresh.id)).toEqual(
+      before,
+    )
+  })
+
+  test('answered, the asking computer reveals to the computer that answered, and only it', async () => {
+    const { laptop, desktop, fresh } = await three()
+    const key = await asks(fresh)
+    laptop.socket.take()
+    desktop.socket.take()
+    fresh.socket.take()
+
+    await send(hubOf(laptop), laptop.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'N'.repeat(44),
+      pub: HOLDER,
     })
+    expect(fresh.socket.take()).toEqual([
+      { t: 'key-answered', from: laptop.id, nonce: 'N'.repeat(44), pub: HOLDER },
+    ])
+    // The first answer stands.
+    await send(hubOf(desktop), desktop.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'M'.repeat(44),
+      pub: HOLDER,
+    })
+    expect(fresh.socket.take()).toEqual([])
+
+    await send(hubOf(fresh), fresh.socket, { t: 'reveal-key', pub: key.pub, nonce: key.nonce })
+    expect(laptop.socket.take()).toEqual([
+      { t: 'key-revealed', device: fresh.id, pub: key.pub, nonce: key.nonce },
+    ])
+    expect(desktop.socket.take()).toEqual([])
+    expect(env.db.prepare('select public_key from devices where id = ?').get(fresh.id)).toEqual({
+      public_key: key.pub,
+    })
+  })
+
+  test('takes no reveal other than what was committed to, and no answer from a computer without the key', async () => {
+    const { laptop, fresh } = await three()
+    const other = await computer(env, running, EMAIL, 'Tablet', false)
+    const key = await asks(fresh)
+    fresh.socket.take()
+
+    await send(hubOf(other), other.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'N'.repeat(44),
+      pub: HOLDER,
+    })
+    expect(other.socket.take()).toEqual([
+      { t: 'refused', to: 'answer-key', error: 'only a computer with the key answers' },
+    ])
+    expect(fresh.socket.take()).toEqual([])
+
+    await send(hubOf(laptop), laptop.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'N'.repeat(44),
+      pub: HOLDER,
+    })
+    laptop.socket.take()
+    fresh.socket.take()
+    const swapped = await aKey()
+    await send(hubOf(fresh), fresh.socket, { t: 'reveal-key', pub: swapped.pub, nonce: key.nonce })
+    expect(fresh.socket.take()).toEqual([
+      { t: 'refused', to: 'reveal-key', error: 'not what this computer committed to' },
+    ])
+    expect(laptop.socket.take()).toEqual([])
+
+    // Nor is an Allow of a computer that never revealed.
+    await send(hubOf(laptop), laptop.socket, {
+      t: 'grant-key',
+      to: fresh.id,
+      wrapped: WRAPPED,
+      generation: 1,
+    })
+    expect(fresh.socket.take()).toEqual([])
+    expect(
+      env.db.prepare('select count(*) as many from web_keys where device_id = ?').get(fresh.id),
+    ).toEqual({ many: 0 })
+  })
+
+  test('asked again with the same commitment once answered, the answer comes back', async () => {
+    const { laptop, fresh } = await three()
+    const key = await asks(fresh)
+    await send(hubOf(laptop), laptop.socket, {
+      t: 'answer-key',
+      to: fresh.id,
+      nonce: 'N'.repeat(44),
+      pub: HOLDER,
+    })
+    fresh.socket.take()
+    laptop.socket.take()
+
+    await send(hubOf(fresh), fresh.socket, { t: 'want-key', commitment: key.commitment })
+    expect(fresh.socket.take()).toEqual([
+      { t: 'key-asked' },
+      { t: 'key-answered', from: laptop.id, nonce: 'N'.repeat(44), pub: HOLDER },
+    ])
+    expect(laptop.socket.take()).toEqual([])
+  })
+
+  test('the computer that answered hears the reveal again when it connects again', async () => {
+    const laptop = await computer(env, running, EMAIL, 'Laptop')
+    const fresh = await computer(env, running, EMAIL, 'Studio', false)
+    const key = await asksAndReveals(fresh, laptop)
+    await hangUp(hubOf(laptop), running.of(laptop.user).state, laptop.socket)
+
+    const back = connect(hubOf(laptop), {
+      device: laptop.id,
+      who: laptop.user,
+      session: laptop.session,
+    })
+    await send(hubOf(laptop), back, {
+      t: 'hello',
+      device: laptop.id,
+      name: 'Laptop',
+      platform: 'windows',
+      app: '1',
+    })
+    expect(back.take()).toEqual([
+      { t: 'key', wrapped: 'w'.repeat(60), generation: 1 },
+      { t: 'key-revealed', device: fresh.id, pub: key.pub, nonce: key.nonce },
+    ])
+  })
+
+  test('a computer from before the commitment is told to update, and is not relayed', async () => {
+    const { laptop, fresh } = await three()
+    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    expect(fresh.socket.take()).toEqual([
+      { t: 'refused', to: 'want-key-old', error: 'update Orden on this computer to pair it' },
+    ])
+    expect(laptop.socket.take()).toEqual([
+      { t: 'key-wanted-old', device: fresh.id, name: 'Studio' },
+    ])
+    await send(hubOf(laptop), laptop.socket, {
+      t: 'grant-key',
+      to: fresh.id,
+      wrapped: WRAPPED,
+      generation: 1,
+    })
+    expect(fresh.socket.take()).toEqual([])
   })
 
   test('given reaches the new computer, closes the other prompts, and tells the address', async () => {
     const { laptop, desktop, fresh } = await three()
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    await asksAndReveals(fresh, laptop)
     laptop.socket.take()
     desktop.socket.take()
+    fresh.socket.take()
 
     const sent = await mail(() =>
       send(hubOf(laptop), laptop.socket, {
@@ -96,7 +273,8 @@ describe('the web key', () => {
 
   test('given twice at once is given once', async () => {
     const { laptop, desktop, fresh } = await three()
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    await asksAndReveals(fresh, laptop)
+    fresh.socket.take()
     const grant = { t: 'grant-key', to: fresh.id, wrapped: WRAPPED, generation: 1 }
 
     const sent = await mail(async () => {
@@ -111,9 +289,10 @@ describe('the web key', () => {
 
   test('refused tells the new computer, and closes the other prompts', async () => {
     const { laptop, desktop, fresh } = await three()
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    await asksAndReveals(fresh, laptop)
     laptop.socket.take()
     desktop.socket.take()
+    fresh.socket.take()
 
     await send(hubOf(laptop), laptop.socket, { t: 'deny-key', to: fresh.id })
 
@@ -141,7 +320,7 @@ describe('the web key', () => {
     const fresh = await computer(env, running, EMAIL, 'Studio', false)
     await hangUp(hubOf(laptop), running.of(laptop.user).state, laptop.socket)
 
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    const key = await asks(fresh)
 
     const back = connect(hubOf(laptop), {
       device: laptop.id,
@@ -157,7 +336,7 @@ describe('the web key', () => {
     })
     expect(back.take()).toEqual([
       { t: 'key', wrapped: 'w'.repeat(60), generation: 1 },
-      { t: 'key-wanted', device: fresh.id, name: 'Studio', pub: PUB },
+      { t: 'key-wanted', device: fresh.id, name: 'Studio', commitment: key.commitment },
     ])
   })
 
@@ -165,7 +344,7 @@ describe('the web key', () => {
     const laptop = await computer(env, running, EMAIL, 'Laptop')
     const fresh = await computer(env, running, EMAIL, 'Studio', false)
     const { state } = running.of(laptop.user)
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    await asks(fresh)
     await hangUp(hubOf(fresh), state, fresh.socket)
     await hangUp(hubOf(laptop), state, laptop.socket)
 
@@ -187,19 +366,23 @@ describe('the web key', () => {
 
   test('asked for again is the same request, and a sixth new one in an hour is refused', async () => {
     const { laptop, fresh } = await three()
+    const key = await aKey()
     for (let asked = 0; asked < 10; asked++) {
-      await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+      await send(hubOf(fresh), fresh.socket, { t: 'want-key', commitment: key.commitment })
     }
     expect(laptop.socket.take()).toHaveLength(10)
-    expect(fresh.socket.take()).toEqual([])
+    expect(fresh.socket.take()).toEqual(Array.from({ length: 10 }, () => ({ t: 'key-asked' })))
 
-    // Four more, each with a fresh public key, is five requests in all.
+    // Four more, each with a fresh commitment, is five requests in all.
     for (let asked = 0; asked < 4; asked++) {
-      await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: `${'Q'.repeat(43)}${asked}` })
+      await send(hubOf(fresh), fresh.socket, {
+        t: 'want-key',
+        commitment: (await aKey()).commitment,
+      })
     }
-    expect(fresh.socket.take()).toEqual([])
+    expect(fresh.socket.take().filter((one) => one.t === 'refused')).toEqual([])
 
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: 'R'.repeat(44) })
+    await send(hubOf(fresh), fresh.socket, { t: 'want-key', commitment: (await aKey()).commitment })
     expect(fresh.socket.take()).toEqual([
       {
         t: 'refused',
@@ -285,7 +468,8 @@ describe('the web key', () => {
       send: () => Promise.reject(new Error('the provider is down')),
     }
     env.MAIL_FROM = 'Nib <nib@nibeditor.com>'
-    await send(hubOf(fresh), fresh.socket, { t: 'want-key', pub: PUB })
+    await asksAndReveals(fresh, laptop)
+    fresh.socket.take()
 
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     await send(hubOf(laptop), laptop.socket, {

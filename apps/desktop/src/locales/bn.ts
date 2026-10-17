@@ -1238,6 +1238,10 @@ export const bn: Dictionary = {
   'Ask to join': 'যোগ দিতে চান',
   Asking: 'জিজ্ঞাসা করা হচ্ছে',
   'Waiting for {who}': '{who}-র জন্য অপেক্ষা',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'এই কম্পিউটারটি এখনও জোড়া লাগানো যাবে না: অ্যাকাউন্টের পরিষেবা আপডেট প্রয়োজন।',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} পুরোনো Orden চালাচ্ছে: জোড়া লাগাতে সেখানে আপডেট করুন।',
   '{device} offers this computer your web logins':
     '{device} এই কম্পিউটারকে আপনার ওয়েব লগইন দিচ্ছে',
   '{who} did not let you in': '{who} আপনাকে ঢুকতে দেননি',

@@ -1248,6 +1248,10 @@ export const sw: Dictionary = {
   'Ask to join': 'Omba kujiunga',
   Asking: 'Inaomba',
   'Waiting for {who}': 'Inasubiri {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Kompyuta hii bado haiwezi kuoanishwa: huduma ya akaunti inahitaji kusasishwa.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} inatumia Orden ya zamani: isasishe huko ili kuioanisha.',
   '{device} offers this computer your web logins':
     '{device} inakipa kompyuta hii kuingia kwako kwenye wavuti',
   '{who} did not let you in': '{who} hakukuruhusu kuingia',

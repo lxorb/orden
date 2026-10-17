@@ -1235,6 +1235,10 @@ export const my: Dictionary = {
   'Ask to join': 'ဝင်ခွင့်တောင်းပါ',
   Asking: 'တောင်းနေသည်',
   'Waiting for {who}': '{who} ကို စောင့်နေသည်',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ဤကွန်ပျူတာကို ယခု မတွဲနိုင်သေးပါ- အကောင့်၏ ဝန်ဆောင်မှုကို အပ်ဒိတ်လုပ်ရန် လိုသည်။',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} တွင် Orden ဗားရှင်းဟောင်း သုံးနေသည်- တွဲရန် ထိုနေရာတွင် အပ်ဒိတ်လုပ်ပါ။',
   '{device} offers this computer your web logins':
     '{device} က ဤကွန်ပျူတာကို သင်၏ ဝဘ်ဝင်ရောက်မှုများ ပေးနေသည်',
   '{who} did not let you in': '{who} သင့်ကို ဝင်ခွင့်မပြုပါ',

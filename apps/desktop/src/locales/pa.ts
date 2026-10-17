@@ -1244,6 +1244,10 @@ export const pa: Dictionary = {
   'Ask to join': 'ਜੁੜਨ ਲਈ ਮੰਗੋ',
   Asking: 'ਮੰਗ ਰਿਹਾ ਹੈ',
   'Waiting for {who}': '{who} ਦੀ ਉਡੀਕ',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਨੂੰ ਅਜੇ ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਦਾ: ਖਾਤੇ ਦੀ ਸੇਵਾ ਨੂੰ ਅੱਪਡੇਟ ਦੀ ਲੋੜ ਹੈ।',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} ਪੁਰਾਣਾ Orden ਚਲਾ ਰਿਹਾ ਹੈ: ਜੋੜਨ ਲਈ ਉਸਨੂੰ ਉੱਥੇ ਅੱਪਡੇਟ ਕਰੋ।',
   '{device} offers this computer your web logins':
     '{device} ਇਸ ਕੰਪਿਊਟਰ ਨੂੰ ਤੁਹਾਡੇ ਵੈੱਬ ਲੌਗਇਨ ਦੇ ਰਿਹਾ ਹੈ',
   '{who} did not let you in': '{who} ਨੇ ਤੁਹਾਨੂੰ ਅੰਦਰ ਨਹੀਂ ਆਉਣ ਦਿੱਤਾ',

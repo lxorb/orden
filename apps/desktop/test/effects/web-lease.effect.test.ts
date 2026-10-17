@@ -166,6 +166,55 @@ test('a computer offered the web key says by which one, and takes it on Join', (
   workspace.close(tab.id)
 })
 
+test('a computer that cannot be paired yet says so under the bar, in place of waiting', () => {
+  const tab = webTab()
+  pages.waiting = { device: 'Desktop', digits: '' }
+  pages.unpairable = true
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+
+  const line = target.querySelector('.waiting')
+  expect(line?.textContent).toContain('This computer can’t be paired yet')
+  expect(target.textContent).not.toContain('Waiting for Desktop')
+
+  pages.unpairable = false
+  pages.waiting = null
+  void unmount(app)
+  workspace.close(tab.id)
+})
+
+test('a computer from before pairing by commitment is shown as one to update', () => {
+  const approval = new Approval({
+    hub: {
+      leads: true,
+      on: () => () => undefined,
+      opened: () => () => undefined,
+      introduce: () => undefined,
+      send: () => true,
+    },
+    pub: () => Promise.resolve('bWluZQ=='),
+    wrap: (pub) => Promise.resolve({ wrapped: `for-${pub}`, generation: 1 }),
+    accept: () => Promise.resolve(),
+    holds: () => Promise.resolve(true),
+    rotate: () => Promise.resolve(1),
+    devices: () => Promise.resolve([]),
+    settle: () => Promise.resolve(),
+    heldWithin: () => new Promise(() => undefined),
+  })
+  approval.older = [{ device: 'old-000001', name: 'Old laptop' }]
+
+  const app = mount(WebApprove, { target, props: { approval } })
+  flushSync()
+  const bubble = target.querySelector('.approve')
+  expect(bubble?.textContent).toContain('Old laptop runs an older Orden')
+  bubble?.querySelector('button')?.click()
+  flushSync()
+  expect(approval.older).toEqual([])
+
+  void unmount(app)
+})
+
 test('a computer that has the key is asked in a bubble, with the digits, and answers', async () => {
   const sent: unknown[] = []
   const approval = new Approval({
@@ -180,13 +229,13 @@ test('a computer that has the key is asked in a bubble, with the digits, and ans
       },
     },
     pub: () => Promise.resolve('bWluZQ=='),
-    digits: () => Promise.resolve('000000'),
     wrap: (pub) => Promise.resolve({ wrapped: `for-${pub}`, generation: 1 }),
     accept: () => Promise.resolve(),
     holds: () => Promise.resolve(true),
     rotate: () => Promise.resolve(1),
     devices: () => Promise.resolve([]),
     settle: () => Promise.resolve(),
+    heldWithin: () => new Promise(() => undefined),
   })
   approval.asking = [{ device: 'new-000001', name: 'Desktop', pub: 'bmV3', digits: '482913' }]
 

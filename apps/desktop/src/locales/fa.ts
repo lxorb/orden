@@ -1242,6 +1242,10 @@ export const fa: Dictionary = {
   'Ask to join': 'خواستن پیوستن',
   Asking: 'در حال خواستن',
   'Waiting for {who}': 'در انتظار {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'این رایانه هنوز قابل جفت‌شدن نیست: سرویس حساب نیاز به به‌روزرسانی دارد.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} نسخهٔ قدیمی‌تر Orden را اجرا می‌کند: برای جفت‌کردن، آن را همان‌جا به‌روز کنید.',
   '{device} offers this computer your web logins':
     '{device} ورودهای وب شما را به این رایانه پیشنهاد می‌کند',
   '{who} did not let you in': '{who} شما را راه نداد',

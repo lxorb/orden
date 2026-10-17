@@ -1227,6 +1227,10 @@ export const am: Dictionary = {
   'Ask to join': 'ለመቀላቀል ጠይቅ',
   Asking: 'በመጠየቅ ላይ',
   'Waiting for {who}': '{who}ን በመጠበቅ ላይ',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ይህ ኮምፒውተር ገና ሊጣመር አይችልም፦ የመለያው አገልግሎት መዘመን አለበት።',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} የቆየ Orden እያሄደ ነው፦ ለማጣመር እዚያ ያዘምኑት።',
   '{device} offers this computer your web logins': '{device} የድር መግቢያዎችዎን ለዚህ ኮምፒውተር ያቀርባል',
   '{who} did not let you in': '{who} እንድትገባ አልፈቀደም',
   'What the others in this space see.': 'በዚህ ቦታ ሌሎች የሚያዩት።',

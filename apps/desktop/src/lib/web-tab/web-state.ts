@@ -156,7 +156,6 @@ function isWrapped(value: unknown): value is Wrapped {
   return isRecord(value) && isString(value.wrapped) && isNumber(value.generation)
 }
 
-const isDigits = (value: unknown): value is string => isString(value) && /^\d{6}$/.test(value)
 const isName = (value: unknown): value is string => isString(value) && /^[0-9a-f]{64}$/.test(value)
 
 /** A site's state, out of a web store and into another. `store` is the store's name as
@@ -245,11 +244,6 @@ export const webKey = {
   /** This computer's public key, base64, made the first time. */
   device(): Promise<string> {
     return asked('web_key_device', {}, isString)
-  },
-
-  /** The six digits both screens show while `publicKey`'s computer is approved. */
-  digits(publicKey: string): Promise<string> {
-    return asked('web_key_digits', { publicKey }, isDigits)
   },
 
   /** The web key wrapped to another computer: what Allow sends through the hub. */

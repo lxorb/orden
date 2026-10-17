@@ -1243,6 +1243,10 @@ export const te: Dictionary = {
   'Ask to join': 'చేరేందుకు అడుగు',
   Asking: 'అడుగుతోంది',
   'Waiting for {who}': '{who} కోసం వేచి ఉంది',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'ఈ కంప్యూటర్‌ను ఇంకా జత చేయలేరు: ఖాతా సేవకు అప్‌డేట్ అవసరం.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} పాత Orden నడుపుతోంది: జత చేయడానికి అక్కడ అప్‌డేట్ చేయండి.',
   '{device} offers this computer your web logins':
     '{device} ఈ కంప్యూటర్‌కు మీ వెబ్ లాగిన్‌లను అందిస్తోంది',
   '{who} did not let you in': '{who} మిమ్మల్ని అనుమతించలేదు',

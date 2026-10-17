@@ -1285,6 +1285,10 @@ export const ar: Dictionary = {
   'Ask to join': 'طلب الانضمام',
   Asking: 'جارٍ الطلب',
   'Waiting for {who}': 'في انتظار {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'لا يمكن إقران هذا الحاسوب بعد: خدمة الحساب تحتاج إلى تحديث.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'يعمل {device} بإصدار أقدم من Orden: حدّثه هناك لإقرانه.',
   '{device} offers this computer your web logins':
     'يعرض {device} على هذا الحاسوب تسجيلات دخولك إلى الويب',
   '{who} did not let you in': '{who} لم يسمح لك بالدخول',

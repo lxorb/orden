@@ -1278,6 +1278,10 @@ export const ru: Dictionary = {
   'Ask to join': 'Попросить доступ',
   Asking: 'Запрос',
   'Waiting for {who}': 'Ожидание {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Этот компьютер пока нельзя связать: службе аккаунта нужно обновление.',
+  '{device} runs an older Orden: update it there to pair it.':
+    'На {device} старая версия Orden: обновите её там, чтобы связать.',
   '{device} offers this computer your web logins':
     '{device} предлагает этому компьютеру ваши входы на сайты',
   '{who} did not let you in': '{who} не дал вам доступ',

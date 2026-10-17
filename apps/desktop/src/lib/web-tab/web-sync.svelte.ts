@@ -36,7 +36,6 @@ function begin(): void {
   const approval = new Approval({
     hub,
     pub: () => webKey.device(),
-    digits: (pub) => webKey.digits(pub),
     wrap: (pub) => webKey.wrap(pub),
     accept: async (wrapped) => {
       await webKey.accept(wrapped)
@@ -45,6 +44,7 @@ function begin(): void {
     rotate: () => webKey.rotate(),
     devices: accountDevices,
     settle: () => waited(1500),
+    heldWithin: () => waited(8000),
   })
 
   const leases = new Leases(leaseWorld(approval))
@@ -90,7 +90,11 @@ function begin(): void {
     // The quiet line under a web tab's bar while this computer waits for the key.
     $effect(() => {
       const waiting = approval.waiting
-      untrack(() => (pages.waiting = waiting))
+      const unpairable = approval.unpairable
+      untrack(() => {
+        pages.waiting = waiting
+        pages.unpairable = unpairable
+      })
     })
     // And the key offered, with the Join that takes it.
     $effect(() => {
@@ -103,7 +107,7 @@ function begin(): void {
     })
 
     // A computer asking this one for the key: the bubble, while one asks.
-    const asking = $derived(approval.asking.length > 0)
+    const asking = $derived(approval.asking.length > 0 || approval.older.length > 0)
     $effect(() => {
       if (!asking) return
       const bubble = untrack(() =>

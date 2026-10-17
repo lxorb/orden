@@ -1232,6 +1232,10 @@ export const vi: Dictionary = {
   'Ask to join': 'Xin vào',
   Asking: 'Đang xin',
   'Waiting for {who}': 'Đang chờ {who}',
+  'This computer can’t be paired yet: the account’s service needs an update.':
+    'Chưa thể ghép nối máy tính này: dịch vụ của tài khoản cần được cập nhật.',
+  '{device} runs an older Orden: update it there to pair it.':
+    '{device} đang dùng Orden cũ: hãy cập nhật ở đó để ghép nối.',
   '{device} offers this computer your web logins':
     '{device} đề nghị máy tính này dùng các đăng nhập web của bạn',
   '{who} did not let you in': '{who} không cho bạn vào',

@@ -2,9 +2,17 @@
  *  the hub carries the two halves between them without ever holding the key.
  *
  *  The key only ever travels wrapped to a device's public key, so what passes
- *  through here is ciphertext; what the person compares is six digits worked out
- *  from the new computer's public key on both screens, which is what a hub that
- *  swapped in a key of its own could not match. Bitwarden's "log in with device" is
+ *  through here is ciphertext; what the person compares is six digits on both screens,
+ *  worked out the way lib/pairing.ts says: the asking computer commits to its key and a
+ *  nonce, a computer with the key answers with a nonce of its own and its key, and only
+ *  then does the asking computer reveal its key and nonce, which have to be what it
+ *  committed to (`opens`, ../pairing.ts). The digits come out of both keys and both
+ *  nonces, so nobody between the two screens - this hub included - can choose a key that
+ *  shows the same ones, and the approval can only be of a computer that revealed.
+ *
+ *  A computer from before the commitment asks with its key straight away. That request
+ *  is not relayed: it is told to update, and the computers with the key are told it
+ *  asked, so nobody is left waiting on digits that would mean nothing. Bitwarden's "log in with device" is
  *  the same shape, and its fifteen minutes is where a request's life comes from: a
  *  request lives while the asking computer is connected and fifteen minutes after,
  *  so an approval prompt never turns up long after anybody was waiting on it.
@@ -25,6 +33,7 @@ import { setPublicKey } from './devices'
 import { type FromDevice, say } from './frames'
 import { type Attached, attach, attachedTo, everySocket, socketOf, socketsOf } from './sockets'
 import { wipeWebState } from './bucket'
+import { opens } from '../pairing'
 
 /** How long a request for the key outlives the asking computer's socket. */
 const WANT_FOR = 15 * 60 * 1000
@@ -42,18 +51,41 @@ export interface Relay {
   rotated(): Promise<void>
 }
 
+/** What a computer from before the commitment is told, in words it shows nowhere but
+ *  which say what to do. */
+const UPDATE_TO_PAIR = 'update Orden on this computer to pair it'
+
+/** A request for the key, as far as it has come: committed, then answered by one computer
+ *  with the key, then revealed. */
 interface Want {
-  pub: string
+  commitment: string
   name: string
   at: number
+  answer?: { from: string; nonce: string; pub: string }
+  revealed?: { pub: string; nonce: string }
 }
+
+const isText = (value: unknown): value is string => typeof value === 'string'
 
 function readWant(value: unknown): Want | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Partial<Want>
-  return typeof one.pub === 'string' && typeof one.name === 'string' && typeof one.at === 'number'
-    ? { pub: one.pub, name: one.name, at: one.at }
-    : null
+  if (!isText(one.commitment) || !isText(one.name) || typeof one.at !== 'number') return null
+  const answer =
+    one.answer && isText(one.answer.from) && isText(one.answer.nonce) && isText(one.answer.pub)
+      ? one.answer
+      : undefined
+  const revealed =
+    one.revealed && isText(one.revealed.pub) && isText(one.revealed.nonce)
+      ? one.revealed
+      : undefined
+  return {
+    commitment: one.commitment,
+    name: one.name,
+    at: one.at,
+    ...(answer ? { answer } : {}),
+    ...(revealed ? { revealed } : {}),
+  }
 }
 
 function stillWanted(relay: Relay, device: string, want: Want): boolean {
@@ -68,29 +100,109 @@ function toKeyHolders(relay: Relay, frame: Parameters<typeof say>[1], except?: s
   }
 }
 
-/** A computer without the key asks for it. Asked again with the same public key
- *  it is the same request, carried to the key holders again and not counted twice:
- *  a computer on a flaky connection asks on every reconnect. */
+/** A computer without the key asks for it, committed to its key and a nonce. Asked
+ *  again with the same commitment it is the same request - a computer on a flaky
+ *  connection asks on every reconnect - carried to the key holders again while nobody
+ *  has answered it, its answer handed back again once somebody has, and not counted
+ *  twice. A new commitment is a new request, and any prompt about the old one closes. */
 export async function wantKey(
   relay: Relay,
   socket: WebSocket,
   me: Attached,
-  pub: string,
+  commitment: string,
 ): Promise<void> {
   if (me.keyed) return
 
   const held = readWant(await relay.ctx.storage.get(WANT + me.device))
-  const again = held?.pub === pub && stillWanted(relay, me.device, held)
+  const again = held?.commitment === commitment && stillWanted(relay, me.device, held)
 
-  if (!again && !(await mayAskForWebKey(relay.env, me.who))) {
+  if (again) {
+    say(socket, { t: 'key-asked' })
+    if (!held.answer) {
+      toKeyHolders(
+        relay,
+        { t: 'key-wanted', device: me.device, name: me.name, commitment },
+        me.device,
+      )
+    } else if (!held.revealed) {
+      say(socket, { t: 'key-answered', ...held.answer })
+    }
+    return
+  }
+
+  if (!(await mayAskForWebKey(relay.env, me.who))) {
     say(socket, { t: 'refused', to: 'want-key', error: TRY_IN_AN_HOUR })
     return
   }
 
-  if (!(await setPublicKey(relay.env, me.who, me.device, pub))) return
+  if (held?.answer) toKeyHolders(relay, { t: 'key-settled', device: me.device }, me.device)
+  await relay.ctx.storage.put(WANT + me.device, { commitment, name: me.name, at: Date.now() })
+  say(socket, { t: 'key-asked' })
+  toKeyHolders(relay, { t: 'key-wanted', device: me.device, name: me.name, commitment }, me.device)
+}
 
-  await relay.ctx.storage.put(WANT + me.device, { pub, name: me.name, at: Date.now() })
-  toKeyHolders(relay, { t: 'key-wanted', device: me.device, name: me.name, pub }, me.device)
+/** A computer from before the commitment asking: told to update, and the computers with
+ *  the key told it asked. `refused` names its own frame, which that computer does not
+ *  answer by asking again. */
+export function wantKeyOld(relay: Relay, socket: WebSocket, me: Attached): void {
+  if (me.keyed) return
+  say(socket, { t: 'refused', to: 'want-key-old', error: UPDATE_TO_PAIR })
+  toKeyHolders(relay, { t: 'key-wanted-old', device: me.device, name: me.name }, me.device)
+}
+
+/** A computer with the key answering one that asked, once: the first answer stands, and
+ *  the computer that gave it may give a fresh one until the asking computer has
+ *  revealed. */
+export async function answerKey(
+  relay: Relay,
+  socket: WebSocket,
+  me: Attached,
+  answer: Extract<FromDevice, { t: 'answer-key' }>,
+): Promise<void> {
+  if (!me.keyed) {
+    say(socket, { t: 'refused', to: 'answer-key', error: 'only a computer with the key answers' })
+    return
+  }
+  const want = readWant(await relay.ctx.storage.get(WANT + answer.to))
+  if (!want || !stillWanted(relay, answer.to, want)) return
+  if (want.answer && want.answer.from !== me.device) return
+
+  const answered: Want = {
+    commitment: want.commitment,
+    name: want.name,
+    at: want.at,
+    answer: { from: me.device, nonce: answer.nonce, pub: answer.pub },
+  }
+  await relay.ctx.storage.put(WANT + answer.to, answered)
+  for (const target of socketsOf(relay.ctx, answer.to)) {
+    say(target, { t: 'key-answered', from: me.device, nonce: answer.nonce, pub: answer.pub })
+  }
+}
+
+/** The asking computer's key and nonce: what it committed to, or nothing. The key is the
+ *  one its device is known by from here on, and the one its approval is of. */
+export async function revealKey(
+  relay: Relay,
+  socket: WebSocket,
+  me: Attached,
+  reveal: Extract<FromDevice, { t: 'reveal-key' }>,
+): Promise<void> {
+  if (me.keyed) return
+  const want = readWant(await relay.ctx.storage.get(WANT + me.device))
+  if (!want?.answer || want.revealed) return
+  if (!(await opens(want.commitment, reveal.pub, reveal.nonce))) {
+    say(socket, { t: 'refused', to: 'reveal-key', error: 'not what this computer committed to' })
+    return
+  }
+  if (!(await setPublicKey(relay.env, me.who, me.device, reveal.pub))) return
+
+  await relay.ctx.storage.put(WANT + me.device, {
+    ...want,
+    revealed: { pub: reveal.pub, nonce: reveal.nonce },
+  })
+  for (const target of socketsOf(relay.ctx, want.answer.from)) {
+    say(target, { t: 'key-revealed', device: me.device, pub: reveal.pub, nonce: reveal.nonce })
+  }
 }
 
 /** Every request still waiting, for a key holder that has just connected. */
@@ -103,10 +215,16 @@ export async function wantedOf(relay: Relay, socket: WebSocket, me: Attached): P
     const want = readWant(value)
     if (!want || device === me.device) continue
 
-    if (stillWanted(relay, device, want)) {
-      say(socket, { t: 'key-wanted', device, name: want.name, pub: want.pub })
-    } else {
+    if (!stillWanted(relay, device, want)) {
       await relay.ctx.storage.delete(name)
+      continue
+    }
+    // Unanswered, it is asked of this computer like any other; answered by this one and
+    // revealed, the reveal comes again, so a computer that reconnected can still show it.
+    if (!want.answer) {
+      say(socket, { t: 'key-wanted', device, name: want.name, commitment: want.commitment })
+    } else if (want.answer.from === me.device && want.revealed) {
+      say(socket, { t: 'key-revealed', device, ...want.revealed })
     }
   }
 }
@@ -172,7 +290,8 @@ export async function grantKey(
     mine: row.mine === 1,
     current: row.current,
     held: row.held,
-    wanted: want !== null && stillWanted(relay, grant.to, want),
+    // Only a computer that revealed the key it committed to: what the person compared.
+    wanted: want?.revealed !== undefined && stillWanted(relay, grant.to, want),
     generation: grant.generation,
   })
 
