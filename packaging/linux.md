@@ -9,6 +9,7 @@ them. Not Flathub; see the section of that name.
 | --- | --- | --- | --- |
 | `apt/` | apt (`apt install orden`, from `lxorb.github.io/apt`) | the `.deb` | amd64, arm64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
+| `aur/orden-git/` | AUR (`yay -S orden-git`) | `main`, compiled on the installing machine | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
 
@@ -176,6 +177,9 @@ By hand, once `apt.yml` is on main: `gh workflow run apt.yml -f suite=stable -f 
 or `-f suite=unstable -f tag=edge`.
 
 ## AUR - `orden-bin`
+
+`orden-git`, beside it and conflicting with it, compiles `main` instead; its recipe
+and its own workflow, `aur.yml`, are described in `aur/README.md`.
 
 `aur/nib-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
 generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. The package
