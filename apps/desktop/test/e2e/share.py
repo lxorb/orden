@@ -20,8 +20,10 @@ nobody. The owner opens the same sheet from the note's own row and gives that on
 note away; the other side gets no space, no folder and no row in the tree - a row
 at the foot of the space switcher, under whoever shared it, which opens a tab that
 syncs through the file's room. The same row and the same tab are photographed on a
-phone. Then a guest follows a link to one canvas and draws on it. Then the owner
-takes the note back and the row and its tab go, with nothing asked.
+phone. Then a guest follows a link to one canvas and is in it, with none of the
+app round it - no bar, no tabs, no file list - on a desktop, after a reload and on
+a phone (#386). Then the owner takes the note back and the row and its tab go,
+with nothing asked.
 
 Everything here is the real thing: the built web app, the Worker under
 `wrangler dev` on workerd, a Durable Object holding the room, the D1 migrations
@@ -441,6 +443,31 @@ def shared_with_you(page: Page, label: str, count: int = 1) -> None:
         f"() => window.nibApp.sharedWithYou.items.length === {count}",
         f"[{label}] a file shared on its own",
     )
+
+
+def landed_alone(page: Page, label: str, note_id: str, wrong) -> None:
+    """That a guest a link gave one file to is in that file, in its room, and that
+    the window is the file: no bar, no tab strip, no file list, no status bar.
+    Every piece of the app's chrome says which edge it is with `data-chrome`."""
+    wait_for(
+        page,
+        f"() => window.nibApp.workspace.active?.note.shared === {json.dumps(note_id)}",
+        f"[{label}] the shared file to open by itself",
+    )
+    wait_for(
+        page,
+        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"[{label}] the file to join its room",
+    )
+    settled(page, label)
+    chrome = page.evaluate(
+        "() => [...document.querySelectorAll('[data-chrome], .strip')]"
+        ".map((one) => one.dataset.chrome ?? one.className)"
+    )
+    if chrome:
+        wrong(f"[{label}] a guest with one file still sees the app round it: {chrome}")
+    if not page.locator(".pane").count():
+        wrong(f"[{label}] the file itself is not on screen")
 
 
 def shared_row(page: Page, name: str):
@@ -946,24 +973,33 @@ def main() -> int:
         if drawer.evaluate("() => window.nibApp.account.user"):
             wrong("a link to one canvas made an account rather than a guest")
 
-        shared_row(drawer, ITEM_CANVAS).locator(".nib-row").click()
-        wait_for(
-            drawer,
-            "() => window.nibApp.workspace.active?.kind === 'canvas'",
-            "[drawer] the shared canvas to open",
-        )
-        wait_for(
-            drawer,
-            f"() => window.nibApp.rooms.carries({json.dumps(plane['id'])})",
-            "[drawer] the canvas to join its room",
-        )
-        settled(drawer, "drawer")
-        drawer.wait_for_timeout(400)
+        # Nothing to press: a link to one file opens it, and the guest who has no
+        # account sees that file and none of the app round it (#386).
+        landed_alone(drawer, "drawer", plane["id"], wrong)
         drawer.screenshot(path=str(SHOTS / "shared-canvas.png"))
-        say("a guest with no account is drawing on one shared canvas")
+        say("a guest with no account is drawing on one shared canvas, and sees nothing else")
 
         if drawer.evaluate("() => window.nibApp.account.spaces.length"):
             wrong("a link to one canvas handed over a space as well")
+
+        # A shared file has no path, so no tab of it outlives the page: coming back
+        # is the file again, alone, rather than the app round an empty space.
+        drawer.reload(wait_until="domcontentloaded")
+        wait_for(drawer, "() => !!window.nibApp", "[drawer] the app to start again")
+        landed_alone(drawer, "drawer", plane["id"], wrong)
+        say("the guest who came back is back in the canvas, alone")
+
+        # The same link on a phone: the same canvas, the same nothing round it.
+        thumb = fresh(browser, "thumb", at=f"{ORIGIN}/join/{found.group(1)}", viewport=PHONE)
+        let_in(thumb, "thumb")
+        landed_alone(thumb, "thumb", plane["id"], wrong)
+        thumb.screenshot(path=str(SHOTS / "shared-canvas-phone.png"))
+        say("and on a phone")
+
+        # Somebody with an account keeps the app round the same file: they have
+        # more than it to move between.
+        if not owner.locator('[data-chrome="top"]').count():
+            wrong("the owner lost the app's bar")
 
         # ── Taking it back ────────────────────────────────────────
         request(
