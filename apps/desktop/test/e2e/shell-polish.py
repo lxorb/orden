@@ -942,7 +942,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
             len(marked) == 1,
             f"[{label}] one note wears the mark and no other row does ({marked})",
         )
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{label}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{label}.png"))
         say(f"[{label}] wrote tree-{label}.png")
         for one in shared:
             check(
