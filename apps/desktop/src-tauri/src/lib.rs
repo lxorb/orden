@@ -690,33 +690,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
-    // The opener is how a link leaves the app anywhere, and the os plugin is how
-    // the window knows which build it is running as.
-    //
-    // Without the script the opener puts in every webview by default, a web tab's
-    // included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
-    // link away from the page and asks the opener to hand the link to the system
-    // browser, which a site is never granted: so in a web tab those presses did
-    // nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
-    // *"Ctrl + click to open a new web page doesn't work."* A page's links open the
-    // way a browser opens them, and the engine asks this app for the window; see
-    // web_opens.rs. The app's own links are pressed through its own code, and each
-    // one says where it goes; see open-link.ts.
-    //
     // Deep links come after single instance above, which is the order that plugin
     // asks for: on Windows and Linux a `nib://` link reaching an app that is
     // already open arrives as a second launch, and single instance is what hands
     // it over to be read as a link. See uris.rs.
-    let builder = builder
-        .plugin(
-            tauri_plugin_opener::Builder::new()
-                .open_js_links_on_click(false)
-                .build(),
-        )
-        .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .manage(Picked::default())
-        .manage(uris::Pending::default());
+    let builder = links_out_and_in(builder);
     trace::mark("plugins: opener, os, deep link");
 
     // Sync's store and the watch on the space folders: two empty slots, filled when the
@@ -798,6 +776,33 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             std::process::exit(1);
         })
         .run(on_event);
+}
+
+/// The plugins every build has, the phone's too: the opener, which is how a link leaves
+/// the app anywhere, the os plugin, which is how the window knows which build it is
+/// running as, and deep links; with the paths the reader picked in a dialog of the
+/// system's (`Picked`) and the links the app was launched by (`uris::Pending`).
+///
+/// Without the script the opener puts in every webview by default, a web tab's
+/// included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
+/// link away from the page and asks the opener to hand the link to the system
+/// browser, which a site is never granted: so in a web tab those presses did
+/// nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
+/// *"Ctrl + click to open a new web page doesn't work."* A page's links open the
+/// way a browser opens them, and the engine asks this app for the window; see
+/// `web_opens.rs`. The app's own links are pressed through its own code, and each
+/// one says where it goes; see open-link.ts.
+fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init())
+        .manage(Picked::default())
+        .manage(uris::Pending::default())
 }
 
 /// The window's commands, each saying by name while it runs on the window's thread what

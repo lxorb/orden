@@ -3098,7 +3098,7 @@ mod shot {
         let height = usize::try_from(pixels.height).ok()?;
         let mut rgba = Vec::with_capacity(width.checked_mul(height)?.checked_mul(4)?);
         for row in pixels.data.chunks(pixels.stride.max(1)).take(height) {
-            for one in row.get(..width.checked_mul(4)?)?.chunks_exact(4) {
+            for one in row.get(..width.checked_mul(4)?)?.as_chunks::<4>().0 {
                 let (blue, green, red, alpha) = (one[0], one[1], one[2], one[3]);
                 let unmixed = |value: u8| {
                     if alpha == 0 {

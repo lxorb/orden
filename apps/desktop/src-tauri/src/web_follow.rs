@@ -226,7 +226,7 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
 /// Places a page in the window's own units at `scale`: screen pixels where the runtime
 /// positions child webviews, and GTK's layout pixels on Linux, where the page is in an
 /// overlay. The Linux runtime bounds leave it beside the app's webview, where GTK shares
-/// their height; see web_overlay.rs.
+/// their height; see `web_overlay.rs`.
 #[cfg_attr(
     target_os = "linux",
     allow(

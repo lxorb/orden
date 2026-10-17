@@ -1,8 +1,8 @@
-//! Runtime choices for the system WebKitGTK engine on Linux.
+//! Runtime choices for the system `WebKitGTK` engine on Linux.
 
-/// Disable accelerated compositing for native Wayland sessions, before WebKitGTK starts.
+/// Disable accelerated compositing for native Wayland sessions, before `WebKitGTK` starts.
 ///
-/// WebKitGTK's accelerated compositing has produced repeated blank or partially rendered
+/// `WebKitGTK`'s accelerated compositing has produced repeated blank or partially rendered
 /// frames on Wayland. Its software compositing path avoids that surface handoff. Leave
 /// X11 alone, and let a reader's explicit setting take precedence.
 pub fn prepare_rendering() {
