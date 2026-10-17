@@ -11,10 +11,26 @@ name: release
 # Nix is not served from here. The stable flake in packaging/nix follows the
 # release, and anyone who wants the edge builds it from the `unstable` branch
 # themselves; there is no branch holding a flake pinned to edge's binaries.
+#
+# A push that changes nothing a build is made of builds nothing: the documents, every
+# Markdown file and the tests. GitHub reads these filters for a branch only, so a tag
+# always builds; and a push that touches anything else as well builds as before. Nothing
+# below reads a Markdown file or a test into what it ships - `vite build` and the crate
+# import neither, and the installers carry no document.
 on:
   push:
     tags: ['v*']
     branches: [unstable]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.test.ts'
+      - 'apps/desktop/test/**'
+      # Not every package's: `@nib/sync-core/sim` is a folder of its tests that the
+      # package exports.
+      - 'packages/editor/test/**'
+      - 'packages/glasses/test/**'
+      - 'services/*/test/**'
   workflow_dispatch:
 
 # A build of `unstable` is never cancelled by a newer push: pushes came faster
@@ -53,12 +69,21 @@ jobs:
         shell: bash
         run: bash scripts/build-version.sh edge
 
-  # With Azure on, a push to `unstable` is built only once the branch has been still
-  # for a few minutes: pushes come in bursts, and a build that a newer one replaces
-  # anyway is money for nothing. The newest push of a burst builds; the others end
-  # here, before any machine exists. A tag, a dispatch or Azure off: no waiting.
+  # A push to `unstable` is built only once the branch has been still for a few
+  # minutes (`NIB_CI_SETTLE_S`, five by default): pushes come in bursts, and a build that
+  # a newer one replaces anyway is runner time for nothing. The newest push of a burst
+  # builds; the others end here, before anything is compiled. A tag or a dispatch: no
+  # waiting.
+  #
+  # Newest among the pushes that build, which is not the branch's head: a push that
+  # changes only what `paths-ignore` names makes no run at all, so a burst that ends
+  # with one would leave every run behind a head that never builds, and edge would
+  # stand still. So a run asks whether a later run of this workflow exists for a push
+  # to `unstable` - by run number, which only goes up - and steps aside only then. One
+  # that was cancelled by hand is not counted; one superseded while it waited is, as
+  # whatever superseded it is a later run too.
   settle:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/unstable' && vars.NIB_CI_AZURE == 'on'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/unstable'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -71,14 +96,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SETTLE_S: ${{ vars.NIB_CI_SETTLE_S || '300' }}
+          # The newest later run's number, or nothing: see the comment above the job.
+          LATER: >-
+            [.workflow_runs[] | select(.run_number > $mine and .conclusion != "cancelled") | .run_number]
+            | max // empty
         run: |
           # From the push, not from now: a run that queued behind another has waited already.
           pushed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)
           left=$(($(date -d "$pushed" +%s) + SETTLE_S - $(date +%s)))
           if [ "$left" -gt 0 ]; then sleep "$left"; fi
-          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
-          echo "newest=$([ "$head" = "$GITHUB_SHA" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
-          [ "$head" = "$GITHUB_SHA" ] || echo "main moved on to $head, which builds instead"
+          later=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?branch=unstable&event=push&per_page=20" |
+            jq -r --argjson mine "$GITHUB_RUN_NUMBER" "$LATER")
+          echo "newest=$([ -z "$later" ] && echo true || echo false)" >>"$GITHUB_OUTPUT"
+          [ -z "$later" ] || echo "run $later is newer and builds instead"
 
   build:
     needs: [version, settle]
