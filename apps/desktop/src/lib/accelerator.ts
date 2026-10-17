@@ -43,7 +43,7 @@ const NAMED: Readonly<Record<string, string>> = {
 export function accelerator(written: string | null, platform: Platform): string | null {
   const combination = parseCombination(written ?? '', platform)
   if (!combination) return null
-  // Never the Windows key outside a Mac: the desktop's own; see `refuse` in shortcuts.svelte.ts.
+  // Never the Windows key outside a Mac; see `refuse` in shortcuts.svelte.ts.
   if (combination.meta && platform !== 'mac') return null
   const key = combination.key
   const chord = combination.ctrl || combination.meta || combination.alt
