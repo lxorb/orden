@@ -291,9 +291,9 @@ What runs, and when. The repository is public, so GitHub's own runners are all o
 | a pull request into `main`, ready for review | `check.yml`: types, tests, lint, prettier, knip, the sync walks, the smoke, launch and layout drives, WebKit's core drives on Linux and on a Mac, the crate on all three systems, and the Android build where the crate changed. With it, whichever of `nix.yml`, `agents.yml`, `machine.yml`, `mac-update.yml`, `upgrade.yml` and `agent-engines.yml` the change touches the paths of |
 | a draft pull request | nothing |
 | a push to `main` | `check.yml` again, which the deploy of the Worker and the web app waits for; `publish-even.yml` where the glasses' manifest changed |
-| a push to `unstable` | `release.yml` (the `edge` build) and `publish-mobile.yml` (the phones'). Nothing checks it here: `unstable` is checked when it comes to `main` |
+| a push to `unstable` | `release.yml` (the `edge` build) and `publish-mobile.yml` (the phones'). Nothing checks it on the push: `unstable` is checked when it comes to `main`, and by the night's drives |
 | a tag `v*` | `release.yml` and `publish-mobile.yml`, at once |
-| every night | `drives.yml` (every drive), `walks.yml` (new seeds), `agents.yml`'s scenarios |
+| every night | `drives.yml` (every drive, on `unstable`'s head, on a night something was pushed to it), `walks.yml` (new seeds), `agents.yml`'s scenarios |
 
 **A draft is not checked.** Every pull request workflow skips a draft, and the whole run
 starts the moment it is marked ready for review (`ready_for_review` is one of the events
@@ -317,7 +317,11 @@ it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exit
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
 instead, in `.github/workflows/drives.yml`, and whenever that workflow is
-dispatched; `smoke.py` and `layout-sweep.py` also run on every pull request into
+dispatched. The night drives `unstable`, where the work is, rather than `main`,
+which only takes releases - a schedule runs from `main`, and the workflow checks
+out `unstable`'s head - and only when something was pushed to `unstable` since the
+night before; a dispatch drives the branch it names
+(`gh workflow run drives.yml --ref unstable`), always; `smoke.py` and `layout-sweep.py` also run on every pull request into
 `main`, in `check.yml`. The sweep holds every settings pane and the big surfaces, at three
 desktop widths and a phone, light and dark, signed out and in, to the facts a layout
 keeps: no word broken across lines, nothing past the window or spilling out of its
