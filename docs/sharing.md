@@ -157,6 +157,17 @@ is no file here for a write to go to: its room keeps it.
 A guest sees the same thing through the join page, because a guest is a person in
 a file exactly as they are a person in a space.
 
+A guest with no account who came for one file sees only that file. The tab strip,
+the file list, the bars and the status bar are somebody else's app round it, and a
+friend handed a canvas read them as something they were meant to understand. So
+while the file is in front of them - and while the link to it is still being walked
+through - the window is the file, the way full screen leaves it but with no way out,
+because there is nothing out there that is theirs. Editing, the pen and the other
+people in it are all still there. A shared file has no path and so no tab of it is
+kept between launches; a guest who comes back holding one file and no space is put
+back in it. An account, or a guest a link let into a whole space, keeps the app:
+they have more than one thing to move between. See `alone.svelte.ts`.
+
 ## Marks
 
 One mark, `SharedMark.svelte`, in the three places it can be said:
