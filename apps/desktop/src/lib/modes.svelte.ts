@@ -247,6 +247,70 @@ function wordsOf(value: unknown): Record<string, string> {
   return out
 }
 
+/** Where each setting starts, and what a value no setting can use falls back to. */
+const DEFAULTS = {
+  opensInSource: false,
+  readOnly: false,
+  focus: false,
+  quietMarks: false,
+  silent: false,
+  typewriter: false,
+  punctuation: false,
+  numbers: false,
+  lineNumbers: false,
+  codeTheme: 'follow',
+  rtl: false,
+  strict: false,
+  equationNumbers: false,
+  zoom: 1,
+  width: 42,
+  lineHeight: 1.72,
+  spellcheck: true,
+  spellLanguage: 'system',
+  alwaysOnTop: false,
+  frame: 'nib' as Frame,
+  hand: false,
+  closeBrackets: true,
+  ligatures: 'off' as LigatureScope,
+  glassesBreak: 2 as GlassesBreak,
+  glassesLineNumbers: true,
+  glassesVoice: false,
+  glassesCompaction: DEFAULT_COMPACTION,
+  glassesSeen: false,
+  glassesModel: '',
+  glassesEffort: 'low' as Effort,
+  vim: false,
+  attachments: 'space' as AttachmentFolder,
+  pagesPaper: 'a4' as Paper,
+  conflicts: DEFAULT_RULE,
+  keepVersions: KEEP_MONTH,
+  remindBefore: 0,
+  highlightTone: null as number | null,
+  hardBreaks: false,
+  linkFormat: 'wikilink' as LinkFormat,
+  properties: 'hidden' as PropertiesMode,
+}
+
+/** A stored switch, or its default where what is stored is not one. */
+function on(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+/** The days of versions kept, when one of the choices. */
+function keepingOf(value: unknown): number | undefined {
+  return isNumber(value) && KEEP_VERSIONS.includes(value) ? value : undefined
+}
+
+/** The minutes a reminder comes early, when one of the choices. */
+function remindingOf(value: unknown): number | undefined {
+  return isNumber(value) && REMIND_BEFORE.includes(value) ? value : undefined
+}
+
+/** A highlight's tone, or none, when it is one. */
+function toneOf(value: unknown): number | null | undefined {
+  return isNumber(value) || value === null ? highlightTone(value).tone : undefined
+}
+
 interface Shown {
   tab: { source: boolean }
   kept: () => void
@@ -254,42 +318,42 @@ interface Shown {
 
 class Modes {
   /** Where a new tab starts; stored as the old window-wide `source`. */
-  opensInSource = $state(false)
+  opensInSource = $state(DEFAULTS.opensInSource)
   /** The note laid out as it reads, with nothing that writes to it. The reading
    *  view is a different thing - the note through the renderer, per tab; this is
    *  the editor with its doors locked, over every tab's source mode. Never shared
    *  with the account: whether a note is open for writing this minute is not a
    *  preference. */
-  readOnly = $state(false)
-  focus = $state(false)
+  readOnly = $state(DEFAULTS.readOnly)
+  focus = $state(DEFAULTS.focus)
   /** The formatting marks kept out of sight while writing, so a note edits the way a
    *  Notion page or a Word document does and the markdown stays the file's business.
    *  Off, which is Typora's and Obsidian's live preview: a mark comes back while the
    *  caret is inside it. The account's, because how somebody likes to write is the
    *  same on every device. See `quietMarks` in the editor package. */
-  quietMarks = $state(false)
+  quietMarks = $state(DEFAULTS.quietMarks)
   /** No hints at all: the app as clean as it is for somebody who already knows it.
    *  Off, because the people a hint is for would never look for the switch. The
    *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
-  silent = $state(false)
-  typewriter = $state(false)
-  punctuation = $state(false)
-  numbers = $state(false)
-  lineNumbers = $state(false)
-  codeTheme = $state('follow')
-  rtl = $state(false)
-  strict = $state(false)
-  equationNumbers = $state(false)
-  zoom = $state(1)
-  width = $state(42)
-  lineHeight = $state(1.72)
+  silent = $state(DEFAULTS.silent)
+  typewriter = $state(DEFAULTS.typewriter)
+  punctuation = $state(DEFAULTS.punctuation)
+  numbers = $state(DEFAULTS.numbers)
+  lineNumbers = $state(DEFAULTS.lineNumbers)
+  codeTheme = $state(DEFAULTS.codeTheme)
+  rtl = $state(DEFAULTS.rtl)
+  strict = $state(DEFAULTS.strict)
+  equationNumbers = $state(DEFAULTS.equationNumbers)
+  zoom = $state(DEFAULTS.zoom)
+  width = $state(DEFAULTS.width)
+  lineHeight = $state(DEFAULTS.lineHeight)
   /** The webview's own spell checker, over the writing surface. On, because a
    *  typo is worth knowing about and nobody goes looking through settings for
    *  the checker every other editor has running already. */
-  spellcheck = $state(true)
+  spellcheck = $state(DEFAULTS.spellcheck)
   /** The dictionary to check against; `system` leaves it to the browser, which
    *  reads the language the machine is set to. */
-  spellLanguage = $state('system')
+  spellLanguage = $state(DEFAULTS.spellLanguage)
   /** The words the reader has said are words: names, terms, a project. The
    *  checker is turned off over each of them wherever it appears, which is what
    *  takes the wavy line away; see spelling.ts in the editor package for why
@@ -301,7 +365,7 @@ class Modes {
   /** This window over every other application's. A desktop's, and this machine's
    *  rather than the account's: which window is in front is about the desk it is
    *  on. */
-  alwaysOnTop = $state(false)
+  alwaysOnTop = $state(DEFAULTS.alwaysOnTop)
 
   /** Who draws the frame round the window.
    *
@@ -314,17 +378,17 @@ class Modes {
    *  measurement in the shell is taken from it. The other choice is for somebody who
    *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that
    *  stand down when the system draws its own. */
-  frame = $state<Frame>('nib')
+  frame = $state<Frame>(DEFAULTS.frame)
   /** The pointing hand over everything that can be pressed, as a web page draws it.
    *  Off, which is how a desktop app draws its buttons: the arrow, with the hand kept
    *  for a link. This machine's, for the same reason the frame is: it is about the
    *  pointer on this desk. Said on the root as `data-pointer`; see base.css. */
-  hand = $state(false)
-  closeBrackets = $state(true)
+  hand = $state(DEFAULTS.hand)
+  closeBrackets = $state(DEFAULTS.closeBrackets)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
    *  account. */
-  ligatures = $state<LigatureScope>('off')
+  ligatures = $state<LigatureScope>(DEFAULTS.ligatures)
   /** At which heading a new page starts on the Even Realities glasses.
    *
    *  Two, which is H2 and above: it is what makes the panel read as a document
@@ -335,23 +399,23 @@ class Modes {
    *  Every setting in this section follows the account rather than the machine.
    *  The plugin runs on a phone and is set up on a desktop, and nobody wants to
    *  type an API key into a WebView with a thumb. */
-  glassesBreak = $state<GlassesBreak>(2)
+  glassesBreak = $state<GlassesBreak>(DEFAULTS.glassesBreak)
   /** A gutter of the note's own line numbers down the left of the panel.
    *
    *  On, because they are what "go to line forty" is answered with and what tells
    *  a reader glancing up how far into a note they are. They cost the body about
    *  a tenth of its width, and turning them off is the one setting that rebuilds
    *  the page; see even/screen.ts. */
-  glassesLineNumbers = $state(true)
+  glassesLineNumbers = $state(DEFAULTS.glassesLineNumbers)
   /** Whether the microphone is listening for commands.
    *
    *  Off until asked for, which is the only defensible default for a microphone:
    *  it is turned on from the hold modal on the glasses, or here. */
-  glassesVoice = $state(false)
+  glassesVoice = $state(DEFAULTS.glassesVoice)
   /** How much of a note's own white space reaches the panel; see `Compaction` in
    *  @nib/glasses. One break between blocks, which is Emil's answer having read on a
    *  pair; the default is said once, in that package. */
-  glassesCompaction = $state<Compaction>(DEFAULT_COMPACTION)
+  glassesCompaction = $state<Compaction>(DEFAULTS.glassesCompaction)
   /** Which of a note's markers are drawn. Rule one as it stands, until a reader
    *  overrules it per construct; see `Marks` in @nib/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
@@ -364,23 +428,23 @@ class Modes {
    *  What the Glasses section on every other device waits for: somebody who has
    *  never worn a pair should not be offered a pane of settings about them. Set
    *  once, by the plugin, the first time a bridge answers. */
-  glassesSeen = $state(false)
+  glassesSeen = $state(DEFAULTS.glassesSeen)
   /** Which model answers. Empty until the reader has chosen one from the list the
    *  API itself gave; see even/models.ts. */
-  glassesModel = $state('')
+  glassesModel = $state(DEFAULTS.glassesModel)
   /** How hard it is asked to think, from the API's own list. */
-  glassesEffort = $state<Effort>('low')
+  glassesEffort = $state<Effort>(DEFAULTS.glassesEffort)
   /** Modal editing. Off until chosen, follows the account, and independent of
    *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
    *  switch in the Editor pane puts it on top of any of the others. */
-  vim = $state(false)
+  vim = $state(DEFAULTS.vim)
   /** Which mode each editor on the page is in, while modal editing is on. The
    *  status bar shows the one the reader is writing in. */
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
   /** Where a pasted picture is written; see attachments.ts. Follows the account
    *  too, because it is about how someone keeps their notes rather than about
    *  the machine they are at. */
-  attachments = $state<AttachmentFolder>('space')
+  attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
 
   /** The paper a new page note starts on.
    *
@@ -393,23 +457,23 @@ class Modes {
    *  Only what a page note *starts* as. A page added to a note takes the size of the one
    *  it follows, and a page already written on is changed from its own menu; see
    *  `added` and `reshaped` in @nib/markdown/pages. */
-  pagesPaper = $state<Paper>('a4')
+  pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
 
   /** What a device does when the same note was written in two places. On the
    *  account, because it is a decision about the notes rather than about the
    *  machine; see sync/conflicts.ts. */
-  conflicts = $state<ConflictRule>(DEFAULT_RULE)
+  conflicts = $state<ConflictRule>(DEFAULTS.conflicts)
 
   /** How long the account keeps what a note said before, in days: a month, or a
    *  year. On the account because that is whose storage it is, and because the
    *  sweep that enforces it reads the same number; see services/sync/versions.ts
    *  and docs/sync.md. */
-  keepVersions = $state<number>(KEEP_MONTH)
+  keepVersions = $state<number>(DEFAULTS.keepVersions)
 
   /** The automatic reminder: minutes before a task's time, -1 for none. On the account,
    *  because every device rings the same task and the Worker pushes it; see
    *  lib/reminders. At the time, as Todoist starts. */
-  remindBefore = $state<number>(0)
+  remindBefore = $state<number>(DEFAULTS.remindBefore)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
@@ -419,7 +483,7 @@ class Modes {
    *  dozen times rather than a fresh decision each time. On the account: it is
    *  about how somebody marks up, not about the machine they are at. See
    *  highlights.ts in @nib/markdown for which tone each emoji is. */
-  highlightTone = $state<number | null>(null)
+  highlightTone = $state<number | null>(DEFAULTS.highlightTone)
 
   /** Whether a single newline breaks the line instead of being the space
    *  CommonMark makes of it.
@@ -430,13 +494,13 @@ class Modes {
    *  the reading view, an export, a card on a canvas and a published page all say
    *  the same thing; a deck keeps its single breaks whatever this says, because a
    *  slide is a poster. See `RenderOptions.breaks` in @nib/markdown. */
-  hardBreaks = $state(false)
+  hardBreaks = $state(DEFAULTS.hardBreaks)
 
   /** How a link to another note is written: `[[wikilinks]]`, or markdown links
    *  with the shortest name, a relative path or a path from the top of the space.
    *  Wikilinks, which is what nib has always written and what survives a rename.
    *  Reading both spellings already works either way; see link-format.ts. */
-  linkFormat = $state<LinkFormat>('wikilink')
+  linkFormat = $state<LinkFormat>(DEFAULTS.linkFormat)
 
   /** What a note's front matter is drawn as: the rows it says, the YAML it is
    *  written in, or nothing at all.
@@ -448,7 +512,7 @@ class Modes {
    *  the source. The one answer is read by the editor and by the reading view, so a
    *  note cannot say one thing written and another read; see properties.ts in
    *  @nib/markdown and hidden-front-matter.ts in the editor. */
-  properties = $state<PropertiesMode>('hidden')
+  properties = $state<PropertiesMode>(DEFAULTS.properties)
 
   constructor() {
     // The editor package reports a view's mode as it changes and null when
@@ -469,49 +533,33 @@ class Modes {
     // reads as neither on nor off should simply be the default.
     const saved = stored(STORAGE_KEY)
     if (isRecord(saved)) {
-      this.opensInSource = saved.source === true
+      this.opensInSource = on(saved.source, DEFAULTS.opensInSource)
       opening.source = this.opensInSource
       // `reading` is what a build before the reading view called this.
-      this.readOnly = saved.readOnly === true || saved.reading === true
-      this.focus = saved.focus === true
-      this.typewriter = saved.typewriter === true
-      this.quietMarks = saved.quietMarks === true
-      this.silent = saved.silent === true
-      this.hand = saved.hand === true
-      // `=== true` rather than `!== false`: a reader who never chose keeps the
-      // new default, and only one who turned it on keeps it on.
-      this.punctuation = saved.punctuation === true
-      this.numbers = saved.numbers === true
-      this.lineNumbers = saved.lineNumbers === true
-      this.codeTheme = text(saved.codeTheme, 'follow')
-      this.rtl = saved.rtl === true
-      this.strict = saved.strict === true
-      this.equationNumbers = saved.equationNumbers === true
-      this.zoom = measure(saved.zoom, 1)
-      this.width = measure(saved.width, 42)
-      this.lineHeight = measure(saved.lineHeight, 1.72)
-      this.spellcheck = saved.spellcheck !== false
-      this.spellLanguage = text(saved.spellLanguage, 'system')
+      // Every other switch is stored under its own name, and one never chosen keeps its
+      // default.
+      for (const [name, start] of Object.entries(DEFAULTS)) {
+        if (typeof start === 'boolean' && name !== 'opensInSource') {
+          Object.assign(this, { [name]: on(saved[name], start) })
+        }
+      }
+      if (saved.reading === true) this.readOnly = true
+      this.codeTheme = text(saved.codeTheme, DEFAULTS.codeTheme)
+      this.zoom = measure(saved.zoom, DEFAULTS.zoom)
+      this.width = measure(saved.width, DEFAULTS.width)
+      this.lineHeight = measure(saved.lineHeight, DEFAULTS.lineHeight)
+      this.spellLanguage = text(saved.spellLanguage, DEFAULTS.spellLanguage)
       this.spellWords = (stringList(saved.spellWords) ?? [])
         .filter(isSpellWord)
         .slice(0, MOST_SPELL_WORDS)
-      this.alwaysOnTop = saved.alwaysOnTop === true
-      this.closeBrackets = saved.closeBrackets !== false
-      this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
-      this.conflicts = conflictRule(saved.conflicts) ?? DEFAULT_RULE
-      this.keepVersions = KEEP_VERSIONS.includes(saved.keepVersions as number)
-        ? (saved.keepVersions as number)
-        : KEEP_MONTH
-      if (REMIND_BEFORE.includes(saved.remindBefore as number)) {
-        this.remindBefore = saved.remindBefore as number
-      }
-      this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
-      this.glassesLineNumbers = saved.glassesLineNumbers !== false
-      this.glassesVoice = saved.glassesVoice === true
+      this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
+      this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
+      this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
+      this.remindBefore = remindingOf(saved.remindBefore) ?? this.remindBefore
+      this.glassesBreak = glassesBreak(saved.glassesBreak) ?? DEFAULTS.glassesBreak
       if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
       this.glassesMarks = marksOf(saved.glassesMarks)
       this.glassesWords = wordsOf(saved.glassesWords)
-      this.glassesSeen = saved.glassesSeen === true
       // A setting that is gone: who scrolls the note. It offered the glasses' own
       // scrolling, which no firmware ever did - see even/settings.ts - and Emil asked
       // for the row to go: "effectively it should be always nib who turns the pages."
@@ -519,10 +567,11 @@ class Modes {
       // left in the entry for a later version to wonder about. Written back at the
       // end of this method, once everything else has been read.
       stale = 'glassesScroll' in saved
-      this.glassesModel = text(saved.glassesModel, '')
-      this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
-      this.vim = saved.vim === true
-      this.frame = frameChoice(saved.frame) ?? 'nib'
+      this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
+      this.glassesEffort = isEffort(saved.glassesEffort)
+        ? saved.glassesEffort
+        : DEFAULTS.glassesEffort
+      this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
       // Translucency was a switch here until the glass theme was what it meant; see
       // `adoptTranslucency` in theme.svelte.ts, which answers it once. Written back
       // without it, so once is all.
@@ -530,10 +579,8 @@ class Modes {
       stale ||= 'translucent' in saved
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
-      if (isNumber(saved.highlightTone) || saved.highlightTone === null) {
-        this.highlightTone = highlightTone(saved.highlightTone).tone
-      }
-      this.hardBreaks = saved.hardBreaks === true
+      const tone = toneOf(saved.highlightTone)
+      if (tone !== undefined) this.highlightTone = tone
       if (isLinkFormat(saved.linkFormat)) this.linkFormat = saved.linkFormat
       // Kept as `frontMatter` since hidden became the default. An older build wrote
       // `properties` down for everybody who changed any setting at all, so the rows
@@ -544,7 +591,7 @@ class Modes {
           ? propertiesMode(saved.frontMatter)
           : saved.properties === 'source'
             ? 'source'
-            : 'hidden'
+            : DEFAULTS.properties
       stale ||= 'properties' in saved
     }
     // The renderer and the one link writer are told once, here and in the setters
@@ -1117,25 +1164,24 @@ class Modes {
       this.persist()
     }
 
-    const keeping = remote.keepVersions
-    if (isNumber(keeping) && KEEP_VERSIONS.includes(keeping) && unheard) {
+    const keeping = keepingOf(remote.keepVersions)
+    if (keeping !== undefined && unheard) {
       if (keeping !== this.keepVersions) {
         this.keepVersions = keeping
         this.persist()
       }
     }
 
-    const before = remote.remindBefore
-    if (isNumber(before) && REMIND_BEFORE.includes(before) && unheard) {
+    const before = remindingOf(remote.remindBefore)
+    if (before !== undefined && unheard) {
       if (before !== this.remindBefore) {
         this.remindBefore = before
         this.persist()
       }
     }
 
-    const tone = remote.highlightTone
-    if ((isNumber(tone) || tone === null) && unheard) {
-      const wanted = highlightTone(tone).tone
+    const wanted = toneOf(remote.highlightTone)
+    if (wanted !== undefined && unheard) {
       if (wanted !== this.highlightTone) {
         this.highlightTone = wanted
         setHighlightColour(this.highlight)
@@ -1358,19 +1404,19 @@ class Modes {
 
   /** Steps through the widths rather than offering a slider of nothing. */
   stepWidth(direction: number, view?: EditorView) {
-    this.width = step(WIDTHS, this.width, direction, 42)
+    this.width = step(WIDTHS, this.width, direction, DEFAULTS.width)
     this.each(view, (one) => setMeasure(one, this.width))
     this.persist()
   }
 
   stepLineHeight(direction: number, view?: EditorView) {
-    this.lineHeight = step(LINE_HEIGHTS, this.lineHeight, direction, 1.72)
+    this.lineHeight = step(LINE_HEIGHTS, this.lineHeight, direction, DEFAULTS.lineHeight)
     this.each(view, (one) => setLineHeight(one, this.lineHeight))
     this.persist()
   }
 
   stepZoom(direction: number) {
-    this.zoom = step(ZOOM_STEPS, this.zoom, direction, 1)
+    this.zoom = step(ZOOM_STEPS, this.zoom, direction, DEFAULTS.zoom)
     this.applyZoom()
     this.persist()
   }
