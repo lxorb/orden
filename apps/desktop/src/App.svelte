@@ -632,6 +632,9 @@
           sync2,
           wallpaper,
           themeStore: store,
+          // A web tab's downloads, which only a download puts a button up for; see
+          // test/e2e/popups.py.
+          downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
         })
       },
     )
