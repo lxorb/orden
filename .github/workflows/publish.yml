@@ -7,11 +7,15 @@ name: publish
 # Only published stable releases are sent to package managers. The rolling
 # `edge` prerelease is built from `unstable` and is deliberately not published
 # through this release channel.
+#
+# Started by release.yml's publish job, once the release and every file on it are up:
+# a dispatch, because a release that job makes on its own token raises no event any
+# other workflow hears. Nothing listens for `release: published` either. A release made
+# by hand would raise it before its installers were uploaded, and the run after the
+# dispatch would publish it a second time. A release can be sent through again by hand,
+# `gh workflow run publish.yml -f tag=v0.15.0`, and every job is safe to run twice: the
+# bucket and the tap commit only what changed, and Chocolatey skips a version it has.
 on:
-  release:
-    types: [published]
-  # A release published before this workflow existed, or one whose push failed
-  # on a bad token, can be sent through again by hand.
   workflow_dispatch:
     inputs:
       tag:
@@ -46,12 +50,11 @@ jobs:
     steps:
       - id: release
         env:
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
-          PRERELEASE: ${{ github.event.release.prerelease }}
+          TAG: ${{ inputs.tag }}
         run: |
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          if [[ "$TAG" == v*.*.* && "$TAG" != *-* && "$PRERELEASE" != 'true' ]]; then
+          if [[ "$TAG" == v*.*.* && "$TAG" != *-* ]]; then
             echo 'publish=true' >> "$GITHUB_OUTPUT"
           else
             echo 'publish=false' >> "$GITHUB_OUTPUT"
