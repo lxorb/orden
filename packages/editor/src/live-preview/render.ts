@@ -10,7 +10,6 @@ import { NibWidget } from './widget'
 // are fetched only once something on the page wears one, and a formula appearing
 // before the CSS that sets it would be a formula in the wrong font for a frame.
 import 'katex/dist/katex.min.css'
-import { flowSource, keepSafeLinks } from './flow'
 import { sequenceToMermaid } from './sequence'
 
 /** Equation labels seen in this document, in order, so `\eqref` can resolve. */
@@ -314,7 +313,11 @@ async function drawMermaid(host: HTMLElement, code: string) {
 /** Typora's legacy ` ```flow ` fences, drawn by flowchart.js. Without the hooks
  *  and the links a note may not have, whoever wrote it; see flow.ts. */
 async function drawFlowchart(host: HTMLElement, code: string) {
-  const flowchart = (await import('flowchart.js')).default
+  // What a fence may make flowchart.js do is asked with it, never before a note has one.
+  const [{ default: flowchart }, { flowSource, keepSafeLinks }] = await Promise.all([
+    import('flowchart.js'),
+    import('./flow'),
+  ])
 
   host.innerHTML = ''
   flowchart.parse(flowSource(code)).drawSVG(host, {
