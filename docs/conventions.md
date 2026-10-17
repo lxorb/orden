@@ -493,9 +493,7 @@ cannot be, by construction:
   the primary screen. Under the switch the process hooks the making of every window on
   every thread (an in-context event hook), and every top-level window is born or sent
   to the corner a minimised window is parked in, and held there through every move and
-  show that would put a pixel of it on a screen. nib's own Chromium's GPU process and
-  utilities do the same, and the engine is started with `--noerrdialogs` and
-  `--disable-hang-monitor`, so the dialogs it can be talked out of are never raised.
+  show that would put a pixel of it on a screen.
   The boxes the system raises for a process - "has stopped working", a missing disk -
   are not the process's windows; `run_probe` starts every probe with an error mode
   that raises none of them, as Chromium's own test runner does.
@@ -533,12 +531,11 @@ window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it a
 other top-level window of the process, tao's and the single-instance plugin's included,
 are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
 
-Measured 2026-10-03, nib's own Chromium started with `--load-extension` of a folder with
-no manifest, every window of the family looked at every twenty milliseconds: before the
-hook, the load error's box was on the primary screen 254 ms and one second into two
-launches; with the hook but the switches not yet reaching Chromium (the runtime takes a bare switch only with its dashes), five launches of five raised it, and in
-every look it was at -32000,-32000; with both on, twenty launches of twenty logged the
-error, raised no box, and had nothing on a screen.
+Measured 2026-10-03, on nib's own Chromium while there was one, started with
+`--load-extension` of a folder with no manifest, every window of the family looked at every
+twenty milliseconds: before the hook, the load error's box was on the primary screen 254 ms
+and one second into two launches; with the hook, five launches of five raised it, and in
+every look it was at -32000,-32000.
 
 ## The launch
 
@@ -730,7 +727,7 @@ machine this fast the page's own work is a quarter of a launch.
 What is next, in the order the table asks. The webview's start, the largest phase of
 every launch, overlapped with building the window rather than after it - a change to
 the crate's engine and window builder (`engine.rs`, `launch.rs` and the builder in
-`lib.rs`, under `apps/desktop/src-tauri/src`) that waits for the engine switch. Then the restored note on a slow device, 0.3 s of the
+`lib.rs`, under `apps/desktop/src-tauri/src`). Then the restored note on a slow device, 0.3 s of the
 slowed launch over five thousand notes: the note drawn as it reads first and its editor
 mounted a frame later, with nothing moving and the caret where it was. Then the listing
 of a big space, 0.2 s slowed. Tried and not kept: dropping the JavaScript side of Vite's

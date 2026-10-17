@@ -16,7 +16,7 @@
 //!
 //! One list for every store, global, per space and per site: an extension somebody
 //! installed is installed, and "install it again over there" is not a sentence this app
-//! makes anybody read (docs/browser.md, section 3).
+//! makes anybody read.
 
 use std::collections::BTreeMap;
 use std::fs;
