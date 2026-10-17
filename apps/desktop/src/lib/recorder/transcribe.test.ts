@@ -30,7 +30,12 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 /** What the device's keychain answers, which each test sets. */
 let apiKey = ''
-vi.mock('../ai/keys', () => ({ readKey: () => Promise.resolve(apiKey) }))
+// The rest of the module as it is: the AI vault starts with the AI store and listens
+// for keys moving, whatever this test asks of the key.
+vi.mock('../ai/keys', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../ai/keys')>()),
+  readKey: () => Promise.resolve(apiKey),
+}))
 
 /** The account's own road, stubbed at the API rather than at `fetch`: what is under
  *  test is which road was taken. */
