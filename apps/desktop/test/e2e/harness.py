@@ -113,6 +113,13 @@ OWN_BUILD = "NIB_DIST" not in os.environ
 #: The build a Worker serves, asking its own origin for the API; see `Worker`.
 WORKER_DIST = APP / os.environ.get("NIB_WORKER_DIST", "dist-worker")
 SERVICE = ROOT / "services" / "sync"
+#: The online machine's bundle, which the Worker carries inside itself to hand a
+#: machine at its boot (`services/sync/src/machines/entry.ts` imports it). It is built
+#: by `services/machine/build.ts` and is in no checkout until something builds it, and
+#: `wrangler dev` will not bundle the Worker without it: every drive against the
+#: Worker failed on a fresh runner with `ENOENT ... services/machine/dist/machine.bin`.
+MACHINE = ROOT / "services" / "machine"
+MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
 
 #: Which of the two builds a folder holds, written beside it, so a run can tell
@@ -460,6 +467,8 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     kind = "worker" if served_by_worker else "plain"
     if os.environ.get("NIB_SKIP_BUILD") and built(into, kind):
         say(f"reusing the build in {into.name}")
+        if served_by_worker:
+            machine_bundle(fresh=False)
         return
 
     say(f"building the web app into {into.name}")
@@ -487,6 +496,29 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     (into / POINTED).write_text(kind, encoding="utf-8")
     (into / SEED_PATH.lstrip("/")).write_text(SEED_PAGE, encoding="utf-8")
     say(f"built in {time.monotonic() - started:.0f}s")
+    if served_by_worker:
+        machine_bundle(fresh=True)
+
+
+def machine_bundle(fresh: bool) -> None:
+    """The bundle the Worker imports, built beside the build it serves: afresh with it,
+    and otherwise only when there is none yet, so drives reusing one build - the way
+    run-all.py runs them, several at once - never write it under each other."""
+    if not fresh and MACHINE_BUNDLE.exists():
+        return
+    say("building the online machine's bundle the Worker carries")
+    done = subprocess.run(
+        [shutil.which("node") or "node", "build.ts"],
+        cwd=MACHINE,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=BUILD_PATIENCE,
+        check=False,
+    )
+    if done.returncode != 0:
+        raise SystemExit(f"the machine's bundle failed:\n{done.stdout}\n{done.stderr}")
 
 
 def built(into: Path, kind: str) -> bool:
