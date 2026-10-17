@@ -55,6 +55,7 @@ kind; a second copy is the bug the file's own header describes.
 | What does a button's tooltip say? | `shortcuts.tooltip(name, id)` in `apps/desktop/src/lib/shortcuts.svelte.ts`: the name and the key the registry holds for that command now, `Back (Alt+←)`, and the name alone on a touch screen or where no key is held. A `title` that names a command with a key goes through it. |
 | What is a row of a menu? | `apps/desktop/src/lib/menu-item.ts`: `MenuItem` and `DIVIDER`, for a row's own menu, the app menu and the palette alike. What a row *draws* stays each list's own - a hint is a `kbd` in one and a word in another. |
 | Dropping a key from a map? | `apps/desktop/src/lib/records.ts`: `without`, `withOrWithout`. |
+| Something floating over the app, opened from a button? | `apps/desktop/src/lib/overlays.ts`: `overlays.show(close, holds)`. Escape closes it, and so do a press past what `holds` names - the popup and the button that opened it - and the window losing the focus, which is also how a press into a web page is heard. The press that opened it never closes it, and one in a popup opened over it closes neither. A sheet passes no `holds` and is closed by its own scrim. No window listener of a popup's own. |
 | Fetching a part the first time it is asked for? | `packages/markdown/src/door.ts`: `door`, which keeps one fetch, tries twice and forgets a failure; `held` and `latched` in `apps/desktop/src/lib/surfaces.svelte.ts` for a component. A chunk the browser will not fetch again is `apps/desktop/src/lib/reloading.svelte.ts`'s. |
 
 ### The workspace store
