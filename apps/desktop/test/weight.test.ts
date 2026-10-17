@@ -642,8 +642,14 @@ function holds(tail: string): boolean {
  *  the TabKind registry: the kinds' traits moved into one table read on first paint
  *  (workspace/tab-kinds.ts), which holdsWords, the pane, the tab's mark and the status
  *  bar ask, in place of the chains of `kind === ...` they each kept. Its comments are cut
- *  to a line a trait; what is left is the table. Measured 3,199,582. */
-const BUDGET = 3_200_600
+ *  to a line a trait; what is left is the table. Measured 3,199,582.
+ *
+ *  Raised 2026-10-17, to 3,202,400, from an unstable at 3,199,582 (1,018 under), for
+ *  modes: each default said once in DEFAULTS, read on first paint. The store's forty
+ *  fields start from that one table and its restore falls back to it, where each wrote
+ *  its default twice and some three times; Settings' reset reads it too, off the first
+ *  paint. Measured 3,201,397. */
+const BUDGET = 3_202_400
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
