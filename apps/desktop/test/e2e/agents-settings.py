@@ -148,8 +148,10 @@ def look(browser, scheme: str, language: str) -> None:
             "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
         )
 
-        # A site typed as an address from the bar is kept as its site.
-        field = page.locator(".agents .card .add").nth(1)
+        # A site typed as an address from the bar is kept as its site. The Sites card's
+        # own field, named by its heading: counting fields found the terminal's list of
+        # programs instead, once the agent's terminal was on and drew it above.
+        field = page.locator(".agents h3:text-is('Sites') + .card .add")
         field.press_sequentially("https://login.bank2.example/sign-in?next=/")
         field.press("Enter")
         page.wait_for_function(
