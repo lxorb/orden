@@ -107,6 +107,30 @@ ROWS = """
 ORDER = "() => window.nibApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
 
 
+#: The pages being reloaded right now; see `reload`.
+RELOADING: set[Page] = set()
+
+
+def page_error(page: Page, error: Exception) -> None:
+    """A script error is a failure, but for the one a reload makes: the chunks the app
+    fetches once it is up are cancelled by the reload, and WebKit reports each import
+    that was waiting on one as `Importing a module script failed` from the page being
+    left. Chromium says nothing. It is the drive's reload, not the app."""
+    if page in RELOADING and "Importing a module script failed" in str(error):
+        say(f"(a reload cancelled an import: {error})")
+        return
+    wrong(f"page error: {error}")
+
+
+def reload(page: Page) -> None:
+    RELOADING.add(page)
+    try:
+        page.reload(wait_until="domcontentloaded")
+        DRIVE.ready(page)
+    finally:
+        RELOADING.discard(page)
+
+
 def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = False) -> Page:
     options = (
         {
@@ -119,7 +143,8 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
         if finger
         else {"viewport": {"width": 1280, "height": 820}}
     )
-    page = DRIVE.page(browser, color_scheme=scheme, device_scale_factor=2, **options)
+    page = DRIVE.page(browser, errors=False, color_scheme=scheme, device_scale_factor=2, **options)
+    page.on("pageerror", lambda error: page_error(page, error))
     page.on(
         "console",
         lambda message: wrong(f"[{label}] console error: {message.text}")
@@ -128,8 +153,7 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     )
     DRIVE.open(page)
     say(f"[{label}] kept: {page.evaluate(SEED, FILES)}")
-    page.reload(wait_until="domcontentloaded")
-    DRIVE.ready(page)
+    reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
@@ -304,8 +328,7 @@ def drive_hands(browser: Browser) -> None:
         wrong(f"the list did not come back: {listed}")
     sidebar(page, "12-as-a-list")
     page.evaluate("() => localStorage.setItem('nib:essentials-look', 'tiles')")
-    page.reload(wait_until="domcontentloaded")
-    DRIVE.ready(page)
+    reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
     page.locator(".tiles .tile").first.click()
