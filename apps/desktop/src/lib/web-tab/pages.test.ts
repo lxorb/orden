@@ -62,6 +62,9 @@ let refusing = false
 /** A photograph the engine has not answered yet, while a test holds one. */
 let photographing: Promise<void> | null = null
 
+/** The picture the engine hands back for a photograph. */
+let photo: string | null = null
+
 /** Whether the crate says it cuts the app's layers out of a page, as the system's engine
  *  on Windows does; see src-tauri/src/web_cut.rs. */
 let cuts = false
@@ -73,6 +76,7 @@ vi.mock('../tauri', async (importOriginal) => ({
     calls.push({ command, args: args ?? {} })
     if (command === 'web_pause' && pausing) await pausing
     if (command === 'web_shot' && photographing) await photographing
+    if (command === 'web_shot') return photo
     if (command === 'web_pause') return !(refusing && args?.paused === true)
     if (command === 'web_look') {
       if (!looked) throw new Error('that page said nothing')
@@ -735,6 +739,7 @@ describe('a page out of sight', () => {
     pausing = null
     refusing = false
     photographing = null
+    photo = null
     for (const tab of TABS) pages.forget(tab)
     const { saver } = await import('./saver.svelte')
     saver.set('off')
@@ -897,6 +902,36 @@ describe('a page out of sight', () => {
     await shooting
     await settle()
     expect(last('web_place')).toMatchObject({ tab: 't0', pane: PANE, visible: false })
+  })
+
+  test('a picture the engine took longer over than the clock stands in once it lands', async () => {
+    await built('t0')
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    photo = 'data:image/png;base64,late'
+    pages.of('t0').shot = null
+
+    // The clock runs out first, and the menu goes up over the pane with no picture yet.
+    await pages.shoot('t0')
+    expect(pages.of('t0').shot).toBeNull()
+
+    landed()
+    await settle()
+    expect(pages.of('t0').shot).toBe('data:image/png;base64,late')
+  })
+
+  test('a late picture of a page that has gone elsewhere since is not kept', async () => {
+    await built('t0')
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    photo = 'data:image/png;base64,late'
+    pages.of('t0').shot = null
+    await pages.shoot('t0')
+
+    pages.of('t0').url = 'https://example.org/'
+    landed()
+    await settle()
+    expect(pages.of('t0').shot).toBeNull()
   })
 
   test('a freeze the engine refused leaves the page running, and is asked again later', async () => {

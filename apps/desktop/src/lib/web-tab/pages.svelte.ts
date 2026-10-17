@@ -1107,19 +1107,25 @@ class Pages {
   /** The picture itself, raced against a clock. Split from `shoot` so that the one
    *  going on at the moment is something a second caller can wait for. */
   private async photograph(page: Page, tabId: string): Promise<void> {
+    const { url, pane, shotAt } = page
+    const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
+    const asked = invoke<string | null>('web_shot', { tab: tabId })
+    // Kept if late, unless the page moved on: else an empty pane under the menu.
+    void asked.then(
+      (said) => {
+        if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
+          page.shot = said
+          page.shotAt = Date.now()
+        }
+      },
+      () => undefined,
+    )
     try {
       // Raced against a clock, because the overlay is behind the page until this
       // answers: the engine photographs itself in a handful of milliseconds or it is
       // not going to, and a menu waiting on a picture is worse than a menu over an
       // empty pane.
-      const said = await Promise.race([
-        invoke<string | null>('web_shot', { tab: tabId }),
-        new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS)),
-      ])
-      if (said) {
-        page.shot = said
-        page.shotAt = Date.now()
-      }
+      await Promise.race([asked, new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS))])
     } catch {
       // A platform with no way to photograph a webview. The hole keeps its own
       // ground, which is what it held before there was a picture to hold.
