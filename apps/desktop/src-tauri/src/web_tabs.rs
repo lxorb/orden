@@ -713,6 +713,9 @@ fn popup(
     let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
         .window_features(features)
         .title(url.host_str().unwrap_or_default())
+        // The page takes its own drops, as a tab's does, and a file dropped on a site
+        // is no pick in the system's dialog; see `window_builder` in launch.rs.
+        .disable_drag_drop_handler()
         .on_navigation(allowed)
         .on_new_window(move |url, _| {
             if let Some(address) = handed_over(&url) {

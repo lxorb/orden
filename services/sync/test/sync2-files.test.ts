@@ -125,6 +125,53 @@ describe('bytes up', () => {
     expect(done.status).toBe(400)
     expect(env.keys().some((key) => key.startsWith('blobs/'))).toBe(false)
   })
+
+  /** The parts are put together where the blob would live, and a copy somebody else
+   *  finished meanwhile was there: the wrong bytes were left in its place, for them
+   *  and everybody who keeps it. Parts are put together somewhere of their own. */
+  /** Knowing a hash is not having the file: a row is what lets a file entry in a space
+   *  of this account's name a blob, and so read it back. */
+  test('in parts, sent in full even when somebody else already keeps them', async () => {
+    const data = bytes(1000, 7)
+    const hash = await hashOf(data)
+    const other = await signIn(env, 'other@example.com')
+    expect((await upload(data, 'audio/webm', other)).status).toBe(201)
+
+    const started = await call<{ upload?: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: 1000 },
+    })
+
+    expect(started.status).toBe(201)
+    expect(started.json.upload).toBeTruthy()
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toHaveLength(1)
+  })
+
+  test('in parts that are not the bytes named, never over a copy finished meanwhile', async () => {
+    const data = bytes(1000, 5)
+    const hash = await hashOf(data)
+    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: 1000 },
+    })
+
+    const other = await signIn(env, 'other@example.com')
+    expect((await upload(data, 'audio/webm', other)).status).toBe(201)
+
+    const sent = await call<{ part: number; etag: string }>(
+      env,
+      `/v2/blobs/parts/${started.json.upload}/1`,
+      { method: 'PUT', token, raw: bytes(1000, 6) },
+    )
+    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
+      token,
+      body: { parts: [sent.json] },
+    })
+
+    expect(done.status).toBe(400)
+    const kept = await env.NOTES.get(`blobs/${hash}`)
+    expect(new Uint8Array(await kept!.arrayBuffer())).toEqual(data)
+  })
 })
 
 describe('bytes down', () => {
