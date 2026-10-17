@@ -8,6 +8,12 @@
 # helpers built from a different WebKit, which is how a Tauri window ends up
 # blank.
 #
+# What the program needs of that platform: WebKitGTK 2.40 or newer, and GStreamer's
+# -base and -good plugins for a recording and its playback. gnome-46-2404 carries
+# WebKitGTK 2.52 and both plugin sets (and PipeWire's), so nothing is added for
+# them. It carries neither -bad nor gst-libav, so AAC and H.264 - a recording made
+# on a Mac, a video from a phone - do not play in the snap; see packaging/linux.md.
+#
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
 # account and `snapcraft upload --release=stable orden_0.15.0_amd64.snap`; see
 # packaging/linux.md.

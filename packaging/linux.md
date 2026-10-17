@@ -32,7 +32,8 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 
 ```
 Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
-Depends: libwebkit2gtk-4.1-0, libgtk-3-0
+Depends: libwebkit2gtk-4.1-0 (>= 2.40.0), gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, libwebkit2gtk-4.1-0, libgtk-3-0
+Recommends: gstreamer1.0-libav, gstreamer1.0-plugins-bad
 usr/bin/nib
 usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
@@ -61,6 +62,49 @@ has no email address. Fixing this upstream means setting `bundle.category`,
 Each package therefore installs its own `.desktop` entry and moves the icon.
 The three copies differ only where they have to: the Flatpak one is named after
 the app ID and points `Icon=` at it, the snap one points `Icon=` at `${SNAP}`.
+
+## What Orden needs of the system
+
+**WebKitGTK 2.40 or newer.** A web tab's state is read and written in a script
+world of its own through `webkit_web_view_call_async_javascript_function`, which
+is new in 2.40, so the crate builds `webkit2gtk` with its `v2_40` feature
+(`apps/desktop/src-tauri/Cargo.toml`, `src/web_state/isolated.rs`). wry on its
+own asks for 2.38. Every distribution packaged here is past it: Ubuntu 22.04 has
+2.50 and 24.04 2.52 in their updates, Debian 12 2.50 and 13 2.54, Arch 2.54, and the snap's
+gnome-46-2404 platform 2.52.
+
+**GStreamer's -base and -good plugins.** WebKitGTK plays and records sound and
+video through GStreamer, and what Orden plays is its own: a voice note in a chat,
+a recording embedded in a note, a picture's or a video's preview in a chat's
+gallery. A recording on Linux is Opus in WebM (`recorder/container.ts`): Opus is
+in -base, WebM (and MP4) in -good, and so is the source and sink for the sound
+server. Debian's and Ubuntu's `libwebkit2gtk-4.1-0` already depend on both; Arch's
+`webkit2gtk-4.1` depends only on GStreamer's libraries and leaves every plugin
+optional, so the AUR package names them.
+
+**gst-libav and -bad, recommended.** A recording made on a Mac or an iPhone is AAC
+in MP4 (`.m4a`), and a video from a phone is H.264 or HEVC; GStreamer decodes those
+in gst-libav (`avdec_aac`, `avdec_h264`), with -bad holding most of the remaining
+formats. Without them the file is there and does not play, and nothing else in the
+app is affected, so they are what Debian calls Recommends (Debian 13 recommends
+them for WebKitGTK already; Ubuntu only suggests them) and the AUR `optdepends`.
+
+| | WebKitGTK | required | recommended |
+| --- | --- | --- | --- |
+| `.deb` (`tauri.conf.json` `bundle.linux.deb`) | `libwebkit2gtk-4.1-0 (>= 2.40.0)` | `gstreamer1.0-plugins-base`, `-good` | `gstreamer1.0-libav`, `-plugins-bad` |
+| AUR (`PKGBUILD`) | `webkit2gtk-4.1>=2.40` | `gst-plugins-base`, `gst-plugins-good` | `gst-libav`, `gst-plugins-bad` (`optdepends`) |
+| snap | the platform's, 2.52 | the platform's | none: not in the platform |
+| Nix | nixpkgs' | `gstPluginsFor` in the flake: all five | - |
+
+The `.rpm` names neither: Tauri writes its requirements as sonames
+(`libwebkit2gtk-4.1.so.0()(64bit)`), which carry no version, and Fedora and
+openSUSE spell every package above differently.
+
+The snap has no way to recommend a package, and stages nothing beside the platform
+on purpose (see below). gnome-46-2404 carries -base, -good, PipeWire's and the GL
+plugins, so recordings and WebM play; AAC and H.264 do not. Staging gst-libav would
+not be enough to change that: its libavfilter is not in the platform, and the
+platform's launcher puts no directory of the snap's own on the library path.
 
 ## AUR - `orden-bin`
 
