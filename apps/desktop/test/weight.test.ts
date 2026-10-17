@@ -675,8 +675,15 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-17, to 3,216,600, from an unstable at 3,214,464 (336 under), for share
  *  #386 once more: a caret's name held at the edge of the page goes to that caret when it
  *  is pressed (`heldCarets` in carets.ts), in the editor every note is drawn with.
- *  Measured 3,215,593. */
-const BUDGET = 3_216_600
+ *  Measured 3,215,593.
+ *
+ *  Raised 2026-10-17, to 3,218,100, from an unstable at 3,215,776 (824 under), for the
+ *  phone #206: a web note held in a tab off the desktop app goes to the browser and the
+ *  tab with it (`handedOut` in workspace.svelte.ts), a sitting put back there leaves web
+ *  notes' tabs out, and the scratchpad is the one note on a phone's screen, named in the
+ *  bar (Titlebar.svelte, scratchpad/). Their comments are cut to a line each. Measured
+ *  3,217,083. */
+const BUDGET = 3_218_100
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
