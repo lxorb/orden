@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte'
+  import { onDestroy, tick, untrack } from 'svelte'
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
@@ -453,14 +453,28 @@
 
   // Syncing only runs while there is an account behind it - and not before a
   // fresh sign-in has settled what happens to the notes already here.
+  //
+  // Keyed on whose sync it is and which engine, and nothing else. The effect used to
+  // run again whenever anything it read changed - the account's user read back a
+  // moment after signing in, say - and each run started a second loop over the first:
+  // two first passes, the second finding the first already running and lifting the
+  // waiting state with nothing counted, while the notes went on arriving behind it
+  // (test/e2e/signin.py).
+  const syncing = $derived(
+    account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
+  )
   $effect(() => {
-    if (account.syncable) {
-      sync.start()
-      // The bytes are an account's, and a guest is writing into somebody else's.
-      if (account.user) void usage.refresh()
+    if (syncing !== null) {
+      untrack(() => {
+        sync.start()
+        // The bytes are an account's, and a guest is writing into somebody else's.
+        if (account.user) void usage.refresh()
+      })
     } else {
-      sync.stop()
-      rooms.clear()
+      untrack(() => {
+        sync.stop()
+        rooms.clear()
+      })
     }
   })
 
