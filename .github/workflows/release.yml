@@ -335,6 +335,12 @@ jobs:
       # remade on every push to main and is not something to publish anywhere. And to
       # packaging-bump.yml, which moves the manifests in packaging/ onto it, the flake
       # people install from this repository first of all.
+      # And edge to the apt repository's `unstable` suite; a stable release reaches its
+      # `stable` one through publish.yml. See apt.yml.
+      - name: Hand edge to the apt repository
+        if: needs.version.outputs.rolling == 'true'
+        run: gh workflow run apt.yml --ref "$GITHUB_REF_NAME" -f suite=unstable -f tag="$TAG"
+
       - name: Hand the release to the package managers
         if: needs.version.outputs.rolling != 'true'
         run: |

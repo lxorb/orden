@@ -256,3 +256,33 @@ describe('the old names', () => {
     expect(publish).toMatch(/409 \\\(Conflict\\\)/)
   })
 })
+
+/** The apt repository, lxorb/apt: one key, said the same everywhere it is said, and both
+ *  suites written by the one workflow. See packaging/linux.md, "apt". */
+describe('the apt repository', () => {
+  const workflow = repo('.github', 'workflows', 'apt.yml')
+  const fingerprint = /APT_KEY_FINGERPRINT: ([0-9A-F]{40})/.exec(workflow)?.[1] ?? ''
+
+  test('signs with the key whose fingerprint the page and the docs give', () => {
+    expect(fingerprint).toHaveLength(40)
+    const spaced = (fingerprint.match(/.{4}/g) ?? []).join(' ')
+    expect(read('apt', 'README.md')).toContain(spaced)
+    expect(read('apt', 'index.html')).toContain(spaced)
+    expect(read('linux.md')).toContain(fingerprint)
+    expect(read('apt', 'orden-archive-keyring.asc')).toMatch(
+      /^-----BEGIN PGP PUBLIC KEY BLOCK-----/,
+    )
+  })
+
+  test('is written for stable by publish.yml and for unstable by release.yml', () => {
+    expect(repo('.github', 'workflows', 'publish.yml')).toContain('gh workflow run apt.yml')
+    expect(repo('.github', 'workflows', 'publish.yml')).toContain('-f suite=stable')
+    expect(repo('.github', 'workflows', 'release.yml')).toContain('-f suite=unstable -f tag="$TAG"')
+  })
+
+  test('says its own address where the workflow writes it in', () => {
+    for (const page of ['README.md', 'index.html']) {
+      expect(read('apt', page)).toContain('@BASE@/orden-archive-keyring.asc')
+    }
+  })
+})

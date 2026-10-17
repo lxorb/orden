@@ -107,6 +107,21 @@ jobs:
           # fine-grained one.
           token: ${{ secrets.WINGET_TOKEN }}
 
+  # lxorb/apt, the apt repository: its `stable` suite, written by apt.yml, which
+  # release.yml starts as well for `unstable`. A workflow of its own, so the two never
+  # push the repository at once; it skips itself where the key or the token is missing.
+  apt:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: gh workflow run apt.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f suite=stable -f tag="$TAG"
+
   # lxorb/scoop-bucket is ours, so this is a commit rather than a pull request.
   scoop:
     needs: gate

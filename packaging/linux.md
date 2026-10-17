@@ -1,6 +1,6 @@
 # Linux packaging
 
-Four package managers. Three of them repackage what
+Five package managers. Four of them repackage what
 `.github/workflows/release.yml` already publishes rather than rebuilding
 Orden, so a release is a release everywhere and nothing can drift between
 them. Flathub is the exception and has to be: it only takes a source-available
@@ -8,6 +8,7 @@ app that is compiled from source inside its own sandbox.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
+| `apt/` | apt (`apt install orden`, from `lxorb.github.io/apt`) | the `.deb` | amd64, arm64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `flathub/` | Flathub (`flatpak`) | source, in the sandbox | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
@@ -106,6 +107,71 @@ on purpose (see below). gnome-46-2404 carries -base, -good, PipeWire's and the G
 plugins, so recordings and WebM play; AAC and H.264 do not. Staging gst-libav would
 not be enough to change that: its libavfilter is not in the platform, and the
 platform's launcher puts no directory of the snap's own on the library path.
+
+## apt - `lxorb/apt`
+
+An apt repository of our own, on GitHub Pages: `lxorb/apt`, served at
+`https://lxorb.github.io/apt`. The address lives in one place, the repository variable
+`APT_BASE_URL` (that default when it is unset), which `apt.yml` writes into the
+repository's own page; a move to `apt.orden.so` is that variable, a `CNAME` in `lxorb/apt`
+and the lines below.
+
+Two suites, one component, `main`, and both architectures:
+
+- `stable`: the newest release. `publish.yml` dispatches `apt.yml` for every stable tag,
+  with the other package managers.
+- `unstable`: the newest `edge` build. `release.yml` dispatches it once edge's files are up.
+
+**Each suite holds one version, the newest.** A run empties that suite's pool, puts the
+release's two `.deb`s in, writes its `Packages` and `Release` again and signs it; the
+other suite is taken from the repository as it is. Every older `.deb` stays on its release
+page. The repository is pushed as a single commit with no history, because every `.deb`
+that ever went in would otherwise stay in a repository Pages serves - thirty megabytes for
+every edge build.
+
+**Written with `apt-ftparchive` and `gpg`**, in `scripts/apt-repo.sh`, and nothing else:
+no `reprepro` database or `aptly` state to keep beside the files, so the checkout of
+`lxorb/apt` is the whole of the state, a run reads it as it finds it, and the layout is the
+plain one apt reads:
+
+```
+dists/<suite>/InRelease, Release, Release.gpg
+dists/<suite>/main/binary-{amd64,arm64}/Packages, Packages.gz
+pool/<suite>/orden_<version>_<arch>.deb
+orden-archive-keyring.asc, orden-archive-keyring.gpg, index.html, README.md
+```
+
+**The key** is `APT_SIGNING_KEY`, a repository secret: ed25519 with no passphrase,
+`Orden packages <emil@emilvinu.ch>`, fingerprint
+`44404B19539FB2C53F31086941F0103448A194DE`. Its public half is
+`apt/orden-archive-keyring.asc` here and at the root of the repository, and a run whose
+secret is not that key refuses to sign. Without the key or `PACKAGING_TOKEN` the run is
+skipped. `InRelease` and `Release.gpg` both, so every apt finds the signature it asks for.
+
+Adding it, for `stable` (`Suites: unstable` for the edge builds):
+
+```sh
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://lxorb.github.io/apt/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
+sudo tee /etc/apt/sources.list.d/orden.sources >/dev/null <<'EOF'
+Types: deb
+URIs: https://lxorb.github.io/apt
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/orden.asc
+EOF
+sudo apt update
+sudo apt install orden
+```
+
+The one-line form, for an apt older than 2.3 that reads no `.sources` file:
+`deb [signed-by=/etc/apt/keyrings/orden.asc] https://lxorb.github.io/apt stable main` in
+`/etc/apt/sources.list.d/orden.list`. The keyring may be the armored `.asc`; apt reads
+either. The app leaves an install from here to apt and only says when a new version is out
+(`package_manager.rs`).
+
+By hand: `gh workflow run apt.yml -f suite=stable -f tag=v0.15.0`, or
+`-f suite=unstable -f tag=edge`.
 
 ## AUR - `orden-bin`
 
