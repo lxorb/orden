@@ -213,7 +213,7 @@ def drive(browser: Browser) -> None:
     # It used to put a layer on the overlay stack for the whole time it was on, and
     # that stack is what the pane reads to decide whether the page may be seen - so
     # F11 on a web tab hid the page it is meant to fill the screen with.
-    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.activeTabId)")
+    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
     page.wait_for_timeout(500)
     shot(page, "03-fullscreen")
 
