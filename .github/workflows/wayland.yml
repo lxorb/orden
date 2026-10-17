@@ -22,19 +22,13 @@ name: wayland
 #
 # The Nix flake has a workflow of its own, its own launch under sway included, in
 # nix.yml; this one leaves packaging/nix to it.
+# On a pull request into main once it is ready for review, the way check.yml runs, and
+# by hand (`gh workflow run wayland.yml --ref <branch>`). Not on a draft, and not on
+# `unstable`'s pushes: see docs/conventions.md, "CI".
 on:
   pull_request:
-    paths:
-      - 'apps/desktop/src-tauri/**'
-      - 'apps/desktop/src/lib/web-tab/**'
-      - 'apps/desktop/package.json'
-      - 'pnpm-lock.yaml'
-      - 'packaging/**'
-      - '!packaging/nix/**'
-      - 'scripts/wayland-*'
-      - '.github/workflows/wayland.yml'
-  push:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'apps/desktop/src-tauri/**'
       - 'apps/desktop/src/lib/web-tab/**'
@@ -43,6 +37,7 @@ on:
       - 'packaging/**'
       - '!packaging/nix/**'
       - 'scripts/wayland-*'
+      - 'scripts/appimage-trim.sh'
       - '.github/workflows/wayland.yml'
   workflow_dispatch:
 
@@ -56,6 +51,8 @@ permissions:
 
 jobs:
   build:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-22.04
     permissions:
       contents: read
