@@ -14,12 +14,19 @@
  *  - **the vault**: the accounts and their keys as JSON, AES-256-GCM under the vault key
  *    with a random nonce and a fixed label as associated data.
  *
- *  And the six digits two screens compare while a device is allowed, from the new
- *  device's public key: a server that swapped in a key of its own would show different
- *  ones. */
+ *  And the six digits two screens compare while a device is allowed. They come out of
+ *  both devices' public keys and a nonce from each, and the new device commits to its
+ *  key and nonce before the answering device picks its nonce, so nobody between the two
+ *  screens can pick a key that shows the same digits (`commitment`, `digits`; the steps
+ *  are in services/sync/src/ai/vault.ts).
+ *
+ *  And `authOf`, a token derived from the vault key: what the account asks of a device
+ *  before it lets it change anything, so a session without the key changes nothing. */
 
 const CURVE = { name: 'ECDH', namedCurve: 'P-256' } as const
 const WRAP_INFO = new TextEncoder().encode('nib ai vault key')
+const AUTH_INFO = new TextEncoder().encode('nib ai vault auth')
+const DIGITS_LABEL = new TextEncoder().encode('nib ai vault digits')
 const SEAL_LABEL = new TextEncoder().encode('nib ai vault 1')
 const NONCE = 12
 /** An uncompressed P-256 public key's length. */
@@ -53,6 +60,12 @@ async function hex(bytes: Uint8Array<ArrayBuffer>, length: number): Promise<stri
   return [...digest.slice(0, length)].map((one) => one.toString(16).padStart(2, '0')).join('')
 }
 
+/** The id the account files a device under: hex of its public key's hash, so a key and
+ *  the id it is filed under cannot be told apart by anyone who swaps one. */
+export async function idOf(pub: string): Promise<string> {
+  return await hex(bytesOf(pub), 16)
+}
+
 /** A fresh device key. */
 export async function newDeviceKey(): Promise<DeviceKey> {
   const pair = await subtle().generateKey(CURVE, true, ['deriveBits'])
@@ -62,6 +75,17 @@ export async function newDeviceKey(): Promise<DeviceKey> {
     pub: base64(pub),
     priv: await subtle().exportKey('jwk', pair.privateKey),
   }
+}
+
+/** A fresh nonce for one asking, from either side. */
+export function newNonce(): string {
+  return base64(globalThis.crypto.getRandomValues(new Uint8Array(32)))
+}
+
+/** What a device asking to be let in says first: SHA-256 of its key and its nonce. */
+export async function commitment(pub: string, nonce: string): Promise<string> {
+  const digest = await subtle().digest('SHA-256', joined(bytesOf(pub), bytesOf(nonce)))
+  return base64(new Uint8Array(digest))
 }
 
 /** A kept device key, read rather than trusted. */
@@ -77,10 +101,23 @@ export function deviceKeyIn(value: unknown): DeviceKey | null {
     : null
 }
 
-/** The six digits both screens show for a device's public key, `SHA-256(pub)` read as
- *  a number, mod 10^6, in two groups of three. */
-export async function digits(pub: string): Promise<string> {
-  const digest = new Uint8Array(await subtle().digest('SHA-256', bytesOf(pub)))
+/** The six digits both screens show while a device is let in: SHA-256 over the asking
+ *  device's key and nonce, the answering device's nonce and its key, read as a number,
+ *  mod 10^6, in two groups of three. */
+export async function digits(
+  asking: string,
+  askingNonce: string,
+  answeringNonce: string,
+  answering: string,
+): Promise<string> {
+  const said = joined(
+    DIGITS_LABEL,
+    bytesOf(asking),
+    bytesOf(askingNonce),
+    bytesOf(answeringNonce),
+    bytesOf(answering),
+  )
+  const digest = new Uint8Array(await subtle().digest('SHA-256', said))
   let number = 0
   for (const one of digest.slice(0, 6)) number = (number * 256 + one) % 1_000_000
   const six = String(number).padStart(6, '0')
@@ -142,6 +179,18 @@ export async function unwrap(wrapped: string, mine: DeviceKey): Promise<Uint8Arr
   const them = await subtle().importKey('raw', ephemeral, CURVE, false, [])
   const sealing = await wrapping(secret, them, joined(ephemeral, bytesOf(mine.pub)))
   return new Uint8Array(await subtle().decrypt({ name: 'AES-GCM', iv: nonce }, sealing, sealed))
+}
+
+/** The token a device shows the account to change anything: HKDF of the vault key, so
+ *  the account can check it against the hash it keeps and still never learn the key. */
+export async function authOf(key: Uint8Array<ArrayBuffer>): Promise<string> {
+  const material = await subtle().importKey('raw', key, 'HKDF', false, ['deriveBits'])
+  const bits = await subtle().deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: AUTH_INFO },
+    material,
+    256,
+  )
+  return base64(new Uint8Array(bits))
 }
 
 async function vaultKey(key: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
