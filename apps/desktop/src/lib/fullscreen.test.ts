@@ -263,12 +263,12 @@ describe('the shell', () => {
   const menu = readFileSync(`${SOURCE}lib/app-menu.ts`, 'utf8')
   const registry = readFileSync(`${SOURCE}lib/shortcuts/registry.ts`, 'utf8')
 
-  /** Everything inside a `{#if …fullscreen…}` block, by counting the blocks that
-   *  open and close between. */
+  /** Everything inside a `{#if …fullscreen…}` or `{#if …bare…}` block, by counting
+   *  the blocks that open and close between. */
   function branches(text: string): string[] {
     const found: string[] = []
 
-    for (const match of text.matchAll(/\{#if [^}]*fullscreen[^}]*\}/g)) {
+    for (const match of text.matchAll(/\{#if [^}]*(?:fullscreen|bare)[^}]*\}/g)) {
       const opening = match.index
       let depth = 1
       let at = opening + match[0].length
@@ -287,11 +287,13 @@ describe('the shell', () => {
   }
 
   test('the app leaves: the file list, both bars, the round button', () => {
-    expect(app).toContain('{#if !fullscreen.on}')
+    // `bare` is full screen, or a guest's one shared file; see alone.svelte.ts.
+    expect(app).toContain('const bare = $derived(fullscreen.on || alone.on)')
+    expect(app).toContain('{#if !bare}')
     // Which kinds have the bar at all is `hasStatusBar` in regions.ts; what is
     // asserted here is only that full screen takes it away as well.
-    expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}')
-    expect(app).toContain('&& !fullscreen.on}\n        <button class="fab"')
+    expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !bare && !filled}')
+    expect(app).toContain('&& !bare}\n        <button class="fab"')
 
     const gone = branches(app).find((one) => one.includes('class="panels"'))
     expect(gone, 'the panels are not left out').toBeDefined()

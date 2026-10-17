@@ -27,6 +27,7 @@
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
   import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
+  import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -116,6 +117,7 @@
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
+  const bare = $derived(fullscreen.on || alone.on)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
    *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
@@ -438,7 +440,7 @@
   // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.drawer) return
+    if (!host || !viewport.drawer || bare) return
 
     let stop: (() => void) | null = null
     let live = true
@@ -911,7 +913,7 @@
      the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
 <main
   class:focus={modes.focus}
-  class:full={fullscreen.on}
+  class:full={bare}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -929,7 +931,7 @@
          bars. Left out rather than slid away, so nothing in them can be reached
          by a key while they are gone; see fullscreen.svelte.ts. A tab filling the
          window leaves the same, and its bar at the top edge; see lib/tab-fill. -->
-    {#if !fullscreen.on && !filled}
+    {#if !bare && !filled}
       <div
         class="panels"
         data-chrome="start"
@@ -960,7 +962,7 @@
          as Orden started slid it across, over the list the phone had open. -->
     <div
       class="document"
-      inert={viewport.narrow && viewport.drawer && !!workspace.panel}
+      inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
@@ -972,7 +974,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !fullscreen.on}
+      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -995,7 +997,7 @@
       <!-- The three dots at the right end of it open the whole of the app on a
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->
-      {#if !fullscreen.on}
+      {#if !bare}
         {#if filled}
           {#await fillBar() then FillBar}
             <FillBar>{@render bar()}</FillBar>
@@ -1041,11 +1043,11 @@
         </div>
 
         <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if !fullscreen.on && !filled && !__EVEN_PLUGIN__}
+        {#if !bare && !filled && !__EVEN_PLUGIN__}
           <PadColumn />
         {/if}
 
-        {#if workspace.right.length && !fullscreen.on && !filled}
+        {#if workspace.right.length && !bare && !filled}
           <div
             class="panels right"
             data-chrome="end"
@@ -1072,7 +1074,7 @@
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
            keyboard's own table describes. -->
-      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}
+      {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}
@@ -1084,7 +1086,7 @@
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
         <button class="fab" aria-label={fabLabel} onclick={writeNew}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>

@@ -27,6 +27,7 @@
     setReadOnlyMode,
   } from '@nib/editor'
   import { untrack } from 'svelte'
+  import { alone } from './alone.svelte'
   import { isDeck } from '@nib/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
@@ -96,7 +97,7 @@
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along - as it is for a pane filling the window. */
-  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills)
+  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills && !alone.on)
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
   const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
