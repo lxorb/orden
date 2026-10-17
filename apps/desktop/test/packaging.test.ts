@@ -81,20 +81,22 @@ describe('the workflow that publishes it', () => {
   })
 })
 
-/** Only main and a tag have a release to go on. scripts/build-version.sh names every
- *  other ref `edge` as well, because "not a tag" is all it asks - so a manual run of
- *  release.yml on a branch, which is somebody checking that the builds work, would
+/** Only `unstable`, which `edge` is built from, and a tag have a release to go on.
+ *  scripts/build-version.sh names every other ref `edge` as well, because "not a tag"
+ *  is all it asks - so a manual run of release.yml on a branch, which is somebody
+ *  checking that the builds work, would
  *  otherwise delete the signed `edge` and put that branch's build in its place, and
  *  every install on the unstable channel (src-tauri/src/updates.rs) would update to
  *  it. The builds still run on a branch; the job that writes does not. */
 describe('the release', () => {
   const workflow = repo('.github', 'workflows', 'release.yml')
 
-  test('publishes only from main or a tag', () => {
+  test('publishes only from unstable or a tag', () => {
     const job = /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
     const guard = /^ {4}if: (.*)$/m.exec(job)?.[1] ?? ''
 
-    expect(guard).toContain("github.ref == 'refs/heads/main'")
+    expect(guard).toContain("github.ref == 'refs/heads/unstable'")
+    expect(guard).not.toContain("github.ref == 'refs/heads/main'")
     expect(guard).toContain("startsWith(github.ref, 'refs/tags/v')")
   })
 
