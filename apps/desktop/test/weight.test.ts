@@ -663,8 +663,15 @@ function holds(tail: string): boolean {
  *  #387: a late still picture stands in under menus (photograph in web-tab/pages.svelte.ts
  *  keeps a picture that lands after its clock), and Super refused as a global key outside
  *  a Mac (refuse in shortcuts.svelte.ts, accelerator.ts). Their comments are cut to a line
- *  each. Measured 3,206,501. */
-const BUDGET = 3_207_500
+ *  each. Measured 3,206,501.
+ *
+ *  Raised 2026-10-17, to 3,214,800, from an unstable at 3,207,078 (422 under), for share
+ *  #386 again: a page note and a chat shared on their own open as themselves
+ *  (`sharedKind` in openers.ts, 336 bytes), and nobody in a note is out of sight - a
+ *  caret's name stays, and one scrolled away is held at the edge of the page
+ *  (`heldCarets` in carets.ts, the rest). The editor draws every note, so the layer is in
+ *  front of the first paint with it. Measured 3,213,845. */
+const BUDGET = 3_214_800
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
