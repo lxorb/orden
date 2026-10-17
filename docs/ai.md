@@ -342,16 +342,40 @@ account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
   on the account only wrapped to each device's public key (ephemeral ECDH, HKDF-SHA256 with
   both public keys as salt, AES-256-GCM): the shape web logins use (docs/sync-v2.md 6.6),
   in WebCrypto, so a phone and a browser carry it too.
-- **Connecting a new device**: it registers its public key and shows six digits
-  (`SHA-256(pub)` mod 10^6) in Settings > AI. Every device that has the key shows a bubble,
-  *"Phone wants your AI accounts 482 913"*, with Don't allow and Allow; Allow wraps the key
-  to it. Nothing is typed. A server that swapped in a public key of its own would show
-  other digits. The first device of an account makes the key without a word, and the same
-  device after an update, an engine switch or a reinstall opens at once: its device key is
-  in the keychain, which outlives the app.
+- **Connecting a new device**, in three steps so that nobody between the two screens - the
+  account's service included - can choose a key that shows the same digits:
+  1. The new device registers a commitment, `SHA-256(pub || nonce)`, and not its key.
+  2. A device that has the vault key answers with a random nonce of its own. The first
+     answer stands, and the bubble comes up on the device that gave it.
+  3. Only then does the new device reveal its key and nonce. The service and the
+     answering device both check that they hash to the commitment, and that the key hashes
+     to the device's id.
+  Both screens then show the same six digits: `SHA-256` over the new key, its nonce, the
+  answering nonce and the answering key, mod 10^6. The new one shows them in Settings > AI;
+  the answering one shows a bubble, *"Phone wants your AI accounts 482 913"*, with Don't
+  allow and Allow, and Allow wraps the key to exactly the key those digits came from - a key
+  the account lists differently by then is wrapped to nothing. A key swapped in had to be
+  committed to before the answering nonce existed, so it shows the same digits one time in
+  a million, and every try is a bubble the reader sees. Nothing is typed. The first device
+  of an account makes the key without a word, and the same device after an update, an
+  engine switch or a reinstall opens at once: its device key is in the keychain, which
+  outlives the app.
+- **Who may change it**: only a device that has the vault key. The vault is made with a
+  token derived from the key (HKDF), the account keeps only the token's hash, and answering
+  a device, wrapping the key to one, writing the vault, turning an allowed device away and
+  letting the vault go each send it. A session alone - a stolen one included - can register
+  a device and ask, which the reader sees as a bubble, and change nothing else.
+- **A browser** keeps its keys in the vault only once the reader turns on *Keep this
+  browser's keys in the vault* in Settings > AI, which says what it costs: every device's
+  keys are then in the browser's own storage, where a script that got into the page could
+  read them. Turned off, the browser lets go of its place in the vault and keeps what it
+  holds. A desktop and a phone keep theirs in the platform's secret store, and are in the
+  vault once somebody signs in.
 - **When no device is left to allow one**: **Start over**. The old vault is let go of,
   this device's accounts become the vault, and every other device is allowed again from
-  here. Keys only that vault held are typed again; programs' sign-ins are each machine's
+  here. The account takes it only from a device with the key or once no device is allowed
+  any more, so a device still waiting for an answer cannot take the vault away from the
+  others. Keys only that vault held are typed again; programs' sign-ins are each machine's
   own and stay. There is no recovery code, for web logins' reason: losing it costs a key
   typed again, never writing.
 - **Two devices at once**: a write names the revision it read and is refused over a newer
