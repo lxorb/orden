@@ -275,7 +275,8 @@ const style = EditorView.baseTheme({
  *  top and one at the bottom, saw nobody (#386). So whoever's caret is above what can be
  *  seen is held at the top edge of it, and whoever's is below at the foot: their name
  *  in their colour, with an arrow pointing the way to them. Scrolling towards the arrow
- *  brings the caret into view, and the name goes back over it.
+ *  brings the caret into view, and the name goes back over it; pressing the name scrolls
+ *  there.
  *
  *  A layer over the editor rather than a decoration in it, because a decoration is drawn
  *  where its text is, and the text is exactly what is not on screen. Read once a frame,
@@ -324,6 +325,7 @@ function layer(side: 'above' | 'below'): HTMLElement {
 function pill(one: Peer): HTMLElement {
   const tag = document.createElement('span')
   tag.className = 'cm-nib-held-name'
+  tag.dataset.peer = String(one.id)
   tag.style.setProperty('--peer', one.colour)
   tag.append(one.name)
   return tag
@@ -371,7 +373,25 @@ function heldCarets(): Extension {
           write: (held: Held | null) => this.draw(held),
         }
 
+        /** A press on a held name goes to that caret, and leaves this one where it
+         *  is: the press is the name's own, and never reaches the text under it. */
+        private readonly go = (event: MouseEvent) => {
+          const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-nib-held-name')
+            ?.dataset.peer
+          const one = peersOf(this.view.state).find((peer) => String(peer.id) === id)
+          if (!one) return
+          event.preventDefault()
+          const at = Math.min(Math.max(0, one.head), this.view.state.doc.length)
+          this.view.dispatch({ effects: EditorView.scrollIntoView(at, { y: 'center' }) })
+        }
+
+        private readonly keep = (event: MouseEvent) => event.preventDefault()
+
         constructor(private readonly view: EditorView) {
+          for (const side of [this.above, this.below]) {
+            side.addEventListener('mousedown', this.keep)
+            side.addEventListener('click', this.go)
+          }
           view.dom.append(this.above, this.below)
           window.addEventListener('scroll', this.look, true)
           window.addEventListener('resize', this.look)
@@ -448,6 +468,9 @@ const heldStyle = EditorView.baseTheme({
     letterSpacing: '0.02em',
     whiteSpace: 'nowrap',
     userSelect: 'none',
+    // The one thing on the layer a pointer may press: it goes to them.
+    pointerEvents: 'auto',
+    cursor: 'pointer',
   },
 
   '.cm-nib-held-name::before': {
