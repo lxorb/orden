@@ -22,6 +22,7 @@ import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
 import { PANELS } from './panels'
+import { isTabKind } from './tab-kinds'
 
 /** The shape this version writes. */
 const VERSION = 2
@@ -155,19 +156,6 @@ export function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = [
-  'note',
-  'graph',
-  'pdf',
-  'canvas',
-  'pages',
-  'web',
-  'terminal',
-  'view',
-  'chat',
-  'channel',
-]
-
 /** Which kind of tab an entry is, which is its file's name first and what the entry
  *  claims second.
  *
@@ -183,7 +171,7 @@ const TAB_KINDS: readonly TabKind[] = [
  *  that is the graph, and a new tab with no file yet. Everything else a name has no opinion
  *  about - a paper being read - it keeps. */
 function tabKind(value: unknown, path: unknown): TabKind {
-  const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'
+  const said = isTabKind(value) ? value : 'note'
   if (typeof path !== 'string') return said
 
   // A website first of all, because its name is the whole of what it is: a shortcut
