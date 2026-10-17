@@ -1922,6 +1922,12 @@ class Workspace {
   private async openSite(opening: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
+    // Gone, or a `.webloc` that would not read or says no address - a binary plist,
+    // say. This app never writes one, so it is not an empty shortcut waiting for its
+    // address: it says so the way a canvas that will not read does, and opens nothing.
+    if (said === null && /\.webloc$/i.test(opening.trim())) {
+      return unread(opening).then(() => null)
+    }
 
     // A shortcut with no address yet opens in a tab, for its bar; a phone has none.
     if (!isDesktop && (said || viewport.device === 'phone')) {
