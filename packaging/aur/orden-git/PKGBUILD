@@ -14,9 +14,15 @@ pkgdesc="Lightweight markdown editor with realtime inline preview (latest main)"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
+# The same as orden-bin's, for the same reasons: WebKitGTK 2.40 is the oldest the
+# program runs on, and the two GStreamer sets a recording and its playback cannot do
+# without. See packaging/linux.md.
+depends=('gtk3' 'webkit2gtk-4.1>=2.40' 'gst-plugins-base' 'gst-plugins-good'
+         'hicolor-icon-theme')
 makedepends=('git' 'cargo' 'nodejs>=24' 'pnpm')
-optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
+optdepends=('gst-libav: play AAC and H.264 - a recording made on a Mac, a video from a phone'
+            'gst-plugins-bad: play the remaining formats WebKitGTK hands to it'
+            'pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
 provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
 conflicts=('orden' "${_pkgname}" 'nib-bin' 'nibeditor')
