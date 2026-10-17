@@ -152,6 +152,12 @@ a room of text, and nothing drawn on either side reached the other (#386). So a
 document with no path but a share is the shape it was opened as, which was read off
 its name on the account (`roomKindOf` in `rooms/kind.ts`).
 
+Which kind of tab it opens as is read off the same name (`sharedKind` in
+`openers.ts`): a canvas on the plane, a page note on its paper - in a plane's room,
+as the service has it - and a chat as the chat, whose id the pointer's words name.
+Anything else is a note. Both of the first and the last used to open as notes: a page
+note's JSON in a text editor, and a chat's pointer as a line to read.
+
 A link to one file followed by an account that already holds its space - the owner
 opening their own link on a phone, say - opens the file where it is kept, not as a
 borrowed tab. Shared with you does not list a file of one's own, so the borrowed tab
