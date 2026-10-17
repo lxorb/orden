@@ -1242,6 +1242,8 @@ export const fa: Dictionary = {
   'Ask to join': 'خواستن پیوستن',
   Asking: 'در حال خواستن',
   'Waiting for {who}': 'در انتظار {who}',
+  '{device} offers this computer your web logins':
+    '{device} ورودهای وب شما را به این رایانه پیشنهاد می‌کند',
   '{who} did not let you in': '{who} شما را راه نداد',
   'What the others in this space see.': 'آنچه دیگران در این فضا می‌بینند.',
   // Which stream of releases this machine follows; see updates.svelte.ts

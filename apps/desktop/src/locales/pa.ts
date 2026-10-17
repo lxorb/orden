@@ -1244,6 +1244,8 @@ export const pa: Dictionary = {
   'Ask to join': 'ਜੁੜਨ ਲਈ ਮੰਗੋ',
   Asking: 'ਮੰਗ ਰਿਹਾ ਹੈ',
   'Waiting for {who}': '{who} ਦੀ ਉਡੀਕ',
+  '{device} offers this computer your web logins':
+    '{device} ਇਸ ਕੰਪਿਊਟਰ ਨੂੰ ਤੁਹਾਡੇ ਵੈੱਬ ਲੌਗਇਨ ਦੇ ਰਿਹਾ ਹੈ',
   '{who} did not let you in': '{who} ਨੇ ਤੁਹਾਨੂੰ ਅੰਦਰ ਨਹੀਂ ਆਉਣ ਦਿੱਤਾ',
   'What the others in this space see.': 'ਇਸ ਥਾਂ ਵਿੱਚ ਬਾਕੀ ਜੋ ਵੇਖਦੇ ਹਨ।',
   // Which stream of releases this machine follows; see updates.svelte.ts

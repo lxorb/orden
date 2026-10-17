@@ -1247,6 +1247,8 @@ export const kn: Dictionary = {
   'Ask to join': 'ಸೇರಲು ಕೇಳಿ',
   Asking: 'ಕೇಳುತ್ತಿದೆ',
   'Waiting for {who}': '{who} ಗಾಗಿ ಕಾಯುತ್ತಿದೆ',
+  '{device} offers this computer your web logins':
+    '{device} ಈ ಕಂಪ್ಯೂಟರ್‌ಗೆ ನಿಮ್ಮ ವೆಬ್ ಲಾಗಿನ್‌ಗಳನ್ನು ನೀಡುತ್ತಿದೆ',
   '{who} did not let you in': '{who} ನಿಮ್ಮನ್ನು ಒಳಗೆ ಬಿಡಲಿಲ್ಲ',
   'What the others in this space see.': 'ಈ ಸ್ಪೇಸ್‌ನಲ್ಲಿ ಉಳಿದವರು ನೋಡುವುದು.',
   // Which stream of releases this machine follows; see updates.svelte.ts

@@ -1239,6 +1239,8 @@ export const ms: Dictionary = {
   'Ask to join': 'Minta menyertai',
   Asking: 'Meminta',
   'Waiting for {who}': 'Menunggu {who}',
+  '{device} offers this computer your web logins':
+    '{device} menawarkan log masuk web anda kepada komputer ini',
   '{who} did not let you in': '{who} tidak membenarkan anda masuk',
   'What the others in this space see.': 'Apa yang dilihat orang lain dalam ruang ini.',
   // Which stream of releases this machine follows; see updates.svelte.ts

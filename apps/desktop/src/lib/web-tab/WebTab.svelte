@@ -876,6 +876,15 @@
         >
       </p>
     {/if}
+    <!-- The key offered to this computer: taken, with this computer's own web logins put
+         under it, only on Join. -->
+    {#if pages.offered}
+      {@const offered = pages.offered}
+      <p class="waiting">
+        {t('{device} offers this computer your web logins', { device: offered.device })}
+        <button class="nib-chip" onclick={() => offered.join()}>{t('Join')}</button>
+      </p>
+    {/if}
 
     <!-- What the page said, what a site asked for, and what a site is: one at a time,
          because a question waiting to be answered is the only thing worth reading, and

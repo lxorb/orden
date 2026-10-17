@@ -1226,6 +1226,8 @@ export const th: Dictionary = {
   'Ask to join': 'ขอเข้าร่วม',
   Asking: 'กำลังขอ',
   'Waiting for {who}': 'กำลังรอ {who}',
+  '{device} offers this computer your web logins':
+    '{device} เสนอการเข้าสู่ระบบเว็บของคุณให้คอมพิวเตอร์นี้',
   '{who} did not let you in': '{who} ไม่ให้คุณเข้า',
   'What the others in this space see.': 'สิ่งที่คนอื่นในพื้นที่นี้เห็น',
   // Which stream of releases this machine follows; see updates.svelte.ts

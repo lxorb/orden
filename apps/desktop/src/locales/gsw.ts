@@ -1243,6 +1243,8 @@ export const gsw: Dictionary = {
   'Ask to join': 'Um Iilass bitte',
   Asking: 'Fragt',
   'Waiting for {who}': 'Wartet uf {who}',
+  '{device} offers this computer your web logins':
+    '{device} bietet däm Computer dini Web-Aamäldige aa',
   '{who} did not let you in': '{who} hät di nöd iiglaa',
   'What the others in this space see.': 'Was die andere i dem Bereich gsehnd.',
   // Which stream of releases this machine follows; see updates.svelte.ts

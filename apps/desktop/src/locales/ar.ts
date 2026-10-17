@@ -1285,6 +1285,8 @@ export const ar: Dictionary = {
   'Ask to join': 'طلب الانضمام',
   Asking: 'جارٍ الطلب',
   'Waiting for {who}': 'في انتظار {who}',
+  '{device} offers this computer your web logins':
+    'يعرض {device} على هذا الحاسوب تسجيلات دخولك إلى الويب',
   '{who} did not let you in': '{who} لم يسمح لك بالدخول',
   'What the others in this space see.': 'ما يراه الآخرون في هذه المساحة.',
   // Which stream of releases this machine follows; see updates.svelte.ts

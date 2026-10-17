@@ -1243,6 +1243,8 @@ export const te: Dictionary = {
   'Ask to join': 'చేరేందుకు అడుగు',
   Asking: 'అడుగుతోంది',
   'Waiting for {who}': '{who} కోసం వేచి ఉంది',
+  '{device} offers this computer your web logins':
+    '{device} ఈ కంప్యూటర్‌కు మీ వెబ్ లాగిన్‌లను అందిస్తోంది',
   '{who} did not let you in': '{who} మిమ్మల్ని అనుమతించలేదు',
   'What the others in this space see.': 'ఈ స్పేస్‌లోని ఇతరులు చూసేది.',
   // Which stream of releases this machine follows; see updates.svelte.ts

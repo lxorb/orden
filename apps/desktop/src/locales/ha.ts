@@ -1249,6 +1249,8 @@ export const ha: Dictionary = {
   'Ask to join': 'Nemi shiga',
   Asking: 'Ana nema',
   'Waiting for {who}': 'Ana jiran {who}',
+  '{device} offers this computer your web logins':
+    '{device} yana ba wannan kwamfuta shigarka na yanar gizo',
   '{who} did not let you in': '{who} bai bar ka shiga ba',
   'What the others in this space see.': 'Abin da sauran a wannan wurin suke ganin.',
   // Which stream of releases this machine follows; see updates.svelte.ts

@@ -1278,6 +1278,8 @@ export const ru: Dictionary = {
   'Ask to join': 'Попросить доступ',
   Asking: 'Запрос',
   'Waiting for {who}': 'Ожидание {who}',
+  '{device} offers this computer your web logins':
+    '{device} предлагает этому компьютеру ваши входы на сайты',
   '{who} did not let you in': '{who} не дал вам доступ',
   'What the others in this space see.': 'То, что видят остальные в этом пространстве.',
   // Which stream of releases this machine follows; see updates.svelte.ts

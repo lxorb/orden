@@ -1238,6 +1238,8 @@ export const ja: Dictionary = {
   'Ask to join': '参加を申請',
   Asking: '申請中',
   'Waiting for {who}': '{who} の承認待ち',
+  '{device} offers this computer your web logins':
+    '{device} がこのコンピュータにウェブのログインを提供しています',
   '{who} did not let you in': '{who} は参加を断りました',
   'What the others in this space see.': 'この共有スペースの他の人に見える名前です。',
   // Which stream of releases this machine follows; see updates.svelte.ts

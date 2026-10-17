@@ -1238,6 +1238,7 @@ export const gu: Dictionary = {
   'Ask to join': 'જોડાવા માંગો',
   Asking: 'માંગે છે',
   'Waiting for {who}': '{who}ની વાટ',
+  '{device} offers this computer your web logins': '{device} આ કમ્પ્યુટરને તમારા વેબ લૉગિન આપે છે',
   '{who} did not let you in': '{who}એ તમને અંદર આવવા દીધા નહીં',
   'What the others in this space see.': 'આ જગ્યામાં બીજા જે જુએ છે તે.',
   // Which stream of releases this machine follows; see updates.svelte.ts

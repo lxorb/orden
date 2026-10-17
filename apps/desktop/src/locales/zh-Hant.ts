@@ -1219,6 +1219,7 @@ export const zhHant: Dictionary = {
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等候{who}',
+  '{device} offers this computer your web logins': '{device} 向此電腦提供你的網頁登入',
   '{who} did not let you in': '{who}沒有讓你加入',
   'What the others in this space see.': '此空間裡其他人看到的內容。',
   // Which stream of releases this machine follows; see updates.svelte.ts

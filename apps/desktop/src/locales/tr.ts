@@ -1243,6 +1243,8 @@ export const tr: Dictionary = {
   'Ask to join': 'Katılmak için sor',
   Asking: 'Soruluyor',
   'Waiting for {who}': '{who} bekleniyor',
+  '{device} offers this computer your web logins':
+    '{device}, bu bilgisayara web oturumlarınızı sunuyor',
   '{who} did not let you in': '{who} sizi içeri almadı',
   'What the others in this space see.': 'Bu alandaki diğerlerinin gördüğü.',
   // Which stream of releases this machine follows; see updates.svelte.ts

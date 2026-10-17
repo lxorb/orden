@@ -1231,6 +1231,8 @@ export const ko: Dictionary = {
   'Ask to join': '참여 요청',
   Asking: '요청 중',
   'Waiting for {who}': '{who}를 기다리는 중',
+  '{device} offers this computer your web logins':
+    '{device}에서 이 컴퓨터에 웹 로그인을 제공합니다',
   '{who} did not let you in': '{who}가 들여보내지 않았습니다',
   'What the others in this space see.': '이 공간의 다른 사람에게 보이는 것.',
   // Which stream of releases this machine follows; see updates.svelte.ts

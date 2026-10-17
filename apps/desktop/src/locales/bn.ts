@@ -1238,6 +1238,8 @@ export const bn: Dictionary = {
   'Ask to join': 'যোগ দিতে চান',
   Asking: 'জিজ্ঞাসা করা হচ্ছে',
   'Waiting for {who}': '{who}-র জন্য অপেক্ষা',
+  '{device} offers this computer your web logins':
+    '{device} এই কম্পিউটারকে আপনার ওয়েব লগইন দিচ্ছে',
   '{who} did not let you in': '{who} আপনাকে ঢুকতে দেননি',
   'What the others in this space see.': 'এই স্পেসের বাকিরা যা দেখে।',
   // Which stream of releases this machine follows; see updates.svelte.ts

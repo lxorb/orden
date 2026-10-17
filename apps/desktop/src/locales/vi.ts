@@ -1232,6 +1232,8 @@ export const vi: Dictionary = {
   'Ask to join': 'Xin vào',
   Asking: 'Đang xin',
   'Waiting for {who}': 'Đang chờ {who}',
+  '{device} offers this computer your web logins':
+    '{device} đề nghị máy tính này dùng các đăng nhập web của bạn',
   '{who} did not let you in': '{who} không cho bạn vào',
   'What the others in this space see.': 'Những gì người khác trong không gian này thấy.',
   // Which stream of releases this machine follows; see updates.svelte.ts

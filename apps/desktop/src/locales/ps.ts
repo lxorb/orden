@@ -1238,6 +1238,8 @@ export const ps: Dictionary = {
   'Ask to join': 'د يوځای کېدو غوښتنه',
   Asking: 'غوښتنه کېږي',
   'Waiting for {who}': 'د {who} انتظار',
+  '{device} offers this computer your web logins':
+    '{device} دې کمپیوټر ته ستاسو د ویب ننوتنې وړاندې کوي',
   '{who} did not let you in': '{who} تاسو ته پرېنښودل',
   'What the others in this space see.': 'هغه چې نور په دې ځای کې ويني.',
   // Which stream of releases this machine follows; see updates.svelte.ts

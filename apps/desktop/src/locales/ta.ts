@@ -1252,6 +1252,8 @@ export const ta: Dictionary = {
   'Ask to join': 'சேர அனுமதி கேள்',
   Asking: 'கேட்கிறது',
   'Waiting for {who}': '{who} க்காகக் காத்திருக்கிறது',
+  '{device} offers this computer your web logins':
+    '{device} இந்தக் கணினிக்கு உங்கள் வலை உள்நுழைவுகளை வழங்குகிறது',
   '{who} did not let you in': '{who} உங்களை அனுமதிக்கவில்லை',
   'What the others in this space see.': 'இந்த இடத்தில் மற்றவர்கள் பார்ப்பது.',
   // Which stream of releases this machine follows; see updates.svelte.ts

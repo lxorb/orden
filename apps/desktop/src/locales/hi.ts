@@ -1241,6 +1241,8 @@ export const hi: Dictionary = {
   'Ask to join': 'जुड़ने को कहें',
   Asking: 'पूछ रहे हैं',
   'Waiting for {who}': '{who} का इंतज़ार',
+  '{device} offers this computer your web logins':
+    '{device} इस कंप्यूटर को आपके वेब लॉगिन दे रहा है',
   '{who} did not let you in': '{who} ने अंदर नहीं आने दिया',
   'What the others in this space see.': 'इस स्पेस में बाकी लोग जो देखते हैं।',
   // Which stream of releases this machine follows; see updates.svelte.ts

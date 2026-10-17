@@ -520,6 +520,9 @@ class Pages {
   /** The computer this one waits on for the web key, and the six digits both show, for
    *  the quiet line under a web tab's bar. See approval.svelte.ts. */
   waiting = $state<{ device: string; digits: string } | null>(null)
+  /** The web key offered to this computer, and the Join that takes it; see
+   *  web-tab/approval.svelte.ts. */
+  offered = $state<{ device: string; join: () => void } | null>(null)
 
   /** Every tab's page, for the web login to walk. */
   each(): [string, Page][] {

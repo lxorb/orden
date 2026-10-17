@@ -1248,6 +1248,8 @@ export const sw: Dictionary = {
   'Ask to join': 'Omba kujiunga',
   Asking: 'Inaomba',
   'Waiting for {who}': 'Inasubiri {who}',
+  '{device} offers this computer your web logins':
+    '{device} inakipa kompyuta hii kuingia kwako kwenye wavuti',
   '{who} did not let you in': '{who} hakukuruhusu kuingia',
   'What the others in this space see.': 'Kile wengine katika nafasi hii wanaona.',
   // Which stream of releases this machine follows; see updates.svelte.ts

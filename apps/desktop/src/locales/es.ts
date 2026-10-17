@@ -1255,6 +1255,8 @@ export const es: Dictionary = {
   'Ask to join': 'Pedir acceso',
   Asking: 'Pidiendo',
   'Waiting for {who}': 'Esperando a {who}',
+  '{device} offers this computer your web logins':
+    '{device} ofrece a este ordenador tus inicios de sesión web',
   '{who} did not let you in': '{who} no dio acceso',
   'What the others in this space see.': 'Lo que ven los demás en este espacio.',
   // Which stream of releases this machine follows; see updates.svelte.ts

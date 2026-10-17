@@ -1257,6 +1257,8 @@ export const ptPT: Dictionary = {
   'Ask to join': 'Pedir para entrar',
   Asking: 'A pedir',
   'Waiting for {who}': 'À espera de {who}',
+  '{device} offers this computer your web logins':
+    '{device} oferece a este computador os seus inícios de sessão na web',
   '{who} did not let you in': '{who} não deu acesso',
   'What the others in this space see.': 'O que os outros neste espaço veem.',
   // Which stream of releases this machine follows; see updates.svelte.ts

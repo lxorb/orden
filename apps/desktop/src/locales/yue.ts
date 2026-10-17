@@ -1220,6 +1220,7 @@ export const yue: Dictionary = {
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
+  '{device} offers this computer your web logins': '{device} 將你嘅網頁登入提供畀呢部電腦',
   '{who} did not let you in': '{who}冇讓你加入',
   'What the others in this space see.': '呢個空間入面其他人睇到嘅內容。',
   // Which stream of releases this machine follows; see updates.svelte.ts

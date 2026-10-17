@@ -14,7 +14,14 @@
  *  all gone makes a fresh key, which is the first road again: the old state is let go of
  *  on the account, and the person signs in to their sites once more. Until it has the
  *  key a computer takes no leases and uploads nothing: its pages run on its own state,
- *  like a new browser's. */
+ *  like a new browser's.
+ *
+ *  And a computer handed the key for the first time takes it only once the person says
+ *  so, here: the line under the bar says which computer offers it, with Join. Taking a
+ *  key is putting this computer's own web logins under it, so a key somebody else made
+ *  and offered must never be taken without a word. A computer that already holds the
+ *  account's key - after a reconnect, or when the key moves on a generation - takes it as
+ *  it always did. */
 
 import { account } from '../account.svelte'
 import { request } from '../api'
@@ -50,6 +57,8 @@ export interface ApprovalWorld {
   wrap(pub: string): Promise<{ wrapped: string; generation: number }>
   /** Takes the key the hub handed over. */
   accept(wrapped: { wrapped: string; generation: number }): Promise<void>
+  /** Whether this computer already holds a web key of the account's, from before. */
+  holds(): Promise<boolean>
   /** A new key, one generation on: answers the generation. */
   rotate(): Promise<number>
   devices(): Promise<Known[]>
@@ -81,6 +90,11 @@ export class Approval {
   waiting = $state<{ device: string; digits: string } | null>(null)
   /** Computers asking this one for the key. */
   asking = $state<Asking[]>([])
+  /** The key handed to this computer for the first time, and which computer it waited
+   *  on, until the person joins; see `join`. */
+  offered = $state<{ device: string; wrapped: { wrapped: string; generation: number } } | null>(
+    null,
+  )
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who is listening; nothing renders from it
   private readonly heard = new Set<() => void>()
@@ -140,9 +154,29 @@ export class Approval {
     this.asking = this.asking.filter((other) => other.device !== one.device)
   }
 
+  /** The person's yes to the key this computer is offered: it takes it, and from then on
+   *  its web logins are the account's. */
+  async join(): Promise<void> {
+    const offered = this.offered
+    if (!offered) return
+    this.offered = null
+    await this.take(offered.wrapped)
+  }
+
   private async given(frame: HubFrame<'key'>): Promise<void> {
+    const wrapped = { wrapped: frame.wrapped, generation: frame.generation }
+    // Handed the key for the first time: offered, and taken only on Join.
+    if (!this.keyed && !(await this.world.holds().catch(() => false))) {
+      this.offered = { device: this.waiting?.device ?? this.offered?.device ?? '', wrapped }
+      this.waiting = null
+      return
+    }
+    await this.take(wrapped)
+  }
+
+  private async take(wrapped: { wrapped: string; generation: number }): Promise<void> {
     try {
-      await this.world.accept({ wrapped: frame.wrapped, generation: frame.generation })
+      await this.world.accept(wrapped)
     } catch {
       // Wrapped to a key this computer no longer has: it asks again below.
       return

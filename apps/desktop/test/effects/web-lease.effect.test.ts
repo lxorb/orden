@@ -147,6 +147,25 @@ test('a computer waiting for the web key says which one and the six digits under
   workspace.close(tab.id)
 })
 
+test('a computer offered the web key says by which one, and takes it on Join', () => {
+  const tab = webTab()
+  pages.waiting = null
+  let joined = 0
+  pages.offered = { device: 'Desktop', join: () => (joined += 1) }
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+
+  const line = target.querySelector('.waiting')
+  expect(line?.textContent).toContain('Desktop offers this computer your web logins')
+  line?.querySelector('button')?.click()
+  expect(joined).toBe(1)
+
+  pages.offered = null
+  void unmount(app)
+  workspace.close(tab.id)
+})
+
 test('a computer that has the key is asked in a bubble, with the digits, and answers', async () => {
   const sent: unknown[] = []
   const approval = new Approval({
@@ -164,6 +183,7 @@ test('a computer that has the key is asked in a bubble, with the digits, and ans
     digits: () => Promise.resolve('000000'),
     wrap: (pub) => Promise.resolve({ wrapped: `for-${pub}`, generation: 1 }),
     accept: () => Promise.resolve(),
+    holds: () => Promise.resolve(true),
     rotate: () => Promise.resolve(1),
     devices: () => Promise.resolve([]),
     settle: () => Promise.resolve(),

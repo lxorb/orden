@@ -1258,6 +1258,8 @@ export const fr: Dictionary = {
   'Ask to join': 'Demander à rejoindre',
   Asking: 'Demande',
   'Waiting for {who}': 'En attente de {who}',
+  '{device} offers this computer your web logins':
+    '{device} propose à cet ordinateur vos connexions web',
   '{who} did not let you in': '{who} ne vous a pas laissé entrer',
   'What the others in this space see.': 'Ce que voient les autres dans cet espace.',
   // Which stream of releases this machine follows; see updates.svelte.ts

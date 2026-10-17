@@ -1253,6 +1253,8 @@ export const fil: Dictionary = {
   'Ask to join': 'Humiling sumali',
   Asking: 'Humihiling',
   'Waiting for {who}': 'Hinihintay si {who}',
+  '{device} offers this computer your web logins':
+    'Inaalok ng {device} sa computer na ito ang iyong mga web login',
   '{who} did not let you in': 'Hindi ka pinapasok ni {who}',
   'What the others in this space see.': 'Ang nakikita ng iba sa espasyong ito.',
   // Which stream of releases this machine follows; see updates.svelte.ts

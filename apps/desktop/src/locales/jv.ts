@@ -1235,6 +1235,8 @@ export const jv: Dictionary = {
   'Ask to join': 'Njaluk melu',
   Asking: 'Njaluk',
   'Waiting for {who}': 'Ngenteni {who}',
+  '{device} offers this computer your web logins':
+    '{device} nawakake login web sampeyan menyang komputer iki',
   '{who} did not let you in': '{who} ora ngulehake sampeyan mlebu',
   'What the others in this space see.': 'Sing dideleng liyane ing papan iki.',
   // Which stream of releases this machine follows; see updates.svelte.ts

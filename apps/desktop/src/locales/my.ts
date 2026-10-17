@@ -1235,6 +1235,8 @@ export const my: Dictionary = {
   'Ask to join': 'ဝင်ခွင့်တောင်းပါ',
   Asking: 'တောင်းနေသည်',
   'Waiting for {who}': '{who} ကို စောင့်နေသည်',
+  '{device} offers this computer your web logins':
+    '{device} က ဤကွန်ပျူတာကို သင်၏ ဝဘ်ဝင်ရောက်မှုများ ပေးနေသည်',
   '{who} did not let you in': '{who} သင့်ကို ဝင်ခွင့်မပြုပါ',
   'What the others in this space see.': 'ဤနေရာရှိ အခြားသူများ မြင်သည်။',
   // Which stream of releases this machine follows; see updates.svelte.ts

@@ -1227,6 +1227,7 @@ export const am: Dictionary = {
   'Ask to join': 'ለመቀላቀል ጠይቅ',
   Asking: 'በመጠየቅ ላይ',
   'Waiting for {who}': '{who}ን በመጠበቅ ላይ',
+  '{device} offers this computer your web logins': '{device} የድር መግቢያዎችዎን ለዚህ ኮምፒውተር ያቀርባል',
   '{who} did not let you in': '{who} እንድትገባ አልፈቀደም',
   'What the others in this space see.': 'በዚህ ቦታ ሌሎች የሚያዩት።',
   // Which stream of releases this machine follows; see updates.svelte.ts

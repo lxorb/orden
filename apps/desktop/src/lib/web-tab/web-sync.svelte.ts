@@ -41,6 +41,7 @@ function begin(): void {
     accept: async (wrapped) => {
       await webKey.accept(wrapped)
     },
+    holds: async () => (await webKey.current()) !== null,
     rotate: () => webKey.rotate(),
     devices: accountDevices,
     settle: () => waited(1500),
@@ -90,6 +91,15 @@ function begin(): void {
     $effect(() => {
       const waiting = approval.waiting
       untrack(() => (pages.waiting = waiting))
+    })
+    // And the key offered, with the Join that takes it.
+    $effect(() => {
+      const offered = approval.offered
+      untrack(() => {
+        pages.offered = offered
+          ? { device: offered.device, join: () => void approval.join() }
+          : null
+      })
     })
 
     // A computer asking this one for the key: the bubble, while one asks.

@@ -1251,6 +1251,8 @@ export const ml: Dictionary = {
   'Ask to join': 'ചേരാൻ അനുവാദം ചോദിക്കുക',
   Asking: 'ചോദിക്കുന്നു',
   'Waiting for {who}': '{who}യെ കാത്തിരിക്കുന്നു',
+  '{device} offers this computer your web logins':
+    '{device} ഈ കമ്പ്യൂട്ടറിന് നിങ്ങളുടെ വെബ് ലോഗിനുകൾ നൽകുന്നു',
   '{who} did not let you in': '{who} നിങ്ങളെ അകത്ത് കടത്തിയില്ല',
   'What the others in this space see.': 'ഈ സ്പേസിലെ മറ്റുള്ളവർ കാണുന്നത്.',
   // Which stream of releases this machine follows; see updates.svelte.ts

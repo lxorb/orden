@@ -1239,6 +1239,8 @@ export const ur: Dictionary = {
   'Ask to join': 'شامل ہونے کی درخواست',
   Asking: 'درخواست جا رہی ہے',
   'Waiting for {who}': '{who} کا انتظار',
+  '{device} offers this computer your web logins':
+    '{device} اس کمپیوٹر کو آپ کے ویب لاگ اِن پیش کر رہا ہے',
   '{who} did not let you in': '{who} نے اندر نہیں آنے دیا',
   'What the others in this space see.': 'اس اسپیس میں باقی لوگ جو دیکھتے ہیں۔',
   // Which stream of releases this machine follows; see updates.svelte.ts

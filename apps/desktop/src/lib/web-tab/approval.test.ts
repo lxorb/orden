@@ -48,6 +48,8 @@ let hub: FakeHub
 let devices: Known[]
 let accepted: { wrapped: string; generation: number }[]
 let rotated: number
+/** Whether the keychain holds a web key from before this run. */
+let held: boolean
 
 function world(): ApprovalWorld {
   return {
@@ -63,6 +65,7 @@ function world(): ApprovalWorld {
       rotated += 1
       return Promise.resolve(1)
     },
+    holds: () => Promise.resolve(held || rotated > 0 || accepted.length > 0),
     devices: () => Promise.resolve(devices),
     settle: () => Promise.resolve(),
   }
@@ -86,6 +89,7 @@ beforeEach(() => {
   devices = [ME]
   accepted = []
   rotated = 0
+  held = false
 })
 
 describe('the web key', () => {
@@ -126,7 +130,48 @@ describe('the web key', () => {
     hub.say({ t: 'key', wrapped: 'from-desktop', generation: 1 })
     await settle()
     expect(approval.waiting).toBeNull()
+    expect(approval.offered).toEqual({
+      device: 'Desktop',
+      wrapped: { wrapped: 'from-desktop', generation: 1 },
+    })
+    await approval.join()
     expect(approval.keyed).toBe(true)
+    expect(accepted).toEqual([{ wrapped: 'from-desktop', generation: 1 }])
+  })
+
+  /** A key handed over is not one taken: until the person joins, this computer takes
+   *  no key, so it takes no leases and puts none of its own logins under somebody's. */
+  test('a computer handed the key for the first time takes nothing until it joins', async () => {
+    devices = [ME, DESKTOP]
+    const approval = new Approval(world())
+    let told = 0
+    approval.keyedNow(() => (told += 1))
+    approval.start()
+    hub.open()
+    await settle()
+
+    hub.say({ t: 'key', wrapped: 'from-desktop', generation: 1 })
+    hub.say({ t: 'key', wrapped: 'from-desktop', generation: 1 })
+    await settle()
+    expect(accepted).toEqual([])
+    expect(approval.keyed).toBe(false)
+    expect(told).toBe(0)
+
+    await approval.join()
+    expect(approval.keyed).toBe(true)
+    expect(told).toBe(1)
+  })
+
+  test('a computer that already holds the key takes it again without asking', async () => {
+    devices = [ME, DESKTOP]
+    held = true
+    const approval = new Approval(world())
+    approval.start()
+    hub.say({ t: 'key', wrapped: 'again', generation: 2 })
+    await settle()
+    expect(approval.offered).toBeNull()
+    expect(approval.keyed).toBe(true)
+    expect(accepted).toEqual([{ wrapped: 'again', generation: 2 }])
   })
 
   test('a computer that was refused stops waiting', async () => {
@@ -142,6 +187,8 @@ describe('the web key', () => {
   })
 
   test('a computer that has it is asked, with the asking computer’s digits, and Allow wraps it there', async () => {
+    // A computer that held the key before this run, as the hub hands it back.
+    held = true
     const approval = new Approval(world())
     approval.start()
     hub.say({ t: 'key', wrapped: 'mine', generation: 1 })
@@ -168,6 +215,8 @@ describe('the web key', () => {
   })
 
   test('Don’t allow says so, and another computer answering closes the question here', async () => {
+    // A computer that held the key before this run, as the hub hands it back.
+    held = true
     const approval = new Approval(world())
     approval.start()
     hub.say({ t: 'key', wrapped: 'mine', generation: 1 })
@@ -194,6 +243,8 @@ describe('the web key', () => {
   })
 
   test('says once when it comes to hold the key', async () => {
+    // A computer that held the key before this run, as the hub hands it back.
+    held = true
     const approval = new Approval(world())
     const told = vi.fn()
     approval.keyedNow(told)

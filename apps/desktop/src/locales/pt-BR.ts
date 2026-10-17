@@ -1252,6 +1252,8 @@ export const ptBR: Dictionary = {
   'Ask to join': 'Pedir para entrar',
   Asking: 'Pedindo',
   'Waiting for {who}': 'Aguardando {who}',
+  '{device} offers this computer your web logins':
+    '{device} oferece a este computador seus logins da web',
   '{who} did not let you in': '{who} não deu acesso',
   'What the others in this space see.': 'O que os outros neste espaço veem.',
   // Which stream of releases this machine follows; see updates.svelte.ts

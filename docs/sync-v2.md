@@ -435,7 +435,9 @@ top right, the shape the site-permission bubble uses:
 and on the new computer, where the pages are, a quiet line in the web tab's bar area:
 `Waiting for Laptop  482 913`. The six digits are derived from the new computer's public
 key; they must match on both screens. (Three rows: `{device} wants your web logins`,
-`Waiting for {device}`, and the existing `Don't allow` / `Allow`.)
+`Waiting for {device}`, and the existing `Don't allow` / `Allow`.) Once allowed, the same
+line says `Laptop offers this computer your web logins [ Join ]`, and the key is taken on
+Join (6.6).
 
 ---
 
@@ -1031,6 +1033,12 @@ and the account holds only ciphertext and opaque names.
   key. A server that substituted its own key would show different digits. Until it is
   approved, a computer takes no leases and uploads nothing (it cannot name a lease without
   the key): its pages run on its own fresh state, signed out, like a new browser.
+- **Joining.** A computer handed the key for the first time does not take it by itself: the
+  line in the web tab's bar area says *"Laptop offers this computer your web logins"*, with
+  **Join**, and only Join takes the key and so puts this computer's own logins under it. A
+  key somebody else made first and offered would otherwise have taken them without a word.
+  A computer that already holds the account's key - after a reconnect, or when the key moves
+  on a generation - takes it as before.
 - **No recovery code.** If every computer is gone, the new one makes a fresh web key and
   the person signs in to their sites again; the old bundles are deleted. Losing web state is
   losing logins, not writing.
