@@ -27,16 +27,14 @@
  *  routes, the secret store, the AI store - are handed in (`VaultWorld`), so the rules
  *  are tested with two devices in memory. */
 
+import { commitment, digits as pairingDigits, newNonce } from '../../pairing'
 import {
   authOf,
-  commitment,
   type DeviceKey,
   deviceKeyIn,
-  digits,
   fingerprint,
   idOf,
   newDeviceKey,
-  newNonce,
   newVaultKey,
   open,
   seal,
@@ -45,6 +43,9 @@ import {
 } from './crypto'
 import { SvelteMap } from 'svelte/reactivity'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
+
+/** What the vault's six digits are for, beside web logins'; see pairing.ts. */
+const DIGITS = 'nib ai vault digits'
 
 /** Where this device's key pair is kept in its secret store. */
 const DEVICE_SECRET = 'ai-vault-device'
@@ -336,7 +337,7 @@ export class Vault {
       pub: device.pub,
       nonce: asking.nonce,
     })
-    const said = await digits(device.pub, asking.nonce, me.nonce, answering.pub)
+    const said = await pairingDigits(DIGITS, device.pub, asking.nonce, me.nonce, answering.pub)
     asking.answer = { nonce: me.nonce, from: me.nonceFrom, digits: said }
     this.digits = said
   }
@@ -415,7 +416,7 @@ export class Vault {
       shown.push({
         id: one.id,
         name: one.name,
-        digits: await digits(one.pub, one.revealed, mine.nonce, device.pub),
+        digits: await pairingDigits(DIGITS, one.pub, one.revealed, mine.nonce, device.pub),
         pub: one.pub,
       })
     }

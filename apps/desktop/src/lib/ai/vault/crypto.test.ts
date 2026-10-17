@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest'
+import { commitment, digits as pairing, newNonce } from '../../pairing'
+
+/** The vault's six digits, as vault.svelte.ts asks for them. */
+const digits = (...parts: [string, string, string, string]) =>
+  pairing('nib ai vault digits', ...parts)
 import {
   authOf,
-  commitment,
-  digits,
   fingerprint,
   idOf,
   newDeviceKey,
-  newNonce,
   newVaultKey,
   open,
   seal,

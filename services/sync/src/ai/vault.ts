@@ -35,6 +35,7 @@
 import { type Context, Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
+import { bytesOf, digest, hexOf, opens } from '../pairing'
 import { askHub } from '../hub/reach'
 import type { Env, Variables } from '../types'
 import { deviceIn } from '../versions'
@@ -60,31 +61,6 @@ export const aiVault = new Hono<{ Bindings: Env; Variables: Variables }>()
 /** The account's devices, told to read the vault again; never the one that wrote. */
 function told(env: Env, user: string, from: string): Promise<unknown> {
   return askHub(env, user, 'ai', { 'x-nib-from': from }).catch(() => null)
-}
-
-function bytesOf(text: string): Uint8Array<ArrayBuffer> | null {
-  try {
-    const raw = atob(text)
-    const bytes = new Uint8Array(raw.length)
-    for (let at = 0; at < raw.length; at++) bytes[at] = raw.charCodeAt(at)
-    return bytes
-  } catch {
-    return null
-  }
-}
-
-async function digest(...parts: Uint8Array<ArrayBuffer>[]): Promise<Uint8Array> {
-  const all = new Uint8Array(parts.reduce((sum, one) => sum + one.length, 0))
-  let at = 0
-  for (const one of parts) {
-    all.set(one, at)
-    at += one.length
-  }
-  return new Uint8Array(await crypto.subtle.digest('SHA-256', all))
-}
-
-function hexOf(bytes: Uint8Array, length = bytes.length): string {
-  return [...bytes.slice(0, length)].map((one) => one.toString(16).padStart(2, '0')).join('')
 }
 
 /** The hash the account keeps of a vault token. */
@@ -268,9 +244,7 @@ aiVault.put('/devices/:id/reveal', async (context) => {
   if (hexOf(await digest(pubBytes), 16) !== id) {
     return context.json({ error: 'that key is not this device' }, 400)
   }
-  const committed = bytesOf(row.commitment)
-  const opened = await digest(pubBytes, nonceBytes)
-  if (!committed || hexOf(opened) !== hexOf(committed)) {
+  if (!(await opens(row.commitment, pub, nonce))) {
     return context.json({ error: 'not what this device committed to' }, 400)
   }
 

@@ -6,7 +6,8 @@
 import { describe, expect, test } from 'vitest'
 import { added, type Accounts, NONE } from '../accounts'
 import type { Base, Contents } from './merge'
-import { newDeviceKey, newNonce } from './crypto'
+import { newNonce } from '../../pairing'
+import { newDeviceKey } from './crypto'
 import { Vault, type VaultWorld } from './vault.svelte'
 
 interface Row {

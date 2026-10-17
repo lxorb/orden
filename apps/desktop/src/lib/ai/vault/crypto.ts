@@ -14,11 +14,8 @@
  *  - **the vault**: the accounts and their keys as JSON, AES-256-GCM under the vault key
  *    with a random nonce and a fixed label as associated data.
  *
- *  And the six digits two screens compare while a device is allowed. They come out of
- *  both devices' public keys and a nonce from each, and the new device commits to its
- *  key and nonce before the answering device picks its nonce, so nobody between the two
- *  screens can pick a key that shows the same digits (`commitment`, `digits`; the steps
- *  are in services/sync/src/ai/vault.ts).
+ *  The six digits two screens compare while a device is allowed are pairing.ts's, which
+ *  web logins work theirs out with too; the steps are in services/sync/src/ai/vault.ts.
  *
  *  And `authOf`, a token derived from the vault key: what the account asks of a device
  *  before it lets it change anything, so a session without the key changes nothing. */
@@ -26,7 +23,6 @@
 const CURVE = { name: 'ECDH', namedCurve: 'P-256' } as const
 const WRAP_INFO = new TextEncoder().encode('nib ai vault key')
 const AUTH_INFO = new TextEncoder().encode('nib ai vault auth')
-const DIGITS_LABEL = new TextEncoder().encode('nib ai vault digits')
 const SEAL_LABEL = new TextEncoder().encode('nib ai vault 1')
 const NONCE = 12
 /** An uncompressed P-256 public key's length. */
@@ -77,17 +73,6 @@ export async function newDeviceKey(): Promise<DeviceKey> {
   }
 }
 
-/** A fresh nonce for one asking, from either side. */
-export function newNonce(): string {
-  return base64(globalThis.crypto.getRandomValues(new Uint8Array(32)))
-}
-
-/** What a device asking to be let in says first: SHA-256 of its key and its nonce. */
-export async function commitment(pub: string, nonce: string): Promise<string> {
-  const digest = await subtle().digest('SHA-256', joined(bytesOf(pub), bytesOf(nonce)))
-  return base64(new Uint8Array(digest))
-}
-
 /** A kept device key, read rather than trusted. */
 export function deviceKeyIn(value: unknown): DeviceKey | null {
   if (typeof value !== 'object' || value === null) return null
@@ -99,29 +84,6 @@ export function deviceKeyIn(value: unknown): DeviceKey | null {
     priv !== null
     ? { id, pub, priv }
     : null
-}
-
-/** The six digits both screens show while a device is let in: SHA-256 over the asking
- *  device's key and nonce, the answering device's nonce and its key, read as a number,
- *  mod 10^6, in two groups of three. */
-export async function digits(
-  asking: string,
-  askingNonce: string,
-  answeringNonce: string,
-  answering: string,
-): Promise<string> {
-  const said = joined(
-    DIGITS_LABEL,
-    bytesOf(asking),
-    bytesOf(askingNonce),
-    bytesOf(answeringNonce),
-    bytesOf(answering),
-  )
-  const digest = new Uint8Array(await subtle().digest('SHA-256', said))
-  let number = 0
-  for (const one of digest.slice(0, 6)) number = (number * 256 + one) % 1_000_000
-  const six = String(number).padStart(6, '0')
-  return `${six.slice(0, 3)} ${six.slice(3)}`
 }
 
 /** A fresh vault key. */
