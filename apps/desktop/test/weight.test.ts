@@ -670,8 +670,13 @@ function holds(tail: string): boolean {
  *  (`sharedKind` in openers.ts, 336 bytes), and nobody in a note is out of sight - a
  *  caret's name stays, and one scrolled away is held at the edge of the page
  *  (`heldCarets` in carets.ts, the rest). The editor draws every note, so the layer is in
- *  front of the first paint with it. Measured 3,213,845. */
-const BUDGET = 3_214_800
+ *  front of the first paint with it. Measured 3,213,845.
+ *
+ *  Raised 2026-10-17, to 3,216,600, from an unstable at 3,214,464 (336 under), for share
+ *  #386 once more: a caret's name held at the edge of the page goes to that caret when it
+ *  is pressed (`heldCarets` in carets.ts), in the editor every note is drawn with.
+ *  Measured 3,215,593. */
+const BUDGET = 3_216_600
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
