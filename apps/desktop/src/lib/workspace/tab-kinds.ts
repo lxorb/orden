@@ -45,8 +45,8 @@ export interface TabKindTraits {
   /** Whether what is showing takes a dropped note itself rather than the pane opening
    *  it; a terminal types its path. See `ownSurface` in Pane.svelte. */
   readonly takesDrops: boolean
-  /** Whether it draws a bar of its own across the top of the pane, which the window's
-   *  own controls make room for; see `ownBar` in App.svelte. */
+  /** Whether it has a bar of its own with a way to add to it, so a phone's button for
+   *  writing something new stays off it; see `ownBar` in App.svelte. */
   readonly ownBar: boolean
   /** Whether the document open over its file is that file's words. A view over a
    *  `.base` holds which view it is, and a chat's tab over its `.chat` pointer shows the

@@ -84,6 +84,7 @@
   import { saveFront } from './lib/save-place/door'
   import PadColumn from './lib/scratchpad/PadColumn.svelte'
   import { isDraft } from './lib/workspace/drafts'
+  import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
@@ -622,7 +623,7 @@
   }
 
   /** A canvas and a page note, which have a bar of their own with a way to add. */
-  const ownBar = (kind: string | undefined) => kind === 'canvas' || kind === 'pages'
+  const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
 
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {

@@ -31,6 +31,7 @@
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
+  import { TAB_KINDS } from './workspace/tab-kinds'
   import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
@@ -98,22 +99,11 @@
   const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills)
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
-  const ownSurface = $derived(tab?.kind === 'canvas' || tab?.kind === 'terminal')
+  const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
   /** Whether the surface in this pane is the editor, which is the one that has
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
-  const writing = $derived(
-    !!tab &&
-      tab.kind !== 'graph' &&
-      tab.kind !== 'canvas' &&
-      tab.kind !== 'pages' &&
-      tab.kind !== 'pdf' &&
-      tab.kind !== 'web' &&
-      tab.kind !== 'terminal' &&
-      tab.kind !== 'view' &&
-      tab.kind !== 'chat' &&
-      !tab.reading,
-  )
+  const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading)
 
   /** The notes this pane lays out as columns, or none where it lays out none.
    *
