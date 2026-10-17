@@ -139,9 +139,16 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 #: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
 #: photographs and measures the built-in palette. A context made with `first_look=True`
 #: is a new reader's.
+#:
+#: And the app's new name taken as already said. Settings under `nib:` written before
+#: the app is up are what an install from before the rename looks like, so these very
+#: lines made every drive's window an old reader's, and every one of them opened with
+#: "nibeditor is now Orden" over the foot of the note for six seconds - over the paper
+#: theme-options measures, among others. See renamed.svelte.ts.
 BUILT_IN = (
     "try { if (localStorage.getItem('nib:theme') === null) {"
-    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') } }"
+    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') }"
+    " if (localStorage.getItem('nib:renamed') === null) localStorage.setItem('nib:renamed', 'told') }"
     " catch {}"
 )
 
