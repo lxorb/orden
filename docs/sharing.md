@@ -145,6 +145,18 @@ through the file's room from then on, which is also what writes them into the
 owner's space - the same room two people in a shared note already use. So there
 is nothing new in the sync: the room is the mechanism, and it already worked.
 
+One thing the room has to be told. The shape of a room's document - words, or a
+plane - is read off the file's name, and a borrowed file has no name here. Asked of
+the missing path, every shared canvas was taken for words: the guest's plane sat in
+a room of text, and nothing drawn on either side reached the other (#386). So a
+document with no path but a share is the shape it was opened as, which was read off
+its name on the account (`roomKindOf` in `rooms/kind.ts`).
+
+A link to one file followed by an account that already holds its space - the owner
+opening their own link on a phone, say - opens the file where it is kept, not as a
+borrowed tab. Shared with you does not list a file of one's own, so the borrowed tab
+was read-only, and what was drawn there went to nobody. See `one-file.ts`.
+
 A file shared to be read is read-only, exactly as a space shared to be read is.
 That question used to be asked of the path - what may be done where a file sits -
 and a shared file has no path, so it is asked of the document instead:
