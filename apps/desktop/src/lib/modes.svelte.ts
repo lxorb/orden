@@ -549,6 +549,7 @@ class Modes {
       this.width = measure(saved.width, DEFAULTS.width)
       this.lineHeight = measure(saved.lineHeight, DEFAULTS.lineHeight)
       this.spellLanguage = text(saved.spellLanguage, DEFAULTS.spellLanguage)
+      // A stored list with anything but words in it is dropped whole; `adopt` sifts the account's.
       this.spellWords = (stringList(saved.spellWords) ?? [])
         .filter(isSpellWord)
         .slice(0, MOST_SPELL_WORDS)
@@ -567,6 +568,7 @@ class Modes {
       // left in the entry for a later version to wonder about. Written back at the
       // end of this method, once everything else has been read.
       stale = 'glassesScroll' in saved
+      // An empty name reads as none here; `adopt` takes whatever string the account says.
       this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
       this.glassesEffort = isEffort(saved.glassesEffort)
         ? saved.glassesEffort
@@ -1209,6 +1211,7 @@ class Modes {
       this.persist()
     }
 
+    // The account only ever said `properties`; the stored entry's older spelling is `restore`'s.
     const shown = remote.properties
     if (typeof shown === 'string' && unheard) {
       const wanted = propertiesMode(shown)
