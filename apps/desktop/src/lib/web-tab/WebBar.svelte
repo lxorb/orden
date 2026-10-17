@@ -302,6 +302,7 @@
        WebSite.svelte. -->
   <button
     class="nib-glyph site"
+    data-opens="site"
     title={t('Site information')}
     aria-label={t('Site information')}
     aria-haspopup="dialog"
@@ -357,6 +358,7 @@
   {#if downloads.list.length > 0}
     <button
       class="nib-glyph saving"
+      data-opens="downloads"
       class:is-on={progress !== null}
       title={t('Downloads')}
       aria-label={t('Downloads')}

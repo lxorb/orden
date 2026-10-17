@@ -76,6 +76,7 @@
 
 <button
   class="nib-glyph"
+  data-opens="extensions"
   title={t('Extensions')}
   aria-label={t('Extensions')}
   aria-haspopup="dialog"
