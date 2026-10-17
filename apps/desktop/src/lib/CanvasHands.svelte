@@ -38,6 +38,7 @@
     camera,
     width,
     height,
+    ongo,
   }: {
     hands: readonly Hand[]
     /** One screen pixel in plane units, so the dot and the name are the same size
@@ -50,12 +51,16 @@
     camera: Camera
     width: number
     height: number
+    /** Asked to go to where a hand held at the edge is, by a press on it. */
+    ongo?: (at: { x: number; y: number }) => void
   } = $props()
 
   /** How big the pointer is and how far its name sits from it, in screen pixels. */
   const DOT = 4
   const GAP = 9
   const LABEL = 11
+  /** How far round a held hand's arrow a press still lands on it, in screen pixels. */
+  const TARGET = 16
   /** The arrow a hand held at the edge is drawn as, pointing right, in screen pixels:
    *  eleven ahead of its point and as wide again behind, with a notch in its tail. */
   const ARROW = 'M 11 0 L -6.6 -7.7 L -3.3 0 L -6.6 7.7 Z'
@@ -159,8 +164,26 @@
 
       {#if held}
         <!-- Off the screen: an arrow at the nearest edge, pointing the way to them,
-             and their name on the inside of it. -->
-        <g class="held">
+             and their name on the inside of it. Pressed, it goes to them: the press is
+             the arrow's own and starts nothing on the plane under it. -->
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <g
+          class="held"
+          onpointerdown={(event) => event.stopPropagation()}
+          onpointerup={(event) => event.stopPropagation()}
+          onclick={(event) => {
+            event.stopPropagation()
+            ongo?.(at)
+          }}
+        >
+          <!-- Somewhere a finger can land, round the arrow. -->
+          <circle
+            class="target"
+            cx={held.at.x}
+            cy={held.at.y}
+            r={TARGET * unit}
+            fill="transparent"
+          />
           <path
             d={ARROW}
             fill={hand.colour}
@@ -204,6 +227,16 @@
      which is the one kind of movement in the app a reader cannot turn off:
      `--dur-*` goes to zero under prefers-reduced-motion and a bare number does
      not. */
+  /* A held hand is the one thing on this layer a pointer may press. */
+  .held {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .target {
+    pointer-events: all;
+  }
+
   text {
     font-family: var(--font-ui);
     font-weight: var(--weight-strong);

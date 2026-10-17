@@ -1040,7 +1040,15 @@
     {/each}
 
     {#if store.hands.length}
-      <CanvasHands hands={store.hands} {unit} {palette} camera={view} {width} {height} />
+      <CanvasHands
+        hands={store.hands}
+        {unit}
+        {palette}
+        camera={view}
+        {width}
+        {height}
+        ongo={(at: { x: number; y: number }) => (store.camera = { ...camera, x: at.x, y: at.y })}
+      />
     {/if}
   </div>
 
