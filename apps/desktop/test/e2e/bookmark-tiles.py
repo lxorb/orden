@@ -135,6 +135,14 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     page.locator(".tiles .tile").first.click()
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     wait_for(page, "document.querySelectorAll('.tiles .tile').length === 5", f"[{label}] the tiles")
+    # The press opens Plan in place, which is a module fetched the first time an
+    # essential opens (essentials.svelte.ts) and so can take longer than the half a
+    # second below; its tile is lifted once it has.
+    wait_for(
+        page,
+        "/Plan\\.md$/.test(window.nibApp.workspace.active?.essential ?? '')",
+        f"[{label}] Plan open in place",
+    )
     page.wait_for_timeout(500)
     return page
 
@@ -336,7 +344,11 @@ def drive_hands(browser: Browser) -> None:
 
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
-    # The press that opened Plan put the drawer away, as a press on a phone does.
+    # The press that opened Plan put the drawer away, as a press on a phone does - once
+    # the note has opened, which can be after the press. Asked for before then, the file
+    # list is still the panel showing, so showing it again is nothing, and then the
+    # drawer goes.
+    wait_for(page, "window.nibApp.workspace.panel === null", "the drawer put away")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     tiles = page.evaluate(TILES)
