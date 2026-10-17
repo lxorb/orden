@@ -1019,11 +1019,20 @@ exactly what sites that look for automation look for. The crate reads it into nu
 (`web_swipe.rs`), the window runs the gesture (`src/lib/back-swipe`), and the step is the
 tab's own Back or Forward, along the same trail the arrows walk.
 
-**The arrow over a page** is cut out of the page in its own round shape, the way a menu is
-(`covers.ts`, `web_cut.rs`), and the page is placed again on each step of the gesture: it
-never moves, hides or goes blank, and is whole again once the arrow has gone. On nib's own
-Chromium, which cuts nothing, a page steps behind its picture for the arrow as it does for
-a menu.
+**The arrow over a page** stands over the page's picture while the fingers are on: the room
+it comes in over covers the page the way a sheet's scrim does (`nib-swipe-room` in
+`covers.ts`), so the page's window is given an empty shape for the gesture and the arrow is
+the app's own HTML over a still of the page, soft edge, shadow and all. A picture older than
+a moment is put aside as the swipe begins and a fresh one taken (`freshen`); until it is in,
+and while the arrow bursts on its way out, the arrow is cut out of the page in its own round
+shape the way a menu is (`web_cut.rs`). It used to be cut that way all along: a window's
+shape on Windows is whole pixels with no soft edge, set again on every step of the gesture,
+and the circle came out jagged and a step behind the fingers. Emil, 2026-10-17 (#209):
+_"the animation and the icon itself look very pixelated"_. Where the arrow is drawn is
+whole pixels of the screen at every scale, its ring is on the circle's own box, and the
+icon is at its own twenty-four pixels; `test/e2e/swipe.py` photographs it close at 1, 1.25,
+1.5 and 2. On an engine that cuts nothing, a page steps behind its picture for the arrow as
+it does for a menu.
 
 **When the fingers lift.** Emil, 2026-10-12 (#209): _"the touchpad swipe still feels very
 unintuitive. e.g. it is possible to swipe and trigger a "back" whilst not even released the

@@ -519,6 +519,10 @@
   // fingers, so the page is cut round it on every step and is whole again once it has
   // gone; see back-swipe/SwipeArrow.svelte and `coverOf`.
   $effect(() => follow(swiping.turn))
+  // And as one begins over this page, a fresh picture of it to stand under the arrow.
+  $effect(() => {
+    if (swiping.tab === tab.id && swiping.stage === 'tracking') untrack(() => pages.freshen(tab.id))
+  })
 
   // A page took the whole screen or gave it back, here or in another pane: the window
   // follows, and so does where this page is placed. See filling.svelte.ts.

@@ -883,6 +883,25 @@ describe('a page out of sight', () => {
     expect(order).toEqual(['web_pause true', 'web_pause false', 'web_place true'])
   })
 
+  test('a swipe begun over a page puts an old picture aside and takes a fresh one', async () => {
+    await built('t0')
+    const page = pages.of('t0')
+    page.shot = 'data:image/png;base64,old'
+    page.shotAt = Date.now() - 5_000
+    calls.length = 0
+    pages.freshen('t0')
+    expect(page.shot).toBeNull()
+    expect(commands()).toContain('web_shot')
+
+    // One from a moment ago is the page as it is, and stays.
+    page.shot = 'data:image/png;base64,new'
+    page.shotAt = Date.now()
+    calls.length = 0
+    pages.freshen('t0')
+    expect(page.shot).toBe('data:image/png;base64,new')
+    expect(commands()).not.toContain('web_shot')
+  })
+
   test('a page left while it is being photographed is hidden once the picture is in', async () => {
     await built('t0')
     let landed = (): void => undefined

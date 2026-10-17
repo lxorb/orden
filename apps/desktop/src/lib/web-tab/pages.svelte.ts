@@ -1107,6 +1107,16 @@ class Pages {
     }
   }
 
+  /** A swipe begun over the page, which stands as its picture under the arrow: one older
+   *  than `SHOT_KEEPS` put aside for a fresh one, which a page scrolled since would jump
+   *  back from. See back-swipe/SwipeArrow.svelte. */
+  freshen(tabId: string): void {
+    const page = this.held.get(tabId)
+    if (!page || (page.shot && Date.now() - page.shotAt < SHOT_KEEPS)) return
+    page.shot = null
+    void this.shoot(tabId)
+  }
+
   /** The picture itself, raced against a clock. Split from `shoot` so that the one
    *  going on at the moment is something a second caller can wait for. */
   private async photograph(page: Page, tabId: string): Promise<void> {

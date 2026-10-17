@@ -7,6 +7,9 @@ What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_sw
     short one goes nowhere; a sweep after a scroll down is a sweep of its own; the
     setting turned off is a scroll and nothing else;
   - the arrow, photographed half way and past the point where it goes, light and dark;
+    and close up at scales of 1, 1.25, 1.5 and 2, where it has to sit on whole pixels of
+    the screen to be drawn sharp (#209: "the animation and the icon itself look very
+    pixelated");
   - the page script in a site's page says each sideways scroll the page left over, and
     says that the page took it where a scroller in the page could still move, where the
     page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
@@ -93,8 +96,15 @@ def lifted(page: Page) -> None:
     DRIVE.settled(page)
 
 
-def opened(browser: Browser, scheme: str = "light", off: bool = False) -> tuple[Page, float, float]:
-    page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme=scheme)
+def opened(
+    browser: Browser, scheme: str = "light", off: bool = False, scale: float = 1
+) -> tuple[Page, float, float]:
+    page = DRIVE.page(
+        browser,
+        viewport={"width": 1180, "height": 820},
+        color_scheme=scheme,
+        device_scale_factor=scale,
+    )
     if off:
         page.add_init_script("localStorage.setItem('nib:swipe', 'off')")
     # Room for every chunk the launch fetches in the page's list of them, which keeps
@@ -164,6 +174,57 @@ def notes(browser: Browser, scheme: str) -> None:
     sweep(page, x, y, 700)
     lifted(page)
     on(page, "Alpha", "back on Alpha after a scroll down")
+    page.close()
+
+
+#: Where the arrow's circle is drawn, in pixels of the screen: its corner and the
+#: arrow's own box inside it, which are sharp only on whole ones.
+WHERE = """() => {
+  const circle = document.querySelector('.nib-swipe')
+  const arrow = circle?.querySelector('.arrow')
+  if (!circle || !arrow) return null
+  const at = (box) => [box.x, box.y, box.width, box.height].map((one) => one * devicePixelRatio)
+  return { circle: at(circle.getBoundingClientRect()), arrow: at(arrow.getBoundingClientRect()) }
+}"""
+
+
+def close_up(browser: Browser, scale: float) -> None:
+    """The arrow held half way and armed, at a scale of the screen, photographed close:
+    on whole pixels of the screen, and its picture kept beside the others."""
+    page, _, _ = opened(browser, scale=scale)
+    # Fingers on a precision touchpad come in fractions of a pixel, and so does a window
+    # at 125 or 150 per cent.
+    for across, name in ((7.3, "half"), (14.3, "armed")):
+        page.evaluate(HOLD, across)
+        DRIVE.settled(page)
+        where = page.evaluate(WHERE)
+        if where is None:
+            wrong(f"at {scale}x: no arrow {name} way along a sweep")
+        else:
+            # The corner where it stopped; the size grows with `armed`, so only where the
+            # circle and the arrow start.
+            off = [abs(value - round(value)) for value in where["circle"][:2] + where["arrow"][:2]]
+            if name == "half" and max(off) > 0.01:
+                wrong(f"at {scale}x: the arrow sits between pixels of the screen: {where}")
+            else:
+                say(f"ok   at {scale}x: the arrow {name} way along is on whole pixels")
+            box = page.locator(".nib-swipe").bounding_box()
+            if box is not None:
+                shot(
+                    page,
+                    f"close/{scale:g}x-{name}",
+                    clip={
+                        "x": max(0, box["x"] - 16),
+                        "y": box["y"] - 16,
+                        "width": box["width"] + 32,
+                        "height": box["height"] + 32,
+                    },
+                )
+        page.evaluate("clearInterval(window.__holding)")
+        lifted(page)
+        if front(page).startswith("Alpha"):
+            page.evaluate("window.nibApp.workspace.goForward()")
+        on(page, "Beta", "Beta again")
     page.close()
 
 
@@ -273,6 +334,8 @@ def drive(browser: Browser) -> None:
     page_script(browser)
     for scheme in ("light", "dark"):
         notes(browser, scheme)
+    for scale in (1, 1.25, 1.5, 2):
+        close_up(browser, scale)
     turned_off(browser)
 
 

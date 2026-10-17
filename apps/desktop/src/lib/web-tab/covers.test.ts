@@ -108,6 +108,29 @@ describe("the notices row's cards", () => {
   })
 })
 
+/** A swipe's arrow over a page on Windows was cut out of it in a window shape, whole
+ *  pixels with no soft edge, set again on every step (#209). While the fingers are on,
+ *  the room it comes in over covers the page, which stands as its picture under it. */
+describe("a swipe's arrow over a page", () => {
+  function swipe(stage: 'tracking' | 'went'): HTMLElement {
+    document.body.innerHTML = `
+      <div class="hole"></div>
+      <div class="track ${stage === 'went' ? '' : 'nib-swipe-room'}"><div class="nib-swipe"></div></div>`
+    return document.querySelector<HTMLElement>('.hole')!
+  }
+
+  test('while the fingers are on, its room covers the page, and the circle is a layer', () => {
+    const found = layersOver(swipe('tracking'))
+    expect(found.map((one) => one.scrim)).toEqual([true, false])
+    expect(found.find((one) => one.scrim)?.node?.classList.contains('track')).toBe(true)
+  })
+
+  test('bursting on its way out, it is the circle alone', () => {
+    const found = layersOver(swipe('went'))
+    expect(found.map((one) => one.scrim)).toEqual([false])
+  })
+})
+
 /** On an engine that cannot cut, a layer hides the page behind its still - and a notice is
  *  up until somebody answers it, the update notice for a day. So the page ends above the
  *  notices there, the way Chrome gives its download bar room of its own. */
