@@ -86,6 +86,7 @@ import { firstScreen } from './first-screen.svelte'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
+import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
@@ -547,7 +548,7 @@ class Workspace {
     // So does a chat's tab over its `.chat` pointer, which shows the account's messages
     // and holds none of the file's words: an icon chosen for an open chat was measured
     // against its empty text and never written (#227).
-    return open?.kind === 'view' || open?.kind === 'channel' ? null : open
+    return open && !TAB_KINDS[open.kind].fileDocument ? null : open
   }
 
   /** Every open file that has words of its own and a path behind it, once each
