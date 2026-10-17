@@ -132,7 +132,7 @@ edit('snap/snapcraft.yaml', [
   [/(on arm64: sha256\/)[0-9a-f]{64}/, `$1${debArm64}`],
 ])
 
-edit('scoop/nib.json', [
+edit('scoop/orden.json', [
   [/^( {4}"version": )"[^"]*",$/m, `$1"${version}",`],
   ...['x64', 'arm64'].map((arch) => [
     new RegExp(
@@ -142,10 +142,16 @@ edit('scoop/nib.json', [
   ]),
 ])
 
-edit('chocolatey/nib.nuspec', [
+edit('chocolatey/orden.nuspec', [
   [/<version>[^<]*<\/version>/, `<version>${version}</version>`],
   [/(orden@v)[0-9][^/]*/, `$1${version}`],
   [/(releases\/tag\/v)[0-9][^<]*</, `$1${version}<`],
+])
+// `nib`, the name up to 0.15.0, is an empty package that depends on `orden`; publish.yml
+// pushes it as this version with the release's date after it.
+edit('chocolatey/nib.nuspec', [
+  [/<version>[^<]*<\/version>/, `<version>${version}</version>`],
+  [/(<dependency id="orden" version=")[^"]*"/, `$1${version}"`],
 ])
 // Each digest is the first one below the url it belongs to.
 edit('chocolatey/tools/chocolateyinstall.ps1', [

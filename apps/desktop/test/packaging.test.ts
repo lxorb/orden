@@ -214,6 +214,45 @@ describe('what nib claims to open', () => {
       const manifest = read('winget', version, 'lxorb.Nib.installer.yaml')
       expect(manifest, version).not.toContain('FileExtensions')
     }
-    expect(read('chocolatey', 'nib.nuspec')).not.toMatch(/file association/i)
+    expect(read('chocolatey', 'orden.nuspec')).not.toMatch(/file association/i)
+  })
+})
+
+/** The package managers' names up to 0.15.0, kept as roads to the new ones. Chocolatey
+ *  has a way to deprecate a package and Scoop a folder for it; what each asks for is
+ *  held here, because a mistake in either is found by everybody who installed the old
+ *  name, and only on their next upgrade. See packaging/windows.md. */
+describe('the old names', () => {
+  const orden = read('chocolatey', 'orden.nuspec')
+  const nib = read('chocolatey', 'nib.nuspec')
+  const versionOf = (nuspec: string) => /<version>([^<]+)<\/version>/.exec(nuspec)?.[1]
+
+  test('orden is the package Orden is in', () => {
+    expect(orden).toContain('<id>orden</id>')
+    expect(orden).toContain('<file src="tools\\**" target="tools" />')
+  })
+
+  test('nib is deprecated the way Chocolatey asks: a title, a dependency, no files, no icon', () => {
+    expect(nib).toContain('<id>nib</id>')
+    expect(nib).toMatch(/<title>\[Deprecated\] /)
+    expect(nib).toContain('<files />')
+    expect(nib).not.toContain('<iconUrl>')
+    expect(nib).toContain(`<dependency id="orden" version="${versionOf(orden)}" />`)
+  })
+
+  test('and its version is the release the two were bumped to', () => {
+    expect(versionOf(nib)).toBe(versionOf(orden))
+  })
+
+  test("Scoop's orden takes over what nib kept, once", () => {
+    const scoop = JSON.parse(read('scoop', 'orden.json')) as { installer: { script: string[] } }
+    expect(scoop.installer.script.join('\n')).toContain("Join-Path (Split-Path $persist_dir) 'nib'")
+  })
+
+  test('the publish workflow moves nib to deprecated and pushes both packages', () => {
+    const publish = repo('.github', 'workflows', 'publish.yml')
+    expect(publish).toContain('git mv bucket/nib.json bucket/deprecated/nib.json')
+    expect(publish).toContain("@{ id = 'orden'; version = $env:VERSION }, @{ id = 'nib'")
+    expect(publish).toMatch(/409 \\\(Conflict\\\)/)
   })
 })

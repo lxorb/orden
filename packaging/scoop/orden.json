@@ -18,10 +18,17 @@
     "installer": {
         "script": [
             "ensure \"$persist_dir\" | Out-Null",
+            "# Up to 0.15.0 this package was nib, whose persist folder is this one's sibling: what it kept comes over once, while this one holds nothing.",
+            "$was = Join-Path (Split-Path $persist_dir) 'nib'",
+            "if ((Test-Path $was) -and !(Get-ChildItem -LiteralPath $persist_dir -Force)) {",
+            "    Get-ChildItem -LiteralPath $was -Force | Move-Item -Destination \"$persist_dir\" -Force",
+            "}",
             "$appdata = \"$env:APPDATA\\ch.emilvinu.nib\"",
             "if (Test-Path $appdata) {",
-            "    if ((Get-Item -LiteralPath $appdata -Force).LinkType -eq 'Junction') {",
-            "        Remove-Item -LiteralPath $appdata -Force",
+            "    $item = Get-Item -LiteralPath $appdata -Force",
+            "    if ($item.LinkType -eq 'Junction') {",
+            "        # The link alone: Windows PowerShell's Remove-Item follows a junction into what it points at.",
+            "        $item.Delete()",
             "    } else {",
             "        Get-ChildItem -LiteralPath $appdata -Force | Move-Item -Destination \"$persist_dir\" -Force",
             "        Remove-Item -LiteralPath $appdata -Recurse -Force",
@@ -38,7 +45,11 @@
         ]
     ],
     "uninstaller": {
-        "script": "Remove-Item \"$env:APPDATA\\ch.emilvinu.nib\" -Force -Recurse -ErrorAction 'Ignore'"
+        "script": [
+            "$appdata = Get-Item -LiteralPath \"$env:APPDATA\\ch.emilvinu.nib\" -Force -ErrorAction 'Ignore'",
+            "# The link alone, so what it points at - the persist folder, kept until --purge - stays.",
+            "if ($appdata.LinkType -eq 'Junction') { $appdata.Delete() } elseif ($appdata) { Remove-Item -LiteralPath $appdata.FullName -Force -Recurse }"
+        ]
     },
     "checkver": {
         "github": "https://github.com/lxorb/orden"
