@@ -224,6 +224,26 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
     if held["top" if side == "above" else "bottom"] > 40:
         failures.append(f"[{label}] a caret held {side} the page is not at that edge: {held}")
 
+    # Pressed, the name goes to them: the page scrolls to the caret, which is drawn
+    # where it is again.
+    page.locator(f".cm-nib-held.is-{side} .cm-nib-held-name").first.click()
+    try:
+        wait_for(
+            page,
+            f"""() => {{
+                if (document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')) return false
+                const caret = document.querySelector('.cm-nib-caret')
+                if (!caret) return false
+                const box = caret.getBoundingClientRect()
+                const page = {FRONT}.scrollDOM.getBoundingClientRect()
+                return box.top >= page.top && box.bottom <= Math.min(page.bottom, innerHeight)
+            }}""",
+            f"[{label}] the page to go to the caret held {side} it",
+        )
+        say(f"[{label}] pressing the name held {side} the page went to the caret")
+    except SystemExit as gave_up:
+        failures.append(str(gave_up))
+
 
 def place(page: Page, at: int) -> None:
     """Puts the caret where the words should go, and gives the editor the keys."""

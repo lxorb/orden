@@ -252,7 +252,7 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
                 inside: box.left >= surface.left && box.right <= surface.right
                     && box.top >= surface.top && box.bottom <= surface.bottom,
                 left: box.left - surface.left,
-                dot: !!document.querySelector('svg.hands circle'),
+                dot: !!document.querySelector('svg.hands > circle'),
             }
         }"""
     )
@@ -271,6 +271,21 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
             failures.append(f"[{label}] a hand to the left was held {held['left']:.0f}px in, not at the left edge")
         if held["dot"]:
             failures.append(f"[{label}] a hand held at the edge was drawn where it is as well")
+
+    # Pressed, the arrow goes to them: the camera moves to the hand, which is drawn where
+    # it is again.
+    if held:
+        page.locator("svg.hands .held path").first.click(force=True)
+        try:
+            DRIVE.wait_for(
+                page,
+                "!document.querySelector('svg.hands .held') && !!document.querySelector('svg.hands > circle')",
+                f"[{label}] the camera to go to the hand",
+                10,
+            )
+            say(f"[{label}] pressing the arrow went to the hand")
+        except SystemExit as gave_up:
+            failures.append(str(gave_up))
 
     page.evaluate("(camera) => { window.nibApp.workspace.active.camera = camera ?? undefined }", before)
     page.wait_for_timeout(200)

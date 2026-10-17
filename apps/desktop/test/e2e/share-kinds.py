@@ -138,6 +138,35 @@ def crosses(source: Page, label: str, other: Page, there: str) -> None:
         say(f"a card put down on the {label}'s pages is on the {there}'s")
 
 
+def held_and_gone_to(owner: Page, guest: Page) -> None:
+    """The owner's hand on the paper, the guest looking far down the column from it:
+    the hand is held at the guest's edge, and pressing its arrow goes to it."""
+    box = owner.locator(".pages").first.bounding_box()
+    if not box:
+        failed("the owner's pages are not on screen")
+        return
+    for step in range(6):
+        owner.mouse.move(box["x"] + box["width"] / 2 + step * 5, box["y"] + box["height"] / 2)
+        owner.wait_for_timeout(60)
+    try:
+        wait_for(guest, "() => !!document.querySelector('svg.hands')", "[guest] the owner's hand")
+        guest.evaluate(
+            "() => { const tab = window.nibApp.workspace.active;"
+            " tab.camera = { ...(tab.camera ?? { x: 0, y: 0, scale: 1 }), y: 40000 } }"
+        )
+        wait_for(guest, "() => !!document.querySelector('svg.hands .held')", "[guest] the hand held at the edge")
+        say("the owner's hand, far up the column from the guest, is held at the guest's edge")
+        guest.locator("svg.hands .held path").first.click(force=True)
+        wait_for(
+            guest,
+            "() => !document.querySelector('svg.hands .held') && !!document.querySelector('svg.hands > circle')",
+            "[guest] the pages to go to the owner's hand",
+        )
+        say("pressing its arrow went to the owner's hand")
+    except SystemExit as gave_up:
+        failed(str(gave_up))
+
+
 def has_row(words: str) -> str:
     return (
         "() => [...document.querySelectorAll('.chat-tab .main .message .body')]"
@@ -221,6 +250,7 @@ def main() -> int:
                 say("the guest is on the paper, in its room")
                 crosses(owner, "owner", guest, "guest")
                 crosses(guest, "guest", owner, "owner")
+                held_and_gone_to(owner, guest)
             except SystemExit as gave_up:
                 failed(str(gave_up))
         alone(guest, "guest")
