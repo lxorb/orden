@@ -99,7 +99,6 @@ async function choose(path: string, where: Where): Promise<void> {
     await invoke('web_clear', {
       stores: [ownStore(was)],
       clearing: { since: 0, site: true, cache: true },
-      sites: [],
     }).catch(() => undefined)
   }
 }

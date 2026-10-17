@@ -876,9 +876,7 @@ mod tests {
     #[test]
     fn every_window_is_built_where_the_run_sends_them() {
         // Built hidden and never shown: a page printed and gone.
-        // The CEF build's own two, which only its gate runs, placing each window on the
-        // screen it photographs.
-        let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
+        let excused = ["pdf.rs", "engine.rs"];
 
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
         let mut sources = vec![root.clone()];
@@ -917,7 +915,7 @@ mod tests {
     /// Nothing in the crate asks for the keyboard or the front but `raised` and
     /// `keyboard_to`, which both do nothing where a drive sent the windows away; and
     /// nothing asks Windows or an engine for either directly - `WebView2`'s `MoveFocus`,
-    /// wry's `focus_parent` and a Chromium host's `set_focus` all activate the window the
+    /// wry's `focus_parent` and a webview's `set_focus` all activate the window the
     /// page is in. Read off the source for the same reason as the test above: a call that
     /// forgets is only ever found by the person whose typing it took. foreground.rs, which
     /// keeps a probe out of the front, is the one file that names the system's calls, and
