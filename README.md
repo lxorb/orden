@@ -49,7 +49,7 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | --- | --- |
 | Windows, Scoop | `scoop bucket add lxorb https://github.com/lxorb/scoop-bucket` then `scoop install orden` |
 | Windows, Chocolatey | `choco install orden` |
-| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
+| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/orden` |
 | Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
 | Nix, current source from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable` |
 | Debian, Ubuntu | `sudo apt install ./Orden-<version>-linux-x64.deb` |
