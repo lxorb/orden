@@ -268,6 +268,14 @@ def main() -> int:
                     "() => !!document.querySelector('.chat-tab .main .composer .cm-content')",
                     "[chatter] the chat, with somewhere to write",
                 )
+                # Its name in its head, though no pointer of it is on this device.
+                named = chatter.evaluate(
+                    "() => document.querySelector('.chat-tab h2.name')?.textContent.trim() ?? null"
+                )
+                if named != CHAT:
+                    failed(f"the guest's chat is headed {named!r}, not {CHAT!r}")
+                else:
+                    say(f"the guest's chat is headed {named!r}")
                 post(owner, "from the owner")
                 arrives(chatter, "from the owner", "the owner's message on the guest's side")
                 post(chatter, "from a guest")
