@@ -899,6 +899,13 @@ class Workspace {
           continue
         }
 
+        // Off the desktop app a web note is the browser's (`openSite`, #206).
+        const away = draft.address !== undefined || viewport.device === 'phone'
+        if (draft.kind === 'web' && draft.path && !isDesktop && away) {
+          made.push(null)
+          continue
+        }
+
         // A tab from a sitting before nib stopped opening files from outside its
         // spaces goes quietly: nothing in nib opens that file any more.
         if (draft.path && !(await this.opens(draft.path))) {
@@ -1888,9 +1895,14 @@ class Workspace {
     if (isPlugin()) return
 
     const path = this.spelled(asked)
-    // Already open, before anything is written: the conversion below makes a file.
+    // Already open, before anything is written: the conversion below makes a file. Off
+    // the desktop app such a tab is an older sitting's frame inside nib (#206): it goes.
     const held = this.opened.at(path)
     if (held) {
+      if (await this.handedOut(path)) {
+        for (const tab of this.tabs.filter((one) => one.note === held)) this.close(tab.id, false)
+        return
+      }
       this.showTab(held, how)
       return
     }
@@ -1917,6 +1929,17 @@ class Workspace {
     }
 
     this.showTab(await this.opened.opening(opening, () => this.openSite(opening, how)), how)
+  }
+
+  /** A web note's address given to the browser off the desktop app; whether it was. */
+  private async handedOut(path: string): Promise<boolean> {
+    if (isDesktop) return false
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    const said = readWebFile(path, text)
+    if (!said) return false
+    await openExternal(said.url)
+    this.remember(path)
+    return true
   }
 
   /** The document one open of a website comes to. Only `openWeb` calls it, and only

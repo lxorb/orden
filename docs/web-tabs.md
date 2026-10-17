@@ -1140,6 +1140,13 @@ system's from the phone and tablet app, a new tab beside nib's own from a browse
 Links in a note and a new web tab keep the card and the frame above. See `openSite`
 in `workspace.svelte.ts`.
 
+And a web note's tab that an older sitting left goes the same way. Emil, 2026-10-13:
+_"clicking on web notes in the mobile app still opens them inside nib"_. The one way
+left for that was a tab of the note already held - put back from a sitting before the
+change - which opening the note showed, the page in a frame inside nib. Now a web note opened where a tab of it is held is
+handed to the browser and the tab goes (`handedOut`), and a sitting put back off the
+desktop app leaves its web notes' tabs out (`tabsAlong`).
+
 ## The bar
 
 Back, forward, reload, the address, a clip, the dots. The same `.nib-glyph`
