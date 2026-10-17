@@ -75,8 +75,6 @@ sudo apt install orden
 
 `Suites: unstable` follows the edge builds instead. On an apt older than 2.3 the source is one line, `deb [signed-by=/etc/apt/keyrings/orden.asc] https://lxorb.github.io/apt stable main`, in `/etc/apt/sources.list.d/orden.list`. An install from the repository is updated by apt, and the app only says when a new version is out.
 
-The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the latest released version and is where every install starts, **Unstable** follows the rolling edge builds from the `unstable` branch and can break. Builds whose version is a prerelease start on Unstable automatically, including edge builds installed through package managers. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next edge build. The website follows `main`, and the Android app has no updater.
-
 ## Why Orden?
 
 |  | Open source | Built-in MCP | Win, mac, Linux | Web | Android, iOS | Backlinks & graph | Canvas | Pen & pressure | Live collaboration | Free sync | Free publishing |
