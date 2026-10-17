@@ -139,7 +139,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The runner's own Python, the way cef.yml takes it: one package, and the
+      # The runner's own Python: one package, and the
       # browser it drives. `--with-deps` because a bare Chromium on a runner is
       # missing half the shared libraries it needs to start.
       - name: The browser the drive holds

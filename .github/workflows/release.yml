@@ -93,7 +93,7 @@ jobs:
   # only: nothing from a pull request ever reaches these machines.
   machines:
     needs: settle
-    if: ${{ !cancelled() && vars.NIB_CI_AZURE == 'on' && inputs.runners != 'github' && needs.settle.outputs.newest != 'false' }}
+    if: ${{ !cancelled() && vars.NIB_CI_AZURE == 'on' && vars.NIB_CI_ROWS != '' && inputs.runners != 'github' && needs.settle.outputs.newest != 'false' }}
     runs-on: ubuntu-latest
     environment: azure-ci
     timeout-minutes: 10
@@ -101,10 +101,11 @@ jobs:
       contents: read
       id-token: write
     env:
-      # Which jobs get a machine; the repository variable NIB_CI_ROWS overrides it. Only
-      # Chromium on x64: the arm64 jobs and the installers would wait longer for what
-      # the image lacks than they take on GitHub's own runners (.github/azure/boot.ps1).
-      ROWS: ${{ vars.NIB_CI_ROWS || 'chromium-windows-x86_64=windows/x64' }}
+      # Which jobs get a machine: the repository variable NIB_CI_ROWS, and none without
+      # it. The one row this had by default was nib's own Chromium on x64, which is gone;
+      # the installers would wait longer for what the image lacks than they take on
+      # GitHub's own runners (.github/azure/boot.ps1).
+      ROWS: ${{ vars.NIB_CI_ROWS }}
       # After Azure took a Spot machine back mid-job, the run starts again on demand.
       NIB_CI_SPOT: ${{ inputs.runners == 'ondemand' && 'off' || 'on' }}
     outputs:
@@ -305,156 +306,16 @@ jobs:
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
 
-  # nib's own Chromium, for the Browser setting to fetch: the same app built again on
-  # the engine, packed as the engine's own files and the app built on them, and signed
-  # with the updater's key like an installer. Never inside an installer - most people
-  # never switch, and it is four hundred megabytes - and never in the way of one: a
-  # platform whose engine does not build is a release without Chromium on that
-  # platform, and the installers go out regardless. See docs/browser.md and
-  # apps/desktop/src-tauri/cef.
-  #
-  # Windows and a Mac. Not Linux, where the engine's toolkit and the app's cannot share
-  # a process (docs/browser.md section 10), so the setting has no row there.
-  chromium:
-    needs: [version, settle, machines]
-    if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            platform: windows-x86_64
-          - runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            platform: windows-aarch64
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-            platform: macos-aarch64
-          - runner: macos-latest
-            target: x86_64-apple-darwin
-            platform: macos-x86_64
-    runs-on: ${{ fromJSON(needs.machines.outputs.runners || '{}')[format('{0}/chromium-{1}', github.run_attempt, matrix.platform)] || matrix.runner }}
-    timeout-minutes: 120
-    defaults:
-      run:
-        shell: bash
-    env:
-      CEF_DIR: ${{ github.workspace }}/.cef
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
-        with:
-          toolchain: stable
-          targets: ${{ matrix.target }}
-
-      # The engine's C++ wrapper is compiled by MSVC, which cannot write an object whose
-      # path is over 260 characters ("C1083: Cannot open compiler generated file: ''").
-      # Under the checkout, a build for a named target is that long: cef.yml builds for
-      # the host and fits, this names the triple and did not. So Windows builds in a
-      # short folder beside the checkout, set before the cache below so the cache is of
-      # that folder: a cache of the checkout's own target restored a folder nothing
-      # built into, and every crate was compiled again on every run.
-      - name: A short build folder on Windows
-        if: runner.os == 'Windows'
-        run: echo "CARGO_TARGET_DIR=$(cd "$GITHUB_WORKSPACE/.." && pwd -W)/t" >>"$GITHUB_ENV"
-
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          # Relative to the folder before it: five levels up is the one holding the
-          # checkout, where the step above puts Windows' build.
-          workspaces: |
-            apps/desktop/src-tauri/cef -> ${{ runner.os == 'Windows' && '../../../../../t' || 'target' }}
-          key: chromium-${{ matrix.target }}
-          save-if: ${{ github.ref == 'refs/heads/unstable' }}
-
-      # The interface the engine build embeds, as the installers do, and with the number
-      # they carry: the Tauri CLI hands `--config` to the frontend build as TAURI_CONFIG,
-      # and this build has no CLI to do it (apps/desktop/vite.config.ts, `appVersion`).
-      - name: The frontend
-        env:
-          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter @nib/desktop build
-
-      # An Azure machine installs what its image lacks while the steps above run
-      # (.github/azure/boot.ps1); this is the first step that needs any of it.
-      - name: The machine's tools
-        if: startsWith(runner.name, 'nib-')
-        shell: pwsh
-        run: |
-          $deadline = (Get-Date).AddMinutes(20)
-          while (-not (Test-Path C:\r\ready)) {
-            if ((Get-Date) -gt $deadline) { Get-Content C:\r\boot.log -ErrorAction SilentlyContinue; throw 'the machine never got its tools' }
-            Start-Sleep 5
-          }
-          Get-Content C:\r\ready
-
-      - name: The engine
-        run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
-
-      - name: Build the app on it
-        working-directory: apps/desktop/src-tauri/cef
-        env:
-          TAURI_CONFIG: '{"version":"${{ needs.version.outputs.version }}"}'
-        run: cargo build --release --locked --target ${{ matrix.target }}
-
-      - name: Pack
-        run: |
-          suffix=''
-          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
-          python apps/desktop/src-tauri/cef/pack.py \
-            --binary "${CARGO_TARGET_DIR:-apps/desktop/src-tauri/cef/target}/${{ matrix.target }}/release/nib-chromium$suffix" \
-            --engine "$CEF_PATH" \
-            --version "${{ needs.version.outputs.version }}" \
-            --platform "${{ matrix.platform }}" \
-            --out chromium-out
-
-      # With the updater's own key, which is what the app checks every archive against
-      # before it unpacks a byte. Without the key there is nothing the app would accept,
-      # so nothing is uploaded either.
-      - name: Sign
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "no signing key: this platform's Chromium is not published"; exit 1; }
-          for archive in chromium-out/*.tar.gz; do
-            pnpm --filter @nib/desktop exec tauri signer sign -p '' "$PWD/$archive"
-          done
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: chromium-${{ matrix.platform }}
-          if-no-files-found: error
-          path: |
-            chromium-out/*.tar.gz
-            chromium-out/*.sig
-            chromium-out/*.json
-
   # One manifest for every platform, which is what the app polls.
   #
   # A release's own page is for people: the installers, under the product's name, and
   # latest.json, which every install asks for at releases/latest/download. What the app
   # downloads by itself goes on one pre-release, `updates`, beside every other version's:
-  # the bundles the updater installs, and nib's own Chromium (fetch.rs, `release`). The
-  # bundles there keep the name `Nib-`, because every build before 0.14 takes an update
-  # only from a file called that (`names()` in src-tauri/src/updates.rs), and the one
-  # manifest serves them all. A build of main keeps everything on `edge`, as it always has.
+  # the bundles the updater installs. They keep the name `Nib-`, because every build
+  # before 0.14 takes an update only from a file called that (`names()` in
+  # src-tauri/src/updates.rs), and the one manifest serves them all. A build of main keeps everything on `edge`, as it always has.
   publish:
-    needs: [version, build, chromium]
-    # The installers are the release; Chromium goes with them where it built, and a
-    # platform whose engine failed is a release without it rather than no release.
+    needs: [version, build]
     # Only `unstable` and tags: a dispatch on any other branch is a trial and
     # publishes nothing (it would otherwise replace edge).
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
@@ -506,53 +367,10 @@ jobs:
           gh release view "$FILES" >/dev/null 2>&1 ||
             gh release create "$FILES" --prerelease --target "$GITHUB_SHA" --title "$FILES" --notes ""
 
-      # A runtime is the same engine whichever version packed it, and `updates` keeps the
-      # first one: replacing it would leave every earlier version's manifest naming a
-      # signature its file no longer has. One that is there with its signature beside it,
-      # which goes up after it, is used instead of this build's.
-      - name: The runtimes updates has already
-        if: needs.version.outputs.rolling != 'true'
-        run: |
-          there=$(gh release view "$FILES" --json assets --jq '.assets[] | "\(.name) \(.size)"')
-          find artifacts -type f -name 'chromium-runtime-*.tar.gz' | while read -r archive; do
-            name=$(basename "$archive")
-            size=$(awk -v name="$name" '$1 == name { print $2 }' <<<"$there")
-            if [ -z "$size" ] || ! grep -qF "$name.sig " <<<"$there"; then
-              continue
-            fi
-            gh release download "$FILES" --pattern "$name.sig" --output "$archive.sig" --clobber
-            node scripts/runtime-size.mjs artifacts "$name" "$size"
-            rm "$archive"
-            echo "$name: the one on $FILES"
-          done
-
-      # What the Browser setting reads first; see scripts/chromium-manifest.mjs. None at
-      # all where no platform's engine built and signed.
-      - name: Build chromium.json
-        run: node scripts/chromium-manifest.mjs "$VERSION" artifacts > chromium.json || rm -f chromium.json
-
       - name: Upload the files
         run: |
-          # Every file before the manifest that names it: a fetch never reads a
-          # chromium.json whose archives are not there yet, and the updater is never
-          # offered a version whose installer or Chromium is still on its way.
-          if [ -f chromium.json ]; then
-            find artifacts -type f -name 'nib-chromium-*.tar.gz' -exec gh release upload "$FILES" {} --clobber \;
-            # A runtime's signature after the runtime, so a signature on `updates` says
-            # the file beside it is whole.
-            find artifacts -type f -name 'chromium-runtime-*.tar.gz' | while read -r runtime; do
-              gh release upload "$FILES" "$runtime" --clobber
-              if [ "$ROLLING" != true ]; then gh release upload "$FILES" "$runtime.sig" --clobber; fi
-            done
-            # `updates` holds every version's, so each is named for its version.
-            manifest=chromium.json
-            if [ "$ROLLING" != true ]; then
-              manifest="chromium-$VERSION.json"
-              cp chromium.json "$manifest"
-            fi
-            gh release upload "$FILES" "$manifest" --clobber
-          fi
-
+          # Every file before the manifest that names it: the updater is never offered
+          # a version whose installer is still on its way.
           if [ "$ROLLING" = true ]; then
             # The .app.tar.gz is what the updater downloads on a Mac, so it has to
             # be a release asset even though nobody clicks it.
@@ -592,7 +410,7 @@ jobs:
   # mid-build fails with its runner lost. Then the run starts again with machines on
   # demand, once: a build that failed on its own merits fails the same way again.
   machines-again:
-    needs: [machines, build, chromium]
+    needs: [machines, build]
     if: failure() && needs.machines.result == 'success' && inputs.runners != 'ondemand'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -620,7 +438,7 @@ jobs:
   # The first of the three things that delete the Azure machines (the sweeper and the
   # machines themselves are the others): whatever the jobs did, failed or cancelled.
   machines-down:
-    needs: [machines, build, chromium]
+    needs: [machines, build]
     if: always() && needs.machines.result != 'skipped'
     runs-on: ubuntu-latest
     environment: azure-ci
