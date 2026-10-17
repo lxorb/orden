@@ -23,7 +23,7 @@
   import Lightbox from './Lightbox.svelte'
   import { isPicture, isVideo } from './media'
   import { onScreen } from '../on-screen'
-  import { hearJumps, takeJump } from './open'
+  import { chatName, hearJumps, takeJump } from './open'
   import type { Box } from './place'
   import PollSheet from './PollSheet.svelte'
   import Replies from './Replies.svelte'
@@ -48,6 +48,10 @@
   let dropping = $state(false)
 
   const space = $derived(page?.entry?.space ?? null)
+  /** What a chat somebody shared on its own is called: the name its pointer has on the
+   *  account, which came with the tab. A chat's own name is its pointer's, and there is
+   *  no pointer of it here to read one off (#386). */
+  const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
 
   // The chat the pointer names, opened once the store has started and says which it is:
@@ -162,7 +166,7 @@
   {#if page}
     {@const open = page}
     <div class="main" class:hidden={phone && open.replying !== null}>
-      <ChatHead page={open} {space} />
+      <ChatHead page={open} {space} named={lentName} />
       {#if open.ready}
         <Timeline
           bind:this={timeline}
