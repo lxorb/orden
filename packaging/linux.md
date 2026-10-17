@@ -1,23 +1,20 @@
 # Linux packaging
 
-Five package managers. Four of them repackage what
+Four package managers, and a flake. Each repackages what
 `.github/workflows/release.yml` already publishes rather than rebuilding
 Orden, so a release is a release everywhere and nothing can drift between
-them. Flathub is the exception and has to be: it only takes a source-available
-app that is compiled from source inside its own sandbox.
+them. Not Flathub; see the section of that name.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
 | `apt/` | apt (`apt install orden`, from `lxorb.github.io/apt`) | the `.deb` | amd64, arm64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
-| `flathub/` | Flathub (`flatpak`) | source, in the sandbox | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
-| `nix/` | a flake anyone can install from | the AppImage | x86_64, aarch64 |
+| `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
 
-`.github/workflows/validate-linux-packaging.yml` builds all four the way the
-managers themselves do - `makepkg` in an Arch container, `flatpak-builder` plus
-`flatpak-builder-lint` against the Flathub runtime, and `snapcraft` in LXD. Run
-it after every release that changes packaging. The flake has its own,
+`.github/workflows/validate-linux-packaging.yml` builds the AUR package and the snap
+the way the managers themselves do - `makepkg` in an Arch container and `snapcraft` in
+LXD. Run it after every release that changes packaging. The flake has its own,
 `.github/workflows/nix.yml`, which runs on every pull request into `main` that
 changes it.
 
@@ -42,13 +39,14 @@ usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop 
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
 ```
 
-The binary and the icons are fine. The rest is not, and every package here
-repairs the same three things:
+The binary and the icons are fine, and so is most of the control file: `Description:`
+comes from `bundle.shortDescription` and `longDescription` in `tauri.conf.json`, and the
+entry's `Categories=Office;` from `bundle.category` (`Productivity`). What Tauri writes
+is still short of two things, which every package here repairs:
 
-- **`Categories=` is empty**, so Orden lands in no menu category at all. Tauri
-  derives it from `bundle.category` in `tauri.conf.json`, which is unset.
-- **No `MimeType=` and no `%U` on `Exec=`**, so nothing offers Orden as a web
-  browser. Orden claims `x-scheme-handler/http` and `https`, which is what lets it be
+- **No `x-scheme-handler/http` or `https` in `MimeType=` and no `%U` on `Exec=`**, so
+  nothing offers Orden as a web browser: the entry Tauri writes claims
+  `application/pdf` and `x-scheme-handler/nib` alone. Orden claims `x-scheme-handler/http` and `https`, which is what lets it be
   the default browser (see `default_browser.rs`), and of files only
   `application/pdf`, for a file manager's "Open with" (see `handed_pdfs.rs`): it
   opens no note from outside its spaces, so a `.md` in a file manager is never
@@ -57,14 +55,11 @@ repairs the same three things:
   256x256 image means "128 logical pixels at 2x" and every theme lookup scales
   it wrong. Tauri puts `128x128@2x.png` there by name rather than by size.
 
-`Description:` in the control file is also literally `(none)` and `Maintainer:`
-has no email address. Fixing this upstream means setting `bundle.category`,
-`bundle.shortDescription`/`longDescription` and `bundle.publisher` in
-`tauri.conf.json`; the web handlers would still have to be added by hand.
+`Maintainer:` is `bundle.publisher`, a name with no email address, which Debian's
+policy asks for and nothing here enforces.
 
-Each package therefore installs its own `.desktop` entry and moves the icon.
-The three copies differ only where they have to: the Flatpak one is named after
-the app ID and points `Icon=` at it, the snap one points `Icon=` at `${SNAP}`.
+Each package therefore installs its own `.desktop` entry and moves the icon. The
+copies differ only where they have to: the snap one points `Icon=` at `${SNAP}`.
 
 ## What Orden needs of the system
 
@@ -234,159 +229,16 @@ cd orden-bin && git add -A && git commit -m "orden 0.13.1" && git push
 
 ## Flathub
 
-`flathub/` holds a submission the way Flathub wants one: the manifest, the
-AppStream metainfo, the desktop entry, and the two generated files that let the
-whole thing build with no network.
+Orden is not published on Flathub, by the owner's decision. `flathub/` keeps the
+manifest, the AppStream metainfo, the desktop entry and the two generated source lists
+of a submission that builds from source with no network, as Flathub requires of a
+source-available app, for reference; nothing builds or updates them.
 
-**It builds from source, because it has to.** Flathub's requirements gained a
-*Building from source* section on 2026-02-25:
-
-> All source available submissions must be built entirely from source code.
-
-Orden is AGPL, so it is a source-available submission, and a manifest that
-unpacked the release `.deb` would be closed on sight. The Tauri apps on Flathub
-that do exactly that were accepted before the date and are grandfathered, not
-precedent. The exception clause covers well-known vendors with no offline build
-tooling, which is not our case either way: the tooling exists.
-
-### The two generated files
-
-Nothing may be fetched while a Flathub build runs, so every crate and every npm
-tarball is a source in the manifest. Two generators from
-<https://github.com/flatpak/flatpak-builder-tools> write them:
-
-```
-python -m pip install aiohttp tomlkit yarl
-python cargo/flatpak-cargo-generator.py apps/desktop/src-tauri/Cargo.lock \
-  -o packaging/flathub/cargo-sources.json
-
-pipx install "git+https://github.com/flatpak/flatpak-builder-tools.git#subdirectory=node"
-flatpak-node-generator pnpm pnpm-lock.yaml -o packaging/flathub/node-sources.json
-```
-
-Both are large and mechanical, both belong to the same commit as the app, and
-both have to be regenerated whenever either lockfile moves. Run them on Linux:
-the node one writes the host's path separators into its output, and a build in
-the sandbox cannot use Windows ones.
-
-Only the desktop app is compiled. `tauri.conf.json` bundles no `externalBin`, so
-there is no sidecar to vendor a third lockfile for; the MCP server is part of the
-Worker under `services/sync/` and has nothing to do with the Flatpak.
-
-### What the build does
-
-The module unpacks the pnpm version the root `packageManager` field asks for,
-installs `@nib/desktop` and the packages it is built from out of the offline
-store, empties the updater's endpoints, builds the web assets with vite,
-compiles the binary against the vendored crates, and installs the binary, the
-icons, the desktop entry and the metainfo by hand.
-
-`cargo build` rather than `tauri build`: the only thing the bundler would add is
-a `.deb`, and nothing in it is used - Tauri's own desktop entry and icon layout
-are the three things every package here repairs anyway.
-
-**No self-updating.** A Flatpak is updated by Flathub, so the build leaves the
-updater plugin with an empty endpoint list. The plugin stays configured, because
-its public key is not optional and the app will not start without it, and an
-empty list is what the app already treats as nothing new - the same as having no
-network. `createUpdaterArtifacts` goes off with it.
-
-Build and install it locally exactly the way the workflow does:
-
-```
-cd packaging/flathub
-flatpak install -y flathub org.flatpak.Builder org.gnome.Platform//50 org.gnome.Sdk//50
-flatpak run org.flatpak.Builder --force-clean --sandbox --user --install \
-  --install-deps-from=flathub --repo=repo builddir so.orden.Orden.yml
-flatpak run so.orden.Orden
-```
-
-`--sandbox` is the part that matters: it takes the network and the host
-filesystem away from the build commands, which is the condition Flathub builds
-under.
-
-The manifest sets no `WEBKIT_DISABLE_DMABUF_RENDERER`, and does not need one:
-the window comes up on the GNOME 50 runtime with `--device=dri` and nothing
-else. If a blank window is ever reported on a proprietary driver, that variable
-set to 1 in `finish-args` is the usual fix, and the reason other Tauri Flatpaks
-carry it.
-
-### What the linters say
-
-`appstreamcli validate`, `desktop-file-validate`, `flatpak-builder-lint
-manifest` and `flatpak-builder-lint appstream` all pass, and the built Flatpak
-resolves every library it needs against `org.gnome.Platform//50`, which carries
-`libwebkit2gtk-4.1.so.0` alongside the GTK4 flavour.
-
-`flatpak-builder-lint repo` on a locally built repository reports exactly two
-errors, `appstream-external-screenshot-url` and
-`appstream-remote-icon-not-mirrored`. Neither is a defect: the composed
-catalogue is complete - the screenshot is fetched, scaled into five thumbnails,
-and the icons are both cached and remote - but the paths stay relative to the
-`media_baseurl` attribute until Flathub's own build service rewrites them
-absolute, and the linter skips both checks inside that pipeline. The validation
-workflow asserts they are the only two errors rather than ignoring the check.
-
-The screenshot itself is `docs/media/screenshot.png`, taken by
-`apps/desktop/test/e2e/store-shot.py` and pointed at by commit through
-`raw.githubusercontent.com`. Flathub refetches it on every build, so it has to
-be a file in this repository and not the GitHub `user-attachments` link it used
-to be - that one answers a GET with a redirect to a signed S3 URL that expires
-in five minutes and refuses HEAD outright.
-
-The name in the metainfo and the desktop entry is `Orden`, and the app ID is
-`so.orden.Orden`. Flathub requires the matching domain to be yours and to
-answer over HTTPS, which <https://orden.so> does.
-
-The app ID is deliberately not the Tauri bundle identifier: that is still
-`ch.emilvinu.nib`, and it names the data directory, the macOS bundle and the
-Windows registry entries of every install already out there, so it is not a
-string to change for packaging's sake. The two only have to meet in one place.
-The single-instance plugin claims a bus name derived from the identifier, and a
-sandbox may own names under its own app ID alone, so the manifest asks for that
-one name with `--own-name`. Aligning the identifier would retire the hole and
-migrate every existing install's data directory; until that is worth doing, the
-`--own-name` lines are the price.
-
-### Steps to submit it - needs your account
-
-Flathub's requirements say plainly that AI tools must not open or automate
-submission pull requests, or write their commit messages, descriptions or
-review replies, and that AI-generated packaging has to be disclosed. So this is
-yours to open, and the disclosure belongs in the pull request body.
-
-1. Fork <https://github.com/flathub/flathub> with *Copy the master branch only*
-   unchecked, and clone the `new-pr` branch:
-
-   ```
-   git clone --branch=new-pr git@github.com:<you>/flathub.git
-   git checkout -b so.orden.Orden
-   ```
-
-2. Copy the five files in `packaging/flathub/` to the root of that branch, push,
-   and open the pull request against `new-pr` titled `Add so.orden.Orden`.
-3. Comment `bot, build` on it to make Flathub's builders build both
-   architectures.
-4. Two things worth saying in the pull request itself:
-   - the packaging was written with an AI assistant, which their requirements
-     ask you to disclose;
-   - the manifest asks for `--filesystem=xdg-documents` rather than
-     `--filesystem=home`, because the linter treats `home` as an error, and
-     because it is all Orden needs: the spaces are in `~/Documents/Nib`, Orden opens
-     nothing from outside them, and an export saved elsewhere goes through the
-     document portal of the save dialog.
-5. Once it is merged and published, verification is a token you serve yourself:
-   put the line Flathub gives you at
-   <https://emilvinu.ch/.well-known/org.flathub.VerifiedApps.txt>. That is what
-   puts the verified mark on the listing, and it also gates the automerge
-   setting below.
-
-When the app is on Flathub, a release opens its own pull request: the
-`x-checker-data` block on the git source lets Flathub's
-flatpak-external-data-checker move the tag. It cannot regenerate the two source
-files, though, so a release whose lockfiles moved needs them regenerated in the
-same pull request or the build fails. Do not turn on `automerge-flathubbot-prs`
-for that reason.
+The reason is Flathub's own: its requirements keep AI tools out of a submission - they
+may not open or automate the pull request, or write its description, commit messages
+or review replies - and require AI-written packaging to be disclosed, and this manifest
+and everything round it were written with them. The files stay as they were when that
+was decided; the history has how they were made and checked.
 
 ## Snap Store
 
@@ -414,8 +266,8 @@ It pins the bytes it unpacks. `snap.yml` reads the digests the release page repo
 for the two `.deb`s and writes them in at the same moment it rewrites the version and
 the URL - a release whose page reports no digest fails the
 step rather than building an unchecked snap. Every other path here pins one too
-(scoop and chocolatey a sha256, homebrew a sha256, the AUR a sha256, nix a hash,
-Flathub a commit), and this was the one that did not: what the snap unpacks is a
+(scoop and chocolatey a sha256, homebrew a sha256, the AUR a sha256, nix a hash),
+and this was the one that did not: what the snap unpacks is a
 file fetched over the network on a runner, and the Snap Store publishes it under the
 product's name. **When a release is made by hand rather than by the workflow, update
 the two digests in `snap/snapcraft.yaml` with it** - `gh release view v<version>
@@ -588,10 +440,3 @@ the flake once more from GitHub. A build of main never gets there. By hand:
 gh workflow run packaging-bump.yml --repo lxorb/orden -f tag=v0.15.0 -f dry_run=true
 node scripts/bump-packaging.mjs 0.15.0   # the same rewrite, locally
 ```
-
-Flathub is the one it leaves alone, because it builds from source:
-
-- `flathub/so.orden.Orden.yml`: the `tag` and the `commit` on the git source,
-  plus a `<release>` entry in `so.orden.Orden.metainfo.xml`. If either lockfile
-  moved in that release, regenerate `cargo-sources.json` and `node-sources.json`
-  as well - a stale one fails the build rather than building the wrong thing.
