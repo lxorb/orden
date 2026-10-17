@@ -192,6 +192,14 @@ def waited(page: Page, expression: str, what: str, patience: float = 30) -> bool
     return DRIVE.waited(page, expression, what, patience)
 
 
+def keyboard_in_the_list(page: Page) -> bool:
+    """Until the thread list's field has the keyboard. It takes it a frame after the
+    list is drawn (Threads.svelte), so a key pressed the moment the list is there went
+    to the composer instead, now and then on a busy machine: the search typed nowhere,
+    and a Delete archived nothing."""
+    return waited(page, "document.activeElement?.closest('.ask .threads')", "the list's field to take the keyboard")
+
+
 def idle(page: Page) -> bool:
     return waited(page, "!document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to end")
 
@@ -440,6 +448,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelectorAll('.ask .threads .row').length === 2", "two threads")
+    keyboard_in_the_list(page)
     page.keyboard.type("heron")
     page.wait_for_timeout(200)
     found = page.locator(".ask .threads .row .title").all_inner_texts()
@@ -450,6 +459,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
+    keyboard_in_the_list(page)
     page.keyboard.press("Delete")
     waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
     shot(page, f"{tag}11-archived")
