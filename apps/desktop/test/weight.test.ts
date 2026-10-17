@@ -636,8 +636,14 @@ function holds(tail: string): boolean {
  *  come before, and the reading view's door brings it at the launch's last turn anyway
  *  (`warmDoors` in surfaces.svelte.ts). The charts and the web cards stay: the live
  *  preview draws those itself. Measured 3,163,402 and 375, and the ceiling is one per
- *  cent over that again. */
-const BUDGET = 3_195_000
+ *  cent over that again.
+ *
+ *  Raised 2026-10-17, to 3,200,600, from an unstable at 3,194,026 (974 bytes under), for
+ *  the TabKind registry: the kinds' traits moved into one table read on first paint
+ *  (workspace/tab-kinds.ts), which holdsWords, the pane, the tab's mark and the status
+ *  bar ask, in place of the chains of `kind === ...` they each kept. Its comments are cut
+ *  to a line a trait; what is left is the table. Measured 3,199,582. */
+const BUDGET = 3_200_600
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
