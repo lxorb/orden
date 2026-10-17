@@ -1424,6 +1424,9 @@ export const pa: Dictionary = {
   'Add {name}': '{name} ਜੋੜੋ',
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
+  'Keep this browser’s keys in the vault': 'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀਆਂ ਕੁੰਜੀਆਂ ਵਾਲਟ ਵਿੱਚ ਰੱਖੋ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ਫਿਰ ਹਰ ਡਿਵਾਈਸ ਦੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਰਹਿਣਗੀਆਂ, ਜਿੱਥੇ ਪੰਨੇ ਵਿੱਚ ਵੜੀ ਕੋਈ ਸਕ੍ਰਿਪਟ ਉਨ੍ਹਾਂ ਨੂੰ ਪੜ੍ਹ ਸਕਦੀ ਹੈ।',
   'AI can be wrong. Check the facts.': 'AI ਗਲਤ ਹੋ ਸਕਦਾ ਹੈ। ਤੱਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
   'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',

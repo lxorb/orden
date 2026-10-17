@@ -1419,6 +1419,9 @@ export const ur: Dictionary = {
   'No providers yet.': 'ابھی کوئی فراہم کنندہ نہیں۔',
   'Add {name}': '{name} شامل کریں',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
+  'Keep this browser’s keys in the vault': 'اس براؤزر کی کلیدیں والٹ میں رکھیں',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'پھر ہر ڈیوائس کی کلیدیں اس براؤزر کے اسٹوریج میں رکھی جائیں گی، جہاں صفحے میں گھس آنے والا کوئی اسکرپٹ انہیں پڑھ سکتا ہے۔',
   'AI can be wrong. Check the facts.': 'AI غلط ہو سکتا ہے۔ حقائق کی تصدیق کریں۔',
   'Used by the glasses': 'چشمہ استعمال کرتا ہے',
   'Could not read the models.': 'ماڈل پڑھے نہیں جا سکے۔',

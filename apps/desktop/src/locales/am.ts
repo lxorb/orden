@@ -1401,6 +1401,9 @@ export const am: Dictionary = {
   'No providers yet.': 'እስካሁን አቅራቢ የለም።',
   'Add {name}': '{name} ጨምር',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
+  'Keep this browser’s keys in the vault': 'የዚህን አሳሽ ቁልፎች በካዝናው ውስጥ አቆይ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ከዚያ የእያንዳንዱ መሣሪያ ቁልፎች በዚህ አሳሽ ማከማቻ ውስጥ ይቀመጣሉ፤ ወደ ገጹ የገባ ስክሪፕት ሊያነባቸው ይችላል።',
   'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
   'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',

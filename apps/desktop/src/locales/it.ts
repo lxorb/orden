@@ -1462,6 +1462,9 @@ export const it: Dictionary = {
   'Add {name}': 'Aggiungi {name}',
   'This browser holds the keys in its own storage.':
     'Questo browser conserva le chiavi nella propria memoria.',
+  'Keep this browser’s keys in the vault': 'Conserva le chiavi di questo browser nella cassaforte',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Così le chiavi di ogni dispositivo vengono conservate nello spazio di questo browser, dove uno script entrato nella pagina potrebbe leggerle.',
   'AI can be wrong. Check the facts.': 'L’IA può sbagliare. Verificare i fatti.',
   'Used by the glasses': 'Usato dagli occhiali',
   'Could not read the models.': 'Non è stato possibile leggere i modelli.',

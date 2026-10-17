@@ -1385,6 +1385,9 @@ export const yue: Dictionary = {
   'No providers yet.': '仲冇服務商。',
   'Add {name}': '新增{name}',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
+  'Keep this browser’s keys in the vault': '將呢個瀏覽器嘅密鑰放喺保險庫',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '噉樣每部裝置嘅密鑰都會儲喺呢個瀏覽器嘅儲存空間，混入頁面嘅腳本可以讀到。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
   'Used by the glasses': '供眼鏡用',
   'Could not read the models.': '冇辦法讀取模型列表。',

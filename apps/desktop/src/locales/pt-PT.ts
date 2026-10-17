@@ -1457,6 +1457,9 @@ export const ptPT: Dictionary = {
   'Add {name}': 'Adicionar {name}',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no seu próprio armazenamento.',
+  'Keep this browser’s keys in the vault': 'Guardar as chaves deste browser no cofre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Assim, as chaves de todos os dispositivos ficam no armazenamento deste browser, onde um script que entrasse na página as poderia ler.',
   'AI can be wrong. Check the facts.': 'A IA pode errar. Confirme os factos.',
   'Used by the glasses': 'Usado pelos óculos',
   'Could not read the models.': 'Não foi possível ler os modelos.',

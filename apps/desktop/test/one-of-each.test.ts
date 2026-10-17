@@ -457,6 +457,8 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
+      // Whether a browser keeps its keys in the AI vault, in Settings > AI.
+      'lib/AiPane.svelte',
       'lib/GraphControls.svelte',
       // Whether Todoist's done tasks come too.
       'lib/ImportSheet.svelte',

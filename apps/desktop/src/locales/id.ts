@@ -1413,6 +1413,9 @@ export const id: Dictionary = {
   'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Peramban ini menyimpan kunci di penyimpanannya sendiri.',
+  'Keep this browser’s keys in the vault': 'Simpan kunci browser ini di brankas',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Maka kunci setiap perangkat disimpan di penyimpanan browser ini, tempat skrip yang menyusup ke halaman dapat membacanya.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Periksa faktanya.',
   'Used by the glasses': 'Dipakai kacamata',
   'Could not read the models.': 'Tidak dapat membaca daftar model.',

@@ -9,6 +9,7 @@ import { request } from '../../api'
 import { deviceName } from '../../device'
 import { forget, keep, parsed, storedText } from '../../stored'
 import { hub } from '../../sync2/hub.svelte'
+import { isNative } from '../../tauri'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
 import { ai } from '../store.svelte'
@@ -25,6 +26,28 @@ const EVERY = 5 * 60_000
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 
 const baseKey = (id: string) => `nib:ai-vault-base:${id}`
+
+/** Whether a browser keeps its keys in the vault: never until the reader says so. A
+ *  browser's storage is no secret store, and a browser let in holds every device's keys
+ *  there, where a script that got into the page could read them (docs/ai.md, "Every
+ *  device"). A desktop and a phone keep them in the platform's secret store, and are in
+ *  the vault once somebody signs in. */
+const BROWSER_KEY = 'nib:ai-vault-browser'
+
+export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
+
+/** Turns this browser's place in the vault on or off. Off lets go of its device on the
+ *  account, so the key wrapped to it goes with it, and keeps what is on this browser. */
+export async function keepBrowserInVault(on: boolean): Promise<void> {
+  browserVault.on = on
+  if (on) keep(BROWSER_KEY, 'yes')
+  else forget(BROWSER_KEY)
+  if (on) {
+    await vault.refresh()
+    return
+  }
+  await vault.leave()
+}
 
 /** Who each program and ChatGPT says is signed in here, where it has said. */
 async function signIns(): Promise<Record<string, string>> {
@@ -43,7 +66,8 @@ async function signIns(): Promise<Record<string, string>> {
 }
 
 const world: VaultWorld = {
-  account: () => (account.user && account.token ? account.user.id : null),
+  account: () =>
+    account.user && account.token && (isNative || browserVault.on) ? account.user.id : null,
   call: (path, method, body) =>
     request(path, {
       ...(method ? { method } : {}),

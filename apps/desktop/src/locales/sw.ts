@@ -1437,6 +1437,9 @@ export const sw: Dictionary = {
   'Add {name}': 'Ongeza {name}',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'Keep this browser’s keys in the vault': 'Weka funguo za kivinjari hiki kwenye kasha',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kisha funguo za kila kifaa zitahifadhiwa kwenye hifadhi ya kivinjari hiki, ambapo hati iliyoingia kwenye ukurasa inaweza kuzisoma.',
   'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',

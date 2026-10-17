@@ -1431,6 +1431,9 @@ export const kn: Dictionary = {
   'Add {name}': '{name} ಸೇರಿಸಿ',
   'This browser holds the keys in its own storage.':
     'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
+  'Keep this browser’s keys in the vault': 'ಈ ಬ್ರೌಸರ್‌ನ ಕೀಗಳನ್ನು ವಾಲ್ಟ್‌ನಲ್ಲಿ ಇರಿಸಿ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ಆಗ ಪ್ರತಿಯೊಂದು ಸಾಧನದ ಕೀಗಳು ಈ ಬ್ರೌಸರ್‌ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇರುತ್ತವೆ, ಅಲ್ಲಿ ಪುಟದೊಳಗೆ ನುಸುಳಿದ ಸ್ಕ್ರಿಪ್ಟ್ ಅವುಗಳನ್ನು ಓದಬಹುದು.',
   'AI can be wrong. Check the facts.': 'AI ತಪ್ಪಾಗಬಹುದು. ಸತ್ಯಾಂಶಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
   'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',

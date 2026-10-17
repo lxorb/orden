@@ -1417,6 +1417,9 @@ export const hi: Dictionary = {
   'Add {name}': '{name} जोड़ें',
   'This browser holds the keys in its own storage.':
     'यह ब्राउज़र कुंजियाँ अपने ही भंडार में रखता है।',
+  'Keep this browser’s keys in the vault': 'इस ब्राउज़र की कुंजियाँ वॉल्ट में रखें',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'तब हर डिवाइस की कुंजियाँ इस ब्राउज़र के स्टोरेज में रखी जाएँगी, जहाँ पेज में घुसी कोई स्क्रिप्ट उन्हें पढ़ सकती है।',
   'AI can be wrong. Check the facts.': 'AI गलत हो सकता है। तथ्यों की जाँच करें।',
   'Used by the glasses': 'चश्मा इसका उपयोग करता है',
   'Could not read the models.': 'मॉडल पढ़े नहीं जा सके।',

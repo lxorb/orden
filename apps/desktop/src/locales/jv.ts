@@ -1407,6 +1407,9 @@ export const jv: Dictionary = {
   'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
+  'Keep this browser’s keys in the vault': 'Simpen kunci browser iki ing brankas',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Banjur kunci saben piranti disimpen ing panyimpenan browser iki, ing ngendi skrip sing mlebu menyang kaca bisa maca.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Priksa fakta-faktane.',
   'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',

@@ -1411,6 +1411,9 @@ export const ms: Dictionary = {
   'Add {name}': 'Tambah {name}',
   'This browser holds the keys in its own storage.':
     'Pelayar ini menyimpan kunci dalam simpanannya sendiri.',
+  'Keep this browser’s keys in the vault': 'Simpan kunci pelayar ini dalam peti besi',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kemudian kunci setiap peranti disimpan dalam storan pelayar ini, tempat skrip yang menyusup ke halaman boleh membacanya.',
   'AI can be wrong. Check the facts.': 'AI boleh tersilap. Semak faktanya.',
   'Used by the glasses': 'Digunakan cermin mata',
   'Could not read the models.': 'Tidak dapat membaca senarai model.',

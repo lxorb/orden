@@ -1425,6 +1425,9 @@ export const te: Dictionary = {
   'No providers yet.': 'ఇంకా ప్రొవైడర్‌లు లేవు.',
   'Add {name}': '{name} జోడించు',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
+  'Keep this browser’s keys in the vault': 'ఈ బ్రౌజర్ కీలను వాల్ట్‌లో ఉంచు',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'అప్పుడు ప్రతి పరికరం కీలు ఈ బ్రౌజర్ నిల్వలో ఉంటాయి, పేజీలోకి చొరబడిన స్క్రిప్ట్ వాటిని చదవగలదు.',
   'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
   'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',

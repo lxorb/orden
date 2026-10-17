@@ -1,11 +1,15 @@
 """The AI accounts on two devices of one nib account, against the real Worker.
 
 A laptop and a phone are two browsers signed in to the same account, each with its own
-storage, so its own secret store and its own device key. Docs/ai.md, "Every device":
+storage, so its own secret store and its own device key. A browser keeps its keys in the
+vault only once told to, so both are; a third browser, not told, stays out. Docs/ai.md,
+"Every device":
 
 - the laptop adds an Anthropic key, and opens the vault without a word as the account's
   first device;
-- the phone signs in and waits, showing six digits in Settings > AI;
+- a browser not told to keep its keys in the vault never asks for them;
+- the phone signs in and waits; once the laptop has answered it, it shows six digits in
+  Settings > AI;
 - the laptop shows the bubble with the same six digits, and Allow gives the phone the key;
 - the phone then has the account and its key, and the account holds no key in the clear;
 - a change on the phone reaches the laptop within seconds, through the hub;
@@ -59,9 +63,14 @@ def wait(page: Page, script: str, what: str, patience: float = LIVE) -> Any:
     raise SystemExit(f"gave up waiting for {what}")
 
 
-def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
+def signed_in(
+    browser: Browser, token: str, label: str, vault: bool = True
+) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, reduced_motion="reduce")
     context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    if vault:
+        # What Settings > AI's switch writes; see browserVault in ai/vault/start.svelte.ts.
+        context.add_init_script("localStorage.setItem('nib:ai-vault-browser', 'yes')")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
@@ -81,7 +90,7 @@ def main() -> int:
         worker.prepare()
         user = str(uuid.uuid4())
         now = int(time.time() * 1000)
-        tokens = [uuid.uuid4().hex + uuid.uuid4().hex for _ in range(2)]
+        tokens = [uuid.uuid4().hex + uuid.uuid4().hex for _ in range(3)]
         statements = [f"insert into users (id, email, created_at) values ('{user}', 'two@example.com', {now});"]
         for token in tokens:
             digest = hashlib.sha256(token.encode()).hexdigest()
@@ -105,9 +114,21 @@ def main() -> int:
         wait(laptop, standing("open"), "the laptop's vault open", 40)
         check("the account's first device opens without a word", True)
 
+        _, stranger = signed_in(browser, tokens[2], "a browser not told", vault=False)
+        stranger.wait_for_timeout(3000)
+        check(
+            "a browser not told to keep its keys in the vault stays out of it",
+            stranger.evaluate(standing("off")) and len(worker.query("select id from ai_devices")) == 1,
+        )
+
         _, phone = signed_in(browser, tokens[1], "phone")
         wait(phone, standing("waiting"), "the phone waiting", 40)
-        digits = phone.evaluate("async () => (await window.nibApp.aiVault()).vault.digits")
+        digits = wait(
+            phone,
+            "async () => (await window.nibApp.aiVault()).vault.digits",
+            "the phone's six digits, once the laptop answered",
+            40,
+        )
         phone.evaluate("window.nibApp.settings.show('ai')")
         phone.wait_for_selector(f"text={digits}")
         shot(phone, "01-phone-waiting")

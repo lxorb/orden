@@ -1386,6 +1386,9 @@ export const zhHant: Dictionary = {
   'No providers yet.': '還沒有供應商。',
   'Add {name}': '新增{name}',
   'This browser holds the keys in its own storage.': '此瀏覽器把金鑰放在自己的儲存空間裡。',
+  'Keep this browser’s keys in the vault': '將此瀏覽器的金鑰保存在保險庫中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '這樣，每台裝置的金鑰都會保存在此瀏覽器的儲存空間中，混入頁面的指令碼可能讀取它們。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請查證事實。',
   'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型清單。',

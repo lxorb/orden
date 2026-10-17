@@ -1413,6 +1413,9 @@ export const gu: Dictionary = {
   'No providers yet.': 'હજી પ્રદાતા નથી.',
   'Add {name}': '{name} ઉમેરો',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
+  'Keep this browser’s keys in the vault': 'આ બ્રાઉઝરની કી વૉલ્ટમાં રાખો',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'પછી દરેક ઉપકરણની કી આ બ્રાઉઝરના સ્ટોરેજમાં રહેશે, જ્યાં પેજમાં ઘૂસેલી કોઈ સ્ક્રિપ્ટ તેને વાંચી શકે.',
   'AI can be wrong. Check the facts.': 'AI ભૂલ કરી શકે છે. હકીકતો ચકાસો.',
   'Used by the glasses': 'ચશ્માં વાપરે છે',
   'Could not read the models.': 'મોડેલ વાંચી શકાયા નહીં.',

@@ -1421,6 +1421,9 @@ export const fa: Dictionary = {
   'Add {name}': 'افزودن {name}',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'Keep this browser’s keys in the vault': 'کلیدهای این مرورگر را در گاوصندوق نگه دار',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'در این صورت کلیدهای همهٔ دستگاه‌ها در حافظهٔ این مرورگر نگه داشته می‌شوند، جایی که اسکریپتی که به صفحه راه یافته می‌تواند آن‌ها را بخواند.',
   'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',

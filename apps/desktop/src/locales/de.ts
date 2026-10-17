@@ -1442,6 +1442,9 @@ export const de: Dictionary = {
   'Add {name}': '{name} hinzufügen',
   'This browser holds the keys in its own storage.':
     'Dieser Browser bewahrt die Schlüssel in seinem eigenen Speicher auf.',
+  'Keep this browser’s keys in the vault': 'Schlüssel dieses Browsers im Tresor aufbewahren',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Dann liegen die Schlüssel aller Geräte im Speicher dieses Browsers, wo ein Skript, das in die Seite gelangt ist, sie lesen könnte.',
   'AI can be wrong. Check the facts.': 'KI kann sich irren. Fakten prüfen.',
   'Used by the glasses': 'Von der Brille genutzt',
   'Could not read the models.': 'Die Modelle konnten nicht gelesen werden.',

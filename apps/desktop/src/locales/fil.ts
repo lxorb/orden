@@ -1442,6 +1442,9 @@ export const fil: Dictionary = {
   'Add {name}': 'Idagdag ang {name}',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
+  'Keep this browser’s keys in the vault': 'Itago ang mga key ng browser na ito sa vault',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kung gayon, itatago ang mga key ng bawat device sa storage ng browser na ito, kung saan mababasa ang mga ito ng script na nakapasok sa page.',
   'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',
   'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',

@@ -1404,6 +1404,9 @@ export const vi: Dictionary = {
   'Add {name}': 'Thêm {name}',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'Keep this browser’s keys in the vault': 'Giữ khóa của trình duyệt này trong kho',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Khi đó, khóa của mọi thiết bị sẽ được lưu trong bộ nhớ của trình duyệt này, nơi một đoạn mã lọt vào trang có thể đọc được.',
   'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',

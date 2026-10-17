@@ -1440,6 +1440,9 @@ export const ta: Dictionary = {
   'Add {name}': '{name} சேர்',
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
+  'Keep this browser’s keys in the vault': 'இந்த உலாவியின் சாவிகளை பெட்டகத்தில் வை',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'அப்போது ஒவ்வொரு சாதனத்தின் சாவிகளும் இந்த உலாவியின் சேமிப்பில் வைக்கப்படும்; பக்கத்திற்குள் நுழைந்த ஒரு ஸ்கிரிப்ட் அவற்றைப் படிக்கக்கூடும்.',
   'AI can be wrong. Check the facts.': 'AI தவறாகலாம். உண்மைகளைச் சரிபார்க்கவும்.',
   'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',

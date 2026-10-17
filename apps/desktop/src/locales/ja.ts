@@ -1408,6 +1408,9 @@ export const ja: Dictionary = {
   'Add {name}': '{name} を追加',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
+  'Keep this browser’s keys in the vault': 'このブラウザのキーを保管庫に入れる',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'その場合、すべてのデバイスのキーがこのブラウザのストレージに保存され、ページに入り込んだスクリプトに読まれるおそれがあります。',
   'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
   'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',

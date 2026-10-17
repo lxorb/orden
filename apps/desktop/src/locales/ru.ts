@@ -1491,6 +1491,9 @@ export const ru: Dictionary = {
   'Add {name}': 'Добавить {name}',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
+  'Keep this browser’s keys in the vault': 'Хранить ключи этого браузера в хранилище',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тогда ключи всех устройств будут храниться в памяти этого браузера, где их сможет прочитать скрипт, проникший на страницу.',
   'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
   'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',

@@ -1418,6 +1418,9 @@ export const mr: Dictionary = {
   'No providers yet.': 'अद्याप पुरवठादार नाही.',
   'Add {name}': '{name} जोडा',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
+  'Keep this browser’s keys in the vault': 'या ब्राउझरच्या की व्हॉल्टमध्ये ठेवा',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'मग प्रत्येक डिव्हाइसच्या की या ब्राउझरच्या स्टोरेजमध्ये ठेवल्या जातील, जिथे पेजमध्ये शिरलेली स्क्रिप्ट त्या वाचू शकते.',
   'AI can be wrong. Check the facts.': 'AI चुकू शकते. तथ्ये तपासा.',
   'Used by the glasses': 'चष्मा वापरतो',
   'Could not read the models.': 'मॉडेल वाचता आले नाहीत.',

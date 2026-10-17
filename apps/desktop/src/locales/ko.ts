@@ -1401,6 +1401,9 @@ export const ko: Dictionary = {
   'No providers yet.': '아직 공급자가 없습니다.',
   'Add {name}': '{name} 추가',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
+  'Keep this browser’s keys in the vault': '이 브라우저의 키를 보관함에 두기',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '그러면 모든 기기의 키가 이 브라우저의 저장소에 보관되며, 페이지에 들어온 스크립트가 이를 읽을 수 있습니다.',
   'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
   'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',

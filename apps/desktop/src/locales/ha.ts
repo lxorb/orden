@@ -1440,6 +1440,9 @@ export const ha: Dictionary = {
   'Add {name}': 'Ƙara {name}',
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
+  'Keep this browser’s keys in the vault': "Ajiye maɓallan wannan burauza a cikin ma'aji",
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    "Sannan za a ajiye maɓallan kowace na'ura a ma'ajin wannan burauza, inda rubutun da ya shiga shafin zai iya karanta su.",
   'AI can be wrong. Check the facts.': 'AI na iya yin kuskure. Ka tabbatar da gaskiyar bayanai.',
   'Used by the glasses': 'Tabarau na amfani da shi',
   'Could not read the models.': 'Ba a iya karanta samfuran ba.',

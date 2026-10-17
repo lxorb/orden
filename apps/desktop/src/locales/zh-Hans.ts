@@ -1386,6 +1386,9 @@ export const zhHans: Dictionary = {
   'No providers yet.': '还没有服务商。',
   'Add {name}': '添加{name}',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
+  'Keep this browser’s keys in the vault': '将此浏览器的密钥保存在保险库中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '这样，每台设备的密钥都会保存在此浏览器的存储中，混入页面的脚本可能读取它们。',
   'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
   'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',

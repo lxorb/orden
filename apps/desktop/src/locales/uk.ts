@@ -1487,6 +1487,9 @@ export const uk: Dictionary = {
   'No providers yet.': 'Постачальників ще немає.',
   'Add {name}': 'Додати {name}',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
+  'Keep this browser’s keys in the vault': 'Зберігати ключі цього браузера у сховищі',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тоді ключі всіх пристроїв зберігатимуться в пам’яті цього браузера, де їх зможе прочитати скрипт, що потрапив на сторінку.',
   'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
   'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',

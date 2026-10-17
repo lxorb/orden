@@ -33,7 +33,7 @@
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
-  import { vault } from './ai/vault/start.svelte'
+  import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import {
     isLocal,
@@ -201,9 +201,38 @@
 
 <h3>{t('Accounts')}</h3>
 
-<!-- This device waiting for another of the reader's devices to give it the accounts, or
-     on an account with none left that could: the six digits the other shows too, and
-     the way to start again from here. See ai/vault/vault.svelte.ts. -->
+<!-- A browser keeps its keys in the vault only once the reader says so, with what that
+     costs said beside the switch. See browserVault in ai/vault/start.svelte.ts. -->
+{#if !keysAreGuarded()}
+  <div class="card">
+    <div
+      class="nib-setting setting"
+      role="switch"
+      tabindex="0"
+      aria-checked={browserVault.on}
+      aria-label={t('Keep this browser’s keys in the vault')}
+      onclick={() => void keepBrowserInVault(!browserVault.on)}
+      onkeydown={(event) => {
+        if (event.key !== ' ' && event.key !== 'Enter') return
+        event.preventDefault()
+        void keepBrowserInVault(!browserVault.on)
+      }}
+    >
+      <span class="name">{t('Keep this browser’s keys in the vault')}</span>
+      <span class="nib-switch" class:on={browserVault.on} aria-hidden="true"></span>
+    </div>
+  </div>
+  <p class="hint caption">
+    {t(
+      'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.',
+    )}
+  </p>
+{/if}
+
+<!-- This device waiting for another of the reader's devices to give it the accounts: the
+     six digits the other shows too, once it has answered. Or on an account with none left
+     that could: the way to start again from here, which the account takes only then. See
+     ai/vault/vault.svelte.ts. -->
 {#if vault.standing === 'waiting' || vault.standing === 'stranded'}
   <div class="card" transition:slide={{ duration: dur(160) }}>
     <div class="nib-setting setting">
@@ -211,12 +240,11 @@
         {vault.standing === 'waiting' ? t('Allow this device on another one') : t('Start over')}
       </span>
       <div class="row">
-        {#if vault.standing === 'waiting'}<span class="hint digits">{vault.digits}</span>{/if}
-        <button
-          class="nib-chip"
-          class:is-quiet={vault.standing === 'waiting'}
-          onclick={() => void vault.startOver()}>{t('Start over')}</button
-        >
+        {#if vault.standing === 'waiting'}
+          <span class="hint digits">{vault.digits || '…'}</span>
+        {:else}
+          <button class="nib-chip" onclick={() => void vault.startOver()}>{t('Start over')}</button>
+        {/if}
       </div>
     </div>
   </div>

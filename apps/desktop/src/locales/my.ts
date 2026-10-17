@@ -1406,6 +1406,9 @@ export const my: Dictionary = {
   'Add {name}': '{name} ထည့်ပါ',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
+  'Keep this browser’s keys in the vault': 'ဤဘရောက်ဇာ၏ ကီးများကို သေတ္တာထဲတွင် သိမ်းထားပါ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ထိုအခါ စက်တိုင်း၏ ကီးများကို ဤဘရောက်ဇာ၏ သိုလှောင်ရာတွင် သိမ်းမည်ဖြစ်ပြီး စာမျက်နှာထဲသို့ ဝင်လာသော script တစ်ခုက ၎င်းတို့ကို ဖတ်နိုင်သည်။',
   'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',
   'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
