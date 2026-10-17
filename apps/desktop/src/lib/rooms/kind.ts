@@ -43,3 +43,9 @@ export function roomKind(path: string | null | undefined): RoomKind | null {
   if (isWebTarget(name)) return null
   return isCanvasTarget(name) || isPagesTarget(name) ? 'plane' : 'words'
 }
+
+/** Of an open file: one shared on its own has no path, so the kind it opened as. */
+export function roomKindOf(note: { path: string | null; shared: string | null; kind: string }) {
+  if (note.path !== null || !note.shared) return roomKind(note.path)
+  return note.kind === 'canvas' || note.kind === 'pages' ? 'plane' : 'words'
+}
