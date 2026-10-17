@@ -1040,7 +1040,7 @@
     {/each}
 
     {#if store.hands.length}
-      <CanvasHands hands={store.hands} {unit} {palette} />
+      <CanvasHands hands={store.hands} {unit} {palette} camera={view} {width} {height} />
     {/if}
   </div>
 

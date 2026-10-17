@@ -2008,7 +2008,7 @@
 
     <!-- The other hands on the plane, over everything on it. Inside the plane, so
          a pointer somebody else is moving stays where they are pointing. -->
-    <CanvasHands hands={store.hands} {unit} {palette} />
+    <CanvasHands hands={store.hands} {unit} {palette} {camera} {width} {height} />
   </div>
 
   <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />
