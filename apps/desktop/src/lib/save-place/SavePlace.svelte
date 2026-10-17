@@ -65,8 +65,10 @@
 
   // Escape leaves it, like everything else the app puts over a note; and while it is
   // up a web tab's page is out of sight, since a page is drawn over everything the
-  // window draws. See overlays.ts.
-  onMount(() => overlays.show(onclose))
+  // window draws. See overlays.ts. And a press past it, and the window losing the focus,
+  // as every popup does.
+  let bubble = $state<HTMLElement>()
+  onMount(() => overlays.show(onclose, () => [bubble]))
 
   function pick(index = cursor) {
     const chosen = matches[index]
@@ -107,6 +109,7 @@
 <div class="nib-scrim is-clear scrim" onclick={onclose}></div>
 
 <div
+  bind:this={bubble}
   class="nib-layer bubble"
   role="dialog"
   aria-label={t('Save')}

@@ -77,9 +77,17 @@
 
   // Escape closes it, like everything else the app puts over a note; see
   // overlays.ts, which is also what keeps this press from reaching the graph's own
-  // Escape and closing the tab underneath. And Android's back, the same gesture on
-  // a phone.
-  $effect(() => (open ? overlays.show(() => onopen(false)) : undefined))
+  // Escape and closing the tab underneath. So does a press past the card and its tab,
+  // and the window losing the focus. And Android's back, the same gesture on a phone.
+  let corner = $state<HTMLElement>()
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => onopen(false),
+          () => [corner],
+        )
+      : undefined,
+  )
   $effect(() => closeOnBack(open, () => onopen(false)))
 
   function addGroup() {
@@ -122,7 +130,7 @@
   }
 </script>
 
-<div class="corner">
+<div class="corner" bind:this={corner}>
   {#if open}
     <div class="nib-layer card">
       <!-- What the picture is narrowed to. The search's own language, so a habit

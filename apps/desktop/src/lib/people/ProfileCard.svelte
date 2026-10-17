@@ -66,17 +66,9 @@
 
   const close = () => card.close()
 
-  $effect(() => (shown ? overlays.show(close) : undefined))
+  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
+  $effect(() => (shown ? overlays.show(close, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!shown, close))
-  $effect(() => {
-    if (!shown) return
-    const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && layer?.contains(event.target)) return
-      close()
-    }
-    window.addEventListener('pointerdown', outside, true)
-    return () => window.removeEventListener('pointerdown', outside, true)
-  })
   $effect(() => {
     if (!shown) return
     const id = shown.id

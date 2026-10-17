@@ -27,22 +27,20 @@
   let layer = $state<HTMLElement>()
 
   $effect(() => closeOnBack(open, onclose))
-  $effect(() => (open ? overlays.show(onclose) : undefined))
-  $effect(() => {
-    if (!open) return
-    const outside = (event: PointerEvent) => {
-      const target = event.target
-      if (!(target instanceof Node) || layer?.contains(target)) return
-      // A press on what opened it is that button's own: it closes it by itself.
-      if (target instanceof Element && target.closest('[data-opens-popover]')) return
-      // A menu or a list a control in here dropped is part of what is being chosen.
-      if (target instanceof Element && target.closest('.nib-layer, [role=listbox], [role=menu]'))
-        return
-      onclose()
-    }
-    window.addEventListener('pointerdown', outside, true)
-    return () => window.removeEventListener('pointerdown', outside, true)
-  })
+  // Closed by a press past it and by the window losing the focus, as every popup is;
+  // see overlays.ts. A press on what opened it is that button's own: it closes it by
+  // itself. And a menu or a list a control in here dropped is part of what is being
+  // chosen.
+  $effect(() =>
+    open
+      ? overlays.show(onclose, () => [
+          layer,
+          ...document.querySelectorAll(
+            '[data-opens-popover], .nib-layer, [role=listbox], [role=menu]',
+          ),
+        ])
+      : undefined,
+  )
 </script>
 
 {#if open}
