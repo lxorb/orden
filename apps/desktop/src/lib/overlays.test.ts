@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { overlays } from './overlays'
 
 /** One overlay: whether it is open, and how it is closed. */
@@ -136,6 +136,117 @@ describe('escape', () => {
     expect(overlays.depth).toBe(0)
 
     dropdown.off()
+  })
+})
+
+/** A popup closes when it is pressed past, and when the window loses the focus - which
+ *  is also how a press into a web page is heard (#382). */
+describe('a press past a popup', () => {
+  /** Enough of a DOM for `contains`: a node, and the nodes inside it. */
+  class Box {
+    readonly inside: Box[] = []
+    constructor(readonly parent: Box | null = null) {
+      parent?.inside.push(this)
+    }
+    contains(other: unknown): boolean {
+      for (let at = other; at instanceof Box; at = at.parent) if (at === this) return true
+      return false
+    }
+  }
+
+  vi.stubGlobal('Node', Box)
+
+  /** A popup on the stack: itself, the button that opened it, and whether it is open. */
+  function popup(opener = new Box()) {
+    const box = new Box()
+    const it = { open: true, box, opener }
+    const off = overlays.show(
+      () => (it.open = false),
+      () => [box, opener],
+    )
+    return { it, off }
+  }
+
+  const press = (target: unknown) => ({ target: target as EventTarget })
+
+  afterEach(() => {
+    while (overlays.escape()) {
+      // Whatever a test left open.
+    }
+  })
+
+  test('closes on a press anywhere else', () => {
+    const { it } = popup()
+    overlays.pressed(press(new Box()))
+
+    expect(it.open).toBe(false)
+    expect(overlays.depth).toBe(0)
+  })
+
+  test('stays open for a press inside it, and on the button that opened it', () => {
+    const { it, off } = popup()
+    overlays.pressed(press(new Box(it.box)))
+    overlays.pressed(press(it.opener))
+
+    expect(it.open).toBe(true)
+    off()
+  })
+
+  /** The press that opens one is read on its way down, before anything under it has
+   *  opened anything; the popup is on the stack only after. */
+  test('is not closed by the press that opened it', () => {
+    const opener = new Box()
+    overlays.pressed(press(opener))
+    const { it, off } = popup(opener)
+
+    expect(it.open).toBe(true)
+    off()
+  })
+
+  /** A press that waited behind a long task carries a time from before the popup
+   *  opened, and is still a press past it. */
+  test('is closed by a press however long it waited to be read', () => {
+    const { it } = popup()
+    const queued = { target: new Box() as unknown as EventTarget, timeStamp: 0 }
+    overlays.pressed(queued)
+
+    expect(it.open).toBe(false)
+  })
+
+  test('a press in a submenu leaves both open, and one past both closes both', () => {
+    const parent = popup()
+    const child = popup(new Box(parent.it.box))
+
+    overlays.pressed(press(new Box(child.it.box)))
+    expect([parent.it.open, child.it.open]).toEqual([true, true])
+
+    // On the parent, past the submenu: the submenu goes and the parent stays.
+    overlays.pressed(press(new Box(parent.it.box)))
+    expect([parent.it.open, child.it.open]).toEqual([true, false])
+
+    overlays.pressed(press(new Box()))
+    expect(parent.it.open).toBe(false)
+  })
+
+  test('a sheet is closed by its own scrim, and keeps what is under it', () => {
+    const under = popup()
+    const off = overlays.show(() => undefined)
+
+    overlays.pressed(press(new Box()))
+    expect(under.it.open).toBe(true)
+    expect(overlays.depth).toBe(2)
+    off()
+  })
+
+  test('the window losing the focus closes every popup on top, and no sheet', () => {
+    const offSheet = overlays.show(() => undefined)
+    const one = popup()
+    const two = popup(new Box(one.it.box))
+
+    overlays.away()
+    expect([one.it.open, two.it.open]).toEqual([false, false])
+    expect(overlays.depth).toBe(1)
+    offSheet()
   })
 })
 

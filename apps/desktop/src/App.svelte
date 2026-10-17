@@ -900,6 +900,8 @@
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
   onmousedown={onMouse}
+  onpointerdowncapture={(event: PointerEvent) => overlays.pressed(event)}
+  onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
 />
