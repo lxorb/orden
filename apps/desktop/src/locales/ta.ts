@@ -1092,6 +1092,9 @@ export const ta: Dictionary = {
   'Start over': 'மீண்டும் தொடங்கு',
   'Sign in here': 'இங்கே உள்நுழை',
   '{device} wants your AI accounts': '{device} உங்கள் AI கணக்குகளைக் கேட்கிறது',
+  '{device} offers this device your AI vault':
+    '{device} இந்தச் சாதனத்திற்கு உங்கள் AI பெட்டகத்தை வழங்குகிறது',
+  Join: 'சேர்',
   'Allow this device on another one': 'வேறொரு சாதனத்தில் இந்தச் சாதனத்தை அனுமதி',
   'On every device you sign in to, end-to-end encrypted.':
     'நீங்கள் உள்நுழையும் ஒவ்வொரு சாதனத்திலும், முனைக்கு முனை குறியாக்கம்.',

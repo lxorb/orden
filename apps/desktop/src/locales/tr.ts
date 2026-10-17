@@ -1084,6 +1084,8 @@ export const tr: Dictionary = {
   'Start over': 'Baştan başla',
   'Sign in here': 'Burada oturum aç',
   '{device} wants your AI accounts': '{device} yapay zekâ hesaplarını istiyor',
+  '{device} offers this device your AI vault': '{device}, bu cihaza yapay zekâ kasanızı sunuyor',
+  Join: 'Katıl',
   'Allow this device on another one': 'Bu cihaza başka bir cihazdan izin verin',
   'On every device you sign in to, end-to-end encrypted.':
     'Oturum açtığın her cihazda, uçtan uca şifreli.',

@@ -1086,6 +1086,8 @@ export const pa: Dictionary = {
   'Start over': 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
   'Sign in here': 'ਇੱਥੇ ਸਾਈਨ ਇਨ ਕਰੋ',
   '{device} wants your AI accounts': '{device} ਤੁਹਾਡੇ AI ਖਾਤੇ ਚਾਹੁੰਦਾ ਹੈ',
+  '{device} offers this device your AI vault': '{device} ਇਸ ਡਿਵਾਈਸ ਨੂੰ ਤੁਹਾਡਾ AI ਵਾਲਟ ਦੇ ਰਿਹਾ ਹੈ',
+  Join: 'ਸ਼ਾਮਲ ਹੋਵੋ',
   'Allow this device on another one': 'ਕਿਸੇ ਹੋਰ ਡਿਵਾਈਸ ਤੇ ਇਸ ਡਿਵਾਈਸ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
   'On every device you sign in to, end-to-end encrypted.':
     'ਹਰ ਡਿਵਾਈਸ ਤੇ ਜਿੱਥੇ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰੋ, ਐਂਡ-ਟੂ-ਐਂਡ ਇਨਕ੍ਰਿਪਟਿਡ।',

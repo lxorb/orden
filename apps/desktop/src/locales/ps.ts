@@ -1080,6 +1080,8 @@ export const ps: Dictionary = {
   'Start over': 'بیا پیل',
   'Sign in here': 'دلته ننوځئ',
   '{device} wants your AI accounts': '{device} ستاسو د AI حسابونه غواړي',
+  '{device} offers this device your AI vault': '{device} دې وسیلې ته ستاسو د AI خزانه وړاندې کوي',
+  Join: 'یوځای کېدل',
   'Allow this device on another one': 'په بل وسیله دا وسیله اجازه کړئ',
   'On every device you sign in to, end-to-end encrypted.':
     'په هره وسیله چې ننوځئ، له سره تر سره کوډ شوي.',

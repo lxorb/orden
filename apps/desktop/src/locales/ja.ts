@@ -1079,6 +1079,9 @@ export const ja: Dictionary = {
   'Start over': '最初からやり直す',
   'Sign in here': 'ここでサインイン',
   '{device} wants your AI accounts': '{device} が AI アカウントを求めています',
+  '{device} offers this device your AI vault':
+    '{device} がこのデバイスに AI 保管庫を提供しています',
+  Join: '参加',
   'Allow this device on another one': '別のデバイスでこのデバイスを許可',
   'On every device you sign in to, end-to-end encrypted.':
     'サインインするすべてのデバイスで、エンドツーエンド暗号化。',

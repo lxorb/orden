@@ -233,6 +233,22 @@
      six digits the other shows too, once it has answered. Or on an account with none left
      that could: the way to start again from here, which the account takes only then. See
      ai/vault/vault.svelte.ts. -->
+<!-- Offered the vault by another device: the reader's yes, here, is what opens it and puts
+     this device's keys in; see `join` in ai/vault/vault.svelte.ts. -->
+{#if vault.standing === 'offered'}
+  <div class="card" transition:slide={{ duration: dur(160) }}>
+    <div class="nib-setting setting">
+      <span class="name">
+        {t('{device} offers this device your AI vault', { device: vault.offeredBy })}
+      </span>
+      <div class="row">
+        {#if vault.digits}<span class="hint digits">{vault.digits}</span>{/if}
+        <button class="nib-chip" onclick={() => void vault.join()}>{t('Join')}</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 {#if vault.standing === 'waiting' || vault.standing === 'stranded'}
   <div class="card" transition:slide={{ duration: dur(160) }}>
     <div class="nib-setting setting">

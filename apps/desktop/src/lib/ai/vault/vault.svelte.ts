@@ -1,7 +1,7 @@
 /** The AI accounts on every device of the reader's nib account (docs/ai.md, "Every
  *  device"): connected once, there on each device they sign in to.
  *
- *  Four standings. **Open**: this device holds the vault key, so it reads the sealed
+ *  Five standings. **Open**: this device holds the vault key, so it reads the sealed
  *  vault, meets it with its own accounts (merge.ts), and writes back what changed; it
  *  also answers any device asking for the key and, once that device has revealed its
  *  key, shows it with the six digits both screens work out, and one press wraps the key
@@ -9,8 +9,11 @@
  *  the key and this one has asked, showing the same six digits once it has been answered.
  *  **Stranded**: the account has a vault but no device that could allow this one, so the
  *  way on is to start over: the old vault is let go of and this device's accounts become
- *  the vault. **Off**: nobody signed in. The first device of an account makes the key
- *  without a word.
+ *  the vault. **Offered**: another device has wrapped the key to this one, and it waits for
+ *  the reader to press Join here before it opens the vault, takes what is in it or puts
+ *  this device's own keys in - a vault somebody else made and offered would otherwise
+ *  have taken them without a word. **Off**: nobody signed in. The first device of an
+ *  account makes the key without a word, and never one beside a vault that is there.
  *
  *  Letting a device in is three steps, so the digits cannot be chosen by anyone between
  *  the two screens (services/sync/src/ai/vault.ts): the asking device commits to its key
@@ -46,11 +49,15 @@ import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side
 /** Where this device's key pair is kept in its secret store. */
 const DEVICE_SECRET = 'ai-vault-device'
 
+/** Which vault this device joined, per account: a fingerprint of the vault's token, kept
+ *  in the secret store beside the device key so a reinstall that keeps one keeps both. */
+const JOINED_SECRET = 'ai-vault-joined'
+
 /** How many times a write is made again over a newer vault before it waits for the next
  *  read. */
 const TRIES = 3
 
-export type Standing = 'off' | 'opening' | 'open' | 'waiting' | 'stranded'
+export type Standing = 'off' | 'opening' | 'open' | 'offered' | 'waiting' | 'stranded'
 
 /** A device asking for the key, as an open device shows it: with the key the digits
  *  were worked out from, which is the one the vault key is wrapped to. */
@@ -133,11 +140,15 @@ export class Vault {
   asking = $state.raw<Asking[]>([])
   /** Who each account was signed in as, on whichever device saw it. */
   seen = $state.raw<Record<string, string>>({})
+  /** The device offering this one the vault, while it is offered. */
+  offeredBy = $state('')
 
   private device: DeviceKey | null = null
   private registered = ''
   private mineAsking: Mine | null = null
   private readonly answered = new SvelteMap<string, Answered>()
+  /** The vault this device is offered, by its marker, until the reader joins it. */
+  private offered = ''
   private key: Uint8Array<ArrayBuffer> | null = null
   private running: Promise<void> | null = null
   private again = false
@@ -236,12 +247,56 @@ export class Vault {
         return
       }
 
+      // Offered by another device: nothing is opened, taken or put in until the reader
+      // joins here.
+      const marker = await this.markerOf(this.key)
+      if ((await this.joined(account)) !== marker) {
+        const by = read.devices.find((one) => one.id === me.nonceFrom)
+        this.offeredBy = by?.name ?? ''
+        this.digits = this.mineAsking?.answer?.digits ?? ''
+        this.offered = marker
+        this.asking = []
+        this.standing = 'offered'
+        return
+      }
+
       this.standing = 'open'
       this.digits = ''
+      this.offeredBy = ''
       this.mineAsking = null
       this.asking = await this.answer(device, others)
       if (await this.met(account, device, read)) return
     }
+  }
+
+  /** Which vault a key opens, as this device keeps it: a fingerprint of the vault's token,
+   *  which says nothing of the key. */
+  private async markerOf(key: Uint8Array<ArrayBuffer>): Promise<string> {
+    return await fingerprint(await authOf(key))
+  }
+
+  /** The vault this device joined on this account, if any. */
+  private async joined(account: string): Promise<string | null> {
+    const kept: unknown = JSON.parse((await this.world.readSecret(JOINED_SECRET)) ?? 'null')
+    if (typeof kept !== 'object' || kept === null) return null
+    const one = (kept as Record<string, unknown>)[account]
+    return typeof one === 'string' ? one : null
+  }
+
+  private async keepJoined(account: string, marker: string): Promise<void> {
+    const kept: unknown = JSON.parse((await this.world.readSecret(JOINED_SECRET)) ?? 'null')
+    const all = typeof kept === 'object' && kept !== null ? (kept as Record<string, unknown>) : {}
+    await this.world.writeSecret(JOINED_SECRET, JSON.stringify({ ...all, [account]: marker }))
+  }
+
+  /** The reader's yes to the vault this device is offered: it opens, takes what is in it
+   *  and puts this device's own keys in. */
+  async join(): Promise<void> {
+    const account = this.world.account()
+    if (!account || this.standing !== 'offered' || !this.offered) return
+    await this.keepJoined(account, this.offered)
+    this.offered = ''
+    await this.refresh()
   }
 
   /** This device's side of being let in: waits to be answered, reveals against the answer,
@@ -315,6 +370,9 @@ export class Vault {
       from: device.id,
       auth,
     })
+    // Made here, so joined here.
+    const account = this.world.account()
+    if (account) await this.keepJoined(account, await this.markerOf(key))
     return true
   }
 
@@ -483,6 +541,8 @@ export class Vault {
     this.registered = ''
     this.mineAsking = null
     this.answered.clear()
+    this.offered = ''
+    this.offeredBy = ''
     this.asking = []
     this.digits = ''
   }

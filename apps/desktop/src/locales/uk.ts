@@ -1118,6 +1118,8 @@ export const uk: Dictionary = {
   'Start over': 'Почати знову',
   'Sign in here': 'Увійти тут',
   '{device} wants your AI accounts': '{device} запитує ваші облікові записи ШІ',
+  '{device} offers this device your AI vault': '{device} пропонує цьому пристрою ваше сховище ШІ',
+  Join: 'Приєднатися',
   'Allow this device on another one': 'Дозвольте цей пристрій на іншому',
   'On every device you sign in to, end-to-end encrypted.':
     'На кожному пристрої, де ви ввійшли, з наскрізним шифруванням.',

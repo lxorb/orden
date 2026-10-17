@@ -1080,6 +1080,8 @@ export const gu: Dictionary = {
   'Start over': 'ફરી શરૂ કરો',
   'Sign in here': 'અહીં સાઇન ઇન કરો',
   '{device} wants your AI accounts': '{device} તમારા AI એકાઉન્ટ માંગે છે',
+  '{device} offers this device your AI vault': '{device} આ ઉપકરણને તમારું AI વૉલ્ટ આપે છે',
+  Join: 'જોડાઓ',
   'Allow this device on another one': 'બીજા ઉપકરણ પર આ ઉપકરણને મંજૂરી આપો',
   'On every device you sign in to, end-to-end encrypted.':
     'તમે સાઇન ઇન કરો તે દરેક ઉપકરણ પર, એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ.',

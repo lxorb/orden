@@ -1080,6 +1080,9 @@ export const id: Dictionary = {
   'Start over': 'Mulai ulang',
   'Sign in here': 'Masuk di sini',
   '{device} wants your AI accounts': '{device} meminta akun AI Anda',
+  '{device} offers this device your AI vault':
+    '{device} menawarkan brankas AI Anda ke perangkat ini',
+  Join: 'Gabung',
   'Allow this device on another one': 'Izinkan perangkat ini di perangkat lain',
   'On every device you sign in to, end-to-end encrypted.':
     'Di setiap perangkat tempat Anda masuk, terenkripsi ujung ke ujung.',

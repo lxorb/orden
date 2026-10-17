@@ -1099,6 +1099,8 @@ export const fr: Dictionary = {
   'Start over': 'Recommencer',
   'Sign in here': 'Se connecter ici',
   '{device} wants your AI accounts': '{device} demande vos comptes IA',
+  '{device} offers this device your AI vault': '{device} propose à cet appareil votre coffre IA',
+  Join: 'Rejoindre',
   'Allow this device on another one': 'Autorisez cet appareil depuis un autre',
   'On every device you sign in to, end-to-end encrypted.':
     'Sur chaque appareil où vous êtes connecté, chiffré de bout en bout.',

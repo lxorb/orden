@@ -1081,6 +1081,8 @@ export const ur: Dictionary = {
   'Start over': 'دوبارہ شروع کریں',
   'Sign in here': 'یہاں سائن ان کریں',
   '{device} wants your AI accounts': '{device} آپ کے اے آئی اکاؤنٹس چاہتا ہے',
+  '{device} offers this device your AI vault': '{device} اس ڈیوائس کو آپ کا AI والٹ پیش کر رہا ہے',
+  Join: 'شامل ہوں',
   'Allow this device on another one': 'کسی دوسرے آلے پر اس آلے کی اجازت دیں',
   'On every device you sign in to, end-to-end encrypted.':
     'ہر اس آلے پر جس میں آپ سائن ان ہوں، اینڈ ٹو اینڈ انکرپٹڈ۔',

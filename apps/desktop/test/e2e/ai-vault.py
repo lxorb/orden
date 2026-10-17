@@ -11,7 +11,8 @@ vault only once told to, so both are; a third browser, not told, stays out. Docs
 - the phone signs in and waits; once the laptop has answered it, it shows six digits in
   Settings > AI;
 - the laptop shows the bubble with the same six digits, and Allow gives the phone the key;
-- the phone then has the account and its key, and the account holds no key in the clear;
+- the phone then says the laptop offers it the vault, and takes nothing until Join;
+- after Join it has the account and its key, and the account holds no key in the clear;
 - a change on the phone reaches the laptop within seconds, through the hub;
 - the phone, reloaded, opens at once without asking.
 
@@ -140,6 +141,13 @@ def main() -> int:
         check("the laptop's bubble names the phone and shows the same digits", digits in bubble)
         laptop.locator(".approve").get_by_role("button", name="Allow", exact=True).click()
 
+        wait(phone, standing("offered"), "the phone offered the vault", LIVE)
+        phone.wait_for_selector("text=offers this device your AI vault")
+        before = phone.evaluate("() => window.nibApp.ai.accounts.map((one) => one.id)")
+        shot(phone, "03-phone-offered")
+        check("the phone, offered the vault, takes nothing until Join", before == [])
+        phone.get_by_role("button", name="Join", exact=True).click()
+
         wait(phone, standing("open"), "the phone open", LIVE)
         have = phone.evaluate(
             """async () => {
@@ -150,7 +158,7 @@ def main() -> int:
         )
         check("the phone has the account", have["ids"] == ["anthropic"])
         check("the phone has the key, in its own secret store", have["key"] == KEY)
-        shot(phone, "03-phone-open")
+        shot(phone, "04-phone-open")
 
         rows = worker.query("select blob from ai_vaults")
         wraps = worker.query("select wrapped, pub from ai_devices")

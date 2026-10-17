@@ -1097,6 +1097,8 @@ export const es: Dictionary = {
   'Start over': 'Empezar de nuevo',
   'Sign in here': 'Iniciar sesión aquí',
   '{device} wants your AI accounts': '{device} quiere tus cuentas de IA',
+  '{device} offers this device your AI vault': '{device} ofrece a este dispositivo tu bóveda de IA',
+  Join: 'Unirse',
   'Allow this device on another one': 'Permite este dispositivo desde otro',
   'On every device you sign in to, end-to-end encrypted.':
     'En cada dispositivo en el que inicies sesión, con cifrado de extremo a extremo.',

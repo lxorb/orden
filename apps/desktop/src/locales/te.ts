@@ -1084,6 +1084,8 @@ export const te: Dictionary = {
   'Start over': 'మళ్లీ ప్రారంభించండి',
   'Sign in here': 'ఇక్కడ సైన్ ఇన్ చేయండి',
   '{device} wants your AI accounts': '{device} మీ AI ఖాతాలను కోరుతోంది',
+  '{device} offers this device your AI vault': '{device} ఈ పరికరానికి మీ AI వాల్ట్‌ను అందిస్తోంది',
+  Join: 'చేరండి',
   'Allow this device on another one': 'మరొక పరికరంలో ఈ పరికరాన్ని అనుమతించండి',
   'On every device you sign in to, end-to-end encrypted.':
     'మీరు సైన్ ఇన్ చేసే ప్రతి పరికరంలో, ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్.',

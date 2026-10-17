@@ -1074,6 +1074,8 @@ export const vi: Dictionary = {
   'Start over': 'Bắt đầu lại',
   'Sign in here': 'Đăng nhập tại đây',
   '{device} wants your AI accounts': '{device} muốn dùng tài khoản AI của bạn',
+  '{device} offers this device your AI vault': '{device} đề nghị thiết bị này dùng kho AI của bạn',
+  Join: 'Tham gia',
   'Allow this device on another one': 'Cho phép thiết bị này trên thiết bị khác',
   'On every device you sign in to, end-to-end encrypted.':
     'Trên mọi thiết bị bạn đăng nhập, mã hóa đầu cuối.',

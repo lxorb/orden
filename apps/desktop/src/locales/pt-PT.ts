@@ -1098,6 +1098,9 @@ export const ptPT: Dictionary = {
   'Start over': 'Recomeçar',
   'Sign in here': 'Iniciar sessão aqui',
   '{device} wants your AI accounts': '{device} quer as suas contas de IA',
+  '{device} offers this device your AI vault':
+    '{device} oferece a este dispositivo o seu cofre de IA',
+  Join: 'Aderir',
   'Allow this device on another one': 'Permita este dispositivo noutro',
   'On every device you sign in to, end-to-end encrypted.':
     'Em todos os dispositivos em que iniciar sessão, com encriptação ponto a ponto.',

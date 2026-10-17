@@ -1075,6 +1075,8 @@ export const my: Dictionary = {
   'Start over': 'အစမှ ပြန်စပါ',
   'Sign in here': 'ဤနေရာတွင် ဝင်ပါ',
   '{device} wants your AI accounts': '{device} က သင့် AI အကောင့်များကို တောင်းနေသည်',
+  '{device} offers this device your AI vault': '{device} က ဤစက်ကို သင်၏ AI သေတ္တာ ပေးနေသည်',
+  Join: 'ပါဝင်မည်',
   'Allow this device on another one': 'အခြားစက်တွင် ဤစက်ကို ခွင့်ပြုပါ',
   'On every device you sign in to, end-to-end encrypted.':
     'သင်ဝင်သည့် စက်တိုင်းတွင် အစမှအဆုံး ကုဒ်ဝှက်ထားသည်။',

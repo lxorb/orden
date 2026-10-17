@@ -1063,6 +1063,8 @@ export const yue: Dictionary = {
   'Start over': '重新開始',
   'Sign in here': '喺呢度登入',
   '{device} wants your AI accounts': '{device} 想要你嘅 AI 帳戶',
+  '{device} offers this device your AI vault': '{device} 將你嘅 AI 保險庫提供畀呢部裝置',
+  Join: '加入',
   'Allow this device on another one': '喺另一部裝置度允許呢部',
   'On every device you sign in to, end-to-end encrypted.': '喺你登入嘅每部裝置，端對端加密。',
   'Sign in to have them on every device.': '登入就可以喺每部裝置用。',

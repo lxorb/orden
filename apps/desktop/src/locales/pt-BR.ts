@@ -1092,6 +1092,9 @@ export const ptBR: Dictionary = {
   'Start over': 'Recomeçar',
   'Sign in here': 'Entrar aqui',
   '{device} wants your AI accounts': '{device} quer suas contas de IA',
+  '{device} offers this device your AI vault':
+    '{device} oferece a este dispositivo o seu cofre de IA',
+  Join: 'Entrar',
   'Allow this device on another one': 'Permita este dispositivo em outro',
   'On every device you sign in to, end-to-end encrypted.':
     'Em todo dispositivo em que você entrar, com criptografia de ponta a ponta.',

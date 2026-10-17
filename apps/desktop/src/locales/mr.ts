@@ -1079,6 +1079,8 @@ export const mr: Dictionary = {
   'Start over': 'पुन्हा सुरू करा',
   'Sign in here': 'येथे साइन इन करा',
   '{device} wants your AI accounts': '{device} ला तुमची एआय खाती हवी आहेत',
+  '{device} offers this device your AI vault': '{device} या डिव्हाइसला तुमचा AI व्हॉल्ट देत आहे',
+  Join: 'सामील व्हा',
   'Allow this device on another one': 'दुसऱ्या डिव्हाइसवर या डिव्हाइसला परवानगी द्या',
   'On every device you sign in to, end-to-end encrypted.':
     'तुम्ही साइन इन कराल त्या प्रत्येक डिव्हाइसवर, एंड-टू-एंड एन्क्रिप्टेड.',

@@ -1119,6 +1119,9 @@ export const ru: Dictionary = {
   'Start over': 'Начать заново',
   'Sign in here': 'Войти здесь',
   '{device} wants your AI accounts': '{device} запрашивает ваши аккаунты ИИ',
+  '{device} offers this device your AI vault':
+    '{device} предлагает этому устройству ваше хранилище ИИ',
+  Join: 'Присоединиться',
   'Allow this device on another one': 'Разрешите это устройство на другом',
   'On every device you sign in to, end-to-end encrypted.':
     'На каждом устройстве, где вы вошли, со сквозным шифрованием.',

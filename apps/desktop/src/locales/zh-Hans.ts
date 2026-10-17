@@ -1062,6 +1062,8 @@ export const zhHans: Dictionary = {
   'Start over': '重新开始',
   'Sign in here': '在此登录',
   '{device} wants your AI accounts': '{device} 请求你的 AI 账户',
+  '{device} offers this device your AI vault': '{device} 向此设备提供你的 AI 保险库',
+  Join: '加入',
   'Allow this device on another one': '在另一台设备上允许此设备',
   'On every device you sign in to, end-to-end encrypted.': '在你登录的每台设备上，端到端加密。',
   'Sign in to have them on every device.': '登录即可在每台设备上使用。',

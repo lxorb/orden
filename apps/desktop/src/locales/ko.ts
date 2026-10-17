@@ -1073,6 +1073,8 @@ export const ko: Dictionary = {
   'Start over': '처음부터 다시',
   'Sign in here': '여기서 로그인',
   '{device} wants your AI accounts': '{device}에서 AI 계정을 요청합니다',
+  '{device} offers this device your AI vault': '{device}에서 이 기기에 AI 보관함을 제공합니다',
+  Join: '참여',
   'Allow this device on another one': '다른 기기에서 이 기기를 허용하세요',
   'On every device you sign in to, end-to-end encrypted.':
     '로그인하는 모든 기기에서, 종단 간 암호화.',

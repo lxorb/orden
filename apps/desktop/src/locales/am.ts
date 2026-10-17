@@ -1069,6 +1069,8 @@ export const am: Dictionary = {
   'Start over': 'እንደገና ጀምር',
   'Sign in here': 'እዚህ ይግቡ',
   '{device} wants your AI accounts': '{device} የAI መለያዎችዎን ይፈልጋል',
+  '{device} offers this device your AI vault': '{device} የAI ካዝናዎን ለዚህ መሣሪያ ያቀርባል',
+  Join: 'ተቀላቀል',
   'Allow this device on another one': 'ይህን መሣሪያ በሌላ ላይ ይፍቀዱ',
   'On every device you sign in to, end-to-end encrypted.':
     'በሚገቡበት እያንዳንዱ መሣሪያ ላይ፣ ከጫፍ እስከ ጫፍ የተመሰጠረ።',

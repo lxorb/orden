@@ -1068,6 +1068,8 @@ export const th: Dictionary = {
   'Start over': 'เริ่มใหม่',
   'Sign in here': 'ลงชื่อเข้าใช้ที่นี่',
   '{device} wants your AI accounts': '{device} ขอบัญชี AI ของคุณ',
+  '{device} offers this device your AI vault': '{device} เสนอห้องนิรภัย AI ของคุณให้อุปกรณ์นี้',
+  Join: 'เข้าร่วม',
   'Allow this device on another one': 'อนุญาตอุปกรณ์นี้จากอุปกรณ์อื่น',
   'On every device you sign in to, end-to-end encrypted.':
     'บนทุกอุปกรณ์ที่คุณลงชื่อเข้าใช้ เข้ารหัสแบบต้นทางถึงปลายทาง',

@@ -1083,6 +1083,9 @@ export const fa: Dictionary = {
   'Start over': 'شروع دوباره',
   'Sign in here': 'اینجا وارد شوید',
   '{device} wants your AI accounts': '{device} حساب‌های هوش مصنوعی شما را می‌خواهد',
+  '{device} offers this device your AI vault':
+    '{device} گاوصندوق هوش مصنوعی شما را به این دستگاه پیشنهاد می‌کند',
+  Join: 'پیوستن',
   'Allow this device on another one': 'این دستگاه را روی دستگاه دیگری مجاز کنید',
   'On every device you sign in to, end-to-end encrypted.':
     'روی هر دستگاهی که وارد شوید، با رمزگذاری سرتاسری.',

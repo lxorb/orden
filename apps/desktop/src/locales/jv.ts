@@ -1076,6 +1076,9 @@ export const jv: Dictionary = {
   'Start over': 'Wiwiti maneh',
   'Sign in here': 'Mlebu ing kene',
   '{device} wants your AI accounts': '{device} njaluk akun AI sampeyan',
+  '{device} offers this device your AI vault':
+    '{device} nawakake brankas AI sampeyan menyang piranti iki',
+  Join: 'Gabung',
   'Allow this device on another one': 'Idini piranti iki ing piranti liyane',
   'On every device you sign in to, end-to-end encrypted.':
     'Ing saben piranti sing sampeyan mlebu, dienkripsi saka ujung nganti ujung.',

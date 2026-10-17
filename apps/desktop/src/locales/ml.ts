@@ -1091,6 +1091,9 @@ export const ml: Dictionary = {
   'Start over': 'വീണ്ടും തുടങ്ങുക',
   'Sign in here': 'ഇവിടെ സൈൻ ഇൻ ചെയ്യുക',
   '{device} wants your AI accounts': '{device} നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ ആവശ്യപ്പെടുന്നു',
+  '{device} offers this device your AI vault':
+    '{device} ഈ ഉപകരണത്തിന് നിങ്ങളുടെ AI വോൾട്ട് നൽകുന്നു',
+  Join: 'ചേരുക',
   'Allow this device on another one': 'മറ്റൊരു ഉപകരണത്തിൽ ഈ ഉപകരണം അനുവദിക്കുക',
   'On every device you sign in to, end-to-end encrypted.':
     'നിങ്ങൾ സൈൻ ഇൻ ചെയ്യുന്ന എല്ലാ ഉപകരണത്തിലും, എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റഡ്.',

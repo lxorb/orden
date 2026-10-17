@@ -1089,6 +1089,8 @@ export const sw: Dictionary = {
   'Start over': 'Anza upya',
   'Sign in here': 'Ingia hapa',
   '{device} wants your AI accounts': '{device} inaomba akaunti zako za AI',
+  '{device} offers this device your AI vault': '{device} inakipa kifaa hiki kasha lako la AI',
+  Join: 'Jiunge',
   'Allow this device on another one': 'Ruhusu kifaa hiki kwenye kingine',
   'On every device you sign in to, end-to-end encrypted.':
     'Kwenye kila kifaa unachoingia, kimesimbwa mwisho hadi mwisho.',

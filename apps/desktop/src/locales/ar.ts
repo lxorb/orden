@@ -1126,6 +1126,9 @@ export const ar: Dictionary = {
   'Start over': 'البدء من جديد',
   'Sign in here': 'سجّل الدخول هنا',
   '{device} wants your AI accounts': '{device} يطلب حسابات الذكاء الاصطناعي',
+  '{device} offers this device your AI vault':
+    'يعرض {device} على هذا الجهاز خزنة الذكاء الاصطناعي الخاصة بك',
+  Join: 'انضمام',
   'Allow this device on another one': 'اسمح بهذا الجهاز من جهاز آخر',
   'On every device you sign in to, end-to-end encrypted.':
     'على كل جهاز تسجّل الدخول إليه، بتشفير تام بين الطرفين.',

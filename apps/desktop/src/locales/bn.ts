@@ -1080,6 +1080,8 @@ export const bn: Dictionary = {
   'Start over': 'আবার শুরু করুন',
   'Sign in here': 'এখানে সাইন ইন করুন',
   '{device} wants your AI accounts': '{device} আপনার এআই অ্যাকাউন্ট চায়',
+  '{device} offers this device your AI vault': '{device} এই ডিভাইসকে আপনার AI ভল্ট দিচ্ছে',
+  Join: 'যোগ দিন',
   'Allow this device on another one': 'অন্য ডিভাইসে এই ডিভাইসকে অনুমতি দিন',
   'On every device you sign in to, end-to-end encrypted.':
     'যে ডিভাইসেই সাইন ইন করুন, এন্ড-টু-এন্ড এনক্রিপ্টেড।',

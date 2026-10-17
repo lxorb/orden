@@ -1092,6 +1092,9 @@ export const fil: Dictionary = {
   'Start over': 'Magsimula muli',
   'Sign in here': 'Mag-sign in dito',
   '{device} wants your AI accounts': 'Gusto ng {device} ang iyong mga AI account',
+  '{device} offers this device your AI vault':
+    'Inaalok ng {device} sa device na ito ang iyong AI vault',
+  Join: 'Sumali',
   'Allow this device on another one': 'Payagan ang device na ito sa ibang device',
   'On every device you sign in to, end-to-end encrypted.':
     'Sa bawat device na pinag-sign in-an mo, end-to-end encrypted.',

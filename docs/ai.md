@@ -356,8 +356,16 @@ account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
   allow and Allow, and Allow wraps the key to exactly the key those digits came from - a key
   the account lists differently by then is wrapped to nothing. A key swapped in had to be
   committed to before the answering nonce existed, so it shows the same digits one time in
-  a million, and every try is a bubble the reader sees. Nothing is typed. The first device
-  of an account makes the key without a word, and the same device after an update, an
+  a million, and every try is a bubble the reader sees. Nothing is typed.
+- **Joining**: a device the key was wrapped to does not open the vault by itself. Settings >
+  AI says *"Laptop offers this device your AI vault"*, with the digits, and only **Join**
+  opens it, takes what is in it and puts this device's own keys in. A vault somebody else
+  made first - a stolen session, on an account that had none yet - and offered would
+  otherwise have taken them without a word. Which vault a device joined is kept beside its
+  device key in the secret store, so a restart or a reinstall does not ask again; a vault
+  started over is a new one, and is asked about again.
+- **The first device** of an account makes the key without a word, and joins what it made;
+  it never makes one beside a vault that is there. The same device after an update, an
   engine switch or a reinstall opens at once: its device key is in the keychain, which
   outlives the app.
 - **Who may change it**: only a device that has the vault key. The vault is made with a

@@ -1091,6 +1091,8 @@ export const ha: Dictionary = {
   'Start over': 'Sake farawa',
   'Sign in here': 'Shiga a nan',
   '{device} wants your AI accounts': '{device} na son asusun AI naka',
+  '{device} offers this device your AI vault': "{device} yana ba wannan na'ura ma'ajin AI ɗinka",
+  Join: 'Shiga',
   'Allow this device on another one': "Ba da izinin wannan na'ura a wata",
   'On every device you sign in to, end-to-end encrypted.':
     "A kowace na'ura da ka shiga, an ɓoye daga ƙarshe zuwa ƙarshe.",

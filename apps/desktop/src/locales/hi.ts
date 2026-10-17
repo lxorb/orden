@@ -1083,6 +1083,8 @@ export const hi: Dictionary = {
   'Start over': 'फिर से शुरू करें',
   'Sign in here': 'यहाँ साइन इन करें',
   '{device} wants your AI accounts': '{device} आपके एआई खाते चाहता है',
+  '{device} offers this device your AI vault': '{device} इस डिवाइस को आपका AI वॉल्ट दे रहा है',
+  Join: 'जुड़ें',
   'Allow this device on another one': 'किसी दूसरे डिवाइस पर इस डिवाइस को अनुमति दें',
   'On every device you sign in to, end-to-end encrypted.':
     'हर उस डिवाइस पर जिसमें आप साइन इन करें, एंड-टू-एंड एन्क्रिप्टेड।',

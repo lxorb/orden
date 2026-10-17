@@ -1088,6 +1088,8 @@ export const kn: Dictionary = {
   'Start over': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ',
   'Sign in here': 'ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಿ',
   '{device} wants your AI accounts': '{device} ನಿಮ್ಮ AI ಖಾತೆಗಳನ್ನು ಕೇಳುತ್ತಿದೆ',
+  '{device} offers this device your AI vault': '{device} ಈ ಸಾಧನಕ್ಕೆ ನಿಮ್ಮ AI ವಾಲ್ಟ್ ನೀಡುತ್ತಿದೆ',
+  Join: 'ಸೇರಿ',
   'Allow this device on another one': 'ಇನ್ನೊಂದು ಸಾಧನದಲ್ಲಿ ಈ ಸಾಧನವನ್ನು ಅನುಮತಿಸಿ',
   'On every device you sign in to, end-to-end encrypted.':
     'ನೀವು ಸೈನ್ ಇನ್ ಮಾಡುವ ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ, ಎಂಡ್-ಟು-ಎಂಡ್ ಎನ್‌ಕ್ರಿಪ್ಟ್.',

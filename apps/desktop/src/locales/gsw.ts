@@ -1085,6 +1085,8 @@ export const gsw: Dictionary = {
   'Start over': 'Nöi aafange',
   'Sign in here': 'Da aamälde',
   '{device} wants your AI accounts': '{device} wott dini KI-Konte',
+  '{device} offers this device your AI vault': '{device} bietet däm Grät din KI-Tresor aa',
+  Join: 'Biiträte',
   'Allow this device on another one': 'Das Grät uf emne andere zueloo',
   'On every device you sign in to, end-to-end encrypted.':
     'Uf jedem Grät, wo du aagmäldet bisch, Änd-zu-Änd-verschlüsslet.',
