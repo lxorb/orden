@@ -166,8 +166,8 @@ def turned_off(browser: Browser) -> None:
     page.close()
 
 
-#: A site's page with the page script in it, as nib's world holds it, and the binding a
-#: list in the page. Three places to put the pointer: plain words, a scroller in the
+#: A site's page with the page script in it, as nib's world holds it, and the window
+#: names it asks under read into a list in the page. Three places to put the pointer: plain words, a scroller in the
 #: middle of its row, and a map that takes the wheel.
 PAGE = f"""<!doctype html>
 <meta charset="utf-8">
@@ -182,7 +182,10 @@ PAGE = f"""<!doctype html>
 <div id="map">A map.</div>
 <script>
   window.said = []
-  window.nibSwiped = (one) => window.said.push(JSON.parse(one))
+  window.open = (url, name) => {{
+    if (String(name).startsWith('nib-swipe:')) window.said.push(JSON.parse(String(name).slice(10)))
+    return null
+  }}
   document.getElementById('row').scrollLeft = 200
   document.getElementById('map').addEventListener('wheel', (event) => event.preventDefault(), {{ passive: false }})
 </script>
