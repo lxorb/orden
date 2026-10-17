@@ -154,7 +154,7 @@ jobs:
           else
             attr=default
           fi
-          # orden, orden-edge or orden-unstable: every file a profile gets is
+          # orden or orden-unstable: every file a profile gets is
           # named after it, so installed streams never collide.
           pname=$(nix eval --raw "$FLAKE#$attr.pname")
           echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
@@ -217,7 +217,7 @@ jobs:
               test "$(readlink result/bin/nib)" = orden
               expected=2
               ;;
-            orden-edge|orden-unstable) expected=1 ;;
+            orden-unstable) expected=1 ;;
             *) echo "::error::unexpected Nix package name: $pname"; exit 1 ;;
           esac
           test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"
