@@ -205,16 +205,11 @@ export const TAB_KINDS = {
 export type TabKind = keyof typeof TAB_KINDS
 
 /** Every kind, in the table's order. */
-export const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
+const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
 
 /** Whether a string names a kind of tab. */
 export function isTabKind(value: unknown): value is TabKind {
   return typeof value === 'string' && Object.hasOwn(TAB_KINDS, value)
-}
-
-/** One kind's entry. */
-export function traitsOf(kind: TabKind): TabKindTraits {
-  return TAB_KINDS[kind]
 }
 
 /** The kinds a trait holds for, in the table's order. */
