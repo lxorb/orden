@@ -112,11 +112,19 @@ class Joining {
    *  and asking again is how anybody finds out they were let in. */
   private async resume() {
     const held = storedText(WAITING_KEY)
-    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) return
+    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) return this.reopen()
 
     this.token = held
     this.invitation = await api.invitation(held).catch(() => null)
     await this.walkThrough()
+  }
+
+  /** A guest's one file again: no tab of it outlives a launch. */
+  private async reopen() {
+    if (account.user || !account.guest || account.spaces.length) return
+
+    const [only, ...more] = sharedWithYou.items
+    if (only && !more.length) await sharedWithYou.open(only)
   }
 
   /** The field is filled in and the button pressed. */
@@ -200,9 +208,10 @@ class Joining {
     // section and opens in a tab whose words travel through its room. See
     // sharing.svelte.ts and docs/sharing.md.
     if (joined.item) {
-      this.arrived()
+      this.stopAsking()
       await sharedWithYou.load()
       await sharedWithYou.open(joined.item)
+      this.arrived()
       return
     }
 
