@@ -7,7 +7,7 @@
    *  composer and for reactions), the lightbox, a new poll, the bubble. A file dropped
    *  anywhere on the chat lands in the composer. Ctrl+J goes to the New line and
    *  Escape to the bottom (4.16). On a phone the replies are the page. */
-  import type { FileRef, Message, Poll } from '@nib/chats'
+  import { chatOf, type FileRef, type Message, type Poll } from '@nib/chats'
   import { onDestroy, untrack } from 'svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { t } from '../../i18n.svelte'
@@ -51,19 +51,19 @@
   const phone = $derived(viewport.device === 'phone')
 
   // The chat the pointer names, opened once the store has started and says which it is:
-  // a tab put back by the launch comes before the store does.
+  // a tab put back by the launch comes before the store does. A pointer somebody shared
+  // on its own has no path here: its words came down with the tab, and they name it.
   $effect(() => {
     const path = tab.path
-    if (!path || !store().ready) return
+    const lent = tab.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : null
+    if ((!path && !lent) || !store().ready) return
     untrack(() => {
-      void store()
-        .chatAt(path)
-        .then((id) => {
-          missing = !id
-          if (!id || page?.id === id) return
-          page?.close()
-          page = new ChatPage(id)
-        })
+      void (path ? store().chatAt(path) : Promise.resolve(lent)).then((id) => {
+        missing = !id
+        if (!id || page?.id === id) return
+        page?.close()
+        page = new ChatPage(id)
+      })
     })
   })
 
