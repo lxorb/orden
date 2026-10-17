@@ -22,8 +22,9 @@ it after every release that changes packaging. The flake has its own,
 changes it.
 
 `.github/workflows/publish-linux.yml` pushes a published release out to the AUR
-and the Snap Store. Both jobs build and then stop short of uploading until their
-secrets exist, so the workflow is harmless while the accounts below do not.
+and the Snap Store, the snap through `snap.yml`, which `release.yml` also calls for
+every edge build. Both build and then stop short of uploading until their secrets
+exist, so they are harmless while the accounts below do not.
 
 `.github/workflows/publish.yml` does the same for winget, Scoop, Homebrew and
 Chocolatey, and also skips every manager whose token is missing, so nothing is
@@ -397,10 +398,21 @@ helpers from a different WebKit, which is how a Tauri window ends up blank.
 Strict confinement: the spaces are reached through `home`, an export saved to a
 stick through `removable-media`, and nothing else is needed.
 
-It pins the bytes it unpacks. `source-checksum` carries a `sha256/` per
-architecture, and `publish-linux.yml` rewrites both from what the release page
-reports for `Orden-<version>-linux-x64.deb` and `-arm64.deb` at the same moment it
-rewrites the version and the URL - a release whose page reports no digest fails the
+Two channels. A release goes to `stable`, from `publish-linux.yml`; every edge build goes
+to `edge`, from `release.yml` once edge's files are up, at `grade: devel`, which the store
+keeps out of `stable` and `candidate`. Both call `.github/workflows/snap.yml` (`uses:`)
+rather than dispatching it, because a dispatch only finds a workflow on the default
+branch. It finds the two `.deb`s on the release by what they are - a release's page
+calls them `Orden-<version>`, edge `Nib-<version>`, and an edge build's version is in
+nothing else - checks the version is one a snap may have (at most 32 of letters, digits
+and `.+~-`, as `0.15.1-688` is), and writes version, grade, URLs and digests in.
+`sudo snap install orden --edge` follows the edge builds, `sudo snap refresh orden
+--stable` comes back. The app in a snap is the store's to update, and only says when a
+new version is out (`package_manager.rs`).
+
+It pins the bytes it unpacks. `snap.yml` reads the digests the release page reports
+for the two `.deb`s and writes them in at the same moment it rewrites the version and
+the URL - a release whose page reports no digest fails the
 step rather than building an unchecked snap. Every other path here pins one too
 (scoop and chocolatey a sha256, homebrew a sha256, the AUR a sha256, nix a hash,
 Flathub a commit), and this was the one that did not: what the snap unpacks is a
@@ -415,7 +427,7 @@ the two digests in `snap/snapcraft.yaml` with it** - `gh release view v<version>
 the list with "Input should be a valid string", so a snap with a digest per
 architecture never built. Both digests are kept as a record in the comment above the
 line, `scripts/bump-packaging.mjs` rewrites both and puts amd64's in the line, and
-`publish-linux.yml` copies its runner's into the line before it builds.
+`snap.yml` copies its runner's into the line before it builds.
 
 Worth doing because Ubuntu's App Center is the first place a great many Linux
 desktop users look for software, and a snap is the only way to be in it.
@@ -443,8 +455,8 @@ desktop users look for software, and a snap is the only way to be in it.
    rm snapcraft-creds.txt
    ```
 
-4. `gh workflow run publish-linux.yml --repo lxorb/orden -f tag=v0.13.1` uploads
-   both architectures to the stable channel.
+4. `gh workflow run publish-linux.yml --repo lxorb/orden -f tag=v0.15.0` uploads
+   both architectures to the stable channel; the next push to `unstable` fills `edge`.
 
 The first upload of a graphical snap goes through a manual review if it asks for
 anything unusual; this one does not, so it should pass automatically.

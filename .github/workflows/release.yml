@@ -386,3 +386,15 @@ jobs:
       suite: unstable
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
+
+  # And edge to the Snap Store's `edge` channel, the same way; a stable release reaches
+  # `stable` through publish-linux.yml. See snap.yml.
+  snap:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/snap.yml
+    with:
+      tag: ${{ needs.version.outputs.tag }}
+    secrets: inherit

@@ -66,10 +66,7 @@ describe('the snap', () => {
  *  release, so the sed that keeps them together is worth holding to. */
 describe('the workflow that publishes it', () => {
   const workflow = readFileSync(
-    join(
-      fileURLToPath(new URL('../../..', import.meta.url)),
-      '.github/workflows/publish-linux.yml',
-    ),
+    join(fileURLToPath(new URL('../../..', import.meta.url)), '.github/workflows/snap.yml'),
     'utf8',
   )
 
@@ -309,5 +306,36 @@ describe('the apt repository', () => {
     for (const page of ['README.md', 'index.html']) {
       expect(read('apt', page)).toContain('@BASE@/orden-archive-keyring.asc')
     }
+  })
+})
+
+/** The snap: built and uploaded by snap.yml, called by publish-linux.yml for a release
+ *  (`stable`) and by release.yml for edge (`edge`). Called, not dispatched: a dispatch
+ *  finds only a workflow already on the default branch. See packaging/linux.md. */
+describe('the snap workflow', () => {
+  const snapYml = repo('.github', 'workflows', 'snap.yml')
+
+  test('is called for a release and for edge', () => {
+    expect(snapYml).toContain('workflow_call:')
+    expect(repo('.github', 'workflows', 'publish-linux.yml')).toContain(
+      'uses: ./.github/workflows/snap.yml',
+    )
+    const release = repo('.github', 'workflows', 'release.yml')
+    expect(release).toMatch(
+      /uses: \.\/\.github\/workflows\/snap\.yml\n\s+with:\n\s+tag: \$\{\{ needs\.version\.outputs\.tag \}\}/,
+    )
+    expect(release).not.toContain('gh workflow run snap.yml')
+  })
+
+  test('puts edge in the edge channel at devel grade and a release in stable', () => {
+    expect(snapYml).toContain("echo 'channel=edge'")
+    expect(snapYml).toContain("echo 'grade=devel'")
+    expect(snapYml).toContain("echo 'channel=stable'")
+    expect(snapYml).toContain('release: ${{ steps.channel.outputs.channel }}')
+  })
+
+  test("sets the checksum line to its own architecture's digest", () => {
+    expect(snapYml).toContain('if [ "$ARCH" = arm64 ]; then own=$arm64; else own=$amd64; fi')
+    expect(snapYml).toContain('source-checksum: sha256/).*|\\1$own|')
   })
 })

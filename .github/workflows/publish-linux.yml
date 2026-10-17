@@ -115,90 +115,12 @@ jobs:
           echo "The PKGBUILD builds, but AUR_SSH_PRIVATE_KEY is not set, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
           echo "See packaging/linux.md for how to create the account and add the secrets." >> "$GITHUB_STEP_SUMMARY"
 
+  # The snap's own workflow, which release.yml calls as well for edge; see snap.yml.
   snap:
-    name: Snap Store (${{ matrix.arch }})
-    # It reads the repository and uploads an artifact, which travels on the
-    # runtime's own token rather than on this one. The upload to the Snap Store
-    # goes on SNAPCRAFT_STORE_CREDENTIALS.
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     permissions:
       contents: read
-    # One snap per architecture, each built on a runner of that architecture:
-    # snapcraft cross-builds nothing here, it only unpacks the matching .deb.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            arch: amd64
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.runner }}
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
-    env:
-      TAG: ${{ inputs.tag || github.event.release.tag_name }}
-      ARCH: ${{ matrix.arch }}
-      HAS_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      - name: Point snapcraft.yaml at this release
-        working-directory: packaging/snap
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          version="${TAG#v}"
-
-          # The digests the release page reports for the two files this unpacks, read
-          # rather than computed: the bytes are snapcraft's to fetch, and what is
-          # wanted here is what the release says they are. A missing one fails the
-          # step - a snap built with no digest is a snap nobody checked.
-          amd64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-x64.deb\") | .digest" | sed 's|^sha256:||')"
-          arm64="$(gh release view "$TAG" --repo "$REPO" --json assets --jq ".assets[] | select(.name == \"Orden-$version-linux-arm64.deb\") | .digest" | sed 's|^sha256:||')"
-
-          for said in "$amd64" "$arm64"; do
-            if [ -z "$said" ]; then
-              echo "::error::the release page reports no sha256 for a linux .deb of $version"
-              exit 1
-            fi
-          done
-
-          # Both digests into the record, and this runner's into the one line snapcraft reads.
-          if [ "$ARCH" = arm64 ]; then own=$arm64; else own=$amd64; fi
-          sed -i \
-            -e "s/^version: .*/version: '$version'/" \
-            -e "s|/download/v[0-9][^/]*/[A-Za-z]*-[0-9][^-]*-linux-|/download/$TAG/Orden-$version-linux-|g" \
-            -e "s|on amd64: sha256/.*|on amd64: sha256/$amd64|" \
-            -e "s|on arm64: sha256/.*|on arm64: sha256/$arm64|" \
-            -e "s|^\( *source-checksum: sha256/\).*|\1$own|" \
-            snapcraft.yaml
-          grep -nE "^version:|releases/download|sha256/" snapcraft.yaml
-
-      # Pinned for the same reason: `v1` is a moving name, and the second of the
-      # two is handed the Snap Store's credentials.
-      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
-        id: build
-        with:
-          path: packaging/snap
-
-      - uses: snapcore/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
-        if: env.HAS_CREDENTIALS == 'true'
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: stable
-
-      - name: No Snapcraft credentials yet
-        if: env.HAS_CREDENTIALS != 'true'
-        run: |
-          echo "### Snap not published" >> "$GITHUB_STEP_SUMMARY"
-          echo "The snap builds, but SNAPCRAFT_STORE_CREDENTIALS is not set, so nothing was uploaded." >> "$GITHUB_STEP_SUMMARY"
-          echo "See packaging/linux.md for how to register the name and add the secret." >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: snap-${{ matrix.arch }}
-          path: packaging/snap/*.snap
-          if-no-files-found: warn
+    uses: ./.github/workflows/snap.yml
+    with:
+      tag: ${{ inputs.tag || github.event.release.tag_name }}
+    secrets: inherit
