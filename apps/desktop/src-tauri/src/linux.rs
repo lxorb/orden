@@ -31,7 +31,7 @@
 //! (`places_windows`).
 //!
 //! **Drawing on Wayland** (`prepare_rendering`): `WebKitGTK`'s accelerated compositing
-//! off. Where a web tab's page goes is web_overlay.rs's.
+//! off. Where a web tab's page goes is `web_overlay.rs`'s.
 
 use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::{Duration, Instant};
