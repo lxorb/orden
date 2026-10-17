@@ -4,8 +4,9 @@ Emil, 2026-10-05: "The scratchpad should never open as a tab. It should be basic
 thing in the top right that you can click, and then it is selected or it isn't." So the
 glyph at the bar's top right shows a card docked under it, Escape and the glyph put it
 away and give the keyboard back to the note, Ctrl+Shift+X calls it, a reload keeps it
-up with its words, and nothing of it is ever in the tab strip. A phone's drawer shape
-lays it over the note.
+up with its words, and nothing of it is ever in the tab strip. On a phone it is the one
+note on the screen, all of where the note is and named in the bar, never a card beside the
+note (#206: "it should display as the only open note on mobile").
 
     python apps/desktop/test/e2e/scratchpad.py
 
@@ -139,6 +140,19 @@ def phone(browser: Browser) -> None:
     page.wait_for_timeout(400)
     if not page.evaluate(ON_TOP):
         wrong("[phone] the card is up but something else is drawn over it")
+    # Settled, it is all of where the note was: nothing of the note beside it.
+    page.wait_for_timeout(400)
+    sizes = page.evaluate(
+        """() => {
+      const card = document.querySelector('[data-scratchpad] .card')?.getBoundingClientRect()
+      const panes = document.querySelector('[data-panes]')?.getBoundingClientRect()
+      return card && panes ? { card: [card.x, card.width], panes: [panes.x, panes.width] } : null
+    }"""
+    )
+    if not sizes or abs(sizes["card"][0] - sizes["panes"][0]) > 1 or sizes["card"][1] < sizes["panes"][1] - 1:
+        wrong(f"[phone] the scratchpad is beside the note rather than the note there is: {sizes}")
+    if page.locator("header .title .name").inner_text() != "Scratchpad":
+        wrong("[phone] the bar does not name the scratchpad while it is the note on screen")
     no_tab(page, "phone")
     shot(page, "light/05-a-phone")
     page.context.close()

@@ -67,8 +67,9 @@
   /** A phone and a tablet show one document, so the bar says which one. The mark in
    *  front of the name is the same one the desktop's tab wears, because this bar is
    *  that strip on a screen that holds one document; see TabMark.svelte. */
-  const title = $derived(workspace.active?.shown ?? 'Orden')
-  const showing = $derived(workspace.active)
+  const title = $derived(pad.on ? t('Scratchpad') : (workspace.active?.shown ?? 'Orden'))
+  /** None while the scratchpad, which is no tab, is the note there; see scratchpad/pad.ts. */
+  const showing = $derived(viewport.touch && pad.on ? null : workspace.active)
 
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()

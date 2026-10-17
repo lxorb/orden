@@ -75,6 +75,12 @@
     width: 0;
   }
 
+  /* The one note on a phone and a tablet, so all of where the note is; see
+     ScratchpadCard.svelte. */
+  :global(html:not([data-device='desktop'])) .pad:not(.coming, .shut) {
+    width: 100%;
+  }
+
   .shut {
     visibility: hidden;
     transition:
