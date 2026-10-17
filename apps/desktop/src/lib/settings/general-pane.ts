@@ -2,7 +2,7 @@ import { panelDrawable } from '../even/panel-words'
 import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
 import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
-import { modes, REMIND_BEFORE } from '../modes.svelte'
+import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
@@ -158,7 +158,7 @@ function remindersGroup(): Group {
                 ? t('At the time')
                 : t('{count} min', { count: minutes }),
         })),
-        initial: '0',
+        initial: String(DEFAULTS.remindBefore),
         get: () => String(modes.remindBefore),
         set: (value) => modes.setRemindBefore(Number(value)),
       },
@@ -365,7 +365,7 @@ export function generalPane(): Pane {
                   kind: 'switch' as const,
                   label: t('Silent mode'),
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
-                  initial: false,
+                  initial: DEFAULTS.silent,
                   get: () => modes.silent,
                   set: () => modes.toggleSilent(),
                 },

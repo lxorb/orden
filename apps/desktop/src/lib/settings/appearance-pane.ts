@@ -1,5 +1,5 @@
 import { t } from '../i18n.svelte'
-import { modes } from '../modes.svelte'
+import { DEFAULTS, modes } from '../modes.svelte'
 import { isDesktop } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
 import { type SchemeChoice, theme } from '../theme.svelte'
@@ -229,7 +229,7 @@ export function appearancePane(): Pane {
             kind: 'switch',
             label: t('Pointing hand on buttons'),
             words: ['cursor', 'mouse', 'hand', 'click'],
-            initial: false,
+            initial: DEFAULTS.hand,
             get: () => modes.hand,
             set: () => modes.toggleHand(),
           },
@@ -259,7 +259,7 @@ export function appearancePane(): Pane {
                     { value: 'nib', label: t('Orden’s own') },
                     { value: 'system', label: t('The system’s') },
                   ],
-                  initial: 'nib',
+                  initial: DEFAULTS.frame,
                   get: () => modes.frame,
                   set: (value) => modes.setFrame(value),
                 },

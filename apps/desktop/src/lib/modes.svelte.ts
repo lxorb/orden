@@ -248,7 +248,7 @@ function wordsOf(value: unknown): Record<string, string> {
 }
 
 /** Where each setting starts, and what a value no setting can use falls back to. */
-const DEFAULTS = {
+export const DEFAULTS = {
   opensInSource: false,
   readOnly: false,
   focus: false,

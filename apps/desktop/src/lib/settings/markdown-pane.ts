@@ -1,6 +1,6 @@
 import type { EditorView } from '@nib/editor'
 import { t } from '../i18n.svelte'
-import { modes } from '../modes.svelte'
+import { DEFAULTS, modes } from '../modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from '../properties-words'
 import type { Pane } from './fields'
@@ -30,7 +30,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Open notes in source mode'),
             words: ['source mode', 'raw', 'plain text', 'default editing mode'],
-            initial: false,
+            initial: DEFAULTS.opensInSource,
             get: () => modes.opensInSource,
             set: () => modes.toggleOpensInSource(),
           },
@@ -38,7 +38,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Strict CommonMark'),
             hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
-            initial: false,
+            initial: DEFAULTS.strict,
             get: () => modes.strict,
             set: () => modes.toggleStrict(view),
           },
@@ -46,7 +46,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Smart punctuation'),
             hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
-            initial: false,
+            initial: DEFAULTS.punctuation,
             get: () => modes.punctuation,
             set: () => modes.togglePunctuation(view),
           },
@@ -61,7 +61,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             hint: t(
               'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
             ),
-            initial: false,
+            initial: DEFAULTS.hardBreaks,
             get: () => modes.hardBreaks,
             set: () => modes.toggleHardBreaks(),
           },
@@ -80,7 +80,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
               value: one,
               label: t(PROPERTIES_WORDS[one]),
             })),
-            initial: 'hidden',
+            initial: DEFAULTS.properties,
             get: () => modes.properties,
             set: (value) => modes.setProperties(value, view),
           },
@@ -93,7 +93,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Number headings'),
             hint: t('Puts 1., 1.1, 1.2 in front of headings.'),
-            initial: false,
+            initial: DEFAULTS.numbers,
             get: () => modes.numbers,
             set: () => modes.toggleNumbers(view),
           },
@@ -101,7 +101,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Number equations'),
             hint: t('Numbers display equations so you can refer to them.'),
-            initial: false,
+            initial: DEFAULTS.equationNumbers,
             get: () => modes.equationNumbers,
             set: () => modes.toggleEquationNumbers(view),
           },
@@ -113,7 +113,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             label: t('Right to left'),
-            initial: false,
+            initial: DEFAULTS.rtl,
             get: () => modes.rtl,
             set: () => modes.toggleRightToLeft(view),
           },

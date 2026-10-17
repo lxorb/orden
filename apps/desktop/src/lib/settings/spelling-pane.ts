@@ -1,6 +1,6 @@
 import type { EditorView } from '@nib/editor'
 import { t } from '../i18n.svelte'
-import { modes } from '../modes.svelte'
+import { DEFAULTS, modes } from '../modes.svelte'
 import type { Pane } from './fields'
 
 /** Dictionaries the browser's checker can be pointed at, named the way their
@@ -32,7 +32,7 @@ export function spellingPane(view: EditorView | undefined): Pane {
             kind: 'switch',
             label: t('Check spelling'),
             words: ['spellcheck', 'spell check', 'typos'],
-            initial: true,
+            initial: DEFAULTS.spellcheck,
             get: () => modes.spellcheck,
             set: () => modes.toggleSpellcheck(view),
           },
@@ -48,7 +48,7 @@ export function spellingPane(view: EditorView | undefined): Pane {
             kind: 'select',
             label: t('Language'),
             options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
-            initial: 'system',
+            initial: DEFAULTS.spellLanguage,
             get: () => modes.spellLanguage,
             set: (value) => modes.setSpellLanguage(value, view),
           },
