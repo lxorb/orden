@@ -1833,16 +1833,6 @@ export const ml: Dictionary = {
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
-  // The engine web tabs run on
-  Engine: 'എഞ്ചിൻ',
-  Relaunch: 'വീണ്ടും തുടങ്ങുക',
-  'Chromium did not start': 'Chromium തുടങ്ങിയില്ല',
-  'No connection': 'കണക്ഷനില്ല',
-  'Not in this release': 'ഈ റിലീസിൽ ഇല്ല',
-  'Needs an update': 'അപ്ഡേറ്റ് വേണം',
-  'Signature did not match': 'ഒപ്പ് പൊരുത്തപ്പെട്ടില്ല',
-  'Disk full': 'ഡിസ്ക് നിറഞ്ഞു',
-  'Could not be installed': 'ഇൻസ്റ്റാൾ ചെയ്യാനായില്ല',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
   // The archive: a row put away and taken back, and what refuses to delete it

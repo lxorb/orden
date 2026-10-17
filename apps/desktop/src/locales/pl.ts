@@ -1891,16 +1891,6 @@ export const pl: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Domyślna przeglądarka',
-  // The engine web tabs run on
-  Engine: 'Silnik',
-  Relaunch: 'Uruchom ponownie',
-  'Chromium did not start': 'Chromium się nie uruchomił',
-  'No connection': 'Brak połączenia',
-  'Not in this release': 'Nie ma w tym wydaniu',
-  'Needs an update': 'Wymaga aktualizacji',
-  'Signature did not match': 'Podpis się nie zgadza',
-  'Disk full': 'Dysk pełny',
-  'Could not be installed': 'Nie udało się zainstalować',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

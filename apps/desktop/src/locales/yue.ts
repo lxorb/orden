@@ -1773,16 +1773,6 @@ export const yue: Dictionary = {
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 開唔到',
-  'No connection': '冇連線',
-  'Not in this release': '呢個版本冇',
-  'Needs an update': '要更新',
-  'Signature did not match': '簽名唔對',
-  'Disk full': '磁碟滿咗',
-  'Could not be installed': '裝唔到',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
   // The archive: a row put away and taken back, and what refuses to delete it

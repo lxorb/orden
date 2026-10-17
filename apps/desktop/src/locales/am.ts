@@ -1790,16 +1790,6 @@ export const am: Dictionary = {
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
-  // The engine web tabs run on
-  Engine: 'ሞተር',
-  Relaunch: 'እንደገና አስጀምር',
-  'Chromium did not start': 'Chromium አልጀመረም',
-  'No connection': 'ግንኙነት የለም',
-  'Not in this release': 'በዚህ ልቀት ውስጥ የለም',
-  'Needs an update': 'ማዘመን ያስፈልጋል',
-  'Signature did not match': 'ፊርማው አልተዛመደም',
-  'Disk full': 'ዲስኩ ሞልቷል',
-  'Could not be installed': 'መጫን አልተቻለም',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it

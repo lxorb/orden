@@ -1841,16 +1841,6 @@ export const ta: Dictionary = {
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
   // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
-  // The engine web tabs run on
-  Engine: 'இன்ஜின்',
-  Relaunch: 'மீண்டும் தொடங்கு',
-  'Chromium did not start': 'Chromium தொடங்கவில்லை',
-  'No connection': 'இணைப்பு இல்லை',
-  'Not in this release': 'இந்த வெளியீட்டில் இல்லை',
-  'Needs an update': 'புதுப்பிப்பு தேவை',
-  'Signature did not match': 'கையொப்பம் பொருந்தவில்லை',
-  'Disk full': 'வட்டு நிரம்பியது',
-  'Could not be installed': 'நிறுவ முடியவில்லை',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
   // The archive: a row put away and taken back, and what refuses to delete it

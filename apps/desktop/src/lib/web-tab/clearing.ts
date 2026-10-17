@@ -69,7 +69,7 @@ export function reach(apart: readonly (string | null)[]): {
 
 /** Deletes what was asked, from the shared store and the stores of the web notes kept
  *  apart in `apart`. The engine first, while the history still says which sites the
- *  range visited - nib's own Chromium clears site by site - and the history after. */
+ *  range visited, and the history after. */
 export async function clearData(
   asked: Asked,
   apart: readonly (string | null)[],

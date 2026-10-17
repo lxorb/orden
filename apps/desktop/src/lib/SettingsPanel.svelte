@@ -10,10 +10,8 @@
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
-  import EngineRow from './settings/EngineRow.svelte'
   import BrowserThemes from './settings/BrowserThemes.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
-  import { systemName } from './settings/engine'
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
@@ -72,9 +70,6 @@
    *  could not take a search. */
   let customising = $state(false)
   let customBad = $state(false)
-
-  /** Why the engine row's last try did not work, in its own words; see EngineRow. */
-  let engineProblem = $state('')
 
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
@@ -765,19 +760,6 @@
       <span class="name">{t('Default browser')}</span>
       <DefaultBrowser />
     </div>
-    <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
-         there is a choice, which is Windows for now; see `systemName`. -->
-    {#if systemName(platform())}
-      <div class="nib-setting setting">
-        <span class="name">
-          {t('Engine')}
-          {#if engineProblem}<small class="warn" transition:slide={{ duration: dur(160) }}
-              >{t(engineProblem)}</small
-            >{/if}
-        </span>
-        <EngineRow onproblem={(said: string) => (engineProblem = said)} />
-      </div>
-    {/if}
     <!-- Where a few words typed in the address field go: Chrome's list for the reader's
          region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
     <div class="nib-setting setting">

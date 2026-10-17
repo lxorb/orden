@@ -1911,16 +1911,6 @@ export const ar: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'المتصفح الافتراضي',
-  // The engine web tabs run on
-  Engine: 'المحرك',
-  Relaunch: 'إعادة التشغيل',
-  'Chromium did not start': 'لم يبدأ Chromium',
-  'No connection': 'لا يوجد اتصال',
-  'Not in this release': 'غير موجود في هذا الإصدار',
-  'Needs an update': 'يلزم تحديث',
-  'Signature did not match': 'التوقيع غير مطابق',
-  'Disk full': 'القرص ممتلئ',
-  'Could not be installed': 'تعذّر التثبيت',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

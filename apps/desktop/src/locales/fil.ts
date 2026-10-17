@@ -1851,16 +1851,6 @@ export const fil: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Default na browser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'I-relaunch',
-  'Chromium did not start': 'Hindi nagsimula ang Chromium',
-  'No connection': 'Walang koneksyon',
-  'Not in this release': 'Wala sa release na ito',
-  'Needs an update': 'Kailangan ng update',
-  'Signature did not match': 'Hindi tugma ang lagda',
-  'Disk full': 'Puno na ang disk',
-  'Could not be installed': 'Hindi ma-install',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

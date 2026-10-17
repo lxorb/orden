@@ -1804,16 +1804,6 @@ export const gu: Dictionary = {
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
-  // The engine web tabs run on
-  Engine: 'એન્જિન',
-  Relaunch: 'ફરી શરૂ કરો',
-  'Chromium did not start': 'Chromium શરૂ થયું નહીં',
-  'No connection': 'કનેક્શન નથી',
-  'Not in this release': 'આ રિલીઝમાં નથી',
-  'Needs an update': 'અપડેટ જરૂરી છે',
-  'Signature did not match': 'સહી મેળ ખાતી નથી',
-  'Disk full': 'ડિસ્ક ભરાઈ ગઈ',
-  'Could not be installed': 'ઇન્સ્ટોલ થઈ શક્યું નહીં',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1873,16 +1873,6 @@ export const fr: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navigateur par défaut',
-  // The engine web tabs run on
-  Engine: 'Moteur',
-  Relaunch: 'Relancer',
-  'Chromium did not start': 'Chromium n’a pas démarré',
-  'No connection': 'Pas de connexion',
-  'Not in this release': 'Absent de cette version',
-  'Needs an update': 'Mise à jour nécessaire',
-  'Signature did not match': 'La signature ne correspond pas',
-  'Disk full': 'Disque plein',
-  'Could not be installed': 'Installation impossible',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annuler les modifications de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

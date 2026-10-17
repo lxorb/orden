@@ -1806,16 +1806,6 @@ export const jv: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Panjelajah gawan',
-  // The engine web tabs run on
-  Engine: 'Mesin',
-  Relaunch: 'Bukak maneh',
-  'Chromium did not start': 'Chromium ora miwiti',
-  'No connection': 'Ora ana sambungan',
-  'Not in this release': 'Ora ana ing rilis iki',
-  'Needs an update': 'Butuh nganyari',
-  'Signature did not match': 'Tandha tangan ora cocog',
-  'Disk full': 'Disk kebak',
-  'Could not be installed': 'Ora bisa dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

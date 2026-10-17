@@ -1810,16 +1810,6 @@ export const ur: Dictionary = {
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'دوبارہ شروع کریں',
-  'Chromium did not start': 'Chromium شروع نہیں ہوا',
-  'No connection': 'کنکشن نہیں',
-  'Not in this release': 'اس ریلیز میں نہیں',
-  'Needs an update': 'اپ ڈیٹ درکار ہے',
-  'Signature did not match': 'دستخط میل نہیں کھاتے',
-  'Disk full': 'ڈسک بھر گئی',
-  'Could not be installed': 'انسٹال نہیں ہو سکا',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
   // The archive: a row put away and taken back, and what refuses to delete it

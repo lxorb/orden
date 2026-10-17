@@ -607,8 +607,8 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
-  /** Whether this engine runs extensions: `WebView2`, and nib's own Chromium, which is
-   *  Windows' alone for now; see src-tauri/src/extensions.rs. */
+  /** Whether this engine runs extensions: `WebView2`, Windows' alone; see
+   *  src-tauri/src/extensions.rs. */
   const extending = isDesktop && platform() === 'windows'
 
   /** Whether the list of extensions under the puzzle is open. */

@@ -1818,16 +1818,6 @@ export const pa: Dictionary = {
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
   // Orden as the default browser
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
-  // The engine web tabs run on
-  Engine: 'ਇੰਜਣ',
-  Relaunch: 'ਮੁੜ ਚਾਲੂ ਕਰੋ',
-  'Chromium did not start': 'Chromium ਚਾਲੂ ਨਹੀਂ ਹੋਇਆ',
-  'No connection': 'ਕਨੈਕਸ਼ਨ ਨਹੀਂ',
-  'Not in this release': 'ਇਸ ਰਿਲੀਜ਼ ਵਿੱਚ ਨਹੀਂ',
-  'Needs an update': 'ਅੱਪਡੇਟ ਚਾਹੀਦਾ ਹੈ',
-  'Signature did not match': 'ਦਸਤਖ਼ਤ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
-  'Disk full': 'ਡਿਸਕ ਭਰੀ ਹੋਈ',
-  'Could not be installed': 'ਇੰਸਟਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1810,16 +1810,6 @@ export const ja: Dictionary = {
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
   // Orden as the default browser
   'Default browser': '既定のブラウザ',
-  // The engine web tabs run on
-  Engine: 'エンジン',
-  Relaunch: '再起動',
-  'Chromium did not start': 'Chromium を起動できませんでした',
-  'No connection': '接続がありません',
-  'Not in this release': 'このリリースにはありません',
-  'Needs an update': 'アップデートが必要です',
-  'Signature did not match': '署名が一致しません',
-  'Disk full': 'ディスクがいっぱいです',
-  'Could not be installed': 'インストールできませんでした',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
   // The archive: a row put away and taken back, and what refuses to delete it

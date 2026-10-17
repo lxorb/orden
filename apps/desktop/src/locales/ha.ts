@@ -1842,16 +1842,6 @@ export const ha: Dictionary = {
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Orden as the default browser
   'Default browser': 'Birawuza na asali',
-  // The engine web tabs run on
-  Engine: 'Injin',
-  Relaunch: 'Sake buɗewa',
-  'Chromium did not start': 'Chromium bai fara ba',
-  'No connection': 'Babu haɗi',
-  'Not in this release': 'Ba ya cikin wannan sakin',
-  'Needs an update': 'Yana buƙatar sabuntawa',
-  'Signature did not match': 'Sa hannu bai dace ba',
-  'Disk full': 'Faifai ya cika',
-  'Could not be installed': 'Ba a iya shigarwa ba',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

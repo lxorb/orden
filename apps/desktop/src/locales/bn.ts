@@ -1812,16 +1812,6 @@ export const bn: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
-  // The engine web tabs run on
-  Engine: 'ইঞ্জিন',
-  Relaunch: 'আবার চালু করুন',
-  'Chromium did not start': 'Chromium চালু হয়নি',
-  'No connection': 'সংযোগ নেই',
-  'Not in this release': 'এই রিলিজে নেই',
-  'Needs an update': 'আপডেট দরকার',
-  'Signature did not match': 'স্বাক্ষর মেলেনি',
-  'Disk full': 'ডিস্ক পূর্ণ',
-  'Could not be installed': 'ইনস্টল করা যায়নি',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -1822,16 +1822,6 @@ export const te: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
-  // The engine web tabs run on
-  Engine: 'ఇంజిన్',
-  Relaunch: 'మళ్లీ ప్రారంభించు',
-  'Chromium did not start': 'Chromium ప్రారంభం కాలేదు',
-  'No connection': 'కనెక్షన్ లేదు',
-  'Not in this release': 'ఈ విడుదలలో లేదు',
-  'Needs an update': 'అప్‌డేట్ అవసరం',
-  'Signature did not match': 'సంతకం సరిపోలలేదు',
-  'Disk full': 'డిస్క్ నిండింది',
-  'Could not be installed': 'ఇన్‌స్టాల్ చేయలేకపోయింది',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
   // The archive: a row put away and taken back, and what refuses to delete it

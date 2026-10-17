@@ -1814,16 +1814,6 @@ export const ms: Dictionary = {
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Orden as the default browser
   'Default browser': 'Pelayar lalai',
-  // The engine web tabs run on
-  Engine: 'Enjin',
-  Relaunch: 'Lancarkan semula',
-  'Chromium did not start': 'Chromium tidak bermula',
-  'No connection': 'Tiada sambungan',
-  'Not in this release': 'Tiada dalam keluaran ini',
-  'Needs an update': 'Perlu kemas kini',
-  'Signature did not match': 'Tandatangan tidak sepadan',
-  'Disk full': 'Cakera penuh',
-  'Could not be installed': 'Tidak dapat dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Buat asal suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
