@@ -408,6 +408,113 @@
         ${fromSource.pname} = mkSource final;
       };
 
+      # Home Manager, as `programs.orden`:
+      #
+      #   inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
+      #   imports = [ inputs.orden.homeManagerModules.default ];
+      #   programs.orden.enable = true;
+      #
+      # Beyond installing the package it writes only the three files Orden leaves to
+      # the reader in its settings folder, each of them optional: theme stylesheets,
+      # custom.css, and snippets.json. Everything else in that folder is the app's
+      # own state - window positions, history, what Settings saved - and is kept out
+      # of here on purpose, since the app rewrites it while running.
+      homeManagerModules.default =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
+        let
+          cfg = config.programs.orden;
+          inherit (lib) mkOption types;
+          system = pkgs.stdenv.hostPlatform.system;
+          # Tauri's app_config_dir: XDG_CONFIG_HOME, then the bundle identifier.
+          # The source build keeps the release's identifier, so both read the
+          # same folder.
+          folder = "ch.emilvinu.nib";
+          # What themes.rs accepts as a theme's id, the file's name less `.css`.
+          isId = id: builtins.stringLength id <= 39 && builtins.match "[a-z0-9][a-z0-9-]*" id != null;
+          # The CSS itself, or a file holding it. Text first: `types.path` takes
+          # any string starting with a slash, and a stylesheet may well open with
+          # a comment.
+          stylesheet = types.either types.lines types.path;
+          file = value: if builtins.isString value then { text = value; } else { source = value; };
+        in
+        {
+          options.programs.orden = {
+            enable = lib.mkEnableOption "Orden, a markdown editor with realtime inline preview";
+
+            package = mkOption {
+              type = types.package;
+              default =
+                self.packages.${system}.default
+                  or (throw "Orden's flake has packages for ${lib.concatStringsSep " and " systems} only, not ${system}");
+              defaultText = lib.literalExpression "orden.packages.\${pkgs.stdenv.hostPlatform.system}.default";
+              example = lib.literalExpression "orden.packages.\${pkgs.stdenv.hostPlatform.system}.orden-unstable";
+              description = "The Orden to install: this flake's release by default.";
+            };
+
+            themes = mkOption {
+              type = types.attrsOf stylesheet;
+              default = { };
+              example = lib.literalExpression "{ paper = ./paper.css; }";
+              description = ''
+                Theme stylesheets, each written to themes/<name>.css in Orden's
+                settings folder and offered in Settings by that name, capitalised. A name is
+                lower-case letters, digits and hyphens. Themes installed from inside
+                the app go into the same folder and stay the app's.
+              '';
+            };
+
+            customCss = mkOption {
+              type = types.nullOr stylesheet;
+              default = null;
+              example = "body { font-size: 18px; }";
+              description = ''
+                custom.css, applied on top of whichever theme is active. Null leaves
+                the file to the app, which starts it with a comment and nothing else.
+              '';
+            };
+
+            snippets = mkOption {
+              type = types.nullOr (types.attrsOf types.str);
+              default = null;
+              example = {
+                todo = "- [ ] ";
+              };
+              description = ''
+                snippets.json: abbreviations the editor completes while typing, each
+                to the text it inserts. Null leaves the file to the app, which starts
+                it with a couple of examples.
+              '';
+            };
+          };
+
+          config = lib.mkIf cfg.enable {
+            assertions = [
+              {
+                assertion = pkgs.stdenv.hostPlatform.isLinux;
+                message = "programs.orden: this flake packages Orden for Linux only.";
+              }
+            ]
+            ++ map (name: {
+              assertion = isId name;
+              message = "programs.orden.themes.${name}: not a name Orden takes for a theme (lower-case letters, digits and hyphens, at most 39).";
+            }) (builtins.attrNames cfg.themes);
+
+            home.packages = [ cfg.package ];
+
+            xdg.configFile =
+              lib.mapAttrs' (name: css: lib.nameValuePair "${folder}/themes/${name}.css" (file css)) cfg.themes
+              // lib.optionalAttrs (cfg.customCss != null) { "${folder}/custom.css" = file cfg.customCss; }
+              // lib.optionalAttrs (cfg.snippets != null) {
+                "${folder}/snippets.json".text = builtins.toJSON cfg.snippets;
+              };
+          };
+        };
+
       apps = forEach (pkgs: {
         default = {
           type = "app";

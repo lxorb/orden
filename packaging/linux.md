@@ -364,10 +364,37 @@ inputs.orden.inputs.nixpkgs.follows = "nixpkgs";
 environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
 ```
 
-Under Home Manager the same input goes in `home.packages` instead, as
-`home.packages = [ inputs.orden.packages.${pkgs.system}.default ];`, which puts it
-in one user's profile rather than the system's. There is no Home Manager module
-here, and none is needed: it is a package like any other.
+Under Home Manager, `homeManagerModules.default` installs it into one user's
+profile rather than the system's, as `programs.orden`:
+
+```nix
+imports = [ inputs.orden.homeManagerModules.default ];
+programs.orden = {
+  enable = true;
+  # package = inputs.orden.packages.${pkgs.system}.orden-unstable;
+  themes.paper = ./paper.css;          # themes/paper.css, offered in Settings as "Paper"
+  customCss = "body { font-size: 18px; }";
+  snippets = { todo = "- [ ] "; };
+};
+```
+
+`package` defaults to this flake's release. The other three are the files Orden
+leaves to the reader in its settings folder, `~/.config/ch.emilvinu.nib`, and the
+module writes each only when it is set: a theme stylesheet per name (lower-case
+letters, digits and hyphens, what the app takes for a theme's id), `custom.css`,
+which applies over whichever theme is active, and `snippets.json`, the
+abbreviations the editor completes. A stylesheet is the CSS itself or a file
+holding it. Everything else in that folder - which theme is picked, the font,
+window sizes, history - is the app's own state, rewritten while it runs, and the
+module leaves it alone; so does it leave themes installed from inside the app,
+which go into the same `themes/` folder beside the declared ones.
+
+A file the module writes is a link into the Nix store, which nothing can write to.
+Orden still reads it, but saving it from inside the app - Edit custom CSS, Edit
+snippets, reinstalling a declared theme - replaces the link with a file of its own,
+and the next `home-manager switch` stops at it rather than overwrite it (or moves
+it aside, given a `backupFileExtension`). Each file belongs to one of the two:
+declare it here, or edit it in the app.
 
 For the edge rather than the release, install the `orden-unstable` package, named
 explicitly, from the `unstable` branch. It compiles that branch's source and follows
