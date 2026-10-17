@@ -226,13 +226,20 @@
   let rowWidth = $state(0)
   let toolsWidth = $state(0)
   let markWidth = $state(0)
+  /** The least a tab may be, which is nothing with a pointer and a thumb's width on a
+   *  touch screen (the stylesheet's `min-width` below): a tab cannot give below it, so
+   *  the count of tabs that fit is made with it. */
+  let floorWidth = $state(0)
   let tablist = $state<HTMLElement>()
   $effect(() => {
-    if (rowWidth) markWidth = tablist?.querySelector('svg')?.getBoundingClientRect().width ?? 0
+    if (!rowWidth) return
+    markWidth = tablist?.querySelector('svg')?.getBoundingClientRect().width ?? 0
+    const tab = tablist?.querySelector('button')
+    floorWidth = tab ? parseFloat(getComputedStyle(tab).minWidth) || 0 : 0
   })
   const strip = $derived.by(() => {
     const room = rowWidth - 8 - (toolsWidth ? toolsWidth + 4 : 0)
-    const shown = tabsShown(mine.length, room, markWidth + 8)
+    const shown = tabsShown(mine.length, room, Math.max(markWidth + 8, floorWidth))
     return splitTabs(mine, shown, (item) => item.id === showing)
   })
 
@@ -1268,6 +1275,14 @@
      is drawn is not. See test/one-of-each.test.ts. */
   .switch .nib-segmented button {
     min-width: 0;
+  }
+
+  /* Except under a thumb, where a tab is a target like every other and keeps the touch
+     floor however narrow the row: the pill sized to its tabs drew them forty pixels
+     wide on a phone, under the floor the app holds every target to (access.py). The
+     ones with no room go behind More instead; see `floorWidth` above. */
+  :global([data-touch]) .switch .nib-segmented button {
+    min-width: var(--touch-target);
   }
 
   /* The mark in a tab is the one thing in the row that does not give: a squeezed
