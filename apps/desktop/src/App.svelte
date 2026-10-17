@@ -613,6 +613,18 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
+          // The AI accounts on every device, which a drive of two devices reads and
+          // steers; see test/e2e/ai-vault.py.
+          aiVault: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
+              : Promise.all([import('./lib/ai/vault/start.svelte'), import('./lib/ai/keys')]).then(
+                  ([{ vault }, keys]) => ({
+                    vault,
+                    writeKey: keys.writeKey,
+                    readSecret: keys.readSecret,
+                  }),
+                ),
           importing,
           publish,
           rewriting,

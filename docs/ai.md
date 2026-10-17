@@ -322,6 +322,49 @@ Keys are read back, because the request is made by the page. They are never
 cached in a variable, never written to a note, never synced, never logged, and
 never put in an error message.
 
+### Every device
+
+Emil, 2026-10-13: "ai should be connected once and then keep connected across nib
+sessions." So the accounts reach every device the reader signs in to with their nib
+account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
+
+- **What travels**: the accounts, the one in use per provider, what each feature asks,
+  every API key, and who each program or ChatGPT sign-in was signed in as. Sealed with
+  AES-256-GCM under the **vault key**, 32 random bytes only the reader's devices hold; the
+  account stores the sealed vault and nothing it can open.
+- **What does not**: Claude Code's and Codex's logins and the ChatGPT refresh token.
+  Anthropic does not let an app carry a Claude.ai login, and a refresh token used on two
+  devices breaks its own rotation. On another device such an account is there with who it
+  was signed in as, and **Sign in here** runs that program's own login, in that account's
+  home where it has one.
+- **A device**: an ECDH P-256 key pair, the private half in the device's secret store
+  (`ai-vault-device`: keychain, Keystore, or the browser's storage). The vault key is held
+  on the account only wrapped to each device's public key (ephemeral ECDH, HKDF-SHA256 with
+  both public keys as salt, AES-256-GCM): the shape web logins use (docs/sync-v2.md 6.6),
+  in WebCrypto, so a phone and a browser carry it too.
+- **Connecting a new device**: it registers its public key and shows six digits
+  (`SHA-256(pub)` mod 10^6) in Settings > AI. Every device that has the key shows a bubble,
+  *"Phone wants your AI accounts 482 913"*, with Don't allow and Allow; Allow wraps the key
+  to it. Nothing is typed. A server that swapped in a public key of its own would show
+  other digits. The first device of an account makes the key without a word, and the same
+  device after an update, an engine switch or a reinstall opens at once: its device key is
+  in the keychain, which outlives the app.
+- **When no device is left to allow one**: **Start over**. The old vault is let go of,
+  this device's accounts become the vault, and every other device is allowed again from
+  here. Keys only that vault held are typed again; programs' sign-ins are each machine's
+  own and stay. There is no recovery code, for web logins' reason: losing it costs a key
+  typed again, never writing.
+- **Two devices at once**: a write names the revision it read and is refused over a newer
+  one; the device then meets the two three ways against what both last agreed on
+  (`vault/merge.ts`), keys compared by fingerprint, and writes again. Every write tells the
+  account's hub, and each other device reads again within a second.
+
+On one machine nothing disconnects: the accounts file and the homes are in the app's data
+folder, keys and the device key in the keychain, which updates, engine switches and
+reinstalls all keep. ChatGPT's installation is kept in the keychain beside its refresh
+token too, since an uninstall that takes the data folder used to leave the token with no
+client to use it.
+
 ## Helpers
 
 Emil, 2026-10-12: "claude can create subagents of openai models. e.g. claude opus 5.5

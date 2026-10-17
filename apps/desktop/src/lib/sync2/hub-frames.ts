@@ -51,6 +51,9 @@ export type FromHub =
   /** A session on the account's online machine was made or ended, or its shell ended:
    *  Settings' list of them asks again (docs/online-terminal.md 4.10). */
   | { t: 'terms' }
+  /** The account's AI accounts moved on another device: read them again
+   *  (ai/vault/vault.svelte.ts). */
+  | { t: 'ai' }
   /** A chat moved on (`ChatPoke` in @nib/chats/wire): handed on unread, because the
    *  chats read it with their own check, fetched with them after the launch. */
   | { t: 'chat'; said: Record<string, unknown> }
@@ -134,6 +137,9 @@ export function readHubFrame(said: string): FromHub | null {
 
     case 'terms':
       return { t: 'terms' }
+
+    case 'ai':
+      return { t: 'ai' }
 
     case 'key-settled':
       return device(one.device) ? { t: 'key-settled', device: one.device } : null
