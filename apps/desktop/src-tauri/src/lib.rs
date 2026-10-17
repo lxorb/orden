@@ -561,12 +561,6 @@ pub fn run() {
 /// Starts the app on `builder`, and exits with a message if the app could not be built
 /// at all.
 pub fn run_on(builder: tauri::Builder<Engine>) {
-    // WebKitGTK's accelerated compositing can flash between the app's rendered frame and
-    // an empty surface on Wayland. Choose its software compositing path before any
-    // WebKitGTK view is created; an explicit environment setting still takes precedence.
-    #[cfg(target_os = "linux")]
-    linux::prepare_rendering();
-
     // Before everything, because a copy under the old folder's name renames it and
     // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]

@@ -30,14 +30,25 @@
 //! size and whether it was maximised come back on a launch, and its place does not
 //! (`places_windows`).
 //!
-//! **Drawing on Wayland** (`prepare_rendering`): `WebKitGTK`'s accelerated compositing
-//! off. Where a web tab's page goes is `web_overlay.rs`'s.
+//! **Accelerated compositing off on Wayland** (`prepare` too). With a web tab's page laid
+//! over the window's own (`web_overlay.rs`), the window's page drawn by `WebKitGTK`'s
+//! accelerated compositor lost its frame once the app's layers had come and gone over the
+//! web tab a few times: the tab strip and the bar went, and the transparent window showed
+//! whatever was behind it until something drew again, which under a compositor that
+//! draws a dark wallpaper behind is a window flashing between light and dark (#387).
+//! Headless sway, 2026-10-17, Mesa's software GL: the ⋯ menu opened and shut over a web
+//! tab blanked the window's page from the fourth time on in both runs with compositing
+//! on, and in none of 72 pictures with it off. A reader's own
+//! `WEBKIT_DISABLE_COMPOSITING_MODE`, either way, is left as it is.
 
 use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::{Duration, Instant};
 
 /// The switch `WebKitGTK` reads to draw without DMA-BUF.
 const DMABUF: &str = "WEBKIT_DISABLE_DMABUF_RENDERER";
+
+/// The switch `WebKitGTK` reads to draw without its accelerated compositor.
+const COMPOSITING: &str = "WEBKIT_DISABLE_COMPOSITING_MODE";
 
 /// Present only while NVIDIA's own kernel driver is loaded; nouveau has no such file.
 const NVIDIA: &str = "/proc/driver/nvidia/version";
@@ -59,9 +70,16 @@ static PENDING: Mutex<Option<(String, Instant)>> = Mutex::new(None);
 /// Whether GTK draws on Wayland, as it said on the event loop's thread; see `learn`.
 static DRAWN_ON_WAYLAND: OnceLock<bool> = OnceLock::new();
 
-/// Before GTK and before any thread: DMA-BUF off on NVIDIA's driver, and the launcher's
-/// token where GTK 3 looks for it.
+/// Before GTK and before any thread: DMA-BUF off on NVIDIA's driver, accelerated
+/// compositing off on Wayland, and the launcher's token where GTK 3 looks for it.
 pub fn prepare() {
+    if compositing_off(
+        std::env::var("GDK_BACKEND").ok().as_deref(),
+        std::env::var("WAYLAND_DISPLAY").ok().as_deref(),
+        std::env::var_os(COMPOSITING).is_some(),
+    ) {
+        std::env::set_var(COMPOSITING, "1");
+    }
     if dmabuf_off(
         std::path::Path::new(NVIDIA).exists(),
         std::env::var_os(DMABUF).is_some(),
@@ -253,28 +271,19 @@ pub fn hand_gtk(token: &str) {
     }
 }
 
-/// Disable accelerated compositing for native Wayland sessions, before `WebKitGTK` starts.
-///
-/// `WebKitGTK`'s accelerated compositing has produced repeated blank or partially rendered
-/// frames on Wayland. Its software compositing path avoids that surface handoff. Leave
-/// X11 alone, and let a reader's explicit setting take precedence.
-pub fn prepare_rendering() {
-    if std::env::var_os("WEBKIT_DISABLE_COMPOSITING_MODE").is_some() {
-        return;
+/// Whether to turn accelerated compositing off: GTK on Wayland - by the backend it was
+/// told to use first, or by a Wayland display where it was told none - and nobody having
+/// set it either way.
+fn compositing_off(backend: Option<&str>, display: Option<&str>, already_said: bool) -> bool {
+    if already_said {
+        return false;
     }
-
-    let wayland = std::env::var_os("GDK_BACKEND").map_or_else(
-        || std::env::var_os("WAYLAND_DISPLAY").is_some_and(|display| !display.is_empty()),
-        |backend| {
-            backend
-                .to_string_lossy()
-                .split(',')
-                .next()
-                .is_some_and(|one| one.trim().eq_ignore_ascii_case("wayland"))
-        },
-    );
-    if wayland {
-        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    match backend {
+        Some(backend) => backend
+            .split(',')
+            .next()
+            .is_some_and(|first| first.trim().eq_ignore_ascii_case("wayland")),
+        None => display.is_some_and(|display| !display.is_empty()),
     }
 }
 
@@ -287,6 +296,17 @@ mod tests {
         assert!(dmabuf_off(true, false));
         assert!(!dmabuf_off(true, true));
         assert!(!dmabuf_off(false, false));
+    }
+
+    #[test]
+    fn compositing_goes_off_where_gtk_draws_on_wayland_unless_somebody_said() {
+        assert!(compositing_off(None, Some("wayland-1"), false));
+        assert!(compositing_off(Some("wayland,x11"), None, false));
+        assert!(compositing_off(Some(" Wayland "), Some("wayland-1"), false));
+        assert!(!compositing_off(Some("x11"), Some("wayland-1"), false));
+        assert!(!compositing_off(None, Some(""), false));
+        assert!(!compositing_off(None, None, false));
+        assert!(!compositing_off(None, Some("wayland-1"), true));
     }
 
     #[test]
