@@ -1,70 +1,37 @@
-/** Every kind of tab, and what each one is, in one place.
- *
- *  A tab holds a note almost always, and nine other things besides; see `TabKind` in
- *  documents.svelte.ts for what each of them is. What used to be spread over the app
- *  was what each of them does: whether its words are a file's, what a draft of it is
- *  saved as, which mark it wears, whether the pane draws the editor for it, what it
- *  goes out as. Every one of those was a chain of `kind === ...` somewhere, and a new
- *  kind was a hunt through all of them for the ones that needed to hear about it.
- *
- *  So each kind is one entry here, saying all of it, and the places that used to ask
- *  the kind ask its entry. A new kind is a new entry: the type below makes every trait
- *  a required answer, so one that forgets something does not compile.
- *
- *  What is left outside are the questions about one kind by name - is this a web
- *  tab, so its page can be stepped back - which are that kind's own business and no
- *  other's, and the pane's own drawing of each surface (Pane.svelte), where every
- *  kind's component takes different props. */
+/** Every kind of tab and what it does, one entry each: the places that used to ask
+ *  `kind === ...` ask the entry, and a new kind is a new entry that must answer every
+ *  trait. Questions about one kind by name stay with that kind's own code. */
 
 import type { FileMark } from '../file-mark'
 
-/** What a kind of tab is, trait by trait. */
 export interface TabKindTraits {
-  /** Whether its words are a file's words: a note, a canvas and a page note, whose
-   *  words are the JSON in them. What decides every place words cross between a tab
-   *  and a file; see `holdsWords` in documents.svelte.ts. */
+  /** Its words are a file's words (`holdsWords`). */
   readonly words: boolean
-  /** The ending a tab of this kind with no file is saved under, or null for a kind
-   *  that is never saved as a file of its own; see drafts.ts. */
+  /** The ending a draft of it is saved under, if any (drafts.ts). */
   readonly extension: string | null
-  /** Whether the bar under the note is drawn over it; see `hasStatusBar` in
-   *  regions.ts. A page note keeps it: its bar carries the page counter. */
+  /** The bar under the note is drawn over it (`hasStatusBar`). */
   readonly statusBar: boolean
-  /** The mark it wears where a bar says which document is showing, or null for a tab
-   *  that is not a file; see `markOf` in file-mark.ts. */
+  /** The file mark it wears, null for no file (`markOf`). */
   readonly mark: FileMark | null
-  /** What a tab with no file mark wears in the strip instead: the space's picture or
-   *  the AI panel's. Asked only where `mark` is null; see TabMark.svelte. */
+  /** The glyph worn where `mark` is null (TabMark.svelte). */
   readonly glyph: 'graph' | 'ask' | null
-  /** Whether its mark is drawn live, by what is running in it rather than by what it
-   *  is: a terminal wears the program in front. See TabMark.svelte. */
+  /** Its mark is drawn by what runs in it (TabMark.svelte). */
   readonly liveMark: boolean
-  /** Whether the pane draws the editor for it - the surface with no find bar of its
-   *  own - when it is not being read. See `writing` in Pane.svelte. */
+  /** The pane draws the editor for it (`writing` in Pane.svelte). */
   readonly editor: boolean
-  /** Whether what is showing takes a dropped note itself rather than the pane opening
-   *  it; a terminal types its path. See `ownSurface` in Pane.svelte. */
+  /** It takes a dropped note itself (`ownSurface` in Pane.svelte). */
   readonly takesDrops: boolean
-  /** Whether it has a bar of its own with a way to add to it, so a phone's button for
-   *  writing something new stays off it; see `ownBar` in App.svelte. */
+  /** It has its own bar with a way to add (`ownBar` in App.svelte). */
   readonly ownBar: boolean
-  /** Whether the document open over its file is that file's words. A view over a
-   *  `.base` holds which view it is, and a chat's tab over its `.chat` pointer shows the
-   *  account's messages: neither holds the file's words. See `documentAt` in
-   *  workspace.svelte.ts. */
+  /** The document over its file is the file's words (`documentAt`). */
   readonly fileDocument: boolean
-  /** Whether it is one of the two planes - a canvas and a page note, one format and two
-   *  surfaces - which a rename may turn into the other; see `rekind` in open.ts. */
+  /** One of the two planes, canvas and page note (`rekind` in open.ts). */
   readonly plane: boolean
-  /** What it goes out as; see `exportKindOf` in export/offer.ts, which tells a deck
-   *  from a note and a paper with no path from one with one. */
+  /** What it goes out as (`exportKindOf`). */
   readonly exports: 'note' | 'canvas' | 'pages' | 'file' | 'none'
-  /** What an agent is told is selected inside it, in that kind's own terms, or null for
-   *  a kind with nothing to select that nib can see; see `selectionIn` in
-   *  agents/workspace/tabs.ts. */
+  /** What an agent is told is selected in it (`selectionIn`). */
   readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
-  /** Whether its title is somebody else's words - a page's, or the program a terminal is
-   *  running - which an agent is told; see `namedOutside` in agents/workspace/tabs.ts. */
+  /** Its title is somebody else's words (`namedOutside`). */
   readonly outsideTitle: boolean
 }
 
@@ -214,9 +181,8 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
   },
-  // A channel's pane draws its own surface before the editor is ever asked for, so
-  // `editor` only reaches what the pane draws around it. It says what the chain of
-  // kinds in Pane.svelte said before this table, which left the channel out.
+  // `editor` as the chain in Pane.svelte had it, which never left the channel out:
+  // 1f4e7492 added the kind and its surface but not its line there. Kept as it was.
   channel: {
     words: false,
     extension: null,
