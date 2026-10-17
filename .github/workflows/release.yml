@@ -281,15 +281,34 @@ jobs:
       - name: Build latest.json
         run: node scripts/update-manifest.mjs "$FILES" "$VERSION" artifacts > latest.json
 
-      # The rolling release is remade rather than added to: an old build's
-      # files under a new manifest would be the worst of both.
-      - name: Replace the build of main
+      # The rolling release is updated where it stands, never taken down first. It
+      # used to be deleted and made again, and on 2026-10-17 the delete went through and
+      # the create was refused (HTTP 403, "Resource not accessible by integration"), which
+      # left no edge at all for anybody to update from. So: an edge that is there keeps
+      # its page and its tag, gets this build's name and notes, and has its tag moved
+      # here; one that is not there is made. A tag the token may not move is said and
+      # left where it was - the files below are what matter, and they go up either way.
+      # The last build's files come off only after this one's are up; see the step after
+      # the upload.
+      - name: Point edge at this build
         if: needs.version.outputs.rolling == 'true'
         run: |
-          gh release delete "$TAG" --cleanup-tag --yes || true
-          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
-            --title "main · $VERSION" \
-            --notes ""
+          notes="Built from $GITHUB_SHA."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --prerelease --title "main · $VERSION" --notes "$notes"
+            if ! moved=$(gh api -i -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
+              -f sha="$GITHUB_SHA" -F force=true 2>&1); then
+              grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$moved" || true
+              echo "::warning::the $TAG tag could not be moved to $GITHUB_SHA; the release keeps it where it was and takes this build's files"
+            fi
+          elif ! made=$(gh api -i -X POST "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" -f name="main · $VERSION" \
+            -f body="$notes" -F prerelease=true 2>&1); then
+            # What GitHub says it wanted, which is the question when this is refused.
+            grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$made" || true
+            echo "::error::$TAG is not there and could not be made"
+            exit 1
+          fi
 
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
@@ -327,6 +346,17 @@ jobs:
             gh release upload "$TAG" installers/* --clobber
           fi
           gh release upload "$TAG" latest.json --clobber
+
+      # And off edge, everything this build did not put there: the last build's files,
+      # whose names carry its version. After the manifest, so the updater is never pointed
+      # at a file that has gone.
+      - name: Take the last build's files off edge
+        if: needs.version.outputs.rolling == 'true'
+        run: |
+          kept=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
+          gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r name; do
+            grep -qxF "$name" <<<"$kept" || gh release delete-asset "$TAG" "$name" --yes
+          done
 
       # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
       # the release published above never reaches publish.yml's `on: release`, nor
