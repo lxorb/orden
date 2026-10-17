@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { type Build, type Opener, openerFor } from './openers'
+import { type Build, type Opener, openerFor, sharedKind } from './openers'
 
 /** Which opener a path is for: a branch for every kind, and for the two builds.
  *
@@ -112,5 +112,14 @@ describe('in front of a pair of glasses', () => {
     // in but running as the plugin still cannot show a canvas, but could a PDF.
     expect(opener('Papers/Kestrel.pdf', { evenBuild: false, isPlugin: true })).toBe('pdf')
     expect(opener('Boards/Plan.canvas', { evenBuild: false, isPlugin: true })).toBeNull()
+  })
+})
+
+describe('a file somebody shared on its own', () => {
+  test('opens in the tab its name on the account asks for (#386)', () => {
+    expect(sharedKind('/Boards/board.canvas')).toBe('canvas')
+    expect(sharedKind('/Notes/slides.pages')).toBe('pages')
+    expect(sharedKind('/Team/planning.chat')).toBe('channel')
+    expect(sharedKind('/Notes/plan.md')).toBe('note')
   })
 })

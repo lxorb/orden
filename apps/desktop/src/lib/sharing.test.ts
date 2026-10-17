@@ -64,7 +64,7 @@ interface World {
   /** The words each of those files comes down with. */
   words: Record<string, string>
   /** Every shared file that was opened, and every one whose tabs were closed. */
-  opened: { id: string; name: string; canvas: boolean; text: string }[]
+  opened: { id: string; name: string; path: string; text: string }[]
   closed: string[]
   /** Which shared files have a tab right now, as the workspace would answer. */
   showing: string[]
@@ -198,8 +198,8 @@ vi.mock('./workspace.svelte', () => ({
     get tabs() {
       return world.tabs
     },
-    openShared: (item: { id: string; name: string; canvas: boolean }, text: string) =>
-      world.opened.push({ ...item, text }),
+    openShared: (item: { id: string; name: string; path: string }, text: string) =>
+      world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
   },
@@ -1052,8 +1052,8 @@ describe('the files other people shared with you', () => {
     await sharedWithYou.open(world.shared[1]!)
 
     expect(world.opened).toEqual([
-      { id: 'n1', name: 'meeting', canvas: false, text: '# the meeting' },
-      { id: 'n3', name: 'b.canvas', canvas: true, text: '{}' },
+      { id: 'n1', name: 'meeting', path: 'Plans/meeting.md', text: '# the meeting' },
+      { id: 'n3', name: 'b.canvas', path: 'Work/b.canvas', text: '{}' },
     ])
   })
 

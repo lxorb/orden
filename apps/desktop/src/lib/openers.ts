@@ -71,3 +71,12 @@ export function openerFor(
 
   return 'note'
 }
+
+/** The tab a file somebody shared on its own opens in, by its name on the account: it
+ *  has no path here. A chat is its channel, and anything with no surface of its own a
+ *  note, as the shares reach no other kind (#386). */
+export function sharedKind(path: string): 'canvas' | 'pages' | 'channel' | 'note' {
+  if (isCanvasTarget(path)) return 'canvas'
+  if (isPagesTarget(path)) return 'pages'
+  return isChatTarget(path) ? 'channel' : 'note'
+}

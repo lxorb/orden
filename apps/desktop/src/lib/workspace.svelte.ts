@@ -11,7 +11,7 @@ import {
   isWebTarget,
 } from '@nib/markdown/links'
 import { freePath } from '@nib/markdown/paths'
-import { openerFor } from './openers'
+import { openerFor, sharedKind } from './openers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
@@ -1385,8 +1385,9 @@ class Workspace {
    *  and docs/sharing.md.
    *
    *  One tab per shared file, the way a canvas and the graph are one: asking for
-   *  one that is already open brings it forward. */
-  openShared(item: { id: string; name: string; canvas: boolean }, text: string) {
+   *  one that is already open brings it forward. Its kind is read off its name on the
+   *  account, as a file of our own is off its path. */
+  openShared(item: { id: string; name: string; path: string }, text: string) {
     const existing = this.documents.find((one) => one.shared === item.id)
     const open = existing ? this.tabs.find((tab) => tab.note.key === existing.key) : undefined
 
@@ -1397,7 +1398,7 @@ class Workspace {
     }
 
     const note = this.document({
-      kind: item.canvas ? 'canvas' : 'note',
+      kind: sharedKind(item.path),
       path: null,
       name: item.name,
       text,
