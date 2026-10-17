@@ -282,12 +282,14 @@ line appear as it is drawn, both see a small named pointer where the other's han
 is, and neither drawing is ever woven through the other. It is the same room a note
 has, about a different kind of file.
 
-**Nobody is ever nowhere.** The name stays beside the pointer rather than fading
-the way a caret's does, and a pointer off the screen - a phone and a desktop looking
-at two corners of one plane - is held at the nearest edge of it, as an arrow pointing
-the way to them with the name on the inside. Moving towards the arrow brings them
-into view. A page note draws its hands with the same layer and says the same; see
-`canvas/edge.ts` and `CanvasHands.svelte`.
+**Nobody is ever nowhere.** The name stays beside the pointer, and a pointer off the
+screen - a phone and a desktop looking at two corners of one plane - is held at the
+nearest edge of it, as an arrow pointing the way to them with the name on the inside.
+Moving towards the arrow brings them into view. A page note draws its hands with the
+same layer and says the same; see `canvas/edge.ts` and `CanvasHands.svelte`. A note
+says it the same way: a caret's name stays over it rather than fading, and a caret
+scrolled out of sight is held at the top or the foot of the page, its name behind an
+arrow pointing up or down to it (`heldCarets` in `packages/editor/src/carets.ts`).
 
 **The same Durable Object class, keyed by the file.** A room is named by the file's
 id, so there is already one instance in the world per file whichever kind of file it
