@@ -238,7 +238,7 @@
      rows had to be asked for opens while that press is still on its way here, so the
      press is read against the moment the menu opened. See `shutBy` in menu.svelte.ts. -->
 <svelte:window
-  onclick={(event) => menu.shutBy(event)}
+  onclick={(event: MouseEvent) => menu.shutBy(event)}
   onblur={() => menu.hide()}
   onresize={() => menu.hide()}
 />

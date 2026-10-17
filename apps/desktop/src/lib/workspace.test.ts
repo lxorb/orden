@@ -316,7 +316,7 @@ describe('previewing every kind of file', () => {
     delete notes['/space/site.url']
     delete notes['/space/other.url']
     delete notes['/space/deck.pages']
-    delete notes[PAPER_PAGES]
+    Reflect.deleteProperty(notes, PAPER_PAGES)
     vi.restoreAllMocks()
   })
 

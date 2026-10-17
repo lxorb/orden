@@ -1544,8 +1544,8 @@
   function onPaste(event: ClipboardEvent) {
     if (store.editing !== null) return
 
-    const picture = [...(event.clipboardData?.items ?? [])].find((one) =>
-      one.type.startsWith('image/') || one.type === 'application/pdf',
+    const picture = [...(event.clipboardData?.items ?? [])].find(
+      (one) => one.type.startsWith('image/') || one.type === 'application/pdf',
     )
 
     if (picture) {
