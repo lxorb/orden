@@ -97,10 +97,23 @@ def opened(browser: Browser, scheme: str = "light", off: bool = False) -> tuple[
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme=scheme)
     if off:
         page.add_init_script("localStorage.setItem('nib:swipe', 'off')")
+    # Room for every chunk the launch fetches in the page's list of them, which keeps
+    # 250 by default and drops the rest: what hears a swipe is among the last.
+    page.add_init_script("performance.setResourceTimingBufferSize(10000)")
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", "# Beta\n\nThe second note.\n")
     page.evaluate(TRAIL)
     wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
+    # What hears a swipe is fetched at the very end of the launch, the last of its doors
+    # (`warmDoors` in surfaces.svelte.ts), and nothing on screen says when it is in. A
+    # sweep before it is a scroll nobody hears: the first arrow this drive asked for,
+    # straight after the seed, used to come out as no arrow at all, and only the second
+    # was drawn. So the chunk is waited for, and two frames for it to start listening.
+    wait_for(
+        page,
+        "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
+        "what hears a swipe",
+    )
     DRIVE.settled(page)
     box = page.locator(".cm-content").first.bounding_box()
     if box is None:
