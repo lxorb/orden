@@ -6,13 +6,21 @@ name: publish-linux
 # packaging/linux.md has the steps for each one.
 #
 # Not here on purpose:
-#   Flathub  - updates arrive as a pull request from Flathub's own
-#              flatpak-external-data-checker, which reads the x-checker-data in
-#              packaging/flathub/so.orden.Orden.yml. Nothing to push.
+#   Flathub  - Orden is not published there; see packaging/linux.md.
 #   AppImage - the release page is the distribution channel.
+#
+# Called by release.yml for every stable release, once its files are up, and run by
+# hand the same way (`gh workflow run publish-linux.yml -f tag=v0.15.0`). Called rather
+# than dispatched, because a dispatch only finds a workflow on the default branch; and
+# nothing listens for `release: published`, which a release made on the workflow's own
+# token never raises and one made by hand would raise before its files were up.
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to publish (e.g. v0.4.0)
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       tag:
@@ -36,9 +44,9 @@ jobs:
       contents: read
     # `edge` is remade on every push to unstable and is not a release anyone should
     # be installing from a package manager.
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     env:
-      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      TAG: ${{ inputs.tag }}
       HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -117,10 +125,10 @@ jobs:
 
   # The snap's own workflow, which release.yml calls as well for edge; see snap.yml.
   snap:
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     permissions:
       contents: read
     uses: ./.github/workflows/snap.yml
     with:
-      tag: ${{ inputs.tag || github.event.release.tag_name }}
+      tag: ${{ inputs.tag }}
     secrets: inherit

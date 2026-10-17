@@ -18,9 +18,12 @@ LXD. Run it after every release that changes packaging. The flake has its own,
 `.github/workflows/nix.yml`, which runs on every pull request into `main` that
 changes it.
 
-`.github/workflows/publish-linux.yml` pushes a published release out to the AUR
-and the Snap Store, the snap through `snap.yml`, which `release.yml` also calls for
-every edge build. Both build and then stop short of uploading until their secrets
+`.github/workflows/publish-linux.yml` pushes a stable release out to the AUR and the
+Snap Store, the snap through `snap.yml`, which `release.yml` also calls for every edge
+build. `release.yml` calls it once the release's files are up - a call rather than a
+dispatch, which only finds a workflow on the default branch - and it runs by hand as
+`gh workflow run publish-linux.yml -f tag=v<version>`; nothing listens for
+`release: published`. Both build and then stop short of uploading until their secrets
 exist, so they are harmless while the accounts below do not.
 
 `.github/workflows/publish.yml` does the same for winget, Scoop, Homebrew and

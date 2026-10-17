@@ -339,3 +339,25 @@ describe('the snap workflow', () => {
     expect(snapYml).toContain('source-checksum: sha256/).*|\\1$own|')
   })
 })
+
+/** The Linux managers for a stable release: called by release.yml, never dispatched and
+ *  never started by `release: published`, which a release made on the workflow's own
+ *  token does not raise. See packaging/linux.md. */
+describe('the Linux publishing workflow', () => {
+  const linux = repo('.github', 'workflows', 'publish-linux.yml')
+  const release = repo('.github', 'workflows', 'release.yml')
+
+  test('is called by release.yml with the release tag', () => {
+    expect(linux).toContain('workflow_call:')
+    expect(linux).not.toMatch(/^\s+release:\s*$/m)
+    expect(release).toMatch(
+      /uses: \.\/\.github\/workflows\/publish-linux\.yml\n\s+with:\n\s+tag: \$\{\{ needs\.version\.outputs\.tag \}\}/,
+    )
+    expect(release).not.toContain('gh workflow run publish-linux.yml')
+  })
+
+  test('publishes a stable tag and nothing else', () => {
+    const stable = "if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}"
+    expect(linux.split(stable)).toHaveLength(3)
+  })
+})
