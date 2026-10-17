@@ -290,6 +290,8 @@ same layer and says the same; see `canvas/edge.ts` and `CanvasHands.svelte`. A n
 says it the same way: a caret's name stays over it rather than fading, and a caret
 scrolled out of sight is held at the top or the foot of the page, its name behind an
 arrow pointing up or down to it (`heldCarets` in `packages/editor/src/carets.ts`).
+Pressing what is held goes to them: a note scrolls to the caret, and a canvas or a
+page note moves its camera to the hand.
 
 **The same Durable Object class, keyed by the file.** A room is named by the file's
 id, so there is already one instance in the world per file whichever kind of file it
