@@ -1169,6 +1169,7 @@ export const pa: Dictionary = {
   'Double-click to write': 'ਲਿਖਣ ਲਈ ਦੋ ਵਾਰ ਕਲਿੱਕ ਕਰੋ',
   'Another colour': 'ਹੋਰ ਰੰਗ',
   'Turn into a note': 'ਨੋਟ ਵਿੱਚ ਬਦਲੋ',
+  Arrange: 'ਤਰਤੀਬ ਦਿਓ',
   'Bring to front': 'ਸਭ ਤੋਂ ਅੱਗੇ ਲਿਆਓ',
   'Bring forward': 'ਅੱਗੇ ਲਿਆਓ',
   'Send backward': 'ਪਿੱਛੇ ਭੇਜੋ',

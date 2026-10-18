@@ -1171,6 +1171,7 @@ export const kn: Dictionary = {
   'Double-click to write': 'ಬರೆಯಲು ಎರಡು ಬಾರಿ ಕ್ಲಿಕ್',
   'Another colour': 'ಬೇರೆ ಬಣ್ಣ',
   'Turn into a note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಮಾಡಿ',
+  Arrange: 'ಜೋಡಿಸಿ',
   'Bring to front': 'ಮುಂದಕ್ಕೆ ತರಿ',
   'Bring forward': 'ಒಂದು ಹೆಜ್ಜೆ ಮುಂದೆ',
   'Send backward': 'ಒಂದು ಹೆಜ್ಜೆ ಹಿಂದೆ',

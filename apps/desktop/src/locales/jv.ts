@@ -1160,6 +1160,7 @@ export const jv: Dictionary = {
   'Double-click to write': 'Klik kaping pindho kanggo nulis',
   'Another colour': 'Warna liya',
   'Turn into a note': 'Owahi dadi cathetan',
+  Arrange: 'Tata',
   'Bring to front': 'Gawa ing ngarep banget',
   'Bring forward': 'Gawa ngarep',
   'Send backward': 'Kirim mburi',

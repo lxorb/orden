@@ -1167,6 +1167,7 @@ export const fa: Dictionary = {
   'Double-click to write': 'دو بار کلیک برای نوشتن',
   'Another colour': 'رنگ دیگر',
   'Turn into a note': 'تبدیل به یادداشت',
+  Arrange: 'چیدمان',
   'Bring to front': 'آوردن به جلوترین',
   'Bring forward': 'آوردن به جلو',
   'Send backward': 'بردن به عقب',

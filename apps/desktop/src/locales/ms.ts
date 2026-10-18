@@ -1165,6 +1165,7 @@ export const ms: Dictionary = {
   'Double-click to write': 'Klik dua kali untuk menulis',
   'Another colour': 'Warna lain',
   'Turn into a note': 'Jadikan nota',
+  Arrange: 'Susun',
   'Bring to front': 'Bawa ke hadapan',
   'Bring forward': 'Ke hadapan satu',
   'Send backward': 'Ke belakang satu',

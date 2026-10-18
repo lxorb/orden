@@ -1160,6 +1160,7 @@ export const my: Dictionary = {
   'Double-click to write': 'ရေးရန် နှစ်ချက်နှိပ်ပါ',
   'Another colour': 'အခြားအရောင်',
   'Turn into a note': 'မှတ်စုအဖြစ် ပြောင်းပါ',
+  Arrange: 'စီစဉ်ရန်',
   'Bring to front': 'အရှေ့ဆုံးသို့ ယူပါ',
   'Bring forward': 'ရှေ့သို့ယူပါ',
   'Send backward': 'နောက်သို့ပို့ပါ',

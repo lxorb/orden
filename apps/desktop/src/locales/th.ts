@@ -1151,6 +1151,7 @@ export const th: Dictionary = {
   'Double-click to write': 'ดับเบิลคลิกเพื่อเขียน',
   'Another colour': 'สีอื่น',
   'Turn into a note': 'เปลี่ยนเป็นโน้ต',
+  Arrange: 'จัดเรียง',
   'Bring to front': 'ไปหน้าสุด',
   'Bring forward': 'ขึ้นหนึ่งชั้น',
   'Send backward': 'ลงหนึ่งชั้น',

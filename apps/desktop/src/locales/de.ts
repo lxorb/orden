@@ -1178,6 +1178,7 @@ export const de: Dictionary = {
   'Double-click to write': 'Zum Schreiben doppelklicken',
   'Another colour': 'Andere Farbe',
   'Turn into a note': 'In eine Notiz umwandeln',
+  Arrange: 'Anordnen',
   'Bring to front': 'Ganz nach vorne',
   'Bring forward': 'Nach vorne holen',
   'Send backward': 'Nach hinten schieben',

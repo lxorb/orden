@@ -1201,6 +1201,7 @@ export const uk: Dictionary = {
   'Double-click to write': 'Подвійний клік для письма',
   'Another colour': 'Інший колір',
   'Turn into a note': 'Перетворити в нотатку',
+  Arrange: 'Упорядкувати',
   'Bring to front': 'На передній план',
   'Bring forward': 'Перемістити вперед',
   'Send backward': 'Перемістити назад',

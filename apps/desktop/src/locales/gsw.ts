@@ -1168,6 +1168,7 @@ export const gsw: Dictionary = {
   'Double-click to write': 'Zum Schriibe doppelklicke',
   'Another colour': 'Anderi Farb',
   'Turn into a note': 'I e Notiz umwandle',
+  Arrange: 'Aaordne',
   'Bring to front': 'Ganz nach vorne',
   'Bring forward': 'Nach vorne hole',
   'Send backward': 'Nach hine schiebe',

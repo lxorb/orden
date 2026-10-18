@@ -1144,6 +1144,7 @@ export const zhHans: Dictionary = {
   'Double-click to write': '双击开始书写',
   'Another colour': '其他颜色',
   'Turn into a note': '转为笔记',
+  Arrange: '排列',
   'Bring to front': '置于顶层',
   'Bring forward': '上移一层',
   'Send backward': '下移一层',

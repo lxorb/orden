@@ -1164,6 +1164,7 @@ export const id: Dictionary = {
   'Double-click to write': 'Klik dua kali untuk menulis',
   'Another colour': 'Warna lain',
   'Turn into a note': 'Jadikan catatan',
+  Arrange: 'Atur',
   'Bring to front': 'Bawa ke depan',
   'Bring forward': 'Majukan',
   'Send backward': 'Mundurkan',

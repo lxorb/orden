@@ -1156,6 +1156,7 @@ export const ko: Dictionary = {
   'Double-click to write': '두 번 클릭해 쓰기',
   'Another colour': '다른 색',
   'Turn into a note': '노트로 바꾸기',
+  Arrange: '정렬',
   'Bring to front': '맨 앞으로',
   'Bring forward': '앞으로',
   'Send backward': '뒤로',

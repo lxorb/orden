@@ -1176,6 +1176,7 @@ export const ml: Dictionary = {
   'Double-click to write': 'എഴുതാൻ രണ്ടുതവണ ക്ലിക്ക്',
   'Another colour': 'മറ്റൊരു നിറം',
   'Turn into a note': 'കുറിപ്പാക്കി മാറ്റുക',
+  Arrange: 'ക്രമീകരിക്കുക',
   'Bring to front': 'മുന്നിലേക്ക് കൊണ്ടുവരുക',
   'Bring forward': 'ഒരു പടി മുന്നോട്ട്',
   'Send backward': 'ഒരു പടി പിന്നോട്ട്',

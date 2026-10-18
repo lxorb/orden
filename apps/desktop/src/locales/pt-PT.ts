@@ -1183,6 +1183,7 @@ export const ptPT: Dictionary = {
   'Double-click to write': 'Clicar duas vezes para escrever',
   'Another colour': 'Outra cor',
   'Turn into a note': 'Transformar em nota',
+  Arrange: 'Organizar',
   'Bring to front': 'Trazer para a frente',
   'Bring forward': 'Trazer adiante',
   'Send backward': 'Enviar atrás',

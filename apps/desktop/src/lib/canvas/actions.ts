@@ -753,10 +753,31 @@ async function putDown(
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
+  /** Whether the menu was asked for on bare plane rather than about something:
+   *  only then is putting something down where it was asked one of its rows. The
+   *  bar over what is picked opens it about the pick, and a right click on a card
+   *  is about the card. */
+  bare: boolean
+  /** Rows shown in the menu's place, where it was opened: what pressing Arrange does. */
+  again: (rows: MenuEntry[], title: string) => void
 }
 
-/** The menu, which is the whole of what a canvas can do, written down. What a
- *  reader cannot find a key for they find here. */
+/** Groups of rows with a rule between each, leaving out the groups with nothing in
+ *  them: a rule round nothing is two rules. */
+function sections(...groups: readonly MenuEntry[][]): MenuEntry[] {
+  return groups
+    .filter((one) => one.length)
+    .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
+}
+
+/** The menu, which is the whole of what a canvas can do here, written down. What a
+ *  reader cannot find a key for they find here.
+ *
+ *  Only the rows that would do something (#350). A greyed row is a row read past on
+ *  every opening: on bare plane the menu was seventeen of them out of twenty-eight,
+ *  and taller than a laptop's window, so the export at its foot was below the fold.
+ *  Lining up, spreading out and the order of the stack go behind one row, Arrange,
+ *  which is where every drawing program keeps them. */
 export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuEntry[] {
   const picked = store.picked.length > 0
   const several = store.picked.length > 1
@@ -770,62 +791,97 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   )
   const putting = { colour: tools.colour, path: view.path }
 
-  return [
-    { label: t('Card'), run: () => void place(store, 'text', at, putting) },
-    { label: t('Note'), run: () => void place(store, 'file', at, putting) },
-    { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
-    { label: t('Link'), run: () => void place(store, 'link', at, putting) },
-    { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
-    DIVIDER,
-    { label: t('Duplicate'), disabled: !picked, run: () => run.duplicate(store) },
-    { label: t('Delete'), danger: true, disabled: !picked, run: () => run.remove(store) },
-    ...(onCard
-      ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
-      : []),
-    DIVIDER,
-    { label: t('Group'), disabled: !picked, run: () => run.group(store) },
-    { label: t('Ungroup'), disabled: !onFrame, run: () => run.ungroup(store) },
-    DIVIDER,
-    { label: t('Bring to front'), disabled: !picked, run: () => run.order(store, 'front') },
-    { label: t('Bring forward'), disabled: !picked, run: () => run.order(store, 'forward') },
-    { label: t('Send backward'), disabled: !picked, run: () => run.order(store, 'backward') },
-    { label: t('Send to back'), disabled: !picked, run: () => run.order(store, 'back') },
-    DIVIDER,
-    { label: t('Align left'), disabled: !several, run: () => run.align(store, 'left') },
-    { label: t('Align centre'), disabled: !several, run: () => run.align(store, 'centre') },
-    { label: t('Align right'), disabled: !several, run: () => run.align(store, 'right') },
-    { label: t('Align top'), disabled: !several, run: () => run.align(store, 'top') },
-    { label: t('Align middle'), disabled: !several, run: () => run.align(store, 'middle') },
-    { label: t('Align bottom'), disabled: !several, run: () => run.align(store, 'bottom') },
-    { label: t('Spread across'), disabled: !many, run: () => run.distribute(store, 'x') },
-    { label: t('Spread down'), disabled: !many, run: () => run.distribute(store, 'y') },
-    ...(onEdge
+  const arranging = arrangeRows(store, several, many)
+
+  return sections(
+    view.bare
       ? [
-          DIVIDER,
+          { label: t('Card'), run: () => void place(store, 'text', at, putting) },
+          { label: t('Note'), run: () => void place(store, 'file', at, putting) },
+          { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
+          { label: t('Link'), run: () => void place(store, 'link', at, putting) },
+          { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
+        ]
+      : [],
+    picked
+      ? [
+          { label: t('Duplicate'), run: () => run.duplicate(store) },
+          { label: t('Delete'), danger: true, run: () => run.remove(store) },
+          ...(onCard
+            ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
+            : []),
+          { label: t('Group'), run: () => run.group(store) },
+          ...(onFrame ? [{ label: t('Ungroup'), run: () => run.ungroup(store) }] : []),
+          {
+            label: t('Arrange'),
+            more: () => Promise.resolve(arranging),
+            run: () => view.again(arranging, t('Arrange')),
+          },
+        ]
+      : [],
+    onEdge
+      ? [
           { label: t('Arrow at the end'), run: () => run.ends(store, false, true) },
           { label: t('Arrow at the start'), run: () => run.ends(store, true, false) },
           { label: t('Arrows at both ends'), run: () => run.ends(store, true, true) },
           { label: t('No arrows'), run: () => run.ends(store, false, false) },
         ]
-      : []),
-    DIVIDER,
-    { label: t('Find on the canvas'), run: view.onfind },
-    { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
-    {
-      label: t('Zoom to what is picked'),
-      disabled: !picked,
-      run: () => store.frame(view.width, view.height),
-    },
-    {
-      label: view.narrowed ? t('Show the whole canvas') : t('Narrow to what is picked'),
-      disabled: !picked && !view.narrowed,
-      run: view.onnarrow,
-    },
-    DIVIDER,
-    { label: t('Export as PNG'), run: () => void exportAs(store, view, 'png') },
-    { label: t('Export as SVG'), run: () => void exportAs(store, view, 'svg') },
-    { label: t('Export as PDF'), run: () => void exportAs(store, view, 'pdf') },
-  ]
+      : [],
+    [
+      { label: t('Find on the canvas'), run: view.onfind },
+      { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
+      ...(picked
+        ? [
+            {
+              label: t('Zoom to what is picked'),
+              run: () => store.frame(view.width, view.height),
+            },
+          ]
+        : []),
+      ...(picked || view.narrowed
+        ? [
+            {
+              label: view.narrowed ? t('Show the whole canvas') : t('Narrow to what is picked'),
+              run: view.onnarrow,
+            },
+          ]
+        : []),
+    ],
+    [
+      { label: t('Export as PNG'), run: () => void exportAs(store, view, 'png') },
+      { label: t('Export as SVG'), run: () => void exportAs(store, view, 'svg') },
+      { label: t('Export as PDF'), run: () => void exportAs(store, view, 'pdf') },
+    ],
+  )
+}
+
+/** What Arrange holds for what is picked: the order of the stack for anything,
+ *  lining up for two or more, spreading out for three or more. */
+function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuEntry[] {
+  return sections(
+    [
+      { label: t('Bring to front'), run: () => run.order(store, 'front') },
+      { label: t('Bring forward'), run: () => run.order(store, 'forward') },
+      { label: t('Send backward'), run: () => run.order(store, 'backward') },
+      { label: t('Send to back'), run: () => run.order(store, 'back') },
+    ],
+    several
+      ? [
+          { label: t('Align left'), run: () => run.align(store, 'left') },
+          { label: t('Align centre'), run: () => run.align(store, 'centre') },
+          { label: t('Align right'), run: () => run.align(store, 'right') },
+          { label: t('Align top'), run: () => run.align(store, 'top') },
+          { label: t('Align middle'), run: () => run.align(store, 'middle') },
+          { label: t('Align bottom'), run: () => run.align(store, 'bottom') },
+        ]
+      : [],
+    many
+      ? [
+          { label: t('Spread across'), run: () => run.distribute(store, 'x') },
+          { label: t('Spread down'), run: () => run.distribute(store, 'y') },
+        ]
+      : [],
+  )
 }
 
 async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' | 'pdf') {

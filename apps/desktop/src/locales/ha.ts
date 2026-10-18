@@ -1175,6 +1175,7 @@ export const ha: Dictionary = {
   'Double-click to write': 'Danna sau biyu don rubutawa',
   'Another colour': 'Wani launi',
   'Turn into a note': 'Juya zuwa bayanin kula',
+  Arrange: 'Tsara',
   'Bring to front': 'Kawo gaba kwata-kwata',
   'Bring forward': 'Kawo gaba',
   'Send backward': 'Tura baya',

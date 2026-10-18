@@ -1152,6 +1152,7 @@ export const am: Dictionary = {
   'Double-click to write': 'ለመጻፍ ሁለት ጊዜ ጫን',
   'Another colour': 'ሌላ ቀለም',
   'Turn into a note': 'ወደ ማስታወሻ ቀይር',
+  Arrange: 'አደራጅ',
   'Bring to front': 'ወደ ፊት አምጣ',
   'Bring forward': 'አንድ ወደ ፊት አምጣ',
   'Send backward': 'አንድ ወደ ኋላ ላክ',

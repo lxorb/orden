@@ -1178,6 +1178,7 @@ export const fil: Dictionary = {
   'Double-click to write': 'I-double click para sumulat',
   'Another colour': 'Ibang kulay',
   'Turn into a note': 'Gawing tala',
+  Arrange: 'Ayusin',
   'Bring to front': 'Ilagay sa unahan',
   'Bring forward': 'Isulong',
   'Send backward': 'Iurong',

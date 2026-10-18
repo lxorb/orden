@@ -1163,6 +1163,7 @@ export const gu: Dictionary = {
   'Double-click to write': 'લખવા બે વાર ક્લિક કરો',
   'Another colour': 'બીજો રંગ',
   'Turn into a note': 'નોંધમાં ફેરવો',
+  Arrange: 'ગોઠવો',
   'Bring to front': 'સૌથી આગળ લાવો',
   'Bring forward': 'આગળ લાવો',
   'Send backward': 'પાછળ મોકલો',

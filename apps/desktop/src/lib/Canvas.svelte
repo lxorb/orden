@@ -1403,11 +1403,17 @@
     }
   }
 
-  function showMenu(point: Point) {
+  /** The menu, at a point on the plane. `about` is whether it was asked about what
+   *  is picked - the bar over it - rather than about wherever the point is. */
+  function showMenu(point: Point, about = false) {
     const found = hitFor(point, viewport.touch)
     if (found.node && !store.isPicked(found.node)) store.pick(found.node)
     if (found.edge && !store.isPicked(found.edge)) store.pick(found.edge)
     if (found.stroke && !store.isPicked(found.stroke)) store.pick(found.stroke)
+    // Anything the point is on - a card, a connector, ink, or the box round what the
+    // lasso caught - makes the menu about that rather than about the bare plane.
+    const bare =
+      !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
 
     const rect = host?.getBoundingClientRect()
     const screen = {
@@ -1415,9 +1421,13 @@
       clientY: (rect?.top ?? 0) + (point.y - camera.y) * camera.scale + height / 2,
     }
 
+    const near = viewport.touch
     menu.show(
       new MouseEvent('contextmenu', screen),
       canvasMenu(store, point, {
+        bare,
+        again: (rows, title) =>
+          menu.show(new MouseEvent('contextmenu', screen), rows, { title, near }),
         path: tab.path,
         name: tab.name,
         palette,
@@ -1430,7 +1440,7 @@
         },
         onfind: () => (finding = true),
       }),
-      { title: t('Canvas'), near: viewport.touch },
+      { title: t('Canvas'), near },
     )
   }
 
@@ -2059,7 +2069,7 @@
       ondelete={() => run.remove(store)}
       ongroup={() => (onFrame ? run.ungroup(store) : run.group(store))}
       onmore={() => {
-        if (pickedSpan) showMenu({ x: pickedSpan.x + pickedSpan.width / 2, y: pickedSpan.y })
+        if (pickedSpan) showMenu({ x: pickedSpan.x + pickedSpan.width / 2, y: pickedSpan.y }, true)
       }}
     />
   {/if}

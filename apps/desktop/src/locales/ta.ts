@@ -1176,6 +1176,7 @@ export const ta: Dictionary = {
   'Double-click to write': 'எழுத இருமுறை கிளிக்',
   'Another colour': 'வேறு நிறம்',
   'Turn into a note': 'குறிப்பாக மாற்று',
+  Arrange: 'ஒழுங்கமை',
   'Bring to front': 'முன்னால் கொண்டுவா',
   'Bring forward': 'ஒரு படி முன்',
   'Send backward': 'ஒரு படி பின்',

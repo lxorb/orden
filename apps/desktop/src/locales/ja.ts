@@ -1163,6 +1163,7 @@ export const ja: Dictionary = {
   'Double-click to write': 'ダブルクリックで書く',
   'Another colour': '別の色',
   'Turn into a note': 'ノートにする',
+  Arrange: '整列',
   'Bring to front': '最前面へ',
   'Bring forward': '前面へ',
   'Send backward': '背面へ',

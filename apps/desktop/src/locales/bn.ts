@@ -1163,6 +1163,7 @@ export const bn: Dictionary = {
   'Double-click to write': 'লিখতে দুবার ক্লিক',
   'Another colour': 'আরেকটি রং',
   'Turn into a note': 'নোটে বদলান',
+  Arrange: 'সাজান',
   'Bring to front': 'একেবারে সামনে',
   'Bring forward': 'সামনে আনুন',
   'Send backward': 'পিছনে পাঠান',

@@ -1157,6 +1157,7 @@ export const vi: Dictionary = {
   'Double-click to write': 'Nhấp đôi để viết',
   'Another colour': 'Màu khác',
   'Turn into a note': 'Biến thành ghi chú',
+  Arrange: 'Sắp xếp',
   'Bring to front': 'Đưa lên trước nhất',
   'Bring forward': 'Đưa lên một bậc',
   'Send backward': 'Đưa xuống một bậc',

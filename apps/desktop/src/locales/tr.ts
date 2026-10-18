@@ -1168,6 +1168,7 @@ export const tr: Dictionary = {
   'Double-click to write': 'Yazmak için iki kez tıkla',
   'Another colour': 'Başka bir renk',
   'Turn into a note': 'Nota dönüştür',
+  Arrange: 'Düzenle',
   'Bring to front': 'En öne getir',
   'Bring forward': 'Öne getir',
   'Send backward': 'Arkaya gönder',

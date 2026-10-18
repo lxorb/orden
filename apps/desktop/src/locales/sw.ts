@@ -1174,6 +1174,7 @@ export const sw: Dictionary = {
   'Double-click to write': 'Bofya mara mbili kuandika',
   'Another colour': 'Rangi nyingine',
   'Turn into a note': 'Fanya dokezo',
+  Arrange: 'Panga',
   'Bring to front': 'Lete mbele kabisa',
   'Bring forward': 'Lete mbele',
   'Send backward': 'Rudisha nyuma',

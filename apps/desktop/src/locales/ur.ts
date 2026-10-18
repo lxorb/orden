@@ -1164,6 +1164,7 @@ export const ur: Dictionary = {
   'Double-click to write': 'لکھنے کے لیے دو بار کلک',
   'Another colour': 'دوسرا رنگ',
   'Turn into a note': 'نوٹ بنا دیں',
+  Arrange: 'ترتیب دیں',
   'Bring to front': 'سب سے آگے لائیں',
   'Bring forward': 'آگے لائیں',
   'Send backward': 'پیچھے بھیجیں',

@@ -1166,6 +1166,7 @@ export const hi: Dictionary = {
   'Double-click to write': 'लिखने के लिए दो बार क्लिक',
   'Another colour': 'दूसरा रंग',
   'Turn into a note': 'नोट बना दें',
+  Arrange: 'व्यवस्थित करें',
   'Bring to front': 'सबसे आगे लाएँ',
   'Bring forward': 'आगे लाएँ',
   'Send backward': 'पीछे भेजें',

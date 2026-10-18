@@ -1203,6 +1203,7 @@ export const ru: Dictionary = {
   'Double-click to write': 'Двойной щелчок для письма',
   'Another colour': 'Другой цвет',
   'Turn into a note': 'Превратить в заметку',
+  Arrange: 'Упорядочить',
   'Bring to front': 'На передний план',
   'Bring forward': 'Переместить вперёд',
   'Send backward': 'Переместить назад',

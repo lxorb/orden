@@ -1200,6 +1200,7 @@ export const pl: Dictionary = {
   'Double-click to write': 'Kliknij dwukrotnie, aby pisać',
   'Another colour': 'Inny kolor',
   'Turn into a note': 'Zamień w notatkę',
+  Arrange: 'Rozmieść',
   'Bring to front': 'Na wierzch',
   'Bring forward': 'Wyżej',
   'Send backward': 'Niżej',

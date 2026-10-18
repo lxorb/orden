@@ -1163,6 +1163,7 @@ export const ps: Dictionary = {
   'Double-click to write': 'د ليکلو لپاره دوه ځله کليک',
   'Another colour': 'بل رنګ',
   'Turn into a note': 'يادښت ته بدلول',
+  Arrange: 'ترتیب',
   'Bring to front': 'تر ټولو مخکې راوستل',
   'Bring forward': 'مخکې راوستل',
   'Send backward': 'وروسته لېږل',

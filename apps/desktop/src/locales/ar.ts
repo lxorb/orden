@@ -1210,6 +1210,7 @@ export const ar: Dictionary = {
   'Double-click to write': 'انقر نقرًا مزدوجًا للكتابة',
   'Another colour': 'لون آخر',
   'Turn into a note': 'تحويل إلى ملاحظة',
+  Arrange: 'ترتيب',
   'Bring to front': 'إحضار إلى المقدمة',
   'Bring forward': 'إحضار للأمام',
   'Send backward': 'إرسال للخلف',

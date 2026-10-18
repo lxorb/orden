@@ -1184,6 +1184,7 @@ export const fr: Dictionary = {
   'Double-click to write': 'Double-cliquez pour écrire',
   'Another colour': 'Autre couleur',
   'Turn into a note': 'Transformer en note',
+  Arrange: 'Disposer',
   'Bring to front': 'Mettre au premier plan',
   'Bring forward': 'Avancer',
   'Send backward': 'Reculer',

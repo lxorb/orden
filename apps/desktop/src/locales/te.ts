@@ -1168,6 +1168,7 @@ export const te: Dictionary = {
   'Double-click to write': 'రాయడానికి రెండుసార్లు క్లిక్',
   'Another colour': 'మరో రంగు',
   'Turn into a note': 'నోట్‌గా మార్చు',
+  Arrange: 'అమర్చు',
   'Bring to front': 'ముందుకు తే',
   'Bring forward': 'ఒక అడుగు ముందుకు',
   'Send backward': 'ఒక అడుగు వెనుకకు',
