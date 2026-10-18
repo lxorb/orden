@@ -4,12 +4,14 @@ import { toBase64 } from '../bytes'
 import type { BrowserProfile } from './browsers'
 import * as chromium from './chromium.fixture'
 import { BOOKMARKS, SESSION } from './firefox.fixture'
+import * as safariFiles from './safari.fixture'
 import type { Planned } from './plan'
 import { mozLz4Of } from './zen.fixture'
 
 /** What each of the crate's answers is, by command, and what it was asked. */
 const files = new Map<string, unknown>()
 let places: unknown = BOOKMARKS
+let safari: unknown = null
 const asked: string[] = []
 
 /** Every import written, space by space. */
@@ -22,7 +24,7 @@ const packed = (value: unknown) =>
   toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(value))))
 
 vi.mock('../tauri', () => ({
-  invoke: (command: string, args: Record<string, unknown>) => {
+  invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push(`${command} ${String(args.file ?? args.profile)}`)
     if (command === 'read_browser_file') {
       const held = files.get(String(args.file))
@@ -33,6 +35,12 @@ vi.mock('../tauri', () => ({
         ? Promise.reject(new Error('locked'))
         : Promise.resolve(JSON.stringify(places))
     }
+    if (command === 'read_safari') {
+      return typeof safari === 'string'
+        ? Promise.reject(new Error(safari))
+        : Promise.resolve(JSON.stringify(safari))
+    }
+    if (command === 'open_full_disk_access') return Promise.resolve()
     if (command === 'read_note') return Promise.reject(new Error('not found'))
     return Promise.reject(new Error(`no ${command} here`))
   },
@@ -100,6 +108,7 @@ const FIREFOX: BrowserProfile = {
 beforeEach(() => {
   files.clear()
   places = BOOKMARKS
+  safari = null
   asked.length = 0
   written.length = 0
   spaces.length = 0
@@ -184,5 +193,38 @@ describe('a Chrome profile brought into nib', () => {
       'Chrome keeps its open tabs locked, so only its bookmarks came. ' +
         '1 page not on the web stays behind',
     ])
+  })
+})
+
+const SAFARI: BrowserProfile = {
+  browser: 'safari',
+  name: 'Safari',
+  path: '/Users/me/Library/Safari',
+  files: [],
+}
+
+describe('Safari brought into nib', () => {
+  test('is a space of its tab groups, its pinned tab, its bookmarks and its Reading List', async () => {
+    safari = { bookmarks: safariFiles.BOOKMARKS, tabs: safariFiles.TABS, session: null }
+
+    const space = await landBrowser(SAFARI, false)
+
+    expect(space.name).toBe('Safari')
+    const paths = written[0]?.files.map((one) => one.path) ?? []
+    expect(paths).toContain('Cars/One.url')
+    expect(paths).toContain('Bookmarks/Favorites/Work/Wiki.url')
+    expect(paths).toContain('Reading List/A long read.url')
+    expect(marks).toEqual([{ kind: 'note', path: 'Mail.url', text: '' }])
+    expect(said).toEqual(['1 page not on the web stays behind'])
+  })
+
+  test('opens Full Disk Access and says why where macOS kept the files back', async () => {
+    safari = 'no access'
+
+    await expect(landBrowser(SAFARI, false)).rejects.toThrow(
+      'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.',
+    )
+    expect(asked).toContain('open_full_disk_access undefined')
+    expect(spaces).toEqual([])
   })
 })

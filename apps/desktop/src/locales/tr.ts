@@ -43,6 +43,9 @@ export const tr: Dictionary = {
     one: 'Web’de olmayan {count} sayfa geride kalıyor',
     other: 'Web’de olmayan {count} sayfa geride kalıyor',
   },
+  'Reading List': 'Okuma Listesi',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS, Safari’nin sekmelerini ve yer işaretlerini Tam Disk Erişimi’nin arkasında tutar. Orden’ı orada açıp yeniden deneyin.',
   // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',

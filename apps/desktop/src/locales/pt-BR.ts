@@ -44,6 +44,9 @@ export const ptBR: Dictionary = {
     one: '{count} página fora da web fica para trás',
     other: '{count} páginas fora da web ficam para trás',
   },
+  'Reading List': 'Lista de Leitura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'O macOS guarda as abas e os favoritos do Safari atrás do Acesso Total ao Disco. Ative o Orden lá e tente de novo.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

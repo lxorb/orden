@@ -42,6 +42,9 @@ export const gu: Dictionary = {
     one: 'વેબ પર ન હોય એવું {count} પાનું રહી ગયું',
     other: 'વેબ પર ન હોય એવાં {count} પાનાં રહી ગયાં',
   },
+  'Reading List': 'વાંચન સૂચિ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safariના ટૅબ અને બુકમાર્ક ફુલ ડિસ્ક ઍક્સેસ પાછળ રાખે છે. ત્યાં Orden ચાલુ કરો, પછી ફરી પૂછો.',
   // Settings: note types
   'Page note': 'પાનાંવાળી નોંધ',
   'Web note': 'વેબ નોંધ',

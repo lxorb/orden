@@ -39,6 +39,9 @@ export const id: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} mengunci tab yang terbuka, jadi hanya bookmark-nya yang ikut.',
   '{count} pages not on the web stay behind': '{count} halaman yang tidak ada di web tertinggal',
+  'Reading List': 'Daftar Bacaan',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS menyimpan tab dan markah Safari di balik Akses Disk Penuh. Nyalakan Orden di sana, lalu coba lagi.',
   // Settings: note types
   'Page note': 'Catatan halaman',
   'Web note': 'Catatan web',

@@ -2,18 +2,20 @@
  *
  *  The crate lists them out of each browser's own list of profiles and hands over the
  *  bytes of a file it has judged to be one of theirs; see browser_profiles.rs. What
- *  the bytes say is read here and in each browser's reader (firefox.ts, chromium.ts). Desktop
+ *  the bytes say is read here and in each browser's reader (firefox.ts, chromium.ts);
+ *  Safari's files the crate reads whole and hands over as JSON (safari.ts). Desktop
  *  only: everywhere else there are no profiles to read. */
 
 import { fromBase64 } from '../bytes'
 import { invoke, isDesktop } from '../tauri'
 
-/** The browsers the import reads besides Zen, in the order the rows show them. All
- *  but Firefox are Chromium, and read alike (chromium.ts). */
-export type BrowserId = 'firefox' | 'chrome' | 'edge' | 'brave' | 'chromium' | 'vivaldi'
+/** The browsers the import reads besides Zen, in the order the rows show them: Safari,
+ *  a Mac's own, first. Chrome and the rest are Chromium, and read alike (chromium.ts). */
+export type BrowserId = 'safari' | 'firefox' | 'chrome' | 'edge' | 'brave' | 'chromium' | 'vivaldi'
 
 /** A browser's name is its name in every language, as an app's is in the import. */
 export const BROWSER_NAMES: Record<BrowserId, string> = {
+  safari: 'Safari',
   firefox: 'Firefox',
   chrome: 'Chrome',
   edge: 'Edge',

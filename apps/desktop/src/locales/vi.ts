@@ -39,6 +39,9 @@ export const vi: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} khóa các thẻ đang mở, nên chỉ dấu trang được mang sang.',
   '{count} pages not on the web stay behind': '{count} trang không có trên web được để lại',
+  'Reading List': 'Danh sách đọc',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS giữ các tab và dấu trang của Safari sau Quyền truy cập toàn bộ ổ đĩa. Hãy bật Orden ở đó rồi thử lại.',
   // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',

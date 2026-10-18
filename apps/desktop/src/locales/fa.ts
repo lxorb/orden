@@ -42,6 +42,9 @@ export const fa: Dictionary = {
     one: '{count} صفحه که روی وب نیست جا ماند',
     other: '{count} صفحه که روی وب نیستند جا ماندند',
   },
+  'Reading List': 'فهرست مطالعه',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS زبانه‌ها و نشانک‌های Safari را پشت دسترسی کامل به دیسک نگه می‌دارد. Orden را آنجا روشن کنید و دوباره بخواهید.',
   // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',

@@ -44,6 +44,9 @@ export const ptPT: Dictionary = {
     one: '{count} página fora da web fica para trás',
     other: '{count} páginas fora da web ficam para trás',
   },
+  'Reading List': 'Lista de leitura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'O macOS guarda os separadores e os marcadores do Safari atrás do Acesso total ao disco. Ative o Orden aí e tente novamente.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

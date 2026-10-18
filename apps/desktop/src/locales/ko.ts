@@ -39,6 +39,9 @@ export const ko: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser}는 열린 탭을 잠가 두므로 북마크만 가져왔습니다.',
   '{count} pages not on the web stay behind': '웹에 없는 페이지 {count}개는 가져오지 않습니다',
+  'Reading List': '읽기 목록',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS는 Safari의 탭과 북마크를 전체 디스크 접근 권한 뒤에 둡니다. 그곳에서 Orden을 켠 다음 다시 시도하세요.',
   // Settings: note types
   'Page note': '페이지 노트',
   'Web note': '웹 노트',

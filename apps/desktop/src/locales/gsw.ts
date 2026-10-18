@@ -43,6 +43,9 @@ export const gsw: Dictionary = {
     one: '{count} Siite usserhalb vom Web blibt zrugg',
     other: '{count} Siite usserhalb vom Web blibed zrugg',
   },
+  'Reading List': 'Leseliste',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS bhaltet d Tabs und Lesezeiche vo Safari hinter em Vollzuegriff uf d Festplatte. Schalt Orden det ii und probiers nomal.',
   // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',

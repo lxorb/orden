@@ -43,6 +43,9 @@ export const ta: Dictionary = {
     one: 'இணையத்தில் இல்லாத {count} பக்கம் விடப்பட்டது',
     other: 'இணையத்தில் இல்லாத {count} பக்கங்கள் விடப்பட்டன',
   },
+  'Reading List': 'படிக்கும் பட்டியல்',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-இன் தாவல்களையும் புத்தகக்குறிகளையும் முழு வட்டு அணுகலுக்குப் பின்னால் வைத்திருக்கிறது. அங்கே Orden-ஐ இயக்கி, மீண்டும் கேளுங்கள்.',
   // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',

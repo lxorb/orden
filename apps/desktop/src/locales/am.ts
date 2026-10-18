@@ -42,6 +42,9 @@ export const am: Dictionary = {
     one: 'በድር ላይ ያልሆነ {count} ገጽ ቀርቷል',
     other: 'በድር ላይ ያልሆኑ {count} ገጾች ቀርተዋል',
   },
+  'Reading List': 'የንባብ ዝርዝር',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS የSafari ትሮችን እና ዕልባቶችን ከሙሉ የዲስክ መዳረሻ ጀርባ ያስቀምጣል። እዚያ Ordenን ያብሩ፣ ከዚያ እንደገና ይጠይቁ።',
   // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',

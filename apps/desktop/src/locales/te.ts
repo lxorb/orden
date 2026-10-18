@@ -43,6 +43,9 @@ export const te: Dictionary = {
     one: 'వెబ్‌లో లేని {count} పేజీ వదిలివేయబడింది',
     other: 'వెబ్‌లో లేని {count} పేజీలు వదిలివేయబడ్డాయి',
   },
+  'Reading List': 'పఠన జాబితా',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari ట్యాబ్‌లు, బుక్‌మార్క్‌లను పూర్తి డిస్క్ యాక్సెస్ వెనుక ఉంచుతుంది. అక్కడ Orden ను ఆన్ చేసి, మళ్లీ అడగండి.',
   // Settings: note types
   'Page note': 'పేజీ నోట్',
   'Web note': 'వెబ్ నోట్',

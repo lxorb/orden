@@ -42,6 +42,9 @@ export const mr: Dictionary = {
     one: 'वेबवर नसलेले {count} पान मागे राहिले',
     other: 'वेबवर नसलेली {count} पाने मागे राहिली',
   },
+  'Reading List': 'वाचन सूची',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari चे टॅब आणि बुकमार्क फुल डिस्क ॲक्सेसच्या मागे ठेवतो. तिथे Orden सुरू करा, मग पुन्हा प्रयत्न करा.',
   // Settings: note types
   'Page note': 'पानांची नोंद',
   'Web note': 'वेब नोंद',

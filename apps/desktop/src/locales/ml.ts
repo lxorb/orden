@@ -43,6 +43,9 @@ export const ml: Dictionary = {
     one: 'വെബിൽ ഇല്ലാത്ത {count} പേജ് ഒഴിവാക്കി',
     other: 'വെബിൽ ഇല്ലാത്ത {count} പേജുകൾ ഒഴിവാക്കി',
   },
+  'Reading List': 'വായനാ ലിസ്റ്റ്',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-യുടെ ടാബുകളും ബുക്ക്‌മാർക്കുകളും ഫുൾ ഡിസ്ക് ആക്സസിന് പിന്നിൽ സൂക്ഷിക്കുന്നു. അവിടെ Orden ഓൺ ചെയ്ത്, വീണ്ടും ശ്രമിക്കുക.',
   // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',

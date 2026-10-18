@@ -46,6 +46,9 @@ export const ar: Dictionary = {
     two: 'صفحات ليست على الويب بقيت مكانها: {count}',
     zero: 'صفحات ليست على الويب بقيت مكانها: {count}',
   },
+  'Reading List': 'قائمة القراءة',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'يحفظ macOS علامات تبويب Safari وإشاراته المرجعية خلف الوصول الكامل للقرص. فعّل Orden هناك، ثم اطلب مجددًا.',
   // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',

@@ -42,6 +42,9 @@ export const bn: Dictionary = {
     one: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
     other: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
   },
+  'Reading List': 'রিডিং লিস্ট',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-র ট্যাব আর বুকমার্ক ফুল ডিস্ক অ্যাক্সেসের পেছনে রাখে। সেখানে Orden চালু করুন, তারপর আবার চেষ্টা করুন।',
   // Settings: note types
   'Page note': 'পাতার নোট',
   'Web note': 'ওয়েব নোট',

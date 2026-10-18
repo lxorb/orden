@@ -45,6 +45,9 @@ export const uk: Dictionary = {
     one: 'Сторінок не з інтернету, що лишаються: {count}',
     other: 'Сторінок не з інтернету, що лишаються: {count}',
   },
+  'Reading List': 'Список читання',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS тримає вкладки й закладки Safari за повним доступом до диска. Увімкніть там Orden і спробуйте знову.',
   // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',

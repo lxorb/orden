@@ -42,6 +42,9 @@ export const ur: Dictionary = {
     one: 'ویب پر نہ ہونے والا {count} صفحہ پیچھے رہ گیا',
     other: 'ویب پر نہ ہونے والے {count} صفحات پیچھے رہ گئے',
   },
+  'Reading List': 'ریڈنگ لسٹ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS سفاری کے ٹیب اور بُک مارکس کو فل ڈسک ایکسیس کے پیچھے رکھتا ہے۔ وہاں Orden آن کریں، پھر دوبارہ کوشش کریں۔',
   // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',

@@ -17,6 +17,7 @@ import type { Lost } from './plan'
 import type { Sidebar } from './sidebar'
 import { landSpaces } from './sidebar-landing'
 import { sidebarImport } from './sidebar-plan'
+import { safariSidebar } from './safari'
 import { readSnss, type SnssSession } from './snss'
 import { invoke } from '../tauri'
 
@@ -35,7 +36,12 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} · ${profile.name}` : browser
   const firefox = profile.browser === 'firefox'
-  const read = firefox ? await readFirefox(profile, name) : await readChromium(profile, name)
+  const read =
+    profile.browser === 'safari'
+      ? await readSafari(name)
+      : firefox
+        ? await readFirefox(profile, name)
+        : await readChromium(profile, name)
   const nothing = t('Nothing could be read out of {browser}.', { browser })
   if (!read) throw new Error(nothing)
 
@@ -68,6 +74,8 @@ function folderWords(): FolderWords {
     menu: t('Bookmarks menu'),
     other: t('Other bookmarks'),
     mobile: t('Mobile bookmarks'),
+    favorites: t('Favorites'),
+    readingList: t('Reading List'),
   }
 }
 
@@ -129,6 +137,43 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
         ]
       : []
   return { sidebar: chromiumSidebar(session, bookmarks, name, folderWords()), lost }
+}
+
+/** What the crate answers when macOS would not let Safari's files be read. */
+const NO_ACCESS = 'no access'
+
+/** Safari's tabs, bookmarks and Reading List, read whole by the crate. Where macOS
+ *  keeps them behind Full Disk Access, the setting is opened and the reason said:
+ *  a line naming a permission and leaving the reader to find it asks twice. */
+async function readSafari(name: string): Promise<Read | null> {
+  let said: string
+  try {
+    said = await invoke<string>('read_safari')
+  } catch (error) {
+    if (error === NO_ACCESS || (error instanceof Error && error.message === NO_ACCESS)) {
+      await invoke('open_full_disk_access').catch(() => undefined)
+      throw new Error(
+        t(
+          'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.',
+        ),
+        { cause: error },
+      )
+    }
+    return null
+  }
+  const files = JSON.parse(said) as { bookmarks?: unknown; tabs?: unknown; session?: unknown }
+  return {
+    sidebar: safariSidebar(
+      {
+        bookmarks: files.bookmarks ?? null,
+        tabs: files.tabs ?? null,
+        session: files.session ?? null,
+      },
+      name,
+      folderWords(),
+    ),
+    lost: [],
+  }
 }
 
 /** What a `.jsonlz4` holds, or null for one that is not whole. */

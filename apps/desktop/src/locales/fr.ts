@@ -44,6 +44,9 @@ export const fr: Dictionary = {
     one: '{count} page hors du Web reste en arrière',
     other: '{count} pages hors du Web restent en arrière',
   },
+  'Reading List': 'Liste de lecture',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS garde les onglets et les signets de Safari derrière l’accès complet au disque. Activez Orden à cet endroit, puis réessayez.',
   // Settings: note types
   'Page note': 'Note en pages',
   'Web note': 'Note web',

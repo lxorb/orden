@@ -42,6 +42,9 @@ export const ps: Dictionary = {
     one: '{count} پاڼه چې په وېب کې نه ده پاتې شوه',
     other: '{count} پاڼې چې په وېب کې نه دي پاتې شوې',
   },
+  'Reading List': 'د لوستلو لېست',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS د Safari ټبونه او نښې د ډیسک بشپړ لاسرسي شاته ساتي. هلته Orden چالان کړئ، بیا بیا وغواړئ.',
   // Settings: note types
   'Page note': 'د مخونو يادښت',
   'Web note': 'ویب يادښت',

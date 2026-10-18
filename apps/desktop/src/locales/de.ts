@@ -43,6 +43,9 @@ export const de: Dictionary = {
     one: '{count} Seite außerhalb des Webs bleibt zurück',
     other: '{count} Seiten außerhalb des Webs bleiben zurück',
   },
+  'Reading List': 'Leseliste',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS hält die Tabs und Lesezeichen von Safari hinter Festplattenvollzugriff. Schalte Orden dort ein und versuche es noch einmal.',
   // Settings: note types
   'Page note': 'Seitennotiz',
   'Web note': 'Webnotiz',

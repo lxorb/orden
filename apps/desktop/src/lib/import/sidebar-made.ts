@@ -17,6 +17,9 @@ export interface FolderWords {
   menu: string
   other: string
   mobile: string
+  /** Safari's name for its bar, and its Reading List. */
+  favorites: string
+  readingList: string
 }
 
 /** What a browser's JSON said, read field by field. */

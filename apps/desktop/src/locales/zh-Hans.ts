@@ -39,6 +39,9 @@ export const zhHans: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} 将打开的标签页加密保存，所以只带来了书签。',
   '{count} pages not on the web stay behind': '{count} 个不在网上的页面没有带来',
+  'Reading List': '阅读列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 将 Safari 的标签页和书签放在“完全磁盘访问权限”之后。请在那里打开 Orden，然后再试一次。',
   // Settings: note types
   'Page note': '分页笔记',
   'Web note': '网页笔记',

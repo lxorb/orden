@@ -39,6 +39,9 @@ export const zhHant: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} 將開啟的分頁加密保存，所以只帶來了書籤。',
   '{count} pages not on the web stay behind': '{count} 個不在網路上的頁面沒有帶來',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 的分頁和書籤放在「完整磁碟取用權」之後。請在那裡開啟 Orden，然後再試一次。',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

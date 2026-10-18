@@ -42,6 +42,9 @@ export const fil: Dictionary = {
     one: '{count} pahinang wala sa web ang naiwan',
     other: '{count} pahinang wala sa web ang naiwan',
   },
+  'Reading List': 'Listahan ng Babasahin',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'Itinatago ng macOS ang mga tab at bookmark ng Safari sa likod ng Full Disk Access. I-on doon ang Orden, saka subukan ulit.',
   // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',

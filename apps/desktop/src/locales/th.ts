@@ -39,6 +39,9 @@ export const th: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} ล็อกแท็บที่เปิดอยู่ไว้ จึงนำมาได้เฉพาะบุ๊กมาร์ก',
   '{count} pages not on the web stay behind': 'หน้าที่ไม่ได้อยู่บนเว็บ {count} หน้าไม่ได้นำมา',
+  'Reading List': 'รายการอ่าน',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS เก็บแท็บและบุ๊กมาร์กของ Safari ไว้หลังการเข้าถึงดิสก์เต็มรูปแบบ เปิด Orden ที่นั่นแล้วลองอีกครั้ง',
   // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',

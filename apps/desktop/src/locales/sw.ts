@@ -43,6 +43,9 @@ export const sw: Dictionary = {
     one: 'Ukurasa {count} usio kwenye wavuti umebaki',
     other: 'Kurasa {count} zisizo kwenye wavuti zimebaki',
   },
+  'Reading List': 'Orodha ya Kusoma',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS huweka vichupo na alamisho za Safari nyuma ya Ufikiaji Kamili wa Diski. Washa Orden hapo, kisha uombe tena.',
   // Settings: note types
   'Page note': 'Dokezo la kurasa',
   'Web note': 'Dokezo la wavuti',

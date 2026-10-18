@@ -17,6 +17,8 @@ const WORDS: FolderWords = {
   menu: 'Bookmarks menu',
   other: 'Other bookmarks',
   mobile: 'Mobile bookmarks',
+  favorites: 'Favorites',
+  readingList: 'Reading List',
 }
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')

@@ -39,6 +39,9 @@ export const yue: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} 將開咗嘅分頁鎖住咗，所以淨係帶到書籤。',
   '{count} pages not on the web stay behind': '唔喺網上嘅 {count} 個頁面留低咗',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 嘅分頁同書籤放咗喺「完全磁碟取用權限」後面。喺嗰度開咗 Orden，再試多次。',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

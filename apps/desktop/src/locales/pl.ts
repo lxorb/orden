@@ -45,6 +45,9 @@ export const pl: Dictionary = {
     one: 'Stron spoza sieci, które zostają: {count}',
     other: 'Stron spoza sieci, które zostają: {count}',
   },
+  'Reading List': 'Lista Czytelnia',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS trzyma karty i zakładki Safari za Pełnym dostępem do dysku. Włącz tam Orden, a potem spróbuj ponownie.',
   // Settings: note types
   'Page note': 'Notatka ze stronami',
   'Web note': 'Notatka internetowa',

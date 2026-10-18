@@ -45,6 +45,9 @@ export const ru: Dictionary = {
     one: 'Страниц не из интернета, которые остаются: {count}',
     other: 'Страниц не из интернета, которые остаются: {count}',
   },
+  'Reading List': 'Список для чтения',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS держит вкладки и закладки Safari за полным доступом к диску. Включите там Orden и попробуйте снова.',
   // Settings: note types
   'Page note': 'Заметка со страницами',
   'Web note': 'Веб-заметка',

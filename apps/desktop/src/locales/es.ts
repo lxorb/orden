@@ -44,6 +44,9 @@ export const es: Dictionary = {
     one: '{count} página que no está en la web se queda atrás',
     other: '{count} páginas que no están en la web se quedan atrás',
   },
+  'Reading List': 'Lista de lectura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS guarda las pestañas y los marcadores de Safari tras el acceso total al disco. Activa Orden allí y vuelve a intentarlo.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota web',

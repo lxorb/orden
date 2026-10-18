@@ -39,6 +39,9 @@ export const ja: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} は開いているタブを暗号化して保存しているため、ブックマークだけを取り込みました。',
   '{count} pages not on the web stay behind': 'Web 上にないページ {count} 件は持ち込みません',
+  'Reading List': 'リーディングリスト',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS は Safari のタブとブックマークをフルディスクアクセスの内側に置いています。そこで Orden をオンにしてから、もう一度お試しください。',
   // Settings: note types
   'Page note': 'ページノート',
   'Web note': 'ウェブノート',

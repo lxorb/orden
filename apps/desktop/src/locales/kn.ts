@@ -43,6 +43,9 @@ export const kn: Dictionary = {
     one: 'ವೆಬ್‌ನಲ್ಲಿ ಇಲ್ಲದ {count} ಪುಟ ಉಳಿದುಹೋಯಿತು',
     other: 'ವೆಬ್‌ನಲ್ಲಿ ಇಲ್ಲದ {count} ಪುಟಗಳು ಉಳಿದುಹೋದವು',
   },
+  'Reading List': 'ಓದುವ ಪಟ್ಟಿ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safariಯ ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಪೂರ್ಣ ಡಿಸ್ಕ್ ಪ್ರವೇಶದ ಹಿಂದೆ ಇಡುತ್ತದೆ. ಅಲ್ಲಿ Orden ಆನ್ ಮಾಡಿ, ನಂತರ ಮತ್ತೆ ಕೇಳಿ.',
   // Settings: note types
   'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
   'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',

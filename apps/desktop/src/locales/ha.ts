@@ -43,6 +43,9 @@ export const ha: Dictionary = {
     one: 'Shafi {count} da ba ya kan yanar gizo ya rage',
     other: 'Shafuka {count} da ba sa kan yanar gizo sun rage',
   },
+  'Reading List': 'Jerin Karatu',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS yana ajiye shafuka da alamun shafi na Safari a bayan Cikakken Damar Diski. Kunna Orden a can, sannan ku sake nema.',
   // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',

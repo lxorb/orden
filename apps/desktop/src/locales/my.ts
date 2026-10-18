@@ -39,6 +39,9 @@ export const my: Dictionary = {
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} သည် ဖွင့်ထားသော တဘ်များကို သော့ခတ်ထားသဖြင့် စာမှတ်များသာ ပါလာသည်။',
   '{count} pages not on the web stay behind': 'ဝဘ်ပေါ်တွင် မရှိသော စာမျက်နှာ {count} ခု ကျန်ခဲ့သည်',
+  'Reading List': 'ဖတ်ရန်စာရင်း',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS သည် Safari ၏ တဘ်များနှင့် စာမှတ်များကို Full Disk Access နောက်တွင် ထားသည်။ ထိုနေရာတွင် Orden ကို ဖွင့်ပြီး ထပ်မံ တောင်းဆိုပါ။',
   // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',
