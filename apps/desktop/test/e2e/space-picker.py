@@ -86,7 +86,12 @@ def switching(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] the tabs' Alt numbers showed beside the space numbers")
     if [one[0] for one in rows] != [str(at + 1) for at in range(len(names))]:
         wrong(f"[{scheme}] Alt did not number the rows 1 to {len(names)}: {rows}")
-    page.wait_for_timeout(200)
+    # The numbers fade out over frames, and a frame of WebKit's on a busy machine can
+    # be most of a second: waited for, and then held to it (#384).
+    try:
+        page.wait_for_function(f"!({ROWS})().some((one) => one[0] != null)", timeout=3000, polling=50)
+    except Exception:  # noqa: BLE001 - still there, which the check below says
+        pass
     if any(one[0] is not None for one in page.evaluate(ROWS)):
         wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
 

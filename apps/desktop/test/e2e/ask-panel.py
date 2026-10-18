@@ -51,6 +51,16 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 45) -> bo
     return DRIVE.waited(page, expression, what, patience)
 
 
+def landed(page: Page, expression: str, patience: float = 5) -> bool:
+    """Whether the keyboard got where the expression says within `patience` seconds,
+    without counting it as a failure: the caller says what was wrong."""
+    try:
+        page.wait_for_function(expression, timeout=patience * 1000, polling=50)
+    except Exception:  # noqa: BLE001 - not there in time, which the caller says
+        return False
+    return True
+
+
 MODEL = "fake-small"
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -264,10 +274,11 @@ def asked(page: Page) -> None:
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+A")
     wait_for(page, "document.querySelector('.ask textarea')", "the field")
-    page.wait_for_timeout(300)
-    where = page.evaluate(WHERE)
-    if where["tag"] != "textarea":
-        wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {where}")
+    # The keyboard goes in once the panel has been drawn, which is frames after the
+    # field is in the page; a frame of WebKit's on a busy machine can be half a second,
+    # so this waits for it rather than for a third of one (#384).
+    if not landed(page, "document.activeElement?.matches('.ask textarea')"):
+        wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {page.evaluate(WHERE)}")
 
     Model.seen.clear()
     Model.words = ["It ", "faces ", "the ", "wind ", "[2]", "."]

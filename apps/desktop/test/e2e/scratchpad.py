@@ -70,6 +70,14 @@ def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     return page
 
 
+def gone(page: Page) -> None:
+    """Until the card is off the page, or three seconds; what is there then is checked."""
+    try:
+        page.wait_for_function(f"!document.querySelector('{CARD}')", timeout=3000, polling=50)
+    except Exception:  # noqa: BLE001 - still up, which the check after this says
+        pass
+
+
 def no_tab(page: Page, where: str) -> None:
     tabs = page.evaluate(STATE)["tabs"]
     if any("Scratchpad" in one for one in tabs):
@@ -98,6 +106,9 @@ def desktop(browser: Browser, scheme: str) -> None:
 
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
+    # The card leaves over frames, and a frame of WebKit's on a busy machine can be
+    # most of a second: given its time, then held to it (#384).
+    gone(page)
     state = page.evaluate(STATE)
     say(f"[{scheme}] after Escape: {state}")
     if state["card"] or state["pressed"] != "false" or not state["inNote"]:
@@ -128,6 +139,7 @@ def desktop(browser: Browser, scheme: str) -> None:
 
     page.locator(GLYPH).click()
     page.wait_for_timeout(400)
+    gone(page)
     if page.evaluate(STATE)["card"]:
         wrong(f"[{scheme}] the switch did not put the card away")
     page.context.close()
