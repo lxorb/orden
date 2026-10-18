@@ -34,6 +34,7 @@ import { rowsOfText } from '@nib/bases/rows'
 import { taskHash } from '@nib/bases'
 import { appliedEdits } from '@nib/markdown/edits'
 import { taskLine } from '@nib/markdown/task-edits'
+import { objectIn } from '../body'
 import { cleanPath } from '../notes'
 import { blobKey } from '../sync2/files'
 import type { Env } from '../types'
@@ -239,6 +240,15 @@ async function readBaseAt(env: Env, space: Space, asked: string) {
   }
 }
 
+/** Whether the account's Today holds a task with no start date, as the app's does
+ *  (#408): one key out of the settings blob, read per call; off where it never said. */
+async function undatedInToday(env: Env, user: string): Promise<boolean> {
+  const row = await env.DB.prepare('select settings from users where id = ?')
+    .bind(user)
+    .first<{ settings: string | null }>()
+  return objectIn(row?.settings)?.undatedInToday === true
+}
+
 async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   const spaces =
     args.space === undefined || args.space === null
@@ -261,6 +271,9 @@ async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
       ...(filter ? { filter } : {}),
       ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
       inboxes: spaces.map((space) => ({ space: space.name, path: 'Inbox.md' })),
+      ...(view?.trim().toLowerCase() === 'today' && (await undatedInToday(env, token.user_id))
+        ? { undated: true }
+        : {}),
       isNote: (name) => names.has(name.toLowerCase()),
     },
     contextNow(),

@@ -86,6 +86,18 @@ describe('the to-dos, with nib closed', () => {
     expect(writing.tasks).toMatchObject([{ text: 'Write the intro', space: 'Work', priority: 2 }])
   })
 
+  test('Today with the tasks that have no start date, where the account says so (#408)', async () => {
+    const key = await connector(true)
+    await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: true } })
+    const listed = await json(key, 'list_tasks', { view: 'today' })
+    expect(listed.tasks.map((one) => one.text)).toEqual([
+      'Write the intro',
+      'Milk',
+      'Outline',
+      'Read',
+    ])
+  })
+
   test("a task added to the space's inbox, made the first time", async () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
