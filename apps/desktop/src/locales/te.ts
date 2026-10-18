@@ -187,6 +187,8 @@ export const te: Dictionary = {
   Dots: 'చుక్కలు',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'రెండు వేళ్లతో కాన్వాస్‌ను తిప్పండి',
+  'Turn upright': 'నిటారుగా చేయండి',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
   'Note or picture': 'నోట్ లేదా చిత్రం',

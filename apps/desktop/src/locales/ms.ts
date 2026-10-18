@@ -183,6 +183,8 @@ export const ms: Dictionary = {
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Putar kanvas dengan dua jari',
+  'Turn upright': 'Tegakkan',
   Canvas: 'Kanvas',
   Card: 'Kad',
   'Note or picture': 'Nota atau gambar',

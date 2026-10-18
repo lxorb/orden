@@ -1499,6 +1499,8 @@ const CANVAS_ENTRIES: Shortcut[] = (
     // (#401).
     ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
     ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
+    // Upright again (#351).
+    ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
     ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],

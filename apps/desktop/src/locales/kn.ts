@@ -187,6 +187,8 @@ export const kn: Dictionary = {
   Dots: 'ಚುಕ್ಕೆಗಳು',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'ಎರಡು ಬೆರಳುಗಳಿಂದ ಕ್ಯಾನ್ವಾಸ್ ತಿರುಗಿಸಿ',
+  'Turn upright': 'ನೇರಗೊಳಿಸಿ',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',
   'Note or picture': 'ಟಿಪ್ಪಣಿ ಅಥವಾ ಚಿತ್ರ',

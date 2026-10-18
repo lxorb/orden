@@ -32,7 +32,17 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
-  import { ctrlWheelZoom, graphPoint, heldGestures, pinching, zoomed } from './camera'
+  import {
+    ctrlWheelZoom,
+    graphPoint,
+    heldGestures,
+    panned,
+    pinching,
+    screenPoint,
+    turned,
+    turnOf,
+    zoomed,
+  } from './camera'
   import { canvasMenu, place, pull, run } from './canvas/actions'
   import {
     coloured,
@@ -99,6 +109,7 @@
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'
+  import { modes } from './modes.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
@@ -171,10 +182,41 @@
    *  out the same size on screen at every zoom. */
   const unit = $derived(1 / camera.scale)
 
-  /** Where plane 0,0 sits on screen. The plane's transform and the pattern's offset
-   *  are both this. */
-  const originX = $derived(width / 2 - camera.x * camera.scale)
-  const originY = $derived(height / 2 - camera.y * camera.scale)
+  /** How far the view is turned, in radians (#351). */
+  const turn = $derived(turnOf(camera))
+
+  /** The size of what the plane is drawn on: the pane, or upright, a square as wide as
+   *  the pane's diagonal, turned about the middle of the pane, so a turned view has
+   *  ink and dots right into its corners. Square, so the turn never shows its edge. */
+  const spanX = $derived(turn ? Math.ceil(Math.hypot(width, height)) : width)
+  const spanY = $derived(turn ? spanX : height)
+
+  /** Where plane 0,0 sits on what the plane is drawn on. The plane's transform and the
+   *  pattern's offset are both this. */
+  const originX = $derived(spanX / 2 - camera.x * camera.scale)
+  const originY = $derived(spanY / 2 - camera.y * camera.scale)
+
+  /** Where a point of the plane is in the pane, the turn included. */
+  const onScreen = (point: { x: number; y: number }) => screenPoint(camera, width, height, point)
+
+  /** The box on screen round a box of the plane: its four corners where the turn puts
+   *  them. */
+  function screenBox(box: { x: number; y: number; width: number; height: number }) {
+    const corners = [
+      onScreen(box),
+      onScreen({ x: box.x + box.width, y: box.y }),
+      onScreen({ x: box.x, y: box.y + box.height }),
+      onScreen({ x: box.x + box.width, y: box.y + box.height }),
+    ]
+    const xs = corners.map((one) => one.x)
+    const ys = corners.map((one) => one.y)
+    return {
+      left: Math.min(...xs),
+      right: Math.max(...xs),
+      top: Math.min(...ys),
+      bottom: Math.max(...ys),
+    }
+  }
 
   /** How long the points take to leave, and to come back. Fixed, and the whole of
    *  what the fade depends on: crossing a threshold starts it, and where the zoom is
@@ -406,8 +448,9 @@
   /** The part of the plane worth drawing. */
   const inView = $derived.by(() => {
     const scale = 2 ** (roughZoom / 4)
-    const across = width / scale + 2 * SLACK
-    const down = height / scale + 2 * SLACK
+    // What is drawn on, which a turned view makes the square round the pane.
+    const across = spanX / scale + 2 * SLACK
+    const down = spanY / scale + 2 * SLACK
 
     return {
       x: roughX * QUANTUM - across / 2,
@@ -604,12 +647,11 @@
       const node = store.canvas.nodes.find((one) => one.id === id)
       if (!node) return
 
-      const top = originY + node.y * camera.scale
-      const bottom = top + node.height * camera.scale
+      const { top, bottom } = screenBox(node)
       const low = bottom - (room - CARD_MARGIN)
       const high = CARD_MARGIN - top
       const by = low > 0 ? Math.min(low, -high) : high > 0 ? -high : 0
-      if (by) store.camera = { ...camera, y: camera.y + by / camera.scale }
+      if (by) store.camera = panned(camera, 0, -by)
     })
   })
 
@@ -691,17 +733,33 @@
 
     element.addEventListener('wheel', onWheel, { passive: false })
     // And a Mac's trackpad pinch, which WebKit tells as gestures rather than the wheel.
-    const unpinch = heldGestures(element, (at, by) => {
-      const rect = element.getBoundingClientRect()
-      store.camera = zoomed(
-        camera,
-        width,
-        height,
-        at.clientX - rect.left,
-        at.clientY - rect.top,
-        by,
-      )
-    })
+    const unpinch = heldGestures(
+      element,
+      (at, by) => {
+        const rect = element.getBoundingClientRect()
+        store.camera = zoomed(
+          camera,
+          width,
+          height,
+          at.clientX - rect.left,
+          at.clientY - rect.top,
+          by,
+        )
+      },
+      // And its turn, where two fingers turn a canvas (#351).
+      (at, by) => {
+        if (!modes.canvasTurns) return
+        const rect = element.getBoundingClientRect()
+        store.camera = turned(
+          camera,
+          width,
+          height,
+          at.clientX - rect.left,
+          at.clientY - rect.top,
+          by,
+        )
+      },
+    )
     return () => {
       element.removeEventListener('wheel', onWheel)
       unpinch()
@@ -722,7 +780,7 @@
     // touch screen a change of height keeps the top of the plane where it was, as
     // a page's is.
     if (placed && viewport.touch && was && height !== was) {
-      store.camera = { ...camera, y: camera.y + (height - was) / 2 / camera.scale }
+      store.camera = panned(camera, 0, -(height - was) / 2)
     }
 
     // A canvas opens with everything on it in view, and only then: the view is
@@ -861,6 +919,8 @@
       picked: store.picked,
       editing: store.editing,
       scale: camera.scale,
+      turn,
+      turns: modes.canvasTurns,
       inkBox: box,
       pen: tools.ink,
       eraser: pens.eraser,
@@ -956,14 +1016,13 @@
         run.lasso(store, effect.lasso, pens.partly)
         break
       case 'pan':
-        store.camera = {
-          ...camera,
-          x: camera.x - effect.dx / camera.scale,
-          y: camera.y - effect.dy / camera.scale,
-        }
+        store.camera = panned(camera, effect.dx, effect.dy)
         break
       case 'zoom':
         store.camera = zoomed(camera, width, height, effect.at.x, effect.at.y, effect.by)
+        break
+      case 'turn':
+        store.camera = turned(camera, width, height, effect.at.x, effect.at.y, effect.by)
         break
       case 'menu':
         // Only a hold leaves a click behind; the right button does not.
@@ -1371,11 +1430,7 @@
       return
     }
 
-    store.camera = {
-      ...camera,
-      x: camera.x + event.deltaX / camera.scale,
-      y: camera.y + event.deltaY / camera.scale,
-    }
+    store.camera = panned(camera, -event.deltaX, -event.deltaY)
   }
 
   /** A double click on the plane makes a card and opens it; on a card it opens
@@ -1433,10 +1488,8 @@
       !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
 
     const rect = host?.getBoundingClientRect()
-    const screen = {
-      clientX: (rect?.left ?? 0) + (point.x - camera.x) * camera.scale + width / 2,
-      clientY: (rect?.top ?? 0) + (point.y - camera.y) * camera.scale + height / 2,
-    }
+    const at = onScreen(point)
+    const screen = { clientX: (rect?.left ?? 0) + at.x, clientY: (rect?.top ?? 0) + at.y }
 
     const near = viewport.touch
     menu.show(
@@ -1683,9 +1736,11 @@
     const box = pickedSpan
     if (!box || gesture || store.editing !== null || !store.picked.length) return null
 
-    const middle = originX + (box.x + box.width / 2) * camera.scale
-    const above = originY + box.y * camera.scale
-    const under = originY + (box.y + box.height) * camera.scale
+    // Its box as the screen has it, which a turned view makes wider than it is.
+    const seen = screenBox(box)
+    const middle = (seen.left + seen.right) / 2
+    const above = seen.top
+    const under = seen.bottom
     const below = above < ROOM
 
     return {
@@ -1816,233 +1871,245 @@
        every level's points on plane 0,0 and its multiples, which is what makes a
        coarser level a subset of a finer one rather than a second pattern between
        its points. -->
-  {#each patterns as level (level.every)}
-    <div
-      class="dots"
-      style:--dot-step="{level.step}px"
-      style:opacity={level.showing}
-      style:left="{-level.step}px"
-      style:top="{-level.step}px"
-      style:width="{width + 2 * level.step}px"
-      style:height="{height + 2 * level.step}px"
-      style:transform="translate({modulo(originX - level.step / 2, level.step)}px, {modulo(
-        originY - level.step / 2,
-        level.step,
-      )}px)"
-    ></div>
-  {/each}
-
-  <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
-    <CanvasEdges
-      edges={shown.edges}
-      nodes={shown.nodes}
-      picked={store.picked}
-      provisional={drawing}
-    />
-
-    {#each cards as node (node.id)}
-      <CanvasNode
-        {node}
-        canvasPath={tab.path}
-        trusted={trustsHtmlIn(tab.note)}
-        root={workspace.activeSpace?.root ?? null}
-        picked={picked.has(node.id)}
-        dimmed={narrowed && !picked.has(node.id)}
-        editing={store.editing === node.id}
-        offset={STILL}
-        ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
-        onleave={() => (store.editing = null)}
-        onfollow={followNote}
-      />
+  <!-- What is drawn of the plane, turned with the view when two fingers have turned
+       it (#351): a square as wide as the pane's diagonal about the middle of the pane,
+       so its corners are always covered; the pane itself, upright. -->
+  <div
+    class="turned"
+    style:left={turn ? `${(width - spanX) / 2}px` : undefined}
+    style:top={turn ? `${(height - spanY) / 2}px` : undefined}
+    style:width={turn ? `${spanX}px` : undefined}
+    style:height={turn ? `${spanY}px` : undefined}
+    style:transform={turn ? `rotate(${turn}rad)` : undefined}
+  >
+    {#each patterns as level (level.every)}
+      <div
+        class="dots"
+        style:--dot-step="{level.step}px"
+        style:opacity={level.showing}
+        style:left="{-level.step}px"
+        style:top="{-level.step}px"
+        style:width="{spanX + 2 * level.step}px"
+        style:height="{spanY + 2 * level.step}px"
+        style:transform="translate({modulo(originX - level.step / 2, level.step)}px, {modulo(
+          originY - level.step / 2,
+          level.step,
+        )}px)"
+      ></div>
     {/each}
 
-    <!-- The four dots a connector is drawn from, on whichever card the pointer is
+    <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
+      <CanvasEdges
+        edges={shown.edges}
+        nodes={shown.nodes}
+        picked={store.picked}
+        provisional={drawing}
+      />
+
+      {#each cards as node (node.id)}
+        <CanvasNode
+          {node}
+          canvasPath={tab.path}
+          trusted={trustsHtmlIn(tab.note)}
+          root={workspace.activeSpace?.root ?? null}
+          picked={picked.has(node.id)}
+          dimmed={narrowed && !picked.has(node.id)}
+          editing={store.editing === node.id}
+          offset={STILL}
+          ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
+          onleave={() => (store.editing = null)}
+          onfollow={followNote}
+        />
+      {/each}
+
+      <!-- The four dots a connector is drawn from, on whichever card the pointer is
          over. Sized in plane units so they are the same size on screen at any
          zoom. -->
-    {#if portedBox}
-      <!-- The card's box once rather than once a side: which side a dot is on does
+      {#if portedBox}
+        <!-- The card's box once rather than once a side: which side a dot is on does
            not change the card it is on, and this is worked out again on every frame
            the pointer is over one. -->
-      {@const ported = boxOf(portedBox)}
-      {#each SIDES as side (side)}
-        {@const point = sidePoint(ported, side)}
+        {@const ported = boxOf(portedBox)}
+        {#each SIDES as side (side)}
+          {@const point = sidePoint(ported, side)}
+          <div
+            class="port"
+            style:left="{point.x}px"
+            style:top="{point.y}px"
+            style:width="{PORT * unit}px"
+            style:height="{PORT * unit}px"
+          ></div>
+        {/each}
+      {/if}
+
+      <!-- What is picked, and the handles that resize it. -->
+      {#if box}
         <div
-          class="port"
-          style:left="{point.x}px"
-          style:top="{point.y}px"
-          style:width="{PORT * unit}px"
-          style:height="{PORT * unit}px"
+          class="frame"
+          style:left="{box.x}px"
+          style:top="{box.y}px"
+          style:width="{box.width}px"
+          style:height="{box.height}px"
+          style:border-width="{unit}px"
         ></div>
-      {/each}
-    {/if}
 
-    <!-- What is picked, and the handles that resize it. -->
-    {#if box}
-      <div
-        class="frame"
-        style:left="{box.x}px"
-        style:top="{box.y}px"
-        style:width="{box.width}px"
-        style:height="{box.height}px"
-        style:border-width="{unit}px"
-      ></div>
+        {#each HANDLES as handle (handle.id)}
+          <div
+            class="handle"
+            style:left="{box.x + ((handle.x + 1) / 2) * box.width}px"
+            style:top="{box.y + ((handle.y + 1) / 2) * box.height}px"
+            style:width="{HANDLE * unit}px"
+            style:height="{HANDLE * unit}px"
+          ></div>
+        {/each}
 
-      {#each HANDLES as handle (handle.id)}
+        {#if lassoed}
+          <div
+            class="turn"
+            style:left="{box.x + box.width / 2}px"
+            style:top="{box.y - HANDLE * 3.4 * unit}px"
+            style:width="{HANDLE * 2 * unit}px"
+            style:height="{HANDLE * 2 * unit}px"
+          ></div>
+        {/if}
+      {/if}
+
+      {#if band}
         <div
-          class="handle"
-          style:left="{box.x + ((handle.x + 1) / 2) * box.width}px"
-          style:top="{box.y + ((handle.y + 1) / 2) * box.height}px"
+          class="band"
+          style:left="{band.x}px"
+          style:top="{band.y}px"
+          style:width="{band.width}px"
+          style:height="{band.height}px"
+        ></div>
+      {/if}
+
+      <!-- What is being pulled out of the bar, drawn the whole way. Every one of them:
+         a card, a frame, a picture, a body and a line alike, so nothing on the bar is
+         invisible until it is let go of. -->
+      {#if pulling && pullBox && pullTo && pullFrom}
+        {#if PLAIN.has(pulling.tool)}
+          <div
+            class="band pulling"
+            class:round={pulling.tool === 'ellipse'}
+            class:framed={pulling.tool === 'group'}
+            style:left="{pullBox.x}px"
+            style:top="{pullBox.y}px"
+            style:width="{pullBox.width}px"
+            style:height="{pullBox.height}px"
+            style:border-width="{Math.max(1, unit)}px"
+          ></div>
+        {:else}
+          <svg class="drawing" aria-hidden="true" width="1" height="1" style:overflow="visible">
+            <path
+              d={pulledPath(pulling.tool, pullFrom, pullTo, pullBox)}
+              style:stroke-width="{2 * unit}px"
+              style:stroke-dasharray="{6 * unit}
+              {5 * unit}"
+            />
+            <!-- An arrow wears its head while it is being dragged out: an arrow with no
+               head on it is a line, and which of the two this is is the whole question
+               a preview answers. -->
+            {#if pullHead}
+              <path
+                class="point"
+                d="M 0 0 L {-pullHead.size} {-pullHead.size *
+                  0.5} L {-pullHead.size} {pullHead.size * 0.5} Z"
+                transform="translate({pullHead.x} {pullHead.y}) rotate({pullHead.angle})"
+              />
+            {/if}
+          </svg>
+        {/if}
+      {/if}
+
+      <!-- The anchor a connector being dragged out will attach to. Shown before it is
+         let go, because a hand aiming a line at a card is asking which side. -->
+      {#if joining}
+        <div
+          class="port aiming"
+          style:left="{joining.at.x}px"
+          style:top="{joining.at.y}px"
+          style:width="{PORT * 1.6 * unit}px"
+          style:height="{PORT * 1.6 * unit}px"
+        ></div>
+      {/if}
+
+      <!-- An end of a picked connector being moved, and where it will land. -->
+      {#if rewiring && rewiredTo}
+        <div
+          class="port aiming"
+          class:loose={rewiredTo.onto === null}
+          style:left="{rewiredTo.at.x}px"
+          style:top="{rewiredTo.at.y}px"
+          style:width="{PORT * 1.6 * unit}px"
+          style:height="{PORT * 1.6 * unit}px"
+        ></div>
+      {/if}
+
+      <!-- The two ends of a picked connector, which are dragged onto another card. -->
+      {#each edgeHandles as end (end.key)}
+        <div
+          class="handle round"
+          style:left="{end.at.x}px"
+          style:top="{end.at.y}px"
           style:width="{HANDLE * unit}px"
           style:height="{HANDLE * unit}px"
         ></div>
       {/each}
 
-      {#if lassoed}
+      <!-- The eraser's own ring, for the hands that have no cursor: it is drawn on the
+         page under the finger or the nib, at the width it is about to rub. -->
+      {#if rubbing}
         <div
-          class="turn"
-          style:left="{box.x + box.width / 2}px"
-          style:top="{box.y - HANDLE * 3.4 * unit}px"
-          style:width="{HANDLE * 2 * unit}px"
-          style:height="{HANDLE * 2 * unit}px"
+          class="rubbing"
+          style:left="{rubbing.at.x}px"
+          style:top="{rubbing.at.y}px"
+          style:width="{rubbing.reach * 2}px"
+          style:height="{rubbing.reach * 2}px"
+          style:border-width="{1.5 * unit}px"
         ></div>
       {/if}
-    {/if}
 
-    {#if band}
-      <div
-        class="band"
-        style:left="{band.x}px"
-        style:top="{band.y}px"
-        style:width="{band.width}px"
-        style:height="{band.height}px"
-      ></div>
-    {/if}
-
-    <!-- What is being pulled out of the bar, drawn the whole way. Every one of them:
-         a card, a frame, a picture, a body and a line alike, so nothing on the bar is
-         invisible until it is let go of. -->
-    {#if pulling && pullBox && pullTo && pullFrom}
-      {#if PLAIN.has(pulling.tool)}
+      <!-- The lines that say what a drag lined itself up with. -->
+      {#each guides as guide, index (index)}
         <div
-          class="band pulling"
-          class:round={pulling.tool === 'ellipse'}
-          class:framed={pulling.tool === 'group'}
-          style:left="{pullBox.x}px"
-          style:top="{pullBox.y}px"
-          style:width="{pullBox.width}px"
-          style:height="{pullBox.height}px"
-          style:border-width="{Math.max(1, unit)}px"
+          class="guide"
+          class:down={guide.axis === 'y'}
+          style:left="{guide.axis === 'x' ? guide.at : guide.from}px"
+          style:top="{guide.axis === 'y' ? guide.at : guide.from}px"
+          style:width="{guide.axis === 'x' ? unit : guide.to - guide.from}px"
+          style:height="{guide.axis === 'y' ? unit : guide.to - guide.from}px"
         ></div>
-      {:else}
-        <svg class="drawing" aria-hidden="true" width="1" height="1" style:overflow="visible">
+      {/each}
+
+      {#if lasso && lasso.length > 1}
+        <svg class="lasso" aria-hidden="true" width="1" height="1" style:overflow="visible">
           <path
-            d={pulledPath(pulling.tool, pullFrom, pullTo, pullBox)}
-            style:stroke-width="{2 * unit}px"
-            style:stroke-dasharray="{6 * unit}
-            {5 * unit}"
+            d="M {lasso
+              .map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`)
+              .join(' L ')} Z"
+            style:stroke-width="{1.5 * unit}px"
+            style:stroke-dasharray="{5 * unit}
+            {4 * unit}"
           />
-          <!-- An arrow wears its head while it is being dragged out: an arrow with no
-               head on it is a line, and which of the two this is is the whole question
-               a preview answers. -->
-          {#if pullHead}
-            <path
-              class="point"
-              d="M 0 0 L {-pullHead.size} {-pullHead.size * 0.5} L {-pullHead.size} {pullHead.size *
-                0.5} Z"
-              transform="translate({pullHead.x} {pullHead.y}) rotate({pullHead.angle})"
-            />
-          {/if}
         </svg>
       {/if}
-    {/if}
 
-    <!-- The anchor a connector being dragged out will attach to. Shown before it is
-         let go, because a hand aiming a line at a card is asking which side. -->
-    {#if joining}
-      <div
-        class="port aiming"
-        style:left="{joining.at.x}px"
-        style:top="{joining.at.y}px"
-        style:width="{PORT * 1.6 * unit}px"
-        style:height="{PORT * 1.6 * unit}px"
-      ></div>
-    {/if}
-
-    <!-- An end of a picked connector being moved, and where it will land. -->
-    {#if rewiring && rewiredTo}
-      <div
-        class="port aiming"
-        class:loose={rewiredTo.onto === null}
-        style:left="{rewiredTo.at.x}px"
-        style:top="{rewiredTo.at.y}px"
-        style:width="{PORT * 1.6 * unit}px"
-        style:height="{PORT * 1.6 * unit}px"
-      ></div>
-    {/if}
-
-    <!-- The two ends of a picked connector, which are dragged onto another card. -->
-    {#each edgeHandles as end (end.key)}
-      <div
-        class="handle round"
-        style:left="{end.at.x}px"
-        style:top="{end.at.y}px"
-        style:width="{HANDLE * unit}px"
-        style:height="{HANDLE * unit}px"
-      ></div>
-    {/each}
-
-    <!-- The eraser's own ring, for the hands that have no cursor: it is drawn on the
-         page under the finger or the nib, at the width it is about to rub. -->
-    {#if rubbing}
-      <div
-        class="rubbing"
-        style:left="{rubbing.at.x}px"
-        style:top="{rubbing.at.y}px"
-        style:width="{rubbing.reach * 2}px"
-        style:height="{rubbing.reach * 2}px"
-        style:border-width="{1.5 * unit}px"
-      ></div>
-    {/if}
-
-    <!-- The lines that say what a drag lined itself up with. -->
-    {#each guides as guide, index (index)}
-      <div
-        class="guide"
-        class:down={guide.axis === 'y'}
-        style:left="{guide.axis === 'x' ? guide.at : guide.from}px"
-        style:top="{guide.axis === 'y' ? guide.at : guide.from}px"
-        style:width="{guide.axis === 'x' ? unit : guide.to - guide.from}px"
-        style:height="{guide.axis === 'y' ? unit : guide.to - guide.from}px"
-      ></div>
-    {/each}
-
-    {#if lasso && lasso.length > 1}
-      <svg class="lasso" aria-hidden="true" width="1" height="1" style:overflow="visible">
-        <path
-          d="M {lasso
-            .map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`)
-            .join(' L ')} Z"
-          style:stroke-width="{1.5 * unit}px"
-          style:stroke-dasharray="{5 * unit}
-          {4 * unit}"
-        />
-      </svg>
-    {/if}
-
-    <!-- The other hands on the plane, over everything on it. Inside the plane, so
+      <!-- The other hands on the plane, over everything on it. Inside the plane, so
          a pointer somebody else is moving stays where they are pointing. -->
-    <CanvasHands
-      hands={store.hands}
-      {unit}
-      {palette}
-      {camera}
-      {width}
-      {height}
-      ongo={(at: { x: number; y: number }) => (store.camera = { ...camera, x: at.x, y: at.y })}
-    />
-  </div>
+      <CanvasHands
+        hands={store.hands}
+        {unit}
+        {palette}
+        {camera}
+        width={spanX}
+        height={spanY}
+        ongo={(at: { x: number; y: number }) => (store.camera = { ...camera, x: at.x, y: at.y })}
+      />
+    </div>
 
-  <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />
+    <CanvasInk ink={shown.ink} {live} {camera} width={spanX} height={spanY} {picked} {palette} />
+  </div>
 
   <!-- What an empty plane says, and the only thing it ever says. It goes the moment
        anything is on the plane, and it is one line rather than a lesson. -->
@@ -2140,6 +2207,13 @@
      transform rather than by its own background position, so panning it is a
      composite and never a repaint. One of these is up at any moment, and two for a
      fifth of a second while a level is leaving or coming back. */
+  /* Everything drawn of the plane; turned with the view when it is (#351). */
+  .turned {
+    position: absolute;
+    inset: 0;
+    transform-origin: center;
+  }
+
   .dots {
     position: absolute;
     pointer-events: none;

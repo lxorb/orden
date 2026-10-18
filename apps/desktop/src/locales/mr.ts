@@ -186,6 +186,8 @@ export const mr: Dictionary = {
   Dots: 'ठिपके',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'दोन बोटांनी कॅनव्हास फिरवा',
+  'Turn upright': 'सरळ करा',
   Canvas: 'कॅनव्हास',
   Card: 'कार्ड',
   'Note or picture': 'नोंद किंवा चित्र',

@@ -186,6 +186,8 @@ export const pa: Dictionary = {
   Dots: 'ਬਿੰਦੂ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਕੈਨਵਸ ਘੁਮਾਓ',
+  'Turn upright': 'ਸਿੱਧਾ ਕਰੋ',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',
   'Note or picture': 'ਨੋਟ ਜਾਂ ਤਸਵੀਰ',

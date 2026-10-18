@@ -187,6 +187,8 @@ export const fil: Dictionary = {
   Dots: 'Mga tuldok',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Iikot ang canvas gamit ang dalawang daliri',
+  'Turn upright': 'Ituwid',
   Canvas: 'Canvas',
   Card: 'Card',
   'Note or picture': 'Tala o larawan',

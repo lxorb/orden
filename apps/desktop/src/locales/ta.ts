@@ -187,6 +187,8 @@ export const ta: Dictionary = {
   Dots: 'புள்ளிகள்',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'இரு விரல்களால் கேன்வாஸைச் சுழற்று',
+  'Turn upright': 'நேராக்கு',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
   'Note or picture': 'குறிப்பு அல்லது படம்',

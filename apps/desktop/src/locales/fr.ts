@@ -189,6 +189,8 @@ export const fr: Dictionary = {
   Dots: 'Points',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Faire pivoter un canevas à deux doigts',
+  'Turn upright': 'Redresser',
   Canvas: 'Canevas',
   Card: 'Carte',
   'Note or picture': 'Note ou image',

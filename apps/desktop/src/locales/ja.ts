@@ -183,6 +183,8 @@ export const ja: Dictionary = {
   Dots: 'ドット',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '2本指でキャンバスを回転',
+  'Turn upright': 'まっすぐに戻す',
   Canvas: 'キャンバス',
   Card: 'カード',
   'Note or picture': 'ノートまたは画像',

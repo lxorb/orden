@@ -186,6 +186,8 @@ export const ur: Dictionary = {
   Dots: 'نقطے',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'دو انگلیوں سے کینوس گھمائیں',
+  'Turn upright': 'سیدھا کریں',
   Canvas: 'کینوس',
   Card: 'کارڈ',
   'Note or picture': 'نوٹ یا تصویر',

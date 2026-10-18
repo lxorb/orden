@@ -187,6 +187,8 @@ export const tr: Dictionary = {
   Dots: 'Noktalı',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Tuvali iki parmakla döndür',
+  'Turn upright': 'Düzelt',
   Canvas: 'Tuval',
   Card: 'Kart',
   'Note or picture': 'Not veya resim',

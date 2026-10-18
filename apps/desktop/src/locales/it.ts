@@ -188,6 +188,8 @@ export const it: Dictionary = {
   Dots: 'Puntini',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Ruota una tela con due dita',
+  'Turn upright': 'Raddrizza',
   Canvas: 'Tela',
   Card: 'Scheda',
   'Note or picture': 'Nota o immagine',

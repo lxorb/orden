@@ -188,6 +188,8 @@ export const ptPT: Dictionary = {
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Rodar uma tela com dois dedos',
+  'Turn upright': 'Endireitar',
   Canvas: 'Tela',
   Card: 'Cartão',
   'Note or picture': 'Nota ou imagem',

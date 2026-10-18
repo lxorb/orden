@@ -186,6 +186,8 @@ export const ps: Dictionary = {
   Dots: 'ټکي',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'کینوس په دوو ګوتو وګرځوئ',
+  'Turn upright': 'سم یې کړئ',
   Canvas: 'تخته',
   Card: 'کارت',
   'Note or picture': 'يادښت يا انځور',

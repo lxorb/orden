@@ -43,7 +43,7 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
-import { NOTCH, zoomed } from '../camera'
+import { NOTCH, turned, turnOf, zoomed } from '../camera'
 import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
@@ -588,6 +588,7 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
   ['canvas.zoom.in', (store, view) => zoomedBy(store, view, NOTCH)],
   ['canvas.zoom.out', (store, view) => zoomedBy(store, view, 1 / NOTCH)],
+  ['canvas.upright', (store, view) => upright(store, view)],
   ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
   ['canvas.find', (_store, view) => view.onfind()],
   ['canvas.front', (store) => run.order(store, 'front')],
@@ -595,6 +596,17 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.back', (store) => run.order(store, 'back')],
   ['canvas.backward', (store) => run.order(store, 'backward')],
 ]
+
+/** A turned view upright again about its middle, keeping what is there there (#351);
+ *  false where it is upright already, so the key is let go. */
+function upright(store: CanvasStore, view: { width: number; height: number }): boolean {
+  const turn = turnOf(store.camera)
+  if (!turn) return false
+
+  const { width, height } = view
+  store.camera = turned(store.camera, width, height, width / 2, height / 2, -turn)
+  return true
+}
 
 /** One notch of the zoom, about the middle of the view. */
 function zoomedBy(store: CanvasStore, view: KeyView, by: number) {
@@ -839,6 +851,9 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
     [
       { label: t('Find on the canvas'), run: view.onfind },
       { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
+      ...(turnOf(store.camera)
+        ? [{ label: t('Turn upright'), run: () => void upright(store, view) }]
+        : []),
       ...(picked
         ? [
             {

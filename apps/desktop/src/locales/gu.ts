@@ -186,6 +186,8 @@ export const gu: Dictionary = {
   Dots: 'બિંદુઓ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'બે આંગળીઓથી કેનવાસ ફેરવો',
+  'Turn upright': 'સીધું કરો',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',
   'Note or picture': 'નોંધ કે ચિત્ર',

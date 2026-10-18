@@ -183,6 +183,8 @@ export const my: Dictionary = {
   Dots: 'အစက်များ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'လက်နှစ်ချောင်းဖြင့် ကင်းဗတ်ကို လှည့်ရန်',
+  'Turn upright': 'တည့်တည့်ပြန်ထားရန်',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',
   'Note or picture': 'မှတ်စုသို့မဟုတ်ပုံ',

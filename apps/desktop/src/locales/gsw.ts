@@ -187,6 +187,8 @@ export const gsw: Dictionary = {
   Dots: 'Pünkt',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Liiwand mit zwei Finger drähe',
+  'Turn upright': 'Grad richte',
   Canvas: 'Liinwand',
   Card: 'Chärtli',
   'Note or picture': 'Notiz oder Bild',

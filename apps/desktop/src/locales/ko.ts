@@ -183,6 +183,8 @@ export const ko: Dictionary = {
   Dots: '점',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '두 손가락으로 캔버스 회전',
+  'Turn upright': '똑바로 세우기',
   Canvas: '캔버스',
   Card: '카드',
   'Note or picture': '노트 또는 그림',

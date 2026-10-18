@@ -187,6 +187,8 @@ export const ha: Dictionary = {
   Dots: 'Ɗigogi',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Juya zane da yatsu biyu',
+  'Turn upright': 'Daidaita',
   Canvas: 'Kanbas',
   Card: 'Kati',
   'Note or picture': 'Bayanin kula ko hoto',

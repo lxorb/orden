@@ -183,6 +183,8 @@ export const jv: Dictionary = {
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Puter kanvas nganggo driji loro',
+  'Turn upright': 'Jejegke',
   Canvas: 'Kanvas',
   Card: 'Kartu',
   'Note or picture': 'Cathetan utawa gambar',

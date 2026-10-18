@@ -189,6 +189,8 @@ export const uk: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Обертати полотно двома пальцями',
+  'Turn upright': 'Вирівняти',
   Canvas: 'Полотно',
   Card: 'Картка',
   'Note or picture': 'Нотатка або малюнок',

@@ -189,6 +189,8 @@ export const ru: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Вращать холст двумя пальцами',
+  'Turn upright': 'Выровнять',
   Canvas: 'Полотно',
   Card: 'Карточка',
   'Note or picture': 'Заметка или картинка',

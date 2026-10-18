@@ -142,6 +142,8 @@ export const fa: Dictionary = {
   Duration: 'مدت',
   'Smart dates': 'تاریخ‌های هوشمند',
   'From any app': 'از هر برنامه‌ای',
+  'Rotate a canvas with two fingers': 'چرخاندن بوم با دو انگشت',
+  'Turn upright': 'صاف کردن',
   'Show tasks without a start date in Today': 'نمایش کارهای بدون تاریخ شروع در امروز',
   'Every day': 'هر روز',
   'Every weekday': 'هر روز کاری',

@@ -183,6 +183,8 @@ export const zhHantHK: Dictionary = {
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用兩指旋轉畫布',
+  'Turn upright': '擺正',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',

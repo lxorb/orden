@@ -144,6 +144,8 @@ export const es: Dictionary = {
   Duration: 'Duración',
   'Smart dates': 'Fechas inteligentes',
   'From any app': 'Desde cualquier app',
+  'Rotate a canvas with two fingers': 'Girar un lienzo con dos dedos',
+  'Turn upright': 'Enderezar',
   'Show tasks without a start date in Today': 'Mostrar en Hoy las tareas sin fecha de inicio',
   'Every day': 'Cada día',
   'Every weekday': 'Cada día laborable',

@@ -183,6 +183,8 @@ export const vi: Dictionary = {
   Dots: 'Dấu chấm',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Xoay canvas bằng hai ngón tay',
+  'Turn upright': 'Đặt thẳng lại',
   Canvas: 'Canvas',
   Card: 'Thẻ',
   'Note or picture': 'Ghi chú hoặc ảnh',
