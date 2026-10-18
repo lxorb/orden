@@ -726,8 +726,14 @@ function holds(tail: string): boolean {
  *  scratchpad puts the panes out of reach and points the format bar at its own editor
  *  (App.svelte, scratchpad/is.svelte.ts), and a touch screen offers no Ask panel
  *  (`offers` in workspace.svelte.ts, asked by the panel paths and focus.ts). Measured
- *  3,224,067. */
-const BUDGET = 3_225_100
+ *  3,224,067.
+ *
+ *  Raised 2026-10-18, to 3,228,200, for #409 on top of #345: a tab's web data moves
+ *  once, the moves queued per page and the page counted as on its way between the old
+ *  page closing and the new one opening (`rehousing` and `moved` in pages.svelte.ts),
+ *  and a file in the Essentials kept out of the file list (`unkept` in
+ *  workspace.svelte.ts). Measured 3,227,260. */
+const BUDGET = 3_228_200
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
