@@ -693,8 +693,18 @@ function holds(tail: string): boolean {
  *  on the overlay stack (`pressed` and `away` in overlays.ts) that the shell calls from
  *  the window; the menus, the space switcher and the app menu that are drawn with the
  *  shell say what they hold, and the copies of a window listener each kept are gone.
- *  Measured 3,214,496. */
-const BUDGET = 3_215_500
+ *  Measured 3,214,496.
+ *
+ *  Raised 2026-10-18, to 3,217,100, from an unstable at 3,214,496 (1,004 under), for the
+ *  seven held back after 0.16.0, landed together. Three weigh on the first paint: #317,
+ *  the question Ctrl+N asks in a terminal draws its box to tick with TickBox.svelte, one
+ *  box shared with quitting's (198 bytes); #359, closing a tab with unsaved words asks to
+ *  save, don't save or cancel (workspace/closing-unsaved.ts, read by the workspace, 528);
+ *  #371, a note's task chips say a start date only while it is to come, and a date typed
+ *  or picked there is written as one (link-index.svelte.ts, quick-add/task-pick.ts, 907).
+ *  #372's Full permissions, #333's browser memory, #360's quick question inset and #376's
+ *  spaces in app data add nothing to it. Measured 3,216,129. */
+const BUDGET = 3_217_100
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
