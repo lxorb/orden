@@ -1,4 +1,4 @@
-"""Does Settings > Import bring a Firefox and a Chrome profile in as spaces? Windows only.
+"""Does Settings > Import bring Firefox, Chrome and Safari in as spaces? Windows only.
 
 Issue #377: *"firefox and chrome import (based on tab groups and so on)"*. A profile is
 a space; a pinned tab one of the Essentials; a tab group a folder; Firefox's saved
@@ -6,13 +6,16 @@ groups a folder of them; the bookmarks a folder called Bookmarks (docs/import.md
 
 The probe writes browsers of its own - a Firefox with a `profiles.ini`, a session and a
 `places.sqlite`, and a Chrome with a `Local State`, a `Bookmarks` file and a session
-written command by command the way Chromium writes one - and points the app at them
+written command by command the way Chromium writes one, and a Safari: its binary
+`Bookmarks.plist` with a Reading List, and a `SafariTabs.db` laid out the way macOS
+15's Safari lays it out, which the crate reads wherever a probe puts it although only a
+Mac has a Safari of its own - and points the app at them
 with `NIB_BROWSERS_DIR`, so nobody's own browser is ever read. Then, in an app started
-off the screen through `run_probe`, it opens Settings > Import, presses Firefox and
-then Chrome, and asks:
+off the screen through `run_probe`, it opens Settings > Import, presses Firefox,
+Chrome and Safari, and asks:
 
-* the rows: Firefox and Chrome there, and no row for a browser it did not write;
-* the spaces: Firefox and Chrome, each holding its tabs where the browser had them, the
+* the rows: Safari, Firefox and Chrome there, and no row for a browser it did not write;
+* the spaces: Firefox, Chrome and Safari, each holding its tabs where the browser had them, the
   groups as folders, the bookmarks under Bookmarks, the pinned tab an Essential;
 * a second import: nothing written twice.
 
@@ -32,6 +35,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import plistlib
 import shutil
 import sqlite3
 import struct
@@ -180,6 +184,52 @@ CHROME_BOOKMARKS = {
 }
 
 
+def safari_bookmarks() -> dict[str, object]:
+    """Bookmarks.plist as Safari writes it: lists and leaves under a root, the Favorites
+    bar, the menu and the Reading List among them."""
+
+    def leaf(url: str, title: str, **more: object) -> dict[str, object]:
+        return {"WebBookmarkType": "WebBookmarkTypeLeaf", "URLString": url,
+                "URIDictionary": {"title": title}, "WebBookmarkUUID": title, **more}
+
+    def folder(title: str, children: list[object]) -> dict[str, object]:
+        return {"WebBookmarkType": "WebBookmarkTypeList", "Title": title,
+                "WebBookmarkUUID": title or "root", "Children": children}
+
+    return folder("", [
+        {"WebBookmarkType": "WebBookmarkTypeProxy", "Title": "History"},
+        folder("BookmarksBar", [folder("Work", [leaf("https://wiki.example.com/", "Wiki")])]),
+        folder("BookmarksMenu", [leaf("https://recipes.example.com/", "Recipes")]),
+        folder("com.apple.ReadingList", [leaf("https://long.example.com/", "A long read")]),
+    ])
+
+
+def safari_tabs(at: pathlib.Path) -> None:
+    """SafariTabs.db: a tab group of two, its pinned tab, and the window's own tab."""
+
+    db = sqlite3.connect(at)
+    db.executescript(
+        """
+        CREATE TABLE bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT,special_id INTEGER DEFAULT 0,
+          parent INTEGER, type INTEGER,title TEXT,url TEXT COLLATE NOCASE,num_children INTEGER DEFAULT 0,
+          order_index INTEGER NOT NULL,external_uuid TEXT UNIQUE,last_modified REAL DEFAULT NULL,
+          deleted INTEGER DEFAULT 0,extra_attributes BLOB DEFAULT NULL,local_attributes BLOB DEFAULT NULL,
+          date_closed REAL DEFAULT NULL, subtype INTEGER DEFAULT 0);
+        INSERT INTO bookmarks (id, parent, type, title, url, order_index) VALUES
+          (1, 0, 1, 'Root', NULL, 0),
+          (2, 1, 1, 'Docs', NULL, 0),
+          (3, 2, 1, 'TopScopedBookmarkList', NULL, 0),
+          (4, 3, 0, 'Mail', 'https://mail.example.com/', 0),
+          (5, 2, 0, 'The guide', 'https://docs.example.com/guide', 1),
+          (6, 2, 0, 'API', 'https://docs.example.com/api', 2),
+          (7, 1, 1, 'Local', NULL, 1),
+          (8, 7, 0, 'Board', 'https://board.example.com/', 0);
+        """
+    )
+    db.commit()
+    db.close()
+
+
 def browsers_home() -> pathlib.Path:
     """Browsers of the probe's own, said to the app in `NIB_BROWSERS_DIR`."""
 
@@ -205,6 +255,15 @@ def browsers_home() -> pathlib.Path:
     (default / "Bookmarks").write_text(json.dumps(CHROME_BOOKMARKS), encoding="utf-8")
     (default / "Sessions" / "Session_13436813666016900").write_bytes(snss(CHROME_TABS, {DOCS: "Docs"}))
 
+    safari = made / "safari" / "Library"
+    (safari / "Safari").mkdir(parents=True)
+    (safari / "Safari" / "Bookmarks.plist").write_bytes(
+        plistlib.dumps(safari_bookmarks(), fmt=plistlib.FMT_BINARY)
+    )
+    container = safari / "Containers" / "com.apple.Safari" / "Data" / "Library" / "Safari"
+    container.mkdir(parents=True)
+    safari_tabs(container / "SafariTabs.db")
+
     os.environ[BROWSERS_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
@@ -228,6 +287,15 @@ EXPECTED = {
         "Docs/API.url",
         "Docs/The guide.url",
         "Mail.url",
+    ],
+    "Safari": [
+        "Board.url",
+        "Bookmarks/Bookmarks menu/Recipes.url",
+        "Bookmarks/Favorites/Work/Wiki.url",
+        "Docs/API.url",
+        "Docs/The guide.url",
+        "Mail.url",
+        "Reading List/A long read.url",
     ],
 }
 
@@ -285,6 +353,7 @@ def main() -> int:
 
         bring("Firefox")
         bring("Chrome")
+        bring("Safari")
         said["held"] = held = app.ask(zen.HELD)
         said["files"] = files = {name: zen.files_under(spaces / name) for name in EXPECTED}
         said["chrome"] = camera.photograph(args.identifier, (args.shots / "browser-import-chrome.png").resolve())
@@ -292,6 +361,7 @@ def main() -> int:
         # Again: nothing is written twice.
         bring("Firefox")
         bring("Chrome")
+        bring("Safari")
         said["again"] = {name: zen.files_under(spaces / name) for name in EXPECTED}
         said["spaces again"] = app.ask("JSON.stringify(nib.workspace.spaces.map((one) => one.name))")
     finally:
@@ -304,13 +374,14 @@ def main() -> int:
         isinstance(rows, list)
         and "Firefox" in rows
         and "Chrome" in rows
+        and "Safari" in rows
         and not any(name in rows for name in ("Edge", "Brave", "Chromium", "Vivaldi"))
         and isinstance(held, dict)
-        and held.get("spaces") == ["Notes", "Firefox", "Chrome"]
+        and held.get("spaces") == ["Notes", "Firefox", "Chrome", "Safari"]
         and files == EXPECTED
         and "Mail.url" in json.dumps(held.get("bookmarks"))
         and said.get("again") == files
-        and said.get("spaces again") == ["Notes", "Firefox", "Chrome"]
+        and said.get("spaces again") == ["Notes", "Firefox", "Chrome", "Safari"]
     )
     print("PASS" if good else "FAIL")
     return 0 if good else 1

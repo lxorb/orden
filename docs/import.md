@@ -123,8 +123,32 @@ came in, and lands in it.
   says so. The crate hands over only the files it listed for a profile it listed
   (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie, a password or the
   history, and `scripts/browser-import-probe.py` reads browsers of its own through
-  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does. Safari's
-  is the next reader (#394).
+  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
+- **Safari** (#394), on a Mac, first among the browsers, since it is the Mac's own.
+  Safari keeps no list of profiles; what is read is three files of the home folder,
+  which the crate reads whole and hands over as JSON (`safari.rs`), and
+  `import/safari.ts` reads into the same sidebar:
+  - **the open tabs** are `SafariTabs.db` (Safari 15 on), in Safari's container: a
+    tree of folders and tabs, copied with its log and read the way Firefox's
+    `places.sqlite` is. A folder that holds tabs is a tab group and becomes a folder of
+    its name; a group's `TopScopedBookmarkList` holds its pinned tabs, which are the
+    Essentials; the window's own tabs, in the folder Safari calls `Local`, come at the
+    top of the space. Rows marked deleted, blank tabs and Safari's own lists
+    (`com.apple.…`, its iCloud tabs among them) stay behind. An older Safari's windows
+    are `LastSession.plist` instead, a private window never;
+  - **the bookmarks** are `Bookmarks.plist`, a binary property list (the `plist` crate
+    reads it): the Bookmarks folder holds Favorites, which is Safari's name for its bar,
+    the Bookmarks menu, and every other list of the root by its title; History is a
+    list there too, and stays;
+  - **the Reading List**, the root's `com.apple.ReadingList`, is a folder of its own
+    after the bookmarks, each page kept on the day it was added.
+
+  macOS keeps all three behind Full Disk Access, so the first read is refused: the
+  crate answers `no access`, as it does for Apple Notes, and the app opens System
+  Settings > Privacy & Security > Full Disk Access and says in its line to turn Orden
+  on there and ask again. The layout of `SafariTabs.db` is the one a macOS 15 Safari
+  writes, as forensic readers of it document; the tests hold the reader to files written
+  after it, since no Mac wrote them here.
 - **More apps** are a row and a case in `carriedBy`; the readers are already there.
 
 ## Where it lands
