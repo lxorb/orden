@@ -250,7 +250,7 @@ TEARDOWN = 90
 #: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
-    "chromium": "Chromium's own DevTools or flags, which WebKit does not have",
+    "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
 }
 
 #: The identifier every release is built under, which is the nib the reader is using

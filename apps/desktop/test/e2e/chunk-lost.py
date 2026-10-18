@@ -35,6 +35,13 @@ from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
 
+#: The loss is staged by refusing the chunk at Playwright's route, and WebKit keeps the
+#: refusal as the address's answer for the life of the browser, across Reload and into
+#: every context after it, without asking the route again (#384): the chunk is never
+#: fetched a second time, so neither story can be told there. Whether Safari itself
+#: holds on to a real network failure that way is a question for a Mac.
+NEEDS = ("chromium",)
+
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
