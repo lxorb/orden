@@ -713,8 +713,15 @@ function holds(tail: string): boolean {
  *  a new file and a folder deleted are steps too (`bin` in workspace.svelte.ts), and
  *  undos and redos take turns. What a step means going back and forth is still fetched
  *  with the first undo (undoing.ts, redoing.ts). Its comments are cut to a line each.
- *  Measured 3,221,381. */
-const BUDGET = 3_222_400
+ *  Measured 3,221,381.
+ *
+ *  Raised 2026-10-18, to 3,223,700, from an unstable at 3,221,698 (702 under), for #402:
+ *  a row's twist is pressed on the row's whole height and a step either side of it,
+ *  a strip drawn nowhere in the file list's own stylesheet (Tree.svelte, which the
+ *  first paint draws), and a press there only turns the row, double or middle
+ *  (`onTwist` in tree-keys.ts). The tag tree's is off the first paint. Measured
+ *  3,222,679. */
+const BUDGET = 3_223_700
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
