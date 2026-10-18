@@ -446,6 +446,77 @@ describe('an outbox folded while offline', () => {
   })
 })
 
+describe('a move to another space', () => {
+  const WORK = 'work'
+  const WORK_ROOT = '/device/work'
+
+  /** A device holding the seeded space and an empty second one, offline. */
+  async function twoSpaces(): Promise<Device> {
+    const here = await device()
+    here.engine.stop()
+    const writing = here.store.open()
+    await writing.write([
+      put('spaces', { space_id: WORK, root: WORK_ROOT, cursor: 0, role: 'owner', store: null }),
+      put('meta', wantedRow(WORK, new Map())),
+    ])
+    await writing.cleanExit(true)
+    await here.launch()
+    here.online = false
+    return here
+  }
+
+  /** What a space holds, live, as path and kind. */
+  function held(here: Device, space: string): string[] {
+    const state = here.engine.core.spaces.get(space)
+    if (!state) return []
+    return [...state.entries.values()]
+      .filter((entry) => state.isLive(entry.id))
+      .map((entry) => `${entry.local_path} ${entry.kind}`)
+      .sort()
+  }
+
+  test('takes a folder with everything in it, each as the kind it was (#413)', async () => {
+    // The other space's tree had never heard of anything in the folder, and only the
+    // folder was made there: the account, and every other device, had it empty.
+    const here = await twoSpaces()
+    await here.disk.mkdir(`${ROOT}/Trip`)
+    await here.engine.created(`${ROOT}/Trip`, true)
+    for (const [name, text] of [
+      ['Trip/Trip.md', '# Trip\n'],
+      ['Trip/Map.md', '# Map\n'],
+      ['Trip/Board.canvas', '{"nodes":[],"edges":[]}'],
+    ] as const) {
+      await here.disk.write(`${ROOT}/${name}`, text)
+      await here.engine.created(`${ROOT}/${name}`, false, text)
+    }
+
+    await here.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    await here.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+
+    expect(held(here, WORK)).toEqual([
+      'Trip folder',
+      'Trip/Board.canvas canvas',
+      'Trip/Map.md note',
+      'Trip/Trip.md note',
+    ])
+    expect(held(here, SPACE)).toEqual(['Ideas.md note', 'Plan.md note'])
+    const map = here.engine.entryAt(`${WORK_ROOT}/Trip/Map.md`)
+    expect((await here.engine.hold(map?.id ?? ''))?.text()).toBe('# Map\n')
+  })
+
+  test('takes a note the account knows, with its words, and leaves none behind', async () => {
+    const here = await twoSpaces()
+    await here.disk.move(`${ROOT}/Plan.md`, `${WORK_ROOT}/Plan.md`)
+    await here.engine.moved(`${ROOT}/Plan.md`, `${WORK_ROOT}/Plan.md`)
+
+    expect(held(here, WORK)).toEqual(['Plan.md note'])
+    expect(held(here, SPACE)).toEqual(['Ideas.md note'])
+    const plan = here.engine.entryAt(`${WORK_ROOT}/Plan.md`)
+    expect(plan?.id).not.toBe(PLAN)
+    expect((await here.engine.hold(plan?.id ?? ''))?.text()).toBe(SEEDED[0]?.text)
+  })
+})
+
 describe('the folder watcher', () => {
   test('hears the engine’s own new folder as that folder, never a second one', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)

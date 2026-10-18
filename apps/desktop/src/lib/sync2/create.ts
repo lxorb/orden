@@ -161,7 +161,7 @@ export async function made(
 }
 
 /** Every entry at or under a local path. */
-function atOrUnder(space: SpaceState, path: string): EntryRow[] {
+export function atOrUnder(space: SpaceState, path: string): EntryRow[] {
   const key = space.key(path)
   const inside = space.key(`${path}${SEP}`)
   return [...space.entries.values()].filter((entry) => {
