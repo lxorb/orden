@@ -65,6 +65,7 @@ const {
   writePapers,
 } = await import('./papers')
 const { parseQuery } = await import('../search/query')
+const { shownName } = await import('../note-name')
 
 const ROOT = '/space'
 
@@ -115,6 +116,15 @@ describe('a paper that has been read', () => {
     paperRead(`${ROOT}/papers/Ink.pdf`, 7, page('ink ink ink ink ink'))
 
     expect(found('ink').map((hit) => hit.page)).toEqual([1, 7])
+  })
+
+  test('and the paper a page note holds is named as the note is (#400)', () => {
+    paperRead(`${ROOT}/papers/Kestrel study.pages.pdf`, 1, page('a kestrel study'))
+
+    const [hit] = found('study').filter((one) => one.path.endsWith('.pages.pdf'))
+    expect(hit?.name).toBe('Kestrel study.pages')
+    expect(shownName(hit?.name ?? '')).toBe('Kestrel study')
+    expect(hit?.page).toBe(1)
   })
 
   test('and its pages come in the order they are in the paper', () => {
