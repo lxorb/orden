@@ -743,9 +743,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-18, to 3,233,100, for #412: a tile dragged back onto the file list
  *  and a file dragged into the Essentials, each one undo step (`unkeepInto` and the
  *  `keep` kind of undo), with the list's rows slid into place (`arrive` in
- *  tree-lift.ts). Measured 3,232,059. */
-const BUDGET = 3_233_100
-const MOST_FILES = 381
+ *  tree-lift.ts). Measured 3,232,059.
+ *
+ *  Raised 2026-10-18, to 3,235,600, and by one module, for #352: which spaces are put
+ *  away has to be known to the first paint's switcher (`shownSpaces`, from
+ *  workspace/archived-spaces.svelte.ts); archiving and the account's side of it
+ *  (space-archive.ts) are behind the press. Measured 3,234,549 in 381 modules. */
+const BUDGET = 3_235_600
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
