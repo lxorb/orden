@@ -24,7 +24,7 @@ of facts a layout has to keep whatever is on it:
 Every pane of the settings and every page behind one, signed out and with an
 account, at 1280, 960 and 720 on a desktop and 390 on a phone, light and dark; and
 beside them the new tab, the palette, the theme picker, the theme store, a question,
-the question with a box under its answers (Ctrl+N in a terminal), the sync question, the icon picker, the sign-in sheet, a row's menu, every panel of
+the question with a box under its answers (Ctrl+N in a terminal), the sync question, the quick question, the icon picker, the sign-in sheet, a row's menu, every panel of
 the sidebars, the file list and the empty space.
 
 The account is the browser's own: the session is a word in storage and every request
@@ -361,6 +361,31 @@ CHECK = r"""
       }
     }
     if (tops.length > 1) say(`the words "${words}" beside a box to tick wrap over ${tops.length} lines in ${named(label)}`)
+  }
+
+  // ── A box inset in a layer is inset at its foot too ────────────────────
+  // The quick question (#360) held its field a space in from the top and the sides of
+  // its sheet and set it on the sheet's bottom edge. A layer's first thing standing
+  // clear of the top is the layer's inset, and its last thing keeps at least half of
+  // it below; a layer that starts on its own edge - a list, a bar - is not asked.
+  for (const sheet of visible) {
+    if (!sheet.classList.contains('nib-screen')) continue
+    const kids = [...sheet.children].filter((k) => isShown.has(k) && inFlow(k))
+    if (!kids.length) continue
+    const s = css(sheet)
+    const box = sheet.getBoundingClientRect()
+    // From the sheet's border to what is drawn in its first and last box: the sheet's
+    // padding, a margin and the box's own padding are all the one inset.
+    const inner = { t: box.top + parseFloat(s.borderTopWidth), b: box.bottom - parseFloat(s.borderBottomWidth) }
+    const first = kids[0]
+    const last = kids[kids.length - 1]
+    const top = first.getBoundingClientRect().top + parseFloat(css(first).borderTopWidth) + parseFloat(css(first).paddingTop) - inner.t
+    const foot = inner.b - (last.getBoundingClientRect().bottom - parseFloat(css(last).borderBottomWidth) - parseFloat(css(last).paddingBottom))
+    // A layer that scrolls is cut at its foot by its height, and its last thing is
+    // wherever the scroll left it.
+    if (sheet.scrollHeight > sheet.clientHeight + 1) continue
+    if (top >= 8 && foot < top / 2)
+      say(`${named(kids[kids.length - 1])} stands ${px(foot)} from the foot of ${named(sheet).split(' < ')[0]}, whose top is ${px(top)} in`)
   }
 
   // ── A row of settings keeps a name a person can read ───────────────────
@@ -706,6 +731,42 @@ async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> Non
     )
 
 
+#: A provider the quick question can be asked of, and nothing that answers: nothing is
+#: asked here, and the layer only draws its field once there is somebody to ask.
+PROVIDER = """
+() => {
+  const ai = window.nibApp.ai
+  if (ai.providers.some((one) => one.name === 'Sweep')) return
+  const made = ai.add('compatible')
+  ai.update(made.id, { name: 'Sweep', baseUrl: 'http://layout-sweep.localhost:9', model: 'sweep' })
+  ai.setDefault(made.id)
+}
+"""
+
+QUICK = '[role="dialog"][aria-label="Quick question"]'
+
+
+async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> None:
+    """Ctrl twice: the quick question, with the open note along as a chip and then on
+    its own once the chip is taken off, which is where its field met the sheet's foot
+    (#360)."""
+    await page.evaluate(PROVIDER)
+    # Through the palette's row: a built app has no path to the module to call.
+    await page.keyboard.press("Control+Shift+P")
+    await page.wait_for_selector(PALETTE)
+    await page.keyboard.type("Quick question")
+    await page.wait_for_timeout(120)
+    await page.keyboard.press("Enter")
+    await page.wait_for_selector(f"{QUICK} textarea", timeout=8000)
+    await one.check(page, "quick question", width, scheme, QUICK)
+    drop = page.locator(f"{QUICK} .drop")
+    if await drop.count():
+        await drop.click()
+        await page.wait_for_selector(f"{QUICK} .chips", state="detached", timeout=4000)
+        await one.check(page, "quick question / alone", width, scheme, QUICK)
+    await shut(page, QUICK)
+
+
 async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     """Everything but the settings, at one width in one scheme."""
     walks = [
@@ -739,6 +800,7 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
             '[role="dialog"]:has(.tick)',
             "() => { window.nibApp.prompt.dismiss() }",
         )),
+        ("quick question", quick_question(one, page, width, scheme)),
         ("new tab", new_tab(one, page, width, scheme)),
     ]
     if not one.signed_in:

@@ -260,6 +260,12 @@
      from the same line, so it grows downwards as the answer arrives. */
   .quick {
     --screen-width: var(--screen-list);
+    /* One edge for everything in the sheet (#360): the composer's box, the chip under
+       it, the question's bubble and the answer all start and end this far in, and the
+       last of them stands as far from the foot as the box does from the top. */
+    --quick-inset: var(--space-3);
+    /* The round button sits as far in from the box's end as from its foot. */
+    --go-inset: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
 
     z-index: var(--z-screen);
     display: flex;
@@ -273,13 +279,19 @@
     flex: none;
     align-items: flex-end;
     min-height: 0;
-    width: calc(100% - 2 * var(--space-3));
-    margin: var(--space-3) var(--space-3) 0;
-    padding: 0 var(--space-2) 0 0;
+    width: calc(100% - 2 * var(--quick-inset));
+    margin: var(--quick-inset) var(--quick-inset) 0;
+    padding: 0 var(--go-inset) 0 0;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  /* Alone in the sheet - no note to take along, nothing asked yet - the box stands as
+     far from the foot as from the top, rather than on the sheet's edge. */
+  .field:last-child {
+    margin-bottom: var(--quick-inset);
   }
 
   /* Grows to a few lines and then scrolls: a question is sometimes a paragraph. */
@@ -307,7 +319,7 @@
     place-items: center;
     width: 28px;
     height: 28px;
-    margin-bottom: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
+    margin-bottom: var(--go-inset);
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -349,10 +361,16 @@
     stroke-width: 1.3;
   }
 
+  /* Under the box and on its edge, with the sheet's foot as far below as the box is
+     from the top; a thread under it takes the place of that foot. */
   .chips {
     flex: none;
     display: flex;
-    padding: var(--space-2) var(--space-4) var(--space-1);
+    padding: var(--space-2) var(--quick-inset) var(--quick-inset);
+  }
+
+  .chips + .talk {
+    padding-top: 0;
   }
 
   /* What goes along: its mark, its name, and the cross that takes it off. The Ask
@@ -437,7 +455,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-4) var(--space-3);
+    padding: var(--quick-inset);
   }
 
   /* The question: the AI panel's bubble at the end of the line. */
