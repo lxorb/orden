@@ -1244,10 +1244,20 @@ pub async fn web_open(
         // the interface instead, and the interface opens a tab beside the one that
         // asked - behind it or in front, as the press said; see web_opens.rs and
         // `openPage` in workspace.svelte.ts.
+        //
+        // Read before anything is refused, so it is about this request and no later one.
+        #[cfg(windows)]
+        let hushed = crate::extensions::welcome::taken(&asking);
         let Some(address) = handed_over(&url) else {
             return NewWindowResponse::Deny;
         };
         let said = crate::web_opens::taken(&asking);
+        // Nobody pressed for it, and an extension has just arrived in this store: the page
+        // it opens about its own install, which never opens; see extensions/welcome.rs.
+        #[cfg(windows)]
+        if hushed {
+            return NewWindowResponse::Deny;
+        }
 
         // Unless nobody pressed anything and the page asked for a size: a sign-in or a
         // share dialog, whose page talks to the one that opened it and closes itself.
@@ -1428,6 +1438,11 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // there this run; see extensions/webview2.rs.
         #[cfg(windows)]
         crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
+        // And a window asked for in it while an extension arrives, held back unless a
+        // person asked: the page an extension opens about its own install; see
+        // extensions/welcome.rs.
+        #[cfg(windows)]
+        crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
         // The browser's own chords, which the page is never offered, on a page in any
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());

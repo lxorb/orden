@@ -27,11 +27,15 @@ use tauri::{AppHandle, Emitter as _, Url};
 
 mod crx;
 mod fetch;
+#[cfg(any(windows, test))]
+mod given;
 pub mod library;
 pub mod link;
 mod manifest;
 pub mod popup;
 mod unzip;
+#[cfg(any(windows, test))]
+pub mod welcome;
 
 #[cfg(windows)]
 pub mod webview2;
