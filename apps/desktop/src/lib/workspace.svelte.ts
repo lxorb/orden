@@ -899,9 +899,10 @@ class Workspace {
           continue
         }
 
-        // Off the desktop app a web note is the browser's (`openSite`, #206).
-        const away = draft.address !== undefined || viewport.device === 'phone'
-        if (draft.kind === 'web' && draft.path && !isDesktop && away) {
+        // Off the desktop app a web note is the browser's (`openSite`, #206), and a phone
+        // or a tablet draws no page at all: a tab of one an older sitting left goes.
+        const away = viewport.touch || (!!draft.path && draft.address !== undefined)
+        if (draft.kind === 'web' && !isDesktop && away) {
           made.push(null)
           continue
         }
@@ -1954,8 +1955,9 @@ class Workspace {
       return unread(opening).then(() => null)
     }
 
-    // A shortcut with no address yet opens in a tab, for its bar; a phone has none.
-    if (!isDesktop && (said || viewport.device === 'phone')) {
+    // A shortcut with no address yet opens in a tab, for its bar; a phone and a tablet
+    // have none.
+    if (!isDesktop && (said || viewport.touch)) {
       if (said) await openExternal(said.url)
       this.remember(opening)
       return null
@@ -2001,9 +2003,10 @@ class Workspace {
    *  first would leave behind. The file list's own gesture asks for the name, because
    *  there the row is the thing being made; see `createWebsite`. */
   openWebsite(inPrivate = false) {
-    // Nor in the glasses' plugin, whose package has no web tab to draw; see
+    // Not on a phone or a tablet, which hand every page to the system's browser (#206);
+    // nor in the glasses' plugin, whose package has no web tab to draw; see
     // `webSurface` in surfaces.svelte.ts.
-    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
+    if (__EVEN_PLUGIN__ || viewport.touch) return
 
     const file = this.document({
       kind: 'web',
@@ -2040,7 +2043,8 @@ class Workspace {
    *  own - `target="_blank"`, a Ctrl+click inside the page - so the tab lands beside
    *  that page, in its pane, rather than wherever the interface last had focus. */
   openPage(url: string, ask: TabAsk = 'plain', opener?: string): string | null {
-    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return null
+    // A phone and a tablet draw no page inside nib: the system's browser has it (#206).
+    if (__EVEN_PLUGIN__ || viewport.touch) return null
 
     // A phone and a tablet hold one document, so there is no behind for a tab to be
     // in: one put there would be one the reader has no strip to find it in. See
@@ -2088,7 +2092,7 @@ class Workspace {
   /** A website in a folder, named before it has an address, and opened; see
    *  web-tab/new-site.ts. */
   async createWebsite(folder?: string, named?: string) {
-    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
+    if (__EVEN_PLUGIN__ || viewport.touch) return
 
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return

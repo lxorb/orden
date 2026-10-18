@@ -1116,7 +1116,7 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('New note from template'),
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
     },
-    ...(viewport.device === 'phone'
+    ...(viewport.touch
       ? []
       : [
           {
@@ -1131,8 +1131,8 @@ export function appCommands(view?: EditorView): Command[] {
           {
             // The other way round: a tab with an address field and nothing in it yet,
             // for somebody who has the address and no name in mind. Nothing is
-            // written while it is only browsed; the row below keeps it. A phone has no
-            // web tab at all - there the system browser is the answer.
+            // written while it is only browsed; the row below keeps it. A phone and a
+            // tablet have no web tab at all - there the system browser is the answer.
             id: 'new-website',
             label: t('Open a website'),
             run: () => workspace.openWebsite(),
@@ -1288,7 +1288,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new-private',
       label: t('New private tab'),
       hint: shortcuts.hint('app.new-private'),
-      disabled: !isDesktop || viewport.device === 'phone',
+      disabled: !isDesktop || viewport.touch,
       run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
     },
     // Chrome's History, from anywhere: a tab of its own in the space on screen. Named
@@ -1297,7 +1297,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'web-history',
       label: t('Browsing history'),
       hint: shortcuts.hint('web.history'),
-      disabled: viewport.device === 'phone',
+      disabled: viewport.touch,
       run: () => void import('./web-tab/history-open').then((one) => one.openHistory()),
     },
     {

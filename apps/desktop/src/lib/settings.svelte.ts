@@ -182,7 +182,7 @@ export type KindName =
 export function kindsHere(): KindName[] {
   if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
 
-  const web = viewport.device !== 'phone'
+  const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken) here.push('chat')
   if (isDesktop) here.push('terminal', 'remote')

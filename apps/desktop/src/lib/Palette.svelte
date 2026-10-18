@@ -90,9 +90,10 @@
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
 
-  /** A phone has no web tab, so it has no pages to go to either; nor has the glasses'
-   *  plugin on any screen, whose package leaves the history and the address rows out. */
-  const browses = $derived(!__EVEN_PLUGIN__ && viewport.device !== 'phone')
+  /** A phone and a tablet have no web tab, so no pages to go to either; nor has the
+   *  glasses' plugin on any screen, whose package leaves the history and the address
+   *  rows out. */
+  const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
 
   /** Something was taken out of the history or the list of things used: the one
    *  change the stores below do not say themselves. */
