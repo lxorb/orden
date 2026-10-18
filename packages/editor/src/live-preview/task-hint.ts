@@ -1,7 +1,8 @@
 /** A date typed in words at the end of a task, offered as the field it could be
  *  (docs/tasks.md 5.7): `- [ ] Call mum tomorrow`, and after the caret, quietly,
- *  `📅 Tomorrow ⇥`. Tab takes it - the words go and `📅 2026-10-08` is written where
- *  the Tasks plugin reads it, one edit - and anything else leaves the words as typed.
+ *  `🛫 Tomorrow ⇥`. Tab takes it - the words go and the day the task starts, `🛫
+ *  2026-10-08`, is written where the Tasks plugin reads it (or where the line already
+ *  holds that day; #371), one edit - and anything else leaves the words as typed.
  *
  *  A hint after the caret rather than the completion menu, because a menu answers
  *  Enter, and Enter at the end of a task is the next task: a menu would turn every
@@ -60,7 +61,7 @@ class HintWidget extends NibWidget {
   toDOM() {
     const hint = document.createElement('span')
     hint.className = 'nib-task-hint'
-    hint.textContent = `📅 ${this.text} ⇥`
+    hint.textContent = `🛫 ${this.text} ⇥`
     return hint
   }
 }
@@ -79,10 +80,13 @@ const hinted = StateField.define<Hint | null>({
 
 /** The words out and the field in, as the edit of the characters that change. */
 async function write(view: EditorView, hint: Hint) {
-  const [{ appliedEdits, oneEdit }, { writeTask }] = await Promise.all([
-    import('@nib/markdown/edits'),
-    import('@nib/markdown/task-edits'),
-  ])
+  const [{ appliedEdits, oneEdit }, { writeTask }, { readTask }, { startField }] =
+    await Promise.all([
+      import('@nib/markdown/edits'),
+      import('@nib/markdown/task-edits'),
+      import('@nib/markdown/task-line'),
+      import('@nib/markdown/task-dates'),
+    ])
   // Typed over while the writer was on its way: the hint it was is gone.
   if (view.state.field(hinted, false) !== hint) return
 
@@ -91,9 +95,10 @@ async function write(view: EditorView, hint: Hint) {
   while (start > 0 && /[ \t]/.test(line.text.charAt(start - 1))) start--
   const without = line.text.slice(0, start) + line.text.slice(hint.to - line.from)
   const { due, time } = hint.day
+  const field = startField(readTask(without) ?? {}, view.state.facet(noteIndex).dueReads ?? 'start')
   const after = appliedEdits(
     without,
-    writeTask(without, time === undefined ? { due } : { due, time }),
+    writeTask(without, time === undefined ? { [field]: due } : { [field]: due, time }),
   )
   const edit = oneEdit(line.text, after)
   if (!edit) return
