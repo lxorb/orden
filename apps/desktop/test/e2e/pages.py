@@ -1318,8 +1318,16 @@ def check_paper(page: Page, label: str) -> None:
         }"""
     )
     if not opened_note:
-        fail(f"[{label}] the import wrote no page note beside the paper")
+        fail(f"[{label}] the import wrote no page note for the paper")
         return
+
+    # One thing in the list, the page note: the paper is the note's, not a row beside
+    # it (#400).
+    beside = page.evaluate(
+        "() => window.nibApp.workspace.files.filter((one) => one.name.startsWith('Lecture 4')).map((one) => one.name)"
+    )
+    if beside != ["Lecture 4.pages"]:
+        fail(f"[{label}] the import shows {beside} in the list rather than the page note alone")
 
     say(f"[{label}] the note the import made: {opened_note}")
     page.wait_for_selector(".pages", timeout=15000)
