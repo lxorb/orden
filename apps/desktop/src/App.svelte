@@ -543,6 +543,9 @@
         // The update notice, which only a release server puts up; see
         // test/e2e/notices.py.
         updates,
+        // The questions the app asks, so a drive can put up one only a terminal raises -
+        // Ctrl+N in a terminal - in a browser that has none; see test/e2e/layout-sweep.py.
+        prompt,
         workspace,
         search,
         settings,

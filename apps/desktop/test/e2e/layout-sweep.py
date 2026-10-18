@@ -18,12 +18,13 @@ of facts a layout has to keep whatever is on it:
   - no two things side by side in a row are drawn over each other
   - no control is drawn at no size at all, and no empty field is invisible: a box
     with no border, no ground and no words in it is a row with nothing to press
+  - a box to tick is drawn as a box, with its few words on one line beside it
   - a row of settings keeps a name a person can read beside its control
 
 Every pane of the settings and every page behind one, signed out and with an
 account, at 1280, 960 and 720 on a desktop and 390 on a phone, light and dark; and
 beside them the new tab, the palette, the theme picker, the theme store, a question,
-the sync question, the icon picker, the sign-in sheet, a row's menu, every panel of
+the question with a box under its answers (Ctrl+N in a terminal), the sync question, the icon picker, the sign-in sheet, a row's menu, every panel of
 the sidebars, the file list and the empty space.
 
 The account is the browser's own: the session is a word in storage and every request
@@ -331,6 +332,35 @@ CHECK = r"""
       if (!edged && !ground && s.boxShadow === 'none')
         say(`${named(el)} is an empty field with nothing to show where it is`)
     }
+  }
+
+  // ── A box to tick is a box, and its words one line beside it ───────────
+  // The question Ctrl+N raises in a terminal drew "Always ask" as an empty pill the
+  // width of a field, its two words wrapped under each other (#317): a rule for the
+  // sheet's text field that caught its checkbox too.
+  for (const el of visible) {
+    if (!el.matches('input[type="checkbox"]')) continue
+    const r = el.getBoundingClientRect()
+    if (r.width <= 1 && r.height <= 1) continue
+    if (r.width > 2 * r.height || r.width > 32)
+      say(`${named(el)} is a box to tick drawn ${px(r.width)} by ${px(r.height)}`)
+    const label = el.closest('label')
+    if (!label || label.querySelector('input, select, textarea, button') !== el) continue
+    const words = [...label.childNodes].filter((one) => one !== el).map((one) => one.textContent).join(' ').trim()
+    if (!words || words.length > 40) continue
+    // The lines its words are drawn on, off each text's own boxes: two tops more than a
+    // few pixels apart are two lines.
+    const tops = []
+    const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent.trim()) continue
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      for (const one of range.getClientRects()) {
+        if (one.width > 1 && !tops.some((top) => Math.abs(top - one.top) < 4)) tops.push(one.top)
+      }
+    }
+    if (tops.length > 1) say(`the words "${words}" beside a box to tick wrap over ${tops.length} lines in ${named(label)}`)
   }
 
   // ── A row of settings keeps a name a person can read ───────────────────
@@ -699,6 +729,16 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
             "() => { window.nibApp.iconChoice.close() }",
         )),
         ("sync question", sync_question(one, page, width, scheme)),
+        # A key that is both the terminal's and the app's, asked about with a box under
+        # its answers (#317); only a terminal raises it, so it is raised here by hand.
+        ("terminal question", layer(
+            one, page, "terminal question", width, scheme,
+            "() => { void window.nibApp.prompt.chooseTicking({ title: 'Ctrl+N in a terminal',"
+            " options: [{ id: 'shell', label: 'Terminal' }, { id: 'app', label: 'Scratchpad', primary: true }],"
+            " tick: 'Always ask' }) }",
+            '[role="dialog"]:has(.tick)',
+            "() => { window.nibApp.prompt.dismiss() }",
+        )),
         ("new tab", new_tab(one, page, width, scheme)),
     ]
     if not one.signed_in:
