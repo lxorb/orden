@@ -312,6 +312,37 @@ agree on it: the bar's buttons once stepped by a fifth and the wheel by two fift
 which is two zooms for one hand. `wheelZoom` is the one function both the plane and
 a page note ask.
 
+## Turning
+
+**Two fingers turn a canvas, where Settings › Editor › Canvas says so** (#351): Rotate
+a canvas with two fingers, off to begin with and on the account, as Concepts does it.
+On glass the turn is the change in the angle of the line between the two fingers; on
+a Mac's trackpad it is WebKit's own `rotation` on the gesture events (`heldGestures`).
+Either way the plane turns about the point between the fingers, and only once they
+have turned six degrees from where they began (`TURN_DEADBAND`): a pinch held a
+little crooked never gets there, and a turn meant as one passes it in its first
+moment - from there it follows every degree, so it does not jump by the six.
+
+**Upright again** is Ctrl+Alt+R (⌥⌘R), beside the zoom's keys, and a row of the
+plane's menu while it is turned: a key rather than a two-finger double tap, which a
+tablet's own gestures and a palm both make too easily, and the menu is where a hand
+with no keyboard finds it. A page note never turns: paper is read upright.
+
+**How far it is turned is the view's, not the file's.** It is kept beside the pan and
+the zoom this device keeps for each plane (`canvas/place.ts`), the way a page note
+keeps its zoom, so a plane turned on a tablet opens upright on a laptop and the file
+Obsidian reads is the same bytes.
+
+**Everything is one transform, turned.** The camera carries `turn`, and `graphPoint`
+and `screenPoint` in `camera.ts` turn by it, so the hit test, the lasso, a drag, a
+connector and the menu's place all read the plane where it is drawn; a drag across
+the screen is turned back into the plane before it moves anything (`planeDelta` in
+`canvas/pointer.ts`). What is drawn - the pattern, the cards and the ink - is turned
+together by one css rotation of a square as wide as the pane's diagonal, so a turned
+view has dots and ink right into its corners, and the ink's own tiles never learn
+there is a turn at all. Fitting keeps the turn and fits the turned box. An export is
+of the plane and is upright.
+
 On paper the number opens rows instead - a sheet has a width to read at and a page
 to see whole, so there is more than one answer to "fit"; see [pages.md](pages.md).
 

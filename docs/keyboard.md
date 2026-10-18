@@ -1009,6 +1009,8 @@ nobody else's. Paragraph has no key now - Ctrl+2 on a second-level heading is wh
 it back into prose - and **Ctrl+Shift+P**, which it held for a while, is the palette on
 commands; see the digit rule above.
 
+Ctrl+Alt+R stands a canvas two fingers turned upright again (#351), beside them.
+
 The plane steps its zoom on the same two keys as a page note, Ctrl+Alt+= and
 Ctrl+Alt+-: the bar no longer has buttons for it (#401).
 
