@@ -217,10 +217,10 @@ export async function exportPagesPng(out: PagesOut): Promise<string | undefined>
  *  ring round it, and the same ring goes into the SVG, onto the screen and in here.
  *  So the three pictures of one stroke cannot drift.
  *
- *  PDF coordinates run up the page and a plane's run down it, so every `y` is
- *  subtracted from the page's height. That is the whole of the conversion: the units
- *  are the same, because a page's size in this format is already the size it would
- *  be printed. */
+ *  PDF coordinates run up the page and a plane's run down it, which `drawSvgPath`
+ *  turns itself about the top of the sheet. That is the whole of the conversion: the
+ *  units are the same, because a page's size in this format is already the size it
+ *  would be printed. */
 export async function exportPagesPdf(out: PagesOut): Promise<string | undefined> {
   const bytes = await pagesPdf(out)
   if (!bytes) return
@@ -269,12 +269,17 @@ async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
       const path = ring
         .map((point, index) => {
           const x = (point.x - page.x).toFixed(2)
-          const y = (height - (point.y - page.y)).toFixed(2)
+          const y = (point.y - page.y).toFixed(2)
           return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
         })
         .join(' ')
 
+      // An SVG path runs down the page and pdf-lib turns it up the page itself, about
+      // the origin it is given: so the path is the plane's own `y`, and the origin is the
+      // top of the sheet. Turned twice, the ink landed below the sheet, off the page.
       sheet.drawSvgPath(`${path} Z`, {
+        x: 0,
+        y: height,
         color: rgb(colour.r, colour.g, colour.b),
         opacity: inkOpacity(stroke),
         // The ring is the stroke: it is filled, never stroked, exactly as it is on
