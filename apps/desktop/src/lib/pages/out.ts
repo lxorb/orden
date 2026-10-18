@@ -18,8 +18,8 @@
  *  and every printer draws: pdf-lib has no annotation writer of its own, and ink
  *  only a reader that renders annotations can see is ink that prints as a blank
  *  page. What that costs is that the strokes cannot be rubbed out again in another
- *  app - which is what the `.pages` file beside the paper is for, and why the
- *  paper is never written over.
+ *  app - which is what the page note holding the paper is for, and why the paper
+ *  is never written over.
  *
  *  pdf-lib is loaded when an export runs and not before, like the rest of the
  *  export's libraries. */
@@ -34,7 +34,8 @@ import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
-import { isDesktop, joinPath } from '../tauri'
+import { isDesktop } from '../tauri'
+import { paperPlaces } from './held'
 
 /** What an export of a page note is about. */
 export interface PagesOut {
@@ -241,7 +242,7 @@ async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   // with it.
   const papers = new Set(pages.map((page) => page.file).filter((one): one is string => !!one))
   const source = papers.size === 1 ? [...papers][0] : null
-  const bytes = source && out.root ? await paperBytes(joinPath(out.root, source)) : null
+  const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
 
   const doc = bytes ? await PDFDocument.load(bytes) : await PDFDocument.create()
   const kept = bytes ? await doc.copyPages(doc, doc.getPageIndices()) : []
@@ -391,9 +392,14 @@ function hexOf(colour: string): { r: number; g: number; b: number } {
   }
 }
 
-/** The paper's bytes, or null where it is not there. A note whose PDF has gone
- *  still exports: the ink is the note's own and the paper was only ever underneath
- *  it. */
-async function paperBytes(path: string): Promise<Uint8Array | null> {
-  return await fileBytes(path).catch(() => null)
+/** The paper's bytes, from the first of its places that answers - the paper the note
+ *  holds, then where the page's name points, as the sheet on screen reads it (see
+ *  held.ts) - or null where it is in none of them. A note whose PDF has gone still
+ *  exports: the ink is the note's own and the paper was only ever underneath it. */
+async function paperBytes(places: readonly string[]): Promise<Uint8Array | null> {
+  for (const path of places) {
+    const bytes = await fileBytes(path).catch(() => null)
+    if (bytes) return bytes
+  }
+  return null
 }

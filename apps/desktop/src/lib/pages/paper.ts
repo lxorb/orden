@@ -1,10 +1,10 @@
 /** The paper behind a page, where the paper is a page of a PDF.
  *
- *  A page note made from a PDF keeps the PDF. Nothing is baked into the note: each
- *  page says which file and which page of it, and the picture is drawn from the
- *  paper itself when that page comes near the view. So the PDF in the space is the
- *  one copy of it - Obsidian opens it, a rename is one file to rename, and the note
- *  beside it is kilobytes of ink rather than a folder of PNGs.
+ *  A page note made from a PDF holds the PDF (held.ts). Nothing is baked into the
+ *  note: each page says which file and which page of it, and the picture is drawn
+ *  from the paper itself when that page comes near the view. So the PDF the note
+ *  holds is the one copy of it - Obsidian opens it, it travels with the note, and the
+ *  note is kilobytes of ink rather than a folder of PNGs.
  *
  *  Drawn once per page and kept, because a page somebody is writing on is a page
  *  they are looking at for minutes: rasterising it on every scroll would be the one
@@ -25,7 +25,7 @@
 import type { OpenPdf } from '../pdf/document'
 import { openDocument } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
-import { placesOf } from '../space-paths'
+import { paperPlaces } from './held'
 
 /** How much bigger than the page itself a background is drawn. */
 const SCALE = 2
@@ -65,8 +65,8 @@ const held = new Map<string, Held>()
  *
  *  A page holds the path the way a JSON Canvas file node holds one, which is to say
  *  relative. What it is relative to is the note, or the space the note is in, and only
- *  the surface knows either - so the surface says, and `placesOf` decides where to
- *  look. Handing the bare name to the reader is what made every page of an imported
+ *  the surface knows either - so the surface says, and `paperPlaces` decides where to
+ *  look, the paper the note itself holds first; see held.ts. Handing the bare name to the reader is what made every page of an imported
  *  PDF a blank sheet: nothing in the app can read `Lecture 4.pdf`. */
 export interface PaperAt {
   /** What the page says: the path as the file holds it. */
@@ -84,7 +84,7 @@ export interface PaperAt {
  *  in different folders naming the same paper under the space's root open it twice,
  *  which is a worker apiece and rare enough to leave alone. */
 function keyOf(at: PaperAt): string {
-  return placesOf(at.file, at.note, at.root).join('\n')
+  return paperPlaces(at.file, at.note, at.root).join('\n')
 }
 
 /** One page of a paper as a picture, drawn now or already drawn.
@@ -127,7 +127,7 @@ export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
  *  The last refusal is what comes back out, so the sheet can say the paper could not
  *  be read rather than nothing at all. */
 async function opened(at: PaperAt): Promise<OpenPdf> {
-  const places = placesOf(at.file, at.note, at.root)
+  const places = paperPlaces(at.file, at.note, at.root)
   let last: unknown = new Error(`${at.file} is nowhere this space can read`)
 
   for (const path of places) {
