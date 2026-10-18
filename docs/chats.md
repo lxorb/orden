@@ -574,9 +574,9 @@ The space's roles (`docs/collaboration.md`, Sharing) answer it, with one setting
   need MLS ([RFC 9420][mls]) or WhatsApp's per-device fan-out ([multi-device][wa-multi]),
   each a project of its own.
 - **What it would protect.** The same people's notes beside the chat are not end-to-end
-  encrypted (`docs/sync-v2.md` 6.6 encrypts web logins only, because they are live
-  credentials). Slack, Discord and Teams make the same choice, and Telegram for its cloud
-  chats.
+  encrypted (`docs/sync-v2.md` 6.6 encrypted web logins only, because they are live
+  credentials, and the AI vault does the same for keys). Slack, Discord and Teams make the
+  same choice, and Telegram for its cloud chats.
 - **What is done**: TLS on the wire, Cloudflare's encryption at rest, no third party sees a
   message (link previews are made by the sender, no GIF service), and the person's own
   controls in 4.18.

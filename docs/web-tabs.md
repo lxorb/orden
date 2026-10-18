@@ -408,9 +408,7 @@ Chrome and Edge never freeze one: the page on screen or under a menu, one playin
 heard in the last five minutes, one loading, one whose site was given the camera or
 the microphone (a call), one allowed to notify (a chat somebody expects to hear from),
 and one an agent is acting in - the crate wakes a frozen reader's tab before an agent's
-first call into it, because a frozen page answers no protocol call. A frozen page keeps
-its web login's lease; the two-minute light upload skips a site whose every page is
-frozen, which has changed nothing, and a full capture wakes the page it reads.
+first call into it, because a frozen page answers no protocol call.
 
 **Memory saver** (Settings, General, Tabs) is the one thing that takes a page down, and
 it is off until chosen. Its three strengths are Chrome's three, held against what a
@@ -430,8 +428,8 @@ screen, nor one under a menu, nor any page that is never frozen, nor a pinned on
 with something typed into a field and not sent - which the page says each time its tab
 is left (`web_look`) - because Chrome's never does. Changing it judges every page out of
 sight at once. A **parked** tab keeps its address, its place on the page and its trail,
-so reviving it is a load and not a loss; that path is also what a login handed to
-another computer and an engine that has gone come back through. Closing the tab takes
+so reviving it is a load and not a loss; that path is also what an engine that has gone
+comes back through. Closing the tab takes
 the webview and the trail with it.
 
 A web note turned Separate or back to Global builds again only its own page; every other
@@ -1830,7 +1828,8 @@ keep a profile per space, which is what nib had and what #239 took away.
 **The note's file is the choice.** `Nib-Data=<sixteen hex digits>` beside `Nib-Home` and
 `Nib-Icon` (`web-tab/shortcut.ts`), an id made when it is turned on, and the store is
 `note_<id>`. In the file, so it moves and is renamed with the note, syncs with it, and opens
-in a store of the same name on another computer (empty there until web data syncs). Every
+in a store of the same name on another computer, empty there: a computer's web logins stay
+on it (#393, docs/sync-v2.md section 6). Every
 rewrite of the file carries the key. A duplicated note keeps the id and so shares the jar.
 An unsaved tab has no file to say it, and is always on the shared store.
 
@@ -2220,15 +2219,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/own-data.ts` | Web data in a web note's menus: Global or Separate, written into the note's file |
 | `apps/desktop/src/lib/web-tab/merged.ts` | the stores the spaces kept, merged into the shared one once. Tested |
 | `apps/desktop/src-tauri/src/web_state/merge.rs` | a store's cookies one by one and its origins' storage into the shared store. Unit tested; `scripts/web-data-probe.py` |
-| `apps/desktop/src/lib/web-tab/lease.svelte.ts` | a web login as a lease: whether a page may run, handing over, losing it, what goes up and when. Tested; see docs/sync-v2.md 6 |
-| `apps/desktop/src/lib/web-tab/lease-transfer.ts` | a site's login uploaded under the fence and downloaded for a restore. Tested |
-| `apps/desktop/src/lib/web-tab/carried.ts` | what travels with a login besides the site's storage: zoom, grants, where each web note was left. Tested |
-| `apps/desktop/src/lib/web-tab/approval.svelte.ts` | the web key: made, asked for, given. Tested |
-| `apps/desktop/src/lib/web-tab/activity.ts` | whether somebody is at this computer. Tested |
-| `apps/desktop/src/lib/web-tab/web-sync.svelte.ts` | all of that started, where the account says web logins travel |
-| `apps/desktop/src/lib/web-tab/WebLocked.svelte` | `Open on {device}` and Use here, in place of a page another computer is using |
-| `apps/desktop/src/lib/web-tab/WebApprove.svelte` | another computer asking for the web logins, with the six digits |
-| `scripts/web-lease-probe.py` | the drive for the lease: two probe builds on one account under `wrangler dev`, the surface, Use here, and a computer that goes away without a word |
+| `apps/desktop/src/lib/web-tab/activity.ts` | whether somebody is at this computer, for the faces in chats. Tested |
 | `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested |
 | `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |

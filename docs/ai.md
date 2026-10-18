@@ -340,7 +340,7 @@ account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
 - **A device**: an ECDH P-256 key pair, the private half in the device's secret store
   (`ai-vault-device`: keychain, Keystore, or the browser's storage). The vault key is held
   on the account only wrapped to each device's public key (ephemeral ECDH, HKDF-SHA256 with
-  both public keys as salt, AES-256-GCM): the shape web logins use (docs/sync-v2.md 6.6),
+  both public keys as salt, AES-256-GCM): the shape web logins used (docs/sync-v2.md 6.6),
   in WebCrypto, so a phone and a browser carry it too.
 - **Connecting a new device**, in three steps so that nobody between the two screens - the
   account's service included - can choose a key that shows the same digits:
@@ -384,8 +384,8 @@ account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
   here. The account takes it only from a device with the key or once no device is allowed
   any more, so a device still waiting for an answer cannot take the vault away from the
   others. Keys only that vault held are typed again; programs' sign-ins are each machine's
-  own and stay. There is no recovery code, for web logins' reason: losing it costs a key
-  typed again, never writing.
+  own and stay. There is no recovery code, for the reason web logins had none: losing
+  it costs a key typed again, never writing.
 - **Two devices at once**: a write names the revision it read and is refused over a newer
   one; the device then meets the two three ways against what both last agreed on
   (`vault/merge.ts`), keys compared by fingerprint, and writes again. Every write tells the

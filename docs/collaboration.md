@@ -770,7 +770,7 @@ switcher's row of a shared space, and a chat's rows once there are chats.
 - **Whether they are here**: active while any device of theirs is in use, away
   while one is connected and none is, offline with none. The account's hub works it
   out from the `active` and `idle` every signed-in device now says (one
-  `Activity` per device, `people/here.ts`, which web logins that travel share)
+  `Activity` per device, `people/here.ts`)
   and writes `presence` only when the answer changes. Nobody is told: whoever has a
   person on screen asks `GET /v2/presence?ids=` at most once a minute
   (`people.watch`). Appear offline is offline to everybody but the person.

@@ -751,20 +751,16 @@ and re-read the page every step; Atlas's "take control" is the mode switch peopl
 
 ### 7.4 One session, one holder
 
-Under sync v2 a site's login is a lease: one device holds (store, site) while it is in use
-(`sync-v2.md` 6.2). An agent's tab in the reader's store needs the same lease, and the
-agent's activity counts as the device being active, so a laptop does not hand the session
-to the desktop in the middle of an agent's job. An agent never takes a lease another device
-is actively using: `browser_open` answers `in_use_elsewhere` with the device's name, and
-the agent can wait, or use its own store. An agent store is not synced and needs no lease.
+Under sync v2 a site's login was to be a lease: one device holding (store, site) while it
+was in use (`sync-v2.md` 6.2), and an agent's tab in the reader's store needing the same
+lease. As built, an agent never acquired or took one: the window told the crate which sites
+another computer held, and `browser_open` refused those with `in_use_elsewhere`.
 
-As built (lane `web-lease`): an agent never acquires or takes a lease at all. It cannot press
-Use here on the reader's behalf, and an ask of its own would be a handover the other
-computer's person was never asked about the moment they stepped away. So the window tells
-the crate which sites another computer holds (`web_lease_elsewhere`, see
-`src-tauri/src/agents/leases.rs`), `browser_open` refuses those, an agent at work counts as
-somebody at this computer (`web-tab/activity.ts`), and a site this computer has never asked
-about runs on its own state, as the reader's pages do while the hub is out of reach.
+**Removed (#393).** Web logins no longer travel between computers, so there is no lease
+and nothing for an agent to wait on: a site's login is this computer's, and an agent's tab
+in the reader's store runs on it as the reader's own tabs do. `in_use_elsewhere` is gone
+from the codes, and so is `web_lease_elsewhere`. Why it was taken out is `sync-v2.md`
+section 6.
 
 ---
 
@@ -1391,7 +1387,8 @@ Each has a recommendation, and the design above assumes it.
     needs one.
 13. **An agent and sync v2's leases.** Recommendation: **an agent's tab in your store holds
     the site's lease like you do and counts as you being active, and never takes one from
-    another device you are using.**
+    another device you are using.** Moot since #393: web logins no longer travel, so there
+    are no leases (7.4).
 14. **Engine order.** Recommendation: **build on `WebView2` now**, which the spike proved;
     the Mac and Linux subsets last.
 
