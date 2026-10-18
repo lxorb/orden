@@ -20,6 +20,7 @@ import type { Archive } from './archive.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
 import type { FileAction, FileActions, Kept } from './undo.svelte'
+import type { Bookmark } from './bookmarks.svelte'
 import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
@@ -40,6 +41,7 @@ export interface PutsBack {
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   loadTree(): Promise<void>
   persist(): void
+  readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   /** A file deleted without a step to undo it; see `bin` in workspace.svelte.ts. */
   bin(path: string, isFolder: boolean): Promise<Kept | null>
 }
@@ -88,6 +90,12 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
       case 'many':
         for (const step of [...action.steps].reverse()) if (!(await undoOne(ws, step))) return false
         break
+      case 'keep': {
+        // The rows sliding as they go, the way the drop that kept them slid them.
+        const { moving } = await import('../list-landing.svelte')
+        moving(() => ws.bookmarks.put(action.root, action.before))
+        break
+      }
       case 'merge':
         await unmerge(ws, action)
         break

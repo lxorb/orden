@@ -54,8 +54,8 @@
   import { isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
-  import { carried, carriedNothing, carry, landing } from './drag-paths'
-  import { dropOnList, fileClipboard } from './list-landing.svelte'
+  import { carried, carriedNothing, carry, isBookmarkDrag, landing } from './drag-paths'
+  import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import {
     autoScrollBy,
@@ -661,6 +661,21 @@
 
   $effect(() => () => lift?.dropLift(held))
 
+  // Rows into or out of the Essentials slide (#412); see `arrive` in tree-lift.ts.
+  $effect(() => {
+    listMotion.before = () =>
+      new Map(
+        [...held.rows()].map((row) => [row.dataset.path ?? '', row.getBoundingClientRect().top]),
+      )
+    listMotion.after = (was) => {
+      if (was) void liftCode().then((code) => code.arrive(held, was))
+    }
+    return () => {
+      listMotion.before = () => null
+      listMotion.after = () => undefined
+    }
+  })
+
   /** A row lights only where a drop would do something, the way a pane's drop
    *  zones do: a row held over itself, over a row inside it, or over the row it
    *  already sits in used to light and then move nothing.
@@ -692,7 +707,8 @@
     // and in Manual that is where a new order is; the middle of the row is the row
     // itself, which is the move into a folder the list has always had. See
     // tree-lift.ts, which is also where the bands are. A copy is never an order.
-    const ordering = how === 'move' && row instanceof HTMLElement
+    const ordering =
+      how === 'move' && row instanceof HTMLElement && !isBookmarkDrag(event.dataTransfer)
     if (lift && ordering && lift.aimAt(held, row, event.clientY, entry)) {
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'

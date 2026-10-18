@@ -9,6 +9,7 @@ import { folderOf, nameOf } from '../space-paths'
 import { copyAgain, type Copies } from './copying'
 import type { FileAction } from './undo.svelte'
 import { putBack } from './undoing'
+import type { Bookmark } from './bookmarks.svelte'
 
 /** What doing an undone operation again needs of the store: the operations
  *  themselves, which record themselves as they always do. */
@@ -17,6 +18,7 @@ export interface DoesAgain extends Copies {
   rename(path: string, name: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   loadTree(): Promise<void>
   persist(): void
 }
@@ -64,6 +66,12 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
     case 'many':
       for (const step of action.steps) await again(ws, step)
       break
+    case 'keep': {
+      const { moving } = await import('../list-landing.svelte')
+      moving(() => ws.bookmarks.put(action.root, action.after))
+      ws.undone.record(action)
+      break
+    }
     case 'copy':
       await copyAgain(ws, action.made)
       break

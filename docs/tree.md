@@ -134,6 +134,17 @@ is in it.
   and is a row there; a row out of a group dragged onto the grid comes out and is a
   tile. The arrows walk the grid by its rows and columns and step off its foot onto
   the rows under it.
+- **Between the list and the grid, both ways** (#412). A file dragged out of the list
+  onto the grid is kept there, the grid showing an empty place for it while there is no
+  tile yet, and leaves the list; a selection goes together. A tile dragged onto the list
+  lands in the folder it is let go of in - the folder's row or the stretch under the
+  rows lights as a drop there does - which opens to show it, and leaves the grid; let
+  go of in the folder it is already in, it only leaves the grid. Either way is one
+  Ctrl+Z, both halves of it (`keep` in `workspace/undo.svelte.ts`), and Ctrl+Shift+Z
+  does it again. It moves as it goes: the rows slide out of the way and the one that
+  came back fades in where it lands (`arrive` in `tree-lift.ts`), and the tiles scale
+  in and out and slide over; for a reader who asked for less motion, none of it. A tile
+  lands where the folder's order puts it, not between two rows of a Manual order.
 - **The list** is the other way of looking at all of it, for somebody who keeps a lot
   of notes there and reads them by name: Appearance, File list, Essentials: Grid or
   List in Settings, kept on this machine. A settings search for the old word,

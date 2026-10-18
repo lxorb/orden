@@ -179,6 +179,29 @@ export async function slideInto(held: Held, was: Map<string, number>): Promise<v
   }
 }
 
+/** Rows that came into the list or left it - an essential let go of over it, a file
+ *  kept as one (#412) - with the rest sliding to their new places, and a row that was
+ *  not there before fading in where it lands. Nothing for a reader who asked for as
+ *  little movement as possible. */
+export async function arrive(held: Held, was: Map<string, number>): Promise<void> {
+  if (dur(SLIDING) === 0) return
+
+  await slideInto(held, was)
+  for (const row of held.rows()) {
+    if (was.has(row.dataset.path ?? '')) continue
+    row.animate(
+      [
+        { opacity: 0, transform: 'translateX(-6px)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      {
+        duration: dur(SLIDING),
+        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+      },
+    )
+  }
+}
+
 /* -- The order a drop would leave behind -- */
 
 /** The children the list draws for one folder, the space's own top included. Off

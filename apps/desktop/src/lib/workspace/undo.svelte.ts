@@ -6,6 +6,7 @@
 
 import { t } from '../i18n.svelte'
 import type { Edit } from '../search/replace'
+import type { Bookmark } from './bookmarks.svelte'
 
 export type FileAction =
   | {
@@ -35,6 +36,8 @@ export type FileAction =
   | { kind: 'create'; path: string; content?: string; trashId?: string }
   /** One gesture of several operations (#399). */
   | { kind: 'many'; steps: FileAction[] }
+  /** A space's Essentials as they were and became (#412). */
+  | { kind: 'keep'; root: string; before: Bookmark[]; after: Bookmark[] }
   /** The composer's three, each recorded with the text it replaced: what those
    *  do is edit two notes at once, and an edit is not a file operation the
    *  filesystem can put back. */
@@ -205,6 +208,8 @@ function labelOf(action: FileAction | undefined): string | null {
       })
     case 'create':
       return t('Undo making {name}', { name: shownName(nameOf(action.path)) })
+    case 'keep':
+      return t('Undo the move')
     case 'many': {
       const [first] = action.steps
       if (!action.steps.every((one) => one.kind === first?.kind)) return labelOf(first)
@@ -225,6 +230,7 @@ function doesAgain(action: FileAction): boolean {
     case 'archive':
     case 'unarchive':
     case 'create':
+    case 'keep':
       return true
     case 'many':
       return action.steps.every(doesAgain)
