@@ -145,7 +145,7 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     # The cards that point at the palette and the graph sit over the list's top rows.
     page.add_init_script(
-        "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+        "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
     )
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     try:

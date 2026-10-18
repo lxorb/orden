@@ -26,7 +26,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 NOTCH = 1.2
 
 WINDOW = (

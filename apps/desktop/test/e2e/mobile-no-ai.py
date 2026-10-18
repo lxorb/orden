@@ -25,7 +25,7 @@ ANDROID = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 # The right side's tabs, by the names they wear, once it is open on the outline.
 RIGHT_TABS = """
