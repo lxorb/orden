@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { answer } from './answer'
 import { readBase, writeBase } from './base-file'
-import { builtinView } from './builtins'
+import { builtinView, todayAs } from './builtins'
 import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Answer, Row } from './types'
 
@@ -64,6 +64,20 @@ describe('the built-in views', () => {
         ],
       ],
     ])
+  })
+
+  test('a Today a tab changed follows the setting, unless its filter is the reader’s own', () => {
+    const laidOut = (base: ReturnType<typeof builtinView>) => ({
+      ...base,
+      views: base.views.map((view) => ({ ...view, type: 'board' })),
+    })
+    const off = laidOut(builtinView('today'))
+    const on = laidOut(builtinView('today', { undated: true }))
+    expect(todayAs(off, true)).toEqual(on)
+    expect(todayAs(on, false)).toEqual(off)
+    expect(todayAs(on, true)).toEqual(on)
+    const own = { ...off, views: off.views.map((view) => ({ ...view, filters: 'task.mine' })) }
+    expect(todayAs(own, true)).toEqual(own)
   })
 
   test('Upcoming: what is overdue, then by day from today, a start still to come on its day', () => {
@@ -150,5 +164,7 @@ describe('the built-in views', () => {
       })
       expect(readBase(writeBase(base))).toEqual(base)
     }
+    const undated = builtinView('today', { undated: true })
+    expect(readBase(writeBase(undated))).toEqual(undated)
   })
 })

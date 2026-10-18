@@ -154,3 +154,18 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
       })
   }
 }
+
+/** A Today a tab changed, made to say `undated` the way Settings does now: a view whose
+ *  filter is still the one nib ships the other way takes this way's, so what a reader
+ *  laid out stays theirs and the switch still reaches it. A filter they wrote is kept. */
+export function todayAs(base: Base, undated: boolean): Base {
+  const now = builtinView('today', { undated }).views[0]?.filters
+  const other = JSON.stringify(builtinView('today', { undated: !undated }).views[0]?.filters)
+  if (now === undefined) return base
+  return {
+    ...base,
+    views: base.views.map((view) =>
+      JSON.stringify(view.filters) === other ? { ...view, filters: now } : view,
+    ),
+  }
+}
