@@ -15,6 +15,7 @@ import { STARTS_RIGHT } from './workspace/panels'
 vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
+  agentsPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),
   propertiesPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
@@ -111,6 +112,20 @@ describe('the panel tabs', () => {
       const { html } = row(panel)
       expect(html.match(/class="tools/g)).toHaveLength(1)
     }
+  })
+
+  /** The square that stopped every agent stood beside the Agents tab on its own
+   *  (#406). An agent is stopped where it runs - its row in the panel, its tab, the
+   *  Ask panel's composer - and by the stop key, the tray and `nib --stop-agents`. */
+  test('and the Agents panel has no stop of its own among them', () => {
+    open('# Head\n')
+    agentMarks.heard = true
+    const { html, after } = row('agents')
+    agentMarks.heard = false
+
+    expect(html).toContain('aria-label="Agents"')
+    expect(after).not.toContain('Stop agents')
+    expect(html).not.toContain('Stop agents')
   })
 
   test('and with nothing laid out yet, none is put behind More', () => {

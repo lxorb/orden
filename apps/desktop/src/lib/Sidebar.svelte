@@ -809,20 +809,6 @@
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
           </button>
         {/if}
-        {#if showing === 'agents'}
-          <button
-            class="nib-glyph tool"
-            title={shortcuts.tooltip(t('Stop agents'), 'agents.stop')}
-            aria-label={t('Stop agents')}
-            onclick={() => {
-              if (!__EVEN_PLUGIN__) void import('./agents/ui/index').then((one) => one.stopAgents())
-            }}
-          >
-            <svg viewBox="0 0 13 13"
-              ><rect class="solid" x="3.2" y="3.2" width="6.6" height="6.6" rx="1.2" /></svg
-            >
-          </button>
-        {/if}
         {#if showing === 'ask'}
           <!-- New chat first, as VS Code has it, so Chats keeps the row's end. -->
           <button
@@ -1311,11 +1297,6 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
     pointer-events: none;
-  }
-
-  .tool .solid {
-    fill: currentColor;
-    stroke: none;
   }
 
   /* The tools keep their size: they are square glyph buttons, and a row that has
