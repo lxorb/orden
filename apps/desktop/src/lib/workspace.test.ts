@@ -961,6 +961,96 @@ describe('nesting a note in a note', () => {
   })
 })
 
+describe('a file in the Essentials', () => {
+  const note = (path: string): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  const folder = (path: string, children: Entry[]): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  const shown = (entry: Entry | null): string[] =>
+    !entry
+      ? []
+      : entry.children.flatMap((child) => [child.path, ...shown(child.is_dir ? child : null)])
+
+  const mark = (path: string) => ({ kind: 'note' as const, path, text: '' })
+
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.tree = folder('/space', [
+      note('/space/a.md'),
+      note('/space/Board.canvas'),
+      note('/space/Lecture.pages'),
+      note('/space/Site.web'),
+      folder('/space/f', [note('/space/f/b.md')]),
+    ])
+    workspace.device.expanded = { '/space/f': true }
+    workspace.panel = null
+    workspace.revealing = null
+    for (const one of workspace.bookmarks.list) workspace.bookmarks.toggle(one)
+  })
+
+  afterEach(() => {
+    for (const one of workspace.bookmarks.list) workspace.bookmarks.toggle(one)
+    workspace.activeSpaceId = null
+  })
+
+  test('is in the Essentials and not in the file list as well, whatever kind it is', () => {
+    for (const one of ['a.md', 'Board.canvas', 'Lecture.pages', 'Site.web', 'f/b.md']) {
+      workspace.bookmarks.toggle(mark(one))
+    }
+
+    expect(shown(workspace.shownTree)).toEqual(['/space/f'])
+    expect(workspace.visibleRows()).toEqual(['/space/f'])
+  })
+
+  test('and taken out of them is back in the list', () => {
+    workspace.bookmarks.toggle(mark('Board.canvas'))
+    expect(shown(workspace.shownTree)).not.toContain('/space/Board.canvas')
+
+    workspace.bookmarks.toggle(mark('Board.canvas'))
+    expect(shown(workspace.shownTree)).toContain('/space/Board.canvas')
+  })
+
+  test('is only left out of what is drawn: the disk and the files still hold it', () => {
+    workspace.bookmarks.toggle(mark('a.md'))
+
+    expect(shown(workspace.tree)).toContain('/space/a.md')
+    expect(workspace.files.map((one) => one.path)).toContain('/space/a.md')
+    expect(workspace.notes.map((one) => one.path)).toContain('/space/a.md')
+  })
+
+  test('a folder, a heading and a search kept there leave the list alone', () => {
+    workspace.bookmarks.toggle({ kind: 'folder', path: 'f', text: '' })
+    workspace.bookmarks.toggle({ kind: 'heading', path: 'a.md', text: 'Plan' })
+    workspace.bookmarks.toggle({ kind: 'search', path: '', text: 'plan' })
+
+    expect(shown(workspace.shownTree)).toContain('/space/f')
+    expect(shown(workspace.shownTree)).toContain('/space/f/b.md')
+    expect(shown(workspace.shownTree)).toContain('/space/a.md')
+  })
+
+  test('is shown where its row is when it is asked for, which is not the list', () => {
+    workspace.bookmarks.toggle(mark('f/b.md'))
+    workspace.revealNote('/space/f/b.md')
+
+    expect(workspace.panel).toBe('tree')
+    expect(workspace.revealing).toBeNull()
+  })
+})
+
 describe('a note found in the file list', () => {
   beforeEach(() => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]

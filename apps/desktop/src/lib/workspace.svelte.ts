@@ -693,10 +693,33 @@ class Workspace {
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
-    return orderedTree(this.unarchived(coming), this.sortMode, (folder) =>
+    return orderedTree(this.unkept(this.unarchived(coming)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
     )
   })
+
+  /** Whether a file is kept in this space's Essentials. */
+  inEssentials(path: string): boolean {
+    const root = this.activeSpace?.root
+    if (root === undefined || !within(root, path)) return false
+
+    const at = relativeTo(root, path)
+    return this.bookmarks.list.some((one) => one.kind === 'note' && samePath(one.path, at))
+  }
+
+  /** The tree without the files kept in the Essentials, which are drawn there (#345);
+   *  see docs/tree.md. */
+  private unkept(tree: Entry): Entry {
+    const root = this.activeSpace?.root
+    const kept = this.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
+    if (root === undefined || !kept.length) return tree
+
+    return withoutRows(tree, (entry) => {
+      if (entry.is_dir) return false
+      const at = relativeTo(root, entry.path)
+      return kept.some((one) => samePath(one, at))
+    })
+  }
 
   /** The tree without what the space has archived. */
   private unarchived(tree: Entry): Entry {
@@ -3538,6 +3561,12 @@ class Workspace {
   revealNote(path = this.active?.path) {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
+
+    // Its row is its tile, above the list (#345).
+    if (this.inEssentials(path)) {
+      this.showPanel('tree')
+      return
+    }
 
     // An archived note's row is in the archive, at the list's foot.
     if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
