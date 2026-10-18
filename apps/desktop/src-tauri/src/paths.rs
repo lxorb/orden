@@ -155,14 +155,48 @@ pub fn highlights_of(pdf: &Path) -> PathBuf {
     pdf.with_file_name(name)
 }
 
-/// A PDF's highlights travel with it. They are data about the file rather than a
-/// file of their own, so a rename or a move that left them behind would leave
-/// them describing a name nothing answers to.
+/// The PDF a page note holds: the note's own name with `.pdf` after it, beside it,
+/// the way a PDF's highlights are its name with their suffix after it. A PDF brought
+/// in becomes a page note and its bytes move here, so the space holds one thing - the
+/// page note - and the paper under its pages travels with it. See docs/pages.md.
+pub fn paper_of(pages: &Path) -> PathBuf {
+    let mut name = pages.file_name().unwrap_or_default().to_os_string();
+    name.push(".pdf");
+    pages.with_file_name(name)
+}
+
+/// Whether a PDF is the paper of the page note beside it: `Lecture.pages.pdf` with
+/// `Lecture.pages` there. The list shows the page note and not its paper, as it
+/// shows a PDF and not its highlights; a paper whose note has gone is a PDF again,
+/// and is listed, so nothing is ever kept where nobody can see it.
+pub fn held_paper(pdf: &Path) -> bool {
+    if !is_pdf(pdf) {
+        return false;
+    }
+
+    let holder = pdf.with_extension("");
+    is_pages(&holder) && holder.is_file()
+}
+
+/// What a file holds travels with it: a PDF's highlights, and a page note's paper
+/// and that paper's highlights. Moved, copied and dropped with it; see `copy_held`
+/// and `drop_held`. They are data about the file rather than a file of
+/// their own, so a rename or a move that left them behind would leave them
+/// describing a name nothing answers to.
 ///
-/// Quiet about failure on purpose: the PDF has already moved, and a sidecar that
-/// could not follow is a lost set of highlights, not a lost file. Moved the way the
-/// PDF was, so a PDF that went to the trash on another disk takes them with it.
-pub fn move_highlights(from: &Path, to: &Path) {
+/// Quiet about failure on purpose: the file has already moved, and a sidecar that
+/// could not follow is a lost set of highlights or a paper listed on its own, not a
+/// lost file. Moved the way the file was, so one that went to the trash on another
+/// disk takes them with it.
+pub fn move_held(from: &Path, to: &Path) {
+    if is_pages(from) {
+        let paper = paper_of(from);
+        let moved = paper_of(to);
+        if paper.exists() && crate::carry::move_whole(&paper, &moved, "move").is_ok() {
+            move_held(&paper, &moved);
+        }
+        return;
+    }
     if !is_pdf(from) {
         return;
     }
@@ -175,7 +209,15 @@ pub fn move_highlights(from: &Path, to: &Path) {
 
 /// And a copy of it has them too, for the reason they follow a move. Quiet about
 /// failure for the same reason as well.
-pub fn copy_highlights(from: &Path, to: &Path) {
+pub fn copy_held(from: &Path, to: &Path) {
+    if is_pages(from) {
+        let paper = paper_of(from);
+        let copied = paper_of(to);
+        if paper.exists() && !copied.exists() && fs::copy(&paper, &copied).is_ok() {
+            copy_held(&paper, &copied);
+        }
+        return;
+    }
     if !is_pdf(from) {
         return;
     }
@@ -187,9 +229,14 @@ pub fn copy_highlights(from: &Path, to: &Path) {
 }
 
 /// And they go when it goes.
-pub fn drop_highlights(pdf: &Path) {
-    if is_pdf(pdf) {
-        let _ = fs::remove_file(highlights_of(pdf));
+pub fn drop_held(file: &Path) {
+    if is_pages(file) {
+        let paper = paper_of(file);
+        if fs::remove_file(&paper).is_ok() {
+            drop_held(&paper);
+        }
+    } else if is_pdf(file) {
+        let _ = fs::remove_file(highlights_of(file));
     }
 }
 
@@ -1014,10 +1061,10 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        a_shareable_folder, at_most, drop_highlights, files_in, folded, folder_key, folder_named,
-        free_spot, highlights_of, inside, is_base, is_canvas, is_markdown, is_pages, is_pdf,
-        is_shortcut, judged, judged_beyond, judged_space, link_to, move_highlights, same_path,
-        space_root, write_atomically, Picked,
+        a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
+        folder_named, free_spot, held_paper, highlights_of, inside, is_base, is_canvas,
+        is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_beyond, judged_space, link_to,
+        move_held, paper_of, same_path, space_root, write_atomically, Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1594,12 +1641,12 @@ mod tests {
         std::fs::write(highlights_of(&was), "{}").expect("its highlights");
 
         std::fs::rename(&was, &now).expect("the move");
-        move_highlights(&was, &now);
+        move_held(&was, &now);
 
         assert!(!highlights_of(&was).exists());
         assert!(highlights_of(&now).exists());
 
-        drop_highlights(&now);
+        drop_held(&now);
         assert!(!highlights_of(&now).exists());
     }
 
@@ -1612,9 +1659,62 @@ mod tests {
         // PDF has one, and nothing else may take a file with it.
         std::fs::write(highlights_of(&note), "{}").expect("a decoy");
 
-        move_highlights(&note, &here.join("Other.md"));
-        drop_highlights(&note);
+        move_held(&note, &here.join("Other.md"));
+        drop_held(&note);
         assert!(highlights_of(&note).exists());
+    }
+
+    #[test]
+    fn a_page_note_holds_the_paper_named_after_it() {
+        assert_eq!(
+            paper_of(&path(&["Nib", "Lecture 4.pages"])),
+            path(&["Nib", "Lecture 4.pages.pdf"])
+        );
+
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let paper = here.join("Lecture.pages.pdf");
+        std::fs::write(&paper, "%PDF").expect("a paper");
+        // Nobody holds it yet: a PDF like any other.
+        assert!(!held_paper(&paper));
+
+        std::fs::write(here.join("Lecture.pages"), "{}").expect("its page note");
+        assert!(held_paper(&paper));
+        // A PDF of any other name is nobody's, and neither is the note itself.
+        std::fs::write(here.join("Lecture.pdf"), "%PDF").expect("a pdf");
+        assert!(!held_paper(&here.join("Lecture.pdf")));
+        assert!(!held_paper(&here.join("Lecture.pages")));
+    }
+
+    #[test]
+    fn a_page_note_takes_its_paper_and_the_papers_highlights_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let was = here.join("Lecture.pages");
+        let now = here.join("Reading").join("Week 1.pages");
+        std::fs::create_dir_all(here.join("Reading")).expect("a folder");
+        std::fs::write(&was, "{}").expect("a page note");
+        std::fs::write(paper_of(&was), "%PDF").expect("its paper");
+        std::fs::write(highlights_of(&paper_of(&was)), "{}").expect("the paper's highlights");
+
+        std::fs::rename(&was, &now).expect("the move");
+        move_held(&was, &now);
+
+        assert!(!paper_of(&was).exists());
+        assert!(paper_of(&now).exists());
+        assert!(highlights_of(&paper_of(&now)).exists());
+
+        let copy = here.join("Reading").join("Week 1 copy.pages");
+        std::fs::copy(&now, &copy).expect("the copy");
+        copy_held(&now, &copy);
+        assert!(paper_of(&now).exists());
+        assert!(paper_of(&copy).exists());
+        assert!(highlights_of(&paper_of(&copy)).exists());
+
+        drop_held(&copy);
+        assert!(!paper_of(&copy).exists());
+        assert!(!highlights_of(&paper_of(&copy)).exists());
+        assert!(paper_of(&now).exists());
     }
 
     #[test]

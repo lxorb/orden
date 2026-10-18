@@ -10,8 +10,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, in_spaces, inside, is_base, is_canvas, is_chat, is_markdown, is_pages, is_pdf,
-    is_shortcut, space_root, spaces_dir, Seen, MAX_DEPTH,
+    cannot, held_paper, in_spaces, inside, is_base, is_canvas, is_chat, is_markdown, is_pages,
+    is_pdf, is_shortcut, space_root, spaces_dir, Seen, MAX_DEPTH,
 };
 
 /// How many notes and folders one read may put in the tree.
@@ -55,6 +55,10 @@ pub struct Entry {
 pub struct TreeOptions {
     /// Files and folders beginning with a dot.
     pub show_hidden: bool,
+    /// The papers page notes hold, which the list leaves out: what a file list
+    /// draws is the page note. A reader that walks the tree for every file there
+    /// is - sync, where it cannot scan the folder - asks for them.
+    pub papers: bool,
 }
 
 /// Reads a space into a tree of notes and folders.
@@ -167,13 +171,16 @@ fn walk(
                     } else {
                         folder(&child, name)
                     });
-                } else if is_markdown(&child)
+                } else if (is_markdown(&child)
                     || is_pdf(&child)
                     || is_canvas(&child)
                     || is_pages(&child)
                     || is_base(&child)
                     || is_shortcut(&child)
-                    || is_chat(&child)
+                    || is_chat(&child))
+                    // But a page note's paper, which is part of the note beside it
+                    // rather than a file of its own; see `held_paper`.
+                    && (options.papers || !held_paper(&child))
                 {
                     // The notes, the PDFs beside them, the canvases, the stacks
                     // of paper, the websites and the chats: the things a tab can hold.
@@ -366,6 +373,34 @@ mod tests {
 
         let nested = &top.children[0];
         assert_eq!(names(&nested.children), ["Deep.PDF"]);
+    }
+
+    /// A PDF brought in is a page note, and its paper is part of the note: the list
+    /// shows `Lecture.pages` and not `Lecture.pages.pdf` beside it. A paper whose note
+    /// is not there is a PDF like any other and is listed, and a reader that asks for
+    /// every file - sync on a phone, which cannot scan the folder - is given it.
+    #[test]
+    fn a_page_note_is_listed_and_the_paper_it_holds_is_not() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("Lecture.pages"), "{}").expect("a page note");
+        std::fs::write(here.join("Lecture.pages.pdf"), "%PDF").expect("its paper");
+        std::fs::write(here.join("Orphan.pages.pdf"), "%PDF").expect("a paper with no note");
+
+        let top = read(here, &options());
+        assert_eq!(names(&top.children), ["Lecture.pages", "Orphan.pages.pdf"]);
+
+        let every = read(
+            here,
+            &TreeOptions {
+                papers: true,
+                ..options()
+            },
+        );
+        assert_eq!(
+            names(&every.children),
+            ["Lecture.pages", "Lecture.pages.pdf", "Orphan.pages.pdf"]
+        );
     }
 
     /// A folder holding two symlinks back to the folder above it. Reading each
