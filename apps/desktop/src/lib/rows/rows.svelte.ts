@@ -24,6 +24,7 @@ import { inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { type RowsListener, RowsStore } from './store'
+import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
 
 const store = new RowsStore({
@@ -36,6 +37,7 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
+  vault: isVault,
 })
 
 // Every write in any space says itself to the link index, and every file operation
