@@ -58,7 +58,9 @@ import sys
 import time
 from typing import Any
 
-from harness import LAUNCHED, Drive
+from urllib.parse import urlsplit
+
+from harness import ENGINE, LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -440,10 +442,16 @@ class Browser:
             device_scale_factor=2 if phone else 1,
             color_scheme="light",
             reduced_motion="reduce",
+            # The account here is the routes', and in WebKit a page the asset worker
+            # controls sends its fetches past them; see WEBKIT_WORKERS in harness.py.
+            service_workers="block" if ENGINE == "webkit" else "allow",
         )
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
-        await context.route(re.compile(r"^https?://(?!layout-sweep\.localhost)"), self.answer)
+        # Everything but the app's own origin, which is a name below `.localhost` in
+        # Chromium and the loopback address itself in WebKit (see harness.py).
+        own = re.escape(urlsplit(DRIVE.origin).netloc)
+        await context.route(re.compile(rf"^https?://(?!{own}/)"), self.answer)
         with_sockets = getattr(context, "route_web_socket", None)
         if with_sockets:
             await with_sockets(re.compile(r"^wss?://"), lambda socket: None)
@@ -466,6 +474,8 @@ class Browser:
         return page
 
     def threw(self, error: Any) -> None:
+        if harmless(error):
+            return
         self.errors.append(f"{error} (after {self.at})")
         if os.environ.get("SWEEP_TRACE"):
             say(f"  {self.label} threw after {self.at}: {(error.stack or '')[:2500]}")
@@ -857,7 +867,12 @@ async def sweep() -> list[Browser]:
         wanted = sys.argv[sys.argv.index("--only") + 1].split(",")
         kinds = [one for one in kinds if f"{one.kind}-{'in' if one.signed_in else 'out'}" in wanted]
     async with async_playwright() as play:
-        browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
+        # The engine the run is in, as every other drive's (`NIB_ENGINE` in harness.py):
+        # the sweep is a question about how an engine lays the app out.
+        if ENGINE == "webkit":
+            browser = await play.webkit.launch()
+        else:
+            browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
         try:
             results = await asyncio.gather(*(sweep_one(one, browser) for one in kinds), return_exceptions=True)
         finally:
