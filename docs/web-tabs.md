@@ -1875,6 +1875,26 @@ because the runtime has no way to name a profile for a webview it builds. It cos
 browser process while one of its tabs is open, and nothing after: a login in it survives
 its last tab closing because its session cookies are given an expiry as its pages load.
 
+**The page moves once** (#409). Turning a note Separate asks for the move twice - the menu
+that wrote the file, and the open tab that heard the file change - and the two used to run
+side by side: the second waited out the closing page's silence and then closed the page the
+first had just built in the new store, which the tab went on believing in, spinning until it
+was closed by hand. A tab's moves run one after the other now (`rehouse` in
+`pages.svelte.ts`), the second finds the page already where it asks for, and the page counts
+as on its way from the park to the build, so the pane looking again meanwhile says where the
+new page goes rather than asking for a second.
+
+**A store is handed each extension once, and its first-run page never opens** (#409). On
+Windows a store nothing was ever handed to - every note just turned Separate - is given the
+extensions on the list as its first page is built (`extensions/webview2.rs`), and an install
+runs the extension's `onInstalled`, which most answer with a "thanks for installing" page: a
+window of the engine's own, or a tab. A store holding an extension at the list's version is
+handed nothing, and one on its way in is not handed again before the engine answers
+(`extensions/given.rs`); and for ten seconds after an extension is handed over, the store is
+quiet: a window nobody pressed for is not opened from its pages, and a framed window its
+browser process opens on its own is closed as it appears (`extensions/welcome.rs`). The
+extension is installed and runs; its options page is in Settings.
+
 **History is one list** (`nib:web-visits`, `visited.ts`), a note kept apart included, as
 Firefox keeps one history across containers. **Delete browsing data** clears the shared
 store and the own store of every web note kept apart that is open.
@@ -2201,6 +2221,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_cookies/twins.rs` | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
+| `apps/desktop/src-tauri/src/extensions/given.rs` | what a store is handed: each extension once, nothing to a store loaded again. Unit tested |
+| `apps/desktop/src-tauri/src/extensions/welcome.rs` | a store quiet while an extension arrives, so its first-run page never opens. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
 | `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |
