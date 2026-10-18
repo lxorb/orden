@@ -87,6 +87,42 @@
     places?: boolean
   } = $props()
 
+  /** Whether Undo and Redo come first, which is a phone's bar: see `arrows` below. */
+  const early = $derived(viewport.device === 'phone')
+
+  /** Whether there is more of the bar past either end of it, which is what the fade
+   *  at that end says: a row scrolled sideways with nothing to show it scrolls reads
+   *  as a row that ends at the edge of the screen (#350). */
+  let scroller = $state<HTMLElement>()
+
+  /** Reads values for their own sake, so the effect around them follows them. */
+  const follows = (..._values: unknown[]) => undefined
+  let fades = $state({ start: false, end: false })
+
+  function measure() {
+    const row = scroller
+    if (!row) return
+    const along = standing
+      ? { at: row.scrollTop, seen: row.clientHeight, whole: row.scrollHeight }
+      : { at: Math.abs(row.scrollLeft), seen: row.clientWidth, whole: row.scrollWidth }
+    const start = along.at > 1
+    const end = along.at + along.seen < along.whole - 1
+    if (start !== fades.start || end !== fades.end) fades = { start, end }
+  }
+
+  $effect(() => {
+    const row = scroller
+    if (!row) return
+    // Measured again when the bar stands on its end, since that is the other way.
+    follows(standing)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const watcher = new ResizeObserver(measure)
+    watcher.observe(row)
+    for (const one of row.children) watcher.observe(one)
+    return () => watcher.disconnect()
+  })
+
   /** Which panel is open over the bar, if any. One at a time: two panels over a
    *  drawing is a dialog box, and this is a bar. */
   type Panel = 'pen' | 'rub' | 'catch' | 'put' | 'colour'
@@ -346,7 +382,49 @@
         </span>
       {/if}
 
-      <div class="scroller">
+      <div
+        class="scroller"
+        class:fade-start={fades.start}
+        class:fade-end={fades.end}
+        bind:this={scroller}
+        onscroll={measure}
+      >
+        <!-- Back and forward again. On a phone they come first: the bar is wider
+             than the screen there, and the two a thumb wants most were the two
+             scrolled out of sight past its end (#350). -->
+        {#snippet arrows()}
+          <button
+            type="button"
+            title={shortcuts.tooltip(t('Undo'), 'edit.undo')}
+            aria-label={t('Undo')}
+            disabled={!canundo}
+            onclick={() => {
+              tick()
+              onundo()
+            }}
+          >
+            <CanvasIcon node={MARKS.undo} />
+          </button>
+
+          <button
+            type="button"
+            title={shortcuts.tooltip(t('Redo'), 'edit.redo')}
+            aria-label={t('Redo')}
+            disabled={!canredo}
+            onclick={() => {
+              tick()
+              onredo()
+            }}
+          >
+            <CanvasIcon node={MARKS.redo} />
+          </button>
+        {/snippet}
+
+        {#if early}
+          {@render arrows()}
+          <span class="split"></span>
+        {/if}
+
         {#snippet holding(mark: ToolMark)}
           <button
             type="button"
@@ -428,33 +506,10 @@
           }}
         ></button>
 
-        <span class="split"></span>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Undo'), 'edit.undo')}
-          aria-label={t('Undo')}
-          disabled={!canundo}
-          onclick={() => {
-            tick()
-            onundo()
-          }}
-        >
-          <CanvasIcon node={MARKS.undo} />
-        </button>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Redo'), 'edit.redo')}
-          aria-label={t('Redo')}
-          disabled={!canredo}
-          onclick={() => {
-            tick()
-            onredo()
-          }}
-        >
-          <CanvasIcon node={MARKS.redo} />
-        </button>
+        {#if !early}
+          <span class="split"></span>
+          {@render arrows()}
+        {/if}
 
         <span class="split"></span>
 
@@ -663,6 +718,38 @@
 
   .scroller::-webkit-scrollbar {
     display: none;
+  }
+
+  /* The ends that have more past them fade out, along whichever way the bar runs. */
+  .scroller.fade-start,
+  .scroller.fade-end {
+    --fade: 28px;
+    --from: 0px;
+    --to: 0px;
+
+    mask-image: linear-gradient(
+      var(--along, to right),
+      transparent 0,
+      #000 var(--from),
+      #000 calc(100% - var(--to)),
+      transparent 100%
+    );
+  }
+
+  .scroller.fade-start {
+    --from: var(--fade);
+  }
+
+  .scroller.fade-end {
+    --to: var(--fade);
+  }
+
+  .cluster.standing .scroller {
+    --along: to bottom;
+  }
+
+  :global([dir='rtl']) .scroller {
+    --along: to left;
   }
 
   button {
