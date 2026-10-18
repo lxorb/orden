@@ -140,6 +140,10 @@ tauri-plugin-process = "2"
 # every desktop: `places.sqlite`, copied out of a profile Firefox may have open; see
 # firefox_profiles.rs.
 tempfile = "3"
+# Safari's bookmarks and its old session are binary property lists; see safari.rs.
+# Already in the lock file, at this version, as what tauri reads a bundle's Info.plist
+# with.
+plist = "1"
 # The `deep-link` feature is what makes a second launch hand over a `nib://` link
 # as a link rather than as an argument nothing reads: on Windows and Linux that is
 # how a link reaches an app that is already open.

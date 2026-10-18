@@ -3,7 +3,8 @@
 //! a listed file of a listed profile is read. Zen's row is the first to use it; see
 //! `zen_profiles.rs`. The rows for the other browsers ask `browser_profiles` which of
 //! them are on this machine and `read_browser_file` for one of their files: Firefox's
-//! in `firefox_profiles.rs`, every Chromium's in `chromium_profiles.rs`. Read and never written: `fs::read` opens a file sharing it for
+//! in `firefox_profiles.rs`, every Chromium's in `chromium_profiles.rs`. Safari's
+//! are read whole, by `read_safari` (`safari.rs`). Read and never written: `fs::read` opens a file sharing it for
 //! reading, writing and deleting, which is how a running browser replaces it, and the
 //! bytes are a copy the moment they are read.
 
@@ -14,7 +15,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::paths::folded;
-use crate::{chromium_profiles, firefox_profiles};
+use crate::{chromium_profiles, firefox_profiles, safari};
 
 /// One profile, the way the browser's own profile manager shows it.
 #[derive(Serialize, Debug, PartialEq, Eq)]
@@ -36,7 +37,8 @@ pub struct Browser {
 /// show them, each with its profiles. None where none ever ran.
 #[tauri::command(async)]
 pub fn browser_profiles() -> Vec<Browser> {
-    std::iter::once("firefox")
+    ["safari", "firefox"]
+        .into_iter()
         .chain(chromium_profiles::BROWSERS)
         .map(|id| Browser {
             id,
@@ -62,6 +64,7 @@ pub fn read_browser_file(browser: String, profile: String, file: String) -> Resu
 /// A browser's profiles, by its id; none for a browser this does not read.
 fn profiles_of(browser: &str) -> Vec<Profile> {
     match browser {
+        "safari" => safari::profiles(),
         "firefox" => firefox_profiles::profiles(),
         _ if chromium_profiles::BROWSERS.contains(&browser) => chromium_profiles::profiles(browser),
         _ => Vec::new(),
@@ -89,6 +92,21 @@ pub(crate) fn read_listed(
     }
     let bytes = fs::read(&path).map_err(|error| format!("{file} could not be read: {error}"))?;
     Ok(BASE64.encode(bytes))
+}
+
+/// A database a browser may hold open, copied with its write-ahead log where nothing
+/// changes them while they are read: Firefox's `places.sqlite`, Safari's
+/// `SafariTabs.db`. The log is only there while the browser has the database open,
+/// and a copy without it is the database as of the last time it was closed, which is
+/// behind rather than wrong. The copy is also where the system's refusal shows, which
+/// is how Safari's Full Disk Access is heard.
+pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile::TempDir> {
+    let copy = tempfile::tempdir()?;
+    fs::copy(folder.join(database), copy.path().join(database))?;
+    let log = format!("{database}-wal");
+    // Not there is a database that was closed cleanly.
+    let _ = fs::copy(folder.join(&log), copy.path().join(&log));
+    Ok(copy)
 }
 
 /// Each profile once, the first place it was found winning: one folder reached under

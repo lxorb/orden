@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::browser_profiles::{ini_profiles, known, once, Profile};
+use crate::browser_profiles::{copied, ini_profiles, known, once, Profile};
 use crate::paths::folder_named;
 
 /// Where a drive keeps the browsers of its own, so a probe never reads the reader's:
@@ -39,9 +39,6 @@ const BACKUPS: &str = "bookmarkbackups";
 const BACKUP_PREFIX: &str = "bookmarks-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
 
-/// What beside the database holds what was written since it was last folded in.
-const ALONGSIDE: [&str; 1] = ["places.sqlite-wal"];
-
 /// The roots that are not bookmarks: the tags, which list again what is already
 /// bookmarked, under each tag.
 const TAGS: &str = "tags________";
@@ -58,8 +55,9 @@ pub(crate) fn profiles() -> Vec<Profile> {
 pub fn read_firefox_places(profile: String) -> Result<String, String> {
     let path = known("Firefox", &profile, PLACES, &profiles())?;
     let folder = path.parent().ok_or("a profile has a folder")?;
-    let copied = copy_out(folder)?;
-    let db = Connection::open(copied.path().join(PLACES))
+    let copy =
+        copied(folder, PLACES).map_err(|error| format!("{PLACES} could not be copied: {error}"))?;
+    let db = Connection::open(copy.path().join(PLACES))
         .map_err(|error| format!("{PLACES} could not be opened: {error}"))?;
     let tree = tree_of(&db).map_err(|error| format!("{PLACES} could not be read: {error}"))?;
     Ok(tree.to_string())
@@ -119,21 +117,6 @@ fn files_of(profile: &Path) -> Vec<String> {
     }
 
     found
-}
-
-/// The database and its log, copied where nothing changes them while they are read.
-/// The log is only there while Firefox has the database open, and a copy without it
-/// is the bookmarks as of the last time it was closed, which is behind rather than
-/// wrong.
-fn copy_out(folder: &Path) -> Result<tempfile::TempDir, String> {
-    let copied = tempfile::tempdir().map_err(|error| format!("no temporary folder: {error}"))?;
-    fs::copy(folder.join(PLACES), copied.path().join(PLACES))
-        .map_err(|error| format!("{PLACES} could not be copied: {error}"))?;
-    for name in ALONGSIDE {
-        // Not there is a database that was closed cleanly.
-        let _ = fs::copy(folder.join(name), copied.path().join(name));
-    }
-    Ok(copied)
 }
 
 /// One row of `moz_bookmarks`, with the address of a bookmark.
@@ -303,8 +286,8 @@ mod tests {
         db.pragma_update(None, "journal_mode", "wal")
             .expect("a log");
 
-        let copied = copy_out(here.path()).expect("a copy");
-        let read = Connection::open(copied.path().join(PLACES)).expect("the copy");
+        let copy = copied(here.path(), PLACES).expect("a copy");
+        let read = Connection::open(copy.path().join(PLACES)).expect("the copy");
         assert!(tree_of(&read).expect("a tree")["children"].is_array());
         drop(db);
     }

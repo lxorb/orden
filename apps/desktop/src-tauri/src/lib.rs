@@ -252,6 +252,9 @@ mod firefox_profiles;
 // see chromium_profiles.rs.
 #[cfg(desktop)]
 mod chromium_profiles;
+// Safari's tabs and bookmarks, for the import's Safari row on a Mac; see safari.rs.
+#[cfg(desktop)]
+mod safari;
 // The profiles Zen lists and the file of each that holds its tabs, for the import's
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
@@ -421,6 +424,7 @@ macro_rules! desktop_commands {
             browser_profiles::browser_profiles,
             browser_profiles::read_browser_file,
             firefox_profiles::read_firefox_places,
+            safari::read_safari,
             browser_themes::browser_themes,
             page_style::wear_page_styles,
             launch::take_startup_pages,
