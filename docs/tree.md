@@ -23,7 +23,7 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. Every mark comes off the name, the globe included: a website is a shortcut file, `Svelte docs.url`, which is the format Explorer and every browser write. It used to be a note with `url:` in its front matter, and the row had to ask the link index what the file said; see docs/web-tabs.md |
 | the name | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place |
 | a click | opens what the row is |
-| the twist at the far end | shows what the row holds, and only appears when it holds something |
+| the twist at the far end | shows what the row holds, and only appears when it holds something; a press anywhere in the row's height a step either side of it counts, and opens nothing (#402) |
 | right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |

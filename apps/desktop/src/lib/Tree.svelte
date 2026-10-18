@@ -70,7 +70,7 @@
   import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
-  import { treeStep, TREE_MOVES } from './tree-keys'
+  import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -756,8 +756,7 @@
   }
 
   function openRowAt(event: MouseEvent, entry: Entry) {
-    const twist = event.target instanceof Element ? event.target.closest('.twist') : null
-    if (twist) {
+    if (onTwist(event)) {
       workspace.toggleFolder(entry.path)
       return
     }
@@ -1190,8 +1189,10 @@
       aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
-      ondblclick={(event) => tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
-      use:middleOpens={(event) => void workspace.openRow(entry.path, howFor(tabAsk(event)))}
+      ondblclick={(event) =>
+        !onTwist(event) && tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
+      use:middleOpens={(event) =>
+        onTwist(event) || void workspace.openRow(entry.path, howFor(tabAsk(event)))}
       oncontextmenu={(event) => showRowMenu(event, entry, name)}
       use:longPress={(event) => showRowMenu(event, entry, name)}
       ontouchstart={(event) => onRowTouchStart(event, entry)}
@@ -1338,9 +1339,29 @@
      where a list already puts what a row counts; see `.nib-row-meta` in the themes
      package. */
   .twist {
+    position: relative;
+    align-self: stretch;
     display: grid;
     place-items: center;
     padding: 0 var(--space-1);
+  }
+
+  /* Where a press lets the row out, wider than the mark it is drawn as (#402): the
+     row's whole height, a step past the mark in front and on to the row's own end.
+     Drawn nowhere; the press lands on the twist, which is all `onTwist` asks. */
+  .twist::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline: calc(-1 * var(--space-1)) calc(-1 * var(--row-pad));
+  }
+
+  /* And never narrower than a thumb. */
+  :global([data-touch]) .twist::before {
+    inset-inline-start: min(
+      calc(-1 * var(--space-1)),
+      calc(var(--icon-sm) + 2 * var(--space-1) + var(--row-pad) - var(--touch-target))
+    );
   }
 
   /* The box the twist fills; the shape and the turn are Twist.svelte's, which the
