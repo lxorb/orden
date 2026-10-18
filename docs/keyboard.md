@@ -408,6 +408,16 @@ with a chat at the end of the first line where the account has chats, and a line
 has nothing in left out (a browser has no shell of its own, a phone no web tab). See
 `kindLines` in new-kinds.ts.
 
+**Which kinds are offered is the reader's**, in Settings › Note types: a switch for each
+kind this device can make, in the same three lines. Emil, #355: *"user should be able to
+configure which items of the Ctrl + T menu should be shown / hidden in settings"*. A kind
+switched off is offered nowhere - not under Ctrl+T or the plus, not in a pane with nothing
+open, not by the file list's New or the palette - and a file of that kind still opens, edits
+and syncs as it did. The last kind still offered cannot be switched off. The choice is the
+account's, the last device to change it winning, and a phone and a desktop each offer what
+of it they have. See `hiddenKinds` in settings.svelte.ts, kind-choice.ts and
+`test/e2e/tab-kinds.py`.
+
 **Each card wears its letter, and the letter makes it**: N a note, C a canvas, P a page
 note, M a chat, R a terminal (T is the new tab's own key, and R is what Run has been on
 Windows for thirty years), S Remote (SSH, which opens the host picker; docs/terminal.md,
