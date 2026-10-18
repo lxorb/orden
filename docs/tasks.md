@@ -489,6 +489,15 @@ simply there, and nothing under it says when it started. Its **deadline** is the
 has to be done by: it is said under the task, and only a deadline makes a task overdue.
 A project's own list is its note, and shows every task in it.
 
+A task with **no start date** is out of Today unless its deadline has come, as in Todoist.
+Settings › General › Add task › *Show todos without a start date in Today* (#408) turns
+that round: Today then takes a task with neither a start date nor a scheduled one as one
+whose start date has come, whatever its deadline, which still only makes it overdue once
+past. The Tasks panel's Today count follows it, and so do the glasses' Today and both
+connectors' `list_tasks`. It is on the account (`undatedInToday`), off to begin with, and
+it is `undated` on Bases' Today (`builtinView`); a Today a tab laid out differently keeps
+its layout and still follows it (`todayAs`), unless the reader wrote its filter.
+
 Written, a start date is `🛫` and a deadline `[deadline:: ]`; what nib writes for a date
 picked, typed or said is `🛫`. A `📅` is read by where it stands, and never rewritten:
 
@@ -664,7 +673,7 @@ The built-in views are bases the app carries:
 | view           | rows            | filter                                             | group, sort                               |
 | -------------- | --------------- | -------------------------------------------------- | ----------------------------------------- |
 | Inbox          | tasks           | open, started, in a space's inbox note             | by space; note order                      |
-| Today          | tasks           | open, started, on or before today, or due by then  | Overdue (a deadline past) first, then Today; priority, time |
+| Today          | tasks           | open, started, on or before today, or due by then; with the setting, one with no start date too (5.1.1) | Overdue (a deadline past) first, then Today; priority, time |
 | Upcoming       | tasks           | open, dated; a start to come on its day            | Overdue first, then by day from today; time, priority |
 | Completed      | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
 | Project        | tasks           | in this note                                       | by heading; note order                    |
