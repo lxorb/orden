@@ -27,6 +27,15 @@ export const ptBR: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Os contêineres ficam no Firefox',
+  'Nothing could be read out of {browser}.': 'Não foi possível ler nada do {browser}.',
+  'Saved groups': 'Grupos salvos',
+  'Tab group': 'Grupo de abas',
+  'Bookmarks toolbar': 'Barra de favoritos',
+  'Bookmarks menu': 'Menu de favoritos',
+  'Other bookmarks': 'Outros favoritos',
+  'Mobile bookmarks': 'Favoritos do celular',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

@@ -27,6 +27,15 @@ export const uk: Dictionary = {
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Контейнери залишаються в Firefox',
+  'Nothing could be read out of {browser}.': 'З {browser} нічого не вдалося прочитати.',
+  'Saved groups': 'Збережені групи',
+  'Tab group': 'Група вкладок',
+  'Bookmarks toolbar': 'Панель закладок',
+  'Bookmarks menu': 'Меню закладок',
+  'Other bookmarks': 'Інші закладки',
+  'Mobile bookmarks': 'Мобільні закладки',
   // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',

@@ -133,6 +133,13 @@ png = "0.18"
 tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
+# Apple Notes keeps its notes in a SQLite database in a group container, which is
+# the only way into them: Notes has no export. Read with the same `rusqlite` the sync
+# store uses (above), and a temporary folder to copy the database into, because Notes
+# is very likely running while it is read. Firefox's bookmarks are the same story on
+# every desktop: `places.sqlite`, copied out of a profile Firefox may have open; see
+# firefox_profiles.rs.
+tempfile = "3"
 # The `deep-link` feature is what makes a second launch hand over a `nib://` link
 # as a link rather than as an argument nothing reads: on Windows and Linux that is
 # how a link reaches an app that is already open.
@@ -225,11 +232,6 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
 # shells that do not say it themselves - zsh, a Mac's own. Already in the lock file, as
 # what portable-pty and tauri build with. See src/terminal/process.rs.
 libc = "0.2"
-# Apple Notes keeps its notes in a SQLite database in a group container, which is
-# the only way into them: Notes has no export. Read with the same `rusqlite` the sync
-# store uses (above), and a temporary folder to copy the database into, because Notes
-# is very likely running while it is read.
-tempfile = "3"
 # Where the main window was and how big it was, put back at the next launch the way
 # a Mac app puts back its frame. Only the size, the place and whether it was
 # maximised: whether it is visible is the launch's own decision (see ground.rs), and

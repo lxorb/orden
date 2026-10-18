@@ -27,6 +27,15 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
+  'Nothing could be read out of {browser}.': '{browser}-இலிருந்து எதையும் படிக்க முடியவில்லை.',
+  'Saved groups': 'சேமித்த குழுக்கள்',
+  'Tab group': 'தாவல் குழு',
+  'Bookmarks toolbar': 'புத்தகக்குறி கருவிப்பட்டி',
+  'Bookmarks menu': 'புத்தகக்குறி பட்டியல்',
+  'Other bookmarks': 'பிற புத்தகக்குறிகள்',
+  'Mobile bookmarks': 'மொபைல் புத்தகக்குறிகள்',
   // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',

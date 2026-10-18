@@ -1,7 +1,9 @@
 //! What every browser's import shares on this side: a profile as the import lists it,
 //! the `profiles.ini` Firefox and everything built on it keep, and the one narrow way
 //! a listed file of a listed profile is read. Zen's row is the first to use it; see
-//! `zen_profiles.rs`. Read and never written: `fs::read` opens a file sharing it for
+//! `zen_profiles.rs`. The rows for the other browsers ask `browser_profiles` which of
+//! them are on this machine and `read_browser_file` for one of their files: Firefox's
+//! in `firefox_profiles.rs`. Read and never written: `fs::read` opens a file sharing it for
 //! reading, writing and deleting, which is how a running browser replaces it, and the
 //! bytes are a copy the moment they are read.
 
@@ -11,6 +13,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::firefox_profiles;
 use crate::paths::folded;
 
 /// One profile, the way the browser's own profile manager shows it.
@@ -20,6 +23,48 @@ pub struct Profile {
     pub path: String,
     /// The files of it the import reads, the one to read first in front.
     pub files: Vec<String>,
+}
+
+/// One browser the import reads, by the id the app names it with, and its profiles.
+#[derive(Serialize)]
+pub struct Browser {
+    pub id: &'static str,
+    pub profiles: Vec<Profile>,
+}
+
+/// The browsers on this machine that hold anything to import, in the order the rows
+/// show them, each with its profiles. None where none ever ran.
+#[tauri::command(async)]
+pub fn browser_profiles() -> Vec<Browser> {
+    ["firefox"]
+        .into_iter()
+        .map(|id| Browser {
+            id,
+            profiles: profiles_of(id),
+        })
+        .filter(|one| !one.profiles.is_empty())
+        .collect()
+}
+
+/// One listed file of a listed profile of a browser, as base64. Never a database:
+/// Firefox's bookmarks are read out of theirs by `read_firefox_places`.
+#[tauri::command(async)]
+pub fn read_browser_file(browser: String, profile: String, file: String) -> Result<String, String> {
+    if Path::new(&file)
+        .extension()
+        .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
+    {
+        return Err(format!("{file} is a database"));
+    }
+    read_listed(&browser, &profile, &file, &profiles_of(&browser))
+}
+
+/// A browser's profiles, by its id; none for a browser this does not read.
+fn profiles_of(browser: &str) -> Vec<Profile> {
+    match browser {
+        "firefox" => firefox_profiles::profiles(),
+        _ => Vec::new(),
+    }
 }
 
 /// More than any session or bookmark file is. A file past it is not one, and the app

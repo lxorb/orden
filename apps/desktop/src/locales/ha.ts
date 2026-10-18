@@ -27,6 +27,15 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
+  'Nothing could be read out of {browser}.': 'Ba a iya karanta komai daga {browser} ba.',
+  'Saved groups': 'Ƙungiyoyin da aka adana',
+  'Tab group': 'Ƙungiyar shafuka',
+  'Bookmarks toolbar': 'Sandar alamun shafi',
+  'Bookmarks menu': 'Menu na alamun shafi',
+  'Other bookmarks': 'Sauran alamun shafi',
+  'Mobile bookmarks': 'Alamun shafi na waya',
   // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',

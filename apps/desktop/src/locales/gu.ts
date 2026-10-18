@@ -26,6 +26,15 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'કન્ટેનર Firefox માં જ રહે છે',
+  'Nothing could be read out of {browser}.': '{browser} માંથી કંઈ વાંચી શકાયું નહીં.',
+  'Saved groups': 'સાચવેલા જૂથો',
+  'Tab group': 'ટૅબ જૂથ',
+  'Bookmarks toolbar': 'બુકમાર્ક ટૂલબાર',
+  'Bookmarks menu': 'બુકમાર્ક મેનૂ',
+  'Other bookmarks': 'અન્ય બુકમાર્ક',
+  'Mobile bookmarks': 'મોબાઇલ બુકમાર્ક',
   // Settings: note types
   'Page note': 'પાનાંવાળી નોંધ',
   'Web note': 'વેબ નોંધ',

@@ -244,6 +244,10 @@ mod web_worlds;
 // browser_profiles.rs.
 #[cfg(desktop)]
 mod browser_profiles;
+// The profiles Firefox lists and its bookmarks, for the import's Firefox row; see
+// firefox_profiles.rs.
+#[cfg(desktop)]
+mod firefox_profiles;
 // The profiles Zen lists and the file of each that holds its tabs, for the import's
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
@@ -410,6 +414,9 @@ macro_rules! desktop_commands {
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
+            browser_profiles::browser_profiles,
+            browser_profiles::read_browser_file,
+            firefox_profiles::read_firefox_places,
             browser_themes::browser_themes,
             page_style::wear_page_styles,
             launch::take_startup_pages,

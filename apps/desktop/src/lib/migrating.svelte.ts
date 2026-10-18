@@ -9,7 +9,8 @@
  *
  *  And Zen, the browser, whose spaces become spaces and whose tabs web notes in
  *  them: one space per Zen space rather than one for the import. See
- *  import/zen-plan.ts.
+ *  import/zen-plan.ts. Every other browser on the machine the same way, a profile
+ *  a space of its own (import/browser-landing.ts).
  *
  *  An import into a space that already exists is the import sheet's, and carries no
  *  settings: it is notes arriving, not somebody arriving. See importing.svelte.ts.
@@ -23,6 +24,7 @@ import { message, t } from './i18n.svelte'
 import { type FormatId, worthKnowing } from './import/plan'
 import { type LinkFormat, linkWriting, setLinkWriting } from './link-format'
 import { insideFolder, pickedFolder, sourcesFrom, type Picked, type Source } from './import/sources'
+import type { BrowserProfile, FoundBrowser } from './import/browsers'
 import type { Vault } from './import/vaults'
 import type { ZenProfile } from './import/zen-profiles'
 import { isDesktop } from './tauri'
@@ -41,6 +43,13 @@ class Migrating {
   /** Zen's profiles, while the reader is choosing one. Null when the list is not up. */
   profiles = $state<ZenProfile[] | null>(null)
 
+  /** The browsers on this machine with anything to import, once asked: a row each. */
+  browsers = $state<FoundBrowser[]>([])
+
+  /** One browser's profiles, while the reader is choosing one. Null when the list is
+   *  not up. */
+  browserProfiles = $state<BrowserProfile[] | null>(null)
+
   /** Obsidian: the vaults this machine has, by name, the way Arc lists the browsers
    *  it found. Where Obsidian lists none, or off the desktop, straight to the
    *  folder dialog, which is Obsidian's own "Open folder as vault". */
@@ -56,6 +65,37 @@ class Migrating {
   back() {
     this.vaults = null
     this.profiles = null
+    this.browserProfiles = null
+  }
+
+  /** Which browsers are on this machine, asked as the rows are drawn: the crate reads
+   *  each browser's own list of profiles, so a row is there only for a browser with
+   *  something to bring. Only the desktop has their profiles to read. */
+  async findBrowsers() {
+    if (!isDesktop) return
+    const { foundBrowsers } = await import('./import/browsers')
+    this.browsers = await foundBrowsers()
+  }
+
+  /** A browser: its one profile straight away, or the list where it keeps several, the
+   *  way Zen's are. */
+  async browser(found: FoundBrowser) {
+    if (this.working) return
+    const [only] = found.profiles
+    if (found.profiles.length > 1) this.browserProfiles = found.profiles
+    else if (only) await this.browserProfile(only, false)
+  }
+
+  /** One profile of a browser, as a space named for it, landed in without opening a
+   *  page; `several` where the browser keeps more than one, which names the space for
+   *  the profile too. */
+  async browserProfile(profile: BrowserProfile, several = true) {
+    await this.running(async () => {
+      const { landBrowser } = await import('./import/browser-landing')
+      const space = await landBrowser(profile, several)
+      this.browserProfiles = null
+      await arrive(space, false)
+    })
   }
 
   /** Zen: its one profile straight away, or the list where it keeps several, the

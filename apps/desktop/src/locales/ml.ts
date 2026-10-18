@@ -27,6 +27,15 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
+  'Nothing could be read out of {browser}.': '{browser}-ൽ നിന്ന് ഒന്നും വായിക്കാനായില്ല.',
+  'Saved groups': 'സംരക്ഷിച്ച ഗ്രൂപ്പുകൾ',
+  'Tab group': 'ടാബ് ഗ്രൂപ്പ്',
+  'Bookmarks toolbar': 'ബുക്ക്‌മാർക്ക് ടൂൾബാർ',
+  'Bookmarks menu': 'ബുക്ക്‌മാർക്ക് മെനു',
+  'Other bookmarks': 'മറ്റ് ബുക്ക്‌മാർക്കുകൾ',
+  'Mobile bookmarks': 'മൊബൈൽ ബുക്ക്‌മാർക്കുകൾ',
   // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',

@@ -26,6 +26,15 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
+  'Nothing could be read out of {browser}.': '{browser}에서 아무것도 읽지 못했습니다.',
+  'Saved groups': '저장된 그룹',
+  'Tab group': '탭 그룹',
+  'Bookmarks toolbar': '북마크 도구 모음',
+  'Bookmarks menu': '북마크 메뉴',
+  'Other bookmarks': '기타 북마크',
+  'Mobile bookmarks': '모바일 북마크',
   // Settings: note types
   'Page note': '페이지 노트',
   'Web note': '웹 노트',

@@ -26,6 +26,15 @@ export const bn: Dictionary = {
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
+  'Nothing could be read out of {browser}.': '{browser} থেকে কিছুই পড়া যায়নি।',
+  'Saved groups': 'সংরক্ষিত গ্রুপ',
+  'Tab group': 'ট্যাব গ্রুপ',
+  'Bookmarks toolbar': 'বুকমার্ক টুলবার',
+  'Bookmarks menu': 'বুকমার্ক মেনু',
+  'Other bookmarks': 'অন্যান্য বুকমার্ক',
+  'Mobile bookmarks': 'মোবাইল বুকমার্ক',
   // Settings: note types
   'Page note': 'পাতার নোট',
   'Web note': 'ওয়েব নোট',

@@ -26,6 +26,15 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانټینرونه په Firefox کې پاتې کېږي',
+  'Nothing could be read out of {browser}.': 'له {browser} څخه هېڅ ونه لوستل شو.',
+  'Saved groups': 'خوندي شوې ډلې',
+  'Tab group': 'د ټب ډله',
+  'Bookmarks toolbar': 'د نښو توکپټه',
+  'Bookmarks menu': 'د نښو مېنو',
+  'Other bookmarks': 'نورې نښې',
+  'Mobile bookmarks': 'د موبایل نښې',
   // Settings: note types
   'Page note': 'د مخونو يادښت',
   'Web note': 'ویب يادښت',

@@ -26,6 +26,15 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
+  'Nothing could be read out of {browser}.': 'ไม่สามารถอ่านสิ่งใดจาก {browser} ได้',
+  'Saved groups': 'กลุ่มที่บันทึกไว้',
+  'Tab group': 'กลุ่มแท็บ',
+  'Bookmarks toolbar': 'แถบบุ๊กมาร์ก',
+  'Bookmarks menu': 'เมนูบุ๊กมาร์ก',
+  'Other bookmarks': 'บุ๊กมาร์กอื่นๆ',
+  'Mobile bookmarks': 'บุ๊กมาร์กบนมือถือ',
   // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',

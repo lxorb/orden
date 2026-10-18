@@ -27,6 +27,15 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'D Container blibe im Firefox',
+  'Nothing could be read out of {browser}.': 'Us {browser} het sich nüüt lo läse.',
+  'Saved groups': 'Gspeichereti Gruppe',
+  'Tab group': 'Tab-Gruppe',
+  'Bookmarks toolbar': 'Lesezeiche-Symbolleischte',
+  'Bookmarks menu': 'Lesezeiche-Menü',
+  'Other bookmarks': 'Wiiteri Lesezeiche',
+  'Mobile bookmarks': 'Mobili Lesezeiche',
   // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',

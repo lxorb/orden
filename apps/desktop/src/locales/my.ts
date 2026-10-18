@@ -26,6 +26,15 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
+  'Nothing could be read out of {browser}.': '{browser} မှ ဘာမျှ ဖတ်၍ မရပါ။',
+  'Saved groups': 'သိမ်းထားသော အုပ်စုများ',
+  'Tab group': 'တဘ် အုပ်စု',
+  'Bookmarks toolbar': 'စာမှတ် ကိရိယာဘား',
+  'Bookmarks menu': 'စာမှတ် မီနူး',
+  'Other bookmarks': 'အခြား စာမှတ်များ',
+  'Mobile bookmarks': 'မိုဘိုင်း စာမှတ်များ',
   // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',

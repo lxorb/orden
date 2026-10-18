@@ -26,6 +26,15 @@ export const zhHantHK: Dictionary = {
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器會留在 Firefox',
+  'Nothing could be read out of {browser}.': '無法從 {browser} 讀取任何內容。',
+  'Saved groups': '已儲存的群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

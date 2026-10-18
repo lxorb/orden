@@ -27,6 +27,15 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
+  'Nothing could be read out of {browser}.': '{browser} içinden hiçbir şey okunamadı.',
+  'Saved groups': 'Kaydedilen gruplar',
+  'Tab group': 'Sekme grubu',
+  'Bookmarks toolbar': 'Yer imleri araç çubuğu',
+  'Bookmarks menu': 'Yer imleri menüsü',
+  'Other bookmarks': 'Diğer yer imleri',
+  'Mobile bookmarks': 'Mobil yer imleri',
   // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',

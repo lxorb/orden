@@ -26,6 +26,15 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
+  'Nothing could be read out of {browser}.': 'ከ{browser} ምንም ሊነበብ አልቻለም።',
+  'Saved groups': 'የተቀመጡ ቡድኖች',
+  'Tab group': 'የትር ቡድን',
+  'Bookmarks toolbar': 'የዕልባቶች መሣሪያ አሞሌ',
+  'Bookmarks menu': 'የዕልባቶች ምናሌ',
+  'Other bookmarks': 'ሌሎች ዕልባቶች',
+  'Mobile bookmarks': 'የሞባይል ዕልባቶች',
   // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',

@@ -27,6 +27,15 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  'Nothing could be read out of {browser}.': '{browser} ನಿಂದ ಏನನ್ನೂ ಓದಲು ಆಗಲಿಲ್ಲ.',
+  'Saved groups': 'ಉಳಿಸಿದ ಗುಂಪುಗಳು',
+  'Tab group': 'ಟ್ಯಾಬ್ ಗುಂಪು',
+  'Bookmarks toolbar': 'ಬುಕ್‌ಮಾರ್ಕ್ ಟೂಲ್‌ಬಾರ್',
+  'Bookmarks menu': 'ಬುಕ್‌ಮಾರ್ಕ್ ಮೆನು',
+  'Other bookmarks': 'ಇತರ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'Mobile bookmarks': 'ಮೊಬೈಲ್ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
   // Settings: note types
   'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
   'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',

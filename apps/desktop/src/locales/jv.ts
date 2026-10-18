@@ -26,6 +26,15 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
+  'Nothing could be read out of {browser}.': 'Ora ana sing bisa diwaca saka {browser}.',
+  'Saved groups': 'Grup sing disimpen',
+  'Tab group': 'Grup tab',
+  'Bookmarks toolbar': 'Bilah tandha buku',
+  'Bookmarks menu': 'Menu tandha buku',
+  'Other bookmarks': 'Tandha buku liyane',
+  'Mobile bookmarks': 'Tandha buku seluler',
   // Settings: note types
   'Page note': 'Cathetan kaca',
   'Web note': 'Cathetan web',

@@ -26,6 +26,15 @@ export const fa: Dictionary = {
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
+  'Nothing could be read out of {browser}.': 'هیچ چیزی از {browser} خوانده نشد.',
+  'Saved groups': 'گروه‌های ذخیره‌شده',
+  'Tab group': 'گروه زبانه',
+  'Bookmarks toolbar': 'نوار نشانک‌ها',
+  'Bookmarks menu': 'منوی نشانک‌ها',
+  'Other bookmarks': 'نشانک‌های دیگر',
+  'Mobile bookmarks': 'نشانک‌های تلفن همراه',
   // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',

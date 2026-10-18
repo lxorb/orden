@@ -27,6 +27,15 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
+  'Nothing could be read out of {browser}.': '{browser} నుండి ఏమీ చదవలేకపోయాము.',
+  'Saved groups': 'సేవ్ చేసిన గ్రూప్‌లు',
+  'Tab group': 'ట్యాబ్ గ్రూప్',
+  'Bookmarks toolbar': 'బుక్‌మార్క్‌ల టూల్‌బార్',
+  'Bookmarks menu': 'బుక్‌మార్క్‌ల మెనూ',
+  'Other bookmarks': 'ఇతర బుక్‌మార్క్‌లు',
+  'Mobile bookmarks': 'మొబైల్ బుక్‌మార్క్‌లు',
   // Settings: note types
   'Page note': 'పేజీ నోట్',
   'Web note': 'వెబ్ నోట్',

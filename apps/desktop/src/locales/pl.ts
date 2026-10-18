@@ -27,6 +27,15 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontenery zostają w Firefox',
+  'Nothing could be read out of {browser}.': 'Nie udało się nic odczytać z przeglądarki {browser}.',
+  'Saved groups': 'Zapisane grupy',
+  'Tab group': 'Grupa kart',
+  'Bookmarks toolbar': 'Pasek zakładek',
+  'Bookmarks menu': 'Menu zakładek',
+  'Other bookmarks': 'Inne zakładki',
+  'Mobile bookmarks': 'Zakładki z telefonu',
   // Settings: note types
   'Page note': 'Notatka ze stronami',
   'Web note': 'Notatka internetowa',

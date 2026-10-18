@@ -26,6 +26,15 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
+  'Nothing could be read out of {browser}.': 'Walang nabasa mula sa {browser}.',
+  'Saved groups': 'Mga naka-save na grupo',
+  'Tab group': 'Grupo ng tab',
+  'Bookmarks toolbar': 'Toolbar ng mga bookmark',
+  'Bookmarks menu': 'Menu ng mga bookmark',
+  'Other bookmarks': 'Iba pang bookmark',
+  'Mobile bookmarks': 'Mga bookmark sa mobile',
   // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',

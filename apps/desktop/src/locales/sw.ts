@@ -27,6 +27,15 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
+  'Nothing could be read out of {browser}.': 'Hakuna kilichoweza kusomwa kutoka {browser}.',
+  'Saved groups': 'Vikundi vilivyohifadhiwa',
+  'Tab group': 'Kikundi cha vichupo',
+  'Bookmarks toolbar': 'Upau wa alamisho',
+  'Bookmarks menu': 'Menyu ya alamisho',
+  'Other bookmarks': 'Alamisho zingine',
+  'Mobile bookmarks': 'Alamisho za simu',
   // Settings: note types
   'Page note': 'Dokezo la kurasa',
   'Web note': 'Dokezo la wavuti',

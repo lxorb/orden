@@ -26,6 +26,15 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کنٹینر Firefox ہی میں رہتے ہیں',
+  'Nothing could be read out of {browser}.': '{browser} سے کچھ بھی پڑھا نہیں جا سکا۔',
+  'Saved groups': 'محفوظ گروپس',
+  'Tab group': 'ٹیب گروپ',
+  'Bookmarks toolbar': 'بک مارکس ٹول بار',
+  'Bookmarks menu': 'بک مارکس مینو',
+  'Other bookmarks': 'دیگر بک مارکس',
+  'Mobile bookmarks': 'موبائل بک مارکس',
   // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',

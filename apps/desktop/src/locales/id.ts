@@ -26,6 +26,15 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontainer tetap di Firefox',
+  'Nothing could be read out of {browser}.': 'Tidak ada yang dapat dibaca dari {browser}.',
+  'Saved groups': 'Grup tersimpan',
+  'Tab group': 'Grup tab',
+  'Bookmarks toolbar': 'Bilah markah',
+  'Bookmarks menu': 'Menu markah',
+  'Other bookmarks': 'Markah lainnya',
+  'Mobile bookmarks': 'Markah seluler',
   // Settings: note types
   'Page note': 'Catatan halaman',
   'Web note': 'Catatan web',

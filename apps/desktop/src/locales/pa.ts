@@ -26,6 +26,15 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ਕੰਟੇਨਰ Firefox ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
+  'Nothing could be read out of {browser}.': '{browser} ਤੋਂ ਕੁਝ ਵੀ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
+  'Saved groups': 'ਸੰਭਾਲੇ ਗਰੁੱਪ',
+  'Tab group': 'ਟੈਬ ਗਰੁੱਪ',
+  'Bookmarks toolbar': 'ਨਿਸ਼ਾਨੀਆਂ ਟੂਲਬਾਰ',
+  'Bookmarks menu': 'ਨਿਸ਼ਾਨੀਆਂ ਮੀਨੂ',
+  'Other bookmarks': 'ਹੋਰ ਨਿਸ਼ਾਨੀਆਂ',
+  'Mobile bookmarks': 'ਮੋਬਾਈਲ ਨਿਸ਼ਾਨੀਆਂ',
   // Settings: note types
   'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
   'Web note': 'ਵੈੱਬ ਨੋਟ',

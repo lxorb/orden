@@ -26,6 +26,15 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
+  'Nothing could be read out of {browser}.': 'Không đọc được gì từ {browser}.',
+  'Saved groups': 'Nhóm đã lưu',
+  'Tab group': 'Nhóm thẻ',
+  'Bookmarks toolbar': 'Thanh dấu trang',
+  'Bookmarks menu': 'Menu dấu trang',
+  'Other bookmarks': 'Dấu trang khác',
+  'Mobile bookmarks': 'Dấu trang trên di động',
   // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',

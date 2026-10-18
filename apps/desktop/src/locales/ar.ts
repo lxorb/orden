@@ -26,6 +26,15 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
+  'Nothing could be read out of {browser}.': 'تعذّرت قراءة أي شيء من {browser}.',
+  'Saved groups': 'المجموعات المحفوظة',
+  'Tab group': 'مجموعة علامات تبويب',
+  'Bookmarks toolbar': 'شريط الإشارات المرجعية',
+  'Bookmarks menu': 'قائمة الإشارات المرجعية',
+  'Other bookmarks': 'إشارات مرجعية أخرى',
+  'Mobile bookmarks': 'إشارات الجوال المرجعية',
   // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',

@@ -26,6 +26,15 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器留喺 Firefox',
+  'Nothing could be read out of {browser}.': '讀唔到 {browser} 入面任何嘢。',
+  'Saved groups': '已儲存嘅群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',
