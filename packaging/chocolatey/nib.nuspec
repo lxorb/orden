@@ -10,7 +10,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nib</id>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
     <packageSourceUrl>https://github.com/lxorb/orden/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>lxorb</owners>
 
@@ -34,7 +34,7 @@ its settings and notes where they were. `choco uninstall nib` afterwards removes
 empty package alone and leaves Orden installed.
 ]]></description>
     <dependencies>
-      <dependency id="orden" version="0.15.0" />
+      <dependency id="orden" version="0.16.0" />
     </dependencies>
   </metadata>
   <files />

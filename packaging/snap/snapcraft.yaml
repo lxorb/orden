@@ -15,12 +15,12 @@
 # on a Mac, a video from a phone - do not play in the snap; see packaging/linux.md.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable orden_0.15.0_amd64.snap`; see
+# account and `snapcraft upload --release=stable orden_0.16.0_amd64.snap`; see
 # packaging/linux.md.
 name: orden
 title: Orden
 base: core24
-version: '0.15.0'
+version: '0.16.0'
 summary: Markdown editor with live preview
 description: |
   Orden, formerly nibeditor, is a small markdown editor that formats what you
@@ -83,8 +83,8 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-x64.deb
-      - on arm64: https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.16.0/Orden-0.16.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.16.0/Orden-0.16.0-linux-arm64.deb
     # The bytes those two names stood for on the day the release was made. Every
     # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
     # AUR, nix, and flathub by commit - and this one did not: a tampered release
@@ -96,9 +96,9 @@ parts:
     # snapcraft 8.11.1). Both digests are written down below, and the snap workflow
     # copies the one for its runner into the line; as committed it holds amd64's,
     # for a build on an amd64 machine. See packaging/linux.md.
-    #   on amd64: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
-    #   on arm64: sha256/fa276143e8fe1d63f8da427b8e5c8ed4609dd47d33fc3306770334b2987c3601
-    source-checksum: sha256/c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
+    #   on amd64: sha256/576e58010d909072a23313c6a9e6841f862fab226355c5347b07a853e6c39aba
+    #   on arm64: sha256/ae4a7cf7a29f83dc521bda5354c3d1924e49d249ed514959afe7c76e56947095
+    source-checksum: sha256/576e58010d909072a23313c6a9e6841f862fab226355c5347b07a853e6c39aba
     override-build: |
       craftctl default
 
