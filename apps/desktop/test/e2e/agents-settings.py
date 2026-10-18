@@ -112,13 +112,16 @@ def memory_limit(page, name: str) -> None:
     row = page.locator(MEMORY)
     row.scroll_into_view_if_needed()
     quiet(page)
-    check(f"[{name}] the memory limit starts Off", row.locator(".value").inner_text().strip() == "Off")
+    # The words in the row, not what is drawn of them: WebKit has no innerText for a
+    # row its scroller has not drawn yet, and Chromium does (#384).
+    said = lambda: (row.locator(".value").text_content() or "").strip()  # noqa: E731
+    check(f"[{name}] the memory limit starts Off", said() == "Off")
     check(f"[{name}] and the grant holds no ceiling", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
     page.evaluate(SLIDE, ["Browser memory limit", 4096])
     page.wait_for_timeout(200)
     quiet(page)
     check(f"[{name}] a limit set is in the grant", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 4096)
-    check(f"[{name}] and its row says it", row.locator(".value").inner_text().strip() == "4 GB")
+    check(f"[{name}] and its row says it", said() == "4 GB")
     shot(page, f"{name}-memory-limit")
     page.evaluate(SLIDE, ["Browser memory limit", 0])
     page.wait_for_timeout(200)
