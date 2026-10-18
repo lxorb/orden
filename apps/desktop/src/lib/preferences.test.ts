@@ -132,6 +132,18 @@ describe('the Note types pane', () => {
     for (const one of rest) if (one.kind === 'switch') one.set(true)
     expect(last?.kind === 'switch' && last.locked?.()).toBe(false)
   })
+
+  /** #355: somebody who wants a kind gone from Ctrl+T looks for it by Ctrl+T. */
+  test('is found by the new tab and its key', async () => {
+    const { search } = await import('./settings-search')
+    for (const query of ['Ctrl+T', 'new tab']) {
+      const hits = search(query, preferences(), [])
+      expect(
+        hits.some((hit) => hit.kind === 'field' && hit.pane.id === 'kinds'),
+        query,
+      ).toBe(true)
+    }
+  })
 })
 
 describe('the Appearance pane', () => {
