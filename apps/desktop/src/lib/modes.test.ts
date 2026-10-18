@@ -88,6 +88,7 @@ interface Held {
   glassesSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
+  undatedInToday?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -442,6 +443,14 @@ describe('Silent mode', () => {
   })
 })
 
+describe('the tasks with no start date in Today', () => {
+  test('start out of it, and are remembered across a restart', async () => {
+    expect(modes.undatedInToday).toBe(false)
+    modes.setUndatedInToday(true)
+    expect((await restarted()).undatedInToday).toBe(true)
+  })
+})
+
 describe('the pointing hand', () => {
   test('starts off and is said on the root for the stylesheet', async () => {
     expect(modes.hand).toBe(false)
@@ -647,6 +656,29 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.silent).toBe(true)
+  })
+
+  test('brings the tasks with no start date into Today', async () => {
+    const { release, settingsCall } = heldAnswer({ undatedInToday: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.undatedInToday).toBe(true)
+  })
+
+  test('leaves them where this machine put them while the answer was in the air', async () => {
+    const { release, settingsCall } = heldAnswer({ undatedInToday: false })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    modes.setUndatedInToday(true)
+    release()
+    await adopted
+
+    expect(modes.undatedInToday).toBe(true)
   })
 
   test('brings a setting this machine has never chosen', async () => {

@@ -172,6 +172,7 @@ interface Saved {
   conflicts: string
   keepVersions: number
   remindBefore: number
+  undatedInToday: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -285,6 +286,7 @@ export const DEFAULTS = {
   conflicts: DEFAULT_RULE,
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
+  undatedInToday: false,
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
@@ -474,6 +476,13 @@ class Modes {
    *  because every device rings the same task and the Worker pushes it; see
    *  lib/reminders. At the time, as Todoist starts. */
   remindBefore = $state<number>(DEFAULTS.remindBefore)
+
+  /** Whether Today holds a task with no start date, as one whose start date has come
+   *  (#408). Off, which is Todoist's Today: a start date or a deadline that has come.
+   *  On the account, because it is how somebody plans their day rather than which
+   *  machine they plan it on; the connector's Today reads it too. See `undated` in
+   *  @nib/bases' builtins.ts. */
+  undatedInToday = $state(DEFAULTS.undatedInToday)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
@@ -1100,6 +1109,15 @@ class Modes {
     this.share({ remindBefore: minutes })
   }
 
+  /** Whether Today holds the tasks with no start date. */
+  setUndatedInToday(on: boolean) {
+    if (on === this.undatedInToday) return
+
+    this.undatedInToday = on
+    this.persist()
+    this.share({ undatedInToday: on })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1180,6 +1198,12 @@ class Modes {
         this.remindBefore = before
         this.persist()
       }
+    }
+
+    const undated = remote.undatedInToday
+    if (typeof undated === 'boolean' && unheard && undated !== this.undatedInToday) {
+      this.undatedInToday = undated
+      this.persist()
     }
 
     const wanted = toneOf(remote.highlightTone)
@@ -1480,6 +1504,7 @@ class Modes {
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
+      undatedInToday: this.undatedInToday,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

@@ -405,6 +405,8 @@ export interface AccountSettings {
   attachments?: string
   /** The automatic reminder's minutes before a task's time, -1 for none. */
   remindBefore?: number
+  /** Whether Today holds a task with no start date, as one whose start date has come. */
+  undatedInToday?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
