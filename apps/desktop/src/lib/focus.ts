@@ -227,3 +227,8 @@ export function openSpaces(): void {
     pressRegion('space', SWITCHER)
   })
 }
+
+/** Keeps the keyboard; not for a finger, whose tap WebKit would drop (#384). */
+export function keepFocus(event: Pick<Event, 'preventDefault'> & { pointerType?: string }): void {
+  if (event.pointerType !== 'touch') event.preventDefault()
+}

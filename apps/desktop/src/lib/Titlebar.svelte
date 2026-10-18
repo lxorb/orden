@@ -3,6 +3,7 @@
   import AppMenu from './AppMenu.svelte'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
+  import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import FileMark from './FileMark.svelte'
@@ -93,7 +94,8 @@
       aria-pressed={pad.on}
       title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
       aria-label={t('Scratchpad')}
-      onpointerdown={(event) => event.preventDefault()}
+      onpointerdown={keepFocus}
+      onmousedown={keepFocus}
       onclick={() => pad.toggle()}
     >
       <svg viewBox="0 0 14 14"

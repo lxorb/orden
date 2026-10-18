@@ -23,6 +23,7 @@
   import type { Priority } from '@nib/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@nib/bases/language'
   import { todayOf } from '@nib/bases'
+  import { keepFocus } from '../focus'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
@@ -498,7 +499,8 @@
             role="option"
             aria-selected={index === active}
             tabindex="-1"
-            onpointerdown={(event) => event.preventDefault()}
+            onpointerdown={keepFocus}
+            onmousedown={keepFocus}
             onclick={() => take(one)}
           >
             <span class="nib-row-mark"
