@@ -317,6 +317,22 @@ jobs:
             ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz
             ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz.sig
 
+  # One generation of the release's caches on `unstable`, the only ref that saves any:
+  # once this run's are saved, the ones they replaced go, so the repository's 10 GB holds
+  # today's caches rather than yesterday's beside them (#307). After every job that saves
+  # one; see scripts/prune-caches.sh, which says what is kept.
+  caches:
+    needs: [build, macos]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/unstable' && (needs.build.result == 'success' || needs.macos.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/prune-caches.sh "$GITHUB_REF"
+
   # One manifest for every platform, which is what the app polls.
   #
   # A release's own page is for people: the installers, under the product's name, and
