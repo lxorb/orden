@@ -24,7 +24,7 @@ Nothing here loosens any of them.
 
 ## The short version
 
-1. **A task is a line in a note.** `- [ ] Call the bank 📅 2026-10-06`, in the Obsidian
+1. **A task is a line in a note.** `- [ ] Call the bank 🛫 2026-10-06`, in the Obsidian
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
    every date, priority and recurrence nib wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
@@ -464,9 +464,9 @@ one canonical form so a round trip through Obsidian changes no byte.
 | field          | written                                              | read too                                       | notes                                                                             |
 | -------------- | ---------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
 | status         | `[ ]` open, `[x]` done, `[/]` doing, `[-]` cancelled | any one character, as the box already reads it | `[>]` and others are kept and shown as open with their mark                       |
-| due date       | `📅 2026-10-06`                                      | `[due:: 2026-10-06]`                           | Todoist's date                                                                    |
+| due date       | `📅 2026-10-06`                                      | `[due:: 2026-10-06]`                           | read by where it stands (5.1.1): a deadline in a vault, a start date elsewhere   |
 | scheduled      | `⏳ 2026-10-08`                                      | `[scheduled:: ]`                               | "do it on", Things' When                                                          |
-| start          | `🛫 2026-10-08`                                      | `[start:: ]`                                   | hidden from Today and Upcoming until then, Things' Anytime                        |
+| start          | `🛫 2026-10-08`                                      | `[start:: ]`                                   | the task's date: hidden until then (5.1.1), Todoist's date, Things' Anytime       |
 | created        | `➕ 2026-10-03`                                      | `[created:: ]`                                 | written by quick add when Settings says so (off by default)                       |
 | done           | `✅ 2026-10-03`                                      | `[completion:: ]`                              | written on ticking                                                                |
 | cancelled      | `❌ 2026-10-03`                                      | `[cancelled:: ]`                               | written on cancelling                                                             |
@@ -474,11 +474,35 @@ one canonical form so a round trip through Obsidian changes no byte.
 | recurrence     | `🔁 every week on Monday`, `... when done`           | `[repeat:: ]`                                  | always written in English, the words Tasks parses; shown in the reader's language |
 | id, depends on | `🆔 a1b2c3`, `⛔ a1b2c3`                             | `[id:: ]`, `[dependsOn:: ]`                    | written when a dependency is drawn                                                |
 | tags           | `#admin`                                             |                                                | Todoist's labels                                                                  |
-| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the due or scheduled date's time                                           |
+| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the start or scheduled date's time                                         |
 | duration       | `[duration:: 45m]`                                   | `1h30m`, `90m`                                 | nib's                                                                             |
 | deadline       | `[deadline:: 2026-10-20]`                            |                                                | nib's; Todoist's deadline                                                         |
-| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the due time, or absolute                                      |
+| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the start time, or absolute                                    |
 | assignee       | `[assignee:: Lucile]`                                | `+Lucile` in quick add                         | nib's                                                                             |
+
+#### 5.1.1 A start date and a deadline
+
+A task has two dates a reader sets (#371). Its **start date** is the first day it can be
+worked on: before it the task is out of sight - in Today, the Inbox, a label and Assigned
+to me - and in Upcoming on that day, where the days ahead are; from it on the task is
+simply there, and nothing under it says when it started. Its **deadline** is the day it
+has to be done by: it is said under the task, and only a deadline makes a task overdue.
+A project's own list is its note, and shows every task in it.
+
+Written, a start date is `🛫` and a deadline `[deadline:: ]`; what nib writes for a date
+picked, typed or said is `🛫`. A `📅` is read by where it stands, and never rewritten:
+
+- in an **Obsidian vault**, a space with `.obsidian` at its root, it is the Tasks plugin's
+  due date, which is a deadline;
+- in a **space of nib's own**, where a deadline has always been `[deadline:: ]`, it is the
+  date nib wrote before it said start dates, and is read as one - unless the line has a
+  `🛫` of its own, which makes it a line written the plugin's way and its `📅` the
+  deadline.
+
+A date set again is written to the field that already holds it, so an old `📅` moves in
+place. `⏳` stays the plugin's scheduled date: it places a task on a day the way a start
+date does, and never makes it late. The rules are `@nib/markdown/task-dates`; the rows say
+which way a space reads its `📅` (`dueReads`), and so does the editor's note index.
 
 **Order on the line**: words, then nib's bracket fields, then tags, then the emoji fields in
 Tasks' own order. Tasks reads its fields from the end of the line backwards and stops at the
@@ -639,9 +663,9 @@ The built-in views are bases the app carries:
 
 | view           | rows            | filter                                             | group, sort                               |
 | -------------- | --------------- | -------------------------------------------------- | ----------------------------------------- |
-| Inbox          | tasks           | open, in a space's inbox note                      | by space; note order                      |
-| Today          | tasks           | open, due or scheduled on or before today, started | Overdue first, then Today; priority, time |
-| Upcoming       | tasks           | open, dated after today, started                   | by day; time, priority                    |
+| Inbox          | tasks           | open, started, in a space's inbox note             | by space; note order                      |
+| Today          | tasks           | open, started, on or before today, or due by then  | Overdue (a deadline past) first, then Today; priority, time |
+| Upcoming       | tasks           | open, dated; a start to come on its day            | Overdue first, then by day from today; time, priority |
 | Completed      | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
 | Project        | tasks           | in this note                                       | by heading; note order                    |
 | Label          | tasks and notes | carry this tag                                     | by note                                   |
@@ -839,9 +863,10 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
 ```
 
 - Chips are a widget after the words (`packages/editor/src/live-preview/widgets.ts`), quiet
-  (`--muted`, the small size), one per field: the date as a weekday within a week and a
-  short date after, red when overdue; ↻ for recurrence; the flag for priority; 🔔 when a
-  reminder is set; ⏱ and the duration; ⚑ and the deadline; the assignee's initial.
+  (`--muted`, the small size), one per field: the start date while it is still to come, as
+  a weekday within a week and a short date after, and nothing once it has come (5.1.1); ↻ for recurrence; the flag for priority; 🔔 when a
+  reminder is set; ⏱ and the duration; ⚑ and the deadline, red when overdue; the assignee's
+  initial.
 - **The caret on the line shows the source**, as every mark does, and the chips give way to
   the emoji and brackets as written.
 - **A chip pressed** opens its picker as a small layer (`.nib-layer`): the date chip a
@@ -1038,7 +1063,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
 
 ### 5.10 Reminders
 
-What a reminder is: a time, from `[remind::]` or from the due time when the task has one
+What a reminder is: a time, from `[remind::]` or from the start time when the task has one
 and the automatic reminder is on (Settings: at the time, 5, 15, 30 or 60 minutes before,
 or off). Location reminders are later (row 66).
 
@@ -1077,7 +1102,8 @@ reading reminder times), and Emil decided to build it (8.5).
 
 - **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
   app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
-  on the wall clock from the task's time on its due (else scheduled) day; a bare time is
+  on the wall clock from the task's time on the day it starts (else is scheduled); a
+  deadline rings nothing (5.1.1); a bare time is
   on that day; an absolute one is its own moment; the automatic one is the account
   setting `remindBefore` (0, 5, 15, 30, 60, or -1 for off; Settings > General >
   Reminders), for every task with a day and a time. A floating time is the device's
@@ -1460,7 +1486,7 @@ What becomes what: a project a note in the space's projects folder (`Projects/<P
 or `Projects/<Project>/<Project>.md` for one with projects inside it), a section a heading, a task a line with its sub-tasks indented,
 its description and comments indented under it with their dates, attachments downloaded
 beside the note (account import only), labels tags, priority the emoji (Todoist's API counts
-4 as p1, which the importer turns round), the due date and time, `every` and `every!` (the
+4 as p1, which the importer turns round), the date and time as the start date (`🛫`), `every` and `every!` (the
 human string re-parsed by the same grammar, with the original kept as a comment under the
 task when it cannot be read), deadlines, durations, reminders, assignees as names, and the
 Inbox the space's inbox. Completed tasks, if asked, as done lines with their dates. A preview
@@ -1622,7 +1648,8 @@ function parseQuickAdd(text: string, langs: string[], now: Date): QuickAdd   // 
 // what an expression reads beyond Bases' own `file.*`, `note.*`, `formula.*`, `this`:
 //   file.space, file.shared
 //   task.text status done cancelled open due scheduled start created completed cancelledOn
-//   deadline date (due, else scheduled) at (date and time) started time zone duration
+//   deadline date (start, else scheduled, else deadline; 5.1.1) at (date and time)
+//   started time zone duration
 //   remind priority recurrence recurring tags assignee mine id dependsOn section (nearest
 //   heading) headings parent subtask indent line note, and task.hasTag(...)
 ```
@@ -1678,8 +1705,10 @@ them.
 1. **`#` stays a tag in quick add, and a project is `>Note`.** Decided. In a markdown file
    `#Work` is a tag, and Obsidian agrees; filters accept `#Work` for a note of that name
    (5.8), because that is where Todoist habits land.
-2. **Bare dates are due dates (`📅`).** Decided. Todoist calls its date "due" and most
-   Obsidian users write `📅`; the stricter reading is there through `⏳` and `{deadline}`.
+2. **Bare dates are start dates (`🛫`).** Decided, and changed on 2026-10-18 (#371): a
+   date is the first day a task can be worked on, and only a deadline (`{deadline}`) makes
+   one late. Bare dates were due dates (`📅`) until then; a `📅` is read by where it stands
+   (5.1.1).
 3. **`/tasks` means to-dos, background work becomes `/jobs`** (synonyms `/ps`, `/bashes`).
    Decided.
 4. **Tasks views span every space**, each row saying which space when it is not the open
