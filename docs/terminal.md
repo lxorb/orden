@@ -98,8 +98,8 @@ General, Terminal, Restore history** turned off writes nothing and forgets every
 there is at that moment - Warp's switch stops recording and leaves the database where it
 was. The tab itself, its shell and its folder still come back, as every tab does.
 
-**Moved to another space** (Move to space, in the tab's menu or the palette, or the tab
-carried onto the space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
+**Moved to another space** (Move to space in the palette, or the tab carried onto the
+space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
 same shell: the process goes on, its screen and scrollback with it, and its current
 folder is the one it was in. What changes is which space it is in - whose set it is in,
 where a restart puts it - and where its last lines are kept: read, written under the new
