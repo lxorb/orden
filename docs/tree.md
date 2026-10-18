@@ -61,6 +61,17 @@ The Essentials above the list keep notes, folders, headings, blocks, searches, g
 and one view of the space's graph. Each says where it points the way a link does,
 relative to the space, so the list travels to every machine signed in.
 
+**A file kept there is not in the list as well** (#345). Emil: *"Anything added to
+Essentials should appear only under Essentials, not in the explorer's file list as
+well."* A note, a canvas, a page note or a website is in one of the two at any time:
+kept, its row leaves the list; let go of, the row is back. Only what is drawn changes -
+`shownTree` leaves it out, so the rows, the arrows and a Shift-click agree, while the
+disk, a search, the links and the quick open still have every file. Asked to show it,
+the list shows the panel its tile is in. Since the list is the account's, every machine
+signed in leaves out the same rows. A folder, a heading or a block kept there leaves the
+list alone: the note they are in, and what the folder holds, are still listed. See
+`unkept` in workspace.svelte.ts.
+
 A graph bookmark points at nothing on disk. It carries a whole set of graph
 settings - the filter, the colour groups, the spread, the arrows, the sizes, how
 far a neighbourhood reaches - as JSON in a field of its own, under the name the
