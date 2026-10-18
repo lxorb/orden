@@ -1476,8 +1476,10 @@
   }
 
   /** The menu, at a point on the plane. `about` is whether it was asked about what
-   *  is picked - the bar over it - rather than about wherever the point is. */
-  function showMenu(point: Point, about = false) {
+   *  is picked - the bar over it - rather than about wherever the point is. `buttons`
+   *  are the ones still down as it opens, so a held press chooses the row it is let go
+   *  of on (#368); see menu-release.ts. */
+  function showMenu(point: Point, about = false, buttons = 0) {
     const found = hitFor(point, viewport.touch)
     if (found.node && !store.isPicked(found.node)) store.pick(found.node)
     if (found.edge && !store.isPicked(found.edge)) store.pick(found.edge)
@@ -1493,7 +1495,7 @@
 
     const near = viewport.touch
     menu.show(
-      new MouseEvent('contextmenu', screen),
+      new MouseEvent('contextmenu', { ...screen, buttons }),
       canvasMenu(store, point, {
         bare,
         again: (rows, title) =>
@@ -1525,7 +1527,7 @@
     // was, and there the menu is what a finger held still opens.
     if (lastPen || (hand.penSeen && viewport.touch)) return
 
-    showMenu(planeAt(event))
+    showMenu(planeAt(event), false, event.buttons)
   }
 
   /** Whether the key was typed into something that takes words. The find bar

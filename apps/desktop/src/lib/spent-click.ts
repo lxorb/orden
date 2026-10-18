@@ -17,9 +17,10 @@ const WITHIN = 700
 let armed: (() => void) | null = null
 
 /** Spends the click the press now being read goes on to make, where the press is not a
- *  mouse's. Called from the catch's own `pointerdown`. */
-export function spendClick(press: { pointerType: string }): void {
-  if (press.pointerType === 'mouse' || armed) return
+ *  mouse's (or is, with `any`; see menu-release.ts). Called from the catch's own
+ *  `pointerdown`. */
+export function spendClick(press: { pointerType: string }, any = false): void {
+  if ((press.pointerType === 'mouse' && !any) || armed) return
 
   const spend = (event: Event) => {
     event.preventDefault()
@@ -30,11 +31,13 @@ export function spendClick(press: { pointerType: string }): void {
   const done = () => {
     clearTimeout(timer)
     window.removeEventListener('click', spend, true)
+    window.removeEventListener('auxclick', spend, true)
     window.removeEventListener('pointerdown', done, true)
     armed = null
   }
 
   window.addEventListener('click', spend, true)
+  window.addEventListener('auxclick', spend, true)
   // Added while this press is on its way, so it hears the next one and not this.
   window.addEventListener('pointerdown', done, true)
   armed = done
