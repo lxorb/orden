@@ -122,6 +122,12 @@ describe('the kinds a new tab can be', () => {
     expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online'])
   })
 
+  /** And on a tablet, which hands every page to the system's browser as well (#206). */
+  test('and on a tablet', () => {
+    viewport.device = 'tablet'
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online'])
+  })
+
   test('make one each', async () => {
     const made = makers()
     for (const one of newKinds()) one.make()

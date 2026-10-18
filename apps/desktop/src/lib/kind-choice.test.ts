@@ -105,6 +105,12 @@ describe('the kinds a device has', () => {
     viewport.device = 'phone'
     expect(kindsHere()).not.toContain('web')
   })
+
+  /** A tablet hands every page to the system's browser too (#206). */
+  test('and on a tablet', () => {
+    viewport.device = 'tablet'
+    expect(kindsHere()).not.toContain('web')
+  })
 })
 
 describe('turning a kind off', () => {

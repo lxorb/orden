@@ -2333,6 +2333,28 @@ describe('a new tab', () => {
     expect(workspace.active).toBe(chosenOn)
   })
 
+  /** A tablet hands every page to the system's browser, as a phone does (#206): a link
+   *  pressed in a note and a new web tab make no tab there, and a desktop still draws
+   *  both. Where the link's address goes instead is `placeFor` in open-link.ts. */
+  test('a tablet draws no page: a link and a new web tab make no tab there', () => {
+    const was = viewport.device
+    try {
+      viewport.device = 'tablet'
+      workspace.openBlank()
+      expect(workspace.openPage('https://example.com/')).toBeNull()
+      workspace.openWebsite()
+      workspace.newTab()
+      expect(workspace.tabs.some((one) => one.kind === 'web')).toBe(false)
+
+      viewport.device = 'desktop'
+      expect(workspace.openPage('https://example.com/')).not.toBeNull()
+      workspace.openWebsite()
+      expect(workspace.tabs.filter((one) => one.kind === 'web')).toHaveLength(2)
+    } finally {
+      viewport.device = was
+    }
+  })
+
   /** Where there is no web tab to make, Ctrl+T is Ctrl+D's view itself. */
   test('a phone has no web tab, so a new tab there is the kinds in the pane itself', () => {
     const was = viewport.device
