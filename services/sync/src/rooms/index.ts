@@ -18,7 +18,7 @@
 import { Hono } from 'hono'
 import { NO_SUCH_NOTE, ROOM_AWAY, SIGN_IN } from '../refused'
 import { subprotocol, tokenOf } from '@nib/rooms'
-import { DEVICE_PROTOCOL, ROOM_V2 } from '@nib/sync-core'
+import { ROOM_V2 } from '@nib/sync-core'
 import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
@@ -53,11 +53,11 @@ import type { Ingested } from './room'
  *  was given this note to write in - the stronger of the two is what the room is
  *  told: what they may do to this file is the most any of it allows. */
 const ALLOWED = `with me as (
-  select u.id as user_id, u.email as email, null as guest_id
+  select u.id as user_id, u.email as email, null as guest_id, s.id as session_id
     from sessions s join users u on u.id = s.user_id
    where s.token_hash = ?1 and s.expires_at > ?2
   union all
-  select null as user_id, null as email, s.guest_id as guest_id
+  select null as user_id, null as email, s.guest_id as guest_id, null as session_id
     from guest_sessions s
    where s.token_hash = ?1 and s.expires_at > ?2
 ),
@@ -82,6 +82,9 @@ reached as (
       or gs.role is not null or gi.role is not null
 )
 select (select coalesce(user_id, guest_id) from me) as who,
+       (select guest_id from me) as guest,
+       (select d.id from me join devices d on d.session_id = me.session_id
+           and d.user_id = me.user_id and d.revoked_at is null limit 1) as bound,
        (select space_id from reached) as space_id,
        (select path from reached) as path,
        (select epoch from reached) as epoch,
@@ -160,15 +163,16 @@ rooms.get('/:noteId', async (context) => {
   const token = tokenOf(offered)
   const noteId = context.req.param('noteId')
 
-  const allowed = await context.env.DB.prepare(ALLOWED)
-    .bind(await sha256(token ?? ''), now(), noteId)
-    .first<{
-      who: string | null
-      space_id: string | null
-      path: string | null
-      epoch: number | null
-      role: string | null
-    }>()
+  const hash = await sha256(token ?? '')
+  const allowed = await context.env.DB.prepare(ALLOWED).bind(hash, now(), noteId).first<{
+    who: string | null
+    guest: string | null
+    bound: string | null
+    space_id: string | null
+    path: string | null
+    epoch: number | null
+    role: string | null
+  }>()
 
   if (!allowed?.who) return context.json({ error: SIGN_IN }, 401)
   // A note in a space nobody shared is indistinguishable from one that is not
@@ -206,11 +210,18 @@ rooms.get('/:noteId', async (context) => {
       // this one is not in the space any more. See `roomsRevoked`.
       'x-nib-who': allowed.who,
       // Sync v2: which epoch the note's document is on, whether the socket speaks
-      // `nib.v2` (and so hears acknowledgements and new epochs), and which device it
-      // said it is. See `NoteRoom` and docs/sync-v2.md section 7.
+      // `nib.v2` (and so hears acknowledgements and new epochs), and which device is
+      // on the other end. See `NoteRoom` and docs/sync-v2.md section 7.
       'x-nib-epoch': String(allowed.epoch ?? 0),
       'x-nib-v2': offers(offered, ROOM_V2) ? 'yes' : 'no',
-      ...deviceIn(offered),
+      // The device as the session proves it, the way a tree op names it (see
+      // sync2/device.ts) - not as the socket says it is. The room writes it beside
+      // the words it settles, and a device's own words never stand against its own
+      // delete: named one way here and another on the op, a device's move to another
+      // space had its delete refused as somebody else's edit, and left a copy (#413).
+      'x-nib-device-id': allowed.guest
+        ? `guest:${allowed.guest}`
+        : (allowed.bound ?? `session:${hash.slice(0, 16)}`),
     },
     context.req.header('cf-ray') ?? null,
   )
@@ -301,14 +312,6 @@ function protocolsIn(header: string | undefined): string[] {
 
 function offers(header: string | undefined, protocol: string): boolean {
   return protocolsIn(header).includes(protocol)
-}
-
-/** The device a v2 socket said it is, as the header the room reads; nothing for one that
- *  said nothing, or something that is not a device id. */
-function deviceIn(header: string | undefined): Record<string, string> {
-  const said = protocolsIn(header).find((one) => one.startsWith(DEVICE_PROTOCOL))
-  const device = said?.slice(DEVICE_PROTOCOL.length) ?? ''
-  return /^[A-Za-z0-9_-]{1,64}$/.test(device) ? { 'x-nib-device-id': device } : {}
 }
 
 /** How many of somebody's open files one revocation wakes at a time. A bound on
