@@ -22,6 +22,8 @@ What it checks and photographs:
     a phone's bar: Undo and Redo first, and a fade at each end with more past it
     no zoom on the bar, on a desktop or a phone (#401)
     the lasso's key held: the lasso until it comes up, then the tool before it (#349)
+    two fingers turning the canvas, only with the setting on, and a click, a drag and
+      the upright key right in a turned view (#351)
     printing: the sheet the PDF is made from, handed to the print engine
 
 Run it from the repository root:
@@ -299,12 +301,12 @@ def check_pattern(page: Page) -> None:
         )
         page.wait_for_timeout(250)
 
-        layers = page.locator(".canvas > .dots").count()
+        layers = page.locator(".canvas .dots").count()
         if layers < 1:
             fail(f"no pattern at all at a zoom of {scale}")
         else:
             steps = page.evaluate(
-                "() => [...document.querySelectorAll('.canvas > .dots')]"
+                "() => [...document.querySelectorAll('.canvas .dots')]"
                 ".map((one) => Math.round(parseFloat(getComputedStyle(one)"
                 ".getPropertyValue('--dot-step'))))"
             )
@@ -1287,6 +1289,194 @@ def drive_phone(browser, theme: str) -> None:
         context.close()
 
 
+# Where a card is drawn on screen: the middle of what the page draws for it, which a
+# turned view turns with it.
+CARD_AT = """
+(words) => {
+  const card = [...document.querySelectorAll('.canvas .node')].find((one) => one.textContent.includes(words))
+  const box = card?.getBoundingClientRect()
+  return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null
+}
+"""
+
+
+# Where a point of the plane is on screen, by the same arithmetic as camera.ts: the
+# offset from the middle of the camera, scaled, turned, from the middle of the pane.
+TO_SCREEN = """
+(point) => {
+  const camera = window.nibApp.workspace.active.camera
+  const rect = document.querySelector('.canvas').getBoundingClientRect()
+  const turn = camera.turn ?? 0
+  const dx = (point.x - camera.x) * camera.scale
+  const dy = (point.y - camera.y) * camera.scale
+  return {
+    x: rect.left + rect.width / 2 + dx * Math.cos(turn) - dy * Math.sin(turn),
+    y: rect.top + rect.height / 2 + dx * Math.sin(turn) + dy * Math.cos(turn),
+  }
+}
+"""
+
+
+def two_fingers(cdp, middle: tuple[float, float], degrees: float, steps: int = 12) -> None:
+    """Two fingers a hundred and sixty pixels apart about a point, turned together by
+    `degrees`, through the protocol's own touch events."""
+    import math
+
+    def at(angle: float) -> list[dict]:
+        dx, dy = 80 * math.cos(angle), 80 * math.sin(angle)
+        return [
+            {"x": middle[0] - dx, "y": middle[1] - dy, "id": 1},
+            {"x": middle[0] + dx, "y": middle[1] + dy, "id": 2},
+        ]
+
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": at(0)})
+    for step in range(1, steps + 1):
+        angle = math.radians(degrees * step / steps)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": at(angle)})
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+def drive_turning(browser) -> None:
+    """Two fingers turn a canvas where the setting says so, and only then; turned, a
+    click lands on the card under it, a drag carries a card the way the hand went, and
+    the key stands it upright again (#351)."""
+    say("=== turning ===")
+    context = browser.new_context(
+        viewport={"width": 1180, "height": 820},
+        has_touch=True,
+        device_scale_factor=1,
+    )
+    context.add_init_script(PREPARE + "\nlocalStorage.setItem('nib:pen-seen', 'yes');")
+    page = context.new_page()
+    page.on("pageerror", lambda error: fail(f"[turning] page error: {error}"))
+    cdp = context.new_cdp_session(page)
+    cdp.send("Input.setIgnoreInputEvents", {"ignore": False})
+
+    turn = "() => window.nibApp.workspace.active.camera?.turn ?? 0"
+    try:
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        opened(page, "turning")
+        tool(page, "v")
+        three_cards(page)
+        box = plane(page)
+        middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+        # Off, the default: two fingers turned are a pan and a zoom and no turn.
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+        two_fingers(cdp, middle, 40)
+        page.wait_for_timeout(300)
+        if abs(page.evaluate(turn)) > 1e-6:
+            fail(f"two fingers turned the canvas with the setting off ({page.evaluate(turn)})")
+        else:
+            say("with the setting off, two fingers turned do not turn the canvas")
+
+        # On: they turn it, about the point between them.
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+        two_fingers(cdp, middle, 40)
+        page.wait_for_timeout(400)
+        got = page.evaluate(turn)
+        say(f"with the setting on, the canvas turned by {math_degrees(got):.1f} degrees")
+        if not 0.4 < got < 0.75:
+            fail(f"two fingers turned forty degrees turned the canvas by {got} radians")
+        shot(page, "canvas-turned")
+
+        # A click on a card where it is drawn picks that card: Delete takes it away.
+        two = page.evaluate(CARD_AT, "two")
+        page.mouse.click(two["x"], two["y"])
+        page.wait_for_timeout(200)
+        page.keyboard.press("Delete")
+        written(page, "!plane.nodes.some((n) => n.id === 'bb')")
+        if any(node["id"] == "bb" for node in canvas_of(page)["nodes"]):
+            fail("a click on a card in a turned view did not land on that card")
+        else:
+            say("a click on a card in a turned view lands on it")
+
+        # A drag carries a card the way the hand went, on screen.
+        one = page.evaluate(CARD_AT, "one")
+        page.mouse.move(one["x"], one["y"])
+        page.mouse.down()
+        page.mouse.move(one["x"] + 60, one["y"], steps=6)
+        page.mouse.move(one["x"] + 120, one["y"], steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        moved = page.evaluate(CARD_AT, "one")
+        shift = (moved["x"] - one["x"], moved["y"] - one["y"])
+        # Within a step of the grid it snaps to, which is the plane's and so turned.
+        if abs(shift[0] - 120) > 20 or abs(shift[1]) > 20:
+            fail(f"a card dragged 120px right in a turned view went {shift} on screen")
+        else:
+            say("a card dragged across a turned view goes where the hand went")
+
+        # A connector drawn from a card's side to another, in the turned view: the side's
+        # point is worked out from the plane, the way the surface does.
+        # Nothing picked first: the dragged card's own handles are on its sides. And the
+        # file written, so where the card is read from it is where it was dragged to.
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(1600)
+        aa = next(node for node in canvas_of(page)["nodes"] if node["id"] == "aa")
+        start = page.evaluate(
+            TO_SCREEN, {"x": aa["x"] + aa["width"] + 2, "y": aa["y"] + aa["height"] / 2}
+        )
+        end = page.evaluate(CARD_AT, "three")
+        page.mouse.move(start["x"] - 20, start["y"])
+        page.mouse.move(start["x"], start["y"], steps=3)
+        page.wait_for_timeout(200)
+        page.mouse.down()
+        page.mouse.move(start["x"] + 15, start["y"] + 15, steps=4)
+        page.mouse.move(end["x"], end["y"], steps=12)
+        page.mouse.up()
+        written(page, "plane.edges.some((e) => e.fromNode === 'aa' && e.toNode === 'cc')")
+        if not any(e["fromNode"] == "aa" and e["toNode"] == "cc" for e in canvas_of(page)["edges"]):
+            fail("a connector dragged between two cards in a turned view joined nothing")
+        else:
+            say("a connector dragged between two cards in a turned view joins them")
+
+        # Ink drawn there, then caught by the lasso held on its key: what is caught is
+        # what was drawn, and the bar comes up over it.
+        tool(page, "d")
+        x0, y0 = box["x"] + 160, box["y"] + box["height"] - 220
+        page.mouse.move(x0, y0)
+        page.mouse.down()
+        for step in range(1, 16):
+            page.mouse.move(x0 + step * 10, y0 + (step % 3) * 8)
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        page.keyboard.down("q")
+        page.mouse.move(x0 - 30, y0 - 30)
+        page.mouse.down()
+        for x, y in ((x0 + 190, y0 - 30), (x0 + 190, y0 + 50), (x0 - 30, y0 + 50), (x0 - 30, y0 - 30)):
+            page.mouse.move(x, y, steps=5)
+        page.mouse.up()
+        page.keyboard.up("q")
+        page.wait_for_timeout(300)
+        if not page.evaluate("() => document.querySelectorAll('.over button').length"):
+            fail("the lasso in a turned view caught nothing of what was drawn under it")
+        else:
+            say("the lasso in a turned view catches what was drawn under it")
+        shot(page, "canvas-turned-ink")
+        page.keyboard.press("Escape")
+        tool(page, "v")
+
+        # The key stands it upright again.
+        page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+        page.keyboard.press("Control+Alt+r")
+        page.wait_for_timeout(300)
+        if abs(page.evaluate(turn)) > 1e-6:
+            fail(f"Ctrl+Alt+R did not stand the canvas upright ({page.evaluate(turn)})")
+        else:
+            say("Ctrl+Alt+R stands the canvas upright")
+        shot(page, "canvas-upright-again")
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+    finally:
+        context.close()
+
+
+def math_degrees(radians: float) -> float:
+    import math
+
+    return math.degrees(radians)
+
+
 def main() -> int:
     with DRIVE.session() as browser:
         for theme in ("light", "dark"):
@@ -1294,6 +1484,7 @@ def main() -> int:
         drive_tablet(browser)
         for theme in ("light", "dark"):
             drive_phone(browser, theme)
+        drive_turning(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
 

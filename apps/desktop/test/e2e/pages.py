@@ -24,6 +24,7 @@ What it checks and photographs:
       on a finger held still
     printing: one picture per page of the PDF, handed to the print engine
     the lasso's key held: the lasso until it comes up, then the pen again (#349)
+    the paper upright under two fingers turned, with the canvas's turning on (#351)
     the page counter in the status bar, and the thumbnails in the outline panel's slot
     a PDF imported as a page note: every page drawn, on the sheet and in the panel,
       counted in pixels rather than taken on trust, and a page whose paper has gone
@@ -618,6 +619,37 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
     tool(page, "v")
+
+
+def check_upright(page: Page, cdp, label: str) -> None:
+    """Paper is read upright: two fingers turning it, with the canvas's turning on,
+    turn nothing (#351)."""
+    import math
+
+    say("--- paper stays upright ---")
+    page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+    box = surface(page)
+    middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+    def at(angle: float) -> list[dict]:
+        dx, dy = 80 * math.cos(angle), 80 * math.sin(angle)
+        return [
+            {"x": middle[0] - dx, "y": middle[1] - dy, "id": 1},
+            {"x": middle[0] + dx, "y": middle[1] + dy, "id": 2},
+        ]
+
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": at(0)})
+    for step in range(1, 13):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": at(math.radians(40 * step / 12))})
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(300)
+    turn = page.evaluate("() => window.nibApp.pages.current.store.camera.turn ?? 0")
+    page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+    if turn:
+        fail(f"[{label}] two fingers turned a page note by {turn}")
+    else:
+        say(f"[{label}] two fingers turning the paper leave it upright")
+    store_call(page, "s.fitAgain()")
 
 
 def check_gutter(page: Page, cdp, label: str) -> None:
@@ -1493,6 +1525,7 @@ def drive(browser, theme: str) -> None:
         check_pen(page, cdp, theme)
         check_lasso(page, cdp, theme)
         check_lasso_held(page, cdp, theme)
+        check_upright(page, cdp, theme)
         check_palm(page, cdp, theme)
         check_rulings(page, theme)
         check_adding(page, theme)
