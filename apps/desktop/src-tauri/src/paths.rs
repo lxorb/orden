@@ -17,6 +17,8 @@ use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
+#[cfg(desktop)]
+use std::sync::OnceLock;
 use tauri::{AppHandle, Manager};
 
 /// The extensions the app treats as a note. Anything else is not listed and not
@@ -232,24 +234,108 @@ pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
     path.is_absolute().then_some(path)
 }
 
-/// `Documents/Nib`, so notes sit where a person would look for them rather than
-/// buried in application data. Falls back to the home folder on a system that
-/// has no documents folder of its own.
-///
-/// Where the folder is, and nothing more: judging a path is not a reason to make a
+/// The folder a new install keeps its spaces in, inside the app's own data. Emil,
+/// 2026-10-17 (#376), in German: the default nib sync folder belongs in app data rather
+/// than in Documents - it is nothing a person should reach directly, but through Orden.
+#[cfg(desktop)]
+const SPACES: &str = "Spaces";
+
+/// The file in the settings folder that says which folder this install's spaces are in,
+/// written the first time it is decided and read from then on, so the answer never
+/// changes under somebody's notes: not when a `Documents/Nib` appears later, made by an
+/// older build or by hand, and not when one is emptied. A path written into it by hand
+/// is where the spaces are from the next launch, which is the one way to put them
+/// somewhere else.
+#[cfg(desktop)]
+const SPACES_KEPT: &str = "spaces-folder";
+
+/// What a desktop decided, once a launch, before anything else: `spaces_dir` is asked
+/// before every note, and many of the commands that ask it answer on the window's own
+/// thread, where it must not wait for the disk; see `decide_spaces`.
+#[cfg(desktop)]
+static SPACES_CHOSEN: OnceLock<PathBuf> = OnceLock::new();
+
+/// Where the spaces are, and nothing more: judging a path is not a reason to make a
 /// folder, and judging one is what most of the callers are doing - `in_spaces`
 /// stands in front of every note, folder, tree, search and trash command, and a
 /// note being read asks whether it is inside. What wants the folder to be there
 /// says so, with `spaces_root`.
 ///
-/// `NIB_SPACES_DIR` wins outright, and is read at call time and before the documents
-/// folder is asked for: a drive that says where the notes go must not be overruled by a
-/// documents folder, and must not need one to exist at all.
+/// On a desktop, the folder `spaces_folder` decides, once: `Spaces` in the app's own
+/// local data (`%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on a Mac,
+/// `$XDG_DATA_HOME` on Linux, each under the identifier) for a new install, and
+/// `Documents/Nib`, where every space used to be, for an install that has one - nobody's
+/// spaces are moved. On a phone, `Documents/Nib`, which is the app's own container there
+/// already and what the Files app shows of it.
+///
+/// `NIB_SPACES_DIR` wins outright, and is read at call time and before anything else
+/// is asked for: a drive that says where the notes go must not be overruled by a
+/// documents folder or a kept answer, and must not need either to exist at all.
 pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
     }
 
+    default_spaces(app)
+}
+
+/// A desktop's spaces folder when no variable names one, as `decide_spaces` found it as
+/// the app started. Asked before that, it is an error rather than a guess: a guess made
+/// before the old `Documents/Nib` was looked for could put somebody's spaces out of sight.
+#[cfg(desktop)]
+fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
+    SPACES_CHOSEN
+        .get()
+        .cloned()
+        .ok_or_else(|| "the spaces folder is not decided yet".to_string())
+}
+
+/// Decides a desktop's spaces folder for this launch, reading and if need be writing
+/// the answer kept in the settings folder; see `SPACES_KEPT`. The first thing the app
+/// does once it is built, so nothing asks `spaces_dir` before it. A folder that cannot be
+/// found is said in the log, and every note command says so after it.
+#[cfg(desktop)]
+pub fn decide_spaces(app: &AppHandle) {
+    match chosen_spaces(app) {
+        Ok(chosen) => {
+            let _ = SPACES_CHOSEN.set(chosen);
+        }
+        Err(error) => crate::logs::say(app, "error", &format!("the spaces folder: {error}")),
+    }
+}
+
+/// What `decide_spaces` decides.
+#[cfg(desktop)]
+fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
+    let kept = config_dir(app)?.join(SPACES_KEPT);
+    let said = fs::read_to_string(&kept).ok();
+    let fresh = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("could not find the app's data folder: {error}"))?
+        .join(SPACES);
+    let old = documents_nib(app).ok().filter(|dir| dir.is_dir());
+    let chosen = spaces_folder(said.as_deref(), old, fresh);
+    if folder_named(said.as_deref().map(str::trim).map(OsStr::new)).is_none() {
+        // Written once; a disk that will not take it decides again next launch, the
+        // same way while nothing changes.
+        if let Some(dir) = kept.parent() {
+            let _ = made(dir);
+        }
+        let _ = fs::write(&kept, chosen.to_string_lossy().as_bytes());
+    }
+    Ok(chosen)
+}
+
+/// A phone's spaces folder: `Documents/Nib`, inside the app's own container.
+#[cfg(mobile)]
+fn default_spaces(app: &AppHandle) -> Result<PathBuf, String> {
+    documents_nib(app)
+}
+
+/// `Documents/Nib`, or `Nib` in the home folder on a system with no documents folder:
+/// where every space was until #376, and where a phone's still are.
+fn documents_nib(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
         .document_dir()
@@ -257,6 +343,18 @@ pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| format!("could not find the documents folder: {error}"))?;
 
     Ok(base.join("Nib"))
+}
+
+/// Which folder a desktop's spaces are in: the one the settings folder says (`said`, an
+/// absolute path), else the old `Documents/Nib` where it is there already (`old`), else
+/// the new default in the app's data (`fresh`). Pure, so the rule is tested without an
+/// app or a disk.
+#[cfg(desktop)]
+fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: PathBuf) -> PathBuf {
+    if let Some(kept) = folder_named(said.map(str::trim).map(OsStr::new)) {
+        return kept;
+    }
+    old.unwrap_or(fresh)
 }
 
 /// The same folder, made if it is not there yet. What the commands that read or
@@ -966,6 +1064,50 @@ mod tests {
         let said = folder_named(Some(absolute.as_os_str())).expect("an absolute path");
         assert_eq!(said, absolute);
         assert!(!said.ends_with("Nib"));
+    }
+
+    /// #376: a new install keeps its spaces in the app's own data, an install that has
+    /// `Documents/Nib` keeps them there, and what was decided once is what is used from
+    /// then on, whatever appears in Documents later.
+    #[cfg(desktop)]
+    #[test]
+    fn a_new_install_keeps_its_spaces_in_app_data_and_nobody_s_move() {
+        let root = |parts: &[&str]| {
+            let mut all = vec![if cfg!(windows) { r"C:\" } else { "/" }];
+            all.extend_from_slice(parts);
+            path(&all)
+        };
+        let fresh = root(&["data", "ch.emilvinu.nib", "Spaces"]);
+        let old = root(&["home", "Documents", "Nib"]);
+
+        // Nothing kept and no old folder: the app's data.
+        assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
+        // An old folder there already: it stays where it is.
+        assert_eq!(
+            super::spaces_folder(None, Some(old.clone()), fresh.clone()),
+            old
+        );
+        // Kept once, kept for good: an old folder appearing later moves nothing.
+        let kept = fresh.to_string_lossy().to_string();
+        assert_eq!(
+            super::spaces_folder(Some(&kept), Some(old.clone()), root(&["elsewhere"])),
+            fresh
+        );
+        // With the line end a hand-edited file has.
+        let edited = format!("{}\n", old.to_string_lossy());
+        assert_eq!(
+            super::spaces_folder(Some(&edited), None, fresh.clone()),
+            old
+        );
+        // A kept answer that names no absolute folder decides again.
+        assert_eq!(
+            super::spaces_folder(Some("Spaces"), None, fresh.clone()),
+            fresh
+        );
+        assert_eq!(
+            super::spaces_folder(Some(""), Some(old.clone()), fresh),
+            old
+        );
     }
 
     /// Anything that is not an absolute path is not an override. A relative one would be

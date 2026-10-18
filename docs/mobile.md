@@ -3,8 +3,9 @@
 The same app, the same crate and the same notes, built as a native Android and
 iOS app with Tauri 2. Nothing about it is a separate product: the phone layout,
 the drawer, the sheets and the docked formatting bar are the ones the web build
-already has on a small screen, and the notes are the same files under the
-documents folder that the desktop reads.
+already has on a small screen, and the notes are the same files the desktop reads,
+in `Documents/Nib` inside the app's own container (a desktop's are in its app data;
+see docs/automation.md).
 
 ## Identity
 

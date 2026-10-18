@@ -325,10 +325,13 @@ Realities plugin does not carry the code for it at all.
 **A probe says where its notes go, because nothing else does.** Building under an
 identifier of its own - `--config '{"identifier":"ch.emilvinu.nib.probe"}'`, which is
 what every drive in `scripts/` does - moves the settings folder and the browsing
-profile, and says **nothing at all** about where the spaces are: `spaces_dir` resolves
-`Documents/Nib` whatever the identifier is. So a drive that makes itself a space to
-open makes it in the reader's own notes folder, beside their notes. That is not a
-hypothetical; it is what happened, and the space had to be deleted by hand.
+profile, and used to say **nothing at all** about where the spaces are: `spaces_dir`
+resolved `Documents/Nib` whatever the identifier was. So a drive that made itself a space
+to open made it in the reader's own notes folder, beside their notes. That is not a
+hypothetical; it is what happened, and the space had to be deleted by hand. A new install
+keeps its spaces in its own app data now (`Spaces` there, see below), which an identifier
+of its own does move - but an install that finds `Documents/Nib` already there keeps using
+it, a probe's included, so the variable is still the rule.
 
 So the spaces root is a variable, and every probe and drive sets it:
 
@@ -339,12 +342,26 @@ NIB_SPACES_DIR=/some/temp/folder
 | | |
 | --- | --- |
 | when it is set | it **is** the spaces root - used as given, with no `Nib` joined onto it |
-| when it wins | outright, and before the documents folder is asked for, so a drive needs no documents folder to exist |
+| when it wins | outright, and before the documents folder or the kept answer is asked for, so a drive needs neither to exist |
 | when it is read | at call time, so a drive sets it and starts the app, with nothing built again |
 | what is ignored | anything that is not an absolute path: a relative one would be read against whatever folder the app was started in, and an empty value is what a shell leaves behind when it clears a variable |
 
 A drive points it at a folder it made in the system's temp area and writes its space
-there, so a run touches nothing of anybody's. See `SPACES_DIR` and `spaces_named` in
+there, so a run touches nothing of anybody's.
+
+**Without it, the spaces folder is decided once per install** (#376), as the app starts
+(`decide_spaces` in `paths.rs`), and written to `spaces-folder` in the settings folder so
+the answer never changes under somebody's notes:
+
+| | |
+| --- | --- |
+| a new install | `Spaces` in the app's local data, under the identifier: `%LOCALAPPDATA%\ch.emilvinu.nib\Spaces` on Windows, `~/Library/Application Support/ch.emilvinu.nib/Spaces` on a Mac, `$XDG_DATA_HOME/ch.emilvinu.nib/Spaces` (`~/.local/share/...`) on Linux. Emil, 2026-10-17: the folder is nothing a person should reach directly, but through Orden |
+| an install that already has `Documents/Nib` | `Documents/Nib`, where every space used to be: nobody's spaces are moved |
+| `spaces-folder` there already | the folder it names, whatever appears in Documents later; a path written into it by hand is where the spaces are from the next launch |
+| a phone | `Documents/Nib` as before, which is inside the app's own container there |
+
+Every space is in the one folder, synced ones included: a space nib sync brings to this
+device is made there like any other. See `SPACES_DIR` and `spaces_named` in
 `src-tauri/src/paths.rs`, and `scripts/web-session-probe.py` for a drive that does it.
 
 **A probe never updates.** A build looks for a new version as it starts and runs the

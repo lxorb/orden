@@ -7,9 +7,8 @@
 //!
 //! A phone has no second window, no installer, no file dialog and no shell, so
 //! the modules that are only about those are `#[cfg(desktop)]` and their commands
-//! reach the handler only there. Everything about notes is the same on both: the
-//! same folder under the documents directory, read and written by the same
-//! commands.
+//! reach the handler only there. Everything about notes is the same on both: one
+//! spaces folder (`paths::spaces_dir`), read and written by the same commands.
 //!
 //! One rule about every command that waits for the disk: it says `async`.
 //!
@@ -757,6 +756,10 @@ fn ready(
     trace::mark("app built, window created");
 
     let handle = app.handle();
+
+    // Where the spaces are, before anything asks; see `decide_spaces`.
+    #[cfg(desktop)]
+    paths::decide_spaces(handle);
 
     // Which display GTK opened, asked here on the event loop's thread before any window is
     // placed; see linux.rs.
