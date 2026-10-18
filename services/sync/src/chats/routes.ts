@@ -110,6 +110,10 @@ select ch.id as id, ch.space_id as space,
   left join chat_reads r on r.chat_id = ch.id
                         and r.who = (select coalesce(user_id, guest_id) from me)
  where ch.ended_at is null and (?4 is null or ch.space_id = ?4)
+   -- Its pointer in Recently deleted: the chat is not listed while it is there, and is
+   -- again once it is put back (#375). Still reached by id, so a pointer restored opens
+   -- the chat as it was.
+   and not exists (select 1 from notes n where n.id = ch.file_id and n.deleted = 1)
  group by ch.id
  order by coalesce(ch.last_at, ch.created_at) desc
  limit 2000`
