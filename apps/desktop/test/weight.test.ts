@@ -738,8 +738,13 @@ function holds(tail: string): boolean {
  *  inside a block that holds the margin under it, and that block has the editor measure
  *  again when its height changes by itself (`toDOM` in the editor's
  *  live-preview/cover.ts), so a click under a cover lands on the line it was made on.
- *  Measured 3,228,558. */
-const BUDGET = 3_229_600
+ *  Measured 3,228,558.
+ *
+ *  Raised 2026-10-18, to 3,233,100, for #412: a tile dragged back onto the file list
+ *  and a file dragged into the Essentials, each one undo step (`unkeepInto` and the
+ *  `keep` kind of undo), with the list's rows slid into place (`arrive` in
+ *  tree-lift.ts). Measured 3,232,059. */
+const BUDGET = 3_233_100
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
