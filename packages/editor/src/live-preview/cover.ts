@@ -63,9 +63,11 @@ export class CoverWidget extends NibWidget {
   }
 
   /** Kept off the height of a line: a band of picture is not text, and asking
-   *  CodeMirror to guess at it makes it scroll in jumps. */
+   *  CodeMirror to guess at it makes it scroll in jumps. What the block measures at
+   *  the defaults: the band's `--cover-height` (tokens.css) and the 1.8em under it
+   *  (document.css) at the 16.5px a note's text starts at. */
   override get estimatedHeight() {
-    return 200
+    return 230
   }
 
   toDOM(view: EditorView) {
