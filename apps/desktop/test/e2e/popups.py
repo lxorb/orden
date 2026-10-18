@@ -8,7 +8,8 @@ never reach the app. A list dropped by a control inside the settings is closed b
 press on the settings around it, and the settings stay.
 
 The popups are the context menu, the space switcher, the app's menu, the canvas bar's
-panels, the graph's controls and a dropdown in the settings; every one of them, and the
+panels, the colours of what is picked, the graph's controls, a dropdown in the settings,
+a web tab's site and downloads bubbles and a guest's corner; every one of them, and the
 rest that need an account or a web page to be opened at all, closes through the one
 rule in lib/overlays.ts.
 
@@ -280,6 +281,23 @@ def drive(browser: Browser) -> None:
         check(page, "the downloads", lambda: saving.click(), ".downloads.nib-bubble", ".web")
     else:
         say("the downloads: nothing has been downloaded in this build")
+
+    # ── A guest's corner ────────────────────────────────────────────
+    # A guest alone in the one file a link gave them, said to the app the way a link
+    # leaves it: a guest, and a file somebody shared open on its own. The rest of a
+    # guest's way in is share.py's, against the real Worker.
+    page.evaluate(
+        """() => {
+          window.nibApp.account.guest = { id: 'g1', name: 'Chromium wren' }
+          window.nibApp.workspace.openShared(
+            { id: 'shared-1', name: 'board.canvas', path: '/Boards/board.canvas' },
+            '{"nib":{"version":1},"nodes":[],"edges":[]}',
+          )
+        }"""
+    )
+    DRIVE.wait_for(page, "!!document.querySelector('.guest-corner .who')", "a guest's corner")
+    face = page.locator(".guest-corner .who").first
+    check(page, "a guest's corner", lambda: face.click(), ".guest-corner .pop", ".canvas")
 
 
 if __name__ == "__main__":
