@@ -19,6 +19,7 @@ What it checks and photographs:
       starts on, which is a setting rather than A4 for everybody
     adding, reordering and deleting a page, and what reordering does to the ink on it
     a long page growing past A4 when writing reaches the bottom of it
+    ink caught by the lasso dragged where the hand takes it, and no Add on the bar
     the page counter in the status bar, and the thumbnails in the outline panel's slot
     a PDF imported as a page note: every page drawn, on the sheet and in the panel,
       counted in pixels rather than taken on trust, and a page whose paper has gone
@@ -423,6 +424,60 @@ def check_pen(page: Page, cdp, label: str) -> None:
         fail(f"[{label}] the stroke carries {varied} pressure(s): the nib was not felt")
 
     shot(page, f"{label}-a-stroke")
+
+
+def check_lasso(page: Page, cdp, label: str) -> None:
+    """Writing caught by the lasso is dragged where the hand takes it, and the bar
+    offers nothing a press on paper would not put down (#350)."""
+    say("--- the lasso, and what the bar offers ---")
+
+    if page.locator(".cluster .bar button[aria-label='Add']").count():
+        fail(f"[{label}] a page note's bar offers Add, and nothing on paper answers to it")
+
+    tool(page, "d")
+    box = surface(page)
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 320
+    stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
+    # The stroke just drawn, found again by its id: the file is free to keep its ink
+    # in whatever order it likes.
+    drawn = page.evaluate(
+        "() => { const ink = window.nibApp.pages.current.store.canvas.ink;"
+        " return ink[ink.length - 1].id }"
+    )
+    first = (
+        "(id) => { const store = window.nibApp.pages.current.store;"
+        " const one = store.canvas.ink.find((s) => s.id === id);"
+        " return { x: one.points[0].x, y: one.points[0].y, scale: store.camera.scale } }"
+    )
+    was = page.evaluate(first, drawn)
+
+    tool(page, "q")
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 300, y0 - 30), (x0 + 300, y0 + 70), (x0 - 30, y0 + 70), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+
+    page.mouse.move(x0 + 120, y0 + 15)
+    page.mouse.down()
+    page.mouse.move(x0 + 220, y0 + 115, steps=10)
+    page.mouse.up()
+    page.wait_for_timeout(400)
+
+    now = page.evaluate(first, drawn)
+    # A hundred pixels right and down, in the paper's own units.
+    wanted = 100 / was["scale"]
+    moved = (now["x"] - was["x"], now["y"] - was["y"])
+    if abs(moved[0] - wanted) > 4 or abs(moved[1] - wanted) > 4:
+        fail(f"[{label}] lassoed ink did not follow the drag (moved {moved}, not {wanted:.0f})")
+    else:
+        say(f"[{label}] the lassoed ink moved by {tuple(round(v) for v in moved)}")
+    shot(page, f"{label}-lasso-moved")
+
+    page.keyboard.press("Delete")
+    page.wait_for_timeout(200)
+    tool(page, "v")
 
 
 def check_gutter(page: Page, cdp, label: str) -> None:
@@ -1274,6 +1329,7 @@ def drive(browser, theme: str) -> None:
         check_opens(page, theme)
         check_refits(page, theme)
         check_pen(page, cdp, theme)
+        check_lasso(page, cdp, theme)
         check_palm(page, cdp, theme)
         check_rulings(page, theme)
         check_adding(page, theme)
