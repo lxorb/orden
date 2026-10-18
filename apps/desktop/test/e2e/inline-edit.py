@@ -52,6 +52,12 @@ def found(page: Page, words: str) -> dict[str, object] | None:
     return page.evaluate(TASK, words)  # type: ignore[no-any-return]
 
 
+def day(task: dict) -> object:
+    """The day a task's words were read for: its start date since a date typed is one
+    (7f8ffd4e), and a deadline or a scheduled day as before."""
+    return task.get("start") or task.get("scheduled") or task.get("due")
+
+
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
@@ -74,7 +80,7 @@ def add_in_place(page: Page) -> None:
     if isinstance(task, dict):
         if task.get("section") != ["Garden"]:
             wrong(f"the task did not land under its section: {task.get('section')}")
-        if task.get("priority") != 2 or not task.get("due"):
+        if task.get("priority") != 2 or not day(task):
             wrong("the words were not read for their priority and day")
     if not page.locator(".view-tab .editor").count():
         wrong("the field went away after a task was added")
@@ -115,7 +121,7 @@ def edit_in_place(page: Page) -> None:
     page.keyboard.press("Enter")
     wait_for(page, f"() => !!({TASK})('Fix the kitchen tap')", "the new words written")
     task = (found(page, "Fix the kitchen tap") or {}).get("task") or {}
-    if isinstance(task, dict) and not task.get("due"):
+    if isinstance(task, dict) and not day(task):
         wrong("the day typed into the field was not written")
     wait_for(page, "!document.querySelector('.view-tab .editor')", "the field put away after saving")
 
