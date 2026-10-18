@@ -39,6 +39,10 @@ export const ml: Dictionary = {
   'Bookmarks bar': 'ബുക്ക്‌മാർക്ക് ബാർ',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} തുറന്ന ടാബുകൾ പൂട്ടി സൂക്ഷിക്കുന്നു, അതിനാൽ ബുക്ക്‌മാർക്കുകൾ മാത്രം വന്നു.',
+  '{count} pages not on the web stay behind': {
+    one: 'വെബിൽ ഇല്ലാത്ത {count} പേജ് ഒഴിവാക്കി',
+    other: 'വെബിൽ ഇല്ലാത്ത {count} പേജുകൾ ഒഴിവാക്കി',
+  },
   // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',

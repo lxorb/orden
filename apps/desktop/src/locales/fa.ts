@@ -38,6 +38,10 @@ export const fa: Dictionary = {
   'Bookmarks bar': 'نوار نشانک‌ها',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} زبانه‌های باز خود را قفل نگه می‌دارد، پس فقط نشانک‌هایش آمد.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} صفحه که روی وب نیست جا ماند',
+    other: '{count} صفحه که روی وب نیستند جا ماندند',
+  },
   // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',

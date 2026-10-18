@@ -39,6 +39,10 @@ export const sw: Dictionary = {
   'Bookmarks bar': 'Upau wa alamisho',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} hufunga vichupo vyake vilivyo wazi, kwa hivyo alamisho zake pekee zimekuja.',
+  '{count} pages not on the web stay behind': {
+    one: 'Ukurasa {count} usio kwenye wavuti umebaki',
+    other: 'Kurasa {count} zisizo kwenye wavuti zimebaki',
+  },
   // Settings: note types
   'Page note': 'Dokezo la kurasa',
   'Web note': 'Dokezo la wavuti',

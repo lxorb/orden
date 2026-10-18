@@ -39,6 +39,11 @@ export const it: Dictionary = {
   'Bookmarks bar': 'Barra dei preferiti',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} tiene sotto chiave le schede aperte, quindi sono arrivati solo i preferiti.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} pagine fuori dal web restano indietro',
+    one: '{count} pagina fuori dal web resta indietro',
+    other: '{count} pagine fuori dal web restano indietro',
+  },
   // Settings: note types
   'Page note': 'Nota a pagine',
   'Web note': 'Nota web',

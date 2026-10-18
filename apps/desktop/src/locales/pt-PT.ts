@@ -39,6 +39,11 @@ export const ptPT: Dictionary = {
   'Bookmarks bar': 'Barra de marcadores',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     'O {browser} guarda os separadores abertos trancados, por isso só vieram os marcadores.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} páginas fora da web ficam para trás',
+    one: '{count} página fora da web fica para trás',
+    other: '{count} páginas fora da web ficam para trás',
+  },
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

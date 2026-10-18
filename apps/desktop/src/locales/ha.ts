@@ -39,6 +39,10 @@ export const ha: Dictionary = {
   'Bookmarks bar': 'Sandar alamun shafi',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} yana kulle shafukansa da ke buɗe, don haka alamun shafinsa kawai suka zo.',
+  '{count} pages not on the web stay behind': {
+    one: 'Shafi {count} da ba ya kan yanar gizo ya rage',
+    other: 'Shafuka {count} da ba sa kan yanar gizo sun rage',
+  },
   // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',

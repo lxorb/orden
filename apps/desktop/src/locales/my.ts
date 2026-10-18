@@ -38,6 +38,7 @@ export const my: Dictionary = {
   'Bookmarks bar': 'စာမှတ်ဘား',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} သည် ဖွင့်ထားသော တဘ်များကို သော့ခတ်ထားသဖြင့် စာမှတ်များသာ ပါလာသည်။',
+  '{count} pages not on the web stay behind': 'ဝဘ်ပေါ်တွင် မရှိသော စာမျက်နှာ {count} ခု ကျန်ခဲ့သည်',
   // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',

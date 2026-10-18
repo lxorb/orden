@@ -38,6 +38,7 @@ export const ms: Dictionary = {
   'Bookmarks bar': 'Bar penanda halaman',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} mengunci tab yang terbuka, jadi hanya penanda halamannya yang dibawa.',
+  '{count} pages not on the web stay behind': '{count} halaman yang bukan di web ditinggalkan',
   // Settings: note types
   'Page note': 'Nota halaman',
   'Web note': 'Nota web',

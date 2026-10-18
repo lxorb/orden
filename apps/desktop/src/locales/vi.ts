@@ -38,6 +38,7 @@ export const vi: Dictionary = {
   'Bookmarks bar': 'Thanh dấu trang',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} khóa các thẻ đang mở, nên chỉ dấu trang được mang sang.',
+  '{count} pages not on the web stay behind': '{count} trang không có trên web được để lại',
   // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',

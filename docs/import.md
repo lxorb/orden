@@ -106,7 +106,8 @@ came in, and lands in it.
     menu, the other bookmarks, the phone's), every bookmark folder a folder and each
     bookmark a web note kept on the day it was bookmarked. The bar's bookmarks are not
     made Essentials. Separators, Firefox's tags and smart folders, bookmarklets and
-    folders with nothing on the web in them stay behind.
+    folders with nothing on the web in them stay behind, and the line counts the
+    pages among them: a tab on the browser's own pages, a file, a bookmarklet.
 
   Firefox's session is `sessionstore-backups/recovery.jsonlz4` (then `sessionstore` and
   `previous`), read like Zen's (`import/firefox.ts`); its bookmarks are `places.sqlite`,

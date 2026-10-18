@@ -53,4 +53,6 @@ export interface Sidebar {
   folders: SidebarFolder[]
   /** In the order they sit in the sidebar, each once. */
   tabs: SidebarTab[]
+  /** How many pages the reader left behind for not being on the web, where it counted. */
+  dropped?: number
 }

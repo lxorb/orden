@@ -80,6 +80,11 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
     })
   })
 
+  test('counts the pages it left behind for not being on the web', () => {
+    expect(firefoxSidebar(SESSION, BOOKMARKS, 'Firefox', WORDS).dropped).toBe(2)
+    expect(firefoxSidebar(null, null, 'Firefox', WORDS).dropped).toBe(0)
+  })
+
   test('says containers stay where a tab was in one', () => {
     expect(planned().lost).toEqual([CONTAINERS])
     expect(planned(null).lost).toEqual([])

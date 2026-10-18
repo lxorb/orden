@@ -39,6 +39,10 @@ export const de: Dictionary = {
   'Bookmarks bar': 'Lesezeichenleiste',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} hält seine offenen Tabs verschlossen, darum kamen nur die Lesezeichen.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} Seite außerhalb des Webs bleibt zurück',
+    other: '{count} Seiten außerhalb des Webs bleiben zurück',
+  },
   // Settings: note types
   'Page note': 'Seitennotiz',
   'Web note': 'Webnotiz',

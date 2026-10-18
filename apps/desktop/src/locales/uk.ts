@@ -39,6 +39,12 @@ export const uk: Dictionary = {
   'Bookmarks bar': 'Панель закладок',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} тримає відкриті вкладки під замком, тож прийшли лише закладки.',
+  '{count} pages not on the web stay behind': {
+    few: 'Сторінок не з інтернету, що лишаються: {count}',
+    many: 'Сторінок не з інтернету, що лишаються: {count}',
+    one: 'Сторінок не з інтернету, що лишаються: {count}',
+    other: 'Сторінок не з інтернету, що лишаються: {count}',
+  },
   // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',

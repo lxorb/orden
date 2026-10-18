@@ -38,6 +38,7 @@ export const th: Dictionary = {
   'Bookmarks bar': 'แถบบุ๊กมาร์ก',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} ล็อกแท็บที่เปิดอยู่ไว้ จึงนำมาได้เฉพาะบุ๊กมาร์ก',
+  '{count} pages not on the web stay behind': 'หน้าที่ไม่ได้อยู่บนเว็บ {count} หน้าไม่ได้นำมา',
   // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',

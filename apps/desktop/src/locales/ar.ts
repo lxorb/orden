@@ -38,6 +38,14 @@ export const ar: Dictionary = {
   'Bookmarks bar': 'شريط الإشارات المرجعية',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     'يحتفظ {browser} بعلامات تبويبه المفتوحة مقفلة، لذا جاءت إشاراته المرجعية فقط.',
+  '{count} pages not on the web stay behind': {
+    few: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    many: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    one: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    other: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    two: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    zero: 'صفحات ليست على الويب بقيت مكانها: {count}',
+  },
   // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',

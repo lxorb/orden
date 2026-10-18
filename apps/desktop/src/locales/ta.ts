@@ -39,6 +39,10 @@ export const ta: Dictionary = {
   'Bookmarks bar': 'புத்தகக்குறிப் பட்டை',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} தன் திறந்த தாவல்களைப் பூட்டி வைக்கிறது, அதனால் புத்தகக்குறிகள் மட்டும் வந்தன.',
+  '{count} pages not on the web stay behind': {
+    one: 'இணையத்தில் இல்லாத {count} பக்கம் விடப்பட்டது',
+    other: 'இணையத்தில் இல்லாத {count} பக்கங்கள் விடப்பட்டன',
+  },
   // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',

@@ -38,6 +38,7 @@ export const jv: Dictionary = {
   'Bookmarks bar': 'Bilah tandha buku',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} ngunci tab sing kabukak, mula mung tandha bukune sing teka.',
+  '{count} pages not on the web stay behind': '{count} kaca sing ora ana ing web ditinggal',
   // Settings: note types
   'Page note': 'Cathetan kaca',
   'Web note': 'Cathetan web',

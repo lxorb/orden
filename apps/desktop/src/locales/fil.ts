@@ -38,6 +38,10 @@ export const fil: Dictionary = {
   'Bookmarks bar': 'Bar ng mga bookmark',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     'Naka-lock sa {browser} ang mga bukas na tab nito, kaya ang mga bookmark lang ang dumating.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} pahinang wala sa web ang naiwan',
+    other: '{count} pahinang wala sa web ang naiwan',
+  },
   // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',

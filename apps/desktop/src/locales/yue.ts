@@ -38,6 +38,7 @@ export const yue: Dictionary = {
   'Bookmarks bar': '書籤列',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} 將開咗嘅分頁鎖住咗，所以淨係帶到書籤。',
+  '{count} pages not on the web stay behind': '唔喺網上嘅 {count} 個頁面留低咗',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

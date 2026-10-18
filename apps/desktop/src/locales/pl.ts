@@ -39,6 +39,12 @@ export const pl: Dictionary = {
   'Bookmarks bar': 'Pasek zakładek',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} trzyma otwarte karty pod kluczem, więc przyszły tylko zakładki.',
+  '{count} pages not on the web stay behind': {
+    few: 'Stron spoza sieci, które zostają: {count}',
+    many: 'Stron spoza sieci, które zostają: {count}',
+    one: 'Stron spoza sieci, które zostają: {count}',
+    other: 'Stron spoza sieci, które zostają: {count}',
+  },
   // Settings: note types
   'Page note': 'Notatka ze stronami',
   'Web note': 'Notatka internetowa',

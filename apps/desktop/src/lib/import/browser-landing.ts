@@ -40,7 +40,21 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   if (!read) throw new Error(nothing)
 
   const { spaces, lost } = sidebarImport(read.sidebar, new Date(), firefox ? CONTAINERS : null)
-  return landSpaces(spaces, [...lost, ...read.lost], nothing)
+  return landSpaces(spaces, [...lost, ...read.lost, ...droppedLine(read.sidebar)], nothing)
+}
+
+/** The line that counts the pages left behind for not being on the web, where any were. */
+function droppedLine(sidebar: Sidebar): Lost[] {
+  const count = sidebar.dropped ?? 0
+  if (!count) return []
+  return [
+    {
+      text: key('{count} pages not on the web stay behind'),
+      // Filed under its `other` form; see notion.ts and i18n.svelte.ts.
+      one: '{count} page not on the web stays behind',
+      values: { count },
+    },
+  ]
 }
 
 /** The names of the folders the import makes, in the reader's language. */

@@ -38,6 +38,10 @@ export const mr: Dictionary = {
   'Bookmarks bar': 'बुकमार्क बार',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} आपले उघडे टॅब लॉक करून ठेवतो, म्हणून फक्त बुकमार्क आले.',
+  '{count} pages not on the web stay behind': {
+    one: 'वेबवर नसलेले {count} पान मागे राहिले',
+    other: 'वेबवर नसलेली {count} पाने मागे राहिली',
+  },
   // Settings: note types
   'Page note': 'पानांची नोंद',
   'Web note': 'वेब नोंद',

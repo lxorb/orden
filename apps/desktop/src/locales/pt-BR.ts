@@ -39,6 +39,11 @@ export const ptBR: Dictionary = {
   'Bookmarks bar': 'Barra de favoritos',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     'O {browser} guarda as abas abertas trancadas, então só os favoritos vieram.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} páginas fora da web ficam para trás',
+    one: '{count} página fora da web fica para trás',
+    other: '{count} páginas fora da web ficam para trás',
+  },
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

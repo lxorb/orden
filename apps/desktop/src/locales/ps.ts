@@ -38,6 +38,10 @@ export const ps: Dictionary = {
   'Bookmarks bar': 'د نښو پټه',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} خپل پرانیستي ټبونه تړلي ساتي، نو یوازې نښې یې راغلې.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} پاڼه چې په وېب کې نه ده پاتې شوه',
+    other: '{count} پاڼې چې په وېب کې نه دي پاتې شوې',
+  },
   // Settings: note types
   'Page note': 'د مخونو يادښت',
   'Web note': 'ویب يادښت',

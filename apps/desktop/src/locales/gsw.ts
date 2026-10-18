@@ -39,6 +39,10 @@ export const gsw: Dictionary = {
   'Bookmarks bar': 'Lesezeicheleischte',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} haltet sini offene Tabs verschlosse, drum sind nur d Lesezeiche cho.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} Siite usserhalb vom Web blibt zrugg',
+    other: '{count} Siite usserhalb vom Web blibed zrugg',
+  },
   // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',

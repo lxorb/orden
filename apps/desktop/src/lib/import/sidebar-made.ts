@@ -52,6 +52,8 @@ const SPACE = 'browser'
 export class Made {
   readonly folders: SidebarFolder[] = []
   readonly tabs: SidebarTab[] = []
+  /** Pages left behind for not being on the web: a browser's own, a file, a bookmarklet. */
+  dropped = 0
 
   folder(id: string, name: string, parent: string | null) {
     if (this.folders.some((one) => one.id === id)) return
@@ -59,7 +61,10 @@ export class Made {
   }
 
   tab(tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean }) {
-    if (!isWebAddress(tab.url)) return
+    if (!isWebAddress(tab.url)) {
+      this.dropped++
+      return
+    }
     const title = tab.title.trim() && tab.title !== tab.url ? tab.title : untitled(tab.url)
     this.tabs.push({
       ...tab,
@@ -89,6 +94,7 @@ export class Made {
       spaces: [{ id: SPACE, name, icon: null, colour: null, container: 0 }],
       folders: this.kept(),
       tabs: this.tabs,
+      dropped: this.dropped,
     }
   }
 }

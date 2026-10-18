@@ -38,6 +38,10 @@ export const am: Dictionary = {
   'Bookmarks bar': 'የዕልባቶች አሞሌ',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} የተከፈቱ ትሮቹን ቆልፎ ያስቀምጣል፣ ስለዚህ ዕልባቶቹ ብቻ መጥተዋል።',
+  '{count} pages not on the web stay behind': {
+    one: 'በድር ላይ ያልሆነ {count} ገጽ ቀርቷል',
+    other: 'በድር ላይ ያልሆኑ {count} ገጾች ቀርተዋል',
+  },
   // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',

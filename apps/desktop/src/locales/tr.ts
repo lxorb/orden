@@ -39,6 +39,10 @@ export const tr: Dictionary = {
   'Bookmarks bar': 'Yer işareti çubuğu',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} açık sekmelerini kilitli tutuyor, bu yüzden yalnızca yer işaretleri geldi.',
+  '{count} pages not on the web stay behind': {
+    one: 'Web’de olmayan {count} sayfa geride kalıyor',
+    other: 'Web’de olmayan {count} sayfa geride kalıyor',
+  },
   // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',

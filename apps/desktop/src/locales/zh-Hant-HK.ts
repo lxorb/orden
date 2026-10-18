@@ -38,6 +38,7 @@ export const zhHantHK: Dictionary = {
   'Bookmarks bar': '書籤列',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} 將開啟的分頁加密保存，所以只帶來了書籤。',
+  '{count} pages not on the web stay behind': '{count} 個不在網上的頁面沒有帶來',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

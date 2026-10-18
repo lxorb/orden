@@ -38,6 +38,7 @@ export const ja: Dictionary = {
   'Bookmarks bar': 'ブックマークバー',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} は開いているタブを暗号化して保存しているため、ブックマークだけを取り込みました。',
+  '{count} pages not on the web stay behind': 'Web 上にないページ {count} 件は持ち込みません',
   // Settings: note types
   'Page note': 'ページノート',
   'Web note': 'ウェブノート',

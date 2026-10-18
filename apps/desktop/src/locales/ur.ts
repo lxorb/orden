@@ -38,6 +38,10 @@ export const ur: Dictionary = {
   'Bookmarks bar': 'بُک مارکس بار',
   '{browser} keeps its open tabs locked, so only its bookmarks came.':
     '{browser} اپنے کھلے ٹیب مقفل رکھتا ہے، اس لیے صرف اس کے بُک مارکس آئے۔',
+  '{count} pages not on the web stay behind': {
+    one: 'ویب پر نہ ہونے والا {count} صفحہ پیچھے رہ گیا',
+    other: 'ویب پر نہ ہونے والے {count} صفحات پیچھے رہ گئے',
+  },
   // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',

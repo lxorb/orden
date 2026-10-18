@@ -120,7 +120,8 @@ describe('a Firefox profile brought into nib', () => {
     expect(paths).toContain('Saved groups/Trip/Hotel.url')
     expect(paths).toContain('Bookmarks/Bookmarks toolbar/Work/Board.url')
     expect(marks).toEqual([{ kind: 'note', path: 'Mail.url', text: '' }])
-    expect(said).toEqual(['Containers stay in Firefox'])
+    // The settings page and the bookmarklet are not on the web.
+    expect(said).toEqual(['Containers stay in Firefox 2 pages not on the web stay behind'])
     // The running session's file was tried first, and was not there.
     expect(asked[0]).toBe('read_browser_file sessionstore-backups/recovery.jsonlz4')
   })
@@ -168,7 +169,7 @@ describe('a Chrome profile brought into nib', () => {
     expect(paths).toContain('Docs/docs.example.com guide.url')
     expect(paths).toContain('Bookmarks/Bookmarks bar/Work/Board.url')
     expect(marks).toEqual([{ kind: 'note', path: 'mail.example.com.url', text: '' }])
-    expect(said).toEqual([])
+    expect(said).toEqual(['1 page not on the web stays behind'])
   })
 
   test('brings the bookmarks alone where the session is encrypted, and says so', async () => {
@@ -179,6 +180,9 @@ describe('a Chrome profile brought into nib', () => {
 
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths.every((path) => path.startsWith('Bookmarks/'))).toBe(true)
-    expect(said).toEqual(['Chrome keeps its open tabs locked, so only its bookmarks came.'])
+    expect(said).toEqual([
+      'Chrome keeps its open tabs locked, so only its bookmarks came. ' +
+        '1 page not on the web stays behind',
+    ])
   })
 })
