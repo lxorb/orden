@@ -2,19 +2,18 @@
  *
  *  The other direction, and the same opinions read backwards: the markers here
  *  are the ones the editor's own formatting commands produce, so a page pasted
- *  into a note, an article the clipper saved and a note typed by hand are the
+ *  into a note, an article a web tab clipped and a note typed by hand are the
  *  same kind of file. Turndown does the walking, with the GFM rules on top for
  *  tables, task lists and strikethrough.
  *
- *  One copy of it, because there were two: the editor's paste and the clipper
- *  had each grown their own set of rules, and a page pasted into the app came
+ *  One copy of it, because there were two: the editor's paste and the browser
+ *  extension Orden used to have had each grown their own set of rules, and a page pasted into the app came
  *  out with three spaces after every bullet while the same page clipped came out
  *  with one. Whoever needs it imports it from here.
  *
- *  Pictures are the one thing a caller decides. The clipper has no address for
- *  them yet - the bytes are still on the site, and the address is the hash of
- *  bytes nobody has fetched - so it numbers them instead; a paste has the
- *  addresses already and keeps them. */
+ *  Pictures are the one thing a caller decides (`image`): one that has no address
+ *  for them yet can number them and fill the addresses in afterwards; a paste has
+ *  the addresses already and keeps them. */
 
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
@@ -433,9 +432,9 @@ const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
  *  left to end early. `File_(1).png`, which Wikipedia writes, comes out as one
  *  address rather than as an address and a bracket of prose.
  *
- *  Exported because the clipper fills its picture placeholders in after the
- *  conversion, when there is a blob to point at, and both halves of a clip have to
- *  say an address the same way. It had its own copy built on `encodeURI`, which
+ *  Exported because a caller that fills picture placeholders in after the
+ *  conversion has to say an address the same way. The browser extension Orden used
+ *  to have had its own copy built on `encodeURI`, which
  *  escapes the percent as well: an address the page had already escaped came back
  *  escaping its own escapes, and `a%20b.png` was saved as `a%2520b.png`. The
  *  percent is not touched here - an address that already carries escapes stays the
@@ -502,8 +501,8 @@ function converter(options: FromHtmlOptions): TurndownService {
   service.escape = escapeText
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
-  // the list is one. For the clipper this is a second line of defence behind its
-  // own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
+  // the list is one. For a clip this is a second line of defence behind the
+  // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
   service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
 
@@ -707,8 +706,8 @@ function converter(options: FromHtmlOptions): TurndownService {
   })
 
   // The two things a picture says, and no `title`, which is the one place it
-  // differs from a link: a caller's address arrives after the conversion, and the
-  // clipper fills its numbers in by the shape `](nib:0)`, so a title written
+  // differs from a link: a caller's address may arrive after the conversion, filled in
+  // by the shape `](nib:0)`, so a title written
   // between them would leave the placeholder in the note. A page's own goes with
   // the rest of the attributes, and there is no third string here to break out
   // of a title's quotes.

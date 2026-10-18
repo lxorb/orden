@@ -239,8 +239,7 @@ const ASKED: &str = "nib://web-ask";
 const OPENED: &str = "nib://web-open";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
-/// is worse than a clip that stops early, and 4 MB is what the API takes; see
-/// `MAX_NOTE_BYTES` in the clipper.
+/// is worse than a clip that stops early, and 4 MB is what the API takes.
 const LONGEST_PAGE: usize = 4_000_000;
 
 /// The page a tab's webview is built on before it is sent anywhere.

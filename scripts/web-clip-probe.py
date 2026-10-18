@@ -1,5 +1,5 @@
 """A web tab's Clip, driven in a native Windows build: the page writes itself down in
-nib's own world, and the window clips it with the clipper extension's extractor.
+nib's own world, and the window clips it with the article extractor.
 
 What it asks, against a news article served on the loopback (the extractor's own
 fixture, packages/markdown/src/fixtures/news.html) with three things added to the page:

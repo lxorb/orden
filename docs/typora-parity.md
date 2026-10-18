@@ -1210,8 +1210,8 @@ Features Typora does not have, which are the reason this exists.
       - convert on the first open, or all at once from the palette, and a note that
       had words of its own beyond the link stays a note beside its shortcut. No room
       and no collaboration: there are no words in it to share
-- [x] Clip the page a tab is showing into the space, through the same converter the
-      browser extension uses: the selection, or the article, as markdown under
+- [x] Clip the page a tab is showing into the space, through the converter a paste
+      uses: the selection, or the article, as markdown under
       `source:` and `date:`. On a desktop the page is read in the document as the
       reader sees it, through the engine's own script callback rather than through the
       app's IPC, so the page is read without being given anything to call

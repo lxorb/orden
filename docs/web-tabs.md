@@ -1607,14 +1607,13 @@ a probe build, read back out of the folder, the tabs and the crate's list.
 the one way in from a web tab: the scissors that did the same from the bar went on
 every platform when Emil asked for them gone (#405, *"und entferne bitte diese komische
 schere um browser tabs als note zu speichern"*), and a press on the dots is one more
-than a press on the bar for something nobody does every minute. It goes through the
-same three
-things the clipper extension uses: the article extractor (`@nib/markdown/article`,
+than a press on the bar for something nobody does every minute. It goes through
+three things: the article extractor (`@nib/markdown/article`,
 Mozilla's Readability, which is Firefox's reader mode), the converter
 (`@nib/markdown/from-html`) and the note's shape (`@nib/markdown/clip-note`:
 `source:`, `title:`, `clipped:` and `tags:`, then the title as a heading). A page
-clipped from a tab and the same page clipped from the extension are the same note,
-and `lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
+clipped from a tab is the note the extractor makes of the same page read live, and
+`lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
 documentation, Wikipedia with maths and a page of tables. The extractor is fetched
 when somebody clips, never on the way to a window.
 

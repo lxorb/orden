@@ -5,7 +5,7 @@
  *  This is the one place that argues with that, so no reader has to.
  *
  *  What a file may hold and how a taken name steps aside are
- *  @nib/markdown/paths, shared with the clipper and the sync service so that an
+ *  @nib/markdown/paths, shared with the sync service so that an
  *  imported note is named the way every other note is. */
 
 import { freePath, withoutForbidden } from '@nib/markdown/paths'

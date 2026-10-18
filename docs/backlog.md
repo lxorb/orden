@@ -42,7 +42,7 @@ the session scratchpad under `backlog\lanes\<lane>.md`.
 | 10 | `naming-docs` - one name, true docs | 3 | S | naming now, docs after the wave | display strings, `packaging/`, `docs/`, `README.md` |
 | 11 | `security-2` - the lows and the CSP | 4 | M | now; a migration number agreed with #43 | `worker/`, `apps/desktop/src/csp.ts`, the HTML entries |
 | 12 | `rust-hardening` - the crate's leftovers | 5 | M | after #39 | `rs/notes.rs`, `trash.rs`, `updates.rs`, `downloads.rs`, `themes.rs`, `tree.rs` |
-| 13 | `clipper-import` - one extractor | 3 | M | after #40 | `apps/clipper`, `md/`, `lib/web-tab/clip.ts`, `rs/apple_text.rs` |
+| 13 | `clipper-import` - one extractor | 3 | M | after #40 | `md/`, `lib/web-tab/clip.ts`, `rs/apple_text.rs` (the extension itself went in #366) |
 | 14 | `iphone-platform` - what Android has | 4 | XL | after Emil answers Q6 | the iOS project, `lib/mobile/`, `apps/desktop/public/sw.js` |
 
 ## The top fifteen
@@ -201,8 +201,7 @@ id (80b9de44) landed; two faults are left.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
-| Mozilla's Readability moves out of the clipper into the markdown package (`packages/markdown/src/article.ts`) so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
-| The clipper's fortieth catalogue: `yue` still answers Hong Kong written Chinese | batches, fixer C2, 2026-09-14 | 40 catalogues, the same negotiation as the app | S | low | none |
+| Mozilla's Readability moves out of the browser extension (gone since, #366) into the markdown package (`packages/markdown/src/article.ts`) so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
 | Apple Notes tables, drawings and scans are counted, not converted | batches #95, 2026-09-12 | tables as markdown tables, drawings and scans as pictures where the database holds them | M | low | none |
 
 ## 14. iphone-platform - what Android has

@@ -1872,8 +1872,8 @@ select:focus-visible,
      tokens.css, and a theme that restates the surfaces moves this with them.
 
      Said with the attribute because the app states it on the document on every
-     change of theme - see theme.svelte.ts - and so do an export, a deck and the
-     clipper. A published page is the one carrier that leaves it off and reads the
+     change of theme - see theme.svelte.ts - and so do an export and a deck. A
+     published page is the one carrier that leaves it off and reads the
      system instead, and no published page has a control like this on it: anything
      that puts one there has to answer the scheme the way blog-css.ts does. */
   --segment-raised: var(--surface-3);

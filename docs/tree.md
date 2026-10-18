@@ -14,7 +14,7 @@ the same name - the folder-note convention Obsidian's plugins read - and the
 folders somebody else's vault arrived with are still folders. The filesystem is
 the filesystem; only the interface stopped talking about it. `read_tree` and
 `paths.rs` needed no change, and neither did sync, rooms, links, search, publish,
-exports, the glasses or the clipper: all of them go on seeing files in folders.
+exports or the glasses: all of them go on seeing files in folders.
 
 ## One row, and what it does
 
