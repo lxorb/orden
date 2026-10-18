@@ -445,6 +445,8 @@
     // anything that does not ask for it as mouse input, and a mouse contact while a
     // nib is on the glass is that nib, not a second hand.
     if (contacts.echo(event)) return
+    // A lasso held on its key is a held one now, however short the hold (#349).
+    tools.used()
 
     // The right button on a mouse starts nothing; the menu is the browser's own
     // event. A pen holding its button is the eraser and not a right button at all.
@@ -1070,7 +1072,7 @@
     const wanted = toolPressed(event)
     if (wanted && PAPER_TOOLS.has(wanted)) {
       event.preventDefault()
-      tools.choose(wanted)
+      tools.pressed(wanted, event)
       return
     }
 
@@ -1164,9 +1166,11 @@
   {onpointercancel}
   {onwheel}
   {onkeydown}
+  onkeyup={(event) => tools.released(event)}
   {ondblclick}
   {oncontextmenu}
   use:longPress={held}
+  style:cursor={!viewport.touch && tools.which === 'lasso' ? 'crosshair' : undefined}
 >
   <!-- The column, moved by one transform: the pages are elements at their own
        coordinates and a scroll is composited, whether there are two pages or four

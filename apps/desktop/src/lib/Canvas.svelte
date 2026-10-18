@@ -855,6 +855,7 @@
     // read before the machine moves on: what lands is what was on screen.
     const aiming = pullTo
     const beginning = machine.gesture === null
+    if (beginning && input.kind === 'down') tools.used()
     const next = step(machine, input, {
       tool: tools.which,
       picked: store.picked,
@@ -1547,6 +1548,7 @@
 
   function onKeyUp(event: KeyboardEvent) {
     if (event.key === ' ' && !typing(event.target)) send({ kind: 'space', down: false })
+    tools.released(event)
   }
 
   /** What is picked, as a canvas of its own, so it pastes into another canvas

@@ -483,7 +483,7 @@ export const run = {
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
     const tool = toolPressed(event)
     if (tool) {
-      tools.choose(tool)
+      tools.pressed(tool, event)
       return true
     }
 
