@@ -219,6 +219,10 @@ const KNOWN: Record<string, Check> = {
   toolbar: buttonList,
   pull: pulledCommand,
   hiddenKinds: kindList,
+  // The spaces the reader put away whole (#352), by their ids: per person rather than on
+  // the space, because a space somebody shared with you is yours to put away and still
+  // theirs to keep in sight. Read for its shape; an id nobody has is simply never met.
+  archivedSpaces: spaceList,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   // How long the account keeps what a note said before: a month, or a year.
@@ -372,6 +376,27 @@ function kindList(value: unknown): string | null {
     seen.add(kind)
   }
 
+  return null
+}
+
+/** How many spaces may be put away, and what a space's id looks like: far past
+ *  anybody's, inside what the whole column may hold (`MOST_BYTES`, a hundred ids being
+ *  under four kilobytes), and the ids `newId` makes. */
+const MOST_ARCHIVED_SPACES = 100
+const SPACE_ID = /^[A-Za-z0-9_-]{1,64}$/
+
+/** The spaces put away: a list of ids, each once. */
+function spaceList(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'archivedSpaces must be a list of space ids'
+  if (value.length > MOST_ARCHIVED_SPACES) {
+    return `archivedSpaces holds at most ${MOST_ARCHIVED_SPACES} spaces`
+  }
+  const seen = new Set<string>()
+  for (const id of value as unknown[]) {
+    if (typeof id !== 'string' || !SPACE_ID.test(id)) return `${String(id)} is not a space id`
+    if (seen.has(id)) return `${id} is in archivedSpaces twice`
+    seen.add(id)
+  }
   return null
 }
 

@@ -186,6 +186,23 @@ describe('the tasks with no start date in Today, on an account', () => {
   })
 })
 
+describe('the spaces an account put away', () => {
+  test('are a list of space ids', async () => {
+    const kept = await patch({ archivedSpaces: ['a1B2-c3', 'x_9'] })
+    expect(kept.json.settings.archivedSpaces).toEqual(['a1B2-c3', 'x_9'])
+    expect((await patch({ archivedSpaces: [] })).json.settings.archivedSpaces).toEqual([])
+  })
+
+  test('and nothing else', async () => {
+    expect((await patch({ archivedSpaces: 'a1' })).status).toBe(400)
+    expect((await patch({ archivedSpaces: ['a/b'] })).status).toBe(400)
+    expect((await patch({ archivedSpaces: ['a1', 'a1'] })).status).toBe(400)
+    expect(
+      (await patch({ archivedSpaces: Array.from({ length: 101 }, (_, at) => `s${at}`) })).status,
+    ).toBe(400)
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)
