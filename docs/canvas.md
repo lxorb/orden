@@ -106,7 +106,7 @@ the `--touch-*` scale for them, the way every other surface in the app does.
 Left to right, in the order a hand uses them:
 
 ```
-[arrow] [hand] | [pen] [pen] [pen] [eraser] [lasso] | [put down] | [ink] | [undo] [redo] | [-] [92%] [+]
+[arrow] [hand] | [pen] [pen] [pen] [eraser] [lasso] | [put down] | [ink] | [undo] [redo]
 ```
 
 Arranging is on the left, drawing is in the middle, and what a press puts on the
@@ -125,6 +125,18 @@ system's own picker, which on Android is the gallery, the camera and the files a
 in one sheet; the bytes go where every other pasted picture goes, and the plane gets
 a `file` node pointing at them, so Obsidian reads it. A picture dropped on the plane
 or pasted into it takes the same road.
+
+**The lasso's key, held, is the lasso only while it is down** (#349): Q tapped puts
+the lasso in hand as its button does; held - longer than a quarter of a second, or
+with a loop drawn while it is down - it is the lasso until it comes up, and then the
+tool before it is back, the pen most of all, with what the loop caught still caught.
+Photoshop's spring-loaded keys, on the lasso's own key rather than a second one, so
+there is nothing new to learn or to clash: moving the lasso's key in Settings ›
+Keyboard moves the hold with it. Obsidian's canvas has no lasso, Excalidraw's has no
+hold, and GoodNotes' lasso is a button and a pen gesture, so none of them had a key
+to borrow. The same on a page note. A pen's barrel button is not it: that button is
+the eraser on a plane and on paper, and has been since the pens came. See `pressed`
+and `released` in `canvas/tools.svelte.ts`.
 
 **Three pens, always three.** A pen is a thing you own rather than a setting you
 pick, so a favourite is the whole pen: which nib, how wide, how much of the
