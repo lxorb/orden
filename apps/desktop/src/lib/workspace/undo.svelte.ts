@@ -240,12 +240,15 @@ function doesAgain(action: FileAction): boolean {
 }
 
 /** Whether a sidebar was the last thing pressed or typed in: Ctrl+Z is then its file
- *  actions', wherever the app has put the keyboard since (#399). */
+ *  actions', wherever the app has put the keyboard since (#399). Not a panel of a note's
+ *  own: what Properties writes is the note's, and the note's to undo. */
 let sidebarLast = false
 
 export function used(target: EventTarget | null) {
   if (!(target instanceof Element) || target.matches('body,html')) return
-  if (target.closest('[data-sidebar]')) sidebarLast = true
+  if (target.closest('[data-sidebar]')) {
+    sidebarLast = !target.closest('[data-panel]:not([data-panel=tree])')
+  }
   // A menu, a sheet, a toast: over everything, and whatever opened them's.
   else if (!target.closest('[role=menu],[role=dialog],[role=status],[role=tooltip]')) {
     sidebarLast = false

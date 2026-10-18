@@ -7,7 +7,10 @@ import { sidebarKey, used } from './undo.svelte'
  *  press goes on to whatever has the keyboard otherwise. */
 
 document.body.innerHTML = `
-  <aside data-sidebar><ul><li><button class="row">Plan</button></li></ul></aside>
+  <aside data-sidebar>
+    <div data-panel="tree"><ul><li><button class="row">Plan</button></li></ul></div>
+  </aside>
+  <aside data-sidebar><div data-panel="properties"><button class="prop">due</button></div></aside>
   <div data-panes>
     <div class="cm-editor"><div contenteditable="true" class="note"></div></div>
     <textarea></textarea><canvas></canvas>
@@ -67,6 +70,14 @@ describe('a press of Undo', () => {
 
     used($('.row'))
     expect(press($('.row'), 'edit.undo', true)).toBeNull()
+  })
+
+  /** Properties writes the note's own words, which the note's undo takes back. */
+  test('and a press in a panel about the note leaves it the note’s', () => {
+    used($('.row'))
+    used($('.prop'))
+    expect(press($('.note'), 'edit.undo')).toBeNull()
+    expect(press(document.body, 'edit.undo')).toBeNull()
   })
 
   test('and typing in the note since takes it back from the sidebar', () => {
