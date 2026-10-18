@@ -35,6 +35,9 @@ export const pa: Dictionary = {
   'Bookmarks menu': 'ਨਿਸ਼ਾਨੀਆਂ ਮੀਨੂ',
   'Other bookmarks': 'ਹੋਰ ਨਿਸ਼ਾਨੀਆਂ',
   'Mobile bookmarks': 'ਮੋਬਾਈਲ ਨਿਸ਼ਾਨੀਆਂ',
+  'Bookmarks bar': 'ਬੁੱਕਮਾਰਕ ਬਾਰ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ਆਪਣੀਆਂ ਖੁੱਲ੍ਹੀਆਂ ਟੈਬਾਂ ਲਾਕ ਰੱਖਦਾ ਹੈ, ਇਸ ਲਈ ਸਿਰਫ਼ ਬੁੱਕਮਾਰਕ ਆਏ।',
   // Settings: note types
   'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
   'Web note': 'ਵੈੱਬ ਨੋਟ',

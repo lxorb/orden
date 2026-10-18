@@ -35,6 +35,9 @@ export const bn: Dictionary = {
   'Bookmarks menu': 'বুকমার্ক মেনু',
   'Other bookmarks': 'অন্যান্য বুকমার্ক',
   'Mobile bookmarks': 'মোবাইল বুকমার্ক',
+  'Bookmarks bar': 'বুকমার্ক বার',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} তার খোলা ট্যাবগুলো লক করে রাখে, তাই শুধু বুকমার্কগুলো এসেছে।',
   // Settings: note types
   'Page note': 'পাতার নোট',
   'Web note': 'ওয়েব নোট',

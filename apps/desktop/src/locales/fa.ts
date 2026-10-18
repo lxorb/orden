@@ -35,6 +35,9 @@ export const fa: Dictionary = {
   'Bookmarks menu': 'منوی نشانک‌ها',
   'Other bookmarks': 'نشانک‌های دیگر',
   'Mobile bookmarks': 'نشانک‌های تلفن همراه',
+  'Bookmarks bar': 'نوار نشانک‌ها',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} زبانه‌های باز خود را قفل نگه می‌دارد، پس فقط نشانک‌هایش آمد.',
   // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',

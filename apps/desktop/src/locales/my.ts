@@ -35,6 +35,9 @@ export const my: Dictionary = {
   'Bookmarks menu': 'စာမှတ် မီနူး',
   'Other bookmarks': 'အခြား စာမှတ်များ',
   'Mobile bookmarks': 'မိုဘိုင်း စာမှတ်များ',
+  'Bookmarks bar': 'စာမှတ်ဘား',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} သည် ဖွင့်ထားသော တဘ်များကို သော့ခတ်ထားသဖြင့် စာမှတ်များသာ ပါလာသည်။',
   // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',

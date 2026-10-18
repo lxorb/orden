@@ -36,6 +36,9 @@ export const uk: Dictionary = {
   'Bookmarks menu': 'Меню закладок',
   'Other bookmarks': 'Інші закладки',
   'Mobile bookmarks': 'Мобільні закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} тримає відкриті вкладки під замком, тож прийшли лише закладки.',
   // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',

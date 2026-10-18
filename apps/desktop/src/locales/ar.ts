@@ -35,6 +35,9 @@ export const ar: Dictionary = {
   'Bookmarks menu': 'قائمة الإشارات المرجعية',
   'Other bookmarks': 'إشارات مرجعية أخرى',
   'Mobile bookmarks': 'إشارات الجوال المرجعية',
+  'Bookmarks bar': 'شريط الإشارات المرجعية',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'يحتفظ {browser} بعلامات تبويبه المفتوحة مقفلة، لذا جاءت إشاراته المرجعية فقط.',
   // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',

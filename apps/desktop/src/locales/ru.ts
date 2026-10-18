@@ -36,6 +36,9 @@ export const ru: Dictionary = {
   'Bookmarks menu': 'Меню закладок',
   'Other bookmarks': 'Другие закладки',
   'Mobile bookmarks': 'Мобильные закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} хранит открытые вкладки под замком, поэтому пришли только закладки.',
   // Settings: note types
   'Page note': 'Заметка со страницами',
   'Web note': 'Веб-заметка',

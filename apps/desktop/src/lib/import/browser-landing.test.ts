@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { toBase64 } from '../bytes'
 import type { BrowserProfile } from './browsers'
+import * as chromium from './chromium.fixture'
 import { BOOKMARKS, SESSION } from './firefox.fixture'
 import type { Planned } from './plan'
 import { mozLz4Of } from './zen.fixture'
@@ -142,5 +143,42 @@ describe('a Firefox profile brought into nib', () => {
       'Nothing could be read out of Firefox.',
     )
     expect(spaces).toEqual([])
+  })
+})
+
+const CHROME: BrowserProfile = {
+  browser: 'chrome',
+  name: 'Person 1',
+  path: '/chrome/Default',
+  files: ['Bookmarks', 'Sessions/Session_13436813666016900', 'Sessions_Encrypted/Session_2'],
+}
+
+const bookmarksFile = () => toBase64(new TextEncoder().encode(JSON.stringify(chromium.BOOKMARKS)))
+
+describe('a Chrome profile brought into nib', () => {
+  test('is a space of its tabs and groups, its pinned tab an Essential, its bookmarks a folder', async () => {
+    files.set('Bookmarks', bookmarksFile())
+    files.set('Sessions/Session_13436813666016900', chromium.SESSION)
+
+    const space = await landBrowser(CHROME, false)
+
+    expect(space.name).toBe('Chrome')
+    const paths = written[0]?.files.map((one) => one.path) ?? []
+    expect(paths).toContain('mail.example.com.url')
+    expect(paths).toContain('Docs/docs.example.com guide.url')
+    expect(paths).toContain('Bookmarks/Bookmarks bar/Work/Board.url')
+    expect(marks).toEqual([{ kind: 'note', path: 'mail.example.com.url', text: '' }])
+    expect(said).toEqual([])
+  })
+
+  test('brings the bookmarks alone where the session is encrypted, and says so', async () => {
+    files.set('Bookmarks', bookmarksFile())
+    files.set('Sessions_Encrypted/Session_2', toBase64(chromium.LOCKED))
+
+    await landBrowser(CHROME, false)
+
+    const paths = written[0]?.files.map((one) => one.path) ?? []
+    expect(paths.every((path) => path.startsWith('Bookmarks/'))).toBe(true)
+    expect(said).toEqual(['Chrome keeps its open tabs locked, so only its bookmarks came.'])
   })
 })

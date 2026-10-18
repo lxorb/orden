@@ -8,13 +8,16 @@
 
 import { key, t } from '../i18n.svelte'
 import type { Space } from '../workspace.svelte'
-import { BROWSER_NAMES, browserFile, type BrowserId, type BrowserProfile } from './browsers'
-import { type FolderWords, firefoxSidebar } from './firefox'
+import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
+import { chromiumSidebar } from './chromium'
+import { firefoxSidebar } from './firefox'
+import type { FolderWords } from './sidebar-made'
 import { unmozLz4 } from './mozlz4'
 import type { Lost } from './plan'
 import type { Sidebar } from './sidebar'
 import { landSpaces } from './sidebar-landing'
 import { sidebarImport } from './sidebar-plan'
+import { readSnss, type SnssSession } from './snss'
 import { invoke } from '../tauri'
 
 /** What a browser's profile came to: its sidebar, and what could not come with it. */
@@ -23,20 +26,20 @@ interface Read {
   lost: Lost[]
 }
 
-const CONTAINERS: Record<BrowserId, Lost> = {
-  firefox: { text: key('Containers stay in Firefox') },
-}
+/** Only Firefox has containers to leave behind. */
+const CONTAINERS: Lost = { text: key('Containers stay in Firefox') }
 
 /** The profile written into its space; `several` where the browser keeps more than
  *  one profile. Answers the space, to land in. */
 export async function landBrowser(profile: BrowserProfile, several: boolean): Promise<Space> {
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} · ${profile.name}` : browser
-  const read = await readFirefox(profile, name)
+  const firefox = profile.browser === 'firefox'
+  const read = firefox ? await readFirefox(profile, name) : await readChromium(profile, name)
   const nothing = t('Nothing could be read out of {browser}.', { browser })
   if (!read) throw new Error(nothing)
 
-  const { spaces, lost } = sidebarImport(read.sidebar, new Date(), CONTAINERS[profile.browser])
+  const { spaces, lost } = sidebarImport(read.sidebar, new Date(), firefox ? CONTAINERS : null)
   return landSpaces(spaces, [...lost, ...read.lost], nothing)
 }
 
@@ -47,6 +50,7 @@ function folderWords(): FolderWords {
     savedGroups: t('Saved groups'),
     group: t('Tab group'),
     toolbar: t('Bookmarks toolbar'),
+    bar: t('Bookmarks bar'),
     menu: t('Bookmarks menu'),
     other: t('Other bookmarks'),
     mobile: t('Mobile bookmarks'),
@@ -74,6 +78,43 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
 
   if (!session && !bookmarks) return null
   return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), lost: [] }
+}
+
+/** A Chromium's session, the first of its files that reads, and its bookmarks. A
+ *  session written encrypted is said in a line, and the bookmarks come alone. Null
+ *  where neither is there. */
+async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
+  let session: SnssSession | null = null
+  let locked = false
+  for (const file of profile.files.filter((one) => one !== 'Bookmarks')) {
+    const bytes = await browserFile(profile, file)
+    const read = bytes ? readSnss(bytes) : null
+    if (read === 'locked') locked = true
+    else if (read) {
+      session = read
+      break
+    }
+  }
+
+  const said = await browserFile(profile, 'Bookmarks')
+  let bookmarks: unknown = null
+  try {
+    bookmarks = said ? (JSON.parse(new TextDecoder().decode(said)) as unknown) : null
+  } catch {
+    // A file Chromium was halfway through writing is no bookmarks rather than a refusal.
+  }
+
+  if (!session && !bookmarks) return null
+  const lost: Lost[] =
+    !session && locked
+      ? [
+          {
+            text: key('{browser} keeps its open tabs locked, so only its bookmarks came.'),
+            values: { browser: BROWSER_NAMES[profile.browser] },
+          },
+        ]
+      : []
+  return { sidebar: chromiumSidebar(session, bookmarks, name, folderWords()), lost }
 }
 
 /** What a `.jsonlz4` holds, or null for one that is not whole. */

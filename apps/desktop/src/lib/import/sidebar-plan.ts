@@ -40,8 +40,8 @@ const LONGEST_MARK = 64 * 1024
 
 /** What nib makes of a sidebar. `now` is when the web notes say they were kept, where
  *  the browser did not say; `containers` is the line that says containers stayed
- *  behind, in the browser's name. */
-export function sidebarImport(session: Sidebar, now: Date, containers: Lost): SidebarImport {
+ *  behind, in the browser's name, or null for a browser that has none. */
+export function sidebarImport(session: Sidebar, now: Date, containers: Lost | null): SidebarImport {
   const first = session.spaces[0]
   // A tab whose space is not in the list is in the first one, which is where Zen
   // shows a tab it has lost the space of.
@@ -65,7 +65,10 @@ export function sidebarImport(session: Sidebar, now: Date, containers: Lost): Si
         now,
       ),
     ),
-    lost: container || session.spaces.some((space) => space.container > 0) ? [containers] : [],
+    lost:
+      containers && (container || session.spaces.some((space) => space.container > 0))
+        ? [containers]
+        : [],
   }
 }
 

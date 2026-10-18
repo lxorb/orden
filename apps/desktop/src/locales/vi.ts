@@ -35,6 +35,9 @@ export const vi: Dictionary = {
   'Bookmarks menu': 'Menu dấu trang',
   'Other bookmarks': 'Dấu trang khác',
   'Mobile bookmarks': 'Dấu trang trên di động',
+  'Bookmarks bar': 'Thanh dấu trang',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} khóa các thẻ đang mở, nên chỉ dấu trang được mang sang.',
   // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',

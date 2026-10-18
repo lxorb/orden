@@ -36,6 +36,9 @@ export const ta: Dictionary = {
   'Bookmarks menu': 'புத்தகக்குறி பட்டியல்',
   'Other bookmarks': 'பிற புத்தகக்குறிகள்',
   'Mobile bookmarks': 'மொபைல் புத்தகக்குறிகள்',
+  'Bookmarks bar': 'புத்தகக்குறிப் பட்டை',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} தன் திறந்த தாவல்களைப் பூட்டி வைக்கிறது, அதனால் புத்தகக்குறிகள் மட்டும் வந்தன.',
   // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',

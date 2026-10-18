@@ -35,6 +35,9 @@ export const ko: Dictionary = {
   'Bookmarks menu': '북마크 메뉴',
   'Other bookmarks': '기타 북마크',
   'Mobile bookmarks': '모바일 북마크',
+  'Bookmarks bar': '북마크바',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser}는 열린 탭을 잠가 두므로 북마크만 가져왔습니다.',
   // Settings: note types
   'Page note': '페이지 노트',
   'Web note': '웹 노트',

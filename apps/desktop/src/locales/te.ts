@@ -36,6 +36,9 @@ export const te: Dictionary = {
   'Bookmarks menu': 'బుక్‌మార్క్‌ల మెనూ',
   'Other bookmarks': 'ఇతర బుక్‌మార్క్‌లు',
   'Mobile bookmarks': 'మొబైల్ బుక్‌మార్క్‌లు',
+  'Bookmarks bar': 'బుక్‌మార్క్‌ల బార్',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} తన తెరిచిన ట్యాబ్‌లను లాక్ చేసి ఉంచుతుంది, కాబట్టి బుక్‌మార్క్‌లు మాత్రమే వచ్చాయి.',
   // Settings: note types
   'Page note': 'పేజీ నోట్',
   'Web note': 'వెబ్ నోట్',

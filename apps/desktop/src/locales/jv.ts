@@ -35,6 +35,9 @@ export const jv: Dictionary = {
   'Bookmarks menu': 'Menu tandha buku',
   'Other bookmarks': 'Tandha buku liyane',
   'Mobile bookmarks': 'Tandha buku seluler',
+  'Bookmarks bar': 'Bilah tandha buku',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ngunci tab sing kabukak, mula mung tandha bukune sing teka.',
   // Settings: note types
   'Page note': 'Cathetan kaca',
   'Web note': 'Cathetan web',

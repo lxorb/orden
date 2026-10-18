@@ -35,6 +35,9 @@ export const yue: Dictionary = {
   'Bookmarks menu': '書籤選單',
   'Other bookmarks': '其他書籤',
   'Mobile bookmarks': '流動裝置書籤',
+  'Bookmarks bar': '書籤列',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 將開咗嘅分頁鎖住咗，所以淨係帶到書籤。',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',

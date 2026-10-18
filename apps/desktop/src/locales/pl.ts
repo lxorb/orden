@@ -36,6 +36,9 @@ export const pl: Dictionary = {
   'Bookmarks menu': 'Menu zakładek',
   'Other bookmarks': 'Inne zakładki',
   'Mobile bookmarks': 'Zakładki z telefonu',
+  'Bookmarks bar': 'Pasek zakładek',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} trzyma otwarte karty pod kluczem, więc przyszły tylko zakładki.',
   // Settings: note types
   'Page note': 'Notatka ze stronami',
   'Web note': 'Notatka internetowa',

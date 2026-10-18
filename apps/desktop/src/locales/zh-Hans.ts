@@ -35,6 +35,9 @@ export const zhHans: Dictionary = {
   'Bookmarks menu': '书签菜单',
   'Other bookmarks': '其他书签',
   'Mobile bookmarks': '移动设备书签',
+  'Bookmarks bar': '书签栏',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 将打开的标签页加密保存，所以只带来了书签。',
   // Settings: note types
   'Page note': '分页笔记',
   'Web note': '网页笔记',

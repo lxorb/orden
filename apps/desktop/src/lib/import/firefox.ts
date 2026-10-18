@@ -27,37 +27,8 @@
  *  Firefox writes its daily backups as, which is also what the crate reads out of
  *  `places.sqlite` (firefox_profiles.rs). Anything not recognised is stepped over. */
 
-import { isWebAddress } from '../web-tab/address'
-import type { Sidebar, SidebarFolder, SidebarTab } from './sidebar'
-
-/** The names of the folders the import makes, in the reader's language. */
-export interface FolderWords {
-  bookmarks: string
-  savedGroups: string
-  /** A tab group with no name of its own. */
-  group: string
-  toolbar: string
-  menu: string
-  other: string
-  mobile: string
-}
-
-type Said = Record<string, unknown>
-
-function isObject(value: unknown): value is Said {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function list(value: unknown): Said[] {
-  return Array.isArray(value) ? value.filter(isObject) : []
-}
-
-function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
-}
-
-/** The one space a profile is. */
-const SPACE = 'browser'
+import type { Sidebar } from './sidebar'
+import { type FolderWords, isObject, list, Made, type Said, text } from './sidebar-made'
 
 /** Firefox's roots, by their fixed ids, in the order its library shows them. */
 const ROOTS: [string, keyof FolderWords][] = [
@@ -84,40 +55,7 @@ export function firefoxSidebar(
   }
   if (isObject(bookmarks)) readBookmarks(bookmarks, made, words)
 
-  return {
-    spaces: [{ id: SPACE, name, icon: null, colour: null, container: 0 }],
-    folders: made.kept(),
-    tabs: made.tabs,
-  }
-}
-
-/** The folders and tabs as they are read, and which folders end up holding a page. */
-class Made {
-  readonly folders: SidebarFolder[] = []
-  readonly tabs: SidebarTab[] = []
-
-  folder(id: string, name: string, parent: string | null) {
-    if (this.folders.some((one) => one.id === id)) return
-    this.folders.push({ id, name, icon: null, parent, space: SPACE, split: false })
-  }
-
-  tab(tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean }) {
-    if (!isWebAddress(tab.url)) return
-    this.tabs.push({ ...tab, home: null, space: SPACE, essential: tab.essential ?? false })
-  }
-
-  /** The folders some page is in, at whatever depth. */
-  kept(): SidebarFolder[] {
-    const byId = new Map(this.folders.map((one) => [one.id, one]))
-    const full = new Set<string>()
-    for (const tab of this.tabs) {
-      for (let at = tab.folder ? byId.get(tab.folder) : undefined; at && !full.has(at.id);) {
-        full.add(at.id)
-        at = at.parent ? byId.get(at.parent) : undefined
-      }
-    }
-    return this.folders.filter((one) => full.has(one.id))
-  }
+  return made.sidebar(name)
 }
 
 /** The open windows' tabs in their order, and the groups they are in. Never a private

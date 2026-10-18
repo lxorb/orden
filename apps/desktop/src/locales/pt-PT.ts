@@ -36,6 +36,9 @@ export const ptPT: Dictionary = {
   'Bookmarks menu': 'Menu de marcadores',
   'Other bookmarks': 'Outros marcadores',
   'Mobile bookmarks': 'Marcadores do telemóvel',
+  'Bookmarks bar': 'Barra de marcadores',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'O {browser} guarda os separadores abertos trancados, por isso só vieram os marcadores.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

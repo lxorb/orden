@@ -36,6 +36,9 @@ export const it: Dictionary = {
   'Bookmarks menu': 'Menu segnalibri',
   'Other bookmarks': 'Altri segnalibri',
   'Mobile bookmarks': 'Segnalibri del dispositivo mobile',
+  'Bookmarks bar': 'Barra dei preferiti',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} tiene sotto chiave le schede aperte, quindi sono arrivati solo i preferiti.',
   // Settings: note types
   'Page note': 'Nota a pagine',
   'Web note': 'Nota web',

@@ -3,7 +3,7 @@
 //! a listed file of a listed profile is read. Zen's row is the first to use it; see
 //! `zen_profiles.rs`. The rows for the other browsers ask `browser_profiles` which of
 //! them are on this machine and `read_browser_file` for one of their files: Firefox's
-//! in `firefox_profiles.rs`. Read and never written: `fs::read` opens a file sharing it for
+//! in `firefox_profiles.rs`, every Chromium's in `chromium_profiles.rs`. Read and never written: `fs::read` opens a file sharing it for
 //! reading, writing and deleting, which is how a running browser replaces it, and the
 //! bytes are a copy the moment they are read.
 
@@ -13,8 +13,8 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::firefox_profiles;
 use crate::paths::folded;
+use crate::{chromium_profiles, firefox_profiles};
 
 /// One profile, the way the browser's own profile manager shows it.
 #[derive(Serialize, Debug, PartialEq, Eq)]
@@ -36,8 +36,8 @@ pub struct Browser {
 /// show them, each with its profiles. None where none ever ran.
 #[tauri::command(async)]
 pub fn browser_profiles() -> Vec<Browser> {
-    ["firefox"]
-        .into_iter()
+    std::iter::once("firefox")
+        .chain(chromium_profiles::BROWSERS)
         .map(|id| Browser {
             id,
             profiles: profiles_of(id),
@@ -63,6 +63,7 @@ pub fn read_browser_file(browser: String, profile: String, file: String) -> Resu
 fn profiles_of(browser: &str) -> Vec<Profile> {
     match browser {
         "firefox" => firefox_profiles::profiles(),
+        _ if chromium_profiles::BROWSERS.contains(&browser) => chromium_profiles::profiles(browser),
         _ => Vec::new(),
     }
 }

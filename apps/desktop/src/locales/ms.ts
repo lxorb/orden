@@ -35,6 +35,9 @@ export const ms: Dictionary = {
   'Bookmarks menu': 'Menu penanda',
   'Other bookmarks': 'Penanda lain',
   'Mobile bookmarks': 'Penanda mudah alih',
+  'Bookmarks bar': 'Bar penanda halaman',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} mengunci tab yang terbuka, jadi hanya penanda halamannya yang dibawa.',
   // Settings: note types
   'Page note': 'Nota halaman',
   'Web note': 'Nota web',

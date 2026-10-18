@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 
 import { readShortcut } from '../web-tab/shortcut'
-import { firefoxSidebar, type FolderWords } from './firefox'
+import { firefoxSidebar } from './firefox'
+import type { FolderWords } from './sidebar-made'
 import { BOOKMARKS, SESSION } from './firefox.fixture'
 import { sidebarImport } from './sidebar-plan'
 
@@ -10,6 +11,7 @@ const WORDS: FolderWords = {
   savedGroups: 'Saved groups',
   group: 'Tab group',
   toolbar: 'Bookmarks toolbar',
+  bar: 'Bookmarks bar',
   menu: 'Bookmarks menu',
   other: 'Other bookmarks',
   mobile: 'Mobile bookmarks',

@@ -35,6 +35,9 @@ export const ur: Dictionary = {
   'Bookmarks menu': 'بک مارکس مینو',
   'Other bookmarks': 'دیگر بک مارکس',
   'Mobile bookmarks': 'موبائل بک مارکس',
+  'Bookmarks bar': 'بُک مارکس بار',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} اپنے کھلے ٹیب مقفل رکھتا ہے، اس لیے صرف اس کے بُک مارکس آئے۔',
   // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',

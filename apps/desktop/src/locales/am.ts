@@ -35,6 +35,9 @@ export const am: Dictionary = {
   'Bookmarks menu': 'የዕልባቶች ምናሌ',
   'Other bookmarks': 'ሌሎች ዕልባቶች',
   'Mobile bookmarks': 'የሞባይል ዕልባቶች',
+  'Bookmarks bar': 'የዕልባቶች አሞሌ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} የተከፈቱ ትሮቹን ቆልፎ ያስቀምጣል፣ ስለዚህ ዕልባቶቹ ብቻ መጥተዋል።',
   // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',

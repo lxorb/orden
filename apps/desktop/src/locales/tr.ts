@@ -36,6 +36,9 @@ export const tr: Dictionary = {
   'Bookmarks menu': 'Yer imleri menüsü',
   'Other bookmarks': 'Diğer yer imleri',
   'Mobile bookmarks': 'Mobil yer imleri',
+  'Bookmarks bar': 'Yer işareti çubuğu',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} açık sekmelerini kilitli tutuyor, bu yüzden yalnızca yer işaretleri geldi.',
   // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',

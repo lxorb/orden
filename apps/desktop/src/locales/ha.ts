@@ -36,6 +36,9 @@ export const ha: Dictionary = {
   'Bookmarks menu': 'Menu na alamun shafi',
   'Other bookmarks': 'Sauran alamun shafi',
   'Mobile bookmarks': 'Alamun shafi na waya',
+  'Bookmarks bar': 'Sandar alamun shafi',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} yana kulle shafukansa da ke buɗe, don haka alamun shafinsa kawai suka zo.',
   // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',

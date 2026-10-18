@@ -36,6 +36,9 @@ export const sw: Dictionary = {
   'Bookmarks menu': 'Menyu ya alamisho',
   'Other bookmarks': 'Alamisho zingine',
   'Mobile bookmarks': 'Alamisho za simu',
+  'Bookmarks bar': 'Upau wa alamisho',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} hufunga vichupo vyake vilivyo wazi, kwa hivyo alamisho zake pekee zimekuja.',
   // Settings: note types
   'Page note': 'Dokezo la kurasa',
   'Web note': 'Dokezo la wavuti',

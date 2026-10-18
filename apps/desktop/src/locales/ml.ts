@@ -36,6 +36,9 @@ export const ml: Dictionary = {
   'Bookmarks menu': 'ബുക്ക്‌മാർക്ക് മെനു',
   'Other bookmarks': 'മറ്റ് ബുക്ക്‌മാർക്കുകൾ',
   'Mobile bookmarks': 'മൊബൈൽ ബുക്ക്‌മാർക്കുകൾ',
+  'Bookmarks bar': 'ബുക്ക്‌മാർക്ക് ബാർ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} തുറന്ന ടാബുകൾ പൂട്ടി സൂക്ഷിക്കുന്നു, അതിനാൽ ബുക്ക്‌മാർക്കുകൾ മാത്രം വന്നു.',
   // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',

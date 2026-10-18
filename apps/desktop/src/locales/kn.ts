@@ -36,6 +36,9 @@ export const kn: Dictionary = {
   'Bookmarks menu': 'ಬುಕ್‌ಮಾರ್ಕ್ ಮೆನು',
   'Other bookmarks': 'ಇತರ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
   'Mobile bookmarks': 'ಮೊಬೈಲ್ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'Bookmarks bar': 'ಬುಕ್‌ಮಾರ್ಕ್ ಬಾರ್',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ತನ್ನ ತೆರೆದ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಲಾಕ್ ಮಾಡಿ ಇಡುತ್ತದೆ, ಹಾಗಾಗಿ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು ಮಾತ್ರ ಬಂದವು.',
   // Settings: note types
   'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
   'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',

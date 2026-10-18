@@ -35,6 +35,9 @@ export const th: Dictionary = {
   'Bookmarks menu': 'เมนูบุ๊กมาร์ก',
   'Other bookmarks': 'บุ๊กมาร์กอื่นๆ',
   'Mobile bookmarks': 'บุ๊กมาร์กบนมือถือ',
+  'Bookmarks bar': 'แถบบุ๊กมาร์ก',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ล็อกแท็บที่เปิดอยู่ไว้ จึงนำมาได้เฉพาะบุ๊กมาร์ก',
   // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',

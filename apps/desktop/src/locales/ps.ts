@@ -35,6 +35,9 @@ export const ps: Dictionary = {
   'Bookmarks menu': 'د نښو مېنو',
   'Other bookmarks': 'نورې نښې',
   'Mobile bookmarks': 'د موبایل نښې',
+  'Bookmarks bar': 'د نښو پټه',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} خپل پرانیستي ټبونه تړلي ساتي، نو یوازې نښې یې راغلې.',
   // Settings: note types
   'Page note': 'د مخونو يادښت',
   'Web note': 'ویب يادښت',

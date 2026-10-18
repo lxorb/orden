@@ -35,6 +35,9 @@ export const id: Dictionary = {
   'Bookmarks menu': 'Menu markah',
   'Other bookmarks': 'Markah lainnya',
   'Mobile bookmarks': 'Markah seluler',
+  'Bookmarks bar': 'Bilah bookmark',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} mengunci tab yang terbuka, jadi hanya bookmark-nya yang ikut.',
   // Settings: note types
   'Page note': 'Catatan halaman',
   'Web note': 'Catatan web',

@@ -36,6 +36,9 @@ export const ptBR: Dictionary = {
   'Bookmarks menu': 'Menu de favoritos',
   'Other bookmarks': 'Outros favoritos',
   'Mobile bookmarks': 'Favoritos do celular',
+  'Bookmarks bar': 'Barra de favoritos',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'O {browser} guarda as abas abertas trancadas, então só os favoritos vieram.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',

@@ -35,6 +35,9 @@ export const fil: Dictionary = {
   'Bookmarks menu': 'Menu ng mga bookmark',
   'Other bookmarks': 'Iba pang bookmark',
   'Mobile bookmarks': 'Mga bookmark sa mobile',
+  'Bookmarks bar': 'Bar ng mga bookmark',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'Naka-lock sa {browser} ang mga bukas na tab nito, kaya ang mga bookmark lang ang dumating.',
   // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',

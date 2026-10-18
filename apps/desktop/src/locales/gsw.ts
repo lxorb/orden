@@ -36,6 +36,9 @@ export const gsw: Dictionary = {
   'Bookmarks menu': 'Lesezeiche-Menü',
   'Other bookmarks': 'Wiiteri Lesezeiche',
   'Mobile bookmarks': 'Mobili Lesezeiche',
+  'Bookmarks bar': 'Lesezeicheleischte',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} haltet sini offene Tabs verschlosse, drum sind nur d Lesezeiche cho.',
   // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',

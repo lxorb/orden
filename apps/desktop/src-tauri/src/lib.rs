@@ -248,6 +248,10 @@ mod browser_profiles;
 // firefox_profiles.rs.
 #[cfg(desktop)]
 mod firefox_profiles;
+// The profiles Chrome, Edge, Brave, Chromium and Vivaldi keep, for the import's rows;
+// see chromium_profiles.rs.
+#[cfg(desktop)]
+mod chromium_profiles;
 // The profiles Zen lists and the file of each that holds its tabs, for the import's
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]

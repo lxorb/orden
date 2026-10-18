@@ -35,6 +35,9 @@ export const gu: Dictionary = {
   'Bookmarks menu': 'બુકમાર્ક મેનૂ',
   'Other bookmarks': 'અન્ય બુકમાર્ક',
   'Mobile bookmarks': 'મોબાઇલ બુકમાર્ક',
+  'Bookmarks bar': 'બુકમાર્ક બાર',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} તેના ખુલ્લા ટૅબ લૉક રાખે છે, તેથી ફક્ત તેના બુકમાર્ક આવ્યા.',
   // Settings: note types
   'Page note': 'પાનાંવાળી નોંધ',
   'Web note': 'વેબ નોંધ',
