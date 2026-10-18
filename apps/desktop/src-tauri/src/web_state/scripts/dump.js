@@ -1,5 +1,5 @@
 /** What a site keeps in the page's own storage, read out of it: the page's half of
- *  capturing a web login. See src-tauri/src/web_state.rs and docs/sync-v2.md 6.4.
+ *  reading a web store out. See src-tauri/src/web_state.rs and docs/sync-v2.md 6.4.
  *
  *  One file for every engine. The crate runs it in an isolated world of a page on the
  *  origin (a DevTools world under WebView2, a `WKContentWorld` on a Mac, a script world

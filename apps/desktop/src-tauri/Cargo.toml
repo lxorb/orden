@@ -88,8 +88,8 @@ tauri-plugin-os = "2"
 # installer and a phone in its manifest, and the arriving half is the same code.
 tauri-plugin-deep-link = "2"
 serde = { version = "1", features = ["derive"] }
-# `raw_value` so a web state's IndexedDB dump passes through as the text the page
-# wrote rather than being parsed into a tree and printed again; see web_state.rs.
+# `raw_value` so a web store's IndexedDB dump passes through as the text the page
+# wrote rather than being parsed into a tree and printed again; see web_state/merge.rs.
 serde_json = { version = "1", features = ["raw_value"] }
 # Bytes cross the bridge as base64: an export is a Word file, an ePub or a
 # picture, and JSON digits would cost six characters a byte. Already in the lock
@@ -188,21 +188,6 @@ rustls = { version = "0.23", default-features = false, features = ["ring"] }
 # for the Appearance pane's Import row. In the lock file already, through the updater
 # plugin, and inflated by the flate2 above. See src/browser_themes.rs.
 zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
-# A web login carried between computers is sealed on the device and opened only on
-# another of the person's own: an X25519 key pair per computer, the web key wrapped
-# to each one in a sealed box, and every bundle XChaCha20-Poly1305 under a key HKDF
-# derives from it, named by HMAC-SHA256. RustCrypto's own crates, pure Rust, and a
-# desktop's alone: a phone never holds the web key. hkdf and hmac are in the lock
-# file already, through the keychain's Secret Service transport, and sha2 is above.
-# See src/web_state/crypto.rs and docs/sync-v2.md 6.6.
-x25519-dalek = { version = "2", default-features = false, features = [
-  "static_secrets",
-  "zeroize",
-] }
-chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
-hkdf = "0.12"
-hmac = "0.12"
-zeroize = "1"
 # How long a web state's capture or restore waits for the engine before it gives up,
 # which is tokio's timer. Tauri runs on tokio already and builds its runtime with every
 # driver the features compile in; this is the one feature it does not ask for itself.

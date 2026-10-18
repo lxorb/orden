@@ -20,9 +20,8 @@
 //!   of two states is neither.
 //! - **Nothing is deleted.** The store merged from is left where it is, as it was.
 //!
-//! Read and written through the same hidden pages and isolated worlds a web login is
-//! carried through (`restore_view.rs`, `isolated.rs`, scripts/dump.js and restore.js),
-//! never through the web key: nothing here leaves the computer.
+//! Read and written through hidden pages and isolated worlds (`restore_view.rs`,
+//! `isolated.rs`, scripts/dump.js and restore.js): nothing here leaves the computer.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -32,11 +31,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use tauri::Webview;
 
-use super::bundle::{Cookie, Partition, DATABASE_MOST};
-use super::capture::quoted;
-use super::cookies::{self, now};
+use super::cookies::{self, now, Cookie, Partition};
+use super::isolated::{self, quoted};
 use super::restore_view::Hidden;
-use super::{isolated, DUMP, RESTORE};
+use super::{DUMP, RESTORE};
+
+/// The most one `IndexedDB` database may be, in bytes of its encoding, before it stays
+/// behind: the site fills it again.
+const DATABASE_MOST: u64 = 16 * 1024 * 1024;
 
 /// What a merge did.
 #[derive(Debug, Default, Serialize, PartialEq, Eq)]
@@ -251,7 +253,7 @@ fn parsed<'a, T: Deserialize<'a>>(text: &'a str) -> Result<T, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::bundle::{Cookie, Partition};
+    use super::super::cookies::{Cookie, Partition};
     use super::chosen;
 
     fn cookie(name: &str, value: &str, expires: Option<f64>) -> Cookie {

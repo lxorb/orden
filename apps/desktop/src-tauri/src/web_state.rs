@@ -1,79 +1,43 @@
-//! A site's web login, carried between the person's computers: taken out of one web
-//! store, sealed so that only their own computers can open it, and put into another -
-//! on another computer, and on another engine if need be. The native half of
-//! docs/sync-v2.md section 6; when it happens and where the bundle goes are the lease's
-//! (lib/web-tab/lease.svelte.ts) and the account's.
+//! A store's web state - its cookies, and each origin's localStorage and `IndexedDB` -
+//! read out of one web store and written into another on this computer, through each
+//! engine's own APIs. What it is for now is the one fold of #239: a store a space kept
+//! apart, merged into the one every page shares (`merge.rs`, lib/web-tab/merged.ts).
 //!
-//! Emil, 2026-09-30: *"The state of the website should be synced as accurately as
-//! possible. Not just some basic cookies, but basically the same way as closing and
-//! reopening Chrome."* So what travels is what Chrome brings back after a restart
-//! (docs/sync-v2.md 6.3): every cookie of the site (session, `HttpOnly`, partitioned
-//! ones included), each origin's localStorage and `IndexedDB`, and the web note tab's
-//! sessionStorage. Never the files: a cookie database is encrypted to the machine it is
-//! on, so everything moves through each engine's own APIs.
+//! It also carried a site's login between the person's computers, sealed so that only
+//! their own could open it (docs/sync-v2.md section 6). That was taken out (#393):
+//! Google binds its sessions to the device they were made on, so a login carried to
+//! another computer stopped working there within minutes, which took away most of the
+//! point. Never the files, then or now: a cookie database is encrypted to the machine it
+//! is on.
 //!
 //! | | `WebView2` | `WKWebView` | `WebKitGTK` |
 //! | --- | --- | --- | --- |
 //! | cookies | `DevTools` `Network.*` (`cookies.rs`) | `WKHTTPCookieStore` | the cookie manager |
 //! | the page's storage | dump.js and restore.js in an isolated world (`isolated.rs`) | a `WKContentWorld` | a script world |
 //! | a page on an origin nobody has open | `WebResourceRequested` answering `<origin>/__nib_restore` (`restore_view.rs`) | `loadHTMLString` | `load_html` |
-//! | the tab's sessionStorage | a script at the next document's start (`session.rs`) | written in, then a reload | the same |
-//!
-//! The pieces, one file each: the bundle's shape (`bundle.rs`), the keys' arithmetic
-//! (`crypto.rs`) and their place in the keychain (`keys.rs`), the folders bundles sit in
-//! between the disk and the account (`folders.rs`), and the capture and the restore
-//! (`capture.rs`, `restore.rs`) over the engine's parts named above.
 //!
 //! **Who may call.** Only the app's own windows (`main`, `nib-2`, ...): a web tab's page
-//! is a remote origin that reaches no command anyway, and the commands refuse any other
-//! caller besides, as the terminal's do. No command hands out a private key or the web
-//! key: only a public key, a wrap for another computer, six digits and opaque names.
-
-mod bundle;
-mod crypto;
-mod folders;
-mod keys;
+//! is a remote origin that reaches no command anyway, and the command refuses any other
+//! caller besides, as the terminal's do.
 
 mod answer;
-mod capture;
 #[cfg(windows)]
 mod cdp;
 pub(crate) mod cookies;
 mod isolated;
 mod merge;
-mod restore;
 mod restore_view;
-mod session;
 
-use std::path::PathBuf;
-
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine as _;
-use serde::Serialize;
-use tauri::ipc::{InvokeBody, Request, Response};
 use tauri::{Manager as _, Webview};
 
-use keys::Keychain;
-
-/// The page's half of a capture; see scripts/dump.js.
+/// The page's half of reading a store out; see scripts/dump.js.
 const DUMP: &str = include_str!("web_state/scripts/dump.js");
 
-/// The page's half of a restore; see scripts/restore.js.
+/// The page's half of writing one in; see scripts/restore.js.
 const RESTORE: &str = include_str!("web_state/scripts/restore.js");
-
-/// Which engine a bundle says it came out of.
-#[cfg(windows)]
-const ENGINE: &str = "webview2";
-#[cfg(target_os = "macos")]
-const ENGINE: &str = "wkwebview";
-#[cfg(target_os = "linux")]
-const ENGINE: &str = "webkitgtk";
 
 /// The one answer every caller that is not a window of ours gets.
 const REFUSED: &str = "not a window of this app";
-
-/// The name of the store every space shares, as the lease key and a manifest say it.
-const GLOBAL: &str = "global";
 
 /// Refuses every caller but the app's own windows.
 fn ours(webview: &Webview) -> Result<(), String> {
@@ -83,136 +47,6 @@ fn ours(webview: &Webview) -> Result<(), String> {
     } else {
         Err(REFUSED.to_owned())
     }
-}
-
-/// The store asked for: its name for a manifest and a lease key, and what a page is
-/// built in (none for the shared one). Checked by the rule every web tab's store is;
-/// see `web_stores.rs`.
-fn store_of(asked: Option<&str>) -> Result<(&str, Option<&str>), String> {
-    match crate::web_stores::named(asked.filter(|one| *one != GLOBAL))? {
-        None => Ok((GLOBAL, None)),
-        Some(name) => Ok((name, Some(name))),
-    }
-}
-
-/// A site as `siteOf` in web-data.ts makes one, checked: a registrable domain, or an
-/// address, in lower case, and nothing that could be read as two fields where it is
-/// joined to a store.
-fn site_of(asked: &str) -> Result<&str, String> {
-    let fits = !asked.is_empty()
-        && asked.len() <= 253
-        && !asked.starts_with('.')
-        && !asked.ends_with('.')
-        && asked.bytes().all(|byte| {
-            byte.is_ascii_lowercase()
-                || byte.is_ascii_digit()
-                || matches!(byte, b'.' | b'-' | b':' | b'[' | b']')
-        });
-    if fits {
-        Ok(asked)
-    } else {
-        Err("that is not a site".to_owned())
-    }
-}
-
-/// The current web key, or why there is none yet.
-fn web_key(vault: &Keychain) -> Result<crypto::WebKey, String> {
-    keys::current(vault)?.ok_or_else(|| "this computer has no web key yet".to_owned())
-}
-
-/// Takes a site's state out of a store and seals it into a folder of its own: the
-/// cookies, and per origin in `origins` its localStorage and `IndexedDB`; with `tab`, the
-/// web note's page is read first and its sessionStorage goes too. `app` is carried as
-/// it is (the trail, zoom, grants, the fence). `databases: false` is the light capture,
-/// which carries the databases of this run's last full one instead of reading them (see
-/// `Asked`). Answers the folder, the manifest's and every chunk's name and size, every
-/// chunk the manifest names, what it says as a digest, and what stayed behind.
-#[tauri::command]
-pub async fn web_state_capture(
-    webview: Webview,
-    store: Option<String>,
-    site: String,
-    origins: Vec<String>,
-    tab: Option<String>,
-    app: Option<serde_json::Value>,
-    databases: Option<bool>,
-) -> Result<capture::Captured, String> {
-    ours(&webview)?;
-    let (label, store) = store_of(store.as_deref())?;
-    let site = site_of(&site)?;
-    let key = web_key(&Keychain::of(webview.app_handle()))?;
-    let tab = match tab {
-        Some(tab) => Some(crate::web_tabs::found(webview.app_handle(), &tab)?),
-        None => None,
-    };
-    capture::capture(
-        &webview,
-        &key,
-        capture::Asked {
-            label,
-            store,
-            site,
-            origins,
-            tab,
-            app,
-            databases: databases.unwrap_or(true),
-        },
-    )
-    .await
-}
-
-/// Puts a bundle into a store: the manifest at `manifest_path` (in a folder
-/// `web_state_inbox` made, with its chunks beside it), sealed for this store and site.
-/// Answers what it did, the tab's sessionStorage for `web_state_session`, and what the
-/// app carried.
-#[tauri::command]
-pub async fn web_state_restore(
-    webview: Webview,
-    store: Option<String>,
-    site: String,
-    manifest_path: String,
-) -> Result<restore::Restored, String> {
-    ours(&webview)?;
-    let (label, store) = store_of(store.as_deref())?;
-    let site = site_of(&site)?;
-    let path = folders::manifest_at(webview.app_handle(), &manifest_path)?;
-    let vault = Keychain::of(webview.app_handle());
-    restore::restore(&webview, &vault, label, store, site, &path).await
-}
-
-/// Seeds a tab's sessionStorage for `origin` and loads its page again so the site
-/// starts from it: what a restored web note's tab gets back.
-#[tauri::command]
-pub async fn web_state_session(
-    webview: Webview,
-    tab: String,
-    origin: String,
-    items: Vec<(String, String)>,
-) -> Result<(), String> {
-    ours(&webview)?;
-    let view = crate::web_tabs::found(webview.app_handle(), &tab)?;
-    let url: tauri::Url = origin
-        .parse()
-        .map_err(|_| format!("{origin} is not an origin"))?;
-    let origin = capture::origin_of(&url).ok_or_else(|| format!("{origin} is not on the web"))?;
-    session::seed(&view, &origin, &items).await
-}
-
-/// The chunks a downloaded manifest names that its folder does not hold yet, which the
-/// window fetches next: only this computer can read the list, since the manifest is
-/// sealed.
-#[tauri::command(async)]
-pub fn web_state_wants(
-    webview: Webview,
-    store: Option<String>,
-    site: String,
-    manifest_path: String,
-) -> Result<Vec<String>, String> {
-    ours(&webview)?;
-    let (label, _) = store_of(store.as_deref())?;
-    let site = site_of(&site)?;
-    let path = folders::manifest_at(webview.app_handle(), &manifest_path)?;
-    restore::chunks_wanted(&Keychain::of(webview.app_handle()), label, site, &path)
 }
 
 /// Folds the store `from` - a space's own, or one of its sites' - into the store every
@@ -251,154 +85,4 @@ pub async fn web_merge(
         _ => true,
     };
     merge::merge(&webview, from, &origins, from_used_last).await
-}
-
-/// One file of a bundle, as bytes, for the window to upload: a capture's manifest or one
-/// of its chunks, by the folder's name and its own. Everything in it is ciphertext.
-#[tauri::command(async)]
-pub fn web_state_file(webview: Webview, folder: String, name: String) -> Result<Response, String> {
-    ours(&webview)?;
-    let folder = folders::folder_named(webview.app_handle(), &folder)?;
-    Ok(Response::new(folders::read(&folder, &name)?))
-}
-
-/// One file of a downloaded bundle, written into the folder `web_state_inbox` made: the
-/// bytes are the request's body, and the folder's name and the file's are its
-/// `x-nib-folder` and `x-nib-name` headers, since the body is not JSON.
-#[tauri::command(async)]
-pub fn web_state_put(webview: Webview, request: Request<'_>) -> Result<(), String> {
-    ours(&webview)?;
-    let header = |name: &str| {
-        request
-            .headers()
-            .get(name)
-            .and_then(|value| value.to_str().ok())
-            .map(str::to_owned)
-            .ok_or_else(|| format!("say the {name}"))
-    };
-    let folder = folders::folder_named(webview.app_handle(), &header("x-nib-folder")?)?;
-    let name = header("x-nib-name")?;
-    if !folders::is_file_name(&name) {
-        return Err("that is not a file of a web state".to_owned());
-    }
-    let InvokeBody::Raw(bytes) = request.body() else {
-        return Err("a web state is sent as bytes".to_owned());
-    };
-    folders::write(&folder.join(name), bytes)
-}
-
-/// A new, empty folder to download a bundle into, for `web_state_restore` to read.
-#[tauri::command(async)]
-pub fn web_state_inbox(webview: Webview) -> Result<PathBuf, String> {
-    ours(&webview)?;
-    folders::fresh(webview.app_handle(), "in")
-}
-
-/// This computer's public key, base64, made the first time it is asked for: what the
-/// account knows the computer by, and what another computer wraps the web key to.
-#[tauri::command(async)]
-pub fn web_key_device(webview: Webview) -> Result<String, String> {
-    ours(&webview)?;
-    Ok(STANDARD.encode(keys::device(&Keychain::of(webview.app_handle()))?.public()))
-}
-
-/// The web key, wrapped to another computer's public key, and its generation.
-#[derive(Debug, Serialize)]
-pub struct Wrapped {
-    wrapped: String,
-    generation: u32,
-}
-
-/// Wraps the current web key to another computer's public key: what **Allow** sends.
-#[tauri::command(async)]
-pub fn web_key_wrap(webview: Webview, target_public_key: String) -> Result<Wrapped, String> {
-    ours(&webview)?;
-    let key = web_key(&Keychain::of(webview.app_handle()))?;
-    Ok(Wrapped {
-        wrapped: STANDARD.encode(crypto::wrap(&key, &keys::public_key(&target_public_key)?)?),
-        generation: key.generation(),
-    })
-}
-
-/// Takes the web key another computer wrapped to this one, and keeps it.
-#[tauri::command(async)]
-pub fn web_key_accept(webview: Webview, wrapped: String, generation: u32) -> Result<(), String> {
-    ours(&webview)?;
-    let bytes = STANDARD
-        .decode(wrapped.trim())
-        .map_err(|_| "that web key was not wrapped for this computer".to_owned())?;
-    keys::accept(&Keychain::of(webview.app_handle()), &bytes, generation)
-}
-
-/// Makes a new web key one generation on (the first, on the first computer), keeps it
-/// and answers its generation: what the first upload does, and the first one after a
-/// computer was ended.
-#[tauri::command(async)]
-pub fn web_key_rotate(webview: Webview) -> Result<u32, String> {
-    ours(&webview)?;
-    Ok(keys::rotate(&Keychain::of(webview.app_handle()))?.generation())
-}
-
-/// Which generation of the web key this computer holds, or none before it is approved.
-#[tauri::command(async)]
-pub fn web_key_current(webview: Webview) -> Result<Option<u32>, String> {
-    ours(&webview)?;
-    keys::current_generation(&Keychain::of(webview.app_handle()))
-}
-
-/// The lease key of a site in a store: the opaque name the hub knows it by.
-#[tauri::command(async)]
-pub fn web_key_lease(
-    webview: Webview,
-    store: Option<String>,
-    site: String,
-) -> Result<String, String> {
-    ours(&webview)?;
-    let (label, _) = store_of(store.as_deref())?;
-    Ok(web_key(&Keychain::of(webview.app_handle()))?.lease(label, site_of(&site)?))
-}
-
-/// Forgets every key this computer holds for web logins: what signing out does.
-#[tauri::command(async)]
-pub fn web_key_forget(webview: Webview) -> Result<(), String> {
-    ours(&webview)?;
-    keys::forget(&Keychain::of(webview.app_handle()))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{site_of, store_of};
-
-    /// The shared store is `global` whichever way it is asked for, and every other store
-    /// is held to the web tab's rule.
-    #[test]
-    fn a_store_is_named_as_the_lease_names_it() {
-        assert_eq!(store_of(None), Ok(("global", None)));
-        assert_eq!(store_of(Some("")), Ok(("global", None)));
-        assert_eq!(store_of(Some("global")), Ok(("global", None)));
-        assert_eq!(
-            store_of(Some("space_0-k3j9x2")),
-            Ok(("space_0-k3j9x2", Some("space_0-k3j9x2")))
-        );
-        assert!(store_of(Some("../web")).is_err());
-    }
-
-    /// A site is one lower-case domain or address, and never something with a line in it.
-    #[test]
-    fn a_site_is_one_plain_name() {
-        for fine in [
-            "ethz.ch",
-            "xn--mnchen-3ya.de",
-            "127.0.0.1",
-            "[::1]",
-            "localhost",
-        ] {
-            assert_eq!(site_of(fine), Ok(fine));
-        }
-        for bad in [
-            "", ".ethz.ch", "ethz.ch.", "ETHZ.ch", "a\nb", "a b", "a/b", "ä.ch",
-        ] {
-            assert!(site_of(bad).is_err(), "{bad} was taken");
-        }
-    }
 }

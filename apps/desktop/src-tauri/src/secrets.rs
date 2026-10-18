@@ -30,8 +30,9 @@ const SHIPPED: &str = "ch.emilvinu.nib";
 
 /// What the keychain files these under. One service for the app, with the
 /// provider's own id as the account, so a reader looking at their keychain sees
-/// one entry per provider rather than an unexplained blob. The web logins' keys are
-/// filed under it too; see `web_state/keys.rs`.
+/// one entry per provider rather than an unexplained blob. The keys web logins used
+/// while they travelled between computers (#393) were filed under it too, and are left
+/// where they are.
 ///
 /// Still `nibeditor`, the product's name when the first key was filed, and never to be
 /// renamed: every key a reader stored is under it, and a new name would find none.
@@ -61,7 +62,7 @@ fn named(name: &str) -> Result<String, String> {
 /// and the name with `@<identifier>` after it for any other build, a probe or a
 /// development build under an identifier of its own. The keychain is the user's and
 /// outlives every build, so a probe must never read, write or forget the keys of the
-/// app somebody installed; web logins' keys are filed the same way (`web_state/keys.rs`).
+/// app somebody installed.
 fn filed(name: &str, identifier: &str) -> Result<String, String> {
     let name = named(name)?;
     Ok(if identifier == SHIPPED {

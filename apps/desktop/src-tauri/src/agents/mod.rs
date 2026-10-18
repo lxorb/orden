@@ -15,7 +15,7 @@
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
 //! | `capture` | a page read for the window's `capture_to_note` |
-//! | `memory`, `leases` | the engine's memory, and sync v2's seam |
+//! | `memory` | the engine's memory |
 //! | `shell`, `watch` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept - and the pictures of their tabs |
 //!
 //! **Nothing at launch.** Not a thread, not a file read, not a webview: the state below
@@ -70,7 +70,6 @@ mod keys;
     not(windows),
     allow(dead_code, reason = "only an engine with agent tabs opens agent tabs")
 )]
-pub(crate) mod leases;
 mod limits;
 #[cfg_attr(
     not(windows),
@@ -109,7 +108,7 @@ pub mod watch;
 
 #[cfg(windows)]
 mod browser;
-// The one door to the DevTools Protocol on a page; web state uses it too (see
+// The one door to the DevTools Protocol on a page; the web store merge uses it too (see
 // web_state/cdp.rs).
 #[cfg(windows)]
 pub(crate) mod cdp;

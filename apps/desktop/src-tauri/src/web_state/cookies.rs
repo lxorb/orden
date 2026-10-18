@@ -1,33 +1,86 @@
-//! A site's cookies, out of a web store and into another, through each engine's own
-//! cookie store: never the cookie database on disk, which is encrypted to the machine.
+//! A store's cookies, read and written through each engine's own cookie store: never the
+//! cookie database on disk, which is encrypted to the machine. What folds a store a space
+//! kept into the shared one (`merge.rs`) reads every cookie of one and writes some into the
+//! other; `web_cookies.rs` keeps a store's logins on Windows through the same protocol.
 //!
 //! | engine | out | in |
 //! | --- | --- | --- |
-//! | `WebView2` | `Network.getAllCookies` over the `DevTools` Protocol, which keeps `partitionKey`, priority and the source scheme and port | `Network.deleteCookies` for each of the site's, then `Network.setCookies` |
-//! | `WKWebView` | `WKHTTPCookieStore`, through the webview's own `cookies()` | `deleteCookie`, then `setCookie` |
+//! | `WebView2` | `Network.getAllCookies` over the `DevTools` Protocol, which keeps `partitionKey`, priority and the source scheme and port | `Network.setCookies` |
+//! | `WKWebView` | `WKHTTPCookieStore`, through the webview's own `cookies()` | `setCookie` |
 //! | `WebKitGTK` | the cookie manager's every cookie, the same way | the same |
 //!
 //! A Mac and Linux go through Tauri's own cookie calls, which are those stores and write
 //! `HttpOnly` back by name, as `web_cookies.rs` does; what they have no word for (a
-//! partition, a priority) is left out there and kept in the bundle for an engine that
-//! has one.
+//! partition, a priority) is left out there.
 //!
-//! What is read is the site's: its own domain, its subdomains, and anything partitioned
-//! under it. What is written replaces exactly that, the way a cookie import in a profile
-//! manager overwrites a site's cookies rather than piling on top. A session cookie is
-//! written back with the four hundred days `web_cookies.rs` gives every session cookie, so
-//! the login it carries survives the next restart here as it did there.
-//!
-//! `web_cookies.rs` keeps a store's logins on Windows through the same protocol, so the
-//! cookie as the protocol says it - read out of an answer, written for `setCookie`, named
-//! for `deleteCookies` - is shared with it, along with the four hundred days.
+//! A session cookie is written with the four hundred days `web_cookies.rs` gives every
+//! session cookie, so the login it carries survives the next restart. The cookie as the
+//! protocol says it - read out of an answer, written for `setCookie`, named for
+//! `deleteCookies` - is shared with `web_cookies.rs`, along with the four hundred days.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use serde::{Deserialize, Serialize};
 use tauri::Webview;
 
-use super::bundle::cookie_of_site;
-pub(crate) use super::bundle::Cookie;
+/// A cookie, as every engine can say it and take it back.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Cookie {
+    pub name: String,
+    pub value: String,
+    /// As the engine said it: a leading dot for a cookie every subdomain is sent, none for
+    /// one only its own host is.
+    pub domain: String,
+    pub path: String,
+    /// Seconds since 1970, or none for a session cookie.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expires: Option<f64>,
+    #[serde(default)]
+    pub http_only: bool,
+    #[serde(default)]
+    pub secure: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub same_site: Option<SameSite>,
+    /// Chromium's own; the others have none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<Priority>,
+    /// The top-level site a partitioned (CHIPS) cookie belongs to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub partition: Option<Partition>,
+    /// Chromium's scheme binding, `Secure`, `NonSecure` or `Unset`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_scheme: Option<String>,
+    /// Chromium's port binding.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_port: Option<i64>,
+}
+
+/// A cookie's `SameSite`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) enum SameSite {
+    Strict,
+    Lax,
+    None,
+}
+
+/// A cookie's priority, which Chromium uses to choose what to evict.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) enum Priority {
+    Low,
+    Medium,
+    High,
+}
+
+/// A partitioned cookie's partition.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Partition {
+    /// `https://example.com`.
+    pub top_level_site: String,
+    #[serde(default)]
+    pub cross_site_ancestor: bool,
+}
 
 /// How long a session cookie is kept once it has been made to last, in seconds: four
 /// hundred days, which is the longest Chrome lets any cookie live. Long enough that
@@ -48,15 +101,6 @@ pub(crate) fn now() -> f64 {
         .map_or(0.0, |since| since.as_secs_f64())
 }
 
-/// The site's cookies in the store `view` is in.
-pub(crate) async fn read(view: &Webview, site: &str) -> Result<Vec<Cookie>, String> {
-    Ok(engine::all(view)
-        .await?
-        .into_iter()
-        .filter(|cookie| cookie_of_site(cookie, site))
-        .collect())
-}
-
 /// Every cookie in the store `view` is in.
 pub(crate) async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
     engine::all(view).await
@@ -68,39 +112,17 @@ pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), Strin
     engine::set(view, cookies, now()).await
 }
 
-/// Replaces the site's cookies in the store `view` is in with `cookies`, and says how many
-/// were written.
-pub(crate) async fn write(view: &Webview, site: &str, cookies: &[Cookie]) -> Result<usize, String> {
-    for old in read(view, site).await? {
-        engine::delete(view, &old).await?;
-    }
-    let now = now();
-    let fitting: Vec<&Cookie> = cookies
-        .iter()
-        .filter(|cookie| cookie_of_site(cookie, site))
-        .collect();
-    engine::set(view, &fitting, now).await?;
-    Ok(fitting.len())
-}
-
 #[cfg(windows)]
 pub(crate) mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
 
-    use super::super::bundle::{Cookie, Partition, Priority, SameSite};
     use super::super::cdp;
-    use super::until;
+    use super::{until, Cookie, Partition, Priority, SameSite};
 
     pub(super) async fn all(view: &Webview) -> Result<Vec<Cookie>, String> {
         let answered = cdp::call(view, "Network.getAllCookies", &json!({})).await?;
         Ok(cookies_in(&answered))
-    }
-
-    pub(super) async fn delete(view: &Webview, cookie: &Cookie) -> Result<(), String> {
-        cdp::call(view, "Network.deleteCookies", &deleting(cookie))
-            .await
-            .map(|_| ())
     }
 
     pub(super) async fn set(view: &Webview, cookies: &[&Cookie], now: f64) -> Result<(), String> {
@@ -236,8 +258,7 @@ mod engine {
     use tauri::webview::cookie;
     use tauri::Webview;
 
-    use super::super::bundle::{Cookie, SameSite};
-    use super::until;
+    use super::{until, Cookie, SameSite};
 
     /// Tauri's cookie calls wait on the window's thread, so they are made from a thread
     /// that may block rather than from the runtime's own.
@@ -259,14 +280,6 @@ mod engine {
                 .iter()
                 .map(from_engine)
                 .collect())
-        })
-        .await
-    }
-
-    pub(super) async fn delete(view: &Webview, one: &Cookie) -> Result<(), String> {
-        let gone = to_engine(one, 0.0);
-        blocking(view, move |view| {
-            view.delete_cookie(gone).map_err(|error| error.to_string())
         })
         .await
     }

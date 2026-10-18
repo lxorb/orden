@@ -730,8 +730,6 @@ pub enum Code {
     NoDialog,
     /// The reader said no.
     Denied,
-    /// Another device is using that site's login (7.4).
-    InUseElsewhere,
 }
 
 /// A dialog the page is holding open until `browser_dialog` answers it.

@@ -146,12 +146,6 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Store::Agent => Some(format!("agent_{}", caller.id())),
         Store::Reader | Store::Space => {
             let reader = store_for(app, open.space.as_deref(), &open.url);
-            // The lease is the reader's store's: the twin carries its logins.
-            if let Err(why) =
-                super::leases::lease_needed(reader.as_deref(), &policy::site_of(&host))
-            {
-                return Answer::error(Code::InUseElsewhere, why);
-            }
             Some(engines::twin_of(reader.as_deref()))
         }
     };
