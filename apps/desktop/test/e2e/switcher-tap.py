@@ -8,7 +8,9 @@ landed on the button under the finger and opened it again. See `clicked` in over
 What it checks, on the built web app in Chromium:
 
     on a phone (its drawer) and a tablet, by finger: a tap opens the list, a second tap on
-      the button closes it, and a tap past it closes it too
+      the button closes it, and a tap past it closes it too - and does nothing else: a
+      row of the file list under that tap is not opened, as a mouse's press past it
+      never opened one
     on a desktop, by mouse: the same, as it always was
 
     python apps/desktop/test/e2e/switcher-tap.py
@@ -37,6 +39,20 @@ EXPANDED = f"document.querySelector('{BUTTON}')?.getAttribute('aria-expanded') =
 LIST = "!!document.querySelector('[data-spaces-open]')"
 
 
+#: The middle of a row of the file list below the open list, or null.
+ROW_BELOW = """() => {
+  const list = document.querySelector('[data-spaces-open]')?.getBoundingClientRect()
+  if (!list) return null
+  for (const row of document.querySelectorAll('.row[data-path]')) {
+    const box = row.getBoundingClientRect()
+    if (box.top > list.bottom + 8 && box.bottom < innerHeight - 8 && box.width > 0) {
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 }
+    }
+  }
+  return null
+}"""
+
+
 def is_open(page: Page) -> bool:
     return bool(page.evaluate(f"() => {EXPANDED} && {LIST}"))
 
@@ -57,6 +73,7 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     DRIVE.open(page)
     # Somewhere to switch to, so the list has rows.
     page.evaluate("async () => { await window.nibApp.workspace.createSpace?.('Second') }")
+    DRIVE.seed(page, *[f"# Row {n}\n\nA note.\n" for n in range(1, 13)])
     page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
     wait_for(page, f"document.querySelector('{BUTTON}')", f"[{label}] the switcher")
     DRIVE.settled(page)
@@ -78,13 +95,22 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     press(page, x, y, touch)
     if not is_open(page):
         wrong(f"[{label}] a third press did not open it again")
-    # Past it: well below the list, in the panel.
+    # Past it: on a row of the file list below the list, where there is one, else well
+    # below the list in the panel.
     size = page.viewport_size or {"width": 800, "height": 800}
-    press(page, x, size["height"] - 40, touch)
+    row = page.evaluate(ROW_BELOW)
+    at = (row["x"], row["y"]) if row else (x, size["height"] - 40)
+    before = page.evaluate("() => window.nibApp.workspace.active?.path ?? null")
+    press(page, at[0], at[1], touch)
     if is_open(page):
         wrong(f"[{label}] a press past the list did not close it")
     else:
         say(f"ok   [{label}] a press past it closes it")
+    after = page.evaluate("() => window.nibApp.workspace.active?.path ?? null")
+    if row and after != before:
+        wrong(f"[{label}] the press past the list opened the row under it: {after}")
+    elif row:
+        say(f"ok   [{label}] and the row of the file list under it was not opened")
     page.close()
 
 
