@@ -22,8 +22,10 @@ at the foot of the space switcher, under whoever shared it, which opens a tab th
 syncs through the file's room. The same row and the same tab are photographed on a
 phone. Then a guest follows a link to one canvas and is in it, with none of the
 app round it - no bar, no tabs, no file list - on a desktop, after a reload and on
-a phone (#386). Then the owner takes the note back and the row and its tab go,
-with nothing asked.
+a phone (#386). Such a guest keeps one thing of their own, a corner: it says who
+they are, renames them where the owner sees it, and signs them in without taking
+them out of the file. Then the owner takes the note back and the row and its tab
+go, with nothing asked.
 
 Everything here is the real thing: the built web app, the Worker under
 `wrangler dev` on workerd, a Durable Object holding the room, the D1 migrations
@@ -81,6 +83,17 @@ ITEM_CANVAS_FILE = '{"nib":{"version":1},"nodes":[],"edges":[]}'
 
 # A phone, for the shots that say the section and the tab are one design on both.
 PHONE = {"width": 390, "height": 844}
+# And one under a thumb, which the app takes for a phone: a handheld's agent and a
+# finger for a pointer, so the controls are a thumb's size (viewport.svelte.ts).
+THUMB = {
+    "viewport": PHONE,
+    "has_touch": True,
+    "is_mobile": True,
+    "user_agent": (
+        "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
+        " Chrome/131.0.0.0 Mobile Safari/537.36"
+    ),
+}
 
 # How long anything is waited for before the test gives up and says what it saw.
 PATIENCE = 40
@@ -153,14 +166,15 @@ def fresh(
     at: str = ORIGIN,
     token: str | None = None,
     viewport: dict | None = None,
+    device: dict | None = None,
 ) -> Page:
     """A browser context that has never held anything: its own storage, its own
     session, and no idea that the other two exist.
 
     `viewport` is how the same session is opened on a second device: a phone is
     the same app at another width, and a token handed to two contexts is one
-    account on two machines."""
-    context = browser.new_context(viewport=viewport or {"width": 1180, "height": 760})
+    account on two machines. `device` is a whole handheld instead, finger and all."""
+    context = browser.new_context(**(device or {"viewport": viewport or {"width": 1180, "height": 760}}))
     if token:
         context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
 
@@ -468,6 +482,29 @@ def landed_alone(page: Page, label: str, note_id: str, wrong) -> None:
         wrong(f"[{label}] a guest with one file still sees the app round it: {chrome}")
     if not page.locator(".pane").count():
         wrong(f"[{label}] the file itself is not on screen")
+
+
+def guest_corner(page: Page, label: str, wrong):
+    """The one thing a guest alone in a file has of the app: their initial in the
+    corner, which opens their name and the way to an account. See
+    GuestCorner.svelte."""
+    corner = page.locator(".guest-corner button.who")
+    corner.wait_for(state="visible", timeout=10_000)
+    name = page.evaluate("() => window.nibApp.account.guest?.name ?? ''")
+    if corner.inner_text().strip() != name.strip()[:1].upper():
+        wrong(f"[{label}] the corner says {corner.inner_text()!r} for a guest called {name!r}")
+
+    # A thumb's target on a touch screen, as every other control there is.
+    touch = page.evaluate("() => document.documentElement.hasAttribute('data-touch')")
+    least = 48 if touch else 24
+    box = corner.bounding_box() or {"width": 0, "height": 0}
+    if box["width"] < least or box["height"] < least:
+        wrong(f"[{label}] the corner is {box['width']}x{box['height']}, under {least}")
+
+    # Clear of what is drawn: nothing of the app's chrome came back with it.
+    if corner.evaluate("(one) => !!one.closest('[data-chrome]')"):
+        wrong(f"[{label}] the corner is part of the app's chrome")
+    return corner
 
 
 def shared_row(page: Page, name: str):
@@ -993,13 +1030,141 @@ def main() -> int:
         thumb = fresh(browser, "thumb", at=f"{ORIGIN}/join/{found.group(1)}", viewport=PHONE)
         let_in(thumb, "thumb")
         landed_alone(thumb, "thumb", plane["id"], wrong)
+        guest_corner(thumb, "thumb", wrong)
         thumb.screenshot(path=str(SHOTS / "shared-canvas-phone.png"))
-        say("and on a phone")
+        say("and on a phone, with the guest's corner")
 
         # Somebody with an account keeps the app round the same file: they have
         # more than it to move between.
         if not owner.locator('[data-chrome="top"]').count():
             wrong("the owner lost the app's bar")
+
+        # ── A guest alone in one note: their corner ────────────────
+        # The chrome went, and with it the foot of the panel a guest renamed
+        # themselves and signed in from. The corner is what is left of it.
+        set_item_link(owner_token, solo["id"], one["id"], "write", "open")
+        note_link = request(f"/v1/spaces/{solo['id']}/share?item={one['id']}", owner_token)[
+            "link"
+        ]["url"]
+        found = re.search(r"/join/([a-f0-9]+)", note_link)
+        if not found:
+            raise SystemExit(f"that is not a join link: {note_link}")
+
+        named = fresh(browser, "named", at=f"{ORIGIN}/join/{found.group(1)}")
+        let_in(named, "named")
+        landed_alone(named, "named", one["id"], wrong)
+        corner = guest_corner(named, "named", wrong)
+        named.screenshot(path=str(SHOTS / "guest-corner.png"))
+
+        pop = named.get_by_role("dialog", name="Account")
+        corner.click()
+        pop.wait_for(state="visible", timeout=10_000)
+        named.wait_for_timeout(250)
+        named.screenshot(path=str(SHOTS / "guest-corner-open.png"))
+
+        named.keyboard.press("Escape")
+        pop.wait_for(state="hidden", timeout=10_000)
+        corner.click()
+        pop.wait_for(state="visible", timeout=10_000)
+        named.locator(".cm-content").click()
+        pop.wait_for(state="hidden", timeout=10_000)
+        say("the corner opens on a press, and Escape or a press past it shuts it")
+
+        corner.click()
+        field = pop.locator("input")
+        field.fill("Grace")
+        field.press("Enter")
+        wait_for(
+            named,
+            "() => window.nibApp.account.guest?.name === 'Grace'",
+            "[named] the guest to be called Grace",
+        )
+        if corner.inner_text().strip() != "G":
+            wrong(f"the corner says {corner.inner_text()!r} after the guest became Grace")
+        named.keyboard.press("Escape")
+
+        # The owner, in the same note, reads the new name over the guest's caret.
+        open_the_file(owner, "owner", one["id"], f"/{SOLO}/{ITEM}")
+        until = time.monotonic() + PATIENCE
+        seen: list[str] = []
+        while time.monotonic() < until and "Grace" not in seen:
+            moved(named, 3 if int(time.monotonic() * 2) % 2 else 6)
+            owner.wait_for_timeout(250)
+            seen = caret_names(owner)
+        if "Grace" not in seen:
+            wrong(f"the owner reads {seen!r} over the guest's caret, not Grace")
+        else:
+            say("the name the guest chose in the corner is the name over their caret")
+
+        # On a phone the words run the width of the screen, and the corner is still
+        # clear of them: the note's first line starts below it.
+        pocket = fresh(browser, "pocket", at=f"{ORIGIN}/join/{found.group(1)}", device=THUMB)
+        let_in(pocket, "pocket")
+        landed_alone(pocket, "pocket", one["id"], wrong)
+        if not pocket.evaluate("() => document.documentElement.dataset.device === 'phone'"):
+            wrong("[pocket] the app did not take the handheld for a phone")
+        box = guest_corner(pocket, "pocket", wrong).bounding_box()
+        words_at = pocket.evaluate(
+            "() => { const range = document.createRange();"
+            " range.selectNodeContents(document.querySelector('.cm-content'));"
+            " return [...range.getClientRects()].filter((one) => one.width && one.height)"
+            ".map((one) => [one.left, one.top, one.right, one.bottom]) }"
+        )
+        if box:
+            under = [
+                one
+                for one in words_at
+                if one[0] < box["x"] + box["width"]
+                and one[2] > box["x"]
+                and one[1] < box["y"] + box["height"]
+                and one[3] > box["y"]
+            ]
+            if under:
+                wrong(f"[pocket] the corner covers the note's words at {under}")
+        pocket.screenshot(path=str(SHOTS / "guest-corner-phone.png"))
+
+        # A tap opens it inside the screen, and a tap past it shuts it.
+        pocket.locator(".guest-corner button.who").tap()
+        held = pocket.get_by_role("dialog", name="Account")
+        held.wait_for(state="visible", timeout=10_000)
+        shown = held.bounding_box() or {"x": -1, "width": 0}
+        if shown["x"] < 0 or shown["x"] + shown["width"] > PHONE["width"]:
+            wrong(f"[pocket] the corner's layer runs off the screen: {shown}")
+        pocket.wait_for_timeout(250)
+        pocket.screenshot(path=str(SHOTS / "guest-corner-phone-open.png"))
+        pocket.locator(".cm-content").tap(position={"x": 40, "y": 300})
+        held.wait_for(state="hidden", timeout=10_000)
+        pocket.context.close()
+        say("on a phone the corner is a thumb's size, clear of the words, and taps open and shut")
+
+        # Sign in: the app's own sign-in, and the file is still there after it.
+        corner.click()
+        pop.get_by_role("button", name="Sign in").click()
+        named.locator("input[type=email]").wait_for(state="visible", timeout=10_000)
+        named.wait_for_timeout(250)
+        named.screenshot(path=str(SHOTS / "guest-corner-sign-in.png"))
+        say("Sign in in the corner opens the app's sign-in")
+
+        grace = "grace@example.com"
+        named.locator("input[type=email]").fill(grace)
+        already = len(worker.written())
+        named.get_by_role("button", name="Continue").click()
+        code = worker.waits_for_mail(
+            grace, r"(\d{6}) is your (?:nibeditor|Orden) code", "[named] the sign-in code", already
+        ).group(1)
+        named.locator(".digits input").first.fill(code)
+        let_in(named, "named", keeps=True)
+        wait_for(named, "() => !!window.nibApp.account.user", "[named] the account")
+        wait_for(
+            named,
+            f"() => window.nibApp.workspace.active?.note.shared === {json.dumps(one['id'])}",
+            "[named] the shared note to still be open once signed in",
+        )
+        settled(named, "named")
+        if named.locator(".guest-corner button.who").count():
+            wrong("the guest's corner stayed after signing in")
+        named.screenshot(path=str(SHOTS / "guest-corner-signed-in.png"))
+        say("signed in from the corner, and still in the file, with the app round it")
 
         # ── Taking it back ────────────────────────────────────────
         request(
