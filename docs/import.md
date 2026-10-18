@@ -86,6 +86,44 @@ came in, and lands in it.
   written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
   `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
   its own through `NIB_ZEN_DIR`.
+- **Every other browser's tabs and bookmarks** (#377). On a desktop there is a row for
+  each browser the machine has a profile of: Firefox, then Chrome, Edge, Brave,
+  Chromium and Vivaldi, which are all Chromium and keep the same files. Each browser's
+  own list of profiles is read - Firefox's `profiles.ini`, a Chromium's `Local State` -
+  and a browser with several shows them by name, the way Zen's are. A profile becomes
+  one space, named for the browser (and for the profile where there are several), and
+  comes in the shape Zen's spaces do, because it is read into the same sidebar
+  (`import/sidebar.ts`) and written the same way (`sidebar-plan.ts`,
+  `sidebar-landing.ts`):
+  - **the open tabs**, every ordinary window's in their order, each a web note; a
+    private window's never;
+  - **a pinned tab** one of the Essentials, which is what stays put above everything;
+  - **a tab group** a folder of its name where its first tab is (one nobody named is
+    `Tab group`); its colour has nothing to become;
+  - **Firefox's saved groups** each a folder in `Saved groups`;
+  - **the bookmarks** a folder called `Bookmarks` after everything else, a folder in it
+    for each of the browser's roots that holds any (the bar or toolbar, Firefox's
+    menu, the other bookmarks, the phone's), every bookmark folder a folder and each
+    bookmark a web note kept on the day it was bookmarked. The bar's bookmarks are not
+    made Essentials. Separators, Firefox's tags and smart folders, bookmarklets and
+    folders with nothing on the web in them stay behind.
+
+  Firefox's session is `sessionstore-backups/recovery.jsonlz4` (then `sessionstore` and
+  `previous`), read like Zen's (`import/firefox.ts`); its bookmarks are `places.sqlite`,
+  which Firefox holds open, so the crate copies it with its log into a temporary folder
+  and reads the copy (`firefox_profiles.rs`), with the newest daily copy in
+  `bookmarkbackups/` behind it. A Chromium's session is `Sessions/Session_*`, an SNSS
+  file: a log of commands replayed to the windows it leaves (`import/snss.ts`), and its
+  bookmarks are the JSON file `Bookmarks` (`import/chromium.ts`). A group a Chromium
+  closed and saved lives in its sync database, not its session, and does not come. Newer
+  Chromium writes its session encrypted as well (`Sessions_Encrypted/`, the key in the
+  system's keychain); where only that one is there, the profile brings its bookmarks and
+  the line says the open tabs stayed locked. Containers stay in Firefox, and the line
+  says so. The crate hands over only the files it listed for a profile it listed
+  (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie, a password or the
+  history, and `scripts/browser-import-probe.py` reads browsers of its own through
+  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does. Safari's
+  is the next reader (#394).
 - **More apps** are a row and a case in `carriedBy`; the readers are already there.
 
 ## Where it lands

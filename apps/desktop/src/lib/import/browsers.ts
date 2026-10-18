@@ -33,6 +33,8 @@ export interface BrowserProfile {
 /** One browser and its profiles, the one it opens first in front. */
 export interface FoundBrowser {
   browser: BrowserId
+  /** What its row says. */
+  name: string
   profiles: BrowserProfile[]
 }
 
@@ -48,6 +50,7 @@ export async function foundBrowsers(): Promise<FoundBrowser[]> {
       .filter((one) => one.id in BROWSER_NAMES)
       .map((one) => ({
         browser: one.id,
+        name: BROWSER_NAMES[one.id],
         profiles: one.profiles.map((profile) => ({ ...profile, browser: one.id })),
       }))
   } catch {
