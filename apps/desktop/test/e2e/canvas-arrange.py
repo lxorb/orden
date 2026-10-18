@@ -17,6 +17,7 @@ What it checks and photographs:
     every put-down tool drawn while it is being dragged out
     an arrow dragged from one card to another becoming a connector
     a picture and a note as two entries in the grid rather than one
+    the bar over what is picked, and its colours, kept on the plane against an edge
 
 Run it from the repository root:
 
@@ -458,6 +459,64 @@ def check_more_menu(page: Page) -> None:
 
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
+
+
+# The bar over what is picked and its colours, measured against the plane: how far
+# either hangs past a side, and how wide the colours are against their widest.
+PICKED_SPILL = """
+() => {
+  const plane = document.querySelector('.canvas').getBoundingClientRect()
+  const over = [...document.querySelectorAll('.over .bar, .over .panel')]
+  const spill = over.map((one) => {
+    const box = one.getBoundingClientRect()
+    return Math.max(plane.left - box.left, box.right - plane.right, 0)
+  })
+  const dots = [...document.querySelectorAll('.over .panel button')]
+    .map((one) => one.getBoundingClientRect().width)
+  return {
+    spill: Math.round(Math.max(0, ...spill)),
+    dots: dots.length ? Math.round(Math.min(...dots)) : 0,
+    widest: Math.round(Math.max(0, ...dots)),
+  }
+}
+"""
+
+
+def check_picked_inside(page: Page) -> None:
+    """The bar over what is picked, and its colours, stay inside the plane when what is
+    picked is against its edge - and the colours keep their size wherever the bar is
+    (#350). A card against the left edge of a phone had its first colour out of reach,
+    and one right of the middle had its colours squeezed into what was left of the
+    plane past its own left edge."""
+    say("--- the bar over what is picked, against an edge ---")
+
+    for side, push in (("left", 520), ("right", -520)):
+        fresh(page)
+        page.evaluate(
+            """() => window.nibApp.workspace.active.note.replace(JSON.stringify({
+              nodes: [{ id: 'aa', type: 'text', x: 0, y: 0, width: 70, height: 60, text: 'edge' }],
+              edges: [],
+            }, null, '\\t') + '\\n')"""
+        )
+        page.wait_for_timeout(600)
+        box = plane(page)
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.mouse.wheel(push, 0)
+        page.wait_for_timeout(400)
+        page.locator(".canvas .node", has_text="edge").first.click()
+        page.wait_for_timeout(300)
+        page.locator('.over button[aria-label="Colour"]').first.click()
+        page.wait_for_timeout(400)
+        got = page.evaluate(PICKED_SPILL)
+        if got["spill"] > 0:
+            fail(f"against the {side} edge the bar over the pick hangs {got['spill']}px off the plane")
+        elif got["dots"] < got["widest"] or got["dots"] < 20:
+            fail(f"against the {side} edge the colours are squeezed ({got})")
+        else:
+            say(f"against the {side} edge the bar and its colours stay on the plane, whole")
+        shot(page, f"canvas-picked-{side}-edge")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
 
 
 def check_broken_picture(page: Page) -> None:
@@ -1008,6 +1067,7 @@ def drive(browser, theme: str) -> None:
         check_shape_text(page)
         check_arranging(page)
         check_more_menu(page)
+        check_picked_inside(page)
         check_picture(page)
         check_broken_picture(page)
         check_sharp_stroke(page, cdp)
