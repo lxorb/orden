@@ -1235,12 +1235,6 @@ export const my: Dictionary = {
   'Ask to join': 'ဝင်ခွင့်တောင်းပါ',
   Asking: 'တောင်းနေသည်',
   'Waiting for {who}': '{who} ကို စောင့်နေသည်',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'ဤကွန်ပျူတာကို ယခု မတွဲနိုင်သေးပါ- အကောင့်၏ ဝန်ဆောင်မှုကို အပ်ဒိတ်လုပ်ရန် လိုသည်။',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} တွင် Orden ဗားရှင်းဟောင်း သုံးနေသည်- တွဲရန် ထိုနေရာတွင် အပ်ဒိတ်လုပ်ပါ။',
-  '{device} offers this computer your web logins':
-    '{device} က ဤကွန်ပျူတာကို သင်၏ ဝဘ်ဝင်ရောက်မှုများ ပေးနေသည်',
   '{who} did not let you in': '{who} သင့်ကို ဝင်ခွင့်မပြုပါ',
   'What the others in this space see.': 'ဤနေရာရှိ အခြားသူများ မြင်သည်။',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1990,10 +1984,6 @@ export const my: Dictionary = {
   'Calls a minute': 'တစ်မိနစ်လျှင် ခေါ်ဆိုမှု',
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} တွင် ဖွင့်ထားသည်',
-  'Use here': 'ဤနေရာတွင် သုံးမည်',
-  '{device} wants your web logins': '{device} က သင်၏ ဝဘ် လော့ဂ်အင်များကို လိုချင်သည်',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'အမြန်မေးခွန်း',

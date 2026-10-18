@@ -24,9 +24,7 @@
  *  terminals running in a process of their own for the same reason. What sleeps is its
  *  drawing, which only happens for a screen that is shown. And an agent's own pages are
  *  never in a set at all, so nothing here touches them; a tab of the reader's that an
- *  agent is acting in is left running too. A frozen page keeps its web login's lease:
- *  nothing about which computer runs the site has changed, and the lease's own idle
- *  release still applies (lease.svelte.ts).
+ *  agent is acting in is left running too.
  *
  *  This machine's, like the engine: what a hidden page may cost is a question about this
  *  computer. */

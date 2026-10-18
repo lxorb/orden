@@ -1257,12 +1257,6 @@ export const ptPT: Dictionary = {
   'Ask to join': 'Pedir para entrar',
   Asking: 'A pedir',
   'Waiting for {who}': 'À espera de {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Este computador ainda não pode ser emparelhado: o serviço da conta precisa de uma atualização.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} usa uma versão antiga do Orden: atualize-o lá para o emparelhar.',
-  '{device} offers this computer your web logins':
-    '{device} oferece a este computador os seus inícios de sessão na web',
   '{who} did not let you in': '{who} não deu acesso',
   'What the others in this space see.': 'O que os outros neste espaço veem.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2054,10 +2048,6 @@ export const ptPT: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Aberto em {device}',
-  'Use here': 'Usar aqui',
-  '{device} wants your web logins': '{device} quer os seus inícios de sessão web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pergunta rápida',

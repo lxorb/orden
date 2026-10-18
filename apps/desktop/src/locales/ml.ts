@@ -1251,12 +1251,6 @@ export const ml: Dictionary = {
   'Ask to join': 'ചേരാൻ അനുവാദം ചോദിക്കുക',
   Asking: 'ചോദിക്കുന്നു',
   'Waiting for {who}': '{who}യെ കാത്തിരിക്കുന്നു',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'ഈ കമ്പ്യൂട്ടർ ഇപ്പോൾ ജോടിയാക്കാനാകില്ല: അക്കൗണ്ടിന്റെ സേവനം അപ്‌ഡേറ്റ് ചെയ്യണം.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} പഴയ Orden ആണ് ഉപയോഗിക്കുന്നത്: ജോടിയാക്കാൻ അവിടെ അപ്‌ഡേറ്റ് ചെയ്യുക.',
-  '{device} offers this computer your web logins':
-    '{device} ഈ കമ്പ്യൂട്ടറിന് നിങ്ങളുടെ വെബ് ലോഗിനുകൾ നൽകുന്നു',
   '{who} did not let you in': '{who} നിങ്ങളെ അകത്ത് കടത്തിയില്ല',
   'What the others in this space see.': 'ഈ സ്പേസിലെ മറ്റുള്ളവർ കാണുന്നത്.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2027,10 +2021,6 @@ export const ml: Dictionary = {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}-ൽ തുറന്നിരിക്കുന്നു',
-  'Use here': 'ഇവിടെ ഉപയോഗിക്കുക',
-  '{device} wants your web logins': '{device} നിങ്ങളുടെ വെബ് ലോഗിനുകൾ ആവശ്യപ്പെടുന്നു',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'പെട്ടെന്നുള്ള ചോദ്യം',

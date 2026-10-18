@@ -1239,12 +1239,6 @@ export const ur: Dictionary = {
   'Ask to join': 'شامل ہونے کی درخواست',
   Asking: 'درخواست جا رہی ہے',
   'Waiting for {who}': '{who} کا انتظار',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'اس کمپیوٹر کو ابھی جوڑا نہیں جا سکتا: اکاؤنٹ کی سروس کو اپ ڈیٹ درکار ہے۔',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} پرانا Orden چلا رہا ہے: جوڑنے کے لیے اسے وہیں اپ ڈیٹ کریں۔',
-  '{device} offers this computer your web logins':
-    '{device} اس کمپیوٹر کو آپ کے ویب لاگ اِن پیش کر رہا ہے',
   '{who} did not let you in': '{who} نے اندر نہیں آنے دیا',
   'What the others in this space see.': 'اس اسپیس میں باقی لوگ جو دیکھتے ہیں۔',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2001,10 +1995,6 @@ export const ur: Dictionary = {
     one: '{count} کال',
     other: '{count} کالز',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} پر کھلا ہے',
-  'Use here': 'یہاں استعمال کریں',
-  '{device} wants your web logins': '{device} آپ کے ویب لاگ اِن چاہتا ہے',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'فوری سوال',

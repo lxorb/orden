@@ -1243,12 +1243,6 @@ export const gsw: Dictionary = {
   'Ask to join': 'Um Iilass bitte',
   Asking: 'Fragt',
   'Waiting for {who}': 'Wartet uf {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Dä Computer chan no nöd kopplet wärde: De Dienscht vom Konto bruucht es Update.',
-  '{device} runs an older Orden: update it there to pair it.':
-    'Uf {device} lauft es ältere Orden: Aktualisier s dört, zum s kopple.',
-  '{device} offers this computer your web logins':
-    '{device} bietet däm Computer dini Web-Aamäldige aa',
   '{who} did not let you in': '{who} hät di nöd iiglaa',
   'What the others in this space see.': 'Was die andere i dem Bereich gsehnd.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2015,10 +2009,6 @@ export const gsw: Dictionary = {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Offe uf {device}',
-  'Use here': 'Da bruuche',
-  '{device} wants your web logins': '{device} wott dini Web-Aamäldige',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Schnälli Frag',

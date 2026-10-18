@@ -682,8 +682,12 @@ function holds(tail: string): boolean {
  *  tab with it (`handedOut` in workspace.svelte.ts), a sitting put back there leaves web
  *  notes' tabs out, and the scratchpad is the one note on a phone's screen, named in the
  *  bar (Titlebar.svelte, scratchpad/). Their comments are cut to a line each. Measured
- *  3,217,083. */
-const BUDGET = 3_218_100
+ *  3,217,083.
+ *
+ *  Lowered 2026-10-17, to 3,212,500, from an unstable at 3,217,083, for #393: web logins no
+ *  longer travel between computers, so the hand-back a closing window waited for and the
+ *  web key's lines under a web tab's bar are gone from the first paint. Measured 3,211,503. */
+const BUDGET = 3_212_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

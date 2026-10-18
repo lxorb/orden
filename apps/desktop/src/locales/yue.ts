@@ -1220,11 +1220,6 @@ export const yue: Dictionary = {
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    '呢部電腦暫時未可以配對：帳戶嘅服務要更新。',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} 用緊舊版 Orden：喺嗰度更新先可以配對。',
-  '{device} offers this computer your web logins': '{device} 將你嘅網頁登入提供畀呢部電腦',
   '{who} did not let you in': '{who}冇讓你加入',
   'What the others in this space see.': '呢個空間入面其他人睇到嘅內容。',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1953,10 +1948,6 @@ export const yue: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁數',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '喺 {device} 開咗',
-  'Use here': '喺呢度用',
-  '{device} wants your web logins': '{device} 想要你嘅網頁登入',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快問',

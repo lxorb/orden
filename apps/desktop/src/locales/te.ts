@@ -1243,12 +1243,6 @@ export const te: Dictionary = {
   'Ask to join': 'చేరేందుకు అడుగు',
   Asking: 'అడుగుతోంది',
   'Waiting for {who}': '{who} కోసం వేచి ఉంది',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'ఈ కంప్యూటర్‌ను ఇంకా జత చేయలేరు: ఖాతా సేవకు అప్‌డేట్ అవసరం.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} పాత Orden నడుపుతోంది: జత చేయడానికి అక్కడ అప్‌డేట్ చేయండి.',
-  '{device} offers this computer your web logins':
-    '{device} ఈ కంప్యూటర్‌కు మీ వెబ్ లాగిన్‌లను అందిస్తోంది',
   '{who} did not let you in': '{who} మిమ్మల్ని అనుమతించలేదు',
   'What the others in this space see.': 'ఈ స్పేస్‌లోని ఇతరులు చూసేది.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2014,10 +2008,6 @@ export const te: Dictionary = {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}లో తెరిచి ఉంది',
-  'Use here': 'ఇక్కడ ఉపయోగించండి',
-  '{device} wants your web logins': '{device} మీ వెబ్ లాగిన్‌లను కోరుతోంది',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'చిన్న ప్రశ్న',

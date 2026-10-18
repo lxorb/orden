@@ -1227,11 +1227,6 @@ export const am: Dictionary = {
   'Ask to join': 'ለመቀላቀል ጠይቅ',
   Asking: 'በመጠየቅ ላይ',
   'Waiting for {who}': '{who}ን በመጠበቅ ላይ',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'ይህ ኮምፒውተር ገና ሊጣመር አይችልም፦ የመለያው አገልግሎት መዘመን አለበት።',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} የቆየ Orden እያሄደ ነው፦ ለማጣመር እዚያ ያዘምኑት።',
-  '{device} offers this computer your web logins': '{device} የድር መግቢያዎችዎን ለዚህ ኮምፒውተር ያቀርባል',
   '{who} did not let you in': '{who} እንድትገባ አልፈቀደም',
   'What the others in this space see.': 'በዚህ ቦታ ሌሎች የሚያዩት።',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1978,10 +1973,6 @@ export const am: Dictionary = {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'በ{device} ላይ ክፍት ነው',
-  'Use here': 'እዚህ ተጠቀም',
-  '{device} wants your web logins': '{device} የድር መግቢያዎችህን ይፈልጋል',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ፈጣን ጥያቄ',

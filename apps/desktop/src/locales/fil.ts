@@ -1253,12 +1253,6 @@ export const fil: Dictionary = {
   'Ask to join': 'Humiling sumali',
   Asking: 'Humihiling',
   'Waiting for {who}': 'Hinihintay si {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Hindi pa maipapares ang computer na ito: kailangang i-update ang serbisyo ng account.',
-  '{device} runs an older Orden: update it there to pair it.':
-    'Lumang Orden ang tumatakbo sa {device}: i-update ito roon para maipares.',
-  '{device} offers this computer your web logins':
-    'Inaalok ng {device} sa computer na ito ang iyong mga web login',
   '{who} did not let you in': 'Hindi ka pinapasok ni {who}',
   'What the others in this space see.': 'Ang nakikita ng iba sa espasyong ito.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2044,10 +2038,6 @@ export const fil: Dictionary = {
     one: '{count} tawag',
     other: '{count} na tawag',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Bukas sa {device}',
-  'Use here': 'Gamitin dito',
-  '{device} wants your web logins': 'Gusto ng {device} ang iyong mga web login',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Mabilis na tanong',

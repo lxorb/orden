@@ -1,5 +1,6 @@
-/** The six digits two screens compare while a device is let in, the one way both the AI
- *  vault (ai/vault) and web logins (web-tab/approval.svelte.ts) work them out.
+/** The six digits two screens compare while a device is let in to the AI vault
+ *  (ai/vault). Web logins worked theirs out here too, until they stopped travelling
+ *  (#393); the vault is what is left.
  *
  *  Three steps, so that nobody between the two screens - the account's service included -
  *  can choose a key that shows the same digits: the asking device commits to its public key
@@ -49,7 +50,7 @@ export async function commitment(pub: string, nonce: string): Promise<string> {
 
 /** The six digits both screens show: SHA-256 over what they are for, the asking device's
  *  key and nonce, and the answering device's nonce and key, read as a number, mod 10^6, in
- *  two groups of three. `purpose` keeps the vault's digits and web logins' apart. */
+ *  two groups of three. `purpose` keeps one use's digits apart from any other's. */
 export async function digits(
   purpose: string,
   asking: string,

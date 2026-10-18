@@ -1243,12 +1243,6 @@ export const tr: Dictionary = {
   'Ask to join': 'Katılmak için sor',
   Asking: 'Soruluyor',
   'Waiting for {who}': '{who} bekleniyor',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Bu bilgisayar henüz eşleştirilemiyor: hesabın hizmetinin güncellenmesi gerekiyor.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} eski bir Orden çalıştırıyor: eşleştirmek için orada güncelleyin.',
-  '{device} offers this computer your web logins':
-    '{device}, bu bilgisayara web oturumlarınızı sunuyor',
   '{who} did not let you in': '{who} sizi içeri almadı',
   'What the others in this space see.': 'Bu alandaki diğerlerinin gördüğü.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2013,10 +2007,6 @@ export const tr: Dictionary = {
     one: '{count} çağrı',
     other: '{count} çağrı',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} üzerinde açık',
-  'Use here': 'Burada kullan',
-  '{device} wants your web logins': '{device} web oturum açma bilgilerinizi istiyor',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Hızlı soru',

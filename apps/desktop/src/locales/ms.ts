@@ -1239,12 +1239,6 @@ export const ms: Dictionary = {
   'Ask to join': 'Minta menyertai',
   Asking: 'Meminta',
   'Waiting for {who}': 'Menunggu {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Komputer ini belum boleh dipasangkan: perkhidmatan akaun perlu dikemas kini.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} menjalankan Orden versi lama: kemas kininya di sana untuk memasangkannya.',
-  '{device} offers this computer your web logins':
-    '{device} menawarkan log masuk web anda kepada komputer ini',
   '{who} did not let you in': '{who} tidak membenarkan anda masuk',
   'What the others in this space see.': 'Apa yang dilihat orang lain dalam ruang ini.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2000,10 +1994,6 @@ export const ms: Dictionary = {
   'Calls a minute': 'Panggilan seminit',
   'Pages a minute': 'Halaman seminit',
   '{count} calls': '{count} panggilan',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Dibuka di {device}',
-  'Use here': 'Guna di sini',
-  '{device} wants your web logins': '{device} mahu log masuk web anda',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Soalan pantas',

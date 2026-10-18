@@ -1276,12 +1276,6 @@ export const uk: Dictionary = {
   'Ask to join': 'Попросити доступ',
   Asking: 'Запит',
   'Waiting for {who}': 'Очікування {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Цей комп’ютер поки не можна поєднати: службі облікового запису потрібне оновлення.',
-  '{device} runs an older Orden: update it there to pair it.':
-    'На {device} стара версія Orden: оновіть її там, щоб поєднати.',
-  '{device} offers this computer your web logins':
-    '{device} пропонує цьому комп’ютеру ваші входи на сайти',
   '{who} did not let you in': '{who} не дав вам доступ',
   'What the others in this space see.': 'Те, що бачать інші в цьому просторі.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2078,10 +2072,6 @@ export const uk: Dictionary = {
     many: '{count} викликів',
     other: '{count} виклику',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Відкрито на {device}',
-  'Use here': 'Використати тут',
-  '{device} wants your web logins': '{device} просить ваші входи на сайти',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Швидке запитання',

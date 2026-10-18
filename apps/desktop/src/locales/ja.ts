@@ -1238,12 +1238,6 @@ export const ja: Dictionary = {
   'Ask to join': '参加を申請',
   Asking: '申請中',
   'Waiting for {who}': '{who} の承認待ち',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'このコンピュータはまだペアリングできません。アカウントのサービスの更新が必要です。',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} は古い Orden を使っています。ペアリングするには、そちらで更新してください。',
-  '{device} offers this computer your web logins':
-    '{device} がこのコンピュータにウェブのログインを提供しています',
   '{who} did not let you in': '{who} は参加を断りました',
   'What the others in this space see.': 'この共有スペースの他の人に見える名前です。',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1996,10 +1990,6 @@ export const ja: Dictionary = {
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
   '{count} calls': '{count} 件の呼び出し',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} で開いています',
-  'Use here': 'ここで使う',
-  '{device} wants your web logins': '{device} が Web のログインを求めています',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ちょっと質問',

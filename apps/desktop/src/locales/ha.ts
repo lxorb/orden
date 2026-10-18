@@ -1249,12 +1249,6 @@ export const ha: Dictionary = {
   'Ask to join': 'Nemi shiga',
   Asking: 'Ana nema',
   'Waiting for {who}': 'Ana jiran {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Ba za a iya haɗa wannan kwamfuta tukuna ba: sabis ɗin asusun yana buƙatar sabuntawa.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} yana amfani da tsohon Orden: sabunta shi a can don haɗa shi.',
-  '{device} offers this computer your web logins':
-    '{device} yana ba wannan kwamfuta shigarka na yanar gizo',
   '{who} did not let you in': '{who} bai bar ka shiga ba',
   'What the others in this space see.': 'Abin da sauran a wannan wurin suke ganin.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2033,10 +2027,6 @@ export const ha: Dictionary = {
     one: 'Kira {count}',
     other: 'Kira {count}',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'A buɗe a kan {device}',
-  'Use here': 'Yi amfani a nan',
-  '{device} wants your web logins': '{device} yana son shigarku na yanar gizo',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Tambaya mai sauri',

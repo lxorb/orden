@@ -1,8 +1,8 @@
 /** The arithmetic of carrying AI accounts end to end between a reader's devices: no
  *  store, no request, so all of it is tested on its own (docs/ai.md, "Every device").
  *
- *  Three kinds of key, the shape web logins have (docs/sync-v2.md 6.6), in what every
- *  webview's WebCrypto has - a desktop's, a phone's and a browser's alike:
+ *  Three kinds of key, the shape web logins had while they travelled (docs/sync-v2.md
+ *  6.6), in what every webview's WebCrypto has - a desktop's, a phone's and a browser's alike:
  *
  *  - **a device key**: an ECDH P-256 key pair per device. The public half is what the
  *    account knows the device by; the private half stays in the device's own secret
@@ -14,8 +14,8 @@
  *  - **the vault**: the accounts and their keys as JSON, AES-256-GCM under the vault key
  *    with a random nonce and a fixed label as associated data.
  *
- *  The six digits two screens compare while a device is allowed are pairing.ts's, which
- *  web logins work theirs out with too; the steps are in services/sync/src/ai/vault.ts.
+ *  The six digits two screens compare while a device is allowed are pairing.ts's; the
+ *  steps are in services/sync/src/ai/vault.ts.
  *
  *  And `authOf`, a token derived from the vault key: what the account asks of a device
  *  before it lets it change anything, so a session without the key changes nothing. */

@@ -190,7 +190,6 @@ describe('what hides a web page', () => {
     'lib/views/schedule/SchedulePicker.svelte': "a task's scheduler, beside what asked for it",
     'lib/views/task-view/TaskSheet.svelte': "a task's own view, over the window",
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
-    'lib/web-tab/WebApprove.svelte': 'another computer asking for the web logins, under the bar',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
     'lib/web-tab/WebDownloads.svelte': 'bubble',

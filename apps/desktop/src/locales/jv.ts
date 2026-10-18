@@ -1235,12 +1235,6 @@ export const jv: Dictionary = {
   'Ask to join': 'Njaluk melu',
   Asking: 'Njaluk',
   'Waiting for {who}': 'Ngenteni {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Komputer iki durung bisa dipasangake: layanan akun kudu dianyari.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} nganggo Orden lawas: anyari ing kana kanggo masangake.',
-  '{device} offers this computer your web logins':
-    '{device} nawakake login web sampeyan menyang komputer iki',
   '{who} did not let you in': '{who} ora ngulehake sampeyan mlebu',
   'What the others in this space see.': 'Sing dideleng liyane ing papan iki.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1992,10 +1986,6 @@ export const jv: Dictionary = {
   'Calls a minute': 'Panggilan saben menit',
   'Pages a minute': 'Kaca saben menit',
   '{count} calls': '{count} panggilan',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Kabuka ing {device}',
-  'Use here': 'Gunakake ing kene',
-  '{device} wants your web logins': '{device} njaluk login web sampeyan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pitakon cepet',

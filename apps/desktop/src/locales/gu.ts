@@ -1238,11 +1238,6 @@ export const gu: Dictionary = {
   'Ask to join': 'જોડાવા માંગો',
   Asking: 'માંગે છે',
   'Waiting for {who}': '{who}ની વાટ',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'આ કમ્પ્યુટર હજી જોડી શકાતું નથી: એકાઉન્ટની સેવાને અપડેટની જરૂર છે.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} જૂનું Orden ચલાવે છે: જોડવા માટે ત્યાં અપડેટ કરો.',
-  '{device} offers this computer your web logins': '{device} આ કમ્પ્યુટરને તમારા વેબ લૉગિન આપે છે',
   '{who} did not let you in': '{who}એ તમને અંદર આવવા દીધા નહીં',
   'What the others in this space see.': 'આ જગ્યામાં બીજા જે જુએ છે તે.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1994,10 +1989,6 @@ export const gu: Dictionary = {
     one: '{count} કૉલ',
     other: '{count} કૉલ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} પર ખુલ્લું',
-  'Use here': 'અહીં વાપરો',
-  '{device} wants your web logins': '{device} તમારા વેબ લોગિન માંગે છે',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ઝડપી પ્રશ્ન',

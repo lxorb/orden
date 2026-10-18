@@ -1278,12 +1278,6 @@ export const ru: Dictionary = {
   'Ask to join': 'Попросить доступ',
   Asking: 'Запрос',
   'Waiting for {who}': 'Ожидание {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Этот компьютер пока нельзя связать: службе аккаунта нужно обновление.',
-  '{device} runs an older Orden: update it there to pair it.':
-    'На {device} старая версия Orden: обновите её там, чтобы связать.',
-  '{device} offers this computer your web logins':
-    '{device} предлагает этому компьютеру ваши входы на сайты',
   '{who} did not let you in': '{who} не дал вам доступ',
   'What the others in this space see.': 'То, что видят остальные в этом пространстве.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2085,10 +2079,6 @@ export const ru: Dictionary = {
     many: '{count} вызовов',
     other: '{count} вызова',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Открыто на {device}',
-  'Use here': 'Использовать здесь',
-  '{device} wants your web logins': '{device} запрашивает ваши входы на сайты',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Быстрый вопрос',

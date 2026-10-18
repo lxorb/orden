@@ -1231,12 +1231,6 @@ export const ko: Dictionary = {
   'Ask to join': '참여 요청',
   Asking: '요청 중',
   'Waiting for {who}': '{who}를 기다리는 중',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    '이 컴퓨터는 아직 페어링할 수 없습니다. 계정 서비스를 업데이트해야 합니다.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device}에서 이전 버전의 Orden을 사용 중입니다. 페어링하려면 그곳에서 업데이트하세요.',
-  '{device} offers this computer your web logins':
-    '{device}에서 이 컴퓨터에 웹 로그인을 제공합니다',
   '{who} did not let you in': '{who}가 들여보내지 않았습니다',
   'What the others in this space see.': '이 공간의 다른 사람에게 보이는 것.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1978,10 +1972,6 @@ export const ko: Dictionary = {
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
   '{count} calls': '호출 {count}회',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}에서 열려 있음',
-  'Use here': '여기에서 사용',
-  '{device} wants your web logins': '{device}에서 웹 로그인을 요청합니다',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '빠른 질문',

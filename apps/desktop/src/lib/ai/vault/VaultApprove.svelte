@@ -2,13 +2,12 @@
   /** Another of the reader's devices asking for their AI accounts (docs/ai.md, "Every
    *  device"): *"Phone wants your AI accounts  482 913"*, with Don't allow and Allow.
    *
-   *  The bubble another computer asks for web logins in (WebApprove.svelte), in the same
-   *  shape and the same two answers. It comes up on the device that answered the asking
-   *  one, once that device has revealed the key it committed to: the six digits are worked
-   *  out from both devices' keys and nonces, the asking device shows the same six in
-   *  Settings > AI, and a key slipped in between would show others (vault.svelte.ts).
-   *  Allow wraps the key to the one these digits came from. Escape puts it away without
-   *  an answer, and the question comes back with the next read. */
+   *  It comes up on the device that answered the asking one, once that device has
+   *  revealed the key it committed to: the six digits are worked out from both devices'
+   *  keys and nonces, the asking device shows the same six in Settings > AI, and a key
+   *  slipped in between would show others (vault.svelte.ts). Allow wraps the key to the
+   *  one these digits came from. Escape puts it away without an answer, and the question
+   *  comes back with the next read. */
   import { onMount } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'

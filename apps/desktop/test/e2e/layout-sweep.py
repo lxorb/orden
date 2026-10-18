@@ -98,7 +98,6 @@ USER = {
     "accent": None,
     "avatar": None,
     "hidden": False,
-    "webSync": False,
     "syncVersion": 1,
 }
 ACCOUNT: dict[str, Any] = {

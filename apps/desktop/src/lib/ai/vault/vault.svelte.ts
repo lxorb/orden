@@ -44,7 +44,7 @@ import {
 import { SvelteMap } from 'svelte/reactivity'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
 
-/** What the vault's six digits are for, beside web logins'; see pairing.ts. */
+/** What the vault's six digits are for; see pairing.ts. */
 const DIGITS = 'nib ai vault digits'
 
 /** Where this device's key pair is kept in its secret store. */

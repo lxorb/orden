@@ -1219,11 +1219,6 @@ export const zhHantHK: Dictionary = {
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    '暫時未能配對此電腦：帳戶的服務需要更新。',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} 執行的是舊版 Orden：請在那裡更新後再配對。',
-  '{device} offers this computer your web logins': '{device} 向此電腦提供你的網頁登入',
   '{who} did not let you in': '{who}沒有讓你加入',
   'What the others in this space see.': '此空間裏其他人看到的內容。',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1954,10 +1949,6 @@ export const zhHantHK: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁面數',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '已在 {device} 開啟',
-  'Use here': '在此使用',
-  '{device} wants your web logins': '{device} 要求你的網頁登入',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快速提問',

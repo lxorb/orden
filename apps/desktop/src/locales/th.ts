@@ -1226,12 +1226,6 @@ export const th: Dictionary = {
   'Ask to join': 'ขอเข้าร่วม',
   Asking: 'กำลังขอ',
   'Waiting for {who}': 'กำลังรอ {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'ยังจับคู่คอมพิวเตอร์เครื่องนี้ไม่ได้ บริการของบัญชีต้องได้รับการอัปเดต',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} ใช้ Orden รุ่นเก่า อัปเดตที่เครื่องนั้นเพื่อจับคู่',
-  '{device} offers this computer your web logins':
-    '{device} เสนอการเข้าสู่ระบบเว็บของคุณให้คอมพิวเตอร์นี้',
   '{who} did not let you in': '{who} ไม่ให้คุณเข้า',
   'What the others in this space see.': 'สิ่งที่คนอื่นในพื้นที่นี้เห็น',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -1968,10 +1962,6 @@ export const th: Dictionary = {
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
   '{count} calls': '{count} การเรียก',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'เปิดอยู่บน {device}',
-  'Use here': 'ใช้ที่นี่',
-  '{device} wants your web logins': '{device} ต้องการการเข้าสู่ระบบเว็บของคุณ',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'คำถามด่วน',

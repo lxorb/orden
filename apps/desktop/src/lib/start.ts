@@ -15,16 +15,7 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import {
-  anythingRuns,
-  GIVE_UP,
-  handBack,
-  handingBack,
-  settleUp,
-  stillWriting,
-  trayKeeper,
-  written,
-} from './parting'
+import { anythingRuns, GIVE_UP, settleUp, stillWriting, trayKeeper, written } from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
@@ -33,7 +24,6 @@ import { hiddenKinds, settings } from './settings.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
-import { HANDS_BACK_WITHIN } from './backoff'
 import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
@@ -322,10 +312,10 @@ async function onClose(event: Closing, window: Closable) {
   // writes them.
   if (!isDesktop) return
 
-  // Nothing being written or running, no web login to hand back and no update to put in
-  // place: the window just goes. What runs is asked about first; see lib/quitting.
+  // Nothing being written or running and no update to put in place: the window just
+  // goes. What runs is asked about first; see lib/quitting.
   const runs = anythingRuns()
-  if (!runs && !workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
+  if (!runs && !workspace.writing && !stillWriting() && !ready() && !going) return
 
   event.preventDefault()
   if (going) return
@@ -356,19 +346,11 @@ function settle() {
   workspace.graphSettings.flush()
 }
 
-/** The writes that are owed, and the web logins this computer holds handed back to the
- *  account, waited for; and a waiting update put in place. */
+/** The writes that are owed, waited for; and a waiting update put in place. */
 async function go(): Promise<void> {
   going = true
   try {
-    await Promise.race([
-      Promise.all([
-        workspace.writesSettled(),
-        written(),
-        Promise.race([handBack(), waited(HANDS_BACK_WITHIN)]),
-      ]),
-      waited(GIVE_UP),
-    ])
+    await Promise.race([Promise.all([workspace.writesSettled(), written()]), waited(GIVE_UP)])
     await installStaged()
   } finally {
     going = false

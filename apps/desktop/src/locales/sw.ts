@@ -1248,12 +1248,6 @@ export const sw: Dictionary = {
   'Ask to join': 'Omba kujiunga',
   Asking: 'Inaomba',
   'Waiting for {who}': 'Inasubiri {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Kompyuta hii bado haiwezi kuoanishwa: huduma ya akaunti inahitaji kusasishwa.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} inatumia Orden ya zamani: isasishe huko ili kuioanisha.',
-  '{device} offers this computer your web logins':
-    '{device} inakipa kompyuta hii kuingia kwako kwenye wavuti',
   '{who} did not let you in': '{who} hakukuruhusu kuingia',
   'What the others in this space see.': 'Kile wengine katika nafasi hii wanaona.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2033,10 +2027,6 @@ export const sw: Dictionary = {
     one: 'simu {count}',
     other: 'simu {count}',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Imefunguliwa kwenye {device}',
-  'Use here': 'Tumia hapa',
-  '{device} wants your web logins': '{device} inaomba kuingia kwako kwenye wavuti',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Swali la haraka',

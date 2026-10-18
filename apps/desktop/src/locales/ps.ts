@@ -1238,12 +1238,6 @@ export const ps: Dictionary = {
   'Ask to join': 'د يوځای کېدو غوښتنه',
   Asking: 'غوښتنه کېږي',
   'Waiting for {who}': 'د {who} انتظار',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'دا کمپیوټر لا نه شي جوړه کېدای: د حساب خدمت تازه کولو ته اړتیا لري.',
-  '{device} runs an older Orden: update it there to pair it.':
-    '{device} زوړ Orden چلوي: د جوړه کولو لپاره یې هلته تازه کړئ.',
-  '{device} offers this computer your web logins':
-    '{device} دې کمپیوټر ته ستاسو د ویب ننوتنې وړاندې کوي',
   '{who} did not let you in': '{who} تاسو ته پرېنښودل',
   'What the others in this space see.': 'هغه چې نور په دې ځای کې ويني.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2006,10 +2000,6 @@ export const ps: Dictionary = {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'په {device} کې پرانیستی',
-  'Use here': 'دلته یې وکاروئ',
-  '{device} wants your web logins': '{device} ستاسو د ویب ننوتنې غواړي',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'چټکه پوښتنه',

@@ -1275,12 +1275,6 @@ export const pl: Dictionary = {
   'Ask to join': 'Poproś o dostęp',
   Asking: 'Prośba',
   'Waiting for {who}': 'Oczekiwanie na {who}',
-  'This computer can’t be paired yet: the account’s service needs an update.':
-    'Tego komputera nie można jeszcze sparować: usługa konta wymaga aktualizacji.',
-  '{device} runs an older Orden: update it there to pair it.':
-    'Na {device} działa starszy Orden: zaktualizuj go tam, aby go sparować.',
-  '{device} offers this computer your web logins':
-    '{device} oferuje temu komputerowi Twoje logowania w sieci',
   '{who} did not let you in': '{who} cię nie wpuścił',
   'What the others in this space see.': 'To, co widzą inni w tej przestrzeni.',
   // Which stream of releases this machine follows; see updates.svelte.ts
@@ -2085,10 +2079,6 @@ export const pl: Dictionary = {
     many: '{count} wywołań',
     other: '{count} wywołania',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Otwarte na {device}',
-  'Use here': 'Użyj tutaj',
-  '{device} wants your web logins': '{device} prosi o Twoje logowania do stron',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Szybkie pytanie',
