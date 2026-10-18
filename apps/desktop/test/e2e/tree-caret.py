@@ -7,6 +7,10 @@ note in front as it was; a double press on it opens nothing either. Pressed on i
 name, the row opens. And under a thumb, the strip is never narrower than the touch
 target, and the mark and the row are where they were: the strip is drawn nowhere.
 
+The tag tree under an empty search draws the same twist in front of a tag that holds
+tags, as a button of its own: pressed a few pixels either side of it, it turns, and
+nothing is searched for; pressed on the tag's name, the tag is searched for.
+
 Run it from the repository root:
 
     python apps/desktop/test/e2e/tree-caret.py
@@ -167,9 +171,62 @@ def thumb(browser: Browser) -> None:
         context.close()
 
 
+TAGS = """
+async () => {
+  const ws = window.nibApp.workspace
+  await ws.noteFrom('# Tagged\\n\\n#work/plan #work/ideas\\n', ws.activeSpace.root)
+  window.nibApp.search.text = ''
+  ws.showPanel('search')
+}
+"""
+
+TAG = "aside .line:has(.twist) .twist"
+TAG_OPEN = f"() => document.querySelector(\"{TAG}\")?.getAttribute('aria-expanded')"
+SEARCHED = "() => window.nibApp.search.text"
+
+
+def tags(browser: Browser) -> None:
+    context = browser.new_context(viewport={"width": 1180, "height": 760})
+    page = context.new_page()
+    page.add_init_script(HINTS)
+    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
+    try:
+        DRIVE.open(page)
+        page.evaluate(TAGS)
+        wait_for(page, f"() => !!document.querySelector(\"{TAG}\")", "the tag that holds tags")
+        seen = None
+        for _ in range(40):
+            now = page.evaluate(f"() => JSON.stringify(document.querySelector(\"{TAG}\").getBoundingClientRect())")
+            if now == seen:
+                break
+            seen = now
+            page.wait_for_timeout(150)
+        box = json.loads(seen or "{}")
+        say(f"the tag's twist: {box}")
+        middle = box["y"] + box["height"] / 2
+        for x, what in ((box["x"] - 3, "3px before the tag's twist"), (box["x"] + box["width"] + 2, "2px after the tag's twist")):
+            was = page.evaluate(TAG_OPEN)
+            page.mouse.click(x, middle)
+            try:
+                wait_for(page, f"() => ({TAG_OPEN})() !== {json.dumps(was)}", what, 10)
+            except BaseException:
+                wrong(f"{what}: the tag did not turn")
+            if page.evaluate(SEARCHED):
+                wrong(f"{what}: it searched for {page.evaluate(SEARCHED)!r} as well")
+            say(f"{what}: {was} -> {page.evaluate(TAG_OPEN)}")
+        page.locator("aside .line:has(.twist) .nib-row-label").first.click()
+        try:
+            wait_for(page, f"() => ({SEARCHED})().includes('tag:work')", "the tag searched for", 10)
+        except BaseException:
+            wrong(f"pressing the tag's name searched for {page.evaluate(SEARCHED)!r}")
+    finally:
+        context.close()
+
+
 def drive(browser: Browser) -> None:
     desk(browser)
     thumb(browser)
+    tags(browser)
 
 
 if __name__ == "__main__":

@@ -23,3 +23,21 @@ describe('the strip', () => {
     expect(css).toMatch(/\[data-touch\]\) \.twist::before \{[^}]*--touch-target/)
   })
 })
+
+describe('the tag tree’s twist', () => {
+  const css = readFileSync(
+    fileURLToPath(new URL('../src/lib/TagTree.svelte', import.meta.url)),
+    'utf8',
+  )
+
+  test('is pressed a step wider than it is drawn, on the row’s whole height', () => {
+    const rule = /\.twist::before \{([^}]*)\}/.exec(css)?.[1] ?? ''
+    expect(rule).toContain('inset-block: 0')
+    expect(rule).toContain("content: ''")
+    expect(rule).not.toMatch(/background|border|color/)
+  })
+
+  test('and never narrower than a thumb where there is one', () => {
+    expect(css).toMatch(/\[data-touch\]\) \.twist::before \{[^}]*--touch-target/)
+  })
+})
