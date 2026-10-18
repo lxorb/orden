@@ -14,7 +14,9 @@
  *
  *  A row's `public_key`, and the `web_keys` rows, are from web logins that travelled
  *  between computers, which were removed (#393). Nothing writes or reads them now; they
- *  stay until a later cleanup drops them, and go with the account when it is erased. */
+ *  stay until a later cleanup drops them, and go with the account when it is erased. A
+ *  device that is ended takes its own `web_keys` row with it all the same: a key wrapped
+ *  to a device the account no longer has is not one to keep. */
 
 import { Hono } from 'hono'
 import { tokenIn } from '../auth'
@@ -106,6 +108,7 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
   if (!row) return false
 
   await env.DB.batch([
+    env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?').bind(user, device),
     env.DB.prepare(
       'update devices set revoked_at = ?, session_id = null where id = ? and user_id = ?',
     ).bind(now(), device, user),

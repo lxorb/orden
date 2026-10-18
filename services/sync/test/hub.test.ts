@@ -81,6 +81,28 @@ describe('ending a device', () => {
     expect((await call(env, '/v1/me', { token: laptop.token })).status).toBe(401)
   })
 
+  /** A web key wrapped to a device from before #393 goes with the device, and another
+   *  device's stays until the later cleanup. */
+  test('takes the web key wrapped to it, and only that one', async () => {
+    const laptop = await computer(env, running, 'keys@example.com', 'Laptop')
+    const desktop = await computer(env, running, 'keys@example.com', 'Desktop')
+    const wrap = env.db.prepare(
+      `insert into web_keys (user_id, device_id, wrapped, generation) values (?, ?, 'w', 1)`,
+    )
+    wrap.run(laptop.user, laptop.id)
+    wrap.run(desktop.user, desktop.id)
+
+    const ended = await call(env, `/v2/devices/${laptop.id}`, {
+      method: 'DELETE',
+      token: desktop.token,
+    })
+    expect(ended.status).toBe(200)
+
+    expect(
+      env.db.prepare('select device_id as device from web_keys where user_id = ?').all(laptop.user),
+    ).toEqual([{ device: desktop.id }])
+  })
+
   test('is what ending its session from the sessions list does', async () => {
     const laptop = await computer(env, running, 'list@example.com', 'Laptop')
     const desktop = await computer(env, running, 'list@example.com', 'Desktop')
