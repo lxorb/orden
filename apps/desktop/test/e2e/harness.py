@@ -171,6 +171,18 @@ WEBKIT_CLIPBOARD = (
     " c.readText = () => read().catch(() => kept) })()"
 )
 
+#: And Cmd+A selecting the words of a field, which on a Mac is the system's and not the
+#: page's: Playwright's WebKit outside a Mac has no such command, so a field asked for
+#: all of its words with the Mac's key kept them unselected and the next words typed
+#: went on the end (#384). Heard first and done once the key has been through the page,
+#: and only where nothing on the page took it.
+MAC_SELECT_ALL = (
+    "addEventListener('keydown', (event) => { const at = event.target;"
+    " if (!event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== 'a') return;"
+    " if (!(at instanceof HTMLInputElement || at instanceof HTMLTextAreaElement)) return;"
+    " setTimeout(() => { if (!event.defaultPrevented) at.select() }) }, true)"
+)
+
 #: Every socket a page opens, kept where `_offline_as_chromium` can close it. WebKit's
 #: offline leaves a socket that is already open carrying messages both ways, where
 #: Chromium's stops it, so a page "offline" in WebKit went on syncing live (#384).
@@ -281,6 +293,7 @@ def answering(browser: Any) -> Any:
             context.add_init_script(MAC_PLATFORM)
             context.add_init_script(WEBKIT_CLIPBOARD)
             context.add_init_script(WEBKIT_SOCKETS)
+            context.add_init_script(MAC_SELECT_ALL)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -1104,6 +1117,7 @@ class Drive:
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
             context.add_init_script(WEBKIT_SOCKETS)
+            context.add_init_script(MAC_SELECT_ALL)
         context.add_init_script(BUILT_IN)
         return context
 
