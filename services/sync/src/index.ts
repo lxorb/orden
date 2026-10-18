@@ -24,7 +24,6 @@ import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
-import { tasks } from './tasks'
 import { chatDoor } from './chats/door'
 import { chats } from './chats/routes'
 import { sweepChats } from './chats/sweep'
@@ -287,7 +286,6 @@ app.route('/v1/second', second)
 // Deleting the account, which takes fresh codes and not only the session; see
 // account.ts.
 app.route('/v1/account', account)
-app.route('/v1', tasks)
 app.route('/v1', notes)
 
 // Sync v2, the hub's half: the account's devices. See hub/devices.ts.

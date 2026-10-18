@@ -302,13 +302,13 @@ async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   return addTaskTo(env, await writableSpace(env, token, args), args)
 }
 
-/** The space a task goes to, as both the connector and the clipper's route have it. */
+/** The space a task goes to. */
 type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
 
 /** A task added to a space the caller may write: to its Inbox.md, or to `note` under
- *  `under`. The connector's `add_task` and the clipper's "As a task" (tasks.ts) both
- *  come here. Throws the sentence to answer with where it cannot. */
-export async function addTaskTo(
+ *  `under`: the connector's `add_task`. Throws the sentence to answer with where it
+ *  cannot. */
+async function addTaskTo(
   env: Env,
   space: Writable,
   args: Args,
@@ -424,9 +424,8 @@ const RUNS: Record<string, (env: Env, token: TokenRow, args: Args) => Promise<un
   add_row: addRow,
 }
 
-/** A sentence a task tool answered with rather than a task: what the clipper's route
- *  hands back as its refusal. */
-export function refusalOf(error: unknown): string | null {
+/** A sentence a task tool answered with rather than a task. */
+function refusalOf(error: unknown): string | null {
   return error instanceof Said || error instanceof AgentError ? error.message : null
 }
 
