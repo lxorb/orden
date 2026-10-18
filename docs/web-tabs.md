@@ -1165,7 +1165,7 @@ desktop app leaves its web notes' tabs out (`tabsAlong`).
 
 ## The bar
 
-Back, forward, reload, the address, a clip, the dots. The same `.nib-glyph`
+Back, forward, reload, the address, the dots. The same `.nib-glyph`
 squares the find bar is made of, the same `.nib-field`, the same row scale, in the
 same place under the tab strip - a bar over the page would cover the first line of
 it.
@@ -1288,10 +1288,10 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 asked for exactly that: _"Our browser related menu structure should be very similar
 to that of chrome. And in general we don't want to reinvent how a browser works."_
 New tab, New private tab, History, Essentials, Delete browsing data, Zoom out / the size /
-Zoom in, Full screen, Print, Find, Save page, Share, Copy link, Open in the browser,
+Zoom in, Full screen, Print, Find, Save as a note, Share, Copy link, Open in the browser,
 Settings - each bent onto what nib has where the two differ: Chrome's Incognito window is
-a tab here, a bookmark is the space's own kept files, Save page is the clipper, and Share
-is nib's share sheet. The three zoom rows keep the menu open the
+a tab here, a bookmark is the space's own kept files, Chrome's Save page is Save as a
+note, the clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
 way a browser's do, which is the one thing a row in this app may now ask for; see
 `keep` in `lib/menu-item.ts`.
 
@@ -1596,7 +1596,12 @@ a probe build, read back out of the folder, the tabs and the crate's list.
 
 ## Clipping the page
 
-The Clip glyph writes the page into the space as a note, through the same three
+**Save as a note**, behind the dots, writes the page into the space as a note. It is
+the one way in from a web tab: the scissors that did the same from the bar went on
+every platform when Emil asked for them gone (#405, *"und entferne bitte diese komische
+schere um browser tabs als note zu speichern"*), and a press on the dots is one more
+than a press on the bar for something nobody does every minute. It goes through the
+same three
 things the clipper extension uses: the article extractor (`@nib/markdown/article`,
 Mozilla's Readability, which is Firefox's reader mode), the converter
 (`@nib/markdown/from-html`) and the note's shape (`@nib/markdown/clip-note`:
@@ -1633,8 +1638,8 @@ given anything to call.
 
 **In a browser build a clip is the link.** The frame's document belongs to
 somebody else's origin and cannot be read at all, so the note is the title and the
-address. The glyph says so before it is pressed: it reads "Clip the link" there and
-"Clip this page" on a desktop, which is better than an apology afterwards.
+address. The row is the same row either way; what lands in the file list says which it
+was.
 
 The clip does not open in a tab. The page is still what the reader is looking at,
 and a note that opened over it would take them away from what they were reading;
