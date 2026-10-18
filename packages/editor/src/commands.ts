@@ -291,6 +291,21 @@ export const toggleTask: StateCommand = (target) => {
   return true
 }
 
+/** Ticks the task the caret is on, or clears it, and does nothing on any other line:
+ *  Enter in Vim's normal mode (vim-mode.ts), where a press anywhere else is still
+ *  Vim's line down. A line that is not a task yet stays what it is, because making
+ *  one is Ctrl+Enter's and Enter on a paragraph should not grow it a box. One caret
+ *  on one line; a selection is something else being done. */
+export const tickTaskAtCaret: StateCommand = (target) => {
+  const { state } = target
+  const { main } = state.selection
+  const line = state.doc.lineAt(main.head)
+  if (state.selection.ranges.length > 1 || main.from < line.from || main.to > line.to) return false
+  if (!taskAt(line.text) || !taskable(state, line)) return false
+
+  return toggleTask(target)
+}
+
 export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
   const pattern = /^\s*\d+[.)]\s+/

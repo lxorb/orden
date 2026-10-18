@@ -11,7 +11,7 @@ import { CodeMirror, Vim } from '@replit/codemirror-vim'
 import { modeExtensions } from './modes'
 import { type DocView, SharedDoc, sharing } from './shared'
 import { loadVim, setVim } from './vim'
-import { takeBackNibKeys } from './vim-mode'
+import { plainNormalEnter, takeBackNibKeys } from './vim-mode'
 
 // The library is loaded the first time modal editing is asked for; these tests turn
 // the mode on and read the state in the same breath, which in the app is a keymap
@@ -167,5 +167,52 @@ describe('the keys Nib keeps for itself', () => {
     // the same way: the settings say the clipboard belongs to the system. So
     // that one is left alone, and visual block lives there.
     expect(unmap('<C-q>')).toBe(true)
+  })
+})
+
+/** Enter on a task in normal mode ticks it; vim-mode.ts asks this first, and
+ *  `tickTaskAtCaret` in commands.ts answers whether the line is a task. */
+describe('Enter, as normal mode reads it', () => {
+  const enter = {
+    key: 'Enter',
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    altKey: false,
+    isComposing: false,
+  }
+  const idle = { prefixRepeat: [], operator: null, keyBuffer: [] }
+  const normal = { insertMode: false, visualMode: false, inputState: idle }
+
+  test('is a plain Enter in normal mode with nothing typed before it', () => {
+    expect(plainNormalEnter(enter, normal)).toBe(true)
+  })
+
+  test('is not Enter in insert mode or in visual mode', () => {
+    expect(plainNormalEnter(enter, { ...normal, insertMode: true })).toBe(false)
+    expect(plainNormalEnter(enter, { ...normal, visualMode: true })).toBe(false)
+  })
+
+  test('is not Enter finishing a command: a count, an operator, a register, a sequence', () => {
+    expect(
+      plainNormalEnter(enter, { ...normal, inputState: { ...idle, prefixRepeat: ['3'] } }),
+    ).toBe(false)
+    expect(
+      plainNormalEnter(enter, { ...normal, inputState: { ...idle, operator: 'delete' } }),
+    ).toBe(false)
+    expect(plainNormalEnter(enter, { ...normal, inputState: { ...idle, registerName: 'a' } })).toBe(
+      false,
+    )
+    expect(plainNormalEnter(enter, { ...normal, inputState: { ...idle, keyBuffer: ['g'] } })).toBe(
+      false,
+    )
+  })
+
+  test('is not a chord with Enter in it, another key, or a view with no modal editing', () => {
+    expect(plainNormalEnter({ ...enter, ctrlKey: true }, normal)).toBe(false)
+    expect(plainNormalEnter({ ...enter, shiftKey: true }, normal)).toBe(false)
+    expect(plainNormalEnter({ ...enter, isComposing: true }, normal)).toBe(false)
+    expect(plainNormalEnter({ ...enter, key: 'j' }, normal)).toBe(false)
+    expect(plainNormalEnter(enter, null)).toBe(false)
   })
 })
