@@ -1847,6 +1847,9 @@ export const uk: Dictionary = {
   'Bring all to front': 'Усе на передній план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Скасувати копіювання',
+  'Undo making {name}': 'Скасувати створення {name}',
+  'Undo the deletion': 'Скасувати видалення',
+  'Undo the move': 'Скасувати переміщення',
   'Redo the last file change': 'Повторити останню зміну файлів',
   'Select down': 'Виділити вниз',
   'Select up': 'Виділити вгору',

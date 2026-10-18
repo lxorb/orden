@@ -1853,6 +1853,9 @@ export const pl: Dictionary = {
   'Bring all to front': 'Przenieś wszystko na wierzch',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Cofnij kopiowanie',
+  'Undo making {name}': 'Cofnij utworzenie {name}',
+  'Undo the deletion': 'Cofnij usunięcie',
+  'Undo the move': 'Cofnij przeniesienie',
   'Redo the last file change': 'Ponów ostatnią zmianę plików',
   'Select down': 'Zaznacz w dół',
   'Select up': 'Zaznacz w górę',

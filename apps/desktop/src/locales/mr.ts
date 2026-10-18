@@ -1783,6 +1783,9 @@ export const mr: Dictionary = {
   'Bring all to front': 'सर्व पुढे आणा',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'कॉपी पूर्ववत करा',
+  'Undo making {name}': '{name} बनवणे पूर्ववत करा',
+  'Undo the deletion': 'हटवणे पूर्ववत करा',
+  'Undo the move': 'हलवणे पूर्ववत करा',
   'Redo the last file change': 'फाइलमधील शेवटचा बदल पुन्हा करा',
   'Select down': 'खाली निवडा',
   'Select up': 'वर निवडा',

@@ -1809,6 +1809,9 @@ export const sw: Dictionary = {
   'Bring all to front': 'Leta zote mbele',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Tendua unakili',
+  'Undo making {name}': 'Tendua kuunda {name}',
+  'Undo the deletion': 'Tendua ufutaji',
+  'Undo the move': 'Tendua uhamishaji',
   'Redo the last file change': 'Rudia badiliko la mwisho la faili',
   'Select down': 'Teua kwenda chini',
   'Select up': 'Teua kwenda juu',

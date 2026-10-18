@@ -1788,6 +1788,9 @@ export const tr: Dictionary = {
   'Bring all to front': 'Tümünü öne getir',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopyalamayı geri al',
+  'Undo making {name}': '{name} oluşturmasını geri al',
+  'Undo the deletion': 'Silmeyi geri al',
+  'Undo the move': 'Taşımayı geri al',
   'Redo the last file change': 'Son dosya değişikliğini yinele',
   'Select down': 'Aşağı doğru seç',
   'Select up': 'Yukarı doğru seç',

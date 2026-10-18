@@ -1811,6 +1811,9 @@ export const ptBR: Dictionary = {
   'Bring all to front': 'Trazer tudo para a frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
+  'Undo making {name}': 'Desfazer criar {name}',
+  'Undo the deletion': 'Desfazer a exclusão',
+  'Undo the move': 'Desfazer a movimentação',
   'Redo the last file change': 'Refazer a última alteração de arquivo',
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',

@@ -1821,6 +1821,9 @@ export const de: Dictionary = {
   'Bring all to front': 'Alle nach vorne bringen',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Undo making {name}': '{name} wieder entfernen',
+  'Undo the deletion': 'Löschen zurücknehmen',
+  'Undo the move': 'Verschieben zurücknehmen',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',

@@ -1783,6 +1783,9 @@ export const ps: Dictionary = {
   'Bring all to front': 'ټول مخې ته راوړه',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'لمېسه بېرته کول',
+  'Undo making {name}': 'د {name} جوړول بېرته کول',
+  'Undo the deletion': 'ړنګون بېرته کول',
+  'Undo the move': 'خوځښت بېرته کول',
   'Redo the last file change': 'د دوتنې وروستی بدلون بيا کول',
   'Select down': 'ښکته ټاکل',
   'Select up': 'پورته ټاکل',

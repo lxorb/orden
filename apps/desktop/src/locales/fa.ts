@@ -1782,6 +1782,9 @@ export const fa: Dictionary = {
   'Bring all to front': 'آوردن همه به جلو',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'واگرد رونوشت',
+  'Undo making {name}': 'واگرد ساختن {name}',
+  'Undo the deletion': 'واگرد حذف',
+  'Undo the move': 'واگرد جابه‌جایی',
   'Redo the last file change': 'ازنو کردن آخرین تغییر پرونده',
   'Select down': 'گزینش به پایین',
   'Select up': 'گزینش به بالا',

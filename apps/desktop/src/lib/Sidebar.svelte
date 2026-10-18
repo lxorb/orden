@@ -565,6 +565,7 @@
     bind:this={aside}
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
+    data-sidebar
     aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
     class:resizing={size.dragging}
     class:right={side === 'right'}

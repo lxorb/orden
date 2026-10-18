@@ -1772,6 +1772,9 @@ export const gu: Dictionary = {
   'Bring all to front': 'બધું આગળ લાવો',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'નકલ પાછી લો',
+  'Undo making {name}': '{name} બનાવવું પાછું લો',
+  'Undo the deletion': 'કાઢવું પાછું લો',
+  'Undo the move': 'ખસેડવું પાછું લો',
   'Redo the last file change': 'ફાઇલનો છેલ્લો ફેરફાર ફરી કરો',
   'Select down': 'નીચે તરફ પસંદ કરો',
   'Select up': 'ઉપર તરફ પસંદ કરો',

@@ -1781,6 +1781,9 @@ export const id: Dictionary = {
   'Bring all to front': 'Bawa semua ke depan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Batalkan penyalinan',
+  'Undo making {name}': 'Batalkan pembuatan {name}',
+  'Undo the deletion': 'Batalkan penghapusan',
+  'Undo the move': 'Batalkan pemindahan',
   'Redo the last file change': 'Ulangi perubahan file terakhir',
   'Select down': 'Pilih ke bawah',
   'Select up': 'Pilih ke atas',

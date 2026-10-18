@@ -1778,6 +1778,9 @@ export const ja: Dictionary = {
   'Bring all to front': 'すべてを手前に移動',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'コピーを元に戻す',
+  'Undo making {name}': '{name} の作成を元に戻す',
+  'Undo the deletion': '削除を元に戻す',
+  'Undo the move': '移動を元に戻す',
   'Redo the last file change': '直前のファイル操作をやり直す',
   'Select down': '下へ選択',
   'Select up': '上へ選択',

@@ -1740,6 +1740,9 @@ export const yue: Dictionary = {
   'Bring all to front': '全部擺到最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Undo making {name}': '復原建立{name}',
+  'Undo the deletion': '復原刪除',
+  'Undo the move': '復原移動',
   'Redo the last file change': '重做上一次檔案變更',
   'Select down': '向下選取',
   'Select up': '向上選取',

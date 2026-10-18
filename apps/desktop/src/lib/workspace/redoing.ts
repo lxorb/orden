@@ -7,6 +7,8 @@
 
 import { folderOf, nameOf } from '../space-paths'
 import { copyAgain, type Copies } from './copying'
+import type { FileAction } from './undo.svelte'
+import { putBack } from './undoing'
 
 /** What doing an undone operation again needs of the store: the operations
  *  themselves, which record themselves as they always do. */
@@ -14,6 +16,7 @@ export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string): Promise<void>
   rename(path: string, name: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -25,32 +28,8 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   const rest = ws.undone.ahead.slice(0, -1)
 
   try {
-    switch (action.kind) {
-      case 'move':
-        await ws.move(action.from, folderOf(action.to))
-        break
-      case 'rename':
-        await ws.rename(action.from, nameOf(action.to))
-        break
-      case 'delete':
-        await ws.remove(action.path, false)
-        break
-      case 'copy':
-        await copyAgain(ws, action.made)
-        break
-      case 'archive':
-      case 'unarchive':
-        // Never in the glasses' plugin, which has no archiving to do again.
-        if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
-        break
-      // Never ahead: they kept only the way back; see `doesAgain`.
-      case 'merge':
-      case 'split':
-      case 'extract':
-      case 'replace':
-      case 'import':
-        return
-    }
+    // What the steps of one gesture record as they are done again is one step again.
+    await ws.undone.batch(() => again(ws, action))
   } catch {
     // Something has taken the place since; the redo stays where it was, to be
     // asked for again.
@@ -60,4 +39,45 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   ws.undone.redone(rest)
   await ws.loadTree()
   ws.persist()
+}
+
+/** Does one operation again. */
+async function again(ws: DoesAgain, action: FileAction): Promise<void> {
+  switch (action.kind) {
+    case 'move':
+      // A move the one before it caused comes about again with that one.
+      if (!action.follows) await ws.move(action.from, folderOf(action.to))
+      break
+    case 'rename':
+      await ws.rename(action.from, nameOf(action.to))
+      break
+    case 'delete':
+      await ws.remove(action.path, action.folder === true)
+      break
+    case 'create': {
+      // Back out of Recently deleted, or written again from what it said.
+      const path = await putBack({ ...action, kind: 'delete', content: action.content ?? '' })
+      await ws.fileCame(path, 'file')
+      ws.undone.record({ kind: 'create', path })
+      break
+    }
+    case 'many':
+      for (const step of action.steps) await again(ws, step)
+      break
+    case 'copy':
+      await copyAgain(ws, action.made)
+      break
+    case 'archive':
+    case 'unarchive':
+      // Never in the glasses' plugin, which has no archiving to do again.
+      if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
+      break
+    // Never ahead: they kept only the way back; see `doesAgain`.
+    case 'merge':
+    case 'split':
+    case 'extract':
+    case 'replace':
+    case 'import':
+      return
+  }
 }

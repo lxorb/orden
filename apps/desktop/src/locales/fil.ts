@@ -1816,6 +1816,9 @@ export const fil: Dictionary = {
   'Bring all to front': 'Dalhin lahat sa harap',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Ibalik ang pagkopya',
+  'Undo making {name}': 'Ibalik ang paggawa ng {name}',
+  'Undo the deletion': 'Ibalik ang pagtanggal',
+  'Undo the move': 'Ibalik ang paglipat',
   'Redo the last file change': 'Gawing muli ang huling pagbabago sa file',
   'Select down': 'Pumili pababa',
   'Select up': 'Pumili pataas',

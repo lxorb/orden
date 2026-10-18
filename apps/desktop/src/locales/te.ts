@@ -1788,6 +1788,9 @@ export const te: Dictionary = {
   'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'కాపీని చర్యరద్దు చేయి',
+  'Undo making {name}': '{name} సృష్టిని చర్యరద్దు చేయి',
+  'Undo the deletion': 'తొలగింపును చర్యరద్దు చేయి',
+  'Undo the move': 'తరలింపును చర్యరద్దు చేయి',
   'Redo the last file change': 'చివరి ఫైల్ మార్పును మళ్లీ చేయి',
   'Select down': 'కిందికి ఎంచుకో',
   'Select up': 'పైకి ఎంచుకో',

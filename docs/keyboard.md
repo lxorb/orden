@@ -199,7 +199,7 @@ entries, so a rebind of one is a rebind of both.
 | Delete, Backspace | delete the selection |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
 | Ctrl+Alt+N | a new note in the folder the row is, or sits in, waiting for its name: New note's key, wherever it is bound |
-| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
+| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac); also with the keyboard gone elsewhere, while the list was the last thing used |
 | Alt+Up, Alt+Down | move the row in the order somebody arranged |
 
 See `docs/tree.md` for what a copy is called and where it lands. Duplicate is a row of

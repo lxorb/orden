@@ -1825,6 +1825,9 @@ export const ptPT: Dictionary = {
   'Bring all to front': 'Trazer tudo para a frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
+  'Undo making {name}': 'Anular criar {name}',
+  'Undo the deletion': 'Anular a eliminação',
+  'Undo the move': 'Anular a deslocação',
   'Redo the last file change': 'Refazer a última alteração de ficheiro',
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',

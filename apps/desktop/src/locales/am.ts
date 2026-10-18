@@ -1758,6 +1758,9 @@ export const am: Dictionary = {
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ቅጂውን መልስ',
+  'Undo making {name}': '{name} መፍጠርን መልስ',
+  'Undo the deletion': 'ማጥፋቱን መልስ',
+  'Undo the move': 'ማንቀሳቀሱን መልስ',
   'Redo the last file change': 'የመጨረሻውን የፋይል ለውጥ እንደገና አድርግ',
   'Select down': 'ወደ ታች ምረጥ',
   'Select up': 'ወደ ላይ ምረጥ',

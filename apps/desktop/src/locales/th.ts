@@ -1751,6 +1751,9 @@ export const th: Dictionary = {
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'เลิกทำการคัดลอก',
+  'Undo making {name}': 'เลิกสร้าง {name}',
+  'Undo the deletion': 'เลิกลบ',
+  'Undo the move': 'เลิกย้าย',
   'Redo the last file change': 'ทำซ้ำการเปลี่ยนแปลงไฟล์ล่าสุด',
   'Select down': 'เลือกลง',
   'Select up': 'เลือกขึ้น',

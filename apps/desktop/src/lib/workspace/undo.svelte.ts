@@ -2,8 +2,7 @@
  *
  *  Not persisted: putting a file back only makes sense while it is fresh, and
  *  an entry that survived a restart would be offering to undo something the
- *  reader had long forgotten. Deleting a folder is not among them either - its
- *  contents are already gone, and there is no snapshot of a folder. */
+ *  reader had long forgotten. */
 
 import { t } from '../i18n.svelte'
 import type { Edit } from '../search/replace'
@@ -18,8 +17,24 @@ export type FileAction =
        *  the reverse rename is the same rewrite the other way round, and holding
        *  a copy of every touched note would hold a whole space. */
       rewrote?: boolean
+      /** Caused by the step before (an unnesting), or made its folder (a nesting). */
+      follows?: boolean
+      nests?: boolean
     }
-  | { kind: 'delete'; path: string; content: string; trashId?: string }
+  | {
+      kind: 'delete'
+      path: string
+      content: string
+      trashId?: string
+      /** Signed in, a folder's words and folders as it went. */
+      folder?: boolean
+      notes?: { path: string; content: string }[]
+      folders?: string[]
+    }
+  /** A file made; what Recently deleted kept of it once undone (#399). */
+  | { kind: 'create'; path: string; content?: string; trashId?: string }
+  /** One gesture of several operations (#399). */
+  | { kind: 'many'; steps: FileAction[] }
   /** The composer's three, each recorded with the text it replaced: what those
    *  do is edit two notes at once, and an edit is not a file operation the
    *  filesystem can put back. */
@@ -54,6 +69,8 @@ export type FileAction =
       closed: string[]
     }
 
+export type Kept = Omit<Extract<FileAction, { kind: 'delete' }>, 'kind' | 'path'>
+
 export interface Copied {
   path: string
   folder: boolean
@@ -85,8 +102,27 @@ export class FileActions {
   }
 
   record(action: FileAction) {
+    if (this.#held) {
+      this.#held.push(action)
+      return
+    }
     this.stack = [...this.stack, action].slice(-KEPT)
     this.ahead = []
+  }
+
+  /** What `work` records, as one step. */
+  #held: FileAction[] | null = null
+
+  async batch<T>(work: () => Promise<T>): Promise<T> {
+    if (this.#held) return work()
+    const held: FileAction[] = (this.#held = [])
+    try {
+      return await work()
+    } finally {
+      this.#held = null
+      const [only, ...more] = held
+      if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
+    }
   }
 
   /** Drops the newest one, once it has actually been put back, and keeps it to do
@@ -104,17 +140,21 @@ export class FileActions {
 
   /** The trash id of a deletion, once the trash has answered with one. */
   trashed(path: string, id: string) {
-    const last = this.last
-    if (last?.kind === 'delete' && samePath(last.path, path)) last.trashId = id
+    const last = this.#held?.at(-1) ?? this.last
+    const step = last?.kind === 'many' ? last.steps.at(-1) : last
+    if (step?.kind === 'delete' && samePath(step.path, path)) step.trashId = id
   }
 
   /** Everything except the deletion whose copy has been restored some other
    *  way - from Recently deleted, say. Undoing it again would write the
    *  snapshot over the note that is now back. */
   forget(trashId: string) {
-    this.stack = this.stack.filter(
-      (action) => action.kind !== 'delete' || action.trashId !== trashId,
-    )
+    const kept = (action: FileAction) => action.kind !== 'delete' || action.trashId !== trashId
+    this.stack = this.stack.flatMap((action): FileAction[] => {
+      if (action.kind !== 'many') return kept(action) ? [action] : []
+      const steps = action.steps.filter(kept)
+      return steps.length ? [{ kind: 'many' as const, steps }] : []
+    })
   }
 
   /** What undoing would do, phrased for a menu. Null when there is nothing.
@@ -124,35 +164,7 @@ export class FileActions {
    *  list, and "Undo renaming Plan.md" beside a row that reads `Plan` is the app
    *  disagreeing with itself. See note-name.ts. */
   get label(): string | null {
-    const action = this.last
-    if (!action) return null
-
-    switch (action.kind) {
-      case 'move':
-        return t('Undo moving {name}', { name: shownName(nameOf(action.to)) })
-      case 'rename':
-        return t('Undo renaming {name}', { name: shownName(nameOf(action.to)) })
-      case 'delete':
-        return t('Undo deleting {name}', { name: shownName(nameOf(action.path)) })
-      case 'merge':
-        return t('Undo merging {name}', { name: shownName(nameOf(action.from)) })
-      case 'split':
-        return t('Undo splitting {name}', { name: shownName(nameOf(action.from)) })
-      case 'extract':
-        return t('Undo extracting from {name}', { name: shownName(nameOf(action.from)) })
-      case 'replace':
-        return t('Undo the replacement')
-      case 'import':
-        return t('Undo the import')
-      case 'copy':
-        return t('Undo the copy')
-      case 'archive':
-        return t('Undo archiving {name}', { name: shownName(nameOf(action.archived[0] ?? '')) })
-      case 'unarchive':
-        return t('Undo unarchiving {name}', {
-          name: shownName(nameOf(action.restored.at(-1) ?? '')),
-        })
-    }
+    return labelOf(this.last)
   }
 
   /** Whether there is anything to do again. */
@@ -161,21 +173,61 @@ export class FileActions {
   }
 }
 
+/** What undoing `action` would do, phrased for a menu. A gesture of several is said
+ *  as the one kind it was, or as its first step where it mixed them. */
+function labelOf(action: FileAction | undefined): string | null {
+  if (!action) return null
+
+  switch (action.kind) {
+    case 'move':
+      return t('Undo moving {name}', { name: shownName(nameOf(action.to)) })
+    case 'rename':
+      return t('Undo renaming {name}', { name: shownName(nameOf(action.to)) })
+    case 'delete':
+      return t('Undo deleting {name}', { name: shownName(nameOf(action.path)) })
+    case 'merge':
+      return t('Undo merging {name}', { name: shownName(nameOf(action.from)) })
+    case 'split':
+      return t('Undo splitting {name}', { name: shownName(nameOf(action.from)) })
+    case 'extract':
+      return t('Undo extracting from {name}', { name: shownName(nameOf(action.from)) })
+    case 'replace':
+      return t('Undo the replacement')
+    case 'import':
+      return t('Undo the import')
+    case 'copy':
+      return t('Undo the copy')
+    case 'archive':
+      return t('Undo archiving {name}', { name: shownName(nameOf(action.archived[0] ?? '')) })
+    case 'unarchive':
+      return t('Undo unarchiving {name}', {
+        name: shownName(nameOf(action.restored.at(-1) ?? '')),
+      })
+    case 'create':
+      return t('Undo making {name}', { name: shownName(nameOf(action.path)) })
+    case 'many': {
+      const [first] = action.steps
+      if (!action.steps.every((one) => one.kind === first?.kind)) return labelOf(first)
+      if (first?.kind === 'delete') return t('Undo the deletion')
+      if (first?.kind === 'move') return t('Undo the move')
+      return labelOf(first)
+    }
+  }
+}
+
 /** Whether an action can be done again from what it recorded: the composer's three
  *  and a replacement kept only the way back. */
-function doesAgain(
-  action: FileAction,
-): action is Extract<
-  FileAction,
-  { kind: 'move' | 'rename' | 'delete' | 'copy' | 'archive' | 'unarchive' }
-> {
+function doesAgain(action: FileAction): boolean {
   switch (action.kind) {
     case 'move':
     case 'rename':
     case 'delete':
     case 'archive':
     case 'unarchive':
+    case 'create':
       return true
+    case 'many':
+      return action.steps.every(doesAgain)
     case 'copy':
       return action.made.every((one) => one.from !== undefined)
     case 'merge':
@@ -185,4 +237,33 @@ function doesAgain(
     case 'import':
       return false
   }
+}
+
+/** Whether a sidebar was the last thing pressed or typed in: Ctrl+Z is then its file
+ *  actions', wherever the app has put the keyboard since (#399). */
+let sidebarLast = false
+
+export function used(target: EventTarget | null) {
+  if (!(target instanceof Element) || target.matches('body,html')) return
+  if (target.closest('[data-sidebar]')) sidebarLast = true
+  // A menu, a sheet, a toast: over everything, and whatever opened them's.
+  else if (!target.closest('[role=menu],[role=dialog],[role=status],[role=tooltip]')) {
+    sidebarLast = false
+  }
+}
+
+/** Undo or Redo, where a key down is the sidebar's: asked on the way down, before a
+ *  note handed the keyboard takes it, and never a field's. */
+export function sidebarKey(event: KeyboardEvent, pressed: (id: string) => boolean) {
+  const key =
+    event.defaultPrevented || !sidebarLast
+      ? null
+      : pressed('edit.undo')
+        ? 'undo'
+        : pressed('edit.redo') || pressed('edit.redo.alt')
+          ? 'redo'
+          : null
+  if (!key && !/^(Control|Meta|Shift|Alt|AltGraph|CapsLock)$/.test(event.key)) used(event.target)
+  const field = event.target instanceof Element && event.target.closest('input,textarea,select')
+  return field ? null : key
 }

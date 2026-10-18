@@ -83,6 +83,7 @@
   import { theme } from './lib/theme.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
+  import { sidebarKey, used } from './lib/workspace/undo.svelte'
   import { saveFront } from './lib/save-place/door'
   import PadColumn from './lib/scratchpad/PadColumn.svelte'
   import { isDraft } from './lib/workspace/drafts'
@@ -794,6 +795,15 @@
     return () => cancelAnimationFrame(frame)
   })
 
+  /** Ctrl+Z for what was done in a sidebar; see `sidebarKey`. */
+  function sidebarUndo(event: KeyboardEvent) {
+    const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
+    if (!own) return
+    event.preventDefault()
+    event.stopPropagation()
+    void (own === 'undo' ? workspace.undoFileAction() : workspace.redoFileAction())
+  }
+
   /** Every app-level key comes from one registry, so a rebind reaches the
    *  keyboard, the menus and the palette at once. The one thing it cannot reach
    *  on its own is here: the palette is this component's own state. */
@@ -896,6 +906,7 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
+  onkeydowncapture={sidebarUndo}
   oncontextmenucapture={(event: MouseEvent) => {
     // A Mac's text field keeps the system's own menu, which has Look Up and the
     // spelling in it as well as the four; see system-menu.ts. Every other field gets
@@ -906,7 +917,10 @@
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
   onmousedown={onMouse}
-  onpointerdowncapture={(event: PointerEvent) => overlays.pressed(event)}
+  onpointerdowncapture={(event: PointerEvent) => {
+    overlays.pressed(event)
+    used(event.target)
+  }}
   onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}

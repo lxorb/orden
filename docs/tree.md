@@ -225,9 +225,11 @@ the names still read as one column. See `move-targets.ts`.
 toast under the list says `Deleted` or `Moved` beside `Undo`, the way Gmail and
 Notion do, and stays while the pointer is on it. Deleting or moving a selection is
 one gesture, so Undo takes the whole selection back. It is the same undo as Ctrl+Z
-on the list and the palette's row, off the same stack, so an undo from any of them
-takes the toast away. A folder deleted with what it held is not offered: there is no snapshot of a
-folder to put back. See `undo-toast.svelte.ts`.
+and the palette's row, off the same stack, so an undo from any of them takes the
+toast away. A folder deleted with what it held comes back whole: out of this
+device's trash, or, signed in, from the words of its notes, kept as it went (the
+pictures and dotted files beside them are the account's Recently deleted's to give
+back). See `undo-toast.svelte.ts`.
 
 ## Copying something
 
@@ -249,11 +251,17 @@ note stays one: `Trip/` copies to `Trip copy/`, and the note inside is renamed
 `Trip copy.md` to match.
 
 Every copy goes through the one write (`workspace/write-file.ts`), so `[[links]]` to
-it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z with
-the list focused undoes the last file change, Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a
-Mac) does it again. A move, a rename, a deletion and a copy can be done again; a
-merge, a split and a replacement kept only the way back, so a redo stops there. See
-`workspace/copying.ts` and `workspace/redoing.ts`.
+it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z
+undoes the last file change and Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a Mac) does it
+again, while the list has the keyboard or was the last thing pressed or typed in: a
+row deleted takes the keyboard with it, and a row renamed or made hands it to the
+note in front, which keeps its own undo once somebody presses or types in it (#399;
+`sidebarKey` in `workspace/undo.svelte.ts`). A delete, a move, a rename, a new file
+and a copy can be done again, and a selection, or a delete with the unnesting it
+caused, is one step either way; a merge, a split and a replacement kept only the way
+back, so a redo stops there. Only what was done on this device is on the stack: what
+sync brings in from another is not. See `workspace/copying.ts` and
+`workspace/redoing.ts`.
 
 ## The order it is read in
 

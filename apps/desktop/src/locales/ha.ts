@@ -1810,6 +1810,9 @@ export const ha: Dictionary = {
   'Bring all to front': 'Kawo duka gaba',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Mayar da kwafin',
+  'Undo making {name}': 'Mayar da ƙirƙirar {name}',
+  'Undo the deletion': 'Mayar da sharewar',
+  'Undo the move': 'Mayar da matsarwar',
   'Redo the last file change': 'Sake yin canjin fayil na ƙarshe',
   'Select down': 'Zaɓi zuwa ƙasa',
   'Select up': 'Zaɓi zuwa sama',

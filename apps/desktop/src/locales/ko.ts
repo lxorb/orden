@@ -1761,6 +1761,9 @@ export const ko: Dictionary = {
   'Bring all to front': '모두 앞으로 가져오기',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '복사 실행 취소',
+  'Undo making {name}': '{name} 만들기 취소',
+  'Undo the deletion': '삭제 취소',
+  'Undo the move': '이동 취소',
   'Redo the last file change': '마지막 파일 변경 다시 실행',
   'Select down': '아래로 선택',
   'Select up': '위로 선택',

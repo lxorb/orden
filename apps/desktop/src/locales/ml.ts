@@ -1803,6 +1803,9 @@ export const ml: Dictionary = {
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'പകർപ്പ് പഴയപടിയാക്കുക',
+  'Undo making {name}': '{name} ഉണ്ടാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the deletion': 'ഇല്ലാതാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the move': 'നീക്കിയത് പഴയപടിയാക്കുക',
   'Redo the last file change': 'അവസാന ഫയൽ മാറ്റം വീണ്ടും ചെയ്യുക',
   'Select down': 'താഴേക്ക് തിരഞ്ഞെടുക്കുക',
   'Select up': 'മുകളിലേക്ക് തിരഞ്ഞെടുക്കുക',

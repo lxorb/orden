@@ -1853,6 +1853,9 @@ export const ru: Dictionary = {
   'Bring all to front': 'Все окна на передний план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Отменить копирование',
+  'Undo making {name}': 'Отменить создание {name}',
+  'Undo the deletion': 'Отменить удаление',
+  'Undo the move': 'Отменить перемещение',
   'Redo the last file change': 'Повторить последнее изменение файлов',
   'Select down': 'Выделить вниз',
   'Select up': 'Выделить вверх',

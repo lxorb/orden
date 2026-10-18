@@ -1795,6 +1795,9 @@ export const kn: Dictionary = {
   'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ನಕಲನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Undo making {name}': '{name} ರಚಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Undo the deletion': 'ಅಳಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Undo the move': 'ಸರಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
   'Redo the last file change': 'ಕೊನೆಯ ಫೈಲ್ ಬದಲಾವಣೆಯನ್ನು ಮತ್ತೆ ಮಾಡಿ',
   'Select down': 'ಕೆಳಗೆ ಆಯ್ಕೆಮಾಡಿ',
   'Select up': 'ಮೇಲೆ ಆಯ್ಕೆಮಾಡಿ',

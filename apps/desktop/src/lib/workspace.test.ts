@@ -784,6 +784,24 @@ describe('selecting several rows', () => {
     spy.mockRestore()
   })
 
+  /** One press of Delete on a selection is one Ctrl+Z (#399). */
+  test('and deleting several is one step to undo', async () => {
+    const spy = vi.spyOn(workspace, 'remove').mockImplementation(async (path: string) => {
+      workspace.undone.record({ kind: 'delete', path, content: '' })
+    })
+    await workspace.removeMany(['/space/a.md', '/space/d.md'])
+
+    expect(workspace.undone.last).toEqual({
+      kind: 'many',
+      steps: [
+        { kind: 'delete', path: '/space/a.md', content: '' },
+        { kind: 'delete', path: '/space/d.md', content: '' },
+      ],
+    })
+    expect(workspace.undoLabel).toBe('Undo the deletion')
+    spy.mockRestore()
+  })
+
   test('the selection empties with the space', async () => {
     workspace.select('/space/a.md')
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
@@ -876,6 +894,41 @@ describe('nesting a note in a note', () => {
     expect(
       sent.filter((one) => one.command === 'remove_empty_folder').map((one) => one.path),
     ).toEqual(['/space/a'])
+  })
+
+  /** The note that went in first and the rows that followed it are one drop, and one
+   *  undo takes them out again with the folder they made (#399). */
+  test('a drop that nests is one step, and undoing it takes the folder away', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    expect(workspace.undone.last).toMatchObject({
+      kind: 'many',
+      steps: [
+        { kind: 'move', from: '/space/a.md', to: '/space/a/a.md', nests: true },
+        { kind: 'move', from: '/space/d.md', to: '/space/a/d.md' },
+      ],
+    })
+
+    sent.length = 0
+    await workspace.undoFileAction()
+    expect(
+      sent
+        .filter((one) => one.command === 'rename_note' || one.command === 'remove_empty_folder')
+        .map((one) => one.command + ' ' + one.path),
+    ).toEqual(['rename_note ', 'rename_note ', 'remove_empty_folder /space/a'])
+    expect(workspace.undone.next?.kind).toBe('many')
+  })
+
+  test('and the last row dragged back out is one step with the unnesting it caused', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    await workspace.moveMany(['/space/a/d.md'], '/space')
+
+    expect(workspace.undone.last).toMatchObject({
+      kind: 'many',
+      steps: [
+        { kind: 'move', from: '/space/a/d.md', to: '/space/d.md' },
+        { kind: 'move', from: '/space/a/a.md', to: '/space/a.md', follows: true },
+      ],
+    })
   })
 
   test('a note dropped on a folder that is a folder is the plain move it always was', async () => {

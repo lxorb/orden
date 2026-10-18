@@ -1809,6 +1809,9 @@ export const ta: Dictionary = {
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'நகலெடுத்ததைச் செயல்தவிர்',
+  'Undo making {name}': '{name} உருவாக்கலைச் செயல்தவிர்',
+  'Undo the deletion': 'நீக்கலைச் செயல்தவிர்',
+  'Undo the move': 'நகர்த்தலைச் செயல்தவிர்',
   'Redo the last file change': 'கடைசிக் கோப்பு மாற்றத்தை மீண்டும் செய்',
   'Select down': 'கீழ்நோக்கித் தேர்ந்தெடு',
   'Select up': 'மேல்நோக்கித் தேர்ந்தெடு',

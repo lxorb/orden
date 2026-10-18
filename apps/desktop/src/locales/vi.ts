@@ -1768,6 +1768,9 @@ export const vi: Dictionary = {
   'Bring all to front': 'Đưa tất cả ra trước',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Hoàn tác việc sao chép',
+  'Undo making {name}': 'Hoàn tác tạo {name}',
+  'Undo the deletion': 'Hoàn tác xoá',
+  'Undo the move': 'Hoàn tác chuyển',
   'Redo the last file change': 'Làm lại thay đổi tệp gần nhất',
   'Select down': 'Chọn xuống',
   'Select up': 'Chọn lên',

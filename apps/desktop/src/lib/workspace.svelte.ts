@@ -88,7 +88,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { FileActions } from './workspace/undo.svelte'
+import { FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -2103,6 +2103,7 @@ class Workspace {
 
     const { newSite } = await import('./web-tab/new-site')
     const path = await newSite(this, dir, named)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     await this.openWeb(path)
   }
@@ -2268,6 +2269,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -2520,8 +2522,8 @@ class Workspace {
     void this.loadTree()
   }
 
-  /** Moves a note or folder into another folder. */
-  async move(from: string, intoFolder: string) {
+  /** Moves a note or folder into another folder; `how`, see undo.svelte.ts. */
+  async move(from: string, intoFolder: string, how?: 'follows' | 'nests') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
@@ -2545,10 +2547,18 @@ class Workspace {
     // A note that moved is a note every link to it has to be pointed at again;
     // see `renameFile`, including why this comes before everything is told.
     const rewrote = (await this.retarget(from, target)) > 0
-    this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
-    await this.fileMoved(from, target, kind)
-    await this.loadTree()
-    await this.unnest(folderOf(from))
+    await this.undone.batch(async () => {
+      this.undone.record({
+        kind: 'move',
+        from,
+        to: target,
+        ...(rewrote ? { rewrote } : {}),
+        ...(how ? { [how]: true } : {}),
+      })
+      await this.fileMoved(from, target, kind)
+      await this.loadTree()
+      await this.unnest(folderOf(from))
+    })
     this.persist()
   }
 
@@ -2564,7 +2574,7 @@ class Workspace {
     const back = entry && unnesting(entry)
     if (!back) return
 
-    await this.move(back.note, back.into)
+    await this.move(back.note, back.into, 'follows')
 
     // The row goes as the note comes up rather than a round trip later: an empty
     // folder standing under the note it used to hold reads as half a move.
@@ -3320,8 +3330,10 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
-    await this.nestFor(intoFolder, paths)
-    for (const path of outermost(paths)) await this.move(path, intoFolder)
+    await this.undone.batch(async () => {
+      await this.nestFor(intoFolder, paths)
+      for (const path of outermost(paths)) await this.move(path, intoFolder)
+    })
     this.clearSelection()
   }
 
@@ -3338,7 +3350,7 @@ class Workspace {
     // blinks out - the note has left and the folder it went into does not exist
     // yet - and comes back a round trip later; see tree-edits.ts.
     this.showEntry(this.freshEntry(intoFolder, true))
-    await this.move(nesting, intoFolder)
+    await this.move(nesting, intoFolder, 'nests')
     this.device.expand(intoFolder)
   }
 
@@ -3391,10 +3403,12 @@ class Workspace {
   }
 
   async removeMany(paths: string[]) {
-    for (const path of this.deletable(paths)) {
-      const entry = this.entryAt(path)
-      if (entry) await this.remove(path, entry.is_dir)
-    }
+    await this.undone.batch(async () => {
+      for (const path of this.deletable(paths)) {
+        const entry = this.entryAt(path)
+        if (entry) await this.remove(path, entry.is_dir)
+      }
+    })
     this.clearSelection()
   }
 
@@ -3645,6 +3659,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -3705,6 +3720,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -3727,8 +3743,10 @@ class Workspace {
     const folder = entry.is_dir ? path : folderFor(path)
     if (samePath(folder, path) && !entry.is_dir) return
 
-    if (!entry.is_dir) await this.moveMany([], folder)
-    await this.createNote(folder)
+    await this.undone.batch(async () => {
+      if (!entry.is_dir) await this.moveMany([], folder)
+      await this.createNote(folder)
+    })
   }
 
   /** A name nothing in the folder answers to: the one asked for, or the one asked
@@ -3984,40 +4002,53 @@ class Workspace {
     // caller that did not look.
     if (this.keepsArchived(path)) return
 
-    // Gone from the tree before the snapshot has been taken and the file has
-    // been moved: three round trips is a long time for a row to sit there
-    // looking as though the delete had not registered.
-    this.hideEntry(path)
+    await this.undone.batch(async () => {
+      // Gone from the tree before the snapshot has been taken and the file has
+      // been moved: three round trips is a long time for a row to sit there
+      // looking as though the delete had not registered.
+      this.hideEntry(path)
 
+      const kept = await this.bin(path, isFolder, source)
+      if (kept) this.undone.record({ kind: 'delete', path, ...kept })
+
+      await this.fileGone(path, isFolder ? 'folder' : 'file')
+      await this.loadTree()
+      // The row deleted may have been the last thing keeping a nested note nested.
+      await this.unnest(folderOf(path))
+    })
+  }
+
+  /** Deletes, answering what puts it back; recorded by the caller. */
+  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
-    // can put it back is the trash, and it is recorded once the trash has it.
+    // can put it back is the trash.
     const words = !isFolder && !isPdfTarget(path)
     let content: string | null = null
     if (words) {
       content = await invoke<string>('read_note', { path }).catch(() => null)
       if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
-      this.undone.record({ kind: 'delete', path, content: content ?? '' })
     }
 
     // Unreadable means no snapshot and never synced: only the trash can keep it.
     const unread = words && content === null
+    // Signed in, the account keeps a copy for 14 days; signed out, this
+    // device does, in its own trash folder (see trash.svelte.ts).
+    const toAccount = account.signedIn && !unread
+    const held =
+      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(this, path) : null
 
     try {
-      // Signed in, the account keeps a copy for 14 days; signed out, this
-      // device does, in its own trash folder (see trash.svelte.ts).
-      if (account.signedIn && !unread) {
+      if (toAccount) {
         await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
-      } else {
-        const entry = await invoke<{ id: string }>('trash_item', {
-          path,
-          kind: isFolder ? 'folder' : 'note',
-        })
-        if (words) this.undone.trashed(path, entry.id)
-        else if (!isFolder) {
-          this.undone.record({ kind: 'delete', path, content: '', trashId: entry.id })
-        }
+        if (isFolder) return held && { content: '', folder: true, ...held }
+        return words ? { content: content ?? '' } : null
       }
+      const entry = await invoke<{ id: string }>('trash_item', {
+        path,
+        kind: isFolder ? 'folder' : 'note',
+      })
+      return { content: content ?? '', trashId: entry.id, ...(isFolder ? { folder: true } : {}) }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that
       // did not happen has to put it back: the listing is what the tree really
@@ -4025,11 +4056,6 @@ class Workspace {
       await this.loadTree()
       throw error
     }
-
-    await this.fileGone(path, isFolder ? 'folder' : 'file')
-    await this.loadTree()
-    // The row deleted may have been the last thing keeping a nested note nested.
-    await this.unnest(folderOf(path))
   }
 
   /** Puts the last file operation back; what each kind means going back is
@@ -4037,14 +4063,25 @@ class Workspace {
    *  Fetched with the first undo, like the redo beside it: a window opens on a note
    *  and not on a file operation to take back. See test/weight.test.ts. */
   async undoFileAction() {
-    const { undoLastFileAction } = await import('./workspace/undoing')
-    await undoLastFileAction(this)
+    await this.inTurn(async () => {
+      const { undoLastFileAction } = await import('./workspace/undoing')
+      await undoLastFileAction(this)
+    })
   }
 
   /** Does the last undone file operation again; see workspace/redoing.ts. */
   async redoFileAction() {
-    const { redoLastFileAction } = await import('./workspace/redoing')
-    await redoLastFileAction(this)
+    await this.inTurn(async () => {
+      const { redoLastFileAction } = await import('./workspace/redoing')
+      await redoLastFileAction(this)
+    })
+  }
+
+  /** Undos and redos one at a time, each after the one before has landed. */
+  private turn: Promise<void> = Promise.resolve()
+  private inTurn(work: () => Promise<void>): Promise<void> {
+    this.turn = this.turn.then(work, work)
+    return this.turn
   }
 
   /** A note the first pass has just written, by the path it landed at.

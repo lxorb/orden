@@ -1785,6 +1785,9 @@ export const pa: Dictionary = {
   'Bring all to front': 'ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ਨਕਲ ਵਾਪਸ ਲਵੋ',
+  'Undo making {name}': '{name} ਬਣਾਉਣਾ ਵਾਪਸ ਲਵੋ',
+  'Undo the deletion': 'ਮਿਟਾਉਣਾ ਵਾਪਸ ਲਵੋ',
+  'Undo the move': 'ਭੇਜਣਾ ਵਾਪਸ ਲਵੋ',
   'Redo the last file change': 'ਫ਼ਾਈਲ ਦੀ ਆਖ਼ਰੀ ਤਬਦੀਲੀ ਮੁੜ ਕਰੋ',
   'Select down': 'ਹੇਠਾਂ ਵੱਲ ਚੁਣੋ',
   'Select up': 'ਉੱਪਰ ਵੱਲ ਚੁਣੋ',

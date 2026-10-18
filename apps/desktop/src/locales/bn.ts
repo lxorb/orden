@@ -1777,6 +1777,9 @@ export const bn: Dictionary = {
   'Bring all to front': 'সব সামনে আনুন',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'কপি আনডু করুন',
+  'Undo making {name}': '{name} তৈরি আনডু',
+  'Undo the deletion': 'মোছা আনডু',
+  'Undo the move': 'সরানো আনডু',
   'Redo the last file change': 'ফাইলের শেষ পরিবর্তন রিডু করুন',
   'Select down': 'নিচের দিকে নির্বাচন',
   'Select up': 'উপরের দিকে নির্বাচন',

@@ -1773,6 +1773,9 @@ export const my: Dictionary = {
   'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ကူးယူမှုကို ပြန်ဖျက်',
+  'Undo making {name}': '{name} ဖန်တီးမှုပြန်ဖျက်',
+  'Undo the deletion': 'ဖျက်မှုကို ပြန်ပါ',
+  'Undo the move': 'ရွှေ့မှုကို ပြန်ပါ',
   'Redo the last file change': 'နောက်ဆုံးဖိုင်ပြောင်းလဲမှု ပြန်လုပ်',
   'Select down': 'အောက်သို့ ရွေး',
   'Select up': 'အထက်သို့ ရွေး',

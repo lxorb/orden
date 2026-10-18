@@ -1792,6 +1792,9 @@ export const gsw: Dictionary = {
   'Bring all to front': 'Alli nach vorne bringä',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Undo making {name}': '{name} wider ewägnäh',
+  'Undo the deletion': 'Lösche zrugnäh',
+  'Undo the move': 'Verschiebe zrugnäh',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',

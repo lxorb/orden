@@ -1774,6 +1774,9 @@ export const jv: Dictionary = {
   'Bring all to front': 'Gawa kabeh menyang ngarep',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Balekake salinan',
+  'Undo making {name}': 'Balekake gawe {name}',
+  'Undo the deletion': 'Balekake pambusakan',
+  'Undo the move': 'Balekake pamindhahan',
   'Redo the last file change': 'Ulangi owah-owahan berkas pungkasan',
   'Select down': 'Pilih mudhun',
   'Select up': 'Pilih munggah',

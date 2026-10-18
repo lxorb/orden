@@ -1778,6 +1778,9 @@ export const ur: Dictionary = {
   'Bring all to front': 'سب کو سامنے لائیں',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'نقل واپس لیں',
+  'Undo making {name}': '{name} بنانا واپس لیں',
+  'Undo the deletion': 'حذف واپس لیں',
+  'Undo the move': 'منتقلی واپس لیں',
   'Redo the last file change': 'فائل کی آخری تبدیلی دوبارہ کریں',
   'Select down': 'نیچے کی طرف منتخب کریں',
   'Select up': 'اوپر کی طرف منتخب کریں',

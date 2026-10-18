@@ -1782,6 +1782,9 @@ export const ms: Dictionary = {
   'Bring all to front': 'Bawa semua ke hadapan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Buat asal salinan',
+  'Undo making {name}': 'Buat asal penciptaan {name}',
+  'Undo the deletion': 'Buat asal penghapusan',
+  'Undo the move': 'Buat asal pengalihan',
   'Redo the last file change': 'Buat semula perubahan fail terakhir',
   'Select down': 'Pilih ke bawah',
   'Select up': 'Pilih ke atas',

@@ -1873,6 +1873,9 @@ export const ar: Dictionary = {
   'Bring all to front': 'إحضار الكل إلى المقدمة',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'التراجع عن النسخ',
+  'Undo making {name}': 'التراجع عن إنشاء {name}',
+  'Undo the deletion': 'التراجع عن الحذف',
+  'Undo the move': 'التراجع عن النقل',
   'Redo the last file change': 'إعادة آخر تغيير في الملفات',
   'Select down': 'التحديد للأسفل',
   'Select up': 'التحديد للأعلى',

@@ -1826,6 +1826,9 @@ export const es: Dictionary = {
   'Bring all to front': 'Traer todo al frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Deshacer la copia',
+  'Undo making {name}': 'Deshacer crear {name}',
+  'Undo the deletion': 'Deshacer la eliminación',
+  'Undo the move': 'Deshacer el movimiento',
   'Redo the last file change': 'Rehacer el último cambio de archivo',
   'Select down': 'Seleccionar hacia abajo',
   'Select up': 'Seleccionar hacia arriba',
