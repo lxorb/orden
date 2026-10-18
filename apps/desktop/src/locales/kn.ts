@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: {key}',
+  'From other apps: set in your system settings':
+    'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಿ',
+  'From other apps: bind {command} in your system settings':
+    'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ {command} ಜೋಡಿಸಿ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ಅಗತ್ಯಗಳು',
   'Add to Essentials': 'ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
@@ -21,6 +27,11 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  // Settings: note types
+  'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
+  'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',
+  'Private tab': 'ಖಾಸಗಿ ಟ್ಯಾಬ್',
+  'Note types': 'ಟಿಪ್ಪಣಿ ಪ್ರಕಾರಗಳು',
   // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
   // Tasks: projects placed in the panel, and their folder
@@ -989,6 +1000,7 @@ export const kn: Dictionary = {
   Comment: 'ಕಾಮೆಂಟ್',
   'Always on top': 'ಯಾವಾಗಲೂ ಮೇಲೆ',
   'What is new': 'ಹೊಸದೇನು',
+  'Download the app': 'ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
   'Report an issue': 'ಸಮಸ್ಯೆ ತಿಳಿಸಿ',
   'Move the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the line down': 'ಸಾಲನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
@@ -1072,6 +1084,16 @@ export const kn: Dictionary = {
   'AI account: {name}': 'AI ಖಾತೆ: {name}',
   Accounts: 'ಖಾತೆಗಳು',
   Access: 'ಪ್ರವೇಶ',
+  Set: 'ಹೊಂದಿಸಲಾಗಿದೆ',
+  'Start over': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ',
+  'Sign in here': 'ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  '{device} wants your AI accounts': '{device} ನಿಮ್ಮ AI ಖಾತೆಗಳನ್ನು ಕೇಳುತ್ತಿದೆ',
+  '{device} offers this device your AI vault': '{device} ಈ ಸಾಧನಕ್ಕೆ ನಿಮ್ಮ AI ವಾಲ್ಟ್ ನೀಡುತ್ತಿದೆ',
+  Join: 'ಸೇರಿ',
+  'Allow this device on another one': 'ಇನ್ನೊಂದು ಸಾಧನದಲ್ಲಿ ಈ ಸಾಧನವನ್ನು ಅನುಮತಿಸಿ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'ನೀವು ಸೈನ್ ಇನ್ ಮಾಡುವ ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ, ಎಂಡ್-ಟು-ಎಂಡ್ ಎನ್‌ಕ್ರಿಪ್ಟ್.',
+  'Sign in to have them on every device.': 'ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ ಪಡೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Agents on this computer connect on their own': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನ ಏಜೆಂಟ್‌ಗಳು ತಾವಾಗಿ ಸಂಪರ್ಕಿಸುತ್ತವೆ',
   Helpers: 'ಸಹಾಯಕರು',
   'Start helpers on your AI accounts': 'ನಿಮ್ಮ AI ಖಾತೆಗಳಲ್ಲಿ ಸಹಾಯಕರನ್ನು ಪ್ರಾರಂಭಿಸಿ',
@@ -1165,6 +1187,13 @@ export const kn: Dictionary = {
   'Export as PNG': 'PNG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as SVG': 'SVG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as PDF': 'PDF ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Choose how to add the pages to the canvas.':
+    'ಪುಟಗಳನ್ನು ಕ್ಯಾನ್ವಾಸ್‌ಗೆ ಹೇಗೆ ಸೇರಿಸಬೇಕು ಎಂದು ಆಯ್ಕೆಮಾಡಿ.',
+  'Single page': 'ಒಂದು ಪುಟ',
+  'All pages': 'ಎಲ್ಲಾ ಪುಟಗಳು',
+  'Choose a page': 'ಪುಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ಆಯ್ದದನ್ನು ಅಳಿಸಿ',
   'Nudge left': 'ಎಡಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
@@ -1225,8 +1254,8 @@ export const kn: Dictionary = {
   'Release channel': 'ಬಿಡುಗಡೆ ಚಾನೆಲ್',
   Stable: 'ಸ್ಥಿರ',
   Unstable: 'ಅಸ್ಥಿರ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ಸ್ಥಿರ ಅಧಿಕೃತ ಬಿಡುಗಡೆಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ mainಗೆ ಪ್ರತಿ ಪುಶ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ಆವೃತ್ತಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ ಎಡ್ಜ್ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',
@@ -1397,15 +1426,16 @@ export const kn: Dictionary = {
   'OpenAI-compatible': 'OpenAI ಹೊಂದಿಕೆ',
   'Base URL': 'ಬೇಸ್ URL',
   'API key': 'API ಕೀ',
-  'Set on this device': 'ಈ ಸಾಧನದಲ್ಲಿ ಹೊಂದಿಸಲಾಗಿದೆ',
   Optional: 'ಐಚ್ಛಿಕ',
   'List models': 'ಮಾದರಿಗಳ ಪಟ್ಟಿ',
   'Asking…': 'ಕೇಳುತ್ತಿದೆ…',
   'No providers yet.': 'ಇನ್ನೂ ಪೂರೈಕೆದಾರರಿಲ್ಲ.',
   'Add {name}': '{name} ಸೇರಿಸಿ',
-  'Keys stay in the secure store on this device.': 'ಕೀಗಳು ಈ ಸಾಧನದ ಸುರಕ್ಷಿತ ಸಂಗ್ರಹದಲ್ಲಿ ಇರುತ್ತವೆ.',
   'This browser holds the keys in its own storage.':
     'ಈ ಬ್ರೌಸರ್ ಕೀಗಳನ್ನು ತನ್ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇಡುತ್ತದೆ.',
+  'Keep this browser’s keys in the vault': 'ಈ ಬ್ರೌಸರ್‌ನ ಕೀಗಳನ್ನು ವಾಲ್ಟ್‌ನಲ್ಲಿ ಇರಿಸಿ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ಆಗ ಪ್ರತಿಯೊಂದು ಸಾಧನದ ಕೀಗಳು ಈ ಬ್ರೌಸರ್‌ನ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಇರುತ್ತವೆ, ಅಲ್ಲಿ ಪುಟದೊಳಗೆ ನುಸುಳಿದ ಸ್ಕ್ರಿಪ್ಟ್ ಅವುಗಳನ್ನು ಓದಬಹುದು.',
   'AI can be wrong. Check the facts.': 'AI ತಪ್ಪಾಗಬಹುದು. ಸತ್ಯಾಂಶಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.',
   'Used by the glasses': 'ಕನ್ನಡಕ ಬಳಸುವುದು',
   'Could not read the models.': 'ಮಾದರಿಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
@@ -1817,16 +1847,6 @@ export const kn: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
-  // The engine web tabs run on
-  Engine: 'ಇಂಜಿನ್',
-  Relaunch: 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ',
-  'Chromium did not start': 'Chromium ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ',
-  'No connection': 'ಸಂಪರ್ಕವಿಲ್ಲ',
-  'Not in this release': 'ಈ ಬಿಡುಗಡೆಯಲ್ಲಿ ಇಲ್ಲ',
-  'Needs an update': 'ಅಪ್‌ಡೇಟ್ ಬೇಕು',
-  'Signature did not match': 'ಸಹಿ ಹೊಂದಿಕೆಯಾಗಲಿಲ್ಲ',
-  'Disk full': 'ಡಿಸ್ಕ್ ತುಂಬಿದೆ',
-  'Could not be installed': 'ಸ್ಥಾಪಿಸಲಾಗಲಿಲ್ಲ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1997,10 +2017,6 @@ export const kn: Dictionary = {
     one: '{count} ಕರೆ',
     other: '{count} ಕರೆಗಳು',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
-  'Use here': 'ಇಲ್ಲಿ ಬಳಸಿ',
-  '{device} wants your web logins': '{device} ನಿಮ್ಮ ವೆಬ್ ಲಾಗಿನ್‌ಗಳನ್ನು ಬಯಸುತ್ತದೆ',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ತ್ವರಿತ ಪ್ರಶ್ನೆ',

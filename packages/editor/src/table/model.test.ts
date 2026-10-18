@@ -200,6 +200,32 @@ describe('sorting by a column', () => {
     ])
   })
 
+  // Only a currency mark comes off the front: a word in front of a number makes a
+  // name of it, and `Room 5` read as 5 sorted the rooms by their numbers and put
+  // a room without one after all of them that have one.
+  test('a name with a number in it is a name', () => {
+    const source = '| r |\n| - |\n| Room 5 |\n| Hall 1 |\n| Attic 3 |\n| Basement |'
+    expect(sorted(source, 0)).toEqual(['Attic 3', 'Basement', 'Hall 1', 'Room 5'])
+  })
+
+  // A column of numbers with a word or two in it has to come out in one order
+  // whatever order it went in, which it cannot if 5x is less than 999 and 1,000 is
+  // less than 5x as words while 999 is less than 1,000 as numbers. The numbers come
+  // first and the words after them.
+  test('a column of numbers and words sorts the same from any order', () => {
+    const cells = ['1,000', '999', '5x']
+    const orders = [
+      [0, 1, 2],
+      [0, 2, 1],
+      [1, 0, 2],
+      [1, 2, 0],
+      [2, 0, 1],
+      [2, 1, 0],
+    ].map((order) => `| n |\n| - |\n${order.map((at) => `| ${cells[at]} |`).join('\n')}`)
+
+    for (const source of orders) expect(sorted(source, 0)).toEqual(['999', '1,000', '5x'])
+  })
+
   test('dates as dates', () => {
     expect(sorted('| d |\n| - |\n| 2025-10-01 |\n| 2025-09-08 |', 0)).toEqual([
       '2025-09-08',

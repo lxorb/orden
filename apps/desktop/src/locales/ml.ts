@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
+  'From other apps: set in your system settings':
+    'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ സജ്ജമാക്കുക',
+  'From other apps: bind {command} in your system settings':
+    'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ {command} ചേർക്കുക',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'അവശ്യങ്ങൾ',
   'Add to Essentials': 'അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
@@ -21,6 +27,11 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Settings: note types
+  'Page note': 'താൾ കുറിപ്പ്',
+  'Web note': 'വെബ് കുറിപ്പ്',
+  'Private tab': 'സ്വകാര്യ ടാബ്',
+  'Note types': 'കുറിപ്പ് തരങ്ങൾ',
   // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
   // Tasks: projects placed in the panel, and their folder
@@ -992,6 +1003,7 @@ export const ml: Dictionary = {
   Comment: 'കമന്റ്',
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
+  'Download the app': 'ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',
@@ -1075,6 +1087,17 @@ export const ml: Dictionary = {
   'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
   Accounts: 'അക്കൗണ്ടുകൾ',
   Access: 'ആക്സസ്',
+  Set: 'സജ്ജമാക്കി',
+  'Start over': 'വീണ്ടും തുടങ്ങുക',
+  'Sign in here': 'ഇവിടെ സൈൻ ഇൻ ചെയ്യുക',
+  '{device} wants your AI accounts': '{device} നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ ആവശ്യപ്പെടുന്നു',
+  '{device} offers this device your AI vault':
+    '{device} ഈ ഉപകരണത്തിന് നിങ്ങളുടെ AI വോൾട്ട് നൽകുന്നു',
+  Join: 'ചേരുക',
+  'Allow this device on another one': 'മറ്റൊരു ഉപകരണത്തിൽ ഈ ഉപകരണം അനുവദിക്കുക',
+  'On every device you sign in to, end-to-end encrypted.':
+    'നിങ്ങൾ സൈൻ ഇൻ ചെയ്യുന്ന എല്ലാ ഉപകരണത്തിലും, എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റഡ്.',
+  'Sign in to have them on every device.': 'എല്ലാ ഉപകരണത്തിലും ലഭിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'Agents on this computer connect on their own': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ സ്വയം ബന്ധിപ്പിക്കും',
   Helpers: 'സഹായികൾ',
   'Start helpers on your AI accounts': 'നിങ്ങളുടെ AI അക്കൗണ്ടുകളിൽ സഹായികളെ ആരംഭിക്കുക',
@@ -1168,6 +1191,13 @@ export const ml: Dictionary = {
   'Export as PNG': 'PNG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as SVG': 'SVG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as PDF': 'PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ഇംപോർട്ട് ചെയ്യുക',
+  'Choose how to add the pages to the canvas.':
+    'പേജുകൾ ക്യാൻവാസിൽ എങ്ങനെ ചേർക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.',
+  'Single page': 'ഒരു പേജ്',
+  'All pages': 'എല്ലാ പേജുകളും',
+  'Choose a page': 'ഒരു പേജ് തിരഞ്ഞെടുക്കുക',
   // The canvas: what its own keys are called
   'Delete what is picked': 'തിരഞ്ഞെടുത്തത് ഇല്ലാതാക്കുക',
   'Nudge left': 'ഇടത്തേക്ക് ചെറുതായി നീക്കുക',
@@ -1228,8 +1258,8 @@ export const ml: Dictionary = {
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
   Unstable: 'അസ്ഥിരം',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
@@ -1400,16 +1430,16 @@ export const ml: Dictionary = {
   'OpenAI-compatible': 'OpenAI അനുയോജ്യം',
   'Base URL': 'ബേസ് URL',
   'API key': 'API കീ',
-  'Set on this device': 'ഈ ഉപകരണത്തിൽ സെറ്റ് ചെയ്തു',
   Optional: 'നിർബന്ധമല്ല',
   'List models': 'മോഡലുകളുടെ പട്ടിക',
   'Asking…': 'ചോദിക്കുന്നു…',
   'No providers yet.': 'ഇനിയും പ്രൊവൈഡർമാരില്ല.',
   'Add {name}': '{name} ചേർക്കുക',
-  'Keys stay in the secure store on this device.':
-    'കീകൾ ഈ ഉപകരണത്തിലെ സുരക്ഷിത സ്റ്റോറിൽ ഇരിക്കും.',
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
+  'Keep this browser’s keys in the vault': 'ഈ ബ്രൗസറിന്റെ കീകൾ വോൾട്ടിൽ സൂക്ഷിക്കുക',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'അപ്പോൾ ഓരോ ഉപകരണത്തിന്റെയും കീകൾ ഈ ബ്രൗസറിന്റെ സംഭരണത്തിൽ സൂക്ഷിക്കും, പേജിൽ കടന്നുകൂടിയ ഒരു സ്ക്രിപ്റ്റിന് അവ വായിക്കാനാകും.',
   'AI can be wrong. Check the facts.': 'AI-ക്ക് തെറ്റുപറ്റാം. വസ്തുതകൾ പരിശോധിക്കുക.',
   'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
@@ -1820,16 +1850,6 @@ export const ml: Dictionary = {
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
-  // The engine web tabs run on
-  Engine: 'എഞ്ചിൻ',
-  Relaunch: 'വീണ്ടും തുടങ്ങുക',
-  'Chromium did not start': 'Chromium തുടങ്ങിയില്ല',
-  'No connection': 'കണക്ഷനില്ല',
-  'Not in this release': 'ഈ റിലീസിൽ ഇല്ല',
-  'Needs an update': 'അപ്ഡേറ്റ് വേണം',
-  'Signature did not match': 'ഒപ്പ് പൊരുത്തപ്പെട്ടില്ല',
-  'Disk full': 'ഡിസ്ക് നിറഞ്ഞു',
-  'Could not be installed': 'ഇൻസ്റ്റാൾ ചെയ്യാനായില്ല',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2001,10 +2021,6 @@ export const ml: Dictionary = {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}-ൽ തുറന്നിരിക്കുന്നു',
-  'Use here': 'ഇവിടെ ഉപയോഗിക്കുക',
-  '{device} wants your web logins': '{device} നിങ്ങളുടെ വെബ് ലോഗിനുകൾ ആവശ്യപ്പെടുന്നു',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'പെട്ടെന്നുള്ള ചോദ്യം',

@@ -9,7 +9,8 @@
  *  rather than floating, because a web tab's page is a native view that would draw over
  *  a floating card; docked, the page is narrowed instead. It takes turns with the right
  *  side at that edge, never both: up, it goes over the side, and the side is back as it
- *  goes; see workspace/panels.ts.
+ *  goes; see workspace/panels.ts. On a phone or a tablet it is the one note on screen
+ *  (#206); see ScratchpadCard.svelte.
  *
  *  It lives beside `custom.css` in the app's own folder (`scratchpad_path` in the
  *  crate's themes.rs, which `openable` admits); the browser build keeps it in a dot

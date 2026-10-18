@@ -103,6 +103,10 @@ class ChatsStore implements Chats {
   private account: string | null = null
   private readonly views = new Map<string, { view: View; holds: number }>()
   private places = new Map<string, Place>()
+  /** Chats whose pointer went from this device - to Recently deleted, or by a sync from
+   *  another - which are not listed, though the account lists them until it has heard
+   *  the pointer went; see `pointerMoved` (#375). */
+  private readonly gone = new Set<string>()
   private readonly unread = new Map<string, number>()
   /** The read place each chat's unread count was worked out from. */
   private readonly countedAt = new Map<string, number>()
@@ -179,6 +183,7 @@ class ChatsStore implements Chats {
     this.cache = null
     this.account = null
     this.places = new Map()
+    this.gone.clear()
     this.unread.clear()
     this.countedAt.clear()
     this.drafts.clear()
@@ -240,7 +245,7 @@ class ChatsStore implements Chats {
     const entries: ChatEntry[] = []
     for (const chat of engine.chats.values()) {
       const row = chat.row
-      if (!row) continue
+      if (!row || this.gone.has(chat.id)) continue
       const place = this.places.get(chat.id) ?? null
       let root = place?.root ?? spaces.get(row.space) ?? null
       if (!root) {
@@ -325,18 +330,31 @@ class ChatsStore implements Chats {
     const found = await findPointers().catch(() => null)
     const engine = this.engine
     if (!found || !engine) return
+    // A pointer that was here and is not: deleted by the sync, or with its folder; its
+    // chat goes off the list as one deleted here does (`pointerMoved`, #375).
+    const went = [...this.places.keys()].filter((chat) => !found.has(chat))
+    for (const chat of went) this.gone.add(chat)
+    for (const chat of found.keys()) this.gone.delete(chat)
     this.places = found
+    if (went.length) void engine.refresh().catch(() => false)
     // A pointer to a chat the account has not listed here yet: made on another device
     // since the list was asked for, which no poke says until somebody posts in it.
     if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
     this.drawList()
   }
 
-  /** The pointers a space's file list holds now: one this device has not placed - come
-   *  by the sync, a move, a copy - is looked for, and its chat listed. */
-  pointersSeen(paths: readonly string[]): void {
-    const placed = new Set([...this.places.values()].map((one) => one.path))
-    if (this.engine && paths.some((path) => !placed.has(path))) void this.lookForPointers()
+  /** The pointers the file list of the space at `root` holds now: one this device has not
+   *  placed - come by the sync, a move, a copy - is looked for, and its chat listed; and
+   *  one placed there that the list no longer holds - deleted by the sync, which says
+   *  nothing to the file operations - is looked for too, and its chat let go. */
+  pointersSeen(root: string | null, paths: readonly string[]): void {
+    if (!this.engine) return
+    const placed = [...this.places.values()]
+    const known = new Set(placed.map((one) => one.path))
+    const held = new Set(paths)
+    const came = paths.some((path) => !known.has(path))
+    const went = root !== null && placed.some((one) => one.root === root && !held.has(one.path))
+    if (came || went) void this.lookForPointers()
   }
 
   // -------------------------------------------------------------------------
@@ -751,13 +769,23 @@ class ChatsStore implements Chats {
   }
 
   /** A pointer moved, came or went on this device (workspace/file-ops.ts): where its
-   *  chat is now. A move into another space moves the chat on the account. */
+   *  chat is now. A move into another space moves the chat on the account.
+   *
+   *  One that went - deleted here, or its deletion brought by the sync - takes its chat
+   *  off the list at once, rather than leaving the row the account still lists until it
+   *  hears, with no pointer and so no name: Emil's nine rows of a lone `#` (#375). The
+   *  account is asked again, and stops listing a chat whose pointer is in Recently
+   *  deleted; put back, the pointer brings its chat back with it. */
   async pointerMoved(from: string | null, to: string | null): Promise<void> {
     const before = [...this.places].find(([, place]) => from !== null && place.path === from)
     const chat = to ? await readPointer(to) : null
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- `list` is what renders
     const next = new Map(this.places)
     if (before) next.delete(before[0])
+    if (before && !chat) this.gone.add(before[0])
+    if (chat) this.gone.delete(chat)
+    const unlisted = chat !== null && !this.engine?.chats.get(chat)?.row
+    if ((before && !chat) || unlisted) void this.engine?.refresh().catch(() => false)
     if (chat && to) {
       const root = workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null
       if (root) next.set(chat, { root, path: to })

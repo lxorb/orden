@@ -217,6 +217,14 @@ export function parseRule(written: string): Rule | null {
     return out
   }
 
+  // `every 2 years in March on the 3rd`: months a rule repeats in every few years
+  // cannot stand in for the unit the way `every March` does, so they follow it, in
+  // the words ruleText writes them with (rrule's reader takes `in` as it does `on`).
+  if (rule.unit === 'year' && peek() === 'in' && MONTH_NAMES[words[at + 1] ?? ''] !== undefined) {
+    at++
+    rule.months = readMonths()
+  }
+
   if (peek() === 'on') {
     at++
     if (peek() === 'the') {
@@ -406,10 +414,15 @@ function candidates(rule: Rule, start: string, period: number): string[] {
 }
 
 /** How many of the rule's periods lie between two dates, roughly, so the search
- *  for the next date starts near it rather than at the reference. */
+ *  for the next date starts near it rather than at the reference. The search only
+ *  walks forward from here, so the guess may fall short but must never pass the
+ *  period `to` is in: a month or a year is taken at its longest, 31 days and 366,
+ *  since one taken shorter than it is (a month as 28) counts more months than went
+ *  by, and a task a few years overdue would skip as many months as it is years
+ *  late. */
 function periodsBetween(rule: Rule, from: string, to: string): number {
   const days = dayNumber(to) - dayNumber(from)
-  const size = { day: 1, week: 7, month: 28, year: 365 }[rule.unit] * rule.every
+  const size = { day: 1, week: 7, month: 31, year: 366 }[rule.unit] * rule.every
   return Math.max(0, Math.floor(days / size) - 1)
 }
 

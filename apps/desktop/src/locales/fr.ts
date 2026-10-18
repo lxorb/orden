@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fr: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Depuis les autres apps : {key}',
+  'From other apps: set in your system settings':
+    'Depuis les autres apps : à définir dans les réglages du système',
+  'From other apps: bind {command} in your system settings':
+    'Depuis les autres apps : associez {command} dans les réglages du système',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Ajouter aux Essentials',
@@ -21,6 +27,11 @@ export const fr: Dictionary = {
   'Import from Zen': 'Importer depuis Zen',
   'Containers stay in Zen': 'Les conteneurs restent dans Zen',
   'Zen’s tabs could not be read.': 'Les onglets de Zen n’ont pas pu être lus.',
+  // Settings: note types
+  'Page note': 'Note en pages',
+  'Web note': 'Note web',
+  'Private tab': 'Onglet privé',
+  'Note types': 'Types de note',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semaine précédente',
   // Tasks: projects placed in the panel, and their folder
@@ -1001,6 +1012,7 @@ export const fr: Dictionary = {
   Comment: 'Commentaire',
   'Always on top': 'Toujours au premier plan',
   'What is new': 'Nouveautés',
+  'Download the app': 'Télécharger l’app',
   'Report an issue': 'Signaler un problème',
   'Move the line up': 'Monter la ligne',
   'Move the line down': 'Descendre la ligne',
@@ -1083,6 +1095,16 @@ export const fr: Dictionary = {
   'AI account: {name}': 'Compte IA : {name}',
   Accounts: 'Comptes',
   Access: 'Accès',
+  Set: 'Défini',
+  'Start over': 'Recommencer',
+  'Sign in here': 'Se connecter ici',
+  '{device} wants your AI accounts': '{device} demande vos comptes IA',
+  '{device} offers this device your AI vault': '{device} propose à cet appareil votre coffre IA',
+  Join: 'Rejoindre',
+  'Allow this device on another one': 'Autorisez cet appareil depuis un autre',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Sur chaque appareil où vous êtes connecté, chiffré de bout en bout.',
+  'Sign in to have them on every device.': 'Connectez-vous pour les avoir sur chaque appareil.',
   'Agents on this computer connect on their own':
     'Les agents de cet ordinateur se connectent d’eux-mêmes',
   Helpers: 'Assistants',
@@ -1177,6 +1199,12 @@ export const fr: Dictionary = {
   'Export as PNG': 'Exporter en PNG',
   'Export as SVG': 'Exporter en SVG',
   'Export as PDF': 'Exporter en PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importer un PDF',
+  'Choose how to add the pages to the canvas.': 'Choisissez comment ajouter les pages au canevas.',
+  'Single page': 'Une seule page',
+  'All pages': 'Toutes les pages',
+  'Choose a page': 'Choisir une page',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Supprimer la sélection',
   'Nudge left': 'Décaler à gauche',
@@ -1237,8 +1265,8 @@ export const fr: Dictionary = {
   'Release channel': 'Canal de mise à jour',
   Stable: 'Stable',
   Unstable: 'Instable',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stable suit les versions officielles, Instable chaque push sur main et peut casser.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stable suit les versions publiées, Instable suit les builds de pointe et peut casser.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importer',
@@ -1432,16 +1460,16 @@ export const fr: Dictionary = {
   'OpenAI-compatible': 'Compatible OpenAI',
   'Base URL': 'URL de base',
   'API key': 'Clé API',
-  'Set on this device': 'Définie sur cet appareil',
   Optional: 'Facultatif',
   'List models': 'Lister les modèles',
   'Asking…': 'Demande en cours…',
   'No providers yet.': 'Aucun fournisseur pour le moment.',
   'Add {name}': 'Ajouter {name}',
-  'Keys stay in the secure store on this device.':
-    'Les clés restent dans le coffre sécurisé de cet appareil.',
   'This browser holds the keys in its own storage.':
     'Ce navigateur garde les clés dans son propre stockage.',
+  'Keep this browser’s keys in the vault': 'Garder les clés de ce navigateur dans le coffre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Les clés de chaque appareil sont alors gardées dans le stockage de ce navigateur, où un script entré dans la page pourrait les lire.',
   'AI can be wrong. Check the facts.': 'L’IA peut se tromper. Vérifiez les faits.',
   'Used by the glasses': 'Utilisée par les lunettes',
   'Could not read the models.': 'Impossible de lire les modèles.',
@@ -1861,16 +1889,6 @@ export const fr: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navigateur par défaut',
-  // The engine web tabs run on
-  Engine: 'Moteur',
-  Relaunch: 'Relancer',
-  'Chromium did not start': 'Chromium n’a pas démarré',
-  'No connection': 'Pas de connexion',
-  'Not in this release': 'Absent de cette version',
-  'Needs an update': 'Mise à jour nécessaire',
-  'Signature did not match': 'La signature ne correspond pas',
-  'Disk full': 'Disque plein',
-  'Could not be installed': 'Installation impossible',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annuler les modifications de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2042,10 +2060,6 @@ export const fr: Dictionary = {
     many: '{count} d’appels',
     other: '{count} appels',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Ouvert sur {device}',
-  'Use here': 'Utiliser ici',
-  '{device} wants your web logins': '{device} demande vos connexions web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Question rapide',

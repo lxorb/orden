@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ur: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'دوسری ایپس سے: {key}',
+  'From other apps: set in your system settings': 'دوسری ایپس سے: سسٹم سیٹنگز میں طے کریں',
+  'From other apps: bind {command} in your system settings':
+    'دوسری ایپس سے: سسٹم سیٹنگز میں {command} مقرر کریں',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ضروری',
   'Add to Essentials': 'ضروری میں شامل کریں',
@@ -21,6 +26,11 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
+  // Settings: note types
+  'Page note': 'صفحات والا نوٹ',
+  'Web note': 'ویب نوٹ',
+  'Private tab': 'نجی ٹیب',
+  'Note types': 'نوٹ کی اقسام',
   // Tasks: Upcoming's weeks
   'Previous week': 'پچھلا ہفتہ',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +993,7 @@ export const ur: Dictionary = {
   Comment: 'تبصرہ',
   'Always on top': 'ہمیشہ اوپر',
   'What is new': 'کیا نیا ہے',
+  'Download the app': 'ایپ ڈاؤن لوڈ کریں',
   'Report an issue': 'مسئلہ رپورٹ کریں',
   'Move the line up': 'سطر اوپر لے جائیں',
   'Move the line down': 'سطر نیچے لے جائیں',
@@ -1066,6 +1077,16 @@ export const ur: Dictionary = {
   'AI account: {name}': 'اے آئی اکاؤنٹ: {name}',
   Accounts: 'اکاؤنٹس',
   Access: 'رسائی',
+  Set: 'سیٹ ہے',
+  'Start over': 'دوبارہ شروع کریں',
+  'Sign in here': 'یہاں سائن ان کریں',
+  '{device} wants your AI accounts': '{device} آپ کے اے آئی اکاؤنٹس چاہتا ہے',
+  '{device} offers this device your AI vault': '{device} اس ڈیوائس کو آپ کا AI والٹ پیش کر رہا ہے',
+  Join: 'شامل ہوں',
+  'Allow this device on another one': 'کسی دوسرے آلے پر اس آلے کی اجازت دیں',
+  'On every device you sign in to, end-to-end encrypted.':
+    'ہر اس آلے پر جس میں آپ سائن ان ہوں، اینڈ ٹو اینڈ انکرپٹڈ۔',
+  'Sign in to have them on every device.': 'ہر آلے پر رکھنے کے لیے سائن ان کریں۔',
   'Agents on this computer connect on their own': 'اس کمپیوٹر کے ایجنٹ خود جڑتے ہیں',
   Helpers: 'معاونین',
   'Start helpers on your AI accounts': 'اپنے اے آئی اکاؤنٹس پر معاون شروع کریں',
@@ -1159,6 +1180,12 @@ export const ur: Dictionary = {
   'Export as PNG': 'PNG میں ایکسپورٹ کریں',
   'Export as SVG': 'SVG میں ایکسپورٹ کریں',
   'Export as PDF': 'PDF میں ایکسپورٹ کریں',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF امپورٹ کریں',
+  'Choose how to add the pages to the canvas.': 'منتخب کریں کہ صفحات کینوس پر کیسے شامل ہوں۔',
+  'Single page': 'ایک صفحہ',
+  'All pages': 'تمام صفحات',
+  'Choose a page': 'ایک صفحہ منتخب کریں',
   // The canvas: what its own keys are called
   'Delete what is picked': 'منتخب حذف کریں',
   'Nudge left': 'بائیں سرکائیں',
@@ -1219,8 +1246,8 @@ export const ur: Dictionary = {
   'Release channel': 'ریلیز چینل',
   Stable: 'مستحکم',
   Unstable: 'غیر مستحکم',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'مستحکم سرکاری ریلیز کے ساتھ چلتا ہے، غیر مستحکم main پر ہر پش کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'مستحکم جاری کردہ ورژن کے ساتھ چلتا ہے، غیر مستحکم ایج بلڈ کے ساتھ اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',
@@ -1388,14 +1415,15 @@ export const ur: Dictionary = {
   'OpenAI-compatible': 'OpenAI سے ہم آہنگ',
   'Base URL': 'بنیادی URL',
   'API key': 'API کلید',
-  'Set on this device': 'اس ڈیوائس پر مقرر',
   Optional: 'اختیاری',
   'List models': 'ماڈل حاصل کریں',
   'Asking…': 'پوچھا جا رہا ہے…',
   'No providers yet.': 'ابھی کوئی فراہم کنندہ نہیں۔',
   'Add {name}': '{name} شامل کریں',
-  'Keys stay in the secure store on this device.': 'کلیدیں اس ڈیوائس کے محفوظ ذخیرے میں رہتی ہیں۔',
   'This browser holds the keys in its own storage.': 'یہ براؤزر کلیدیں اپنے ہی ذخیرے میں رکھتا ہے۔',
+  'Keep this browser’s keys in the vault': 'اس براؤزر کی کلیدیں والٹ میں رکھیں',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'پھر ہر ڈیوائس کی کلیدیں اس براؤزر کے اسٹوریج میں رکھی جائیں گی، جہاں صفحے میں گھس آنے والا کوئی اسکرپٹ انہیں پڑھ سکتا ہے۔',
   'AI can be wrong. Check the facts.': 'AI غلط ہو سکتا ہے۔ حقائق کی تصدیق کریں۔',
   'Used by the glasses': 'چشمہ استعمال کرتا ہے',
   'Could not read the models.': 'ماڈل پڑھے نہیں جا سکے۔',
@@ -1798,16 +1826,6 @@ export const ur: Dictionary = {
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'دوبارہ شروع کریں',
-  'Chromium did not start': 'Chromium شروع نہیں ہوا',
-  'No connection': 'کنکشن نہیں',
-  'Not in this release': 'اس ریلیز میں نہیں',
-  'Needs an update': 'اپ ڈیٹ درکار ہے',
-  'Signature did not match': 'دستخط میل نہیں کھاتے',
-  'Disk full': 'ڈسک بھر گئی',
-  'Could not be installed': 'انسٹال نہیں ہو سکا',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1977,10 +1995,6 @@ export const ur: Dictionary = {
     one: '{count} کال',
     other: '{count} کالز',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} پر کھلا ہے',
-  'Use here': 'یہاں استعمال کریں',
-  '{device} wants your web logins': '{device} آپ کے ویب لاگ اِن چاہتا ہے',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'فوری سوال',

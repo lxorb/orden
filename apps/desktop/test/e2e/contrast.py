@@ -10,7 +10,7 @@ switch existed in the first place.
 
 The theme is chosen through the app itself, `theme.select('contrast')`, because it is
 built in: nothing is fetched, nothing is installed, and a first launch with no network
-at all is answered with it. It is the only Contrast: the copy lxorb/nib-themes had
+at all is answered with it. It is the only Contrast: the copy lxorb/orden-themes had
 is gone, and one still installed is read as this one. See contrast.css in @nib/themes.
 
 Serves the built web app and drives it in Chromium. The build has

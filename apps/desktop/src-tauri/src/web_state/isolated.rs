@@ -26,6 +26,11 @@ pub(crate) async fn run(view: &Webview, source: &str, call: &str) -> Result<Stri
     engine::run(view, source, call).await
 }
 
+/// A string as a JavaScript string literal: JSON's own quoting, which JavaScript reads.
+pub(crate) fn quoted(text: &str) -> Result<String, String> {
+    serde_json::to_string(text).map_err(|error| error.to_string())
+}
+
 #[cfg(windows)]
 mod engine {
     use serde_json::json;
@@ -176,5 +181,19 @@ mod engine {
             .map_err(|error| error.to_string())
         })
         .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::quoted;
+
+    /// Anything a string holds stays inside the literal it is quoted in.
+    #[test]
+    fn a_quoted_string_stays_a_string() {
+        assert_eq!(
+            quoted(r#"{"a":"b'c"}"#).as_deref(),
+            Ok(r#""{\"a\":\"b'c\"}""#)
+        );
     }
 }

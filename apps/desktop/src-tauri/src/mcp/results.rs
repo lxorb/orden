@@ -402,9 +402,6 @@ fn failed(code: &str, message: &str) -> String {
         "password_field" => "Never type a password: ask the reader with browser_takeover.",
         "not_granted" => "The reader has not granted this; they can in Orden's Settings > Agents.",
         "denied" => "The reader said no: do not ask again for the same thing.",
-        "in_use_elsewhere" => {
-            "Another of the reader's devices is using this site: wait, or open with store \"agent\"."
-        }
         "limit" => "Close tabs you no longer need, or slow down.",
         _ => "",
     };

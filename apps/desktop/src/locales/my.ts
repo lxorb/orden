@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'အခြားအက်ပ်များမှ: {key}',
+  'From other apps: set in your system settings': 'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် သတ်မှတ်ပါ',
+  'From other apps: bind {command} in your system settings':
+    'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် {command} ကို ချိတ်ပါ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'မရှိမဖြစ်များ',
   'Add to Essentials': 'မရှိမဖြစ်များသို့ ထည့်ပါ',
@@ -21,6 +26,11 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  // Settings: note types
+  'Page note': 'စာမျက်နှာမှတ်စု',
+  'Web note': 'ဝဘ်မှတ်စု',
+  'Private tab': 'တဘ်သီးသန့်',
+  'Note types': 'မှတ်စုအမျိုးအစားများ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +987,7 @@ export const my: Dictionary = {
   Comment: 'မှတ်ချက်',
   'Always on top': 'အမြဲအပေါ်တွင်',
   'What is new': 'အသစ်ဘာရှိလဲ',
+  'Download the app': 'အက်ပ်ကို ဒေါင်းလုဒ်လုပ်ရန်',
   'Report an issue': 'ပြဿနာတိုင်ပါ',
   'Move the line up': 'လိုင်းကို အထက်ရွှေ့ပါ',
   'Move the line down': 'လိုင်းကို အောက်ရွှေ့ပါ',
@@ -1060,6 +1071,16 @@ export const my: Dictionary = {
   'AI account: {name}': 'AI အကောင့်: {name}',
   Accounts: 'အကောင့်များ',
   Access: 'ဝင်ရောက်ခွင့်',
+  Set: 'သတ်မှတ်ပြီး',
+  'Start over': 'အစမှ ပြန်စပါ',
+  'Sign in here': 'ဤနေရာတွင် ဝင်ပါ',
+  '{device} wants your AI accounts': '{device} က သင့် AI အကောင့်များကို တောင်းနေသည်',
+  '{device} offers this device your AI vault': '{device} က ဤစက်ကို သင်၏ AI သေတ္တာ ပေးနေသည်',
+  Join: 'ပါဝင်မည်',
+  'Allow this device on another one': 'အခြားစက်တွင် ဤစက်ကို ခွင့်ပြုပါ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'သင်ဝင်သည့် စက်တိုင်းတွင် အစမှအဆုံး ကုဒ်ဝှက်ထားသည်။',
+  'Sign in to have them on every device.': 'စက်တိုင်းတွင် ရရှိရန် ဝင်ပါ။',
   'Agents on this computer connect on their own':
     'ဤကွန်ပျူတာရှိ အေးဂျင့်များ သူ့အလိုလို ချိတ်ဆက်သည်',
   Helpers: 'အကူများ',
@@ -1154,6 +1175,13 @@ export const my: Dictionary = {
   'Export as PNG': 'PNG အဖြစ်ထုတ်ပါ',
   'Export as SVG': 'SVG အဖြစ်ထုတ်ပါ',
   'Export as PDF': 'PDF အဖြစ်ထုတ်ပါ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF သွင်းပါ',
+  'Choose how to add the pages to the canvas.':
+    'စာမျက်နှာများကို ကန်ဗတ်ပေါ် မည်သို့ထည့်မည်ကို ရွေးပါ။',
+  'Single page': 'စာမျက်နှာ တစ်မျက်နှာ',
+  'All pages': 'စာမျက်နှာအားလုံး',
+  'Choose a page': 'စာမျက်နှာ ရွေးပါ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ရွေးထားသည်ကို ဖျက်ပါ',
   'Nudge left': 'ဘယ်သို့ အနည်းငယ်တွန်းပါ',
@@ -1214,8 +1242,8 @@ export const my: Dictionary = {
   'Release channel': 'ထုတ်လွှင့်လမ်းကြောင်း',
   Stable: 'တည်ငြိမ်',
   Unstable: 'မတည်ငြိမ်',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'တည်ငြိမ်သည် တရားဝင်ထုတ်လွှင့်မှုများကို လိုက်သည်၊ မတည်ငြိမ်သည် main သို့ တင်သမျှကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီးဗားရှင်းများကို လိုက်သည်၊ မတည်ငြိမ်သည် edge build များကို လိုက်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',
@@ -1373,16 +1401,16 @@ export const my: Dictionary = {
   'OpenAI-compatible': 'OpenAI နှင့်တွဲဖက်',
   'Base URL': 'အခြေ URL',
   'API key': 'API သော့',
-  'Set on this device': 'ဤစက်တွင် သတ်မှတ်ထားသည်',
   Optional: 'မရွေးလည်းရ',
   'List models': 'မော်ဒယ်များယူပါ',
   'Asking…': 'မေးနေသည်…',
   'No providers yet.': 'ပေးသူ မရှိသေးပါ။',
   'Add {name}': '{name} ထည့်ပါ',
-  'Keys stay in the secure store on this device.':
-    'သော့များ ဤစက်၏ လုံခြုံသောသိမ်းဆည်းမှုတွင် ကျန်နေသည်။',
   'This browser holds the keys in its own storage.':
     'ဤဘရောက်ဇာသည် သော့များကို မိမိသိမ်းဆည်းမှုတွင် ထားသည်။',
+  'Keep this browser’s keys in the vault': 'ဤဘရောက်ဇာ၏ ကီးများကို သေတ္တာထဲတွင် သိမ်းထားပါ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ထိုအခါ စက်တိုင်း၏ ကီးများကို ဤဘရောက်ဇာ၏ သိုလှောင်ရာတွင် သိမ်းမည်ဖြစ်ပြီး စာမျက်နှာထဲသို့ ဝင်လာသော script တစ်ခုက ၎င်းတို့ကို ဖတ်နိုင်သည်။',
   'AI can be wrong. Check the facts.': 'AI မှားနိုင်ပါသည်။ အချက်အလက်များကို စစ်ဆေးပါ။',
   'Used by the glasses': 'မျက်မှန် အသုံးပြုသည်',
   'Could not read the models.': 'မော်ဒယ်များကို ဖတ်မရပါ။',
@@ -1792,16 +1820,6 @@ export const my: Dictionary = {
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
   // Orden as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
-  // The engine web tabs run on
-  Engine: 'အင်ဂျင်',
-  Relaunch: 'ပြန်စတင်',
-  'Chromium did not start': 'Chromium မစတင်ပါ',
-  'No connection': 'ချိတ်ဆက်မှု မရှိပါ',
-  'Not in this release': 'ဤထုတ်ဝေမှုတွင် မပါပါ',
-  'Needs an update': 'အပ်ဒိတ် လိုအပ်သည်',
-  'Signature did not match': 'လက်မှတ် မကိုက်ညီပါ',
-  'Disk full': 'ဒစ်ခ် ပြည့်နေသည်',
-  'Could not be installed': 'ထည့်သွင်း၍ မရပါ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1966,10 +1984,6 @@ export const my: Dictionary = {
   'Calls a minute': 'တစ်မိနစ်လျှင် ခေါ်ဆိုမှု',
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} တွင် ဖွင့်ထားသည်',
-  'Use here': 'ဤနေရာတွင် သုံးမည်',
-  '{device} wants your web logins': '{device} က သင်၏ ဝဘ် လော့ဂ်အင်များကို လိုချင်သည်',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'အမြန်မေးခွန်း',

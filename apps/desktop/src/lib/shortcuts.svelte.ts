@@ -174,6 +174,8 @@ class Shortcuts {
   refuse(key: string): string | null {
     const combination = parseCombination(key, this.platform)
     if (!combination) return t('That is not a key combination.')
+    // The Windows key is the desktop's own outside a Mac.
+    if (combination.meta && this.platform !== 'mac') return t('That is not a key combination.')
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     // Named the way the platform names them: a Mac prints its keys as signs, and

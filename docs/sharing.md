@@ -145,6 +145,24 @@ through the file's room from then on, which is also what writes them into the
 owner's space - the same room two people in a shared note already use. So there
 is nothing new in the sync: the room is the mechanism, and it already worked.
 
+One thing the room has to be told. The shape of a room's document - words, or a
+plane - is read off the file's name, and a borrowed file has no name here. Asked of
+the missing path, every shared canvas was taken for words: the guest's plane sat in
+a room of text, and nothing drawn on either side reached the other (#386). So a
+document with no path but a share is the shape it was opened as, which was read off
+its name on the account (`roomKindOf` in `rooms/kind.ts`).
+
+Which kind of tab it opens as is read off the same name (`sharedKind` in
+`openers.ts`): a canvas on the plane, a page note on its paper - in a plane's room,
+as the service has it - and a chat as the chat, whose id the pointer's words name.
+Anything else is a note. Both of the first and the last used to open as notes: a page
+note's JSON in a text editor, and a chat's pointer as a line to read.
+
+A link to one file followed by an account that already holds its space - the owner
+opening their own link on a phone, say - opens the file where it is kept, not as a
+borrowed tab. Shared with you does not list a file of one's own, so the borrowed tab
+was read-only, and what was drawn there went to nobody. See `one-file.ts`.
+
 A file shared to be read is read-only, exactly as a space shared to be read is.
 That question used to be asked of the path - what may be done where a file sits -
 and a shared file has no path, so it is asked of the document instead:
@@ -156,6 +174,28 @@ is no file here for a write to go to: its room keeps it.
 
 A guest sees the same thing through the join page, because a guest is a person in
 a file exactly as they are a person in a space.
+
+A guest with no account who came for one file sees only that file. The tab strip,
+the file list, the bars and the status bar are somebody else's app round it, and a
+friend handed a canvas read them as something they were meant to understand. So
+while the file is in front of them - and while the link to it is still being walked
+through - the window is the file, the way full screen leaves it but with no way out,
+because there is nothing out there that is theirs. Editing, the pen and the other
+people in it are all still there. A shared file has no path and so no tab of it is
+kept between launches; a guest who comes back holding one file and no space is put
+back in it. An account, or a guest a link let into a whole space, keeps the app:
+they have more than one thing to move between. See `alone.svelte.ts`.
+
+What went with the chrome was the guest's own corner of it: the foot of the panel,
+where they read who they are, changed the name the others see and signed in. So one
+thing of theirs stays, in the top corner at the end - the corner the way out of full
+screen takes, clear of the canvas's bar at the foot and of the carets a note holds at
+its edges, which sit at the start. It is their initial on the colour their caret wears
+for everybody else, and pressed it opens the name, which is written as it is left and
+goes to the others' carets and hands at once, and Sign in, the app's own sign-in.
+Whatever the link let this device into goes with it into the account, so somebody who
+signs in is still in the file, now with the app round it. A press past it or Escape
+shuts it, the way a menu is shut. See `GuestCorner.svelte`.
 
 ## Marks
 

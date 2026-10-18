@@ -7,6 +7,10 @@
    *  a small dot in that device's accent where its pointer is, its name beside it,
    *  and the stroke under its pen drawn as it is drawn.
    *
+   *  The name stays, and so does the hand when it is off the screen: it is held at
+   *  the nearest edge with an arrow pointing the way to it, so nobody in a canvas is
+   *  ever nowhere (#386). See canvas/edge.ts.
+   *
    *  One SVG layer for all of it, inside the plane, so a pan and a zoom are the
    *  plane's own transform and nothing here is touched. SVG rather than a third 2d
    *  canvas because this is a handful of shapes that change every frame and go
@@ -19,7 +23,10 @@
    *  gone the moment that device lifts its pen. The finished stroke comes the
    *  ordinary way, once, as one whole object in the room's document. */
 
+  import type { Camera } from './camera'
   import { approach, arrived } from './canvas/ease'
+  import { ALONE_INSET, heldAtEdge, INSET } from './canvas/edge'
+  import { alone } from './alone.svelte'
   import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './canvas/ink'
   import type { Palette } from './canvas/paint'
   import type { Hand } from './canvas/shared'
@@ -29,6 +36,10 @@
     hands,
     unit,
     palette,
+    camera,
+    width,
+    height,
+    ongo,
   }: {
     hands: readonly Hand[]
     /** One screen pixel in plane units, so the dot and the name are the same size
@@ -36,33 +47,27 @@
     unit: number
     /** What the six preset colours are, read off the theme. */
     palette: Palette
+    /** What the screen is looking at, and how big it is, so a hand off it can be
+     *  held at its edge. */
+    camera: Camera
+    width: number
+    height: number
+    /** Asked to go to where a hand held at the edge is, by a press on it. */
+    ongo?: (at: { x: number; y: number }) => void
   } = $props()
-
-  /** How long a name stays after the hand it belongs to has stopped moving. The
-   *  same second and a half a caret's name is shown for. */
-  const NAMED = 1500
 
   /** How big the pointer is and how far its name sits from it, in screen pixels. */
   const DOT = 4
   const GAP = 9
   const LABEL = 11
-
-  let named = $state(true)
-  let timer: ReturnType<typeof setTimeout> | undefined
+  /** How far round a held hand's arrow a press still lands on it, in screen pixels. */
+  const TARGET = 16
+  /** The arrow a hand held at the edge is drawn as, pointing right, in screen pixels:
+   *  eleven ahead of its point and as wide again behind, with a notch in its tail. */
+  const ARROW = 'M 11 0 L -6.6 -7.7 L -3.3 0 L -6.6 7.7 Z'
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
-
-  // A hand that moved is a hand worth naming, and after a pause the name goes and
-  // the dot stays, which is what a caret does.
-  $effect(() => {
-    for (const one of hands) follows(one.at)
-    named = true
-
-    clearTimeout(timer)
-    timer = setTimeout(() => (named = false), NAMED)
-    return () => clearTimeout(timer)
-  })
 
   function inked(colour: string): string {
     return palette[colour] ?? colour
@@ -129,13 +134,27 @@
     }
   })
 
-  /** Each hand as it is drawn: where it has eased to, and everything else as it came. */
-  const drawn = $derived(hands.map((one) => ({ one, at: eased[one.id] ?? one.at })))
+  /** Each hand as it is drawn: where it has eased to, held at the edge where that is
+   *  off the screen, and everything else as it came. */
+  const drawn = $derived(
+    hands.map((one) => {
+      const at = eased[one.id] ?? one.at
+      // Clear of a guest's corner, where they are alone in the file; see alone.svelte.ts.
+      return {
+        one,
+        at,
+        held: heldAtEdge(at, camera, width, height, alone.on ? ALONE_INSET : INSET),
+      }
+    }),
+  )
+
+  /** Which way a held hand's name sits from its arrow, along each axis. */
+  const ALONG = { start: 1, middle: 0, end: -1, hanging: 1, auto: -1 } as const
 </script>
 
 {#if hands.length}
   <svg class="hands" aria-hidden="true" width="1" height="1" style:overflow="visible">
-    {#each drawn as { one: hand, at } (hand.id)}
+    {#each drawn as { one: hand, at, held } (hand.id)}
       {#if hand.stroke}
         <!-- Open ended, because the pen has not lifted: the same outline the ink
              layers fill, drawn the one way `ink.ts` describes it. The stroke is drawn
@@ -149,9 +168,44 @@
         />
       {/if}
 
-      <circle cx={at.x} cy={at.y} r={DOT * unit} fill={hand.colour} />
-
-      {#if named}
+      {#if held}
+        <!-- Off the screen: an arrow at the nearest edge, pointing the way to them,
+             and their name on the inside of it. Pressed, it goes to them: the press is
+             the arrow's own and starts nothing on the plane under it. -->
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <g
+          class="held"
+          onpointerdown={(event) => event.stopPropagation()}
+          onpointerup={(event) => event.stopPropagation()}
+          onclick={(event) => {
+            event.stopPropagation()
+            ongo?.(at)
+          }}
+        >
+          <!-- Somewhere a finger can land, round the arrow. -->
+          <circle
+            class="target"
+            cx={held.at.x}
+            cy={held.at.y}
+            r={TARGET * unit}
+            fill="transparent"
+          />
+          <path
+            d={ARROW}
+            fill={hand.colour}
+            transform="translate({held.at.x} {held.at.y}) rotate({held.angle}) scale({unit})"
+          />
+          <text
+            x={held.at.x + ALONG[held.anchor] * GAP * 1.6 * unit}
+            y={held.at.y + ALONG[held.baseline] * GAP * 1.6 * unit}
+            text-anchor={held.anchor}
+            dominant-baseline={held.baseline}
+            fill={hand.colour}
+            font-size="{LABEL * unit}px">{hand.name}</text
+          >
+        </g>
+      {:else}
+        <circle cx={at.x} cy={at.y} r={DOT * unit} fill={hand.colour} />
         <text
           x={at.x + GAP * unit}
           y={at.y - GAP * unit}
@@ -179,6 +233,16 @@
      which is the one kind of movement in the app a reader cannot turn off:
      `--dur-*` goes to zero under prefers-reduced-motion and a bare number does
      not. */
+  /* A held hand is the one thing on this layer a pointer may press. */
+  .held {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .target {
+    pointer-events: all;
+  }
+
   text {
     font-family: var(--font-ui);
     font-weight: var(--weight-strong);

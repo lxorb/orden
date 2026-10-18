@@ -7,6 +7,9 @@ What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_sw
     short one goes nowhere; a sweep after a scroll down is a sweep of its own; the
     setting turned off is a scroll and nothing else;
   - the arrow, photographed half way and past the point where it goes, light and dark;
+    and close up at scales of 1, 1.25, 1.5 and 2, where it has to sit on whole pixels of
+    the screen to be drawn sharp (#209: "the animation and the icon itself look very
+    pixelated");
   - the page script in a site's page says each sideways scroll the page left over, and
     says that the page took it where a scroller in the page could still move, where the
     page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
@@ -93,14 +96,34 @@ def lifted(page: Page) -> None:
     DRIVE.settled(page)
 
 
-def opened(browser: Browser, scheme: str = "light", off: bool = False) -> tuple[Page, float, float]:
-    page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme=scheme)
+def opened(
+    browser: Browser, scheme: str = "light", off: bool = False, scale: float = 1
+) -> tuple[Page, float, float]:
+    page = DRIVE.page(
+        browser,
+        viewport={"width": 1180, "height": 820},
+        color_scheme=scheme,
+        device_scale_factor=scale,
+    )
     if off:
         page.add_init_script("localStorage.setItem('nib:swipe', 'off')")
+    # Room for every chunk the launch fetches in the page's list of them, which keeps
+    # 250 by default and drops the rest: what hears a swipe is among the last.
+    page.add_init_script("performance.setResourceTimingBufferSize(10000)")
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", "# Beta\n\nThe second note.\n")
     page.evaluate(TRAIL)
     wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
+    # What hears a swipe is fetched at the very end of the launch, the last of its doors
+    # (`warmDoors` in surfaces.svelte.ts), and nothing on screen says when it is in. A
+    # sweep before it is a scroll nobody hears: the first arrow this drive asked for,
+    # straight after the seed, used to come out as no arrow at all, and only the second
+    # was drawn. So the chunk is waited for, and two frames for it to start listening.
+    wait_for(
+        page,
+        "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
+        "what hears a swipe",
+    )
     DRIVE.settled(page)
     box = page.locator(".cm-content").first.bounding_box()
     if box is None:
@@ -154,6 +177,57 @@ def notes(browser: Browser, scheme: str) -> None:
     page.close()
 
 
+#: Where the arrow's circle is drawn, in pixels of the screen: its corner and the
+#: arrow's own box inside it, which are sharp only on whole ones.
+WHERE = """() => {
+  const circle = document.querySelector('.nib-swipe')
+  const arrow = circle?.querySelector('.arrow')
+  if (!circle || !arrow) return null
+  const at = (box) => [box.x, box.y, box.width, box.height].map((one) => one * devicePixelRatio)
+  return { circle: at(circle.getBoundingClientRect()), arrow: at(arrow.getBoundingClientRect()) }
+}"""
+
+
+def close_up(browser: Browser, scale: float) -> None:
+    """The arrow held half way and armed, at a scale of the screen, photographed close:
+    on whole pixels of the screen, and its picture kept beside the others."""
+    page, _, _ = opened(browser, scale=scale)
+    # Fingers on a precision touchpad come in fractions of a pixel, and so does a window
+    # at 125 or 150 per cent.
+    for across, name in ((7.3, "half"), (14.3, "armed")):
+        page.evaluate(HOLD, across)
+        DRIVE.settled(page)
+        where = page.evaluate(WHERE)
+        if where is None:
+            wrong(f"at {scale}x: no arrow {name} way along a sweep")
+        else:
+            # The corner where it stopped; the size grows with `armed`, so only where the
+            # circle and the arrow start.
+            off = [abs(value - round(value)) for value in where["circle"][:2] + where["arrow"][:2]]
+            if name == "half" and max(off) > 0.01:
+                wrong(f"at {scale}x: the arrow sits between pixels of the screen: {where}")
+            else:
+                say(f"ok   at {scale}x: the arrow {name} way along is on whole pixels")
+            box = page.locator(".nib-swipe").bounding_box()
+            if box is not None:
+                shot(
+                    page,
+                    f"close/{scale:g}x-{name}",
+                    clip={
+                        "x": max(0, box["x"] - 16),
+                        "y": box["y"] - 16,
+                        "width": box["width"] + 32,
+                        "height": box["height"] + 32,
+                    },
+                )
+        page.evaluate("clearInterval(window.__holding)")
+        lifted(page)
+        if front(page).startswith("Alpha"):
+            page.evaluate("window.nibApp.workspace.goForward()")
+        on(page, "Beta", "Beta again")
+    page.close()
+
+
 def turned_off(browser: Browser) -> None:
     """Off in the settings: a sweep is a scroll."""
     page, x, y = opened(browser, off=True)
@@ -166,8 +240,8 @@ def turned_off(browser: Browser) -> None:
     page.close()
 
 
-#: A site's page with the page script in it, as nib's world holds it, and the binding a
-#: list in the page. Three places to put the pointer: plain words, a scroller in the
+#: A site's page with the page script in it, as nib's world holds it, and the window
+#: names it asks under read into a list in the page. Three places to put the pointer: plain words, a scroller in the
 #: middle of its row, and a map that takes the wheel.
 PAGE = f"""<!doctype html>
 <meta charset="utf-8">
@@ -182,7 +256,10 @@ PAGE = f"""<!doctype html>
 <div id="map">A map.</div>
 <script>
   window.said = []
-  window.nibSwiped = (one) => window.said.push(JSON.parse(one))
+  window.open = (url, name) => {{
+    if (String(name).startsWith('nib-swipe:')) window.said.push(JSON.parse(String(name).slice(10)))
+    return null
+  }}
   document.getElementById('row').scrollLeft = 200
   document.getElementById('map').addEventListener('wheel', (event) => event.preventDefault(), {{ passive: false }})
 </script>
@@ -257,6 +334,8 @@ def drive(browser: Browser) -> None:
     page_script(browser)
     for scheme in ("light", "dark"):
         notes(browser, scheme)
+    for scale in (1, 1.25, 1.5, 2):
+        close_up(browser, scale)
     turned_off(browser)
 
 

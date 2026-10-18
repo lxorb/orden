@@ -14,7 +14,6 @@ import { releaseDomain } from '../hostnames'
 import { facesIn } from '../people/seen'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
-import { webStoreOf } from './web-store'
 import { bookmarks } from './bookmarks'
 import { spaceExcluded } from './excluded'
 import { spaceArchived } from './archived'
@@ -146,9 +145,6 @@ spaces.get('/', async (context) => {
           held.get(one.id) ?? 0,
           items.get(one.id) ?? [],
         ),
-        // Which web store the space's pages live in on every computer, the owner's
-        // choice for everybody in it; see web-store.ts.
-        webStore: webStoreOf(one.web_store),
         people: faces.get(one.id) ?? [],
       }
 

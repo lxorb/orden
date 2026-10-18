@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'از برنامه‌های دیگر: {key}',
+  'From other apps: set in your system settings': 'از برنامه‌های دیگر: در تنظیمات سیستم تعیین کنید',
+  'From other apps: bind {command} in your system settings':
+    'از برنامه‌های دیگر: {command} را در تنظیمات سیستم اختصاص دهید',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ضروری‌ها',
   'Add to Essentials': 'افزودن به ضروری‌ها',
@@ -21,6 +26,11 @@ export const fa: Dictionary = {
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
+  // Settings: note types
+  'Page note': 'یادداشت صفحه‌ای',
+  'Web note': 'یادداشت وب',
+  'Private tab': 'برگه خصوصی',
+  'Note types': 'انواع یادداشت',
   // Tasks: Upcoming's weeks
   'Previous week': 'هفتهٔ پیشین',
   // Tasks: projects placed in the panel, and their folder
@@ -985,6 +995,7 @@ export const fa: Dictionary = {
   Comment: 'یادداشت کنار',
   'Always on top': 'همیشه رو',
   'What is new': 'تازه‌ها',
+  'Download the app': 'بارگیری برنامه',
   'Report an issue': 'گزارش مشکل',
   'Move the line up': 'جابه‌جایی خط به بالا',
   'Move the line down': 'جابه‌جایی خط به پایین',
@@ -1068,6 +1079,17 @@ export const fa: Dictionary = {
   'AI account: {name}': 'حساب هوش مصنوعی: {name}',
   Accounts: 'حساب‌ها',
   Access: 'دسترسی',
+  Set: 'تنظیم شده',
+  'Start over': 'شروع دوباره',
+  'Sign in here': 'اینجا وارد شوید',
+  '{device} wants your AI accounts': '{device} حساب‌های هوش مصنوعی شما را می‌خواهد',
+  '{device} offers this device your AI vault':
+    '{device} گاوصندوق هوش مصنوعی شما را به این دستگاه پیشنهاد می‌کند',
+  Join: 'پیوستن',
+  'Allow this device on another one': 'این دستگاه را روی دستگاه دیگری مجاز کنید',
+  'On every device you sign in to, end-to-end encrypted.':
+    'روی هر دستگاهی که وارد شوید، با رمزگذاری سرتاسری.',
+  'Sign in to have them on every device.': 'وارد شوید تا روی هر دستگاهی داشته باشید.',
   'Agents on this computer connect on their own': 'عامل‌های این رایانه خودشان وصل می‌شوند',
   Helpers: 'دستیارها',
   'Start helpers on your AI accounts': 'اجرای دستیار روی حساب‌های هوش مصنوعی شما',
@@ -1161,6 +1183,12 @@ export const fa: Dictionary = {
   'Export as PNG': 'برون‌بری به PNG',
   'Export as SVG': 'برون‌بری به SVG',
   'Export as PDF': 'برون‌بری به PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'درون‌آوری PDF',
+  'Choose how to add the pages to the canvas.': 'انتخاب کنید صفحه‌ها چطور به بوم اضافه شوند.',
+  'Single page': 'یک صفحه',
+  'All pages': 'همهٔ صفحه‌ها',
+  'Choose a page': 'یک صفحه انتخاب کنید',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف گزیده',
   'Nudge left': 'تکان به چپ',
@@ -1221,8 +1249,8 @@ export const fa: Dictionary = {
   'Release channel': 'کانال انتشار',
   Stable: 'پایدار',
   Unstable: 'ناپایدار',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'پایدار انتشارهای رسمی را پی می‌گیرد، ناپایدار هر فرستادن به main را و می‌تواند بشکند.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'پایدار نسخه‌های منتشرشده را پی می‌گیرد، ناپایدار ساخت‌های لبه را و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',
@@ -1389,15 +1417,16 @@ export const fa: Dictionary = {
   'OpenAI-compatible': 'سازگار با OpenAI',
   'Base URL': 'نشانی پایه',
   'API key': 'کلید API',
-  'Set on this device': 'گذاشته‌شده روی این دستگاه',
   Optional: 'دلخواه',
   'List models': 'گرفتن مدل‌ها',
   'Asking…': 'در حال پرسیدن…',
   'No providers yet.': 'هنوز فراهم‌کننده‌ای نیست.',
   'Add {name}': 'افزودن {name}',
-  'Keys stay in the secure store on this device.': 'کلیدها در انبار امن این دستگاه می‌مانند.',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'Keep this browser’s keys in the vault': 'کلیدهای این مرورگر را در گاوصندوق نگه دار',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'در این صورت کلیدهای همهٔ دستگاه‌ها در حافظهٔ این مرورگر نگه داشته می‌شوند، جایی که اسکریپتی که به صفحه راه یافته می‌تواند آن‌ها را بخواند.',
   'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
@@ -1802,16 +1831,6 @@ export const fa: Dictionary = {
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
   // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',
-  // The engine web tabs run on
-  Engine: 'موتور',
-  Relaunch: 'راه‌اندازی دوباره',
-  'Chromium did not start': 'Chromium اجرا نشد',
-  'No connection': 'اتصال برقرار نیست',
-  'Not in this release': 'در این نسخه نیست',
-  'Needs an update': 'به‌روزرسانی لازم است',
-  'Signature did not match': 'امضا مطابقت ندارد',
-  'Disk full': 'دیسک پر است',
-  'Could not be installed': 'نصب نشد',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1981,10 +2000,6 @@ export const fa: Dictionary = {
     one: '{count} فراخوان',
     other: '{count} فراخوان',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'باز در {device}',
-  'Use here': 'اینجا استفاده کن',
-  '{device} wants your web logins': '{device} ورودهای وب شما را می‌خواهد',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'پرسش کوتاه',

@@ -70,33 +70,6 @@ export async function written(): Promise<void> {
   while (underway.size) await Promise.all(underway)
 }
 
-/** What has to reach the account rather than the disk before the window goes: a web
- *  login this computer holds, handed back so the next computer starts from where this
- *  one left it (web-tab/lease.svelte.ts). Whether it owes anything is asked at once,
- *  because the close handler decides whether to wait before it can wait; the sending is
- *  waited for, as long as `HANDS_BACK_WITHIN`. */
-interface HandsBack {
-  owes(): boolean
-  send(): Promise<void>
-}
-
-const handing = new Set<HandsBack>()
-
-/** Said once by whatever holds something to hand back. */
-export function handsBack(one: HandsBack): void {
-  handing.add(one)
-}
-
-/** Whether anything is owed to the account. */
-export function handingBack(): boolean {
-  return [...handing].some((one) => one.owes())
-}
-
-/** Everything owed to the account, sent. */
-export async function handBack(): Promise<void> {
-  await Promise.all([...handing].map((one) => one.send().catch(() => undefined)))
-}
-
 /** What puts the window in the tray rather than closing it, while something keeps nib
  *  there: the reminders, while one is waiting or the reader asked (docs/tasks.md
  *  decision 6; see reminders/residency.svelte.ts). Said here for the reason everything

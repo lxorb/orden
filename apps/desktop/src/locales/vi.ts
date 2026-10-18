@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Từ ứng dụng khác: {key}',
+  'From other apps: set in your system settings': 'Từ ứng dụng khác: đặt trong cài đặt hệ thống',
+  'From other apps: bind {command} in your system settings':
+    'Từ ứng dụng khác: gán {command} trong cài đặt hệ thống',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Mục chính',
   'Add to Essentials': 'Thêm vào mục chính',
@@ -21,6 +26,11 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Settings: note types
+  'Page note': 'Ghi chú nhiều trang',
+  'Web note': 'Ghi chú web',
+  'Private tab': 'Thẻ riêng tư',
+  'Note types': 'Loại ghi chú',
   // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +987,7 @@ export const vi: Dictionary = {
   Comment: 'Bình luận',
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
+  'Download the app': 'Tải ứng dụng',
   'Report an issue': 'Báo lỗi',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',
@@ -1059,6 +1070,16 @@ export const vi: Dictionary = {
   'AI account: {name}': 'Tài khoản AI: {name}',
   Accounts: 'Tài khoản',
   Access: 'Quyền truy cập',
+  Set: 'Đã đặt',
+  'Start over': 'Bắt đầu lại',
+  'Sign in here': 'Đăng nhập tại đây',
+  '{device} wants your AI accounts': '{device} muốn dùng tài khoản AI của bạn',
+  '{device} offers this device your AI vault': '{device} đề nghị thiết bị này dùng kho AI của bạn',
+  Join: 'Tham gia',
+  'Allow this device on another one': 'Cho phép thiết bị này trên thiết bị khác',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Trên mọi thiết bị bạn đăng nhập, mã hóa đầu cuối.',
+  'Sign in to have them on every device.': 'Đăng nhập để có chúng trên mọi thiết bị.',
   'Agents on this computer connect on their own': 'Tác tử trên máy này tự kết nối',
   Helpers: 'Trợ thủ',
   'Start helpers on your AI accounts': 'Chạy trợ thủ trên tài khoản AI của bạn',
@@ -1152,6 +1173,12 @@ export const vi: Dictionary = {
   'Export as PNG': 'Xuất thành PNG',
   'Export as SVG': 'Xuất thành SVG',
   'Export as PDF': 'Xuất thành PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Nhập PDF',
+  'Choose how to add the pages to the canvas.': 'Chọn cách thêm các trang vào canvas.',
+  'Single page': 'Một trang',
+  'All pages': 'Tất cả các trang',
+  'Choose a page': 'Chọn một trang',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Xoá phần đã chọn',
   'Nudge left': 'Nhích sang trái',
@@ -1212,8 +1239,8 @@ export const vi: Dictionary = {
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
   Unstable: 'Không ổn định',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',
@@ -1372,16 +1399,16 @@ export const vi: Dictionary = {
   'OpenAI-compatible': 'Tương thích OpenAI',
   'Base URL': 'URL gốc',
   'API key': 'Khoá API',
-  'Set on this device': 'Đã đặt trên thiết bị này',
   Optional: 'Không bắt buộc',
   'List models': 'Lấy danh sách mô hình',
   'Asking…': 'Đang hỏi…',
   'No providers yet.': 'Chưa có nhà cung cấp nào.',
   'Add {name}': 'Thêm {name}',
-  'Keys stay in the secure store on this device.':
-    'Khoá được giữ trong kho bảo mật của thiết bị này.',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'Keep this browser’s keys in the vault': 'Giữ khóa của trình duyệt này trong kho',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Khi đó, khóa của mọi thiết bị sẽ được lưu trong bộ nhớ của trình duyệt này, nơi một đoạn mã lọt vào trang có thể đọc được.',
   'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
@@ -1789,16 +1816,6 @@ export const vi: Dictionary = {
   'Paste {count} lines?': 'Dán {count} dòng?',
   // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
-  // The engine web tabs run on
-  Engine: 'Công cụ',
-  Relaunch: 'Khởi chạy lại',
-  'Chromium did not start': 'Chromium không khởi động được',
-  'No connection': 'Không có kết nối',
-  'Not in this release': 'Không có trong bản phát hành này',
-  'Needs an update': 'Cần cập nhật',
-  'Signature did not match': 'Chữ ký không khớp',
-  'Disk full': 'Ổ đĩa đầy',
-  'Could not be installed': 'Không thể cài đặt',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1962,10 +1979,6 @@ export const vi: Dictionary = {
   'Calls a minute': 'Lượt gọi mỗi phút',
   'Pages a minute': 'Trang mỗi phút',
   '{count} calls': '{count} lượt gọi',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Đang mở trên {device}',
-  'Use here': 'Dùng ở đây',
-  '{device} wants your web logins': '{device} muốn các thông tin đăng nhập web của bạn',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Câu hỏi nhanh',

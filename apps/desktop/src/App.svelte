@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte'
+  import { onDestroy, tick, untrack } from 'svelte'
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
@@ -27,6 +27,7 @@
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
   import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
+  import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -38,12 +39,13 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/prompt.svelte'
-  import { settings } from './lib/settings.svelte'
+  import { hiddenKinds, settings } from './lib/settings.svelte'
   import {
     contextMenu,
     fillBar,
     formatBar as formatBarDoor,
     fullscreenWayOut,
+    guestCorner,
     historySheet,
     iconPicker,
     joinSheet,
@@ -84,6 +86,7 @@
   import { saveFront } from './lib/save-place/door'
   import PadColumn from './lib/scratchpad/PadColumn.svelte'
   import { isDraft } from './lib/workspace/drafts'
+  import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
@@ -99,6 +102,8 @@
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
 
+  const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
+
   // Where a right click keeps the Mac's own menu; see system-menu.ts.
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
   if (platform() === 'macos') {
@@ -113,6 +118,7 @@
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
+  const bare = $derived(fullscreen.on || alone.on)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
    *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
@@ -216,6 +222,7 @@
         shortcuts.receive(remote)
         toolbar.receive(remote)
         pull.receive(remote)
+        void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
@@ -434,7 +441,7 @@
   // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.drawer) return
+    if (!host || !viewport.drawer || bare) return
 
     let stop: (() => void) | null = null
     let live = true
@@ -450,14 +457,28 @@
 
   // Syncing only runs while there is an account behind it - and not before a
   // fresh sign-in has settled what happens to the notes already here.
+  //
+  // Keyed on whose sync it is and which engine, and nothing else. The effect used to
+  // run again whenever anything it read changed - the account's user read back a
+  // moment after signing in, say - and each run started a second loop over the first:
+  // two first passes, the second finding the first already running and lifting the
+  // waiting state with nothing counted, while the notes went on arriving behind it
+  // (test/e2e/signin.py).
+  const syncing = $derived(
+    account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
+  )
   $effect(() => {
-    if (account.syncable) {
-      sync.start()
-      // The bytes are an account's, and a guest is writing into somebody else's.
-      if (account.user) void usage.refresh()
+    if (syncing !== null) {
+      untrack(() => {
+        sync.start()
+        // The bytes are an account's, and a guest is writing into somebody else's.
+        if (account.user) void usage.refresh()
+      })
     } else {
-      sync.stop()
-      rooms.clear()
+      untrack(() => {
+        sync.stop()
+        rooms.clear()
+      })
     }
   })
 
@@ -593,19 +614,34 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
+          // The AI accounts on every device, which a drive of two devices reads and
+          // steers; see test/e2e/ai-vault.py.
+          aiVault: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
+              : Promise.all([import('./lib/ai/vault/start.svelte'), import('./lib/ai/keys')]).then(
+                  ([{ vault }, keys]) => ({
+                    vault,
+                    writeKey: keys.writeKey,
+                    readSecret: keys.readSecret,
+                  }),
+                ),
           importing,
           publish,
           rewriting,
           sync2,
           wallpaper,
           themeStore: store,
+          // A web tab's downloads, which only a download puts a button up for; see
+          // test/e2e/popups.py.
+          downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
         })
       },
     )
   }
 
   /** A canvas and a page note, which have a bar of their own with a way to add. */
-  const ownBar = (kind: string | undefined) => kind === 'canvas' || kind === 'pages'
+  const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
 
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
@@ -867,6 +903,8 @@
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
   onmousedown={onMouse}
+  onpointerdowncapture={(event: PointerEvent) => overlays.pressed(event)}
+  onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
 />
@@ -893,7 +931,7 @@
      the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
 <main
   class:focus={modes.focus}
-  class:full={fullscreen.on}
+  class:full={bare}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -911,7 +949,7 @@
          bars. Left out rather than slid away, so nothing in them can be reached
          by a key while they are gone; see fullscreen.svelte.ts. A tab filling the
          window leaves the same, and its bar at the top edge; see lib/tab-fill. -->
-    {#if !fullscreen.on && !filled}
+    {#if !bare && !filled}
       <div
         class="panels"
         data-chrome="start"
@@ -942,7 +980,7 @@
          as Orden started slid it across, over the list the phone had open. -->
     <div
       class="document"
-      inert={viewport.narrow && viewport.drawer && !!workspace.panel}
+      inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
@@ -954,7 +992,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !fullscreen.on}
+      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -977,7 +1015,7 @@
       <!-- The three dots at the right end of it open the whole of the app on a
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->
-      {#if !fullscreen.on}
+      {#if !bare}
         {#if filled}
           {#await fillBar() then FillBar}
             <FillBar>{@render bar()}</FillBar>
@@ -1023,11 +1061,11 @@
         </div>
 
         <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if !fullscreen.on && !filled && !__EVEN_PLUGIN__}
+        {#if !bare && !filled && !__EVEN_PLUGIN__}
           <PadColumn />
         {/if}
 
-        {#if workspace.right.length && !fullscreen.on && !filled}
+        {#if workspace.right.length && !bare && !filled}
           <div
             class="panels right"
             data-chrome="end"
@@ -1054,7 +1092,7 @@
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
            keyboard's own table describes. -->
-      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}
+      {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}
@@ -1066,8 +1104,8 @@
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
-        <button class="fab" aria-label={t('New note')} onclick={writeNew}>
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
+        <button class="fab" aria-label={fabLabel} onclick={writeNew}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/if}
@@ -1077,6 +1115,12 @@
       {#if fullscreen.on && workspace.active?.kind !== 'web'}
         {#await fullscreenWayOut() then WayOut}
           <WayOut />
+        {/await}
+      {:else if alone.on && account.guest}
+        <!-- A guest alone in one shared file: their name, and the way to an account,
+             which the panel's foot held; see GuestCorner.svelte. -->
+        {#await guestCorner() then Corner}
+          <Corner />
         {/await}
       {/if}
     </div>

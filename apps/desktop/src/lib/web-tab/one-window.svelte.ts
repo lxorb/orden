@@ -2,8 +2,7 @@
  *
  *  Within a window the strip itself sees to it (`secondWebTabs` in workspace/open.ts). Between two
  *  windows nothing is shared but storage and a channel, so each says on the channel
- *  which web notes it holds and since when, the way the web logins say which leases a
- *  window uses (web-sync.svelte.ts):
+ *  which web notes it holds and since when:
  *
  *  - Opening a web note another window holds opens nothing here: that window shows its
  *    tab and comes forward, as Chrome's "Switch to tab" goes to the window a tab is in.

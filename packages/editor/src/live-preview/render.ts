@@ -310,12 +310,17 @@ async function drawMermaid(host: HTMLElement, code: string) {
   host.innerHTML = svg
 }
 
-/** Typora's legacy ` ```flow ` fences, drawn by flowchart.js. */
+/** Typora's legacy ` ```flow ` fences, drawn by flowchart.js. Without the hooks
+ *  and the links a note may not have, whoever wrote it; see flow.ts. */
 async function drawFlowchart(host: HTMLElement, code: string) {
-  const flowchart = (await import('flowchart.js')).default
+  // What a fence may make flowchart.js do is asked with it, never before a note has one.
+  const [{ default: flowchart }, { flowSource, keepSafeLinks }] = await Promise.all([
+    import('flowchart.js'),
+    import('./flow'),
+  ])
 
   host.innerHTML = ''
-  flowchart.parse(code).drawSVG(host, {
+  flowchart.parse(flowSource(code)).drawSVG(host, {
     'line-width': 1.5,
     'font-family': themeColour('--font-ui'),
     'font-size': 13,
@@ -326,4 +331,5 @@ async function drawFlowchart(host: HTMLElement, code: string) {
     'yes-text': 'yes',
     'no-text': 'no',
   })
+  keepSafeLinks(host)
 }

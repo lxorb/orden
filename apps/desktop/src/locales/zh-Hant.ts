@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHant: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '從其他 App：{key}',
+  'From other apps: set in your system settings': '從其他 App：在系統設定中設定',
+  'From other apps: bind {command} in your system settings':
+    '從其他 App：在系統設定中綁定 {command}',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': '新增至 Essentials',
@@ -21,6 +26,11 @@ export const zhHant: Dictionary = {
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen 中',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私密分頁',
+  'Note types': '筆記類型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一週',
   // Tasks: projects placed in the panel, and their folder
@@ -969,6 +979,7 @@ export const zhHant: Dictionary = {
   Comment: '註解',
   'Always on top': '永遠在最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '回報問題',
   'Move the line up': '此行上移',
   'Move the line down': '此行下移',
@@ -1047,6 +1058,15 @@ export const zhHant: Dictionary = {
   'AI account: {name}': 'AI 帳戶：{name}',
   Accounts: '帳戶',
   Access: '存取',
+  Set: '已設定',
+  'Start over': '重新開始',
+  'Sign in here': '在此登入',
+  '{device} wants your AI accounts': '{device} 要求你的 AI 帳戶',
+  '{device} offers this device your AI vault': '{device} 向此裝置提供你的 AI 保險庫',
+  Join: '加入',
+  'Allow this device on another one': '在另一台裝置上允許此裝置',
+  'On every device you sign in to, end-to-end encrypted.': '在你登入的每台裝置上，端對端加密。',
+  'Sign in to have them on every device.': '登入即可在每台裝置上使用。',
   'Agents on this computer connect on their own': '這台電腦上的代理自動連線',
   Helpers: '助手',
   'Start helpers on your AI accounts': '在你的 AI 帳戶上啟動助手',
@@ -1140,6 +1160,12 @@ export const zhHant: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '選擇頁面要怎麼加到畫布上。',
+  'Single page': '單頁',
+  'All pages': '所有頁面',
+  'Choose a page': '選擇一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除選取範圍',
   'Nudge left': '向左微移',
@@ -1200,8 +1226,8 @@ export const zhHant: Dictionary = {
   'Release channel': '發行通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟著正式發行走，開發版跟著main的每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟著已發行的版本，開發版跟著edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1356,14 +1382,15 @@ export const zhHant: Dictionary = {
   'OpenAI-compatible': 'OpenAI相容',
   'Base URL': '基礎網址',
   'API key': 'API金鑰',
-  'Set on this device': '已在此裝置設定',
   Optional: '選填',
   'List models': '列出模型',
   'Asking…': '詢問中…',
   'No providers yet.': '還沒有供應商。',
   'Add {name}': '新增{name}',
-  'Keys stay in the secure store on this device.': '金鑰留在此裝置的安全儲存區中。',
   'This browser holds the keys in its own storage.': '此瀏覽器把金鑰放在自己的儲存空間裡。',
+  'Keep this browser’s keys in the vault': '將此瀏覽器的金鑰保存在保險庫中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '這樣，每台裝置的金鑰都會保存在此瀏覽器的儲存空間中，混入頁面的指令碼可能讀取它們。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請查證事實。',
   'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型清單。',
@@ -1763,16 +1790,6 @@ export const zhHant: Dictionary = {
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 未能啟動',
-  'No connection': '沒有連線',
-  'Not in this release': '此版本中沒有',
-  'Needs an update': '需要更新',
-  'Signature did not match': '簽章不符',
-  'Disk full': '磁碟已滿',
-  'Could not be installed': '無法安裝',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1933,10 +1950,6 @@ export const zhHant: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁面數',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '已在 {device} 開啟',
-  'Use here': '在此使用',
-  '{device} wants your web logins': '{device} 要求你的網頁登入資訊',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快速提問',

@@ -917,6 +917,10 @@ describe('chats', () => {
       await send(people.owner, chat, postOf('kept'))
       await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
       expect((await events(people.owner, chat)).events).toHaveLength(1)
+      // Not listed while its pointer is in Recently deleted, for anybody (#375): a list
+      // that kept it gave every device a row with no pointer and no name.
+      expect(await list(people.owner)).toEqual([])
+      expect(await list(people.writer)).toEqual([])
 
       env.db.prepare('delete from notes where id = ?').run(file)
       await sweepChats(env, T0 + 300_000)
@@ -932,6 +936,22 @@ describe('chats', () => {
         .state.db.prepare("select count(*) as n from sqlite_master where type = 'table'")
         .get()
       expect(tables).toEqual({ n: 0 })
+    })
+
+    test('a pointer put back from Recently deleted lists its chat again, as it was', async () => {
+      const chat = await chatOfOwner()
+      const file = await chatFile('Thesis.chat', chatText({ v: 1, chat }))
+      await send(people.owner, chat, postOf('kept'))
+      await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+      expect(await list(people.owner)).toEqual([])
+
+      const back = await call(env, `/v1/trash/notes/${file}/restore`, {
+        method: 'POST',
+        token: people.owner,
+      })
+      expect(back.status).toBe(200)
+      expect((await list(people.owner)).map((one) => one.id)).toEqual([chat])
+      expect((await events(people.owner, chat)).events).toHaveLength(1)
     })
 
     test('a pointer is never a room', async () => {

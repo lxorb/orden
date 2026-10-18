@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '喺其他 App：{key}',
+  'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',
+  'From other apps: bind {command} in your system settings':
+    '喺其他 App：喺系統設定度綁定 {command}',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': '加入 Essentials',
@@ -21,6 +26,11 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私人分頁',
+  'Note types': '筆記類型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
   // Tasks: projects placed in the panel, and their folder
@@ -969,6 +979,7 @@ export const yue: Dictionary = {
   Comment: '註釋',
   'Always on top': '永遠喺最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '呢行上移',
   'Move the line down': '呢行下移',
@@ -1048,6 +1059,15 @@ export const yue: Dictionary = {
   'AI account: {name}': 'AI 帳戶：{name}',
   Accounts: '帳戶',
   Access: '存取',
+  Set: '已設定',
+  'Start over': '重新開始',
+  'Sign in here': '喺呢度登入',
+  '{device} wants your AI accounts': '{device} 想要你嘅 AI 帳戶',
+  '{device} offers this device your AI vault': '{device} 將你嘅 AI 保險庫提供畀呢部裝置',
+  Join: '加入',
+  'Allow this device on another one': '喺另一部裝置度允許呢部',
+  'On every device you sign in to, end-to-end encrypted.': '喺你登入嘅每部裝置，端對端加密。',
+  'Sign in to have them on every device.': '登入就可以喺每部裝置用。',
   'Agents on this computer connect on their own': '呢部電腦嘅代理自動連線',
   Helpers: '助手',
   'Start helpers on your AI accounts': '喺你嘅 AI 帳戶度開助手',
@@ -1141,6 +1161,12 @@ export const yue: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '揀頁面點樣擺上畫布。',
+  'Single page': '單一頁',
+  'All pages': '所有頁面',
+  'Choose a page': '揀一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除揀咗嘅範圍',
   'Nudge left': '向左微移',
@@ -1201,8 +1227,8 @@ export const yue: Dictionary = {
   'Release channel': '發佈通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟着正式發佈走，開發版跟着main嘅每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟着已發佈嘅版本走，開發版跟着edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1355,14 +1381,15 @@ export const yue: Dictionary = {
   'OpenAI-compatible': 'OpenAI兼容',
   'Base URL': '基礎網址',
   'API key': 'API密鑰',
-  'Set on this device': '已喺呢部裝置設定',
   Optional: '可選',
   'List models': '列出模型',
   'Asking…': '詢問中…',
   'No providers yet.': '仲冇服務商。',
   'Add {name}': '新增{name}',
-  'Keys stay in the secure store on this device.': '密鑰留喺呢部裝置嘅安全儲存區中。',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
+  'Keep this browser’s keys in the vault': '將呢個瀏覽器嘅密鑰放喺保險庫',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '噉樣每部裝置嘅密鑰都會儲喺呢個瀏覽器嘅儲存空間，混入頁面嘅腳本可以讀到。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
   'Used by the glasses': '供眼鏡用',
   'Could not read the models.': '冇辦法讀取模型列表。',
@@ -1761,16 +1788,6 @@ export const yue: Dictionary = {
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 開唔到',
-  'No connection': '冇連線',
-  'Not in this release': '呢個版本冇',
-  'Needs an update': '要更新',
-  'Signature did not match': '簽名唔對',
-  'Disk full': '磁碟滿咗',
-  'Could not be installed': '裝唔到',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1931,10 +1948,6 @@ export const yue: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁數',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '喺 {device} 開咗',
-  'Use here': '喺呢度用',
-  '{device} wants your web logins': '{device} 想要你嘅網頁登入',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快問',

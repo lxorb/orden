@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { type Press, tabAsk } from './new-tab'
 import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
+import { viewport } from './viewport.svelte'
 
 /** Which press on a link goes where.
  *
@@ -79,6 +80,29 @@ describe('what never becomes a tab', () => {
     expect(place('https://svelte.dev/docs', {}, false)).toBe('system')
     expect(place('https://svelte.dev/docs', { ctrlKey: true }, false)).toBe('system')
     expect(place('file:///C:/notes/Idea.md', {}, false)).toBe('nowhere')
+  })
+})
+
+/** Which builds have somewhere to put a page, read off the device when nobody says:
+ *  the desktop alone. A tablet hands a page to the system's browser as a phone does
+ *  (#206), where it used to draw it in a frame inside nib. */
+describe('where a page may go', () => {
+  const was = viewport.device
+  afterEach(() => {
+    viewport.device = was
+  })
+
+  test('a desktop puts it in a tab', () => {
+    viewport.device = 'desktop'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('here')
+  })
+
+  test('a phone and a tablet hand it to the system', () => {
+    viewport.device = 'phone'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('system')
+    viewport.device = 'tablet'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('system')
+    expect(placeFor('https://svelte.dev/docs', 'behind')).toBe('system')
   })
 })
 

@@ -201,7 +201,6 @@ export type Code =
   | 'failed'
   | 'no_dialog'
   | 'denied'
-  | 'in_use_elsewhere'
 
 /** A dialog a page is holding open. */
 export interface Dialog {

@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'من التطبيقات الأخرى: {key}',
+  'From other apps: set in your system settings': 'من التطبيقات الأخرى: يُحدَّد في إعدادات النظام',
+  'From other apps: bind {command} in your system settings':
+    'من التطبيقات الأخرى: اربط {command} في إعدادات النظام',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'الأساسيات',
   'Add to Essentials': 'أضف إلى الأساسيات',
@@ -21,6 +26,11 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  // Settings: note types
+  'Page note': 'ملاحظة صفحات',
+  'Web note': 'ملاحظة ويب',
+  'Private tab': 'علامة تبويب خاصة',
+  'Note types': 'أنواع الملاحظات',
   // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
   // Tasks: projects placed in the panel, and their folder
@@ -1030,6 +1040,7 @@ export const ar: Dictionary = {
   Comment: 'تعليق',
   'Always on top': 'دائمًا في المقدمة',
   'What is new': 'ما الجديد',
+  'Download the app': 'تنزيل التطبيق',
   'Report an issue': 'الإبلاغ عن مشكلة',
   'Move the line up': 'نقل السطر لأعلى',
   'Move the line down': 'نقل السطر لأسفل',
@@ -1111,6 +1122,17 @@ export const ar: Dictionary = {
   'AI account: {name}': 'حساب الذكاء الاصطناعي: {name}',
   Accounts: 'الحسابات',
   Access: 'الوصول',
+  Set: 'مضبوط',
+  'Start over': 'البدء من جديد',
+  'Sign in here': 'سجّل الدخول هنا',
+  '{device} wants your AI accounts': '{device} يطلب حسابات الذكاء الاصطناعي',
+  '{device} offers this device your AI vault':
+    'يعرض {device} على هذا الجهاز خزنة الذكاء الاصطناعي الخاصة بك',
+  Join: 'انضمام',
+  'Allow this device on another one': 'اسمح بهذا الجهاز من جهاز آخر',
+  'On every device you sign in to, end-to-end encrypted.':
+    'على كل جهاز تسجّل الدخول إليه، بتشفير تام بين الطرفين.',
+  'Sign in to have them on every device.': 'سجّل الدخول لتحصل عليها على كل جهاز.',
   'Agents on this computer connect on their own': 'الوكلاء على هذا الحاسوب يتصلون تلقائيًا',
   Helpers: 'المساعدون',
   'Start helpers on your AI accounts': 'تشغيل مساعدين على حسابات الذكاء الاصطناعي',
@@ -1204,6 +1226,12 @@ export const ar: Dictionary = {
   'Export as PNG': 'تصدير كـ PNG',
   'Export as SVG': 'تصدير كـ SVG',
   'Export as PDF': 'تصدير كـ PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'استيراد PDF',
+  'Choose how to add the pages to the canvas.': 'اختر كيف تُضاف الصفحات إلى اللوحة.',
+  'Single page': 'صفحة واحدة',
+  'All pages': 'كل الصفحات',
+  'Choose a page': 'اختر صفحة',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف المحدد',
   'Nudge left': 'دفع لليسار',
@@ -1264,8 +1292,8 @@ export const ar: Dictionary = {
   'Release channel': 'قناة الإصدار',
   Stable: 'مستقر',
   Unstable: 'غير مستقر',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'المستقر يتبع الإصدارات الرسمية، وغير المستقر كل دفعة إلى main وقد يتعطل.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'المستقر يتبع الإصدارات المنشورة، وغير المستقر يتبع بُنى الحافة وقد يتعطل.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'استيراد',
@@ -1482,14 +1510,15 @@ export const ar: Dictionary = {
   'OpenAI-compatible': 'متوافق مع OpenAI',
   'Base URL': 'العنوان الأساسي',
   'API key': 'مفتاح API',
-  'Set on this device': 'معيّن على هذا الجهاز',
   Optional: 'اختياري',
   'List models': 'جلب الطُرز',
   'Asking…': 'جارٍ السؤال…',
   'No providers yet.': 'لا مزوّدين بعد.',
   'Add {name}': 'إضافة {name}',
-  'Keys stay in the secure store on this device.': 'تبقى المفاتيح في المخزن الآمن على هذا الجهاز.',
   'This browser holds the keys in its own storage.': 'يحفظ هذا المتصفح المفاتيح في مخزنه الخاص.',
+  'Keep this browser’s keys in the vault': 'الاحتفاظ بمفاتيح هذا المتصفح في الخزنة',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'عندها تُحفظ مفاتيح كل جهاز في تخزين هذا المتصفح، حيث يمكن لنص برمجي تسلل إلى الصفحة أن يقرأها.',
   'AI can be wrong. Check the facts.': 'قد يخطئ الذكاء الاصطناعي. تحقّق من الحقائق.',
   'Used by the glasses': 'تستخدمه النظارات',
   'Could not read the models.': 'تعذّرت قراءة الطُرز.',
@@ -1899,16 +1928,6 @@ export const ar: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'المتصفح الافتراضي',
-  // The engine web tabs run on
-  Engine: 'المحرك',
-  Relaunch: 'إعادة التشغيل',
-  'Chromium did not start': 'لم يبدأ Chromium',
-  'No connection': 'لا يوجد اتصال',
-  'Not in this release': 'غير موجود في هذا الإصدار',
-  'Needs an update': 'يلزم تحديث',
-  'Signature did not match': 'التوقيع غير مطابق',
-  'Disk full': 'القرص ممتلئ',
-  'Could not be installed': 'تعذّر التثبيت',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2084,10 +2103,6 @@ export const ar: Dictionary = {
     many: '{count} استدعاءً',
     other: '{count} استدعاء',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'مفتوح على {device}',
-  'Use here': 'استخدم هنا',
-  '{device} wants your web logins': 'يريد {device} عمليات تسجيل دخولك على الويب',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'سؤال سريع',

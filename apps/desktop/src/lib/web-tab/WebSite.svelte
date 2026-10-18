@@ -42,10 +42,17 @@
   const said = $derived(grants.of(site))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
-  $effect(() => overlays.show(onclose))
+  // Closed by Escape, a press past it and the window losing the focus - which is also
+  // how a press into the page under it is heard; see overlays.ts. A press on the button
+  // that opened it is that button's own to answer.
+  let bubble = $state<HTMLElement>()
+  $effect(() =>
+    overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="site"]')]),
+  )
 </script>
 
 <div
+  bind:this={bubble}
   class="site nib-bubble is-pressable"
   role="dialog"
   aria-label={site}

@@ -12,17 +12,7 @@
 import { endingOf, nameFromContent, nameFromTitle, shownName, TITLE_CHARS } from '../note-name'
 import { isMarkdownPath } from '../space-paths'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
-
-type Placeable = 'note' | 'canvas' | 'pages' | 'web'
-
-const EXTENSION: Record<Placeable, string> = {
-  note: '.md',
-  canvas: '.canvas',
-  pages: '.pages',
-  web: '.url',
-}
-
-const placeable = (kind: TabKind): kind is Placeable => kind in EXTENSION
+import { TAB_KINDS } from './tab-kinds'
 
 /** Whether a document is a draft: words of its own and no file for them, which is
  *  what wears the dot. A file somebody shared on its own is not one: its room keeps
@@ -47,11 +37,12 @@ export function hasWords(note: NoteDoc): boolean {
 /** The file a name comes to, under its kind's own ending, read the app's own way so
  *  `Plan.canvas` does not become `Plan.canvas.canvas`. */
 export function fileNamed(name: string, kind: TabKind): string {
-  if (!placeable(kind)) return name
+  const extension = TAB_KINDS[kind].extension
+  if (extension === null) return name
 
   const already =
-    kind === 'note' ? isMarkdownPath(name) : endingOf(name)?.toLowerCase() === EXTENSION[kind]
-  return already ? name : `${name}${EXTENSION[kind]}`
+    kind === 'note' ? isMarkdownPath(name) : endingOf(name)?.toLowerCase() === extension
+  return already ? name : `${name}${extension}`
 }
 
 /** Whether a draft is named after its words rather than after a name it came with, as

@@ -23,7 +23,17 @@
   import { store } from './source.svelte'
   import { tip } from './tips.svelte'
 
-  const { page, space }: { page: ChatPage; space: string | null } = $props()
+  const {
+    page,
+    space,
+    named = null,
+  }: {
+    page: ChatPage
+    space: string | null
+    /** The name to show where the chat's entry has none: a chat shared on its own,
+     *  whose pointer is not on this device. */
+    named?: string | null
+  } = $props()
 
   let writing = $state(false)
   let topic = $state('')
@@ -82,7 +92,7 @@
 
 <header class="head">
   <span class="mark"><ChatMark path={page.entry?.path} /></span>
-  <h2 class="name">{page.entry?.name ?? ''}</h2>
+  <h2 class="name">{page.entry?.name ?? named ?? ''}</h2>
   {#if writing}
     <!-- svelte-ignore a11y_autofocus -->
     <input

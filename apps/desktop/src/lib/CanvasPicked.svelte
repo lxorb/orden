@@ -16,6 +16,7 @@
   import { shownColour } from './canvas/palette'
   import { tick } from './canvas/tick'
   import { t } from './i18n.svelte'
+  import { overlays } from './overlays'
 
   const {
     at,
@@ -56,24 +57,19 @@
     oncolour(next)
   }
 
-  // A press anywhere but on this bar puts the colours away, which is how every other
-  // panel in the app closes. Caught on the way down rather than waited for on the way
-  // up: the plane below stops the event at itself for its own gestures, and a panel
-  // that only shuts when nothing else spoke first is a panel that does not shut.
-  $effect(() => {
-    const shut = (event: PointerEvent) => {
-      const target = event.target
-      if (target instanceof Node && over?.contains(target)) return
-
-      colouring = false
-    }
-
-    window.addEventListener('pointerdown', shut, { capture: true })
-    return () => window.removeEventListener('pointerdown', shut, { capture: true })
-  })
+  // A press anywhere but on this bar puts the colours away, and so do Escape and the
+  // window losing the focus, which is how every other panel in the app closes; see
+  // overlays.ts. Caught on the way down rather than waited for on the way up: the plane
+  // below stops the event at itself for its own gestures.
+  $effect(() =>
+    colouring
+      ? overlays.show(
+          () => (colouring = false),
+          () => [over],
+        )
+      : undefined,
+  )
 </script>
-
-<svelte:window onblur={() => (colouring = false)} />
 
 <!-- Every pointer stops here: the plane behind would read a press as a gesture and
      clear the very selection this bar is about. -->

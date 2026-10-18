@@ -10,8 +10,8 @@
  *    costs the space on screen nothing it would not cost as a background tab, and a call
  *    or a song goes on. The space's row says so with the tab's speaker; see
  *    SpaceSound.svelte.
- *  - **Pause** stops what plays and freezes the page at once - WebView2's own suspend, the
- *    page lifecycle's freeze on nib's Chromium - and the page comes back as it was the
+ *  - **Pause** stops what plays and freezes the page at once - WebView2's own suspend -
+ *    and the page comes back as it was the
  *    moment its space is shown again, with no reload. See web_pause.rs. A page in a call, or
  *    capturing the camera, the microphone or the screen, is one the engine will not
  *    freeze, as Chrome and Edge never freeze one; it goes on running.
@@ -24,9 +24,7 @@
  *  terminals running in a process of their own for the same reason. What sleeps is its
  *  drawing, which only happens for a screen that is shown. And an agent's own pages are
  *  never in a set at all, so nothing here touches them; a tab of the reader's that an
- *  agent is acting in is left running too. A frozen page keeps its web login's lease:
- *  nothing about which computer runs the site has changed, and the lease's own idle
- *  release still applies (lease.svelte.ts).
+ *  agent is acting in is left running too.
  *
  *  This machine's, like the engine: what a hidden page may cost is a question about this
  *  computer. */

@@ -29,8 +29,8 @@ const OBJECTS_AT_ONCE = 2 * PER_DELETE
 const ROOMS_AT_ONCE = 200
 
 const ROOM = 'rooms/'
-/** An account's hub, or a guest's, which keeps leases and requests of its own; see
- *  hub/hub.ts. Emptied the way a room is, and counted with the rooms. */
+/** An account's hub, or a guest's, which keeps storage of its own; see hub/hub.ts.
+ *  Emptied the way a room is, and counted with the rooms. */
 const HUB = 'hubs/'
 /** An online terminal machine, whose object holds its container; see machines/. */
 const MACHINE = 'machines/'

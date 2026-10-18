@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Daga wasu manhajoji: {key}',
+  'From other apps: set in your system settings':
+    'Daga wasu manhajoji: saita a cikin saitunan tsarin',
+  'From other apps: bind {command} in your system settings':
+    'Daga wasu manhajoji: ɗaura {command} a cikin saitunan tsarin',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Muhimmai',
   'Add to Essentials': 'Ƙara zuwa Muhimmai',
@@ -21,6 +27,11 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
+  // Settings: note types
+  'Page note': 'Bayanin kula na shafuka',
+  'Web note': 'Bayanin yanar gizo',
+  'Private tab': 'Shafi na sirri',
+  'Note types': "Nau'ikan bayanin kula",
   // Tasks: Upcoming's weeks
   'Previous week': 'Makon da ya gabata',
   // Tasks: projects placed in the panel, and their folder
@@ -992,6 +1003,7 @@ export const ha: Dictionary = {
   Comment: 'Sharhi',
   'Always on top': 'Kullum a sama',
   'What is new': 'Abin da ke sabo',
+  'Download the app': 'Sauke manhajar',
   'Report an issue': 'Bayar da rahoton matsala',
   'Move the line up': 'Matsar da layin sama',
   'Move the line down': 'Matsar da layin ƙasa',
@@ -1075,6 +1087,16 @@ export const ha: Dictionary = {
   'AI account: {name}': 'Asusun AI: {name}',
   Accounts: 'Asusun',
   Access: 'Damar shiga',
+  Set: 'An saita',
+  'Start over': 'Sake farawa',
+  'Sign in here': 'Shiga a nan',
+  '{device} wants your AI accounts': '{device} na son asusun AI naka',
+  '{device} offers this device your AI vault': "{device} yana ba wannan na'ura ma'ajin AI ɗinka",
+  Join: 'Shiga',
+  'Allow this device on another one': "Ba da izinin wannan na'ura a wata",
+  'On every device you sign in to, end-to-end encrypted.':
+    "A kowace na'ura da ka shiga, an ɓoye daga ƙarshe zuwa ƙarshe.",
+  'Sign in to have them on every device.': "Shiga don samun su a kowace na'ura.",
   'Agents on this computer connect on their own': 'Wakilai a wannan kwamfuta suna haɗuwa da kansu',
   Helpers: 'Mataimaka',
   'Start helpers on your AI accounts': 'Fara mataimaka a asusun AI naka',
@@ -1168,6 +1190,12 @@ export const ha: Dictionary = {
   'Export as PNG': 'Fitar a matsayin PNG',
   'Export as SVG': 'Fitar a matsayin SVG',
   'Export as PDF': 'Fitar a matsayin PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Shigar da PDF',
+  'Choose how to add the pages to the canvas.': 'Zaɓi yadda za a saka shafukan a kanbas.',
+  'Single page': 'Shafi ɗaya',
+  'All pages': 'Dukkan shafuka',
+  'Choose a page': 'Zaɓi shafi',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Share abin da aka zaɓa',
   'Nudge left': 'Tura hagu',
@@ -1228,8 +1256,8 @@ export const ha: Dictionary = {
   'Release channel': 'Tashar fitarwa',
   Stable: 'Kwanciyar hankali',
   Unstable: 'Ba kwanciyar hankali',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kwanciyar hankali na bin fitarwa na hukuma, Ba kwanciyar hankali na bin kowane tura zuwa main kuma zai iya lalacewa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kwanciyar hankali na bin fitattun sigogi, Ba kwanciyar hankali na bin gine-ginen gefe kuma zai iya lalacewa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Shigar',
@@ -1407,16 +1435,16 @@ export const ha: Dictionary = {
   'OpenAI-compatible': 'Mai dacewa da OpenAI',
   'Base URL': 'URL na tushe',
   'API key': 'Maɓallin API',
-  'Set on this device': "An saita a wannan na'ura",
   Optional: 'Ba dole ba',
   'List models': 'Samo samfura',
   'Asking…': 'Ana tambaya…',
   'No providers yet.': 'Babu masu bayarwa tukuna.',
   'Add {name}': 'Ƙara {name}',
-  'Keys stay in the secure store on this device.':
-    "Maɓallai suna zama a ma'ajin aminci a wannan na'ura.",
   'This browser holds the keys in its own storage.':
     "Wannan birawuza na riƙe maɓallai a ma'ajinsa.",
+  'Keep this browser’s keys in the vault': "Ajiye maɓallan wannan burauza a cikin ma'aji",
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    "Sannan za a ajiye maɓallan kowace na'ura a ma'ajin wannan burauza, inda rubutun da ya shiga shafin zai iya karanta su.",
   'AI can be wrong. Check the facts.': 'AI na iya yin kuskure. Ka tabbatar da gaskiyar bayanai.',
   'Used by the glasses': 'Tabarau na amfani da shi',
   'Could not read the models.': 'Ba a iya karanta samfuran ba.',
@@ -1830,16 +1858,6 @@ export const ha: Dictionary = {
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Orden as the default browser
   'Default browser': 'Birawuza na asali',
-  // The engine web tabs run on
-  Engine: 'Injin',
-  Relaunch: 'Sake buɗewa',
-  'Chromium did not start': 'Chromium bai fara ba',
-  'No connection': 'Babu haɗi',
-  'Not in this release': 'Ba ya cikin wannan sakin',
-  'Needs an update': 'Yana buƙatar sabuntawa',
-  'Signature did not match': 'Sa hannu bai dace ba',
-  'Disk full': 'Faifai ya cika',
-  'Could not be installed': 'Ba a iya shigarwa ba',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2009,10 +2027,6 @@ export const ha: Dictionary = {
     one: 'Kira {count}',
     other: 'Kira {count}',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'A buɗe a kan {device}',
-  'Use here': 'Yi amfani a nan',
-  '{device} wants your web logins': '{device} yana son shigarku na yanar gizo',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Tambaya mai sauri',

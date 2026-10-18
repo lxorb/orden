@@ -27,7 +27,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
+  import { hiddenKinds, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -68,7 +68,7 @@
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
-  import { readWebFile } from './shortcut'
+  import { apartOf } from './shortcut'
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
@@ -79,7 +79,6 @@
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
   import { extensions, type Extension } from './extensions.svelte'
-  import WebLocked from './WebLocked.svelte'
   import WebSite from './WebSite.svelte'
   import NewHere from '../NewHere.svelte'
 
@@ -380,8 +379,8 @@
   const space = $derived(workspace.spaceOf(tab.note))
   const book = webData.history()
 
-  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
-  const apart = $derived(tab.path !== null ? (readWebFile(tab.path, tab.doc)?.own ?? null) : null)
+  /** The tab's own web data, or null for the shared store; see `apartOf`. */
+  const apart = $derived(apartOf(tab))
 
   // Turned on or off, here or on another computer, a running page moves store.
   $effect(() => {
@@ -499,11 +498,13 @@
   // looked at again; a look that comes to what was said already says nothing.
   $effect(() => follow(page.live))
 
-  // Another computer's web login came or went. Going, the page is asked for again at
-  // once, which is what makes a page come back by itself when the site is free; see
-  // lease.svelte.ts.
+  // And once more a frame after the mount, as if nothing had been said yet: by then the
+  // page asked for at the mount is there to be placed, and a placement's answer is how
+  // the window hears whether the engine cuts the app's layers out of a page (`web_place`,
+  // `cutting` in pages.svelte.ts). The look above comes to what the mount said and says
+  // nothing, so without this a menu over a page that just arrived hid the page instead
+  // of being cut out of it. Until #393 the web login's effect did this in passing.
   $effect(() => {
-    if (page.lock !== null) return
     untrack(() => {
       told = ''
       follow()
@@ -519,6 +520,10 @@
   // fingers, so the page is cut round it on every step and is whole again once it has
   // gone; see back-swipe/SwipeArrow.svelte and `coverOf`.
   $effect(() => follow(swiping.turn))
+  // And as one begins over this page, a fresh picture of it to stand under the arrow.
+  $effect(() => {
+    if (swiping.tab === tab.id && swiping.stage === 'tracking') untrack(() => pages.freshen(tab.id))
+  })
 
   // A page took the whole screen or gave it back, here or in another pane: the window
   // follows, and so does where this page is placed. See filling.svelte.ts.
@@ -584,7 +589,7 @@
     untrack(() =>
       keepPage({
         path,
-        text: tab.doc,
+        text: () => tab.doc,
         url,
         icon,
         wrote: (text: string) => tab.note.replace(text, false),
@@ -607,8 +612,8 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
-  /** Whether this engine runs extensions: `WebView2`, and nib's own Chromium, which is
-   *  Windows' alone for now; see src-tauri/src/extensions.rs. */
+  /** Whether this engine runs extensions: `WebView2`, Windows' alone; see
+   *  src-tauri/src/extensions.rs. */
   const extending = isDesktop && platform() === 'windows'
 
   /** Whether the list of extensions under the puzzle is open. */
@@ -739,10 +744,12 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    newTab: () => workspace.openWebsite(),
-    newPrivate: isDesktop
-      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
-      : undefined,
+    newTab: () => workspace.newTab(tab.paneId),
+    get newPrivate() {
+      return hiddenKinds.offers('private')
+        ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+        : undefined
+    },
     history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
     clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
@@ -858,20 +865,10 @@
         : null}
     />
 
-    <!-- A computer new to the account, waiting for one that has the web logins to let it
-         have them: which one, and the six digits both screens show. -->
     <!-- Built again in another store, which may have signed the site out. -->
     {#if page.notice !== null}
       <p class="waiting" transition:fade={{ duration: dur(140) }}>
         {page.notice}
-      </p>
-    {/if}
-    {#if pages.waiting}
-      <p class="waiting">
-        {t('Waiting for {who}', { who: pages.waiting.device })}
-        <span class="digits"
-          >{pages.waiting.digits.slice(0, 3)} {pages.waiting.digits.slice(3)}</span
-        >
       </p>
     {/if}
 
@@ -967,11 +964,7 @@
       class:still={page.shot !== null}
       style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
       bind:this={hole}
-    >
-      {#if page.lock}
-        <WebLocked lock={page.lock} icon={page.icon ?? page.kept} {address} />
-      {/if}
-    </div>
+    ></div>
   {:else if page.framing === 'frame' && address}
     <!-- Glass reads what a page of the app's own origin stands on as it loads; see
          glass/reading.ts. -->
@@ -1065,21 +1058,13 @@
     background: var(--bg);
   }
 
-  /* Quiet, under the bar: the one line a computer new to the account says while it
-     waits, with the digits in figures of one width so they read as a code. */
+  /* Quiet, under the bar: the one line a page built again in another store says. */
   .waiting {
     margin: 0;
     padding: var(--space-1) var(--space-3);
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-  }
-
-  .digits {
-    margin-inline-start: var(--space-2);
-    color: var(--text-strong);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
   }
 
   /* The still picture of the page, from the top left corner at its own size: it was

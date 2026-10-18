@@ -46,6 +46,7 @@
 
 <button
   class="nib-glyph trigger"
+  data-opens="app-menu"
   class:dots
   title={t('Menu')}
   aria-label={t('Menu')}

@@ -9,22 +9,10 @@
 
 import type { ChatPoke } from '@nib/chats/wire'
 
-/** A lease key or a chunk name: an HMAC a device made, which the service never
- *  reads. Held to a shape all the same, because it becomes part of an object's name
- *  in the bucket, and a key with a slash in it could reach into another's. */
-export const OPAQUE = /^[A-Za-z0-9_-]{16,128}$/
-
 /** A device's id, made by the device and kept in its sync store. */
 export const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 
-/** A public key or a wrapped key, as base64 of either alphabet. An X25519 key is
- *  44 characters and a sealed box of a 32-byte key under 200; the ceilings leave
- *  room and stop a frame from being a place to keep a novel. */
-const PUBLIC_KEY = /^[A-Za-z0-9+/_=-]{16,128}$/
-const WRAPPED = /^[A-Za-z0-9+/_=-]{16,1024}$/
-
-/** How long a frame may be. The longest a correct device sends is a `grant-key`
- *  with a wrapped key in it. */
+/** How long a frame may be: far past the longest a correct device sends, a `hello`. */
 const MOST_FRAME = 4096
 
 /** The longest name, platform and version a `hello` keeps. */
@@ -32,36 +20,23 @@ const MOST_NAME = 120
 const MOST_PLATFORM = 24
 const MOST_APP = 32
 
+/** Until #393 a device also asked for web-login leases and the web key here
+ *  (docs/sync-v2.md section 6). Those frames are read as nothing now, and dropped. */
 export type FromDevice =
-  | { t: 'hello'; device: string; name: string; platform: string; app: string; pub?: string }
+  | { t: 'hello'; device: string; name: string; platform: string; app: string }
   | { t: 'active' }
   | { t: 'idle' }
-  | { t: 'acquire'; key: string; take: boolean }
-  | { t: 'release'; key: string }
-  | { t: 'flushed'; key: string }
-  | { t: 'want-key'; pub: string }
-  | { t: 'grant-key'; to: string; wrapped: string; generation: number }
-  | { t: 'deny-key'; to: string }
 
 export type FromHub =
   | { t: 'poke'; space: string; seq: number }
-  | { t: 'granted'; key: string; fence: number; version: number; rotate?: true }
-  | { t: 'busy'; key: string; device: string; name: string }
-  | { t: 'flush'; key: string; fence: number }
-  | { t: 'lost'; key: string; device: string; name: string }
-  | { t: 'free'; key: string }
-  | { t: 'state'; key: string; version: number }
-  | { t: 'key-wanted'; device: string; name: string; pub: string }
-  | { t: 'key'; wrapped: string; generation: number }
-  | { t: 'key-denied' }
-  | { t: 'key-settled'; device: string }
-  | { t: 'refused'; to: FromDevice['t']; key?: string; error: string }
   /** The account's online terminal machine changed state, to every device of its
    *  owner at once, so a status dot changes everywhere (docs/online-terminal.md, 4.6). */
   | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
   /** A session on the account's machine was made or ended, or its shell ended: Settings'
    *  list asks again (docs/online-terminal.md 4.10). Says nothing of which. */
   | { t: 'terms' }
+  /** The account's AI accounts moved (ai/vault.ts): read them again. Says nothing else. */
+  | { t: 'ai' }
   /** A chat this account reaches moved while none of its devices had it open
    *  (docs/chats.md 4.4): `ChatPoke`, which never carries words. */
   | ChatPoke
@@ -80,9 +55,7 @@ const matching = (fields: Fields, name: string, shape: RegExp): string | null =>
   return typeof value === 'string' && shape.test(value) ? value : null
 }
 
-/** A message from a device, or null for anything that is not one. `release` and
- *  `flushed` carry the version the device last uploaded, and it is not read: the
- *  hub knows which version it accepted, and that is the one it hands on. */
+/** A message from a device, or null for anything that is not one. */
 export function readFrame(said: string): FromDevice | null {
   if (said.length > MOST_FRAME) return null
 
@@ -108,49 +81,14 @@ export function readFrame(said: string): FromDevice | null {
       const platform = text(fields, 'platform', MOST_PLATFORM)
       const app = text(fields, 'app', MOST_APP)
       if (!device || !name || !platform || !app) return null
-
-      const pub = fields.pub === undefined ? undefined : matching(fields, 'pub', PUBLIC_KEY)
-      if (pub === null) return null
-      return { t: 'hello', device, name, platform, app, ...(pub ? { pub } : {}) }
-    }
-
-    case 'acquire': {
-      const key = matching(fields, 'key', OPAQUE)
-      return key ? { t: 'acquire', key, take: fields.take === true } : null
-    }
-
-    case 'release':
-    case 'flushed': {
-      const key = matching(fields, 'key', OPAQUE)
-      return key ? { t: fields.t, key } : null
-    }
-
-    case 'want-key': {
-      const pub = matching(fields, 'pub', PUBLIC_KEY)
-      return pub ? { t: 'want-key', pub } : null
-    }
-
-    case 'grant-key': {
-      const to = matching(fields, 'to', DEVICE)
-      const wrapped = matching(fields, 'wrapped', WRAPPED)
-      const generation = fields.generation
-      if (!to || !wrapped || !isGeneration(generation)) return null
-      return { t: 'grant-key', to, wrapped, generation }
-    }
-
-    case 'deny-key': {
-      const to = matching(fields, 'to', DEVICE)
-      return to ? { t: 'deny-key', to } : null
+      // A device from before #393 says its public key here too, for the web key. It is
+      // not read.
+      return { t: 'hello', device, name, platform, app }
     }
 
     default:
       return null
   }
-}
-
-/** A generation of the web key: a whole number from one. */
-export function isGeneration(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 1
 }
 
 /** The one thing every socket write goes through. A socket the runtime has

@@ -1,5 +1,5 @@
 //! Whether somebody is at this computer, and what the computer is called: the two things
-//! a device says about itself to its account's hub (docs/sync-v2.md section 6.2).
+//! a device says about itself to its account's hub (docs/chats.md 4.10).
 //!
 //! **Somebody is at it** while a key was pressed or the pointer moved in nib in the last
 //! five minutes. The app's own page hears its own input, and nothing else: a key typed

@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Dari aplikasi lain: {key}',
+  'From other apps: set in your system settings': 'Dari aplikasi lain: atur di pengaturan sistem',
+  'From other apps: bind {command} in your system settings':
+    'Dari aplikasi lain: tetapkan {command} di pengaturan sistem',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Esensial',
   'Add to Essentials': 'Tambahkan ke Esensial',
@@ -21,6 +26,11 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Settings: note types
+  'Page note': 'Catatan halaman',
+  'Web note': 'Catatan web',
+  'Private tab': 'Tab pribadi',
+  'Note types': 'Jenis catatan',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
   // Tasks: projects placed in the panel, and their folder
@@ -982,6 +992,7 @@ export const id: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Selalu di atas',
   'What is new': 'Apa yang baru',
+  'Download the app': 'Unduh aplikasinya',
   'Report an issue': 'Laporkan masalah',
   'Move the line up': 'Pindahkan baris ke atas',
   'Move the line down': 'Pindahkan baris ke bawah',
@@ -1065,6 +1076,17 @@ export const id: Dictionary = {
   'AI account: {name}': 'Akun AI: {name}',
   Accounts: 'Akun',
   Access: 'Akses',
+  Set: 'Diatur',
+  'Start over': 'Mulai ulang',
+  'Sign in here': 'Masuk di sini',
+  '{device} wants your AI accounts': '{device} meminta akun AI Anda',
+  '{device} offers this device your AI vault':
+    '{device} menawarkan brankas AI Anda ke perangkat ini',
+  Join: 'Gabung',
+  'Allow this device on another one': 'Izinkan perangkat ini di perangkat lain',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Di setiap perangkat tempat Anda masuk, terenkripsi ujung ke ujung.',
+  'Sign in to have them on every device.': 'Masuk agar ada di setiap perangkat.',
   'Agents on this computer connect on their own': 'Agen di komputer ini terhubung sendiri',
   Helpers: 'Pembantu',
   'Start helpers on your AI accounts': 'Jalankan pembantu di akun AI Anda',
@@ -1158,6 +1180,12 @@ export const id: Dictionary = {
   'Export as PNG': 'Ekspor sebagai PNG',
   'Export as SVG': 'Ekspor sebagai SVG',
   'Export as PDF': 'Ekspor sebagai PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Impor PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih cara menambahkan halaman ke kanvas.',
+  'Single page': 'Satu halaman',
+  'All pages': 'Semua halaman',
+  'Choose a page': 'Pilih halaman',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Hapus yang dipilih',
   'Nudge left': 'Dorong ke kiri',
@@ -1218,8 +1246,8 @@ export const id: Dictionary = {
   'Release channel': 'Saluran rilis',
   Stable: 'Stabil',
   Unstable: 'Tidak stabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil mengikuti rilis resmi, Tidak stabil mengikuti setiap dorongan ke main dan bisa rusak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil mengikuti versi yang dirilis, Tidak stabil mengikuti build edge dan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1381,15 +1409,16 @@ export const id: Dictionary = {
   'OpenAI-compatible': 'Setara OpenAI',
   'Base URL': 'URL dasar',
   'API key': 'Kunci API',
-  'Set on this device': 'Diatur di perangkat ini',
   Optional: 'Opsional',
   'List models': 'Ambil daftar model',
   'Asking…': 'Menanyakan…',
   'No providers yet.': 'Belum ada penyedia.',
   'Add {name}': 'Tambah {name}',
-  'Keys stay in the secure store on this device.': 'Kunci tetap di penyimpanan aman perangkat ini.',
   'This browser holds the keys in its own storage.':
     'Peramban ini menyimpan kunci di penyimpanannya sendiri.',
+  'Keep this browser’s keys in the vault': 'Simpan kunci browser ini di brankas',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Maka kunci setiap perangkat disimpan di penyimpanan browser ini, tempat skrip yang menyusup ke halaman dapat membacanya.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Periksa faktanya.',
   'Used by the glasses': 'Dipakai kacamata',
   'Could not read the models.': 'Tidak dapat membaca daftar model.',
@@ -1801,16 +1830,6 @@ export const id: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Peramban bawaan',
-  // The engine web tabs run on
-  Engine: 'Mesin',
-  Relaunch: 'Luncurkan ulang',
-  'Chromium did not start': 'Chromium tidak dapat dimulai',
-  'No connection': 'Tidak ada koneksi',
-  'Not in this release': 'Tidak ada di rilis ini',
-  'Needs an update': 'Perlu pembaruan',
-  'Signature did not match': 'Tanda tangan tidak cocok',
-  'Disk full': 'Disk penuh',
-  'Could not be installed': 'Tidak dapat dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1975,10 +1994,6 @@ export const id: Dictionary = {
   'Calls a minute': 'Panggilan per menit',
   'Pages a minute': 'Halaman per menit',
   '{count} calls': '{count} panggilan',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Terbuka di {device}',
-  'Use here': 'Gunakan di sini',
-  '{device} wants your web logins': '{device} meminta login web Anda',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pertanyaan cepat',

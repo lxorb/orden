@@ -35,12 +35,17 @@
   import { type Page, pages, siteMark } from './web-tab/pages.svelte'
   import { readWebFile } from './web-tab/shortcut'
   import type { Tab } from './workspace.svelte'
+  import { TAB_KINDS } from './workspace/tab-kinds'
 
   const { tab }: { tab: Tab } = $props()
 
   /** What the document in this tab is, as a mark. Null for the graph, which is the
    *  one tab that is not a file; see `markOf`. */
   const mark = $derived(markOf(tab.kind))
+
+  /** What else its kind says about its mark: whether it is drawn live, and the glyph a
+   *  tab with no file mark wears. See workspace/tab-kinds.ts. */
+  const traits = $derived(TAB_KINDS[tab.kind])
 
   /** The page behind a website, and nothing for any other kind: asking for one makes
    *  it, and a note has no page to make. */
@@ -98,7 +103,7 @@
   <span class="mark" aria-hidden="true">
     <img src={found} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
-{:else if tab.kind === 'terminal'}
+{:else if traits.liveMark}
   <!-- The program in front, or the shell: see terminal/TerminalMark.svelte. Its kind's
        drawing until that has arrived, which is the first terminal's own fetch. -->
   {#await terminalMark()}
@@ -121,7 +126,7 @@
        wear, or the AI panel's. See panel-marks.ts. -->
   <span class="mark quiet" aria-hidden="true">
     <svg class="graph" viewBox="0 0 13 13"
-      ><path d={tab.kind === 'chat' ? ASK_MARK : GRAPH_MARK} /></svg
+      ><path d={traits.glyph === 'ask' ? ASK_MARK : GRAPH_MARK} /></svg
     >
   </span>
 {/if}

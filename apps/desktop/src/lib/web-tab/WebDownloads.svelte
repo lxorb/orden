@@ -35,10 +35,20 @@
     return one.total === null ? null : Math.min(1, one.received / one.total)
   }
 
-  $effect(() => overlays.show(onclose))
+  // Closed by Escape, a press past it and the window losing the focus - which is also
+  // how a press into the page under it is heard; see overlays.ts. A press on the button
+  // that opened it is that button's own to answer.
+  let bubble = $state<HTMLElement>()
+  $effect(() =>
+    overlays.show(onclose, () => [
+      bubble,
+      ...document.querySelectorAll('[data-opens="downloads"]'),
+    ]),
+  )
 </script>
 
 <div
+  bind:this={bubble}
   class="downloads nib-bubble is-pressable"
   role="dialog"
   aria-label={t('Downloads')}

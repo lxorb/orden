@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '他のアプリから: {key}',
+  'From other apps: set in your system settings': '他のアプリから: システム設定で指定',
+  'From other apps: bind {command} in your system settings':
+    '他のアプリから: システム設定で {command} を割り当て',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Essentialsに追加',
@@ -21,6 +26,11 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  // Settings: note types
+  'Page note': 'ページノート',
+  'Web note': 'ウェブノート',
+  'Private tab': 'プライベート タブ',
+  'Note types': 'ノートの種類',
   // Tasks: Upcoming's weeks
   'Previous week': '前の週',
   // Tasks: projects placed in the panel, and their folder
@@ -981,6 +991,7 @@ export const ja: Dictionary = {
   Comment: 'コメント',
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
+  'Download the app': 'アプリをダウンロード',
   'Report an issue': '問題を報告',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',
@@ -1064,6 +1075,17 @@ export const ja: Dictionary = {
   'AI account: {name}': 'AI アカウント: {name}',
   Accounts: 'アカウント',
   Access: 'アクセス',
+  Set: '設定済み',
+  'Start over': '最初からやり直す',
+  'Sign in here': 'ここでサインイン',
+  '{device} wants your AI accounts': '{device} が AI アカウントを求めています',
+  '{device} offers this device your AI vault':
+    '{device} がこのデバイスに AI 保管庫を提供しています',
+  Join: '参加',
+  'Allow this device on another one': '別のデバイスでこのデバイスを許可',
+  'On every device you sign in to, end-to-end encrypted.':
+    'サインインするすべてのデバイスで、エンドツーエンド暗号化。',
+  'Sign in to have them on every device.': 'サインインするとすべてのデバイスで使えます。',
   'Agents on this computer connect on their own': 'このコンピューターのエージェントは自動で接続',
   Helpers: 'ヘルパー',
   'Start helpers on your AI accounts': 'AI アカウントでヘルパーを起動',
@@ -1157,6 +1179,12 @@ export const ja: Dictionary = {
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
   'Export as PDF': 'PDF で書き出す',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF をインポート',
+  'Choose how to add the pages to the canvas.': 'ページをキャンバスにどう追加するか選びます。',
+  'Single page': '1 ページだけ',
+  'All pages': 'すべてのページ',
+  'Choose a page': 'ページを選ぶ',
   // The canvas: what its own keys are called
   'Delete what is picked': '選択したものを削除',
   'Nudge left': '左へ少し動かす',
@@ -1217,8 +1245,8 @@ export const ja: Dictionary = {
   'Release channel': 'リリースチャンネル',
   Stable: '安定版',
   Unstable: '不安定版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',
@@ -1376,15 +1404,16 @@ export const ja: Dictionary = {
   'OpenAI-compatible': 'OpenAI 互換',
   'Base URL': 'ベース URL',
   'API key': 'API キー',
-  'Set on this device': 'この端末に設定済み',
   Optional: '任意',
   'List models': 'モデルを取得',
   'Asking…': '問い合わせ中…',
   'No providers yet.': 'プロバイダはまだありません。',
   'Add {name}': '{name} を追加',
-  'Keys stay in the secure store on this device.': 'キーはこの端末の安全な保管領域に残ります。',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
+  'Keep this browser’s keys in the vault': 'このブラウザのキーを保管庫に入れる',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'その場合、すべてのデバイスのキーがこのブラウザのストレージに保存され、ページに入り込んだスクリプトに読まれるおそれがあります。',
   'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
   'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',
@@ -1798,16 +1827,6 @@ export const ja: Dictionary = {
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
   // Orden as the default browser
   'Default browser': '既定のブラウザ',
-  // The engine web tabs run on
-  Engine: 'エンジン',
-  Relaunch: '再起動',
-  'Chromium did not start': 'Chromium を起動できませんでした',
-  'No connection': '接続がありません',
-  'Not in this release': 'このリリースにはありません',
-  'Needs an update': 'アップデートが必要です',
-  'Signature did not match': '署名が一致しません',
-  'Disk full': 'ディスクがいっぱいです',
-  'Could not be installed': 'インストールできませんでした',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1971,10 +1990,6 @@ export const ja: Dictionary = {
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
   '{count} calls': '{count} 件の呼び出し',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} で開いています',
-  'Use here': 'ここで使う',
-  '{device} wants your web logins': '{device} が Web のログインを求めています',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ちょっと質問',

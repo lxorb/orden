@@ -192,7 +192,7 @@ def front(app, kind: str) -> object:
 
 def shoot(identifier: str, out: pathlib.Path) -> None:
     """The app's own page as its engine draws it (`Page.captureScreenshot`): a window off
-    every screen has no picture of its own to hand over. See web-lease-probe.py."""
+    every screen has no picture of its own to hand over."""
     at = port(switch.local_dir(identifier) / "EBWebView")
     page = next(
         (one for one in (targets(at) if at else []) if str(one.get("url", "")).startswith("http://tauri.localhost")),

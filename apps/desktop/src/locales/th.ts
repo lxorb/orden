@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'จากแอปอื่น: {key}',
+  'From other apps: set in your system settings': 'จากแอปอื่น: ตั้งในการตั้งค่าระบบ',
+  'From other apps: bind {command} in your system settings':
+    'จากแอปอื่น: กำหนด {command} ในการตั้งค่าระบบ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'เพิ่มไปยัง Essentials',
@@ -21,6 +26,11 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Settings: note types
+  'Page note': 'โน้ตแบบหน้า',
+  'Web note': 'โน้ตเว็บ',
+  'Private tab': 'แท็บส่วนตัว',
+  'Note types': 'ประเภทโน้ต',
   // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
   // Tasks: projects placed in the panel, and their folder
@@ -974,6 +984,7 @@ export const th: Dictionary = {
   Comment: 'ความคิดเห็น',
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
+  'Download the app': 'ดาวน์โหลดแอป',
   'Report an issue': 'แจ้งปัญหา',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',
@@ -1053,6 +1064,16 @@ export const th: Dictionary = {
   'AI account: {name}': 'บัญชี AI: {name}',
   Accounts: 'บัญชี',
   Access: 'การเข้าถึง',
+  Set: 'ตั้งค่าแล้ว',
+  'Start over': 'เริ่มใหม่',
+  'Sign in here': 'ลงชื่อเข้าใช้ที่นี่',
+  '{device} wants your AI accounts': '{device} ขอบัญชี AI ของคุณ',
+  '{device} offers this device your AI vault': '{device} เสนอห้องนิรภัย AI ของคุณให้อุปกรณ์นี้',
+  Join: 'เข้าร่วม',
+  'Allow this device on another one': 'อนุญาตอุปกรณ์นี้จากอุปกรณ์อื่น',
+  'On every device you sign in to, end-to-end encrypted.':
+    'บนทุกอุปกรณ์ที่คุณลงชื่อเข้าใช้ เข้ารหัสแบบต้นทางถึงปลายทาง',
+  'Sign in to have them on every device.': 'ลงชื่อเข้าใช้เพื่อให้มีในทุกอุปกรณ์',
   'Agents on this computer connect on their own': 'เอเจนต์ในคอมพิวเตอร์นี้เชื่อมต่อเอง',
   Helpers: 'ผู้ช่วย',
   'Start helpers on your AI accounts': 'เริ่มผู้ช่วยในบัญชี AI ของคุณ',
@@ -1146,6 +1167,12 @@ export const th: Dictionary = {
   'Export as PNG': 'ส่งออกเป็น PNG',
   'Export as SVG': 'ส่งออกเป็น SVG',
   'Export as PDF': 'ส่งออกเป็น PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'นำเข้า PDF',
+  'Choose how to add the pages to the canvas.': 'เลือกวิธีเพิ่มหน้าลงบนแคนวาส',
+  'Single page': 'หน้าเดียว',
+  'All pages': 'ทุกหน้า',
+  'Choose a page': 'เลือกหน้า',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ลบสิ่งที่เลือก',
   'Nudge left': 'ขยับซ้าย',
@@ -1206,8 +1233,8 @@ export const th: Dictionary = {
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
   Unstable: 'ไม่เสถียร',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',
@@ -1363,14 +1390,15 @@ export const th: Dictionary = {
   'OpenAI-compatible': 'เข้ากันได้กับ OpenAI',
   'Base URL': 'URL หลัก',
   'API key': 'คีย์ API',
-  'Set on this device': 'ตั้งไว้บนอุปกรณ์นี้',
   Optional: 'ไม่บังคับ',
   'List models': 'ดึงรายการโมเดล',
   'Asking…': 'กำลังถาม…',
   'No providers yet.': 'ยังไม่มีผู้ให้บริการ',
   'Add {name}': 'เพิ่ม {name}',
-  'Keys stay in the secure store on this device.': 'คีย์อยู่ในที่เก็บนิรภัยของอุปกรณ์นี้',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
+  'Keep this browser’s keys in the vault': 'เก็บคีย์ของเบราว์เซอร์นี้ไว้ในห้องนิรภัย',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'จากนั้นคีย์ของทุกอุปกรณ์จะถูกเก็บไว้ในพื้นที่จัดเก็บของเบราว์เซอร์นี้ ซึ่งสคริปต์ที่แทรกเข้ามาในหน้าอาจอ่านได้',
   'AI can be wrong. Check the facts.': 'AI อาจผิดพลาดได้ โปรดตรวจสอบข้อเท็จจริง',
   'Used by the glasses': 'แว่นใช้อยู่',
   'Could not read the models.': 'อ่านรายการโมเดลไม่ได้',
@@ -1771,16 +1799,6 @@ export const th: Dictionary = {
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
   // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
-  // The engine web tabs run on
-  Engine: 'เอนจิน',
-  Relaunch: 'เปิดใหม่',
-  'Chromium did not start': 'Chromium ไม่เริ่มทำงาน',
-  'No connection': 'ไม่มีการเชื่อมต่อ',
-  'Not in this release': 'ไม่มีในรุ่นนี้',
-  'Needs an update': 'ต้องอัปเดต',
-  'Signature did not match': 'ลายเซ็นไม่ตรงกัน',
-  'Disk full': 'ดิสก์เต็ม',
-  'Could not be installed': 'ติดตั้งไม่ได้',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1944,10 +1962,6 @@ export const th: Dictionary = {
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
   '{count} calls': '{count} การเรียก',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'เปิดอยู่บน {device}',
-  'Use here': 'ใช้ที่นี่',
-  '{device} wants your web logins': '{device} ต้องการการเข้าสู่ระบบเว็บของคุณ',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'คำถามด่วน',

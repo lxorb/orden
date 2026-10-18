@@ -27,10 +27,12 @@
     setReadOnlyMode,
   } from '@nib/editor'
   import { untrack } from 'svelte'
+  import { alone } from './alone.svelte'
   import { isDeck } from '@nib/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
+  import { TAB_KINDS } from './workspace/tab-kinds'
   import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
@@ -54,7 +56,6 @@
     findBar,
     graphSurface,
     pagesSurface,
-    pdfSurface,
     readingSurface,
     terminalSurface,
     viewSurface,
@@ -96,25 +97,14 @@
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along - as it is for a pane filling the window. */
-  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills)
+  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills && !alone.on)
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
-  const ownSurface = $derived(tab?.kind === 'canvas' || tab?.kind === 'terminal')
+  const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
   /** Whether the surface in this pane is the editor, which is the one that has
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
-  const writing = $derived(
-    !!tab &&
-      tab.kind !== 'graph' &&
-      tab.kind !== 'canvas' &&
-      tab.kind !== 'pages' &&
-      tab.kind !== 'pdf' &&
-      tab.kind !== 'web' &&
-      tab.kind !== 'terminal' &&
-      tab.kind !== 'view' &&
-      tab.kind !== 'chat' &&
-      !tab.reading,
-  )
+  const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading)
 
   /** The notes this pane lays out as columns, or none where it lays out none.
    *
@@ -533,17 +523,6 @@
     {#key tab.id}
       {#await pagesSurface() then Pages}
         <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'pdf'}
-    <!-- A paper being read, beside the notes about it. Keyed like the reading
-         view: a PDF is a document of its own and nothing about it is swapped
-         into an editor. -->
-    {#key tab.id}
-      {#await pdfSurface() then Pdf}
-        <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
       {:catch}
         {@render unreachable()}
       {/await}

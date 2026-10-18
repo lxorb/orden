@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./flow": "./src/live-preview/flow.ts",
     "./menu": "./src/menu.ts",
     "./review": "./src/review/marks.ts",
     "./task-days": "./src/task-days.ts"

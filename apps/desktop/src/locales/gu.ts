@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'બીજી ઍપ્સમાંથી: {key}',
+  'From other apps: set in your system settings': 'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં નક્કી કરો',
+  'From other apps: bind {command} in your system settings':
+    'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં {command} જોડો',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'આવશ્યક',
   'Add to Essentials': 'આવશ્યકમાં ઉમેરો',
@@ -21,6 +26,11 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
+  // Settings: note types
+  'Page note': 'પાનાંવાળી નોંધ',
+  'Web note': 'વેબ નોંધ',
+  'Private tab': 'ખાનગી ટૅબ',
+  'Note types': 'નોંધના પ્રકાર',
   // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +993,7 @@ export const gu: Dictionary = {
   Comment: 'ટિપ્પણી',
   'Always on top': 'હંમેશાં ઉપર',
   'What is new': 'નવું શું છે',
+  'Download the app': 'ઍપ ડાઉનલોડ કરો',
   'Report an issue': 'સમસ્યા જણાવો',
   'Move the line up': 'લીટી ઉપર ખસેડો',
   'Move the line down': 'લીટી નીચે ખસેડો',
@@ -1065,6 +1076,16 @@ export const gu: Dictionary = {
   'AI account: {name}': 'AI એકાઉન્ટ: {name}',
   Accounts: 'એકાઉન્ટ',
   Access: 'ઍક્સેસ',
+  Set: 'સેટ છે',
+  'Start over': 'ફરી શરૂ કરો',
+  'Sign in here': 'અહીં સાઇન ઇન કરો',
+  '{device} wants your AI accounts': '{device} તમારા AI એકાઉન્ટ માંગે છે',
+  '{device} offers this device your AI vault': '{device} આ ઉપકરણને તમારું AI વૉલ્ટ આપે છે',
+  Join: 'જોડાઓ',
+  'Allow this device on another one': 'બીજા ઉપકરણ પર આ ઉપકરણને મંજૂરી આપો',
+  'On every device you sign in to, end-to-end encrypted.':
+    'તમે સાઇન ઇન કરો તે દરેક ઉપકરણ પર, એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ.',
+  'Sign in to have them on every device.': 'દરેક ઉપકરણ પર મેળવવા સાઇન ઇન કરો.',
   'Agents on this computer connect on their own': 'આ કમ્પ્યુટરના એજન્ટ આપમેળે જોડાય છે',
   Helpers: 'સહાયકો',
   'Start helpers on your AI accounts': 'તમારા AI એકાઉન્ટ પર સહાયકો શરૂ કરો',
@@ -1158,6 +1179,12 @@ export const gu: Dictionary = {
   'Export as PNG': 'PNG તરીકે નિકાસ કરો',
   'Export as SVG': 'SVG તરીકે નિકાસ કરો',
   'Export as PDF': 'PDF તરીકે નિકાસ કરો',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF આયાત કરો',
+  'Choose how to add the pages to the canvas.': 'પાનાં કેનવાસમાં કેવી રીતે ઉમેરવાં તે પસંદ કરો.',
+  'Single page': 'એક પાનું',
+  'All pages': 'બધાં પાનાં',
+  'Choose a page': 'પાનું પસંદ કરો',
   // The canvas: what its own keys are called
   'Delete what is picked': 'પસંદ કરેલું કાઢો',
   'Nudge left': 'ડાબે સહેજ ખસેડો',
@@ -1218,8 +1245,8 @@ export const gu: Dictionary = {
   'Release channel': 'પ્રકાશન માર્ગ',
   Stable: 'સ્થિર',
   Unstable: 'અસ્થિર',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'સ્થિર અધિકૃત પ્રકાશન અનુસરે છે, અસ્થિર mainમાં દરેક ધકેલ અનુસરે છે અને તૂટી શકે.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'સ્થિર પ્રકાશિત આવૃત્તિઓ અનુસરે છે, અસ્થિર એજ બિલ્ડ અનુસરે છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',
@@ -1382,14 +1409,15 @@ export const gu: Dictionary = {
   'OpenAI-compatible': 'OpenAI સાથે સુસંગત',
   'Base URL': 'મૂળ URL',
   'API key': 'API કી',
-  'Set on this device': 'આ ઉપકરણ પર ગોઠવેલું',
   Optional: 'મરજિયાત',
   'List models': 'મોડેલ લાવો',
   'Asking…': 'પૂછે છે…',
   'No providers yet.': 'હજી પ્રદાતા નથી.',
   'Add {name}': '{name} ઉમેરો',
-  'Keys stay in the secure store on this device.': 'કીઓ આ ઉપકરણના સલામત સંગ્રહમાં રહે છે.',
   'This browser holds the keys in its own storage.': 'આ બ્રાઉઝર કીઓ પોતાના સંગ્રહમાં રાખે છે.',
+  'Keep this browser’s keys in the vault': 'આ બ્રાઉઝરની કી વૉલ્ટમાં રાખો',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'પછી દરેક ઉપકરણની કી આ બ્રાઉઝરના સ્ટોરેજમાં રહેશે, જ્યાં પેજમાં ઘૂસેલી કોઈ સ્ક્રિપ્ટ તેને વાંચી શકે.',
   'AI can be wrong. Check the facts.': 'AI ભૂલ કરી શકે છે. હકીકતો ચકાસો.',
   'Used by the glasses': 'ચશ્માં વાપરે છે',
   'Could not read the models.': 'મોડેલ વાંચી શકાયા નહીં.',
@@ -1792,16 +1820,6 @@ export const gu: Dictionary = {
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
-  // The engine web tabs run on
-  Engine: 'એન્જિન',
-  Relaunch: 'ફરી શરૂ કરો',
-  'Chromium did not start': 'Chromium શરૂ થયું નહીં',
-  'No connection': 'કનેક્શન નથી',
-  'Not in this release': 'આ રિલીઝમાં નથી',
-  'Needs an update': 'અપડેટ જરૂરી છે',
-  'Signature did not match': 'સહી મેળ ખાતી નથી',
-  'Disk full': 'ડિસ્ક ભરાઈ ગઈ',
-  'Could not be installed': 'ઇન્સ્ટોલ થઈ શક્યું નહીં',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1971,10 +1989,6 @@ export const gu: Dictionary = {
     one: '{count} કૉલ',
     other: '{count} કૉલ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} પર ખુલ્લું',
-  'Use here': 'અહીં વાપરો',
-  '{device} wants your web logins': '{device} તમારા વેબ લોગિન માંગે છે',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ઝડપી પ્રશ્ન',

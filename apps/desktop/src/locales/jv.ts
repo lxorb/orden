@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Saka aplikasi liya: {key}',
+  'From other apps: set in your system settings': 'Saka aplikasi liya: atur ing setelan sistem',
+  'From other apps: bind {command} in your system settings':
+    'Saka aplikasi liya: pasang {command} ing setelan sistem',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Penting',
   'Add to Essentials': 'Tambahake menyang Penting',
@@ -21,6 +26,11 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
+  // Settings: note types
+  'Page note': 'Cathetan kaca',
+  'Web note': 'Cathetan web',
+  'Private tab': 'Tab pribadi',
+  'Note types': 'Jinis cathetan',
   // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sadurunge',
   // Tasks: projects placed in the panel, and their folder
@@ -980,6 +990,7 @@ export const jv: Dictionary = {
   Comment: 'Komentar',
   'Always on top': 'Tansah ing ndhuwur',
   'What is new': 'Apa sing anyar',
+  'Download the app': 'Undhuh aplikasine',
   'Report an issue': 'Lapurake masalah',
   'Move the line up': 'Munggahake larike',
   'Move the line down': 'Mudhunake larike',
@@ -1061,6 +1072,17 @@ export const jv: Dictionary = {
   'AI account: {name}': 'Akun AI: {name}',
   Accounts: 'Akun',
   Access: 'Akses',
+  Set: 'Disetel',
+  'Start over': 'Wiwiti maneh',
+  'Sign in here': 'Mlebu ing kene',
+  '{device} wants your AI accounts': '{device} njaluk akun AI sampeyan',
+  '{device} offers this device your AI vault':
+    '{device} nawakake brankas AI sampeyan menyang piranti iki',
+  Join: 'Gabung',
+  'Allow this device on another one': 'Idini piranti iki ing piranti liyane',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Ing saben piranti sing sampeyan mlebu, dienkripsi saka ujung nganti ujung.',
+  'Sign in to have them on every device.': 'Mlebu supaya ana ing saben piranti.',
   'Agents on this computer connect on their own': 'Agen ing komputer iki nyambung dhewe',
   Helpers: 'Pambantu',
   'Start helpers on your AI accounts': 'Miwiti pambantu ing akun AI sampeyan',
@@ -1154,6 +1176,12 @@ export const jv: Dictionary = {
   'Export as PNG': 'Ekspor minangka PNG',
   'Export as SVG': 'Ekspor minangka SVG',
   'Export as PDF': 'Ekspor minangka PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Impor PDF',
+  'Choose how to add the pages to the canvas.': 'Pilih carane nambahake kaca menyang kanvas.',
+  'Single page': 'Siji kaca',
+  'All pages': 'Kabeh kaca',
+  'Choose a page': 'Pilih kaca',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Busak sing dipilih',
   'Nudge left': 'Sunggi ngiwa',
@@ -1214,8 +1242,8 @@ export const jv: Dictionary = {
   'Release channel': 'Saluran wedalan',
   Stable: 'Mantep',
   Unstable: 'Ora mantep',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Mantep ngetutake wedalan resmi, Ora mantep ngetutake saben dorongan menyang main lan bisa rusak.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Mantep ngetutake versi sing wis diwedalake, Ora mantep ngetutake build edge lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1375,15 +1403,16 @@ export const jv: Dictionary = {
   'OpenAI-compatible': 'Cocog karo OpenAI',
   'Base URL': 'URL dhasar',
   'API key': 'Kunci API',
-  'Set on this device': 'Disetel ing piranti iki',
   Optional: 'Ora wajib',
   'List models': 'Jupuk dhaptar model',
   'Asking…': 'Takon…',
   'No providers yet.': 'Durung ana panyedhiya.',
   'Add {name}': 'Tambah {name}',
-  'Keys stay in the secure store on this device.': 'Kunci tetep ing panyimpenan aman piranti iki.',
   'This browser holds the keys in its own storage.':
     'Panjelajah iki nyimpen kunci ing panyimpenane dhewe.',
+  'Keep this browser’s keys in the vault': 'Simpen kunci browser iki ing brankas',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Banjur kunci saben piranti disimpen ing panyimpenan browser iki, ing ngendi skrip sing mlebu menyang kaca bisa maca.',
   'AI can be wrong. Check the facts.': 'AI bisa salah. Priksa fakta-faktane.',
   'Used by the glasses': 'Dipakai tesmak',
   'Could not read the models.': 'Ora bisa maca dhaptar model.',
@@ -1794,16 +1823,6 @@ export const jv: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Panjelajah gawan',
-  // The engine web tabs run on
-  Engine: 'Mesin',
-  Relaunch: 'Bukak maneh',
-  'Chromium did not start': 'Chromium ora miwiti',
-  'No connection': 'Ora ana sambungan',
-  'Not in this release': 'Ora ana ing rilis iki',
-  'Needs an update': 'Butuh nganyari',
-  'Signature did not match': 'Tandha tangan ora cocog',
-  'Disk full': 'Disk kebak',
-  'Could not be installed': 'Ora bisa dipasang',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1967,10 +1986,6 @@ export const jv: Dictionary = {
   'Calls a minute': 'Panggilan saben menit',
   'Pages a minute': 'Kaca saben menit',
   '{count} calls': '{count} panggilan',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Kabuka ing {device}',
-  'Use here': 'Gunakake ing kene',
-  '{device} wants your web logins': '{device} njaluk login web sampeyan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pitakon cepet',

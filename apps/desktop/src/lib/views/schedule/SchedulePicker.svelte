@@ -163,7 +163,8 @@
   })
 
   $effect(() => closeOnBack(true, onclose))
-  $effect(() => overlays.show(onclose))
+  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
+  $effect(() => overlays.show(onclose, () => [layer]))
 
   function pick(picked: Scheduled) {
     asked.pick(picked)

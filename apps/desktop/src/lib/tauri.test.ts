@@ -91,3 +91,39 @@ describe('which operating system this is', () => {
     expect(said).not.toHaveBeenCalled()
   })
 })
+
+/** Where a link outside the app goes: the phone app hands it to the system, which opens
+ *  the reader's own browser (the opener plugin's `ACTION_VIEW` on Android), and a page in a
+ *  browser opens a tab beside itself. A web note goes the same way off the desktop app
+ *  (#206); see `openWeb` in workspace.svelte.ts. */
+describe('a link out of the app', () => {
+  afterEach(() => {
+    vi.doUnmock('@tauri-apps/plugin-opener')
+  })
+
+  test('on a phone is the system’s to open, in the browser it chose', async () => {
+    const opened: string[] = []
+    vi.doMock('@tauri-apps/plugin-opener', () => ({
+      openUrl: (url: string) => {
+        opened.push(url)
+        return Promise.resolve()
+      },
+    }))
+    const { openExternal } = await onTauri({ platform: 'android' })
+
+    await openExternal('https://example.com/site')
+
+    expect(opened).toEqual(['https://example.com/site'])
+  })
+
+  test('in a browser is a new tab', async () => {
+    const tabs: unknown[][] = []
+    const { openExternal } = await inBrowser()
+    ;(window as unknown as { open: (...args: unknown[]) => void }).open = (...args) =>
+      void tabs.push(args)
+
+    await openExternal('https://example.com/site')
+
+    expect(tabs).toEqual([['https://example.com/site', '_blank', 'noopener']])
+  })
+})

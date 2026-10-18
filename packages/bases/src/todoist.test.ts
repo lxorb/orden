@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { compileFilter } from './filter'
 import { contextAt, taskRow } from './fixtures/rows'
 import { fromTodoist } from './todoist'
@@ -125,6 +125,24 @@ describe("Todoist's documented filters", () => {
     expect(fromTodoist('6/10', { ...options, lang: 'en-US' })).toEqual([
       'task.date == date("2026-06-10")',
     ])
+  })
+
+  test("a date with no year and no today given takes this machine's year, not UTC's", () => {
+    // Just after midnight on New Year's Day in Auckland it is still the last day
+    // of the old year in UTC, and `jan 3` is the one coming, not the one gone.
+    const zone = process.env.TZ
+    process.env.TZ = 'Pacific/Auckland'
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date(2027, 0, 1, 0, 30))
+      expect(fromTodoist('date: Jan 3', { isNote: options.isNote })).toEqual([
+        'task.date == date("2027-01-03")',
+      ])
+    } finally {
+      vi.useRealTimers()
+      if (zone === undefined) delete process.env.TZ
+      else process.env.TZ = zone
+    }
   })
 })
 

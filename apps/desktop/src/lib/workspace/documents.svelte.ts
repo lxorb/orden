@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { type TabKind, TAB_KINDS } from './tab-kinds'
 
 /** The name a note nobody has named carries. It is never on screen: such a note
  *  is called after its own first words instead, so a window of drafts is a window
@@ -37,9 +38,10 @@ export const opening = { source: false }
  *  words are which one and where; see docs/terminal.md. A view is a question about the
  *  rows of the spaces (Today, a project, a `.base` file's board), and its words are which
  *  question; see lib/views/spec.ts and docs/tasks.md 5.5. A chat is the AI panel; a channel is
- *  a chat people write in, a `.chat` file's (docs/chats.md). */
-export type TabKind =
-  'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web' | 'terminal' | 'view' | 'chat' | 'channel'
+ *  a chat people write in, a `.chat` file's (docs/chats.md).
+ *
+ *  Each kind is an entry in tab-kinds.ts, which says what it does as well. */
+export type { TabKind }
 
 /** Whether a tab's words are a file's words: a note, a canvas, and a page note,
  *  whose words are the JSON in them.
@@ -56,7 +58,7 @@ export type TabKind =
  *  whose words are a document, which is why a web tab has no collaboration and
  *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
-  return kind === 'note' || kind === 'canvas' || kind === 'pages'
+  return TAB_KINDS[kind].words
 }
 
 export interface DocumentStart {
@@ -449,6 +451,11 @@ export class Tab {
    *  Per tab, since the same site can be open at two pages in two panes, and
    *  written into the session so a restart comes back on the page it was on. */
   address = $state<string | undefined>(undefined)
+
+  /** For a website with no file made at a web note's page - a second tab of it, a link
+   *  out of it: that note's own web data, so the page stays signed in where the note is.
+   *  Read through `apartOf` in web-tab/shortcut.ts, never on its own. */
+  apart = $state<string | null>(null)
 
   /** For a website: a private tab, whose page writes nothing down and is never written
    *  down itself - not in the session, not on the closed stack, never saved as a web

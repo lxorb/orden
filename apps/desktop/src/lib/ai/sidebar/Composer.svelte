@@ -19,6 +19,7 @@
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { dur } from '../../motion'
+  import { overlays } from '../../overlays'
   import { shortcuts } from '../../shortcuts.svelte'
   import { withinSpace } from '../../space-paths'
   import { views } from '../../views.svelte'
@@ -203,14 +204,19 @@
     return inside && at > 0 ? inside.slice(0, at) : ''
   }
 
-  /** A popover is put away by a press anywhere else, and by Escape wherever the
-   *  keyboard is in the foot. */
-  function outside(event: PointerEvent) {
-    if (!chat.popover) return
-    const target = event.target instanceof Element ? event.target : null
-    if (target?.closest('.pop, .tray, .picker .chip, .knob')) return
-    chat.popover = null
-  }
+  let foot = $state<HTMLElement>()
+
+  /** A popover is put away by a press anywhere but on it and what opens it, by the
+   *  window losing the focus, and by Escape; see overlays.ts. Escape wherever the
+   *  keyboard is in the foot is the foot's own, below, which hands the keyboard back. */
+  $effect(() =>
+    chat.popover
+      ? overlays.show(
+          () => (chat.popover = null),
+          () => [...(foot?.querySelectorAll('.pop, .tray, .picker .chip, .knob') ?? [])],
+        )
+      : undefined,
+  )
 
   function footKey(event: KeyboardEvent) {
     if (event.key !== 'Escape' || !chat.popover) return
@@ -495,10 +501,8 @@
   }
 </script>
 
-<svelte:window onpointerdown={outside} />
-
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="foot" onkeydown={footKey}>
+<div class="foot" bind:this={foot} onkeydown={footKey}>
   <Queue />
 
   {#if thread}

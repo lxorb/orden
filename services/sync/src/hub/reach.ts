@@ -11,13 +11,11 @@ import { chunks } from '../bound'
 import type { Env } from '../types'
 
 /** What a route may ask a hub. */
-export type HubAsk =
-  'join' | 'poke' | 'upload' | 'revoke' | 'renamed' | 'erase' | 'machine' | 'terms' | 'chat'
+export type HubAsk = 'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai'
 
 /** What a route answers when the hub it needs did not answer: a moment to wait
  *  through, as a deploy is, rather than a failure. The socket's own handshake cannot
- *  be read by a browser and an upload is retried in the background, so nobody reads
- *  this and it has no catalogue row. */
+ *  be read by a browser, so nobody reads this and it has no catalogue row. */
 export const HUB_AWAY = 'sync is not answering - try again'
 
 /** How many hubs one request tells at once. */
@@ -31,7 +29,6 @@ export async function askHub(
   id: string,
   ask: HubAsk,
   headers: Record<string, string> = {},
-  body?: ArrayBuffer,
 ): Promise<Response | null> {
   const namespace = env.HUB
   if (!namespace) return null
@@ -40,11 +37,7 @@ export async function askHub(
     try {
       const hub = namespace.get(namespace.idFromName(id))
       return await hub.fetch(
-        new Request(`https://hub.invalid/${ask}`, {
-          method: body ? 'PUT' : 'GET',
-          headers: { ...headers, 'x-nib-hub': ask },
-          ...(body ? { body } : {}),
-        }),
+        new Request(`https://hub.invalid/${ask}`, { headers: { ...headers, 'x-nib-hub': ask } }),
       )
     } catch {
       // A reset object: the loop asks the one that replaced it.
@@ -55,7 +48,7 @@ export async function askHub(
 }
 
 /** The hubs of accounts and guests that have gone for good, emptied: every socket
- *  closed and every lease forgotten. Answers the ids that are empty now, so the
+ *  closed and their storage emptied. Answers the ids that are empty now, so the
  *  list they came from keeps the rest; without the namespace there are no hubs,
  *  and every one of them is as empty as it will ever be. See leftovers.ts. */
 export async function eraseHubs(env: Env, ids: readonly string[]): Promise<string[]> {

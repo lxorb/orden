@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'له نورو اپونو: {key}',
+  'From other apps: set in your system settings': 'له نورو اپونو: د سیسټم په ترتیباتو کې یې وټاکئ',
+  'From other apps: bind {command} in your system settings':
+    'له نورو اپونو: {command} د سیسټم په ترتیباتو کې وټاکئ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'اړین',
   'Add to Essentials': 'اړینو ته ورگډ کړه',
@@ -21,6 +26,11 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Settings: note types
+  'Page note': 'د مخونو يادښت',
+  'Web note': 'ویب يادښت',
+  'Private tab': 'شخصي ټب',
+  'Note types': 'د يادښت ډولونه',
   // Tasks: Upcoming's weeks
   'Previous week': 'تېره اونۍ',
   // Tasks: projects placed in the panel, and their folder
@@ -983,6 +993,7 @@ export const ps: Dictionary = {
   Comment: 'څرګندونه',
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
+  'Download the app': 'اپلیکیشن ښکته کړئ',
   'Report an issue': 'ستونزه راپور کول',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',
@@ -1065,6 +1076,16 @@ export const ps: Dictionary = {
   'AI account: {name}': 'د AI حساب: {name}',
   Accounts: 'حسابونه',
   Access: 'لاسرسی',
+  Set: 'ټاکل شوی',
+  'Start over': 'بیا پیل',
+  'Sign in here': 'دلته ننوځئ',
+  '{device} wants your AI accounts': '{device} ستاسو د AI حسابونه غواړي',
+  '{device} offers this device your AI vault': '{device} دې وسیلې ته ستاسو د AI خزانه وړاندې کوي',
+  Join: 'یوځای کېدل',
+  'Allow this device on another one': 'په بل وسیله دا وسیله اجازه کړئ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'په هره وسیله چې ننوځئ، له سره تر سره کوډ شوي.',
+  'Sign in to have them on every device.': 'ننوځئ چې په هره وسیله یې ولرئ.',
   'Agents on this computer connect on their own': 'په دې کمپیوټر استازي پخپله نښلي',
   Helpers: 'مرستندويان',
   'Start helpers on your AI accounts': 'ستاسو د AI په حسابونو مرستندويان پیل کړئ',
@@ -1158,6 +1179,12 @@ export const ps: Dictionary = {
   'Export as PNG': 'لکه PNG صادرول',
   'Export as SVG': 'لکه SVG صادرول',
   'Export as PDF': 'لکه PDF صادرول',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF واردول',
+  'Choose how to add the pages to the canvas.': 'وټاکه چې مخونه څنګه په تخته کې اضافه شي.',
+  'Single page': 'يو مخ',
+  'All pages': 'ټول مخونه',
+  'Choose a page': 'يو مخ وټاکه',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ټاکل شوی ړنګول',
   'Nudge left': 'کيڼ ته ټېل',
@@ -1218,8 +1245,8 @@ export const ps: Dictionary = {
   'Release channel': 'د خپرونې کانال',
   Stable: 'ټينګ',
   Unstable: 'نا ټينګ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',
@@ -1390,15 +1417,15 @@ export const ps: Dictionary = {
   'OpenAI-compatible': 'له OpenAI سره برابر',
   'Base URL': 'بنسټيزه پته',
   'API key': 'د API کيلي',
-  'Set on this device': 'پر دې وسيله ټاکل شوی',
   Optional: 'اختياري',
   'List models': 'ماډلونه راوړل',
   'Asking…': 'پوښتنه کېږي…',
   'No providers yet.': 'تر اوسه برابرونکي نشته.',
   'Add {name}': '{name} ورزياتول',
-  'Keys stay in the secure store on this device.':
-    'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
+  'Keep this browser’s keys in the vault': 'د دې براوزر کلیدونه په خزانه کې وساته',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'بیا به د هرې وسیلې کلیدونه د دې براوزر په زېرمه کې وساتل شي، چېرته چې یو سکرېپټ چې پاڼې ته ننوتی وي هغه لوستلی شي.',
   'AI can be wrong. Check the facts.': 'مصنوعي ځيرکتيا تېروتنه کولی شي. حقايق وڅېړئ.',
   'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
@@ -1804,16 +1831,6 @@ export const ps: Dictionary = {
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
   // Orden as the default browser
   'Default browser': 'اصلي کوټګر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'بيا پیلول',
-  'Chromium did not start': 'Chromium پیل نه شو',
-  'No connection': 'اړیکه نشته',
-  'Not in this release': 'په دې خپرونه کې نشته',
-  'Needs an update': 'تازه کول پکار دي',
-  'Signature did not match': 'لاسلیک سمون نه خوري',
-  'Disk full': 'ډیسک ډک دی',
-  'Could not be installed': 'نصب نه شو',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1983,10 +2000,6 @@ export const ps: Dictionary = {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'په {device} کې پرانیستی',
-  'Use here': 'دلته یې وکاروئ',
-  '{device} wants your web logins': '{device} ستاسو د ویب ننوتنې غواړي',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'چټکه پوښتنه',

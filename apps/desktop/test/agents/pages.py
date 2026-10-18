@@ -213,6 +213,22 @@ HOP = page(
     "setTimeout(() => { location.href = 'http://{denied}:{port}/landed' }, 300)",
 )
 
+# Presses an agent's click by ref used to miss (#373): a button still on screen once the
+# page is scrolled 300 pixels down an 800-pixel tab, where what the press would land on
+# was asked of the page 300 pixels higher and refused as covered by a row there; and a card whose link is stretched over the whole of it, so
+# a press on its heading is the link's - refused by ref, landed by a point.
+CLICKS = page(
+    "Clicks",
+    "<div id=rows>"
+    + "".join(f"<div style='height:28px;border-bottom:1px solid #ddd'>Row {n}</div>" for n in range(26))
+    + "</div><button id=far>Far button</button>"
+    + "<div style='position:relative;border:1px solid;margin-top:1rem;padding:.5rem'>"
+    "<h2 id=card>Card title</h2><a id=stretched href='#read'>Read<span style='position:absolute;inset:0'></span></a></div>"
+    + "<div style='height:600px'></div>",
+    """document.getElementById('far').addEventListener('click', (event) => record({kind: 'far', trusted: event.isTrusted}))
+document.getElementById('stretched').addEventListener('click', (event) => { event.preventDefault(); record({kind: 'card', trusted: event.isTrusted}) })""",
+)
+
 LANDED = page("Landed", "<p>A denied site.</p>", "record({kind: 'landed'})")
 
 
@@ -286,6 +302,7 @@ class Site:
             "/collect": COLLECT,
             "/hop": HOP.replace("{denied}", DENIED).replace("{port}", str(self.port)),
             "/landed": LANDED,
+            "/clicks": CLICKS,
         }
         return filled
 

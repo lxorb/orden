@@ -141,12 +141,20 @@
   },
   {
     "name": "browser_click",
-    "description": "Press an element by ref, scrolled into view. Answers the address afterwards and any tabs the press opened.",
+    "description": "Press an element by ref, scrolled into view. Where a press by ref is refused as covered and the element is what shows there, press a point instead: x and y in the tab's viewport, in the pixels of browser_screenshot at its own scale. Answers the address afterwards and any tabs the press opened.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "tab": { "type": "string" },
         "ref": { "type": "string" },
+        "x": {
+          "type": "number",
+          "description": "Instead of ref: across the tab's viewport, in CSS pixels."
+        },
+        "y": {
+          "type": "number",
+          "description": "Instead of ref: down the tab's viewport, in CSS pixels."
+        },
         "button": { "type": "string", "enum": ["left", "right", "middle"] },
         "count": { "type": "integer", "description": "2 for a double click." },
         "modifiers": {
@@ -154,7 +162,7 @@
           "items": { "type": "string", "enum": ["Alt", "Control", "Meta", "Shift"] }
         }
       },
-      "required": ["tab", "ref"]
+      "required": ["tab"]
     }
   },
   {

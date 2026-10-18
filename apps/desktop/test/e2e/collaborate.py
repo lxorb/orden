@@ -178,6 +178,73 @@ def words(page: Page) -> str:
     )
 
 
+# The editor of the pane in front, rather than `window.nib`, which is whichever
+# editor was made last.
+FRONT = "window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)"
+
+
+def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[str]) -> None:
+    """Puts the other device's caret at one end of the long note and this page's view
+    at the other, and checks the other caret is held at that edge of what can be seen,
+    with its name."""
+    other.evaluate(
+        f"() => {{ const view = {FRONT};"
+        f" view.dispatch({{ selection: {{ anchor: {'view.state.doc.length' if side == 'below' else '0'} }} }});"
+        " view.focus() }"
+    )
+    page.evaluate(
+        f"() => {{ const view = {FRONT}; view.dispatch({{ selection: {{ anchor: "
+        f"{'0' if side == 'below' else 'view.state.doc.length'} }}, scrollIntoView: true }}) }}"
+    )
+    try:
+        wait_for(
+            page,
+            f"() => !!document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')",
+            f"[{label}] the other caret held {side} the page",
+        )
+    except SystemExit as gave_up:
+        failures.append(str(gave_up))
+        return
+
+    held = page.evaluate(
+        f"""() => {{
+            const name = document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')
+            const box = name.getBoundingClientRect()
+            const page = {FRONT}.scrollDOM.getBoundingClientRect()
+            return {{ name: name.textContent, top: box.top - page.top, bottom: page.bottom - box.bottom,
+                      inside: box.top >= Math.max(page.top, 0) && box.bottom <= Math.min(page.bottom, innerHeight) }}
+        }}"""
+    )
+    say(f"[{label}] the other caret, out of sight {side}: {json.dumps(held)}")
+    page.screenshot(path=str(SHOTS / f"held-{side}-{label}.png"))
+    if not held["name"]:
+        failures.append(f"[{label}] a caret held {side} the page carried no name")
+    if not held["inside"]:
+        failures.append(f"[{label}] a caret held {side} the page was drawn past it")
+    if held["top" if side == "above" else "bottom"] > 40:
+        failures.append(f"[{label}] a caret held {side} the page is not at that edge: {held}")
+
+    # Pressed, the name goes to them: the page scrolls to the caret, which is drawn
+    # where it is again.
+    page.locator(f".cm-nib-held.is-{side} .cm-nib-held-name").first.click()
+    try:
+        wait_for(
+            page,
+            f"""() => {{
+                if (document.querySelector('.cm-nib-held.is-{side} .cm-nib-held-name')) return false
+                const caret = document.querySelector('.cm-nib-caret')
+                if (!caret) return false
+                const box = caret.getBoundingClientRect()
+                const page = {FRONT}.scrollDOM.getBoundingClientRect()
+                return box.top >= page.top && box.bottom <= Math.min(page.bottom, innerHeight)
+            }}""",
+            f"[{label}] the page to go to the caret held {side} it",
+        )
+        say(f"[{label}] pressing the name held {side} the page went to the caret")
+    except SystemExit as gave_up:
+        failures.append(str(gave_up))
+
+
 def place(page: Page, at: int) -> None:
     """Puts the caret where the words should go, and gives the editor the keys."""
     page.click(".cm-content")
@@ -344,9 +411,17 @@ def main() -> int:
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret.png"))
         say(f"the remote caret is in {SHOTS / 'remote-caret.png'}")
 
-        # And the name fades, leaving the bar.
+        # And the name stays: somebody in the note is somebody you can see (#386).
         one.wait_for_timeout(1800)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret-settled.png"))
+        named = one.evaluate(
+            "() => { const name = document.querySelector('.cm-nib-caret-name');"
+            " return name ? Number(getComputedStyle(name).opacity) : null }"
+        )
+        if not named:
+            failures.append(f"the other caret's name went once it stopped ({named})")
+        else:
+            say("the other caret's name is still there once it stopped")
 
         # The tab's presence dots.
         one.locator(".strip").first.screenshot(path=str(SHOTS / "presence-dots.png"))
@@ -382,6 +457,28 @@ def main() -> int:
         say(f"a long note joined its room in {took:.0f} ms")
         if took > CEILING * 4:
             failures.append(f"joining took {took:.0f} ms, past {CEILING * 4} ms")
+
+        # A caret scrolled out of sight is held at the edge of the page, named and
+        # pointing the way, on a desktop and on a phone (#386).
+        wait_for(
+            one,
+            "() => {"
+            "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
+            f"  return walk(window.nibApp.workspace.tree).includes('/{SPACE}/long.md')"
+            "}",
+            "[one] the long note to arrive",
+        )
+        one.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/long.md')")
+        wait_for(
+            one,
+            f"() => window.nibApp.rooms.carries({json.dumps(long['id'])})",
+            "[one] the long note to join its room",
+        )
+        held_at_edge(one, joining, "below", "desktop", failures)
+        held_at_edge(one, joining, "above", "desktop", failures)
+        one.set_viewport_size({"width": 390, "height": 844})
+        held_at_edge(one, joining, "below", "phone", failures)
+        one.set_viewport_size({"width": 1100, "height": 700})
 
         # What the account ends up holding, once the room has settled it.
         until = time.monotonic() + PATIENCE

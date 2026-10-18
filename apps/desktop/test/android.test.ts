@@ -324,7 +324,7 @@ describe('the bridge the page talks over', () => {
     expect(page).toContain(`answer('__nibFrame'`)
     for (const call of [
       'secretRead(await frameWord(), id)',
-      'secretWrite(await frameWord(), id, trimmed)',
+      'secretWrite(await frameWord(), id, secret)',
       'secretForget(await frameWord(), id)',
     ]) {
       expect(page, call).toContain(call)

@@ -35,16 +35,15 @@
   let link = $state('')
   let bubble = $state<HTMLElement>()
 
-  $effect(() => overlays.show(onclose))
-
-  // A press anywhere else closes it, as a browser's menu closes.
-  $effect(() => {
-    const pressed = (event: PointerEvent) => {
-      if (bubble && event.target instanceof Node && !bubble.contains(event.target)) onclose()
-    }
-    window.addEventListener('pointerdown', pressed, true)
-    return () => window.removeEventListener('pointerdown', pressed, true)
-  })
+  // As a browser's menu closes: by Escape, a press past it and the window losing the focus - which is also
+  // how a press into the page under it is heard; see overlays.ts. A press on the button
+  // that opened it is that button's own to answer.
+  $effect(() =>
+    overlays.show(onclose, () => [
+      bubble,
+      ...document.querySelectorAll('[data-opens="extensions"]'),
+    ]),
+  )
 
   async function add(event: SubmitEvent) {
     event.preventDefault()

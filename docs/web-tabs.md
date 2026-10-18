@@ -17,6 +17,13 @@ second Chromium is 150 MB and its own update channel - so a web tab is the
 system's engine, and a page that behaves differently on a Mac is behaving the way
 Safari behaves.
 
+For a while that was not true. From 2026-09-30 to 0.15 a reader on Windows could choose
+nib's own Chromium in Settings, a second build of the app on CEF fetched beside the
+first. It is gone (#305, #313): every page is on the system's engine again, and
+`src-tauri/src/retired_engine.rs` clears what that build left on a machine - the choice,
+its lock and the fetched builds - once the window is up. Chromium's profiles in
+`<config>/chromium`, what its tabs were signed in to, stay where they are.
+
 ## The file
 
 **A website in the space is a shortcut file: `Svelte docs.url`.**
@@ -382,8 +389,7 @@ Chrome's freezing: its timers and scripts stop, and it keeps its document, its p
 what was typed into it, its video position and its login. Showing it again wakes it
 before it is placed, in a frame, and nothing loads. On WebView2 that is `TrySuspend`,
 which also hands most of the page's memory back to the system (Edge measures 83 to
-85 per cent per sleeping tab); on nib's own Chromium the page lifecycle's `frozen`, which
-saves the CPU and little memory; WebKit has neither and the engine's own throttling of a
+85 per cent per sleeping tab); WebKit has nothing of the kind and the engine's own throttling of a
 hidden page is all there is. One path freezes and wakes every page, `web_pause.rs`, the
 one Hidden tabs' Pause uses: each freeze and wake is sent after the last has landed, so
 Ctrl+Tab coming round to a page while it is being frozen never shows a page the freeze
@@ -402,9 +408,7 @@ Chrome and Edge never freeze one: the page on screen or under a menu, one playin
 heard in the last five minutes, one loading, one whose site was given the camera or
 the microphone (a call), one allowed to notify (a chat somebody expects to hear from),
 and one an agent is acting in - the crate wakes a frozen reader's tab before an agent's
-first call into it, because a frozen page answers no protocol call. A frozen page keeps
-its web login's lease; the two-minute light upload skips a site whose every page is
-frozen, which has changed nothing, and a full capture wakes the page it reads.
+first call into it, because a frozen page answers no protocol call.
 
 **Memory saver** (Settings, General, Tabs) is the one thing that takes a page down, and
 it is off until chosen. Its three strengths are Chrome's three, held against what a
@@ -424,8 +428,8 @@ screen, nor one under a menu, nor any page that is never frozen, nor a pinned on
 with something typed into a field and not sent - which the page says each time its tab
 is left (`web_look`) - because Chrome's never does. Changing it judges every page out of
 sight at once. A **parked** tab keeps its address, its place on the page and its trail,
-so reviving it is a load and not a loss; that path is also what a login handed to
-another computer and an engine that has gone come back through. Closing the tab takes
+so reviving it is a load and not a loss; that path is also what an engine that has gone
+comes back through. Closing the tab takes
 the webview and the trail with it.
 
 A web note turned Separate or back to Global builds again only its own page; every other
@@ -434,8 +438,8 @@ page keeps running.
 **A space's own tabs out of sight are Hidden tabs** (Settings, General, Tabs): Keep
 running, Pause, or Ask, which is where it starts. Keep running treats them as any page
 out of sight, frozen after five minutes unless something in it has to go on.
-Pause stops what the page plays and freezes it at once - `TrySuspend` on WebView2, the page
-lifecycle's `frozen` on nib's own Chromium, the sound alone on WebKit - and the page runs
+Pause stops what the page plays and freezes it at once - `TrySuspend` on WebView2, the sound
+alone on WebKit - and the page runs
 again, as it was and with no reload, the moment its space is shown. A page in a call, or
 capturing the camera, the microphone or the screen, is one the engine will not freeze, as
 Edge's sleeping tabs never do; it goes on running, and the space's row in the switcher
@@ -842,6 +846,17 @@ fresh are `WebView2`'s own - `Stop`, and the DevTools Protocol's `Page.reload` w
 `ignoreCache` - and elsewhere the nearest a page can do, `window.stop()` and an
 ordinary reload; see `src-tauri/src/web_reload.rs`.
 
+**F5 and Ctrl+R reload from inside the page too, every time** (#344: _"Ctrl+R (Cmd+R on
+Mac) reloads a web tab once; pressing it again does nothing"_). The key is the bar's while
+the app has the keyboard, and a reload leaves the keyboard in the page, where the key never
+reached the app again. `WebView2` reloads on it by itself. `WebKitGTK` has no key of its
+own for it, so the page's widget hears it before the page and says it to the window, with
+the browser's other chords (`reloading` in `web_keys.rs`); a site there no longer has
+Ctrl+R for itself. A Mac has Reload and Hard Reload at the foot of View, whose Cmd+R and
+Cmd+Shift+R the menu bar is asked for before the page (`viewRows` in `native-menu.ts`).
+`scripts/wayland-drive.py` presses Ctrl+R three times and F5 once in a page with the
+keyboard in it.
+
 #### The pointer is never hidden while somebody types
 
 Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser
@@ -988,10 +1003,10 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
   switch): Chrome has no such switch, and how to turn its swipe off is one of the things
   people most often ask about it. Not on a phone, whose sides are the system's back.
 
-**Not the engine's own.** Both of Windows' engines are Chromium and have Chromium's swipe,
-and both are started without it: `TouchpadOverscrollHistoryNavigation` disabled and
+**Not the engine's own.** `WebView2` is Chromium and has Chromium's swipe, and is started
+without it: `TouchpadOverscrollHistoryNavigation` disabled and
 `--overscroll-history-navigation=0` (`ENGINE_SWIPE` in src-tauri/src/engine.rs, in
-`BROWSER_ARGS` for `WebView2` and handed to nib's own Chromium in `cef/src/main.rs`). Emil,
+`BROWSER_ARGS`). Emil,
 2026-10-08 (#209): _"edge supports it for some sites while nib supports it as well ...
 sometimes both triggers"_. `IsSwipeNavigationEnabled`, which wry leaves off, is documented
 for a finger on a screen, and #209 is two fingers on a touchpad going back with it off:
@@ -1007,18 +1022,26 @@ world in every page and frame (`src-tauri/src/web_swipe.js`) hears each sideways
 asks whether anything in the page would take it, and says it a frame at a time; every
 listener is passive and reads, so the page scrolls as it did. It says it the way nib's
 world already asks for the find: on `WebView2` as a window asked for under a name that
-carries it, which the crate reads and never opens, and on nib's own Chromium through a
-binding only that world has. Not a binding on `WebView2`: the engine puts one in a world
+carries it, which the crate reads and never opens. Not a binding: the engine puts one in a world
 only while the protocol's runtime domain is on, and turning that on for every page is
 exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `nib://web-swipe`
 (`web_swipe.rs`), the window runs the gesture (`src/lib/back-swipe`), and the step is the
 tab's own Back or Forward, along the same trail the arrows walk.
 
-**The arrow over a page** is cut out of the page in its own round shape, the way a menu is
-(`covers.ts`, `web_cut.rs`), and the page is placed again on each step of the gesture: it
-never moves, hides or goes blank, and is whole again once the arrow has gone. On nib's own
-Chromium, which cuts nothing, a page steps behind its picture for the arrow as it does for
-a menu.
+**The arrow over a page** stands over the page's picture while the fingers are on: the room
+it comes in over covers the page the way a sheet's scrim does (`nib-swipe-room` in
+`covers.ts`), so the page's window is given an empty shape for the gesture and the arrow is
+the app's own HTML over a still of the page, soft edge, shadow and all. A picture older than
+a moment is put aside as the swipe begins and a fresh one taken (`freshen`); until it is in,
+and while the arrow bursts on its way out, the arrow is cut out of the page in its own round
+shape the way a menu is (`web_cut.rs`). It used to be cut that way all along: a window's
+shape on Windows is whole pixels with no soft edge, set again on every step of the gesture,
+and the circle came out jagged and a step behind the fingers. Emil, 2026-10-17 (#209):
+_"the animation and the icon itself look very pixelated"_. Where the arrow is drawn is
+whole pixels of the screen at every scale, its ring is on the circle's own box, and the
+icon is at its own twenty-four pixels; `test/e2e/swipe.py` photographs it close at 1, 1.25,
+1.5 and 2. On an engine that cuts nothing, a page steps behind its picture for the arrow as
+it does for a menu.
 
 **When the fingers lift.** Emil, 2026-10-12 (#209): _"the touchpad swipe still feels very
 unintuitive. e.g. it is possible to swipe and trigger a "back" whilst not even released the
@@ -1113,18 +1136,32 @@ refuse.
 The file is still theirs in the space: the shortcut is a bookmark on a phone, which
 is what a website on a phone is worth being - and a `.url` is a bookmark to the
 phone's own system too. Making one is not offered there, because the address is
-asked for in a bar and there is no bar; a tablet gets both, and the frame and the
-card, because it has the room - but a web note with an address goes to the system
-browser on a tablet too, and a shortcut nobody has given one yet opens its tab there
-for its bar.
+asked for in a bar and there is no bar.
+
+**A tablet is a phone here.** It used to get the bar, the frame and the card, because
+it has the room, and the frame was the trouble: a link pressed in a note, or a new web
+tab, drew the page inside nib in a frame most sites refuse, with none of the reader's
+logins. So a tablet hands every page to the system browser exactly as a phone does -
+a link and a web note both - and has no web tab of its own: no web note to make, no
+browsing history, and Ctrl+T is the kinds in the pane, as on a phone.
+The one question is `viewport.touch`, which is the phone and the tablet both; the
+desktop is unchanged (`holdsPages` in `open-link.ts`, `openPage` and `openWebsite` in
+`workspace.svelte.ts`, `kindsHere`).
 
 **A web note in a browser build opens a browser tab.** Emil, 2026-10-06 (#206): _"on
 mobile web notes should just open in your default browser - also when nib is open in
 a browser, clicking on them should just open a new tab."_ So only the desktop app
 draws a web note's page; everywhere else its address is handed to the browser - the
 system's from the phone and tablet app, a new tab beside nib's own from a browser.
-Links in a note and a new web tab keep the card and the frame above. See `openSite`
-in `workspace.svelte.ts`.
+Links in a note and a new web tab keep the card and the frame above, on a desktop. See
+`openSite` in `workspace.svelte.ts`.
+
+And a web note's tab that an older sitting left goes the same way. Emil, 2026-10-13:
+_"clicking on web notes in the mobile app still opens them inside nib"_. The one way
+left for that was a tab of the note already held - put back from a sitting before the
+change - which opening the note showed, the page in a frame inside nib. Now a web note opened where a tab of it is held is
+handed to the browser and the tab goes (`handedOut`), and a sitting put back off the
+desktop app leaves its web notes' tabs out (`tabsAlong`).
 
 ## The bar
 
@@ -1166,8 +1203,8 @@ so a dev server, which serves plain http, opened on the engine's error page.
 - The engine says how each navigation of a page's own frame ended (`Arrived` in
   `src-tauri/src/web_page.rs`). Measured on `WebView2` 154: a refused connection, a server
   that does not speak TLS, a 404 and a 500 are all `UNKNOWN`, so the HTTP status the
-  server answered with is what tells them apart. `WebView2`'s alone: elsewhere, and on
-  nib's own Chromium, a host that is not this machine's or the network's stays on https.
+  server answered with is what tells them apart. `WebView2`'s alone: elsewhere a host that
+  is not this machine's or the network's stays on https.
 
 **The field finishes what is typed from the pages already opened**, the way Chrome's
 omnibox does. Emil, 2026-09-27: _"if I already opened moodle-app2.let.ethz.ch then it
@@ -1312,7 +1349,6 @@ reached through a page built in it for the clearing and closed again
 | `WebView2` | `ICoreWebView2Profile2::ClearBrowsingDataInTimeRange`, `ClearBrowsingData` for all time |
 | `WKWebView` | `WKWebsiteDataStore removeDataOfTypes:modifiedSince:` |
 | `WebKitGTK` | `webkit_website_data_manager_clear` over the range |
-| nib's own Chromium | `Storage.clearDataForOrigin` for each site the range visited, every cookie for all time, and the cache |
 
 A space kept per site has a store per site, and the ones cleared are the ones its history
 names. The browser build has no engine of its own behind its pages, so its dialog offers
@@ -1321,8 +1357,7 @@ the history alone.
 **A private tab is Chrome's Incognito window as a tab** (`web-tab/private.ts`): Ctrl+Shift+N
 (docs/backlog.md, Q3), a new tab's New private tab card (I), the dots and the palette. Its
 page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
-of the page's own on a Mac and on Linux, a profile with no folder on nib's own Chromium -
-so nothing it stores reaches the disk. And nib writes nothing of it either: no history, no
+of the page's own on a Mac and on Linux - so nothing it stores reaches the disk. And nib writes nothing of it either: no history, no
 favicon, no place on the page, no session that would bring it back after a restart, no
 closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
 parks it, because a page built again would have forgotten everything. A link out of it
@@ -1331,7 +1366,7 @@ at the left of its address field.
 
 Closing the last private tab forgets everything: `WebView2` keeps one InPrivate session
 for every private page on its environment and ends it with the last. A Mac's and Linux's
-engine, and nib's own Chromium, give each private page a store of its own, so there two
+engine give each private page a store of its own, so there two
 private tabs open at once do not share a sign-in.
 
 **The search engine is one row in Settings**, under Browser: Chrome's list for the reader's
@@ -1339,7 +1374,12 @@ region - Google, which stays the default, Bing, DuckDuckGo, Ecosia, Brave, Start
 Qwant, Yahoo!, and the region's own (Baidu, Naver, Yahoo! JAPAN, Yandex) - and Custom, an
 address with `%s` where the words go. The address field searches on it
 (`web-tab/engines.ts`, `web-tab/search-engine.svelte.ts`); the palette still treats a few
-words as a search for a note.
+words as a search for a note. **And the Web Note card opens it**: Emil, #354, _"if you
+click on web note in the Ctrl + T menu, then it should open your configured search
+engine"_ - the engine's own page, which is the root of the address its search goes to
+(`engineHome`), since the press was already the choice and a second empty field with the
+same kinds under it again answers nothing. A private tab still starts with nowhere to go,
+as Chrome's Incognito window does.
 
 **A link or a picture dragged out of a page** lands where Chrome's would. On the strip it
 opens as a tab where it was let go (`tab-strip/dropped.ts`). On the file list a link is
@@ -1806,7 +1846,8 @@ keep a profile per space, which is what nib had and what #239 took away.
 **The note's file is the choice.** `Nib-Data=<sixteen hex digits>` beside `Nib-Home` and
 `Nib-Icon` (`web-tab/shortcut.ts`), an id made when it is turned on, and the store is
 `note_<id>`. In the file, so it moves and is renamed with the note, syncs with it, and opens
-in a store of the same name on another computer (empty there until web data syncs). Every
+in a store of the same name on another computer, empty there: a computer's web logins stay
+on it (#393, docs/sync-v2.md section 6). Every
 rewrite of the file carries the key. A duplicated note keeps the id and so shares the jar.
 An unsaved tab has no file to say it, and is always on the shared store.
 
@@ -1817,7 +1858,6 @@ What a store is, per engine (`apps/desktop/src-tauri/src/web_stores.rs`):
 | Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/note_<id>`, a user data folder of its own |
 | Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/note_<id>`, a web context of its own |
 | macOS 14+ (`WKWebView`) | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name |
-| nib's own Chromium (`cef`) | the primary profile, `<config>/chromium/Default` | `<config>/chromium/store-note_<id>`, a profile of its own in the one browser process |
 
 On Windows a store of its own is a user data folder rather than a `WebView2` profile,
 because the runtime has no way to name a profile for a webview it builds. It costs a
@@ -1847,8 +1887,7 @@ before its first page is built (`web-tab/merged.ts`, `web_merge` in
 - **nothing deleted**: the old stores stay on disk as they were.
 
 It is marked done (`nib:web-data-merged`) only once every store has merged, so a launch cut
-short tries again. On nib's own Chromium, where each store is a profile the merge's hidden
-pages cannot reach, a space's logins stay in its profile. Proved by
+short tries again. Proved by
 `scripts/web-data-probe.py`, which signs a local site in through the build from before, in
 the shared store and in a space kept apart, and then opens the same note in the build after:
 the space's session cookie, localStorage and IndexedDB record are in the shared store, the
@@ -2198,15 +2237,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/own-data.ts` | Web data in a web note's menus: Global or Separate, written into the note's file |
 | `apps/desktop/src/lib/web-tab/merged.ts` | the stores the spaces kept, merged into the shared one once. Tested |
 | `apps/desktop/src-tauri/src/web_state/merge.rs` | a store's cookies one by one and its origins' storage into the shared store. Unit tested; `scripts/web-data-probe.py` |
-| `apps/desktop/src/lib/web-tab/lease.svelte.ts` | a web login as a lease: whether a page may run, handing over, losing it, what goes up and when. Tested; see docs/sync-v2.md 6 |
-| `apps/desktop/src/lib/web-tab/lease-transfer.ts` | a site's login uploaded under the fence and downloaded for a restore. Tested |
-| `apps/desktop/src/lib/web-tab/carried.ts` | what travels with a login besides the site's storage: zoom, grants, where each web note was left. Tested |
-| `apps/desktop/src/lib/web-tab/approval.svelte.ts` | the web key: made, asked for, given. Tested |
-| `apps/desktop/src/lib/web-tab/activity.ts` | whether somebody is at this computer. Tested |
-| `apps/desktop/src/lib/web-tab/web-sync.svelte.ts` | all of that started, where the account says web logins travel |
-| `apps/desktop/src/lib/web-tab/WebLocked.svelte` | `Open on {device}` and Use here, in place of a page another computer is using |
-| `apps/desktop/src/lib/web-tab/WebApprove.svelte` | another computer asking for the web logins, with the six digits |
-| `scripts/web-lease-probe.py` | the drive for the lease: two probe builds on one account under `wrangler dev`, the surface, Use here, and a computer that goes away without a word |
+| `apps/desktop/src/lib/web-tab/activity.ts` | whether somebody is at this computer, for the faces in chats. Tested |
 | `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested |
 | `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |
@@ -2257,11 +2288,8 @@ versions and goes to the trash like every other document.
 - **The history is one row per page**, at its last visit, so the History page lists a
   page under the last day it was open rather than under every day it was. Two thousand
   pages, this device's.
-- **Two private tabs share a sign-in on Windows only.** A Mac's and Linux's engine and
-  nib's own Chromium make each private page a store of its own.
-- **nib's own Chromium clears site by site.** It has no call that takes a time range, so a
-  range clears the data of each site the history says it visited in it, and the cache
-  whole.
+- **Two private tabs share a sign-in on Windows only.** A Mac's and Linux's engine make
+  each private page a store of its own.
 - **Three of Chrome's menu rows are not here.** Downloads is the glyph in the bar rather
   than a row, see "Downloads"; Copy and Paste are the page's own context menu already;
   and More tools' developer tools are reached by Inspect in that same menu and by F12.
