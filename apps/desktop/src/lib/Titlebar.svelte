@@ -5,6 +5,7 @@
   import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
+  import FileMark from './FileMark.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -125,7 +126,7 @@
   {#if viewport.touch}
     <!-- One document at a time: its mark and name instead of a strip of tabs. -->
     <h1 class="title" data-save-anchor>
-      {#if showing}<TabMark tab={showing} />{/if}
+      {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
         <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}

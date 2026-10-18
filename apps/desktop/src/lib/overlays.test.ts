@@ -370,7 +370,7 @@ describe('what hides a web page', () => {
    *  hidden; see web-tab/covers.ts. */
   test('the row floats over the panes rather than taking room from them', () => {
     const app = read('App.svelte')
-    const panes = app.slice(app.indexOf('<div class="panes" data-panes>'))
+    const panes = app.slice(app.indexOf('<div class="panes" data-panes'))
     const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
     expect(inPanes).toContain('{#if !viewport.drawer}\n            {@render notices()}')
 

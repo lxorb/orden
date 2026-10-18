@@ -86,6 +86,7 @@
   import { sidebarKey, used } from './lib/workspace/undo.svelte'
   import { saveFront } from './lib/save-place/door'
   import PadColumn from './lib/scratchpad/PadColumn.svelte'
+  import { shown as pad } from './lib/scratchpad/is.svelte'
   import { isDraft } from './lib/workspace/drafts'
   import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
   import { shortcuts } from './lib/shortcuts.svelte'
@@ -102,6 +103,12 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  /** The scratchpad as the one note on a touch screen (#404). */
+  const padOver = $derived(viewport.touch && pad.on)
+
+  /** What commands and the keyboard's strip act on. */
+  const writingIn = $derived(padOver ? (pad.view ?? view) : view)
 
   const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
 
@@ -857,7 +864,7 @@
    *  showing. */
   function appContext(): AppContext {
     return {
-      view,
+      view: writingIn,
       palette: (mode, again) => {
         // Shift Shift over the palette puts it away, as Escape does, and the keyboard
         // goes back where it was; see `tapped` in the registry.
@@ -1062,7 +1069,7 @@
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
-        <div class="panes" data-panes>
+        <div class="panes" data-panes class:under-pad={padOver} inert={padOver}>
           <Progress />
           <PaneTree frame={workspace.panes.frame} />
           <!-- The note the window was left on, as it was left, until its editor is up;
@@ -1245,7 +1252,7 @@
 {/if}
 {#if formatBarDoor.asked}
   {#await formatBarDoor.asked then FormatBar}
-    <FormatBar bind:this={formatBar} {view} context={appContext} />
+    <FormatBar bind:this={formatBar} view={writingIn} context={appContext} />
   {/await}
 {/if}
 {#if historySheet.asked}
@@ -1366,6 +1373,10 @@
     min-width: 0;
     min-height: 0;
     display: flex;
+  }
+
+  .panes.under-pad {
+    visibility: hidden;
   }
 
   /* Start, middle and end, whichever of them is up; each card names its track.
