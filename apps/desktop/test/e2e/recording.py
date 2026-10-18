@@ -210,6 +210,8 @@ class Whisper:
 
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     context = browser.new_context(
+        # The asset worker is what this drive is about; see WEBKIT_WORKERS in harness.py.
+        service_workers="allow",
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
         color_scheme="light",
         has_touch=finger,

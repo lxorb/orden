@@ -171,6 +171,13 @@ WEBKIT_CLIPBOARD = (
     " c.readText = () => read().catch(() => kept) })()"
 )
 
+#: Whether a WebKit context lets the page's service worker in, unless the drive says.
+#: In WebKit a page the asset worker controls sends its fetches past the routes a drive
+#: answers them with - every one, not only the asset worker's own - so a drive's stand-in
+#: for the account went unasked and the page reached the real one (#384). Chromium
+#: routes them all the same. The drives about the worker itself say `allow`.
+WEBKIT_WORKERS = "block"
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
@@ -266,11 +273,15 @@ def answering(browser: Any) -> Any:
             context.add_init_script(BUILT_IN)
 
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
+        if WEBKIT:
+            options.setdefault("service_workers", WEBKIT_WORKERS)
         context = made_context(*args, **options)
         answered(context, first_look)
         return context
 
     def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
+        if WEBKIT:
+            options.setdefault("service_workers", WEBKIT_WORKERS)
         # Nothing is loaded in the page yet, so a script added now runs before the app.
         page = made_page(*args, **options)
         answered(page.context, first_look)
@@ -1045,6 +1056,7 @@ class Drive:
         if WEBKIT:
             options.pop("channel", None)
             options.pop("args", None)
+            options.setdefault("service_workers", WEBKIT_WORKERS)
             context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
         else:
             options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
