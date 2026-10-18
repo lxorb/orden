@@ -1181,21 +1181,29 @@ class Drive:
         over the loopback does not: a chunk first asked for while the context is
         offline fails, and a failed module import is remembered for the rest of the
         page's life. `modulepreload` is how the page is handed them all beforehand -
-        the same links the build puts in front of its own first paint. Answers how
-        many there were."""
+        the same links the build puts in front of its own first paint. The
+        stylesheets a chunk brings are fetched too, as `preload` and not applied: a
+        lazy sheet asks for its CSS as it arrives, and WebKit, offline, fails that
+        request where Chromium answered it from its cache (#384). Answers how many
+        there were."""
         assets = (folder or self.folder) / "assets"
         chunks = sorted(f"/assets/{one.name}" for one in assets.glob("*.js"))
+        sheets = sorted(f"/assets/{one.name}" for one in assets.glob("*.css"))
         page.evaluate(
-            """(chunks) => Promise.all(chunks.map((href) => new Promise((done) => {
+            """([chunks, sheets]) => Promise.all([
+              ...chunks.map((href) => ['modulepreload', href]),
+              ...sheets.map((href) => ['preload', href]),
+            ].map(([rel, href]) => new Promise((done) => {
               const link = document.createElement('link')
-              link.rel = 'modulepreload'
+              link.rel = rel
+              if (rel === 'preload') link.as = 'style'
               link.href = href
               link.onload = link.onerror = () => done()
               document.head.append(link)
             })))""",
-            chunks,
+            [chunks, sheets],
         )
-        return len(chunks)
+        return len(chunks) + len(sheets)
 
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
         """The note in front as it reads, once the reading view has drawn it: the view is
