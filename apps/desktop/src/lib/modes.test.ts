@@ -89,6 +89,7 @@ interface Held {
   quietMarks?: boolean
   silent?: boolean
   undatedInToday?: boolean
+  canvasTurns?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -443,6 +444,14 @@ describe('Silent mode', () => {
   })
 })
 
+describe('turning a canvas with two fingers (#351)', () => {
+  test('starts off, and is remembered across a restart', async () => {
+    expect(modes.canvasTurns).toBe(false)
+    modes.setCanvasTurns(true)
+    expect((await restarted()).canvasTurns).toBe(true)
+  })
+})
+
 describe('the tasks with no start date in Today', () => {
   test('start out of it, and are remembered across a restart', async () => {
     expect(modes.undatedInToday).toBe(false)
@@ -656,6 +665,17 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.silent).toBe(true)
+  })
+
+  test('turns a canvas with two fingers where the account says so', async () => {
+    const { release, settingsCall } = heldAnswer({ canvasTurns: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.canvasTurns).toBe(true)
   })
 
   test('brings the tasks with no start date into Today', async () => {

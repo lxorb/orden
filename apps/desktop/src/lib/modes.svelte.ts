@@ -173,6 +173,7 @@ interface Saved {
   keepVersions: number
   remindBefore: number
   undatedInToday: boolean
+  canvasTurns: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -287,6 +288,7 @@ export const DEFAULTS = {
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
   undatedInToday: false,
+  canvasTurns: false,
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
@@ -483,6 +485,9 @@ class Modes {
    *  machine they plan it on; the connector's Today reads it too. See `undated` in
    *  @nib/bases' builtins.ts. */
   undatedInToday = $state(DEFAULTS.undatedInToday)
+
+  /** Whether two fingers turn a canvas (#351). */
+  canvasTurns = $state(DEFAULTS.canvasTurns)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
@@ -1118,6 +1123,15 @@ class Modes {
     this.share({ undatedInToday: on })
   }
 
+  /** Whether two fingers turn a canvas. */
+  setCanvasTurns(on: boolean) {
+    if (on === this.canvasTurns) return
+
+    this.canvasTurns = on
+    this.persist()
+    this.share({ canvasTurns: on })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1203,6 +1217,12 @@ class Modes {
     const undated = remote.undatedInToday
     if (typeof undated === 'boolean' && unheard && undated !== this.undatedInToday) {
       this.undatedInToday = undated
+      this.persist()
+    }
+
+    const turns = remote.canvasTurns
+    if (typeof turns === 'boolean' && unheard && turns !== this.canvasTurns) {
+      this.canvasTurns = turns
       this.persist()
     }
 
@@ -1505,6 +1525,7 @@ class Modes {
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
       undatedInToday: this.undatedInToday,
+      canvasTurns: this.canvasTurns,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

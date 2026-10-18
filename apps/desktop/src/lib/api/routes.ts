@@ -409,6 +409,8 @@ export interface AccountSettings {
   undatedInToday?: boolean
   /** The spaces put away whole, by their ids; see space-archive.ts. */
   archivedSpaces?: string[]
+  /** Whether two fingers turn a canvas (#351). */
+  canvasTurns?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See

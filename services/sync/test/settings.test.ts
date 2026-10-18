@@ -203,6 +203,19 @@ describe('the spaces an account put away', () => {
   })
 })
 
+describe('turning a canvas with two fingers, on an account (#351)', () => {
+  test('is on or off', async () => {
+    expect((await patch({ canvasTurns: true })).json.settings.canvasTurns).toBe(true)
+    expect((await patch({ canvasTurns: false })).json.settings.canvasTurns).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    const refused = await patch({ canvasTurns: 'yes' })
+    expect(refused.status).toBe(400)
+    expect(refused.json.error).toBe('canvasTurns must be true or false')
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)
