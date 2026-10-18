@@ -753,8 +753,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-18, to 3,237,200, for #411: the press that closed a popup has its
  *  click spent when it lands on what opened it, so a tap on the space switcher's button
  *  closes the list rather than opening it again (`clicked` in overlays.ts, asked by
- *  App.svelte). Measured 3,236,191. */
-const BUDGET = 3_237_200
+ *  App.svelte). Measured 3,236,191.
+ *
+ *  Raised 2026-10-18, to 3,238,500, for #384: a finger's press on the title bar, the
+ *  format bar, a suggestion or quick add is let through (`keepFocus` in focus.ts), or
+ *  WebKit sends no click and an iPhone's tap does nothing. Measured 3,237,468. */
+const BUDGET = 3_238_500
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
