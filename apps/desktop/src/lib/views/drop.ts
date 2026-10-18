@@ -11,6 +11,7 @@
  *  through the engine where the answer is "done", so a recurring task dropped on Done
  *  makes its next occurrence as a tick in the editor would. */
 
+import { deadlineField, startField } from '@nib/markdown/task-dates'
 import type { Priority, Row, TaskChange, Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
@@ -61,10 +62,16 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
   if (isDateField(field) || field === 'date') {
     const day = key === null ? null : dayIn(key)
     if (key !== null && day === null) return null
-    // `task.date` is the due date, else the scheduled one: a drop moves whichever
-    // the task is placed by, and gives an undated one a due date.
+    // `task.date` and `task.start` are the day the task starts, `task.deadline` its
+    // deadline, each as its space reads a `📅` (#371): a drop moves the field that holds
+    // it, and gives a task with none a `🛫` or a `[deadline::]`.
+    const reads = task.dueReads
     const which: DateField =
-      field !== 'date' ? field : task.due === undefined && task.scheduled ? 'scheduled' : 'due'
+      field === 'date' || field === 'start'
+        ? startField(task, reads)
+        : field === 'deadline'
+          ? deadlineField(task, reads)
+          : field
     return { change: { task: dated(which, day) } }
   }
 
@@ -86,8 +93,9 @@ export function dropInto(property: string, key: Value, row: Row, today: string):
 
   // The built-in views' own groupings: Today's overdue half and its today half, and
   // Upcoming's days. Their names are the builtins' (see builtins.ts in @nib/bases).
+  // Out of the overdue half, a task is due today: its deadline is what made it late.
   if (property === 'formula.overdue') {
-    return key === false && row.task ? taskDrop('date', today, row, today) : null
+    return key === false && row.task ? taskDrop('deadline', today, row, today) : null
   }
   if (property === 'formula.day') return row.task ? taskDrop('date', key, row, today) : null
 
