@@ -171,6 +171,17 @@ WEBKIT_CLIPBOARD = (
     " c.readText = () => read().catch(() => kept) })()"
 )
 
+#: Every socket a page opens, kept where `_offline_as_chromium` can close it. WebKit's
+#: offline leaves a socket that is already open carrying messages both ways, where
+#: Chromium's stops it, so a page "offline" in WebKit went on syncing live (#384).
+WEBKIT_SOCKETS = (
+    "(() => { const Native = window.WebSocket; if (!Native || window.__nibSockets) return;"
+    " const open = new Set(); window.__nibSockets = open; window.__nibOffline = false;"
+    " window.WebSocket = class extends Native { constructor(url, ...rest) {"
+    " super(window.__nibOffline ? 'ws://offline.invalid/' : url, ...rest);"
+    " open.add(this); this.addEventListener('close', () => open.delete(this)) } } })()"
+)
+
 #: Whether a WebKit context lets the page's service worker in, unless the drive says.
 #: In WebKit a page the asset worker controls sends its fetches past the routes a drive
 #: answers them with - every one, not only the asset worker's own - so a drive's stand-in
@@ -269,6 +280,7 @@ def answering(browser: Any) -> Any:
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
             context.add_init_script(WEBKIT_CLIPBOARD)
+            context.add_init_script(WEBKIT_SOCKETS)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
@@ -477,6 +489,34 @@ def _press_as_a_mac() -> None:
 
 if WEBKIT:
     _press_as_a_mac()
+
+
+def _offline_as_chromium() -> None:
+    """A context set offline in WebKit cut off as Chromium's is: the sockets its pages
+    have open are closed, and one opened while it is offline is refused - pointed at a
+    port nothing answers on - so the app sees the connection go and come back as it
+    does on a machine that lost it. See `WEBKIT_SOCKETS`."""
+    from playwright.sync_api import BrowserContext
+
+    went = BrowserContext.set_offline
+
+    def set_offline(self: Any, offline: bool) -> None:
+        went(self, offline)
+        for page in self.pages:
+            with contextlib.suppress(Exception):
+                page.evaluate(
+                    """(away) => {
+                      window.__nibOffline = away
+                      if (away) for (const one of [...(window.__nibSockets ?? [])]) one.close()
+                    }""",
+                    offline,
+                )
+
+    BrowserContext.set_offline = set_offline  # type: ignore[method-assign]
+
+
+if WEBKIT:
+    _offline_as_chromium()
 
 
 def _hear_no_harmless() -> None:
@@ -1063,6 +1103,7 @@ class Drive:
             context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
+            context.add_init_script(WEBKIT_SOCKETS)
         context.add_init_script(BUILT_IN)
         return context
 
