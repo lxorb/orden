@@ -23,6 +23,7 @@ What it checks and photographs:
     the canvas's bar over lassoed ink, and the paper's own menu on a right click and
       on a finger held still
     printing: one picture per page of the PDF, handed to the print engine
+    the lasso's key held: the lasso until it comes up, then the pen again (#349)
     the page counter in the status bar, and the thumbnails in the outline panel's slot
     a PDF imported as a page note: every page drawn, on the sheet and in the panel,
       counted in pixels rather than taken on trust, and a page whose paper has gone
@@ -564,6 +565,59 @@ def check_print(page: Page, label: str) -> None:
         fail(f"[{label}] printing handed over {sheets} sheets for {count} pages")
     else:
         say(f"[{label}] printing hands the print engine all {count} pages")
+
+
+def check_lasso_held(page: Page, cdp, label: str) -> None:
+    """The lasso's key held is the lasso until it comes up, on paper as on a plane: a
+    loop drawn while it is down catches the writing, and letting go gives the pen back
+    with the writing still caught (#349)."""
+    say("--- the lasso, held on its key ---")
+
+    tool(page, "d")
+    box = surface(page)
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 420
+    stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
+    drawn = page.evaluate(
+        "() => { const ink = window.nibApp.pages.current.store.canvas.ink; return ink[ink.length - 1].id }"
+    )
+
+    page.keyboard.down("q")
+    page.wait_for_timeout(100)
+    held = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 300, y0 - 30), (x0 + 300, y0 + 70), (x0 - 30, y0 + 70), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.keyboard.up("q")
+    page.wait_for_timeout(300)
+
+    picked = page.evaluate("() => window.nibApp.pages.current.store.picked.slice()")
+    back = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    say(f"[{label}] held: in hand {back} again after, picked {len(picked)}")
+    # Glass has no cursor to show, so the mouse's is asked after with the device a
+    # desktop for the moment: the key, held again, over the same paper.
+    page.evaluate("() => { window.nibApp.viewport.device = 'desktop' }")
+    page.keyboard.down("q")
+    page.wait_for_timeout(400)
+    mouse = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    page.keyboard.up("q")
+    page.evaluate("() => { window.nibApp.viewport.device = 'tablet' }")
+    page.wait_for_timeout(100)
+    if held not in ("auto", "default") or mouse != "crosshair":
+        fail(f"[{label}] the held lasso's cursor is {mouse} with a mouse, {held} on glass")
+    if back != "Pen":
+        fail(f"[{label}] letting the lasso's key go did not give the pen back ({back})")
+    if drawn not in picked:
+        fail(f"[{label}] what the held lasso caught was not left caught ({picked})")
+    shot(page, f"{label}-lasso-held")
+
+    page.locator(".pages").first.focus()
+    page.keyboard.press("Delete")
+    page.wait_for_timeout(200)
+    tool(page, "v")
 
 
 def check_gutter(page: Page, cdp, label: str) -> None:
@@ -1438,6 +1492,7 @@ def drive(browser, theme: str) -> None:
         check_refits(page, theme)
         check_pen(page, cdp, theme)
         check_lasso(page, cdp, theme)
+        check_lasso_held(page, cdp, theme)
         check_palm(page, cdp, theme)
         check_rulings(page, theme)
         check_adding(page, theme)

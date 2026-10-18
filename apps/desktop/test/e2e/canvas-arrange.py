@@ -21,6 +21,7 @@ What it checks and photographs:
     the menu holding only what would do something, with Arrange behind one row
     a phone's bar: Undo and Redo first, and a fade at each end with more past it
     no zoom on the bar, on a desktop or a phone (#401)
+    the lasso's key held: the lasso until it comes up, then the tool before it (#349)
     printing: the sheet the PDF is made from, handed to the print engine
 
 Run it from the repository root:
@@ -598,6 +599,52 @@ def check_picked_inside(page: Page) -> None:
         page.wait_for_timeout(200)
 
 
+def check_lasso_held(page: Page) -> None:
+    """The lasso's key held is the lasso until it comes up: a loop drawn while it is
+    down catches the ink, and letting go gives the pen back with the ink still caught
+    (#349)."""
+    say("--- the lasso, held on its key ---")
+
+    fresh(page)
+    box = plane(page)
+    tool(page, "d")
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + box["height"] / 2
+    page.mouse.move(x0, y0)
+    page.mouse.down()
+    for step in range(1, 20):
+        page.mouse.move(x0 + step * 12, y0 + (step % 4) * 8)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+
+    page.keyboard.down("q")
+    page.wait_for_timeout(100)
+    held = cursor_of(page)
+    pressed = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 260, y0 - 30), (x0 + 260, y0 + 60), (x0 - 30, y0 + 60), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.keyboard.up("q")
+    page.wait_for_timeout(300)
+
+    back = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    caught = page.evaluate("() => [...document.querySelectorAll('.over button')].length")
+    say(f"held: cursor {held}, in hand {pressed}; let go: in hand {back}, bar over the pick {caught}")
+    if held != "crosshair" or pressed != "Lasso":
+        fail(f"the lasso's key held did not put the lasso in hand ({pressed}, cursor {held})")
+    if back != "Pen":
+        fail(f"letting the lasso's key go did not give the pen back ({back})")
+    if not caught:
+        fail("what the held lasso caught was not left caught")
+    shot(page, "canvas-lasso-held")
+    page.keyboard.press("Escape")
+
+
 def check_broken_picture(page: Page) -> None:
     """Item 10: a picture the space no longer holds is a calm placeholder."""
     say("--- a picture that is not there ---")
@@ -1149,6 +1196,7 @@ def drive(browser, theme: str) -> None:
         check_arranging(page)
         check_more_menu(page)
         check_picked_inside(page)
+        check_lasso_held(page)
         check_picture(page)
         check_broken_picture(page)
         check_sharp_stroke(page, cdp)
