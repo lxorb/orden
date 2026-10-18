@@ -125,6 +125,7 @@ export const hi: Dictionary = {
   Duration: 'अवधि',
   'Smart dates': 'स्मार्ट तारीखें',
   'From any app': 'किसी भी ऐप से',
+  'Show todos without a start date in Today': 'शुरुआत की तारीख के बिना कार्य आज में दिखाएँ',
   'Every day': 'हर दिन',
   'Every weekday': 'हर कार्यदिवस',
   'Every week': 'हर सप्ताह',

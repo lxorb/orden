@@ -126,6 +126,7 @@ export const sw: Dictionary = {
   Duration: 'Muda',
   'Smart dates': 'Tarehe mahiri',
   'From any app': 'Kutoka programu yoyote',
+  'Show todos without a start date in Today': 'Onyesha kazi zisizo na tarehe ya kuanza katika Leo',
   'Every day': 'Kila siku',
   'Every weekday': 'Kila siku ya kazi',
   'Every week': 'Kila wiki',

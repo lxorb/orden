@@ -340,6 +340,16 @@ export function generalPane(): Pane {
                 },
               ] satisfies Field[])
             : []),
+          // Whether Today holds the tasks with no start date, as begun; off is Today as
+          // Todoist has it. On the account (modes.svelte.ts, docs/tasks.md 5.1.1).
+          {
+            kind: 'switch',
+            label: t('Show todos without a start date in Today'),
+            words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
+            initial: DEFAULTS.undatedInToday,
+            get: () => modes.undatedInToday,
+            set: (on) => modes.setUndatedInToday(on),
+          },
           ...(isDesktop && !isMobile
             ? ([
                 {

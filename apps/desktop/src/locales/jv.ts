@@ -125,6 +125,7 @@ export const jv: Dictionary = {
   Duration: 'Suwene',
   'Smart dates': 'Tanggal pinter',
   'From any app': 'Saka aplikasi apa wae',
+  'Show todos without a start date in Today': 'Tampilake tugas tanpa tanggal wiwitan ing Dina iki',
   'Every day': 'Saben dina',
   'Every weekday': 'Saben dina kerja',
   'Every week': 'Saben minggu',

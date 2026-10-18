@@ -125,6 +125,7 @@ export const id: Dictionary = {
   Duration: 'Durasi',
   'Smart dates': 'Tanggal pintar',
   'From any app': 'Dari aplikasi mana pun',
+  'Show todos without a start date in Today': 'Tampilkan tugas tanpa tanggal mulai di Hari ini',
   'Every day': 'Setiap hari',
   'Every weekday': 'Setiap hari kerja',
   'Every week': 'Setiap minggu',

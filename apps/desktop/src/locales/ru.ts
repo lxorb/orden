@@ -126,6 +126,7 @@ export const ru: Dictionary = {
   Duration: 'Длительность',
   'Smart dates': 'Умные даты',
   'From any app': 'Из любого приложения',
+  'Show todos without a start date in Today': 'Показывать в «Сегодня» задачи без даты начала',
   'Every day': 'Каждый день',
   'Every weekday': 'Каждый будний день',
   'Every week': 'Каждую неделю',

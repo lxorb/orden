@@ -126,6 +126,7 @@ export const tr: Dictionary = {
   Duration: 'Süre',
   'Smart dates': 'Akıllı tarihler',
   'From any app': 'Herhangi bir uygulamadan',
+  'Show todos without a start date in Today': 'Başlangıç tarihi olmayan görevleri Bugün’de göster',
   'Every day': 'Her gün',
   'Every weekday': 'Her iş günü',
   'Every week': 'Her hafta',

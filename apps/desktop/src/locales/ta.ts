@@ -126,6 +126,7 @@ export const ta: Dictionary = {
   Duration: 'கால அளவு',
   'Smart dates': 'ஸ்மார்ட் தேதிகள்',
   'From any app': 'எந்த ஆப்பிலிருந்தும்',
+  'Show todos without a start date in Today': 'தொடக்கத் தேதி இல்லாத பணிகளை இன்று என்பதில் காட்டு',
   'Every day': 'தினமும்',
   'Every weekday': 'ஒவ்வொரு வேலை நாளும்',
   'Every week': 'ஒவ்வொரு வாரமும்',

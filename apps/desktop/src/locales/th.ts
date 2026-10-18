@@ -125,6 +125,7 @@ export const th: Dictionary = {
   Duration: 'ระยะเวลา',
   'Smart dates': 'วันที่อัจฉริยะ',
   'From any app': 'จากแอปใดก็ได้',
+  'Show todos without a start date in Today': 'แสดงงานที่ไม่มีวันที่เริ่มในวันนี้',
   'Every day': 'ทุกวัน',
   'Every weekday': 'ทุกวันทำงาน',
   'Every week': 'ทุกสัปดาห์',

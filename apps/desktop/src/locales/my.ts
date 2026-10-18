@@ -125,6 +125,7 @@ export const my: Dictionary = {
   Duration: 'ကြာချိန်',
   'Smart dates': 'စမတ် ရက်စွဲများ',
   'From any app': 'မည်သည့်အက်ပ်မှမဆို',
+  'Show todos without a start date in Today': 'စတင်ရက် မရှိသော လုပ်ငန်းများကို ယနေ့ တွင် ပြရန်',
   'Every day': 'နေ့တိုင်း',
   'Every weekday': 'အလုပ်ရက်တိုင်း',
   'Every week': 'အပတ်တိုင်း',

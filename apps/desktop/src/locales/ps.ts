@@ -125,6 +125,7 @@ export const ps: Dictionary = {
   Duration: 'موده',
   'Smart dates': 'هوښیارې نېټې',
   'From any app': 'له هر اپ څخه',
+  'Show todos without a start date in Today': 'هغه دندې چې د پیل نېټه نه لري په نن کې وښایاست',
   'Every day': 'هره ورځ',
   'Every weekday': 'هره کاري ورځ',
   'Every week': 'هره اونۍ',

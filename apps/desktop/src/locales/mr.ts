@@ -125,6 +125,7 @@ export const mr: Dictionary = {
   Duration: 'कालावधी',
   'Smart dates': 'स्मार्ट तारखा',
   'From any app': 'कोणत्याही ॲपमधून',
+  'Show todos without a start date in Today': 'सुरुवातीची तारीख नसलेली कार्ये आज मध्ये दाखवा',
   'Every day': 'दररोज',
   'Every weekday': 'प्रत्येक कामाच्या दिवशी',
   'Every week': 'दर आठवड्याला',

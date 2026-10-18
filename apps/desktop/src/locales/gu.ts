@@ -125,6 +125,7 @@ export const gu: Dictionary = {
   Duration: 'અવધિ',
   'Smart dates': 'સ્માર્ટ તારીખો',
   'From any app': 'કોઈપણ ઍપમાંથી',
+  'Show todos without a start date in Today': 'શરૂઆતની તારીખ વગરના કાર્યો આજેમાં બતાવો',
   'Every day': 'દરરોજ',
   'Every weekday': 'દરેક કામકાજના દિવસે',
   'Every week': 'દર અઠવાડિયે',

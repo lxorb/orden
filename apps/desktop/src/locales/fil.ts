@@ -125,6 +125,8 @@ export const fil: Dictionary = {
   Duration: 'Tagal',
   'Smart dates': 'Matalinong petsa',
   'From any app': 'Mula sa anumang app',
+  'Show todos without a start date in Today':
+    'Ipakita sa Ngayong Araw ang mga gawaing walang petsa ng simula',
   'Every day': 'Araw-araw',
   'Every weekday': 'Tuwing araw ng trabaho',
   'Every week': 'Linggo-linggo',

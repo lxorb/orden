@@ -126,6 +126,7 @@ export const te: Dictionary = {
   Duration: 'వ్యవధి',
   'Smart dates': 'స్మార్ట్ తేదీలు',
   'From any app': 'ఏ యాప్ నుండైనా',
+  'Show todos without a start date in Today': 'ప్రారంభ తేదీ లేని పనులను ఈ రోజులో చూపించు',
   'Every day': 'ప్రతిరోజు',
   'Every weekday': 'ప్రతి పనిదినం',
   'Every week': 'ప్రతి వారం',

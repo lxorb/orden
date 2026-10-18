@@ -126,6 +126,8 @@ export const ml: Dictionary = {
   Duration: 'ദൈർഘ്യം',
   'Smart dates': 'സ്മാർട്ട് തീയതികൾ',
   'From any app': 'ഏത് ആപ്പിൽ നിന്നും',
+  'Show todos without a start date in Today':
+    'ആരംഭ തീയതി ഇല്ലാത്ത ടാസ്കുകൾ ഇന്ന് എന്നതിൽ കാണിക്കുക',
   'Every day': 'എല്ലാ ദിവസവും',
   'Every weekday': 'എല്ലാ പ്രവൃത്തിദിവസവും',
   'Every week': 'എല്ലാ ആഴ്ചയും',

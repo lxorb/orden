@@ -126,6 +126,7 @@ export const ptPT: Dictionary = {
   Duration: 'Duração',
   'Smart dates': 'Datas inteligentes',
   'From any app': 'De qualquer aplicação',
+  'Show todos without a start date in Today': 'Mostrar em Hoje as tarefas sem data de início',
   'Every day': 'Todos os dias',
   'Every weekday': 'Todos os dias úteis',
   'Every week': 'Todas as semanas',

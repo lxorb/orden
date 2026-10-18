@@ -125,6 +125,7 @@ export const bn: Dictionary = {
   Duration: 'সময়কাল',
   'Smart dates': 'স্মার্ট তারিখ',
   'From any app': 'যেকোনো অ্যাপ থেকে',
+  'Show todos without a start date in Today': 'শুরুর তারিখ ছাড়া কাজগুলো আজ-এ দেখান',
   'Every day': 'প্রতিদিন',
   'Every weekday': 'প্রতি কর্মদিবস',
   'Every week': 'প্রতি সপ্তাহ',

@@ -124,6 +124,7 @@ export const am: Dictionary = {
   Duration: 'የጊዜ ርዝመት',
   'Smart dates': 'ብልህ ቀኖች',
   'From any app': 'ከማንኛውም መተግበሪያ',
+  'Show todos without a start date in Today': 'የመጀመሪያ ቀን የሌላቸውን ተግባሮች በዛሬ አሳይ',
   'Every day': 'በየቀኑ',
   'Every weekday': 'በየሥራ ቀኑ',
   'Every week': 'በየሳምንቱ',
