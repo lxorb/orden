@@ -748,8 +748,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-18, to 3,235,600, and by one module, for #352: which spaces are put
  *  away has to be known to the first paint's switcher (`shownSpaces`, from
  *  workspace/archived-spaces.svelte.ts); archiving and the account's side of it
- *  (space-archive.ts) are behind the press. Measured 3,234,549 in 381 modules. */
-const BUDGET = 3_235_600
+ *  (space-archive.ts) are behind the press. Measured 3,234,549 in 381 modules.
+ *
+ *  Raised 2026-10-18, to 3,237,200, for #411: the press that closed a popup has its
+ *  click spent when it lands on what opened it, so a tap on the space switcher's button
+ *  closes the list rather than opening it again (`clicked` in overlays.ts, asked by
+ *  App.svelte). Measured 3,236,191. */
+const BUDGET = 3_237_200
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
