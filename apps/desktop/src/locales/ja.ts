@@ -125,7 +125,7 @@ export const ja: Dictionary = {
   Duration: '所要時間',
   'Smart dates': 'スマート日付',
   'From any app': 'どのアプリからでも',
-  'Show todos without a start date in Today': '開始日のないタスクを今日に表示',
+  'Show tasks without a start date in Today': '開始日のないタスクを今日に表示',
   'Every day': '毎日',
   'Every weekday': '毎平日',
   'Every week': '毎週',

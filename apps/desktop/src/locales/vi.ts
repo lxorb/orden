@@ -125,7 +125,7 @@ export const vi: Dictionary = {
   Duration: 'Thời lượng',
   'Smart dates': 'Ngày thông minh',
   'From any app': 'Từ bất kỳ ứng dụng nào',
-  'Show todos without a start date in Today': 'Hiện việc không có ngày bắt đầu trong Hôm nay',
+  'Show tasks without a start date in Today': 'Hiện việc không có ngày bắt đầu trong Hôm nay',
   'Every day': 'Mỗi ngày',
   'Every weekday': 'Mỗi ngày làm việc',
   'Every week': 'Mỗi tuần',

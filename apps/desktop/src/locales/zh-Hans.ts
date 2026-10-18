@@ -125,7 +125,7 @@ export const zhHans: Dictionary = {
   Duration: '时长',
   'Smart dates': '智能日期',
   'From any app': '从任意应用',
-  'Show todos without a start date in Today': '在今天中显示没有开始日期的任务',
+  'Show tasks without a start date in Today': '在今天中显示没有开始日期的任务',
   'Every day': '每天',
   'Every weekday': '每个工作日',
   'Every week': '每周',

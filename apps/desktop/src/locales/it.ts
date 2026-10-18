@@ -126,7 +126,7 @@ export const it: Dictionary = {
   Duration: 'Durata',
   'Smart dates': 'Date intelligenti',
   'From any app': 'Da qualsiasi app',
-  'Show todos without a start date in Today': 'Mostra in Oggi le attività senza data di inizio',
+  'Show tasks without a start date in Today': 'Mostra in Oggi le attività senza data di inizio',
   'Every day': 'Ogni giorno',
   'Every weekday': 'Ogni giorno feriale',
   'Every week': 'Ogni settimana',

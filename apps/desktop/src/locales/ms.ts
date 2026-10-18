@@ -125,7 +125,7 @@ export const ms: Dictionary = {
   Duration: 'Tempoh',
   'Smart dates': 'Tarikh pintar',
   'From any app': 'Dari mana-mana aplikasi',
-  'Show todos without a start date in Today': 'Tunjukkan tugasan tanpa tarikh mula dalam Hari ini',
+  'Show tasks without a start date in Today': 'Tunjukkan tugasan tanpa tarikh mula dalam Hari ini',
   'Every day': 'Setiap hari',
   'Every weekday': 'Setiap hari bekerja',
   'Every week': 'Setiap minggu',

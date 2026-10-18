@@ -125,7 +125,7 @@ export const yue: Dictionary = {
   Duration: '所需時間',
   'Smart dates': '智能日期',
   'From any app': '喺任何 App',
-  'Show todos without a start date in Today': '喺今日顯示冇開始日期嘅任務',
+  'Show tasks without a start date in Today': '喺今日顯示冇開始日期嘅任務',
   'Every day': '每日',
   'Every weekday': '每個工作日',
   'Every week': '每個禮拜',

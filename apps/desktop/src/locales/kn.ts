@@ -126,7 +126,7 @@ export const kn: Dictionary = {
   Duration: 'ಅವಧಿ',
   'Smart dates': 'ಸ್ಮಾರ್ಟ್ ದಿನಾಂಕಗಳು',
   'From any app': 'ಯಾವುದೇ ಆ್ಯಪ್‌ನಿಂದ',
-  'Show todos without a start date in Today': 'ಆರಂಭದ ದಿನಾಂಕವಿಲ್ಲದ ಕಾರ್ಯಗಳನ್ನು ಇಂದು ಎಂಬಲ್ಲಿ ತೋರಿಸಿ',
+  'Show tasks without a start date in Today': 'ಆರಂಭದ ದಿನಾಂಕವಿಲ್ಲದ ಕಾರ್ಯಗಳನ್ನು ಇಂದು ಎಂಬಲ್ಲಿ ತೋರಿಸಿ',
   'Every day': 'ಪ್ರತಿದಿನ',
   'Every weekday': 'ಪ್ರತಿ ಕೆಲಸದ ದಿನ',
   'Every week': 'ಪ್ರತಿ ವಾರ',

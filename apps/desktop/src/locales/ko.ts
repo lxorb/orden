@@ -125,7 +125,7 @@ export const ko: Dictionary = {
   Duration: '소요 시간',
   'Smart dates': '스마트 날짜',
   'From any app': '어느 앱에서나',
-  'Show todos without a start date in Today': '시작일이 없는 할 일을 오늘에 표시',
+  'Show tasks without a start date in Today': '시작일이 없는 할 일을 오늘에 표시',
   'Every day': '매일',
   'Every weekday': '평일마다',
   'Every week': '매주',

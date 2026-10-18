@@ -126,7 +126,7 @@ export const ha: Dictionary = {
   Duration: 'Tsawon lokaci',
   'Smart dates': 'Kwanan wata masu wayo',
   'From any app': 'Daga kowace manhaja',
-  'Show todos without a start date in Today': 'Nuna ayyukan da ba su da ranar farawa a cikin Yau',
+  'Show tasks without a start date in Today': 'Nuna ayyukan da ba su da ranar farawa a cikin Yau',
   'Every day': 'Kowace rana',
   'Every weekday': 'Kowace ranar aiki',
   'Every week': 'Kowane mako',

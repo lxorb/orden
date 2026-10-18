@@ -10,7 +10,7 @@ In the built app, in a space of nib's own:
     deadline said under it in the danger tone, and the panel's Today count turns red.
   * A date picked for a task with none is written as `🛫`; one picked for an old `📅`
     moves that `📅` in place.
-  * With Settings' "Show todos without a start date in Today" on, a task with no start
+  * With Settings' "Show tasks without a start date in Today" on, a task with no start
     date is in Today, the open tab and the panel's count alike, and one whose start is
     still to come is not; off, which is where it starts, it is out again (#408).
 

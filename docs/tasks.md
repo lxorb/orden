@@ -490,7 +490,7 @@ has to be done by: it is said under the task, and only a deadline makes a task o
 A project's own list is its note, and shows every task in it.
 
 A task with **no start date** is out of Today unless its deadline has come, as in Todoist.
-Settings › General › Add task › *Show todos without a start date in Today* (#408) turns
+Settings › General › Add task › *Show tasks without a start date in Today* (#408) turns
 that round: Today then takes a task with neither a start date nor a scheduled one as one
 whose start date has come, whatever its deadline, which still only makes it overdue once
 past. The Tasks panel's Today count follows it, and so do the glasses' Today and both

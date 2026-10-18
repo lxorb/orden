@@ -125,7 +125,7 @@ export const pa: Dictionary = {
   Duration: 'ਮਿਆਦ',
   'Smart dates': 'ਸਮਾਰਟ ਤਾਰੀਖਾਂ',
   'From any app': 'ਕਿਸੇ ਵੀ ਐਪ ਤੋਂ',
-  'Show todos without a start date in Today': 'ਸ਼ੁਰੂਆਤ ਦੀ ਤਾਰੀਖ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਅੱਜ ਵਿੱਚ ਦਿਖਾਓ',
+  'Show tasks without a start date in Today': 'ਸ਼ੁਰੂਆਤ ਦੀ ਤਾਰੀਖ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਅੱਜ ਵਿੱਚ ਦਿਖਾਓ',
   'Every day': 'ਹਰ ਰੋਜ਼',
   'Every weekday': 'ਹਰ ਕੰਮ ਵਾਲੇ ਦਿਨ',
   'Every week': 'ਹਰ ਹਫ਼ਤੇ',

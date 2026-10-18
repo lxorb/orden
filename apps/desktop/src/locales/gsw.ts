@@ -126,7 +126,7 @@ export const gsw: Dictionary = {
   Duration: 'Duur',
   'Smart dates': 'Gschiidi Date',
   'From any app': 'Us jedere App',
-  'Show todos without a start date in Today': 'Ufgaabe ohni Aafangsdatum in Heute zeige',
+  'Show tasks without a start date in Today': 'Ufgaabe ohni Aafangsdatum in Heute zeige',
   'Every day': 'Jede Tag',
   'Every weekday': 'Jede Wärchtig',
   'Every week': 'Jedi Wuche',

@@ -126,7 +126,7 @@ export const uk: Dictionary = {
   Duration: 'Тривалість',
   'Smart dates': 'Розумні дати',
   'From any app': 'З будь-якого застосунку',
-  'Show todos without a start date in Today': 'Показувати в «Сьогодні» завдання без дати початку',
+  'Show tasks without a start date in Today': 'Показувати в «Сьогодні» завдання без дати початку',
   'Every day': 'Щодня',
   'Every weekday': 'Щоробочого дня',
   'Every week': 'Щотижня',

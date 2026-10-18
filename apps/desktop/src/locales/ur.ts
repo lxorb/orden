@@ -125,7 +125,7 @@ export const ur: Dictionary = {
   Duration: 'دورانیہ',
   'Smart dates': 'سمارٹ تاریخیں',
   'From any app': 'کسی بھی ایپ سے',
-  'Show todos without a start date in Today': 'آغاز کی تاریخ کے بغیر کام آج میں دکھائیں',
+  'Show tasks without a start date in Today': 'آغاز کی تاریخ کے بغیر کام آج میں دکھائیں',
   'Every day': 'ہر روز',
   'Every weekday': 'ہر کام کے دن',
   'Every week': 'ہر ہفتے',

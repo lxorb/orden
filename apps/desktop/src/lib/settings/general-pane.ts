@@ -344,7 +344,7 @@ export function generalPane(): Pane {
           // Todoist has it. On the account (modes.svelte.ts, docs/tasks.md 5.1.1).
           {
             kind: 'switch',
-            label: t('Show todos without a start date in Today'),
+            label: t('Show tasks without a start date in Today'),
             words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
             initial: DEFAULTS.undatedInToday,
             get: () => modes.undatedInToday,
