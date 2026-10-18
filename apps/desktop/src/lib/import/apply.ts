@@ -82,7 +82,7 @@ export async function applyImport(
       if (file.kind === 'note') await writeFile(path, file.text)
       else await writeBytes(path, toBase64(file.bytes))
 
-      paths.push(path)
+      paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
       options.onWritten?.(done, files.length)
     }
@@ -95,6 +95,14 @@ export async function applyImport(
   }
 
   return { paths, stepped }
+}
+
+/** A paper that has landed, as the page note it becomes: what the import wrote, and
+ *  what undoing it takes away, the paper the note holds with it. The paper itself
+ *  where it could not be made one, which is a PDF in the space like any other. See
+ *  pages/from-pdf.ts. */
+async function asPages(path: string): Promise<string[]> {
+  return [(await workspace.pageNoteForPdf(path)) ?? path]
 }
 
 /** What an import that wrote something owes the rest of the app. */

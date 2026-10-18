@@ -35,8 +35,8 @@ export type FormatId =
   | 'table'
   | 'markdown'
   | 'pandoc'
-  /** A PDF, brought in as pages to write on: the paper itself, and a page note
-   *  beside it whose pages are that paper's pages. The one row here that is not
+  /** A PDF, brought in as pages to write on: a page note whose pages are that
+   *  paper's pages, holding the paper itself. The one row here that is not
    *  another app's export - somebody's own paper is a thing to write on, and the
    *  door that already takes files is the door to bring it through. */
   | 'pdf-pages'
@@ -44,9 +44,13 @@ export type FormatId =
   | 'todoist'
 
 /** One file the import will write. A note carries words, anything else carries
- *  bytes, and both are addressed the same way so the writing does not branch. */
+ *  bytes, and both are addressed the same way so the writing does not branch.
+ *
+ *  `pages` is a PDF that becomes its page note once it has landed, which is what the
+ *  Import door makes of a paper; see pdf-pages.ts. */
 export type Planned =
-  { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array }
+  | { kind: 'note'; path: string; text: string }
+  | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
 
 /** One line about what could not be carried over.
  *
