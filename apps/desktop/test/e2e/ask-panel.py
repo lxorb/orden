@@ -409,7 +409,10 @@ def properties(page: Page) -> None:
         wrong(f"the row's Remove did not take the key away: {removed!r}")
     shot(page, "07-properties-edited")
 
-    page.evaluate("() => window.nib.focus()")
+    # Pressed into, as a hand goes back to the note: since #399 Ctrl+Z after a press in a
+    # side panel is that panel's file actions', wherever the keyboard was put since, and
+    # a note given the keyboard by a script was pressed into by nobody (#384).
+    page.locator(".cm-content").first.click()
     page.keyboard.press("Control+z")
     page.wait_for_timeout(300)
     if "tags: [birds]" not in page.evaluate(TEXT):
