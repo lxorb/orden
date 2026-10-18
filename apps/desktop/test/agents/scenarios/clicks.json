@@ -1,0 +1,112 @@
+{
+  "proves": "a press by ref lands on a page that was scrolled, and where a press by ref is refused as covered, a press at a point in the tab lands where the element shows (#373)",
+  "doc": "5.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/clicks"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_scroll",
+      "args": {
+        "tab": "{tab}",
+        "dy": 300
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Far button"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "far": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{far}"
+      }
+    },
+    {
+      "record": "far",
+      "where": {
+        "trusted": true
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "heading",
+        "name": "Card title"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "card": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{card}"
+      },
+      "expect": {
+        "status": "error",
+        "contains": {
+          "message": "browser_click's x and y"
+        }
+      }
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{tab}",
+        "expression": "(() => { const r = document.getElementById('card').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()"
+      },
+      "save": {
+        "x": "result.value.x",
+        "y": "result.value.y"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "x": "{x}",
+        "y": "{y}"
+      }
+    },
+    {
+      "record": "card",
+      "where": {
+        "trusted": true
+      },
+      "count": 1
+    }
+  ]
+}
