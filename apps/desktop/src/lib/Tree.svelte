@@ -550,6 +550,8 @@
     // The panes light their drop zones for a note out of the list as well as
     // for a tab out of a strip: both land in the same five places.
     workspace.panes.dragged({ tabId: null })
+    // And the switcher takes it to another space, as it takes a tab (#303).
+    void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
   }
 
   function endDrag() {

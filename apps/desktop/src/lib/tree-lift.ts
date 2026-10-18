@@ -22,6 +22,7 @@
 import { tick } from 'svelte'
 import { dropTarget, targetFor } from './drop-target.svelte'
 import { dur } from './motion'
+import { droppedOnSpace, leftSpaces, overSpaces } from './tab-strip/space-drop'
 import { folderOf, nameOf } from './space-paths'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { shownNames } from './tree-order'
@@ -447,6 +448,14 @@ function onLiftMove(held: Held, event: TouchEvent) {
 
   ghost.style.transform = `translateY(${touch.clientY - ghostFrom}px) scale(1.03)`
 
+  // Over the switcher, a space to take it to (#303); see tab-strip/space-drop.ts.
+  if (overSpaces({ paths: held.carrying() }, { x: touch.clientX, y: touch.clientY })) {
+    slideBack(held)
+    dropTarget.clear()
+    dwellOver(null, false)
+    return
+  }
+
   const under = document.elementFromPoint(touch.clientX, touch.clientY)
   const row = under instanceof Element ? under.closest('.row[data-path]') : null
   const path = row instanceof HTMLElement ? row.dataset.path : undefined
@@ -480,6 +489,10 @@ function onLiftEnd(held: Held, event: TouchEvent) {
   const paths = [...held.carrying()]
 
   if (landed) workspace.arranged.drop()
+  if (!landed && droppedOnSpace({ paths })) {
+    dropLift(held)
+    return
+  }
   dropLift(held)
 
   if (!landed && folder && paths.length) void workspace.moveMany(paths, folder)
@@ -500,6 +513,7 @@ export function dropLift(held: Held): void {
   ghost?.remove()
   ghost = null
   cancelHold()
+  leftSpaces()
   dropTarget.clear()
   letGo(held)
   held.edge(null)

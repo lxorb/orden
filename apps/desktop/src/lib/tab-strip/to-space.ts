@@ -19,6 +19,15 @@ export function spacesOf(tabs: readonly Tab[]): Space[] {
   )
 }
 
+/** The spaces rows of the file list can be moved to, by the same rule as a tab's: never
+ *  their own, nor one that may not be written in or is put away. */
+export function spacesOfPaths(paths: readonly string[]): Space[] {
+  const moving = paths.map((path) => ({ path, home: null, shared: null }))
+  return spacesFor(moving, workspace, canWriteAt).filter(
+    (one) => !workspace.archivedSpaces.has(one.root),
+  )
+}
+
 /** The tabs moved to a space; see moving-space.ts. */
 export async function toSpace(ids: readonly string[], space: string): Promise<void> {
   const { moveToSpace } = await import('../workspace/moving-space')
