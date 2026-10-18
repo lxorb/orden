@@ -69,10 +69,36 @@
   const START = 60
   const RATIO = 2.5
 
-  // The stream of scroll the wheel is in: when it last moved, how far it has gone each
-  // way, whether it has said anything, and whether it went down first, which makes the
-  // rest of it the page's own and says nothing at all.
+  // The stream of scroll the wheel is in: when it began and last moved, how far it has
+  // gone each way, whether it has said anything, and whether it went down first, which
+  // makes the rest of it the page's own and says nothing at all.
   let stream = null
+
+  // When the page last moved anything sideways, and where each scroller stood. The
+  // engine hands a passive listener the wheel after the page has scrolled with it, so a
+  // page with a little way left to go is at its edge when it is asked and says it would
+  // take nothing - and the stream that just moved it was read as a swipe (#407). A
+  // stream that moved the page sideways, from a moment before its first step on, is the
+  // page's to its end, the way Firefox and Chrome have it. The app's own half of this is
+  // lib/back-swipe/slid.ts, whose LEAD this is.
+  const LEAD = 50
+  const lefts = new WeakMap()
+  let slid = -Infinity
+
+  addEventListener(
+    'scroll',
+    function (event) {
+      const at =
+        event.target === document
+          ? document.scrollingElement || document.documentElement
+          : event.target
+      if (!(at instanceof Element)) return
+      const was = lefts.has(at) ? lefts.get(at) : 0
+      lefts.set(at, at.scrollLeft)
+      if (Math.abs(at.scrollLeft - was) > SLACK) slid = event.timeStamp
+    },
+    { capture: true, passive: true },
+  )
 
   // A frame's worth of scroll, said once: a touchpad reports faster than a page draws.
   let heard = null
@@ -86,6 +112,7 @@
     // itself - a map, a slideshow - keeps it.
     one.kept =
       one.kept ||
+      slid >= stream.first - LEAD ||
       one.events.some(function (event) {
         return event.defaultPrevented
       })
@@ -117,7 +144,7 @@
       if (event.wheelDeltaX && event.wheelDeltaX % NOTCH === 0) return
       const at = event.timeStamp
       if (!stream || at - stream.last > QUIET) {
-        stream = { last: at, across: 0, down: 0, said: false, downFirst: false }
+        stream = { first: at, last: at, across: 0, down: 0, said: false, downFirst: false }
         heard = null
       }
       stream.last = at

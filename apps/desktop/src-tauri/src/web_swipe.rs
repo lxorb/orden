@@ -227,7 +227,10 @@ mod tests {
             "open('about:blank', '{}' + JSON.stringify(said))",
             super::NAMED
         )));
-        assert_eq!(SCRIPT.matches("passive: true").count(), 5);
+        // Every listener passive, the scroll one that says what moved (#407) among them.
+        let listening = SCRIPT.matches("addEventListener(").count();
+        assert_eq!(listening, 6);
+        assert_eq!(SCRIPT.matches("passive: true").count(), listening);
         assert!(!SCRIPT.contains("preventDefault()"));
         assert!(!SCRIPT.contains("stopPropagation"));
     }
