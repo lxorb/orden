@@ -153,6 +153,14 @@ and the merge-on-arrival are all inherited rather than copied. Undo is the app's
 own undo model: out of a room it is the snapshot stack, in a room it is the room's
 own history, so undo takes back what you drew and never what somebody else did.
 
+**What the lasso catches is worked with as on a plane** (#350): a press inside it
+drags it, and the canvas's own bar over what is picked (`CanvasPicked.svelte`)
+colours it, copies it and takes it away, with a finger as well as a key. A right
+click on the paper, or a finger held still on it, opens the paper's menu: what can
+be done to the ink that is picked, a page after the one under it, the two fits, and
+the note out as a PDF or on paper. The bar on paper has no Add: nothing a press on
+paper would put down is a card, a frame or a shape.
+
 What is **not** shared is the gesture routing. A canvas's `pointer.ts` machine is
 about ports, connectors, handles and an endless plane; a page note has none of
 those, and its own handler is forty lines that call the same ink functions. That is
@@ -359,6 +367,12 @@ than a replacement for it.
 | **PDF** | The original paper with the ink drawn onto its pages as vector paths. The text stays text, selectable and searchable. A note with no paper behind it gets fresh pages at its own sizes. |
 | **PNG** | One file per page, at 2x, in a zip. |
 | **SVG** | One file per page, in a zip. |
+
+**Print** is the same PDF on paper (#350): the export's own pages, drawn a page at a
+time and handed to the print engine as one picture per sheet - the system's dialog on
+a desktop, the browser's in a browser - so what is printed is exactly what the PDF
+says, the paper behind the ink included. A canvas prints the sheet its PDF is made
+from in the same way.
 
 The PDF is not a picture of the pages, which is the point: open a lecture PDF,
 write on it, export, and what comes out is still the lecture PDF with your

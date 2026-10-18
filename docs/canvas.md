@@ -220,6 +220,20 @@ selection stays in the menu behind the last button - lining up, spreading out, t
 z order, the arrows on a connector - which is the menu a right click and a long
 press already open, so there is one list and not two.
 
+**The menu holds only what would do something there** (#350). On bare plane it is
+what can be put down where it was asked, the plane's own rows (find, fit, export);
+about something picked it is what can be done to that, and never a row that would put
+something new down. A row that could not act is left out rather than greyed: greyed,
+the menu on bare plane was seventeen dead rows out of twenty-eight and taller than a
+laptop's window. Lining up, spreading out and the z order go behind one row,
+**Arrange**, and only the ones that apply - lining up wants two things, spreading
+out three.
+
+**On a phone the bar is wider than the screen**, so it scrolls, and it starts with
+Undo and Redo: the two a thumb wants most were the two scrolled out of sight past
+its end. Whichever end has more past it fades out, so the row reads as one that
+goes on rather than one that stops at the edge of the glass.
+
 **What is picked wears handles**: eight to resize by, and the whole of it to move
 by. Shift holds the shape of the box while it is resized, and a picture under a
 thumb holds it without being asked, because there is no Shift on a tablet and a
