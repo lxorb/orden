@@ -112,7 +112,9 @@
         onclick={() => open(chat)}
       >
         <span class="nib-row-mark"><ChatMark path={chat.path} /></span>
-        <span class="nib-row-label">{chat.name}</span>
+        <!-- A chat whose pointer is still on its way here has no name yet: the kind's
+             word stands in rather than a blank row (#375). -->
+        <span class="nib-row-label">{chat.name ?? t('Chat')}</span>
         {#if chat.mentions && !muted}
           <span class="badge">{amount(chat.mentions)}</span>
         {:else if unread}

@@ -358,7 +358,13 @@ depends on the file's.
   `PATCH /v2/chats/:id {space}` by a writer of both spaces, so its history goes with it and
   its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
   one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
-  the account erases its log 30 days later with the other leftovers.
+  the account erases its log 30 days later with the other leftovers. While the pointer is in
+  Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat
+  whose `file_id` is a deleted note), and a device takes it off its list the moment the
+  pointer goes from it, by its own hand or by the sync, rather than draw the row the account
+  still lists until it hears - a row with no pointer, so no name: a lone `#` for each chat
+  ever deleted (#375). Put back, the pointer brings its chat back as it was. A chat whose
+  pointer is only on its way to this device is listed, under the word Chat until it comes.
 - **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count,
   or the icon the pointer wears; the tab, the palette and the Chats panel show the same.
 

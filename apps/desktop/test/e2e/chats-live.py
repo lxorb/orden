@@ -14,7 +14,10 @@ three browsers, each signed in as one of them:
 - Mia's chat has no composer, and the account refuses her post;
 - Emil finds a message in the palette and with the chat's own Ctrl+F, makes a task of
   one whose link in the inbox opens it again, and sends a note to the chat, where it is
-  drawn as a live card.
+  drawn as a live card;
+- Emil deletes a second chat's pointer: it leaves his Chats panel at once and Lucile's
+  once the delete has synced, the account lists it for nobody, and after a reload it is
+  still gone - no row with no name anywhere (#375).
 
 Everything is the real thing: the built web app, the Worker under `wrangler dev` on
 workerd, the chat's `ChatLog` and each account's hub as Durable Objects, D1 with every
@@ -274,6 +277,65 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
 # ---------------------------------------------------------------- the drive
 
 
+LISTED = """
+async (id) => {
+  const { chats } = await window.nibApp.chats()
+  return { has: chats.list.some((one) => one.id === id), nameless: chats.list.filter((one) => !one.name).length }
+}
+"""
+
+#: The Chats panel's rows, as drawn: how many say nothing but their mark.
+BLANK_ROWS = """
+() => [...document.querySelectorAll('.nib-row.entry .nib-row-label')]
+  .filter((one) => !one.textContent.trim()).length
+"""
+
+
+def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> None:
+    """A second chat made, seen on Lucile's device, and its pointer deleted by Emil: gone
+    from both lists, the account's included, and still gone after a reload (#375)."""
+    owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
+    field = owner.locator("input[aria-label='Name']")
+    field.fill("Doomed")
+    field.press("Enter")
+    doomed = wait(owner, CHAT_PATH, "[Emil] the second chat's pointer", "Doomed", patience=SYNCED)
+    wait(member, CHAT_PATH, "[Lucile] the second chat's pointer", "Doomed", patience=SYNCED)
+
+    owner.evaluate("(path) => window.nibApp.workspace.remove(path, false)", doomed["path"])
+    took = came(owner, f"async () => !(await ({LISTED})({json.dumps(doomed['id'])})).has", "[Emil] the deleted chat gone")
+    if took is not None:
+        say(f"Emil's list let the deleted chat go after {took:.2f}s")
+    took = came(
+        member,
+        f"async () => !(await ({LISTED})({json.dumps(doomed['id'])})).has",
+        "[Lucile] the deleted chat gone",
+        patience=SYNCED,
+    )
+    if took is not None:
+        say(f"Lucile's list let it go after {took:.2f}s")
+
+    listed = [one["id"] for one in worker.request("/v2/chats", tokens[MEMBER])["chats"]]
+    if doomed["id"] in listed:
+        wrong("the account still lists the deleted chat to Lucile")
+    member.reload(wait_until="domcontentloaded")
+    wait(member, "() => !!window.nibApp && window.nibApp.account.signedIn", "[Lucile] the session again", patience=40)
+    wait(member, "async () => (await window.nibApp.chats()).chats.ready", "[Lucile] the chats' store again", patience=40)
+    member.wait_for_timeout(2000)
+    for page, label in ((owner, "Emil"), (member, "Lucile")):
+        said = page.evaluate(LISTED, doomed["id"])
+        if said["has"]:
+            wrong(f"[{label}] still lists the deleted chat")
+        if said["nameless"]:
+            wrong(f"[{label}] lists {said['nameless']} chats with no name")
+        page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+        page.wait_for_timeout(300)
+        blank = page.evaluate(BLANK_ROWS)
+        if blank:
+            wrong(f"[{label}] draws {blank} rows with no name in the Chats panel")
+    DRIVE.shot(member, "deleted-chat-gone")
+    say("the deleted chat is listed nowhere, after a reload too")
+
+
 def main() -> int:
     worker = Worker()
     with DRIVE.session(
@@ -471,6 +533,9 @@ def main() -> int:
 
         # ── Everywhere: the palette, a task, a note sent to the chat ────
         everywhere(owner, chat)
+
+        # ── A chat deleted is listed nowhere ─────────────────────────────
+        deleted(worker, tokens, owner, member)
 
     return DRIVE.verdict("a chat made, written in, reacted to, edited and deleted live between three browsers")
 
