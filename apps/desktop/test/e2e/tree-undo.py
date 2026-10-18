@@ -25,7 +25,7 @@ import re
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import WEBKIT, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
@@ -210,9 +210,11 @@ def drive(browser: Browser) -> None:
         marked(page)
         row(page, "Plan.md").click()
         row(page, "Work/Ideas.md").click(modifiers=["Alt"])
-        # The click opened Plan, whose note took the keyboard; Delete is the list's.
+        # The click opened Plan, whose note took the keyboard; Delete is the list's. On a
+        # Mac it is Cmd+Backspace, as the registry says, which a drive in WebKit is: a bare
+        # Delete there is a character out of a field (#384).
         row(page, "Work/Ideas.md").focus()
-        page.keyboard.press("Delete")
+        page.keyboard.press("Meta+Backspace" if WEBKIT else "Delete")
         two = but("Plan.md", "Work/Ideas.md")
         until(page, two, "two deleted at once")
         recorded(page, "two deleted at once")
