@@ -23,6 +23,7 @@
   import { SpaceTyping } from './space-typing.svelte'
   import { sharedWithYou } from './sharing.svelte'
   import SpaceBadge from './SpaceBadge.svelte'
+  import { spendClick } from './spent-click'
   import { trap } from './trap'
   import { type Space, workspace } from './workspace.svelte'
 
@@ -91,9 +92,10 @@
 
 <!-- Takes the press that closes it, and the scroll that would otherwise reach
      the list underneath. No colour: this is a menu inside the panel, not a
-     layer over the app. -->
+     layer over the app. A tap's click comes after the catch has gone, and is
+     spent rather than reaching what was under it (#411; see spent-click.ts). -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="catch" onclick={close}></div>
+<div class="catch" onclick={close} onpointerdown={spendClick}></div>
 
 <!-- The same walk and the same one tab stop every list in the app has, and the
      same trap every layer has: the arrows move, a digit or a name typed finds a
