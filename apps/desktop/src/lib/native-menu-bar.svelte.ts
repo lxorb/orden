@@ -186,6 +186,24 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   }
 }
 
+/** The keys a web tab is reloaded by, which run from anywhere: with the page holding the
+ *  keyboard a key reaches the app only as a row; see `viewRows` in native-menu.ts. */
+const RELOADING = new Set(['web.reload', 'web.fresh'])
+
+/** View's rows for a web tab in front, greyed with anything else; see `viewRows`. */
+function reloadRows(context: MenuBarContext): MenuItem[] {
+  const web = workspace.active?.kind === 'web'
+  const step = (how: 'reload' | 'fresh') => () => {
+    const tab = workspace.active
+    if (tab?.kind === 'web')
+      void import('./web-tab/pages.svelte').then(({ pages }) => pages.step(tab.id, how))
+  }
+  return [
+    entryRow('web.reload', context, { disabled: !web, run: step('reload') }),
+    entryRow('web.fresh', context, { disabled: !web, run: step('fresh') }),
+  ]
+}
+
 class MenuBar {
   private context: MenuBarContext | null = null
   private label = ''
@@ -266,8 +284,9 @@ class MenuBar {
       settings: entryRow('app.settings', context),
       windowRows: [entryRow('app.next-note', context), entryRow('app.previous-note', context)],
       helpRows: [entryRow('app.keys', context)],
+      viewRows: reloadRows(context),
       keyFor: (command) => shortcuts.keyFor(command),
-      isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app',
+      isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app' || RELOADING.has(command),
       words: words(),
       english: i18n.language === 'en',
     })

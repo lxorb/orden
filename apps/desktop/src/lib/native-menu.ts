@@ -160,6 +160,12 @@ export interface MenuBarSources {
   windowRows: MenuItem[]
   /** Rows Help opens with, ahead of the in-window menu's own. */
   helpRows: MenuItem[]
+  /** Rows View ends with: reloading a web tab, which is Cmd+R and Cmd+Shift+R only as a
+   *  row of the strip while the page has the keyboard - `WKWebView` has no key of its own
+   *  for it, and the page is never offered the key either. Without them a page reloaded
+   *  by the key once had the keyboard after it, and every press after that did nothing
+   *  (#344). */
+  viewRows: MenuItem[]
   /** The key a registry entry answers to right now, in the registry's notation. */
   keyFor(command: string): string | null
   /** Whether a registry entry acts on the window (`app` scope) rather than on
@@ -524,6 +530,9 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     if (group.id === 'edit') return editRows(group.rows)
     if (group.id === 'help' && sources.helpRows.length) {
       return [...sources.helpRows, DIVIDER, ...group.rows]
+    }
+    if (group.id === 'view' && sources.viewRows.length) {
+      return [...group.rows, DIVIDER, ...sources.viewRows]
     }
 
     return group.rows
