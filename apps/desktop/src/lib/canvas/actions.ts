@@ -43,6 +43,7 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
+import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
 import { chooseFiles, PICTURES } from '../choose-files'
@@ -487,8 +488,11 @@ export const run = {
 
     // Shift makes a nudge a grid step, which is the pair every drawing program
     // has. The key itself is the registry's; the modifier is what it means.
+    // The key is matched without the Shift: a bare arrow is what is bound, and a Shift
+    // the binding never named would otherwise match nothing at all (#350).
     const step = event.shiftKey ? GRID : NUDGE
-    const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, event))
+    const arrow = { ...keystroke(event), shiftKey: false }
+    const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, arrow))
     if (nudge) {
       if (!store.picked.length) return false
 
@@ -548,6 +552,20 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.arrow', 'arrow'],
   ['canvas.tool.elbow', 'elbow'],
 ]
+
+/** A key event as the shortcut table reads one: its own fields, copied, since an
+ *  event's fields are getters on its prototype and a spread of one carries none. */
+function keystroke(event: KeyboardEvent): Keystroke {
+  return {
+    key: event.key,
+    code: event.code,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    altKey: event.altKey,
+    shiftKey: event.shiftKey,
+    isComposing: event.isComposing,
+  }
+}
 
 /** Which way each nudge goes. */
 const NUDGES: readonly (readonly [string, number, number])[] = [
