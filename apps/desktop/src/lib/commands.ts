@@ -59,7 +59,7 @@ import { look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
-import { canPrint, printNote } from './export/print'
+import { canPrint, printable, printOpen } from './export/print'
 import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
@@ -1221,8 +1221,8 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'print',
             label: t('Print'),
             hint: shortcuts.hint('app.print'),
-            disabled: workspace.active?.kind !== 'note',
-            run: () => busy.start(t('Printing'), () => printNote()),
+            disabled: !printable(workspace.active?.kind),
+            run: () => busy.start(t('Printing'), () => printOpen()),
           },
         ]
       : []),

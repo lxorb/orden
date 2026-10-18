@@ -33,6 +33,7 @@ import { inkSvg } from '../canvas/svg'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
+import { PDF_TO_CSS } from '../pdf/pages'
 import { isDesktop, joinPath } from '../tauri'
 
 /** What an export of a page note is about. */
@@ -220,8 +221,17 @@ export async function exportPagesPng(out: PagesOut): Promise<string | undefined>
  *  are the same, because a page's size in this format is already the size it would
  *  be printed. */
 export async function exportPagesPdf(out: PagesOut): Promise<string | undefined> {
+  const bytes = await pagesPdf(out)
+  if (!bytes) return
+
+  return handOver(stem(out.name), 'pdf', 'PDF', bytes, 'application/pdf')
+}
+
+/** The note's PDF, as bytes: what the export above writes and what printing puts on
+ *  paper, so the two cannot differ. Null for a note with no pages. */
+async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   const pages = pagesOf(out.canvas)
-  if (!pages.length) return
+  if (!pages.length) return null
 
   const { BlendMode, PDFDocument, rgb } = await import('pdf-lib')
 
@@ -282,7 +292,89 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
   // the note uses three of should not carry the other thirty-seven.
   for (let index = carried - 1; index >= 0; index -= 1) doc.removePage(index)
 
-  return handOver(stem(out.name), 'pdf', 'PDF', new Uint8Array(await doc.save()), 'application/pdf')
+  return new Uint8Array(await doc.save())
+}
+
+/** How finely a page is drawn for the printer, against its size on screen: twice,
+ *  which is near two hundred dots to the inch - sharper than ink on paper needs, and a
+ *  long note still a sheet of pictures the print engine takes without a pause. */
+const PRINT_SCALE = 2
+
+/** The note on paper, through whatever print dialog the machine has (#350).
+ *
+ *  The PDF the export writes, drawn a page at a time and handed to the print engine
+ *  as one picture per sheet: the paper the note was made from, the ink on it and the
+ *  page sizes are all exactly the export's, and a print engine that cannot open a PDF
+ *  itself - a browser's frame, WebKit's - still prints pictures. `printInFrame` is the
+ *  system's own dialog on every desktop and the browser's in a browser. */
+export async function printPages(out: PagesOut): Promise<void> {
+  const bytes = await pagesPdf(out)
+  if (!bytes) return
+
+  const [{ pdfjs }, { printInFrame }] = await Promise.all([
+    import('../pdf/document'),
+    import('../export'),
+  ])
+  const library = await pdfjs()
+  const task = library.getDocument({ data: bytes })
+  const doc = await task.promise
+  const sheets: { src: string; width: number; height: number }[] = []
+
+  try {
+    for (let number = 1; number <= doc.numPages; number += 1) {
+      const page = await doc.getPage(number)
+      const natural = page.getViewport({ scale: PDF_TO_CSS })
+      const viewport = page.getViewport({ scale: PDF_TO_CSS * PRINT_SCALE })
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(viewport.width))
+      canvas.height = Math.max(1, Math.round(viewport.height))
+      const context = canvas.getContext('2d')
+      if (context) {
+        await page.render({ canvas, canvasContext: context, viewport }).promise
+        sheets.push({
+          src: canvas.toDataURL('image/png'),
+          width: natural.width,
+          height: natural.height,
+        })
+      }
+      page.cleanup()
+    }
+  } finally {
+    await task.destroy().catch(() => undefined)
+  }
+
+  const first = sheets[0]
+  if (!first) return
+
+  // One sheet of the first page's size, which is the paper the dialog opens on; a
+  // page of another size is fitted onto it whole rather than cut.
+  const html = [
+    '<!doctype html><html><head><meta charset="utf-8">',
+    `<title>${escaped(stem(out.name))}</title><style>`,
+    `@page{size:${first.width}px ${first.height}px;margin:0}`,
+    'html,body{margin:0;padding:0;background:#fff}',
+    '.sheet{display:flex;align-items:center;justify-content:center;',
+    `width:${first.width}px;height:${first.height}px;break-after:page;overflow:hidden}`,
+    '.sheet:last-child{break-after:auto}',
+    'img{display:block;max-width:100%;max-height:100%}',
+    '</style></head><body>',
+    ...sheets.map(
+      (one, index) =>
+        `<div class="sheet"><img src="${one.src}" alt="Page ${index + 1}" width="${Math.round(one.width)}" height="${Math.round(one.height)}"></div>`,
+    ),
+    '</body></html>',
+  ].join('')
+
+  await printInFrame(html, {
+    width: first.width / 96,
+    height: first.height / 96,
+    margin: 0,
+    landscape: false,
+  })
+}
+
+function escaped(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 /** A colour as the three numbers pdf-lib wants, nought to one. Anything that is

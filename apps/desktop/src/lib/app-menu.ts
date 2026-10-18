@@ -29,7 +29,7 @@ import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
-import { canPrint, printNote } from './export/print'
+import { canPrint, printable, printOpen } from './export/print'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
@@ -187,8 +187,8 @@ export function appMenu(context: Context): MenuGroup[] {
                 label: t('Print'),
                 ...keyed('app.print'),
                 asks: true,
-                disabled: workspace.active?.kind !== 'note',
-                run: () => busy.start(t('Printing'), () => printNote()),
+                disabled: !printable(workspace.active?.kind),
+                run: () => busy.start(t('Printing'), () => printOpen()),
               },
             ]
           : []),
