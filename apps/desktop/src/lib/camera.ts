@@ -16,6 +16,32 @@ export interface Camera {
   y: number
   /** Pixels per unit of the plane. */
   scale: number
+  /** How far the view is turned about the middle of the pane, in radians, clockwise
+   *  on screen; absent is upright. A canvas turned by two fingers (#351) and nothing
+   *  else: the graph and a page note are always upright. */
+  turn?: number
+}
+
+/** A camera's turn, upright where it has none. */
+export function turnOf(camera: Camera): number {
+  return camera.turn ?? 0
+}
+
+/** A turn in (-π, π], so a view turned all the way round is upright again rather
+ *  than a number that grows. */
+export function settledTurn(turn: number): number {
+  let angle = turn % (2 * Math.PI)
+  if (angle > Math.PI) angle -= 2 * Math.PI
+  if (angle <= -Math.PI) angle += 2 * Math.PI
+  return Math.abs(angle) < 1e-9 ? 0 : angle
+}
+
+/** An offset turned by an angle, clockwise on screen. */
+export function turnedBy(x: number, y: number, angle: number): { x: number; y: number } {
+  if (!angle) return { x, y }
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  return { x: x * cos - y * sin, y: x * sin + y * cos }
 }
 
 /** How far in and out the view goes. Far enough out that a space of thousands of
@@ -68,6 +94,8 @@ const PINCHED = 50
 /** WebKit's trackpad pinch on a Mac: the scale since the pinch began, where it is. */
 interface Gesture extends UIEvent {
   scale: number
+  /** Degrees, clockwise, since the gesture began; WebKit's own. */
+  rotation?: number
   clientX: number
   clientY: number
 }
@@ -86,12 +114,15 @@ export function pinching(): boolean {
 export function heldGestures(
   element: HTMLElement,
   zoom: (at: { clientX: number; clientY: number }, by: number) => void,
+  turn?: (at: { clientX: number; clientY: number }, by: number) => void,
 ): () => void {
   let last = 1
+  let twist = new Twist()
   const start = (event: Event) => {
     event.preventDefault()
     gesturing = true
     last = 1
+    twist = new Twist()
   }
   const change = (event: Event) => {
     event.preventDefault()
@@ -99,6 +130,9 @@ export function heldGestures(
     if (!gesture.scale || !last) return
     zoom(gesture, gesture.scale / last)
     last = gesture.scale
+    // And the turn of the two fingers, where the surface turns at all (#351).
+    const by = turn ? twist.to(((gesture.rotation ?? 0) * Math.PI) / 180) : 0
+    if (by) turn?.(gesture, by)
   }
   const end = (event: Event) => {
     event.preventDefault()
@@ -115,6 +149,37 @@ export function heldGestures(
   }
 }
 
+/** How far two fingers have to turn before the view turns with them, in radians:
+ *  six degrees, which a pinch held a little crooked never reaches and a turn meant as
+ *  one passes in its first moment (#351). */
+export const TURN_DEADBAND = (6 * Math.PI) / 180
+
+/** A turn of two fingers as it goes: nothing until it has passed the deadband, and
+ *  from there every change of angle, so the view does not jump by the deadband the
+ *  moment it starts to follow. */
+export class Twist {
+  private began: number | null = null
+  private last = 0
+  private going = false
+
+  /** The angle the fingers are at now, from where they began; answers how much to
+   *  turn the view by since the last. */
+  to(angle: number): number {
+    if (this.began === null) {
+      this.began = angle
+      this.last = angle
+      return 0
+    }
+    if (!this.going) {
+      if (Math.abs(settledTurn(angle - this.began)) < TURN_DEADBAND) return 0
+      this.going = true
+    }
+    const by = settledTurn(angle - this.last)
+    this.last = angle
+    return by
+  }
+}
+
 /** The point of the plane a screen point is over. */
 export function graphPoint(
   camera: Camera,
@@ -123,9 +188,53 @@ export function graphPoint(
   screenX: number,
   screenY: number,
 ): { x: number; y: number } {
+  const off = turnedBy(screenX - width / 2, screenY - height / 2, -turnOf(camera))
   return {
-    x: (screenX - width / 2) / camera.scale + camera.x,
-    y: (screenY - height / 2) / camera.scale + camera.y,
+    x: off.x / camera.scale + camera.x,
+    y: off.y / camera.scale + camera.y,
+  }
+}
+
+/** Where a point of the plane is on screen: `graphPoint` the other way round. */
+export function screenPoint(
+  camera: Camera,
+  width: number,
+  height: number,
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  const off = turnedBy(
+    (point.x - camera.x) * camera.scale,
+    (point.y - camera.y) * camera.scale,
+    turnOf(camera),
+  )
+  return { x: off.x + width / 2, y: off.y + height / 2 }
+}
+
+/** The camera moved by a drag of the screen: the plane goes with the hand, whichever
+ *  way the view is turned. */
+export function panned(camera: Camera, dx: number, dy: number): Camera {
+  const by = turnedBy(dx, dy, -turnOf(camera))
+  return { ...camera, x: camera.x - by.x / camera.scale, y: camera.y - by.y / camera.scale }
+}
+
+/** The camera turned about a screen point by an angle, keeping what is under that
+ *  point under it: two fingers turn the plane about the point between them. */
+export function turned(
+  camera: Camera,
+  width: number,
+  height: number,
+  screenX: number,
+  screenY: number,
+  by: number,
+): Camera {
+  const under = graphPoint(camera, width, height, screenX, screenY)
+  const turn = settledTurn(turnOf(camera) + by)
+  const off = turnedBy(screenX - width / 2, screenY - height / 2, -turn)
+  return {
+    x: under.x - off.x / camera.scale,
+    y: under.y - off.y / camera.scale,
+    scale: camera.scale,
+    ...(turn ? { turn } : {}),
   }
 }
 
@@ -218,11 +327,13 @@ export function zoomed(
 ): Camera {
   const scale = clampScale(camera.scale * by)
   const under = graphPoint(camera, width, height, screenX, screenY)
+  const off = turnedBy(screenX - width / 2, screenY - height / 2, -turnOf(camera))
 
   return {
-    x: under.x - (screenX - width / 2) / scale,
-    y: under.y - (screenY - height / 2) / scale,
+    x: under.x - off.x / scale,
+    y: under.y - off.y / scale,
     scale,
+    ...(camera.turn ? { turn: camera.turn } : {}),
   }
 }
 
