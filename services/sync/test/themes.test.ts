@@ -20,7 +20,7 @@ function registry(answer: (url: string) => Response) {
   })
 }
 
-const RAW = 'https://raw.githubusercontent.com/lxorb/nib-themes/main'
+const RAW = 'https://raw.githubusercontent.com/lxorb/orden-themes/main'
 
 beforeEach(() => {
   env = testEnv()
