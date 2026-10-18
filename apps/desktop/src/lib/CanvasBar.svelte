@@ -61,6 +61,7 @@
     onzoom,
     onfit,
     zoomRows,
+    places = true,
   }: {
     canundo: boolean
     canredo: boolean
@@ -79,6 +80,11 @@
      *  and the whole of the page - and one to one, which is the size it prints at;
      *  a plane has neither, so this is absent there and the number fits. */
     zoomRows?: (() => MenuEntry[]) | undefined
+    /** Whether a press can put something on the surface: a card, a frame, a shape.
+     *  A plane's question. A page note has only the five tools that mean something
+     *  on paper, and a grid of things that a press there would never put down is a
+     *  row of buttons that do nothing (#350). */
+    places?: boolean
   } = $props()
 
   /** Which panel is open over the bar, if any. One at a time: two panels over a
@@ -391,20 +397,22 @@
         <!-- What a press puts on the plane. While one of them is in hand it is that
              one, drawn on the button, so the bar says what a press is about to do
              and pressing it again opens the grid again. -->
-        <button
-          type="button"
-          class:on={open === 'put' || putting !== undefined}
-          class:deeper={putting !== undefined}
-          title={putting ? hinted(putting) : t('Add')}
-          aria-label={putting ? putting.title() : t('Add')}
-          aria-pressed={open === 'put'}
-          onclick={(event) => {
-            tick()
-            toggle('put', event)
-          }}
-        >
-          <CanvasIcon node={putting?.icon ?? MARKS.put} />
-        </button>
+        {#if places}
+          <button
+            type="button"
+            class:on={open === 'put' || putting !== undefined}
+            class:deeper={putting !== undefined}
+            title={putting ? hinted(putting) : t('Add')}
+            aria-label={putting ? putting.title() : t('Add')}
+            aria-pressed={open === 'put'}
+            onclick={(event) => {
+              tick()
+              toggle('put', event)
+            }}
+          >
+            <CanvasIcon node={putting?.icon ?? MARKS.put} />
+          </button>
+        {/if}
 
         <button
           type="button"

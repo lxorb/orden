@@ -201,6 +201,14 @@
     store.fitWidth(false)
   })
 
+  // The hand is shared with the plane, so a card or a shape picked up on a canvas is
+  // still in it when a page note opens - and nothing on paper answers to one, so every
+  // press would do nothing and no button on the bar would be lit. The arrow instead,
+  // which is what a press on paper is when no pen is out (#350).
+  $effect(() => {
+    if (!PAPER_TOOLS.has(tools.which)) tools.choose('select')
+  })
+
   // Words that changed under the surface: a version restored, a copy a sync brought
   // over, the file undo putting one back. The same one line a canvas has.
   $effect(() => {
@@ -1072,6 +1080,7 @@
     canredo={store.canRedo}
     zoom={camera.scale}
     {zoomRows}
+    places={false}
     onundo={() => store.undo()}
     onredo={() => store.redo()}
     onerase={() => store.edit({ ...canvas, ink: [] })}
