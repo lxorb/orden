@@ -1494,6 +1494,11 @@ const CANVAS_ENTRIES: Shortcut[] = (
     // the words from one key. The same trade the plane's Ctrl+1 makes under the
     // Obsidian preset; see presets.ts.
     ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
+    // And the zoom itself on the two keys beside it, the page note's own: the bar no
+    // longer has buttons for it, and a reader without a wheel or a pinch still zooms
+    // (#401).
+    ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
+    ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
     ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],

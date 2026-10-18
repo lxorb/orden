@@ -999,6 +999,9 @@ nobody else's. Paragraph has no key now - Ctrl+2 on a second-level heading is wh
 it back into prose - and **Ctrl+Shift+P**, which it held for a while, is the palette on
 commands; see the digit rule above.
 
+The plane steps its zoom on the same two keys as a page note, Ctrl+Alt+= and
+Ctrl+Alt+-: the bar no longer has buttons for it (#401).
+
 The plane's Fit is Ctrl+Alt+0 for the same reason: it is read off the plane and the
 press goes on to the window afterwards, so the two on one key would fit the plane and
 resize the words at once. A surface with a zoom of its own - the canvas, the graph, a
@@ -1011,7 +1014,7 @@ down on anything one of them has already prevented, keys as well as the wheel.
 | --- | --- |
 | Ctrl+Alt+= , Ctrl+Alt+- | a notch in and out of the paper |
 | Ctrl+Alt+0 | fit the width, and keep the paper fitted from then on |
-| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the menu the percentage on the bar opens |
+| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the paper's own menu, a right click or a finger held still |
 | Add a page | a page at the end. No key either: the gesture is carrying on scrolling past the last sheet, and the silhouette there is the button |
 
 They share Ctrl+Alt+0 with the plane's own Fit and are not a clash, because both

@@ -43,6 +43,7 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
+import { NOTCH, zoomed } from '../camera'
 import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
@@ -585,6 +586,8 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.group', (store) => run.group(store)],
   ['canvas.ungroup', (store) => run.ungroup(store)],
   ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
+  ['canvas.zoom.in', (store, view) => zoomedBy(store, view, NOTCH)],
+  ['canvas.zoom.out', (store, view) => zoomedBy(store, view, 1 / NOTCH)],
   ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
   ['canvas.find', (_store, view) => view.onfind()],
   ['canvas.front', (store) => run.order(store, 'front')],
@@ -592,6 +595,12 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.back', (store) => run.order(store, 'back')],
   ['canvas.backward', (store) => run.order(store, 'backward')],
 ]
+
+/** One notch of the zoom, about the middle of the view. */
+function zoomedBy(store: CanvasStore, view: KeyView, by: number) {
+  const { width, height } = view
+  store.camera = zoomed(store.camera, width, height, width / 2, height / 2, by)
+}
 
 export interface KeyView {
   width: number

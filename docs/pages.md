@@ -186,7 +186,7 @@ horizontal pan, because then there is something to the side to see.
 | a double tap | the two fits in turn: the width of the paper, and then the whole of the page |
 | Ctrl+Alt+= and Ctrl+Alt+- | a notch in and out, about the middle of the view |
 | Ctrl+Alt+0 | back to the width, and the paper stays fitted from then on |
-| the bar | the two buttons step by a notch; the percentage opens Fit width, Fit page and 100% |
+| the menu | a right click or a finger held still on the paper: Fit width, Fit page and 100%. The bar has no zoom of its own (#401) |
 
 One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts` and nothing has its own:
 the bar's own comment said the buttons and the wheel agreed, and they did not -
@@ -201,9 +201,9 @@ once. The same trade the plane's Fit made; see [keyboard.md](keyboard.md), which
 states the digit rule once.
 
 **How far it is zoomed is said on the paper**, as a badge at the top of the pane,
-while the zoom is happening and for six tenths of a second after. The bar carries
-the percentage too, but the bar is at the bottom of the pane and a hand pinching
-the middle of a page is not looking there. It is the same pill the text size uses
+while the zoom is happening and for six tenths of a second after. It is the only
+place the number is: a hand pinching the middle of a page is not looking at the bar
+at the bottom of the pane, which is why the bar no longer carries it (#401). It is the same pill the text size uses
 after a pinch - `.nib-pill` in the themes package - because it is the same thing
 said about something else.
 

@@ -446,6 +446,9 @@ def check_lasso(page: Page, cdp, label: str) -> None:
 
     if page.locator(".cluster .bar button[aria-label='Add']").count():
         fail(f"[{label}] a page note's bar offers Add, and nothing on paper answers to it")
+    # Nor a zoom: a pinch, the wheel, the keys and the paper's menu do it (#401).
+    if page.locator(".cluster .bar button[aria-label^='Zoom']").count():
+        fail(f"[{label}] a page note's bar still has its zoom buttons")
 
     tool(page, "d")
     box = surface(page)
@@ -529,7 +532,7 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     page.mouse.click(x0 + 300, y0 + 260, button="right")
     page.wait_for_timeout(400)
     rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
-    for wanted in ("Add a page after this", "Fit width", "Fit page", "Export as PDF", "Print"):
+    for wanted in ("Add a page after this", "Fit width", "Fit page", "100%", "Export as PDF", "Print"):
         if wanted not in rows:
             fail(f"[{label}] a right click on the paper has no {wanted} ({rows})")
     if page.locator("[role=menu] [role=menuitem][disabled]").count():

@@ -66,3 +66,19 @@ describe('a nudge', () => {
     expect(store.canvas.nodes[0]?.y).toBe(40 - GRID)
   })
 })
+
+describe('the zoom keys', () => {
+  // The bar has no zoom buttons, so the keys are a keyboard's whole zoom (#401).
+  const chord = (key: string, code: string) =>
+    ({ key, code, ctrlKey: true, altKey: true, metaKey: false, shiftKey: false }) as KeyboardEvent
+
+  test('go in and out about the middle of the view', () => {
+    const store = picked()
+    const was = store.camera.scale
+    expect(run.keys(store, chord('=', 'Equal'), view)).toBe(true)
+    expect(store.camera.scale).toBeGreaterThan(was)
+    expect(run.keys(store, chord('-', 'Minus'), view)).toBe(true)
+    expect(run.keys(store, chord('-', 'Minus'), view)).toBe(true)
+    expect(store.camera.scale).toBeLessThan(was)
+  })
+})

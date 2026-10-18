@@ -20,6 +20,7 @@ What it checks and photographs:
     the bar over what is picked, and its colours, kept on the plane against an edge
     the menu holding only what would do something, with Arrange behind one row
     a phone's bar: Undo and Redo first, and a fade at each end with more past it
+    no zoom on the bar, on a desktop or a phone (#401)
     printing: the sheet the PDF is made from, handed to the print engine
 
 Run it from the repository root:
@@ -1136,6 +1137,8 @@ def drive(browser, theme: str) -> None:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         opened(page, theme)
 
+        if page.locator(ZOOM_ON_BAR).count():
+            fail(f"[{theme}] the bar still has its zoom buttons")
         check_cursors(page)
         check_pattern(page)
         check_panel_shuts(page)
@@ -1183,6 +1186,13 @@ BAR_SEEN = """
 """
 
 
+# The bar's zoom group, which is not on it any more (#401).
+ZOOM_ON_BAR = (
+    ".cluster button[aria-label='Zoom in'], .cluster button[aria-label='Zoom out'],"
+    " .cluster button[aria-label='Zoom'], .cluster button[aria-label='Show the whole canvas']"
+)
+
+
 def drive_phone(browser, theme: str) -> None:
     """A phone's bar: wider than the screen, so it scrolls - with Undo and Redo first,
     where a thumb finds them, and a fade at whichever end has more past it (#350)."""
@@ -1206,6 +1216,9 @@ def drive_phone(browser, theme: str) -> None:
         opened(page, "phone")
         page.wait_for_timeout(400)
 
+        # No zoom on the bar: a pinch, the wheel, the keys and the menu do it (#401).
+        if page.locator(ZOOM_ON_BAR).count():
+            fail(f"[phone/{theme}] the bar still has its zoom buttons")
         first = page.evaluate(BAR_SEEN)
         say(f"[phone/{theme}] on screen: {first['seen']}")
         if "Undo" not in first["seen"][:3] or "Redo" not in first["seen"][:3]:

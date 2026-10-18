@@ -683,9 +683,12 @@
             },
           ]
         : [],
+      // The two fits and one to one, which is the size the page prints at: what the
+      // percentage on the bar offered before the bar stopped zooming (#401).
       [
         { label: t('Fit width'), run: () => store.fitAgain() },
         { label: t('Fit page'), run: () => store.fitPage() },
+        { label: '100%', run: () => store.zoomTo(1) },
       ],
       [command('export-pdf', t('Export as PDF')), command('print', t('Print'))],
     ]
@@ -1129,21 +1132,6 @@
     if (fitted && Math.abs(camera.scale - fitted) < fitted * 0.005) store.fitPage()
     else store.fitAgain()
   }
-
-  /** What the percentage on the bar offers: the two fits and one to one.
-   *
-   *  A page note has more than one answer to "fit", which is why the number opens a
-   *  menu here and simply fits on a plane: a sheet of paper has a width to read at
-   *  and a page to see whole, and 100% is the one value worth naming because it is
-   *  the size the page will print at. */
-  function zoomRows(): MenuEntry[] {
-    return [
-      { label: t('Fit width'), run: () => store.fitAgain() },
-      { label: t('Fit page'), run: () => store.fitPage() },
-      DIVIDER,
-      { label: '100%', run: () => store.zoomTo(1) },
-    ]
-  }
 </script>
 
 <!-- Named by how much paper is on it rather than by what it is, the way the canvas is
@@ -1257,14 +1245,10 @@
   <CanvasBar
     canundo={store.canUndo}
     canredo={store.canRedo}
-    zoom={camera.scale}
-    {zoomRows}
     places={false}
     onundo={() => store.undo()}
     onredo={() => store.redo()}
     onerase={() => store.edit({ ...canvas, ink: [] })}
-    onzoom={(by: number) => store.zoomBy(by)}
-    onfit={() => store.fitAgain()}
   />
 </div>
 

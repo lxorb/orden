@@ -89,7 +89,7 @@ lives in the far corner from the tools, and undo is in a third place again.
 | The live tool tinted rather than raised | kept |
 | Flyouts anchored to the tool that opened them | kept |
 | Name and key in every tooltip | kept |
-| Undo, redo and zoom as their own groups | kept, in the one bar |
+| Undo, redo and zoom as their own groups | undo and redo kept, in the one bar; the zoom's group taken off it (#401) |
 | Shape recognition | kept, as a switch on the pen |
 | Everything drawn while it is being dragged out | kept, for every one of them |
 | A rail fixed to the left edge | left; the bar goes to whichever edge it is dragged to |
@@ -289,14 +289,16 @@ zoomed out far enough reads as a grid rather than as the blank grey field it onc
 
 ## Zoom
 
-Minus, the percentage, plus. The number is the button that fits the whole plane
-in the pane, which is the only other thing anybody asks of a zoom. Pinch, the
-wheel and the keys do the rest and always did.
+**Not on the bar** (#401). It had minus, the percentage and plus, and they went:
+three buttons for something a pinch, Ctrl and the wheel, and the keys already do,
+on the one bar a phone has to scroll. Ctrl+Alt+= and Ctrl+Alt+- step a notch about
+the middle of the view, Ctrl+Alt+0 fits the whole plane, Ctrl+1 frames what is
+picked, and the menu has Fit the canvas and Zoom to what is picked.
 
-One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the buttons and the
-wheel really do agree on it now: the comment here said they did while the buttons
-stepped by a fifth and the wheel by two fifths, which is two zooms for one hand.
-`wheelZoom` is the one function both the plane and a page note ask.
+One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the keys and the wheel
+agree on it: the bar's buttons once stepped by a fifth and the wheel by two fifths,
+which is two zooms for one hand. `wheelZoom` is the one function both the plane and
+a page note ask.
 
 On paper the number opens rows instead - a sheet has a width to read at and a page
 to see whole, so there is more than one answer to "fit"; see [pages.md](pages.md).

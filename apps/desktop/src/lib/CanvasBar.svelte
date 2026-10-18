@@ -8,7 +8,9 @@
    *  same order everywhere, drawn bigger where a thumb has to land on them.
    *
    *  Left to right it is arranging, then drawing, then what a press puts on the
-   *  plane, then the colour in hand, then the two arrows, then the zoom. Pressing
+   *  plane, then the colour in hand, then the two arrows. No zoom: a pinch, Ctrl and
+   *  the wheel, the keys and the menus all zoom, and three buttons for it were three
+   *  a thumb did not need on the one bar it has (#401). Pressing
    *  the tool you are already holding opens that tool's own panel and nothing else,
    *  which is the one gesture nobody has to be told, and the panel opens over the
    *  button that opened it rather than in the middle of the pane.
@@ -21,7 +23,6 @@
    *  gesture, and a bar that let one through would clear the selection its own
    *  buttons are for. */
 
-  import { NOTCH } from './camera'
   import CanvasCatch from './CanvasCatch.svelte'
   import CanvasColours from './CanvasColours.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
@@ -47,39 +48,23 @@
   import { tools } from './canvas/tools.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
-  import { type MenuEntry, menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
   const {
     canundo,
     canredo,
-    zoom,
     onundo,
     onredo,
     onerase,
-    onzoom,
-    onfit,
-    zoomRows,
     places = true,
   }: {
     canundo: boolean
     canredo: boolean
-    /** How far in the plane is, so the number on the bar is the one in the corner
-     *  of every drawing program. */
-    zoom: number
     onundo: () => void
     onredo: () => void
     /** Every stroke on the plane, gone, which is what the eraser's panel asks for. */
     onerase: () => void
-    /** In or out about the middle of the view, by this much. */
-    onzoom: (by: number) => void
-    onfit: () => void
-    /** What the percentage offers instead of simply fitting, for a surface with
-     *  more than one answer to "fit". A page note has two - the width of the paper
-     *  and the whole of the page - and one to one, which is the size it prints at;
-     *  a plane has neither, so this is absent there and the number fits. */
-    zoomRows?: (() => MenuEntry[]) | undefined
     /** Whether a press can put something on the surface: a card, a frame, a shape.
      *  A plane's question. A page note has only the five tools that mean something
      *  on paper, and a grid of things that a press there would never put down is a
@@ -510,50 +495,6 @@
           <span class="split"></span>
           {@render arrows()}
         {/if}
-
-        <span class="split"></span>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Zoom out'), zoomRows ? 'pages.zoom.out' : null)}
-          aria-label={t('Zoom out')}
-          onclick={() => {
-            tick()
-            onzoom(1 / NOTCH)
-          }}
-        >
-          <CanvasIcon node={MARKS.zoomOut} />
-        </button>
-
-        <!-- The number is the button that puts the whole plane in the pane, which
-             is the only other thing anybody asks of a zoom on a plane. On paper it
-             opens the rows instead: there is more than one way to fit a sheet. -->
-        <button
-          type="button"
-          class="how-far"
-          title={zoomRows ? t('Zoom') : shortcuts.tooltip(t('Show the whole canvas'), 'canvas.fit')}
-          aria-label={zoomRows ? t('Zoom') : t('Show the whole canvas')}
-          onclick={(event) => {
-            tick()
-            const rows = zoomRows
-            if (rows) menu.show(event, rows(), { title: t('Zoom') })
-            else onfit()
-          }}
-        >
-          {Math.round(zoom * 100)}%
-        </button>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Zoom in'), zoomRows ? 'pages.zoom.in' : null)}
-          aria-label={t('Zoom in')}
-          onclick={() => {
-            tick()
-            onzoom(NOTCH)
-          }}
-        >
-          <CanvasIcon node={MARKS.zoomIn} />
-        </button>
       </div>
     </div>
   {/if}
@@ -852,10 +793,6 @@
 
   .swatch:active::after {
     scale: 1.08;
-  }
-
-  .how-far {
-    padding: 0 var(--space-2);
   }
 
   /* Two lines, the way a thing that moves is drawn everywhere. */

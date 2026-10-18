@@ -1752,11 +1752,6 @@
   const bare = $derived(
     !store.canvas.nodes.length && !store.canvas.edges.length && !store.canvas.ink.length,
   )
-
-  /** One notch of the zoom buttons, about the middle of the view. */
-  function zoomBy(by: number) {
-    store.camera = zoomed(camera, width, height, width / 2, height / 2, by)
-  }
 </script>
 
 <!-- Named by what is on it rather than by what it is: the plane said the one word
@@ -2047,12 +2042,9 @@
     <CanvasBar
       canundo={store.canUndo}
       canredo={store.canRedo}
-      zoom={camera.scale}
       onundo={() => store.undo()}
       onredo={() => store.redo()}
       onerase={() => run.eraseAll(store)}
-      onzoom={zoomBy}
-      onfit={() => store.fit(width, height)}
     />
   {/if}
 
