@@ -967,7 +967,14 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
   of scroll that began by moving one stays its own to the end, even once it has run out:
   scroll latching, so a fling along a carousel never turns into Back. A scroller that says
   `overscroll-behavior-x: contain` or `none` keeps its overscroll, which is the line Google
-  Sheets draws, and a page whose own handler took the wheel - a map - keeps it too.
+  Sheets draws, and a page whose own handler took the wheel - a map - keeps it too. Whether
+  the scroll moved anything is read off what scrolled, not off where the scroller stands
+  when the wheel is heard: a passive listener hears it after the scroll it made, so a
+  scroller with a few pixels left to go was already at its edge when asked, the stream
+  that moved it came out as a swipe, and the arrow came in over a page that had just slid
+  along with the fingers (#407: _"wenn man bei uns horizontal scrollt scrollt die seite so
+  komisch mit"_). A stream that scrolled something sideways, from a moment before its
+  first step, is that content's (`slid.ts`, and the same in `web_swipe.js`).
 - **Sideways on purpose.** 60 pixels sideways (50 for a finger), two and a half times as
   far as down, before anything shows - counted from the stream's very first step, a step
   straight down included, so a scroll down a page that drifts sideways as it goes is a
@@ -1067,7 +1074,7 @@ a stream still ends when the wheel stops for 120 ms, and at once when it turns i
 touchpad's own coasting after a flick, a run of steadily shrinking steps.
 
 Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers, and a hand that says when it
-lifts), `edge.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
+lifts), `edge.test.ts`, `slid.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
 page's swipe, the setting, and every gesture in `test/effects/swipe-replays.json`),
 `touchpad.rs`'s own tests (frames put back together, and what is said while nib is behind),
 `test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page script
