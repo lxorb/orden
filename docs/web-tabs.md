@@ -1136,18 +1136,25 @@ refuse.
 The file is still theirs in the space: the shortcut is a bookmark on a phone, which
 is what a website on a phone is worth being - and a `.url` is a bookmark to the
 phone's own system too. Making one is not offered there, because the address is
-asked for in a bar and there is no bar; a tablet gets both, and the frame and the
-card, because it has the room - but a web note with an address goes to the system
-browser on a tablet too, and a shortcut nobody has given one yet opens its tab there
-for its bar.
+asked for in a bar and there is no bar.
+
+**A tablet is a phone here.** It used to get the bar, the frame and the card, because
+it has the room, and the frame was the trouble: a link pressed in a note, or a new web
+tab, drew the page inside nib in a frame most sites refuse, with none of the reader's
+logins. So a tablet hands every page to the system browser exactly as a phone does -
+a link and a web note both - and has no web tab of its own: no web note to make, no
+browsing history, and Ctrl+T is the kinds in the pane, as on a phone.
+The one question is `viewport.touch`, which is the phone and the tablet both; the
+desktop is unchanged (`holdsPages` in `open-link.ts`, `openPage` and `openWebsite` in
+`workspace.svelte.ts`, `kindsHere`).
 
 **A web note in a browser build opens a browser tab.** Emil, 2026-10-06 (#206): _"on
 mobile web notes should just open in your default browser - also when nib is open in
 a browser, clicking on them should just open a new tab."_ So only the desktop app
 draws a web note's page; everywhere else its address is handed to the browser - the
 system's from the phone and tablet app, a new tab beside nib's own from a browser.
-Links in a note and a new web tab keep the card and the frame above. See `openSite`
-in `workspace.svelte.ts`.
+Links in a note and a new web tab keep the card and the frame above, on a desktop. See
+`openSite` in `workspace.svelte.ts`.
 
 And a web note's tab that an older sitting left goes the same way. Emil, 2026-10-13:
 _"clicking on web notes in the mobile app still opens them inside nib"_. The one way
