@@ -15,8 +15,10 @@
 //! which is Chrome's own as well - except while a video in the page holds the screen,
 //! when F11 gives it back, which `web_page.rs` hears first. Everything else is
 //! the page's, which is what lets a site's own Ctrl+K work, so nothing else is touched.
-//! Reloading needs nothing here: F5 and Ctrl+R pressed in a page are the engine's own, as
-//! they are in Chrome. See docs/web-tabs.md.
+//! Reloading needs nothing here on `WebView2`: F5 and Ctrl+R pressed in a page are the
+//! engine's own, as they are in Chrome. Not on the other two, which have no such key of
+//! their own: see `reloading`, and the Mac's Reload row (native-menu-bar.svelte.ts). See
+//! docs/web-tabs.md.
 //!
 //! Finding and the address field's other two keys are not among them, because Chrome
 //! asks the page first: Google Docs, Notion and VS Code on the web have a find of their
@@ -44,8 +46,10 @@
 //! so a site cannot be read through this and cannot speak through it either: the event
 //! is the engine's, raised in this process, and nothing in the page can raise it.
 //!
-//! `WebView2`'s alone. `WebKitGTK` has no such event reachable through what wry hands
-//! out; there a page keeps every key, as it did.
+//! `WebKitGTK` has no such event, but GTK hands the page's own widget each key before the
+//! page has it (`key-press-event`), which is where the same chords are heard there. What
+//! GTK cannot say is whether the page took a key, so the keys Chrome offers the page
+//! first - find, the address field - stay the page's there.
 //!
 //! **A Mac needs none of this.** There the chords are rows of the menu bar across the
 //! top of the screen - Cmd+T, Cmd+W, Ctrl+Tab and the rest are key equivalents - and
@@ -311,9 +315,104 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
     }
 }
 
-/// Every other engine: a page keeps every key, and on a Mac the menu bar takes the
-/// browser's own chords before the page is asked; see the top of this file.
-#[cfg(not(windows))]
+/// Reloading, which `WebView2` does itself for a page holding the keyboard and nothing
+/// else does: F5, Ctrl+R, and with Shift or Ctrl+F5 the hard reload. Said to the window
+/// as the key it was, where the bar answers it (`web.reload`, `web.fresh` in the
+/// registry). Without it a page reloaded by the key once had the keyboard after it, and
+/// every press after the first went into the page and did nothing (#344).
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
+    if held.alt {
+        return None;
+    }
+    let pressed = |key, code| Pressed {
+        key,
+        code,
+        held,
+        repeat: false,
+        down: true,
+    };
+    match (vk, held.ctrl, held.shift) {
+        (0x74, _, false) => Some(pressed("F5", "F5")),
+        (0x52, true, false) => Some(pressed("r", "KeyR")),
+        (0x52, true, true) => Some(pressed("R", "KeyR")),
+        _ => None,
+    }
+}
+
+/// The virtual key Windows names a key by, from the one GDK names it by, for the keys
+/// `meaning` and `reloading` read: letters, digits, Tab, the page keys, F5, F6 and F11,
+/// and the three modifiers.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub fn vk_of(keyval: u32) -> Option<u32> {
+    match keyval {
+        0x61..=0x7A => Some(keyval - 0x20),
+        0x41..=0x5A | 0x30..=0x39 => Some(keyval),
+        // Tab, and Shift+Tab, which GDK names apart.
+        0xFF09 | 0xFE20 => Some(0x09),
+        0xFF55 => Some(0x21),
+        0xFF56 => Some(0x22),
+        0xFFC2 => Some(0x74),
+        0xFFC3 => Some(0x75),
+        0xFFC8 => Some(0x7A),
+        0xFFE1 | 0xFFE2 => Some(0x10),
+        0xFFE3 | 0xFFE4 => Some(0x11),
+        0xFFE9 | 0xFFEA => Some(0x12),
+        _ => None,
+    }
+}
+
+/// `WebKitGTK`: the same chords, heard on the page's own widget before the page is given
+/// the key, which GTK hands a widget's `key-press-event` first. A key the page is never
+/// offered is the browser's here as on `WebView2` - and reloading too, which `WebKitGTK`
+/// has no key for of its own (`reloading`).
+#[cfg(target_os = "linux")]
+pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, window: String) {
+    use gtk::glib::translate::IntoGlib as _;
+    use gtk::glib::Propagation;
+    use gtk::prelude::WidgetExt as _;
+    use tauri::{Emitter, Manager};
+
+    let held_by = |state: gtk::gdk::ModifierType| Held {
+        ctrl: state.contains(gtk::gdk::ModifierType::CONTROL_MASK),
+        shift: state.contains(gtk::gdk::ModifierType::SHIFT_MASK),
+        alt: state.contains(gtk::gdk::ModifierType::MOD1_MASK),
+    };
+
+    let page = webview.inner();
+    let pressing = app.clone();
+    let pressed_in = window.clone();
+    page.connect_key_press_event(move |_, event| {
+        let Some(vk) = vk_of(event.keyval().into_glib()) else {
+            return Propagation::Proceed;
+        };
+        let held = held_by(event.state());
+        let Some(pressed) = meaning(vk, held, true, false).or_else(|| reloading(vk, held)) else {
+            return Propagation::Proceed;
+        };
+        if !pressed.keeps_page() {
+            if let Some(ours) = pressing.get_webview(&pressed_in) {
+                crate::placement::keyboard_to(&ours);
+            }
+        }
+        let _ = pressing.emit_to(pressed_in.as_str(), PRESSED, pressed);
+        Propagation::Stop
+    });
+    // A modifier let go of inside the page is told, and the page gets its own as well:
+    // Ctrl+Tab held is the strip's gesture, and the release is what chooses.
+    page.connect_key_release_event(move |_, event| {
+        let said = vk_of(event.keyval().into_glib())
+            .and_then(|vk| meaning(vk, held_by(event.state()), false, false));
+        if let Some(said) = said {
+            let _ = app.emit_to(window.as_str(), PRESSED, said);
+        }
+        Propagation::Proceed
+    });
+}
+
+/// A Mac: the menu bar takes the browser's own chords before the page is asked; see the
+/// top of this file. And the other engines, where a page keeps every key.
+#[cfg(not(any(windows, target_os = "linux")))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
 
@@ -424,6 +523,36 @@ mod tests {
         // The space switcher, asked for by web_opens.rs once the page let it go by.
         assert_eq!(down(0x20, true), None);
         assert_eq!(down(0x20, false), None);
+    }
+
+    #[test]
+    fn reloading_is_f5_and_ctrl_r_with_shift_for_the_hard_one() {
+        use super::reloading;
+        let key = |vk, held| reloading(vk, held).map(|one| (one.key, one.code, one.held.shift));
+        assert_eq!(key(0x74, Held::default()), Some(("F5", "F5", false)));
+        assert_eq!(key(0x52, CTRL), Some(("r", "KeyR", false)));
+        let shifted = Held {
+            shift: true,
+            ..CTRL
+        };
+        assert_eq!(key(0x52, shifted), Some(("R", "KeyR", true)));
+        // Ctrl+F5, the hard reload's second key, comes as F5 with Ctrl held.
+        assert_eq!(key(0x74, CTRL).map(|one| one.0), Some("F5"));
+        // R alone is typing, and AltGr+R is a character.
+        assert_eq!(key(0x52, Held::default()), None);
+        assert_eq!(key(0x52, Held { alt: true, ..CTRL }), None);
+    }
+
+    #[test]
+    fn gdk_names_the_keys_windows_does() {
+        use super::vk_of;
+        assert_eq!(vk_of(u32::from(b'r')), Some(0x52));
+        assert_eq!(vk_of(u32::from(b'R')), Some(0x52));
+        assert_eq!(vk_of(u32::from(b'5')), Some(0x35));
+        assert_eq!(vk_of(0xFFC2), Some(0x74));
+        assert_eq!(vk_of(0xFE20), Some(0x09));
+        assert_eq!(vk_of(0xFFE3), Some(0x11));
+        assert_eq!(vk_of(0x20AC), None);
     }
 
     #[test]

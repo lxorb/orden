@@ -846,6 +846,17 @@ fresh are `WebView2`'s own - `Stop`, and the DevTools Protocol's `Page.reload` w
 `ignoreCache` - and elsewhere the nearest a page can do, `window.stop()` and an
 ordinary reload; see `src-tauri/src/web_reload.rs`.
 
+**F5 and Ctrl+R reload from inside the page too, every time** (#344: _"Ctrl+R (Cmd+R on
+Mac) reloads a web tab once; pressing it again does nothing"_). The key is the bar's while
+the app has the keyboard, and a reload leaves the keyboard in the page, where the key never
+reached the app again. `WebView2` reloads on it by itself. `WebKitGTK` has no key of its
+own for it, so the page's widget hears it before the page and says it to the window, with
+the browser's other chords (`reloading` in `web_keys.rs`); a site there no longer has
+Ctrl+R for itself. A Mac has Reload and Hard Reload at the foot of View, whose Cmd+R and
+Cmd+Shift+R the menu bar is asked for before the page (`viewRows` in `native-menu.ts`).
+`scripts/wayland-drive.py` presses Ctrl+R three times and F5 once in a page with the
+keyboard in it.
+
 #### The pointer is never hidden while somebody types
 
 Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser

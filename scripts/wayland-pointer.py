@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A mouse for a headless sway, which has none: a pointer the compositor itself moves
+"""A mouse and a keyboard for a headless sway, which has neither: a pointer the compositor itself moves
 and presses, so a click lands on whatever surface is on top where it is - the app's own
 page, or a web tab's page over it - the way a reader's click does. A click the drive
 sends into the app's page as an event would land on the app however wrong the web tab's
@@ -10,13 +10,20 @@ pointer for one command and takes it away again, before the app has a pointer to
 it with. This holds one for as long as it runs: the wlr-virtual-pointer protocol, spoken
 on the Wayland socket by hand (it is four requests), so nothing is installed for it.
 
+And a keyboard the same way, where KEY_MAP names a keymap (`xkbcli compile-keymap`):
+zwp_virtual_keyboard_v1, its keymap handed over as a file beside the request. A key the
+compositor itself presses goes to whatever has the keyboard - a web tab's page, or the
+app's own - the way a reader's does: #344's Ctrl+R pressed in a page.
+
 Lines read from the FIFO at <path>, made if it is not there:
 
     move X Y      to X, Y in sway's layout, in its own (logical) pixels
     click         the left button pressed and let go
+    key [ctrl] [shift] [alt] CODE
+                  a key by its evdev code (R is 19, T 20, F5 63), the modifiers held
     quit
 
-    python3 scripts/wayland-pointer.py <fifo>
+    KEY_MAP=keymap.txt python3 scripts/wayland-pointer.py <fifo>
 """
 
 import json
@@ -88,6 +95,39 @@ send(1, 0, struct.pack("<I", synced))
 until(synced, registry)
 print("a pointer is on the seat", flush=True)
 
+keyboard = None
+KEY_MAP = os.environ.get("KEY_MAP")
+if KEY_MAP and "zwp_virtual_keyboard_manager_v1" in globals_ and "wl_seat" in globals_:
+    seat = next(ids)
+    send(registry, 0, struct.pack("<I", globals_["wl_seat"]) + text("wl_seat") + struct.pack("<II", 1, seat))
+    keyboards = next(ids)
+    send(
+        registry,
+        0,
+        struct.pack("<I", globals_["zwp_virtual_keyboard_manager_v1"])
+        + text("zwp_virtual_keyboard_manager_v1")
+        + struct.pack("<II", 1, keyboards),
+    )
+    keyboard = next(ids)
+    send(keyboards, 0, struct.pack("<II", seat, keyboard))  # create_virtual_keyboard
+    with open(KEY_MAP, "rb") as kept:
+        keymap = kept.read() + b"\0"
+    held = os.memfd_create("keymap")
+    os.write(held, keymap)
+    # keymap(format xkb_v1, fd, size): the file goes beside the request, not in it.
+    args = struct.pack("<II", 1, len(keymap))
+    wire.sendmsg(
+        [struct.pack("<II", keyboard, ((8 + len(args)) << 16) | 0) + args],
+        [(socket.SOL_SOCKET, socket.SCM_RIGHTS, struct.pack("i", held))],
+    )
+    synced = next(ids)
+    send(1, 0, struct.pack("<I", synced))
+    until(synced, registry)
+    print("and a keyboard", flush=True)
+
+#: The modifiers' bits in an xkb keymap's own order: Shift, Lock, Control, Mod1 (Alt).
+MODIFIERS = {"shift": 1, "ctrl": 4, "alt": 8}
+
 
 def now():
     return int(time.monotonic() * 1000) & 0xFFFFFFFF
@@ -100,6 +140,18 @@ def layout():
         max(one["rect"]["x"] + one["rect"]["width"] for one in outputs),
         max(one["rect"]["y"] + one["rect"]["height"] for one in outputs),
     )
+
+
+def key(held, code):
+    """A key pressed and let go of with `held` down, the way a hand does it."""
+    mask = 0
+    for one in held:
+        mask |= MODIFIERS[one]
+    send(keyboard, 2, struct.pack("<IIII", mask, 0, 0, 0))  # modifiers
+    send(keyboard, 1, struct.pack("<III", now(), code, 1))  # key, pressed
+    time.sleep(0.03)
+    send(keyboard, 1, struct.pack("<III", now(), code, 0))
+    send(keyboard, 2, struct.pack("<IIII", 0, 0, 0, 0))
 
 
 def button(state):
@@ -124,5 +176,7 @@ while True:
                 button(1)
                 time.sleep(0.05)
                 button(0)
+            elif words[0] == "key" and keyboard is not None:
+                key(words[1:-1], int(words[-1]))
             elif words[0] == "quit":
                 sys.exit(0)

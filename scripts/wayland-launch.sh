@@ -127,6 +127,11 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
   set -- "$@" http://127.0.0.1:8765/
 fi
 if [ "${DRIVE:-0}" = 1 ]; then
+  # And a keyboard with it, where xkbcommon's tools can say what its keys are.
+  if command -v xkbcli > /dev/null; then
+    xkbcli compile-keymap --layout us > "$out/keymap.txt"
+    export KEY_MAP="$out/keymap.txt"
+  fi
   python3 "$here/wayland-pointer.py" "$out/pointer.fifo" > "$out/pointer.log" 2>&1 &
   pointer_pid=$!
 fi

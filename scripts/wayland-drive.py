@@ -20,7 +20,11 @@ portrait one at 1.77, one at 1, one at 1.75, one at 2):
     and come back whole after;
   - and the window's own page has to still be drawn after all of it: the tab strip has
     its ink (#387's window flashing between light and dark);
-  - and once, the window made smaller: the page follows.
+  - and once, the window made smaller: the page follows;
+  - and on the last screen, the page clicked into so it holds the keyboard, and
+    Ctrl+R pressed three times and F5 once, each a load of the page (#344: the key
+    reloaded once, and then the page had the keyboard and every press after did
+    nothing). Only where the launch could make a keyboard (`KEY_MAP`).
 
 With `cold` after the app's pid, a launch that came back to the web tab on its own
 instead: the same on the screen it opened on, once.
@@ -388,6 +392,44 @@ def look(output, moved=True, tag=""):
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
 
 
+def loads():
+    """How many times the page has been asked for: the site's own log, a line a load."""
+    try:
+        return (OUT / "site.log").read_text().count('"GET / ')
+    except OSError:
+        return 0
+
+
+def reloads(output):
+    """Ctrl+R three times and F5 once with the page holding the keyboard, each a load."""
+    if not (OUT / "pointer.log").read_text().count("and a keyboard"):
+        print("no keyboard to press with: the reloads are not driven here")
+        return
+    node = window_node()
+    pane = hole()
+    if not node or not pane:
+        fail(f"{output}: no page to reload")
+        return
+    # Into the page, so the keyboard is the page's, as it is after a reload.
+    click(node, pane["x"] + pane["width"] / 2, pane["y"] + pane["height"] / 2)
+    time.sleep(1.0)
+    for times, (held, code, name) in enumerate(
+        [("ctrl", 19, "Ctrl+R"), ("ctrl", 19, "Ctrl+R"), ("ctrl", 19, "Ctrl+R"), ("", 63, "F5")],
+        start=1,
+    ):
+        before = loads()
+        with open(POINTER, "w") as pointer:
+            pointer.write(f"key {held} {code}\n")
+        for _ in range(20):
+            time.sleep(0.25)
+            if loads() > before:
+                break
+        if loads() > before:
+            print(f"{output}: {name} in the page reloads it ({times})")
+        else:
+            fail(f"{output}: {name} pressed in the page did not reload it (press {times})")
+
+
 settled()
 if COLD:
     look(where_now(), moved=False)
@@ -395,6 +437,7 @@ else:
     outputs = [one["name"] for one in sway("-t", "get_outputs")]
     for output in outputs:
         look(output)
+    reloads(where_now())
 
     # Smaller: floating, at a size of its own, and the page has to follow.
     subprocess.run(["swaymsg", f"[pid={APP}] floating enable, resize set 900 650"], check=False)
