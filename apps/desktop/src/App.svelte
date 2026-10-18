@@ -930,6 +930,7 @@
     overlays.pressed(event)
     used(event.target)
   }}
+  onclickcapture={(event: MouseEvent) => overlays.clicked(event)}
   onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}

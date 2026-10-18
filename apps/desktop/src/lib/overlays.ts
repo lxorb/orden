@@ -18,6 +18,15 @@
  *  close it, and a press in a popup opened over it - a submenu, a list - closes
  *  neither. A sheet says nothing of the kind, and is closed by its own scrim.
  *
+ *  **And the press that closed one does not open it again.** A popup that lays a catch
+ *  over the window to take the press past it - the list of spaces does - is closed on
+ *  that press's way down, and the catch goes with it. On a screen the click a tap makes
+ *  is aimed at where the finger was, after the catch has gone, so it reached the button
+ *  under it - the one that opened the popup - and opened it again: a second tap on the
+ *  space switcher never closed it on a phone (#411). A mouse's click goes to what both
+ *  halves of the press were over, and never did. So the click after a press that closed
+ *  a popup is spent where it lands on what that popup held. See `clicked`.
+ *
  *  **Only what is drawn over the note belongs here**, because the stack also decides
  *  whether a web page, a native webview, must hide. Full screen wants Escape and is
  *  a mode, so it is in `onKeydown` in App.svelte; see overlays.test.ts. */
@@ -45,6 +54,9 @@ interface Press {
 
 class Overlays {
   private readonly stack: Open[] = []
+
+  /** What the popups the last press closed held, until that press's click is read. */
+  private shutBy: Holds[] = []
 
   /** Who wants to hear that the stack changed.
    *
@@ -100,14 +112,30 @@ class Overlays {
    *  and one that waited behind a long task carries a time from before a popup that
    *  opened in the meantime, which its time would read as the press that opened it. */
   pressed(press: Pointed) {
-    const target = typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
+    this.shutBy = []
+    const target = nodeOf(press)
 
     for (let at = this.stack.length - 1; at >= 0; at--) {
       const one = this.stack[at]
       if (!one?.holds) return
       if (target && one.holds().some((held) => held?.contains(target))) return
+      this.shutBy.push(one.holds)
       this.shut(one)
     }
+  }
+
+  /** The click a press goes on to make, read on its way down. Where the press closed a
+   *  popup and the click lands on what that popup held - the button that opened it - it
+   *  is spent, so the press that closed it does not open it again (#411). Any other
+   *  click, and every click after the next press, is left alone. */
+  clicked(click: Pointed & Press) {
+    const shut = this.shutBy
+    this.shutBy = []
+    const target = nodeOf(click)
+    if (!target || !shut.some((holds) => holds().some((held) => held?.contains(target)))) return
+
+    click.preventDefault()
+    click.stopImmediatePropagation()
   }
 
   /** The window lost the focus: to another window, or to a web page, which is the one
@@ -145,6 +173,11 @@ class Overlays {
     top.close()
     return true
   }
+}
+
+/** What a press landed on, where it is a node at all. */
+function nodeOf(press: Pointed): Node | null {
+  return typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
 }
 
 export const overlays = new Overlays()
