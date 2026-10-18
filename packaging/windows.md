@@ -47,6 +47,13 @@ publishes Orden as `nib` in both:
   `orden.nuspec` under the id `nib`, without the paragraph that says `nib` is the road to
   `orden`. Neither `orden` nor the deprecation is pushed.
 
+Measured on 2026-10-18 (a throwaway workflow on `windows-latest`, Windows PowerShell
+5.1.26100, run 39123041351): `Remove-Item -Force -Recurse` on the junction removed the link
+and left its target alone, and both `scoop update nib` (which ran 0.15.0's uninstaller) and
+`scoop uninstall nib` kept what was in the persist folder. So the first risk below did not
+show on a current Windows. It is kept as a risk for older Windows 10 builds until one is
+tried, and Chocolatey's is unchanged.
+
 Two things stand in the way of the rename:
 
 - **Scoop's `nib` 0.15.0 uninstaller** is `Remove-Item "$env:APPDATA\ch.emilvinu.nib"
