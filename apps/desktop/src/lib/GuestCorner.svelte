@@ -9,9 +9,9 @@
    *  the canvas's bar is at the foot, and the carets held at a note's edge are at the
    *  start. See docs/sharing.md.
    *
-   *  A press outside it shuts it and the press that opened it does not, the way a menu
-   *  is shut (`shutBy` in menu.svelte.ts); Escape shuts it as it shuts every layer
-   *  (overlays.ts), and back does on a phone. */
+   *  A press outside it shuts it and the press that opened it does not, Escape shuts it
+   *  and so does the window losing the focus, as every popup is shut (overlays.ts); and
+   *  back does on a phone. */
 
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -31,16 +31,13 @@
   let corner = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
 
-  /** When it opened, on the clock a press's own `timeStamp` is read from; see `openedAt`
-   *  in menu.svelte.ts. */
-  let openedAt = 0
-
   const name = $derived(account.guest?.name ?? '')
   /** The colour this device's caret is drawn in for everybody else; see rooms/who.ts. */
   const fill = $derived(accentColour(deviceAccent(), theme.current))
 
   $effect(() => closeOnBack(open, shut))
-  $effect(() => (open ? overlays.show(shut) : undefined))
+  // Its button and what it opens are its own: a press anywhere else shuts it.
+  $effect(() => (open ? overlays.show(shut, () => [corner]) : undefined))
 
   // The name is what there is to do here, so a keyboard lands in it. Not under a finger,
   // where it would put the keyboard over the file for somebody who came to sign in.
@@ -51,18 +48,10 @@
   function toggle() {
     open = !open
     error = null
-    if (open) openedAt = performance.now()
   }
 
   function shut() {
     open = false
-  }
-
-  /** A press aimed past it, which is every press but the one that opened it. */
-  function shutBy(event: MouseEvent) {
-    if (!open || event.timeStamp <= openedAt) return
-    if (event.target instanceof Node && corner?.contains(event.target)) return
-    shut()
   }
 
   /** Written when the field is left or Enter is pressed, as every field in the settings
@@ -84,8 +73,6 @@
     account.open = true
   }
 </script>
-
-<svelte:window onclick={shutBy} />
 
 <div class="guest-corner" bind:this={corner}>
   <button
