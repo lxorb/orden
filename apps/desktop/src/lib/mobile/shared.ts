@@ -108,7 +108,7 @@ export function isPicture(item: SharedItem): boolean {
 }
 
 /** Whether this is a PDF, by what the sender said or by what it is called. */
-export function isPaper(item: SharedItem): boolean {
+function isPaper(item: SharedItem): boolean {
   if (item.text !== null) return false
   return item.mime === 'application/pdf' || /\.pdf$/i.test(item.name)
 }
