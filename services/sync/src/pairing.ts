@@ -1,5 +1,5 @@
 /** The account's half of letting a device in by six digits, the one way the AI vault
- *  (ai/vault.ts) and web logins (hub/keys.ts) both check it: the asking device committed to
+ *  (ai/vault.ts) checks it: the asking device committed to
  *  its key and a nonce before anybody answered, and what it reveals has to be what it
  *  committed to. The devices' half, and why the steps are what they are, is
  *  apps/desktop/src/lib/pairing.ts. */
