@@ -10,6 +10,9 @@ In the built app, in a space of nib's own:
     deadline said under it in the danger tone, and the panel's Today count turns red.
   * A date picked for a task with none is written as `🛫`; one picked for an old `📅`
     moves that `📅` in place.
+  * With Settings' "Show todos without a start date in Today" on, a task with no start
+    date is in Today, the open tab and the panel's count alike, and one whose start is
+    still to come is not; off, which is where it starts, it is out again (#408).
 
 A vault's `📅`, which is a deadline, is the rows' and the editor's unit tests: the web
 app this drives has no `.obsidian` to find.
@@ -62,6 +65,12 @@ WRITE = """async ([files]) => {
 }"""
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
+
+TODAY_COUNT = """() => {
+  const today = [...document.querySelectorAll('.tasks .nib-row')]
+    .find((one) => one.querySelector('.nib-row-label')?.textContent.trim() === 'Today')
+  return Number(today?.querySelector('.nib-row-meta')?.textContent.trim() ?? 0)
+}"""
 
 
 def words_in(page: Page, selector: str = ".view-tab .task .words") -> list[str]:
@@ -161,6 +170,44 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
     if not page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')"):
         wrong("Today's count is not in the danger tone while a deadline has passed")
+
+    # ── The tasks with no start date, by the setting ─────────────────
+    open_builtin(page, "today")
+    if page.evaluate("window.nibApp.modes.undatedInToday"):
+        wrong("Today starts out holding the tasks with no start date")
+    counted = page.evaluate(TODAY_COUNT)
+    page.evaluate("window.nibApp.modes.setUndatedInToday(true)")
+    DRIVE.waited(
+        page,
+        "() => [...document.querySelectorAll('.view-tab .task .words')]"
+        ".some((one) => one.textContent.trim() === 'Undated')",
+        "the open Today to take the task with no start date",
+        10,
+    )
+    quiet(page)
+    undated = words_in(page)
+    say(f"[today, with the undated] {json.dumps(undated)}")
+    for wanted in ("Undated", "Inbox now", "Old date", "Late deadline"):
+        if wanted not in undated:
+            wrong(f"Today with the setting on does not hold {wanted!r}")
+    for unwanted in ("Not yet", "Inbox later"):
+        if unwanted in undated:
+            wrong(f"Today with the setting on holds {unwanted!r}, whose start is still to come")
+    on_count = page.evaluate(TODAY_COUNT)
+    say(f"[today's count] {counted} off, {on_count} on")
+    if on_count != counted + 2:
+        wrong(f"the panel's Today count went from {counted} to {on_count}, not up by the two undated")
+    DRIVE.shot(page, "03-today-undated")
+    page.evaluate("window.nibApp.modes.setUndatedInToday(false)")
+    DRIVE.waited(
+        page,
+        "() => ![...document.querySelectorAll('.view-tab .task .words')]"
+        ".some((one) => one.textContent.trim() === 'Undated')",
+        "the open Today to let the task with no start date go",
+        10,
+    )
+    if page.evaluate(TODAY_COUNT) != counted:
+        wrong("the panel's Today count did not come back with the setting off")
 
     # ── A date picked ────────────────────────────────────────────────
     open_builtin(page, "today")
