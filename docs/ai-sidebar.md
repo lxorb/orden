@@ -55,7 +55,7 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
    has a row in section 3: the nib command it is, or why it has none. `/goal`, `/compact`,
    `/btw`, `/rewind`, `/plan`, `/review` and the rest work the same whoever answers; where a
    CLI has the command itself, nib hands it through, and where not, nib does it.
-9. **Threads are kept, searchable, branchable**: per space, on this device, never synced,
+9. **Threads are kept, searchable, branchable**: one list across spaces, on this device, never synced,
    exported to a note on demand.
 10. **Keyboard first, quiet, fast.** Everything above has a key; the panel is lazy and out of
     the first paint; the only words on screen are the model's.
@@ -441,7 +441,7 @@ in October 2026 (openai.chatgpt 26.5930, its docs and its issues: [codex-ide], [
 | --- | --- |
 | History, Settings and New chat in the view's title | the side's own row: New chat (hidden while the thread is empty) and Chats; Settings › AI stays where every setting is |
 | Back and the chat's title in a chat | the same at a side: Back to the home, the title's menu (rename, follow, branch, save, open in new tab, archive, delete) |
-| the home: "Chats", three recent chats, View all (N), no greeting | the same: the space's three latest threads with their age, a ring on one still at work, Show all and the count to the list |
+| the home: "Chats", three recent chats, View all (N), no greeting | the same: the three latest threads with their age, a ring on one still at work, Show all and the count to the list |
 | the task history: search, newest first, how long ago | the list in the conversation's place (a tab's rail down its left): search, newest first with the age at the end, "..." for Rename, Archive, Delete, Archived last |
 | the composer at the foot from the start, a rounded card the conversation fades under | the same |
 | its row: "+", permissions, the context donut, model and effort, send / stop / queue | "+" (files, web search, dictation, `@`, `/`), the mode (its mark and name; the mark alone on a narrow side), the context ring, the model and effort, one round button: the arrow, the stop while an answer arrives with an empty field, dictation's stop while it listens |
@@ -816,8 +816,16 @@ from there (and that the cache starts again where it does).
 
 ### 4.11 Threads
 
-- **Per space**, as the Ask panel's conversation is today; an answer arriving lands in the
-  space it was asked in. Kept on this device, under the app's data folder by the crate
+- **One list, every space's** (#332, Emil 2026-10-13: _"They should stay the same across
+  spaces: one list of chats, and the open chat stays open when the space changes"_).
+  Switching space changes nothing in the panel: the open thread, where it is scrolled to
+  and what is typed in the field all stay. A thread is still kept in, and works in, the
+  space it was started in - its notes, its `AGENTS.md`, its files - so an answer on its way
+  lands where it was asked and nothing moves under a running turn; a new thread starts in
+  the space in front, and one nothing has been sent in yet moves with the reader. The
+  threads each space kept before are all in the list (`listEveryThread` in
+  `chat/threads.ts`), and the thread open last opens, whichever space it is in. Kept on
+  this device, under the app's data folder by the crate, one folder a space
   (`localStorage` is too small for a history), never synced, never in a note unless
   exported; deleted with `/delete`, and all of a space's with the space.
 - **The list** (◷, or **Ctrl+Shift+A** twice): newest first, title and how long ago; typing
@@ -1126,7 +1134,7 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
 | File | What it owns |
 | --- | --- |
 | `ChatPanel.svelte` | The panel in Ask's slot: the title and its menu, the conversation or the list, the foot |
-| `chat.svelte.ts` | The state: the space's threads, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
+| `chat.svelte.ts` | The state: every space's threads as one list, the open one as a copy made once a frame, the running ones, the queue, steering, every control's action |
 | `Conversation.svelte`, `Reply.svelte`, `PartRow.svelte`, `Explored.svelte`, `StepLine.svelte`, `steps.ts` | The home, messages, answers with Ask's citations, the steps (folded thinking, tool rows, reads as one Explored step) and their fold into Worked for, notices, and a question's row (`review/Approval.svelte`: Approve, Always, Deny) |
 | `Composer.svelte`, `Queue.svelte`, `Suggest.svelte` | The chips, the field and its keys, the queue, the `@` and `/` list |
 | `ModelPicker.svelte`, `Ring.svelte`, `ring.ts` | The model chip and its popover; the context ring and its tray |
