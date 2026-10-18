@@ -174,6 +174,25 @@ WEBKIT_CLIPBOARD = (
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
+#: The one error an engine reports that is not the app's: a resize observer whose
+#: callback changed the size of what it watches has the rest delivered on the next
+#: frame, and the engine says so on the window. WebKit hands it to Playwright as an
+#: uncaught page error and Chromium does not, so in WebKit drives went red on it
+#: (#384). The app treats it the same way: said once and not counted (`RESIZE_LOOP` in
+#: src/lib/log.ts). Matched on its exact words, so nothing else is let through.
+HARMLESS = (
+    "ResizeObserver loop completed with undelivered notifications.",
+    "ResizeObserver loop limit exceeded",
+)
+
+
+def harmless(error: Any) -> bool:
+    """Whether a page error is the engine's notice about a resize observer, which is
+    not a failure of the app's; see `HARMLESS`."""
+    said = str(getattr(error, "message", None) or error).strip()
+    return said.startswith(HARMLESS)
+
+
 #: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
 #: is, or with `NIB_ENGINE=webkit` its WebKit, which is what a Mac, an iPhone and
 #: Linux run the app in. Every drive runs on either; one whose question only Chromium
@@ -447,6 +466,29 @@ def _press_as_a_mac() -> None:
 
 if WEBKIT:
     _press_as_a_mac()
+
+
+def _hear_no_harmless() -> None:
+    """Every `pageerror` listener a drive adds hears nothing `harmless` lets through:
+    one place for every drive, most of which listen for page errors themselves rather
+    than through `Drive.page`, and for every page however it was made."""
+    from playwright.sync_api import Page
+
+    listen = Page.on
+
+    def on(self: Any, event: str, handler: Any) -> Any:
+        if event == "pageerror":
+            heard = handler
+
+            def handler(error: Any) -> Any:
+                return None if harmless(error) else heard(error)
+
+        return listen(self, event, handler)
+
+    Page.on = on  # type: ignore[method-assign]
+
+
+_hear_no_harmless()
 
 
 # ---------------------------------------------------------------------- the build
