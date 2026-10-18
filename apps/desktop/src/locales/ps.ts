@@ -115,8 +115,6 @@ export const ps: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'لارښوونې',
   'Silent mode': 'چوپ حالت',
-  'Sign in to keep your notes safe and on every device.':
-    'ننوځئ چې ستاسو یادښتونه خوندي او په هر وسیله کې وي.',
   'See how your notes connect.': 'وګورئ چې ستاسو یادښتونه څنګه سره تړلي دي.',
   'Press {key} to find anything, notes and commands alike.':
     'د هر څه موندلو لپاره، یادښتونه او امرونه، {key} کېکاږئ.',

@@ -117,8 +117,6 @@ export const fr: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Astuces',
   'Silent mode': 'Mode silencieux',
-  'Sign in to keep your notes safe and on every device.':
-    'Connectez-vous pour garder vos notes en sécurité et sur tous vos appareils.',
   'See how your notes connect.': 'Voyez comment vos notes sont reliées.',
   'Press {key} to find anything, notes and commands alike.':
     'Appuyez sur {key} pour tout trouver, notes comme commandes.',

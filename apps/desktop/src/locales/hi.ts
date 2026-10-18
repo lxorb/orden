@@ -115,8 +115,6 @@ export const hi: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'संकेत',
   'Silent mode': 'मौन मोड',
-  'Sign in to keep your notes safe and on every device.':
-    'अपने नोट सुरक्षित और हर डिवाइस पर रखने के लिए साइन इन करें।',
   'See how your notes connect.': 'देखें कि आपके नोट कैसे जुड़े हैं।',
   'Press {key} to find anything, notes and commands alike.':
     'नोट और कमांड, कुछ भी खोजने के लिए {key} दबाएँ।',

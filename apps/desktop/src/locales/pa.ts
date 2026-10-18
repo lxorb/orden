@@ -115,8 +115,6 @@ export const pa: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ਸੰਕੇਤ',
   'Silent mode': 'ਚੁੱਪ ਮੋਡ',
-  'Sign in to keep your notes safe and on every device.':
-    'ਆਪਣੇ ਨੋਟ ਸੁਰੱਖਿਅਤ ਅਤੇ ਹਰ ਡਿਵਾਈਸ ਉੱਤੇ ਰੱਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'See how your notes connect.': 'ਦੇਖੋ ਤੁਹਾਡੇ ਨੋਟ ਕਿਵੇਂ ਜੁੜੇ ਹਨ।',
   'Press {key} to find anything, notes and commands alike.':
     'ਨੋਟ ਅਤੇ ਕਮਾਂਡਾਂ, ਕੁਝ ਵੀ ਲੱਭਣ ਲਈ {key} ਦਬਾਓ।',

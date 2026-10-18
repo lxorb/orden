@@ -116,8 +116,6 @@ export const gsw: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Hiwiis',
   'Silent mode': 'Ruemodus',
-  'Sign in to keep your notes safe and on every device.':
-    'Mäld di aa, dass dini Notize sicher und uf jedem Grät sind.',
   'See how your notes connect.': 'Lueg, wie dini Notize zämehanged.',
   'Press {key} to find anything, notes and commands alike.':
     'Drück {key}, zum alles finde, Notize wie Befähl.',

@@ -1034,9 +1034,15 @@ beside the control it lives behind, the way Google Docs and Notion point at thei
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
 put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
-off out of the box, an account setting). There are three, in order: signing in, the
-graph, and the palette's keys. The store is `hints.svelte.ts`, the card
-`HintCard.svelte`, and both are fetched through a door, since no launch draws one.
+off out of the box, an account setting). There are two, in order: the graph, and the
+palette's keys. The store is `hints.svelte.ts`, the card `HintCard.svelte`, and both
+are fetched through a door, since no launch draws one.
+
+A hint points at a feature or a key, never at an account. Nothing unasked tells
+somebody to sign in, make an account or turn on syncing (#415): signing in is the
+account row at the foot of the panel, Settings > Account, Sign in in the Help menu and
+the palette, and, for a guest, their corner. The web app's download button in the
+panel's foot is a control, not a card, and stays.
 
 ### Section labels
 

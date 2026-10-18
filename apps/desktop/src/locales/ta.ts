@@ -116,8 +116,6 @@ export const ta: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'குறிப்புகள்',
   'Silent mode': 'அமைதி பயன்முறை',
-  'Sign in to keep your notes safe and on every device.':
-    'உங்கள் குறிப்புகள் பாதுகாப்பாகவும் எல்லா சாதனங்களிலும் இருக்க உள்நுழையவும்.',
   'See how your notes connect.': 'உங்கள் குறிப்புகள் எப்படி இணைந்துள்ளன என்று பாருங்கள்.',
   'Press {key} to find anything, notes and commands alike.':
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',

@@ -116,8 +116,6 @@ export const tr: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'İpuçları',
   'Silent mode': 'Sessiz mod',
-  'Sign in to keep your notes safe and on every device.':
-    'Notlarınızı güvende ve her cihazda tutmak için oturum açın.',
   'See how your notes connect.': 'Notlarınızın nasıl bağlandığını görün.',
   'Press {key} to find anything, notes and commands alike.':
     'Notlar ve komutlar, her şeyi bulmak için {key} tuşlarına basın.',

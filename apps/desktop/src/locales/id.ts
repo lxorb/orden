@@ -112,8 +112,6 @@ export const id: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Petunjuk',
   'Silent mode': 'Mode senyap',
-  'Sign in to keep your notes safe and on every device.':
-    'Masuk agar catatan Anda aman dan ada di setiap perangkat.',
   'See how your notes connect.': 'Lihat bagaimana catatan Anda saling terhubung.',
   'Press {key} to find anything, notes and commands alike.':
     'Tekan {key} untuk menemukan apa saja, catatan maupun perintah.',

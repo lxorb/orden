@@ -112,8 +112,6 @@ export const vi: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Gợi ý',
   'Silent mode': 'Chế độ im lặng',
-  'Sign in to keep your notes safe and on every device.':
-    'Đăng nhập để giữ ghi chú an toàn và có trên mọi thiết bị.',
   'See how your notes connect.': 'Xem các ghi chú của bạn liên kết với nhau thế nào.',
   'Press {key} to find anything, notes and commands alike.':
     'Nhấn {key} để tìm mọi thứ, cả ghi chú lẫn lệnh.',

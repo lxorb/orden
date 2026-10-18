@@ -112,8 +112,6 @@ export const my: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'အကြံပြုချက်များ',
   'Silent mode': 'တိတ်ဆိတ်မုဒ်',
-  'Sign in to keep your notes safe and on every device.':
-    'သင့်မှတ်စုများ လုံခြုံပြီး စက်တိုင်းတွင် ရှိနေစေရန် အကောင့်ဝင်ပါ။',
   'See how your notes connect.': 'သင့်မှတ်စုများ မည်သို့ ချိတ်ဆက်ထားသည်ကို ကြည့်ပါ။',
   'Press {key} to find anything, notes and commands alike.':
     'မှတ်စုနှင့် အမိန့်များ အားလုံးကို ရှာရန် {key} ကိုနှိပ်ပါ။',

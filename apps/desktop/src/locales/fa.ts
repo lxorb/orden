@@ -115,8 +115,6 @@ export const fa: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'راهنماها',
   'Silent mode': 'حالت بی‌صدا',
-  'Sign in to keep your notes safe and on every device.':
-    'وارد شوید تا یادداشت‌هایتان امن و روی همه دستگاه‌ها باشند.',
   'See how your notes connect.': 'ببینید یادداشت‌هایتان چگونه به هم پیوسته‌اند.',
   'Press {key} to find anything, notes and commands alike.':
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',

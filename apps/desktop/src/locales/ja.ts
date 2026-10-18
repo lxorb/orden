@@ -112,8 +112,6 @@ export const ja: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ヒント',
   'Silent mode': 'サイレントモード',
-  'Sign in to keep your notes safe and on every device.':
-    'サインインすると、ノートを安全に保ち、すべてのデバイスで使えます。',
   'See how your notes connect.': 'ノート同士のつながりを見る。',
   'Press {key} to find anything, notes and commands alike.':
     '{key} を押すと、ノートもコマンドも何でも探せます。',
