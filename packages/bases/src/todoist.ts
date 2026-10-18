@@ -80,7 +80,9 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     case 'od':
     case 'überfällig':
     case 'ueberfaellig':
-      return 'task.date < today() || (task.date == today() && task.time && task.time < now().format("HH:mm"))'
+      // Only a deadline makes a task late; a start date past is a task that can be done
+      // (#371, `@nib/markdown/task-dates`).
+      return 'task.deadline < today()'
     case 'no date':
     case 'kein datum':
     case 'ohne datum':
@@ -138,7 +140,8 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     const value = (keyed[2] ?? '').trim()
     const field = /^(date|datum|due|fällig)( before| after| vor| nach)?$/.exec(key)
     if (field) {
-      const which = field[1] === 'due' || field[1] === 'fällig' ? 'task.due' : 'task.date'
+      // Todoist's due date is its date, which here is the day a task starts.
+      const which = 'task.date'
       const op = !field[2] ? '==' : /before|vor/.test(field[2]) ? '<' : '>'
       return onDate(which, op, value, options, at)
     }

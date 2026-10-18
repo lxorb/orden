@@ -3,7 +3,11 @@
  *  engine answers it like any other and "Copy to a base" writes it as a `.base`
  *  file the reader then changes. Group keys are values, never words: Today groups
  *  by whether a task is overdue, and the view says "Overdue" in the reader's
- *  language. */
+ *  language.
+ *
+ *  A task whose start date has not come is in none of them but Upcoming, which is where
+ *  the days ahead are, and a project's own list, which is its note; and only a deadline
+ *  makes a task overdue (#371, `@nib/markdown/task-dates`). */
 
 import type { Base, Filter, View } from './types'
 
@@ -44,7 +48,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
     case 'inbox': {
       const inboxes = params.inboxes ?? []
       const filters: Filter = inboxes.length
-        ? { or: inboxes.map((one) => inNote(one.space, one.path)) }
+        ? { and: ['task.started', { or: inboxes.map((one) => inNote(one.space, one.path)) }] }
         : 'false'
       return base({
         type: 'list',
@@ -59,23 +63,27 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         {
           type: 'list',
           name: 'Today',
-          filters: { and: ['task.started', 'task.due <= today() || task.scheduled <= today()'] },
+          // Everything that can be worked on now: a start date come, or a day planned or
+          // due by today. A start date that has come stays in Today until done.
+          filters: { and: ['task.started', 'task.date <= today() || task.deadline <= today()'] },
           sort: [
             { property: 'task.priority', direction: 'ASC' },
             { property: 'task.time', direction: 'ASC' },
           ],
           groupBy: { property: 'formula.overdue', direction: 'DESC' },
         },
-        { overdue: 'task.due < today() || task.scheduled < today()' },
+        { overdue: 'task.deadline < today()' },
       )
     case 'upcoming':
       // Todoist's Upcoming: what is overdue on top, then every day from today on. The
       // days are in the order the rows' dates put them, which puts the overdue first.
+      // A task waiting for its start date is here, on that day; one already started is
+      // on today, since that is when it can be done.
       return base(
         {
           type: 'list',
           name: 'Upcoming',
-          filters: { and: ['task.started', 'task.date'] },
+          filters: 'task.date',
           sort: [
             { property: 'task.date', direction: 'ASC' },
             { property: 'task.time', direction: 'ASC' },
@@ -84,7 +92,9 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
           groupBy: { property: 'formula.day', direction: 'ASC' },
           nib: { rows: 'tasks', groupOrder: 'rows', kept: {} },
         },
-        { day: 'if(task.date < today(), "overdue", task.date)' },
+        {
+          day: 'if(task.deadline < today(), "overdue", if(task.date < today(), today(), task.date))',
+        },
       )
     case 'logbook':
       return base(
@@ -114,7 +124,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
       return base({
         type: 'list',
         name: `#${params.tag ?? ''}`,
-        filters: `if(task, task.hasTag(${tag}), file.hasTag(${tag}))`,
+        filters: `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`,
         sort: [],
         groupBy: { property: 'file.basename', direction: 'ASC' },
         nib: { rows: 'both', kept: {} },
@@ -124,7 +134,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
       return base({
         type: 'list',
         name: 'Assigned to me',
-        filters: 'task.mine',
+        filters: 'task.mine && task.started',
         sort: [
           { property: 'task.date', direction: 'ASC' },
           { property: 'task.priority', direction: 'ASC' },

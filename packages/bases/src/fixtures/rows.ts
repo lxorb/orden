@@ -46,7 +46,7 @@ export function taskRow(
   path: string,
   line: string,
   at = 0,
-  more: Partial<Pick<TaskRow, 'section' | 'parent' | 'indent'>> & {
+  more: Partial<Pick<TaskRow, 'section' | 'parent' | 'indent' | 'dueReads'>> & {
     space?: string
     note?: Record<string, Value>
   } = {},
@@ -55,6 +55,7 @@ export function taskRow(
   if (!fields) throw new Error(`not a task: ${line}`)
   const task: TaskRow = { ...fields, section: more.section ?? [], indent: more.indent ?? 0 }
   if (more.parent !== undefined) task.parent = more.parent
+  if (more.dueReads !== undefined) task.dueReads = more.dueReads
   return {
     kind: 'task',
     space: more.space ?? 'Notes',

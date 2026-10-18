@@ -36,6 +36,8 @@ export interface Chip {
 
 /** The fields quick add writes. */
 export interface QuickFields {
+  /** The day the words or the picker say: a task's date, which is written as its start
+   *  date, `🛫` (#371, `@nib/markdown/task-dates`). Its deadline is `deadline`. */
   due?: string
   time?: string
   recurrence?: string
