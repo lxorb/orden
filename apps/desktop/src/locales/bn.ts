@@ -119,6 +119,7 @@ export const bn: Dictionary = {
   '{count} h': '{count} ঘণ্টা',
   Inbox: 'ইনবক্স',
   Date: 'তারিখ',
+  'Start date': 'শুরুর তারিখ',
   Priority: 'অগ্রাধিকার',
   Reminder: 'অনুস্মারক',
   Duration: 'সময়কাল',

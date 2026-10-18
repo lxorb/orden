@@ -81,7 +81,7 @@ const FIELD_NAMES: Record<string, string> = {
   'task.status': key('Status'),
   'task.done': key('Done'),
   'task.due': key('Due'),
-  'task.date': key('Date'),
+  'task.date': key('Start date'),
   'task.scheduled': key('Scheduled'),
   'task.start': key('Start'),
   'task.deadline': key('Deadline'),

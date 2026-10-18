@@ -119,6 +119,7 @@ export const ms: Dictionary = {
   '{count} h': '{count} j',
   Inbox: 'Peti masuk',
   Date: 'Tarikh',
+  'Start date': 'Tarikh mula',
   Priority: 'Keutamaan',
   Reminder: 'Peringatan',
   Duration: 'Tempoh',

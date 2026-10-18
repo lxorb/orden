@@ -120,6 +120,7 @@ export const tr: Dictionary = {
   '{count} h': '{count} sa',
   Inbox: 'Gelen kutusu',
   Date: 'Tarih',
+  'Start date': 'Başlangıç tarihi',
   Priority: 'Öncelik',
   Reminder: 'Hatırlatıcı',
   Duration: 'Süre',

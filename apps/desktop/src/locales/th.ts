@@ -119,6 +119,7 @@ export const th: Dictionary = {
   '{count} h': '{count} ชม.',
   Inbox: 'กล่องรับเข้า',
   Date: 'วันที่',
+  'Start date': 'วันที่เริ่ม',
   Priority: 'ความสำคัญ',
   Reminder: 'การเตือน',
   Duration: 'ระยะเวลา',

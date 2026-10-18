@@ -119,6 +119,7 @@ export const pa: Dictionary = {
   '{count} h': '{count} ਘੰ',
   Inbox: 'ਇਨਬਾਕਸ',
   Date: 'ਤਾਰੀਖ',
+  'Start date': 'ਸ਼ੁਰੂਆਤ ਦੀ ਤਾਰੀਖ',
   Priority: 'ਤਰਜੀਹ',
   Reminder: 'ਯਾਦ-ਸੂਚਨਾ',
   Duration: 'ਮਿਆਦ',

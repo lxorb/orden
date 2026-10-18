@@ -120,6 +120,7 @@ export const te: Dictionary = {
   '{count} h': '{count} గం',
   Inbox: 'ఇన్‌బాక్స్',
   Date: 'తేదీ',
+  'Start date': 'ప్రారంభ తేదీ',
   Priority: 'ప్రాధాన్యత',
   Reminder: 'రిమైండర్',
   Duration: 'వ్యవధి',

@@ -552,7 +552,7 @@
         class="control"
         class:set={fields.due !== undefined}
         onclick={askDay}
-        aria-label={fields.due === undefined ? t('Date') : undefined}
+        aria-label={fields.due === undefined ? t('Start date') : undefined}
       >
         <Glyph icon={fields.recurrence ? Repeat : Calendar} />
         {#if fields.due !== undefined}<span>{dayWords(fields.due, today, fields.time)}</span>{/if}

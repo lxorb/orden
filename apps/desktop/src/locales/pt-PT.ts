@@ -120,6 +120,7 @@ export const ptPT: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Caixa de entrada',
   Date: 'Data',
+  'Start date': 'Data de início',
   Priority: 'Prioridade',
   Reminder: 'Lembrete',
   Duration: 'Duração',

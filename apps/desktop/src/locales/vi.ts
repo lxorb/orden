@@ -119,6 +119,7 @@ export const vi: Dictionary = {
   '{count} h': '{count} giờ',
   Inbox: 'Hộp thư đến',
   Date: 'Ngày',
+  'Start date': 'Ngày bắt đầu',
   Priority: 'Ưu tiên',
   Reminder: 'Lời nhắc',
   Duration: 'Thời lượng',

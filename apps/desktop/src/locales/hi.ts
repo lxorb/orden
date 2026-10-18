@@ -119,6 +119,7 @@ export const hi: Dictionary = {
   '{count} h': '{count} घं',
   Inbox: 'इनबॉक्स',
   Date: 'तारीख',
+  'Start date': 'शुरुआत की तारीख',
   Priority: 'प्राथमिकता',
   Reminder: 'रिमाइंडर',
   Duration: 'अवधि',

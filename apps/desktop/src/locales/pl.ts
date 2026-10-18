@@ -120,6 +120,7 @@ export const pl: Dictionary = {
   '{count} h': '{count} godz.',
   Inbox: 'Skrzynka odbiorcza',
   Date: 'Data',
+  'Start date': 'Data rozpoczęcia',
   Priority: 'Priorytet',
   Reminder: 'Przypomnienie',
   Duration: 'Czas trwania',

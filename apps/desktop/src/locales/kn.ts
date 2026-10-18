@@ -120,6 +120,7 @@ export const kn: Dictionary = {
   '{count} h': '{count} ಗಂ',
   Inbox: 'ಇನ್‌ಬಾಕ್ಸ್',
   Date: 'ದಿನಾಂಕ',
+  'Start date': 'ಆರಂಭದ ದಿನಾಂಕ',
   Priority: 'ಆದ್ಯತೆ',
   Reminder: 'ಜ್ಞಾಪನೆ',
   Duration: 'ಅವಧಿ',

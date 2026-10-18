@@ -120,6 +120,7 @@ export const ml: Dictionary = {
   '{count} h': '{count} മണി',
   Inbox: 'ഇൻബോക്സ്',
   Date: 'തീയതി',
+  'Start date': 'ആരംഭ തീയതി',
   Priority: 'മുൻഗണന',
   Reminder: 'ഓർമ്മപ്പെടുത്തൽ',
   Duration: 'ദൈർഘ്യം',

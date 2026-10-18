@@ -119,6 +119,7 @@ export const zhHant: Dictionary = {
   '{count} h': '{count}小時',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先順序',
   Reminder: '提醒',
   Duration: '所需時間',

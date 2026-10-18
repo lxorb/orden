@@ -119,6 +119,7 @@ export const ps: Dictionary = {
   '{count} h': '{count} ساعته',
   Inbox: 'راغلي',
   Date: 'نېټه',
+  'Start date': 'د پیل نېټه',
   Priority: 'لومړیتوب',
   Reminder: 'یادونه',
   Duration: 'موده',

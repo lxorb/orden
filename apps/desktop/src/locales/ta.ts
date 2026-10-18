@@ -120,6 +120,7 @@ export const ta: Dictionary = {
   '{count} h': '{count} மணி',
   Inbox: 'இன்பாக்ஸ்',
   Date: 'தேதி',
+  'Start date': 'தொடக்கத் தேதி',
   Priority: 'முன்னுரிமை',
   Reminder: 'நினைவூட்டல்',
   Duration: 'கால அளவு',

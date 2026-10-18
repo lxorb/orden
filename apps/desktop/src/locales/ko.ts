@@ -119,6 +119,7 @@ export const ko: Dictionary = {
   '{count} h': '{count}시간',
   Inbox: '받은 편지함',
   Date: '날짜',
+  'Start date': '시작일',
   Priority: '우선순위',
   Reminder: '알림',
   Duration: '소요 시간',

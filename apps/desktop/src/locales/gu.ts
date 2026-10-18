@@ -119,6 +119,7 @@ export const gu: Dictionary = {
   '{count} h': '{count} કલાક',
   Inbox: 'ઇનબૉક્સ',
   Date: 'તારીખ',
+  'Start date': 'શરૂઆતની તારીખ',
   Priority: 'પ્રાથમિકતા',
   Reminder: 'રિમાઇન્ડર',
   Duration: 'અવધિ',

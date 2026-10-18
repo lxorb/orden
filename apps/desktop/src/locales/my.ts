@@ -119,6 +119,7 @@ export const my: Dictionary = {
   '{count} h': '{count} နာရီ',
   Inbox: 'ဝင်စာပုံး',
   Date: 'ရက်စွဲ',
+  'Start date': 'စတင်ရက်',
   Priority: 'ဦးစားပေး',
   Reminder: 'သတိပေးချက်',
   Duration: 'ကြာချိန်',

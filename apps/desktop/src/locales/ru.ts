@@ -120,6 +120,7 @@ export const ru: Dictionary = {
   '{count} h': '{count} ч',
   Inbox: 'Входящие',
   Date: 'Дата',
+  'Start date': 'Дата начала',
   Priority: 'Приоритет',
   Reminder: 'Напоминание',
   Duration: 'Длительность',

@@ -119,6 +119,7 @@ export const jv: Dictionary = {
   '{count} h': '{count} jam',
   Inbox: 'Kothak mlebu',
   Date: 'Tanggal',
+  'Start date': 'Tanggal wiwitan',
   Priority: 'Prioritas',
   Reminder: 'Pangeling',
   Duration: 'Suwene',

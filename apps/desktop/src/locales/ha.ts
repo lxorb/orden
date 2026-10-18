@@ -120,6 +120,7 @@ export const ha: Dictionary = {
   '{count} h': '{count} awa',
   Inbox: 'Akwatin saƙo',
   Date: 'Kwanan wata',
+  'Start date': 'Ranar farawa',
   Priority: 'Fifiko',
   Reminder: 'Tunatarwa',
   Duration: 'Tsawon lokaci',

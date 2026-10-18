@@ -119,6 +119,7 @@ export const id: Dictionary = {
   '{count} h': '{count} j',
   Inbox: 'Kotak masuk',
   Date: 'Tanggal',
+  'Start date': 'Tanggal mulai',
   Priority: 'Prioritas',
   Reminder: 'Pengingat',
   Duration: 'Durasi',

@@ -119,6 +119,7 @@ export const fa: Dictionary = {
   '{count} h': '{count} ساعت',
   Inbox: 'صندوق ورودی',
   Date: 'تاریخ',
+  'Start date': 'تاریخ شروع',
   Priority: 'اولویت',
   Reminder: 'یادآوری',
   Duration: 'مدت',

@@ -119,6 +119,7 @@ export const zhHans: Dictionary = {
   '{count} h': '{count}小时',
   Inbox: '收件箱',
   Date: '日期',
+  'Start date': '开始日期',
   Priority: '优先级',
   Reminder: '提醒',
   Duration: '时长',

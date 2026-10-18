@@ -120,6 +120,7 @@ export const uk: Dictionary = {
   '{count} h': '{count} год',
   Inbox: 'Вхідні',
   Date: 'Дата',
+  'Start date': 'Дата початку',
   Priority: 'Пріоритет',
   Reminder: 'Нагадування',
   Duration: 'Тривалість',

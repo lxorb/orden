@@ -120,6 +120,7 @@ export const es: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Bandeja de entrada',
   Date: 'Fecha',
+  'Start date': 'Fecha de inicio',
   Priority: 'Prioridad',
   Reminder: 'Recordatorio',
   Duration: 'Duración',

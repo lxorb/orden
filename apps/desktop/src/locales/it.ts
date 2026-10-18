@@ -120,6 +120,7 @@ export const it: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Posta in arrivo',
   Date: 'Data',
+  'Start date': 'Data di inizio',
   Priority: 'Priorità',
   Reminder: 'Promemoria',
   Duration: 'Durata',

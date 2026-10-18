@@ -119,6 +119,7 @@ export const fil: Dictionary = {
   '{count} h': '{count} oras',
   Inbox: 'Inbox',
   Date: 'Petsa',
+  'Start date': 'Petsa ng simula',
   Priority: 'Priyoridad',
   Reminder: 'Paalala',
   Duration: 'Tagal',

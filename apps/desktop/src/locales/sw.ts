@@ -120,6 +120,7 @@ export const sw: Dictionary = {
   '{count} h': '{count} saa',
   Inbox: 'Kikasha',
   Date: 'Tarehe',
+  'Start date': 'Tarehe ya kuanza',
   Priority: 'Kipaumbele',
   Reminder: 'Kikumbusho',
   Duration: 'Muda',

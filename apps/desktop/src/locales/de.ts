@@ -120,6 +120,7 @@ export const de: Dictionary = {
   '{count} h': '{count} Std.',
   Inbox: 'Eingang',
   Date: 'Datum',
+  'Start date': 'Startdatum',
   Priority: 'Priorität',
   Reminder: 'Erinnerung',
   Duration: 'Dauer',

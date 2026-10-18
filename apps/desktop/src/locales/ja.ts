@@ -119,6 +119,7 @@ export const ja: Dictionary = {
   '{count} h': '{count} 時間',
   Inbox: '受信箱',
   Date: '日付',
+  'Start date': '開始日',
   Priority: '優先度',
   Reminder: 'リマインダー',
   Duration: '所要時間',

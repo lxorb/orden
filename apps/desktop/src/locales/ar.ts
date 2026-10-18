@@ -119,6 +119,7 @@ export const ar: Dictionary = {
   '{count} h': '{count} س',
   Inbox: 'الوارد',
   Date: 'التاريخ',
+  'Start date': 'تاريخ البدء',
   Priority: 'الأولوية',
   Reminder: 'تذكير',
   Duration: 'المدة',

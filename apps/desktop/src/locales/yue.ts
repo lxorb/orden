@@ -119,6 +119,7 @@ export const yue: Dictionary = {
   '{count} h': '{count}個鐘',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先次序',
   Reminder: '提醒',
   Duration: '所需時間',

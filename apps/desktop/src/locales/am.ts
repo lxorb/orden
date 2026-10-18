@@ -118,6 +118,7 @@ export const am: Dictionary = {
   '{count} h': '{count} ሰ',
   Inbox: 'የገቢ ሳጥን',
   Date: 'ቀን',
+  'Start date': 'የመጀመሪያ ቀን',
   Priority: 'ቅድሚያ',
   Reminder: 'ማስታወሻ',
   Duration: 'የጊዜ ርዝመት',

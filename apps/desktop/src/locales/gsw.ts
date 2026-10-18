@@ -120,6 +120,7 @@ export const gsw: Dictionary = {
   '{count} h': '{count} Std.',
   Inbox: 'Iigang',
   Date: 'Datum',
+  'Start date': 'Aafangsdatum',
   Priority: 'Priorität',
   Reminder: 'Erinnerig',
   Duration: 'Duur',

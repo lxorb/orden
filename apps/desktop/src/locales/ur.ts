@@ -119,6 +119,7 @@ export const ur: Dictionary = {
   '{count} h': '{count} گھنٹے',
   Inbox: 'ان باکس',
   Date: 'تاریخ',
+  'Start date': 'آغاز کی تاریخ',
   Priority: 'ترجیح',
   Reminder: 'یاد دہانی',
   Duration: 'دورانیہ',

@@ -119,6 +119,7 @@ export const mr: Dictionary = {
   '{count} h': '{count} तास',
   Inbox: 'इनबॉक्स',
   Date: 'तारीख',
+  'Start date': 'सुरुवातीची तारीख',
   Priority: 'प्राधान्य',
   Reminder: 'स्मरणपत्र',
   Duration: 'कालावधी',
