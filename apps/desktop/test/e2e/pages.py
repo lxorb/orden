@@ -1377,9 +1377,22 @@ def check_paper(page: Page, label: str) -> None:
     # A page whose paper is not there says so rather than coming out blank, which is
     # the other half of the bug: a silent blank sheet is what hid it. Pointed at a paper
     # that was never there, through the store's own edit, which is what changing a page
-    # amounts to anywhere else.
+    # amounts to anywhere else - and the paper the note holds taken away first, since
+    # that is the first place a page's paper is looked for (pages/held.ts).
     page.evaluate(
-        """() => {
+        """async (paper) => {
+          const open = indexedDB.open('nib')
+          const db = await new Promise((resolve, reject) => {
+            open.onsuccess = () => resolve(open.result)
+            open.onerror = () => reject(open.error)
+          })
+          await new Promise((resolve, reject) => {
+            const write = db.transaction(['assets', 'stats'], 'readwrite')
+            write.objectStore('assets').delete(paper)
+            write.objectStore('stats').delete(paper)
+            write.oncomplete = () => resolve()
+            write.onerror = () => reject(write.error)
+          })
           const store = window.nibApp.pages.current.store
           const first = store.pages[0]
           store.edit({
@@ -1388,7 +1401,8 @@ def check_paper(page: Page, label: str) -> None:
               node.id === first.id ? { ...node, file: 'Nowhere at all.pdf' } : node,
             ),
           })
-        }"""
+        }""",
+        f"{opened_note}.pdf",
     )
     page.wait_for_timeout(1500)
 
