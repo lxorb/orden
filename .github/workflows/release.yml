@@ -154,12 +154,16 @@ jobs:
       #
       # The version is passed in rather than read from tauri.conf.json, so a
       # build of main carries the number the manifest will claim for it.
+      #
+      # An edge build trades a little of the binary for minutes; see scripts/edge-profile.sh.
       - name: Build the app
         shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+          ROLLING: ${{ needs.version.outputs.rolling }}
         run: |
+          source scripts/edge-profile.sh
           pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
@@ -221,7 +225,10 @@ jobs:
       # say, as in `build`.
       - name: Build the binary
         shell: bash
+        env:
+          ROLLING: ${{ needs.version.outputs.rolling }}
         run: |
+          source scripts/edge-profile.sh
           pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} --no-bundle \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 

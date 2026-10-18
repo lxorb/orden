@@ -310,6 +310,17 @@ or tests (`paths-ignore` in `release.yml`) builds nothing at all; a tag always b
 
 Most workflows also take a dispatch, `gh workflow run <file>`, for a run by hand.
 
+**An edge build is compiled faster than a release.** Every build that is not a tag's
+compiles the crate with thin LTO over 16 codegen units (`scripts/edge-profile.sh`), where
+a tag keeps `[profile.release]` in the crate's Cargo.toml exactly: fat LTO over one
+codegen unit, which was six of Windows arm's twelve minutes. Edge's binary is a little
+larger and may be a little slower; a release's is not touched. The Mac is built as its
+two architectures at once (`mac`) and put together with `lipo` (`macos`). The crate's
+caches are saved by `unstable` alone, which only builds edge, and a tag reads none of
+them, so the two profiles never share one; and `release.yml`'s `caches` job keeps one
+generation of each on `unstable` (`scripts/prune-caches.sh`), so the repository's 10 GB
+holds today's caches and not yesterday's beside them.
+
 ## Drives
 
 `apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
