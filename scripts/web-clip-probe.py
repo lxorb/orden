@@ -12,7 +12,7 @@ often anything called them.
 * **The page never saw it**: a second snapshot carries the root's count as the first
   read left it, and it is nought - the reader ran in nib's world, where the page's
   wrappers are not the ones called (`web_tabs::web_clip`).
-* **The Clip glyph writes the clipper's note**: `source:`, `title:` from the article's
+* **Save as a note, behind the dots, writes the clipper's note**: `source:`, `title:` from the article's
   own name, `clipped:`, the page's tags, one heading, the article's words and none of
   the cookie banner, the navigation or the footer.
 * **A selection wins**: on the same page with a paragraph selected by the page itself,
@@ -128,9 +128,13 @@ def clip(app, tab: str, selection: bool) -> dict[str, object]:
 
 
 def press_clip(app) -> object:
+    """Save as a note, behind the dots: the scissors are off the bar (#405)."""
     return app.ask(
-        "(() => { const glyph = document.querySelector('.webbar button[aria-label=\"Clip this page\"]');"
-        " glyph?.click(); return JSON.stringify(!!glyph) })()"
+        "(async () => { document.querySelector('.webbar button[aria-label=\"More\"]')?.click();"
+        " await new Promise((go) => setTimeout(go, 400));"
+        " const row = [...document.querySelectorAll('[role=menu] [role=menuitem]')]"
+        ".find((one) => one.textContent.includes('Save as a note'));"
+        " row?.click(); return JSON.stringify(!!row) })()"
     )
 
 
@@ -212,10 +216,10 @@ def main() -> int:
         check("the page never saw the read", calls is not None and calls.group(1) == "0", calls)
 
         before = {one.name for one in space.glob("*.md")}
-        check("the Clip glyph is there", press_clip(app) is True)
+        check("Save as a note is behind the dots", press_clip(app) is True)
         found = newest_note(space, before)
         if found is None:
-            check("the Clip glyph writes a note", False, "nothing appeared")
+            check("Save as a note writes a note", False, "nothing appeared")
         else:
             name, note = found
             said["the note"] = name
