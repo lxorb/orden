@@ -424,6 +424,24 @@ fn ask(
     )
 }
 
+/// An agent's own tab shown to the reader without a question, for an agent that asks
+/// nothing: its Show, answered as it is raised, which the window shows the tab for.
+fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) {
+    approvals::granted(
+        app,
+        Asking {
+            agent: &grant.id,
+            name: &grant.name,
+            category: Category::Showing,
+            summary,
+            site: policy::host_of(&own.url).map(|host| policy::site_of(&host)),
+            tab: Some(own.id.clone()),
+            key: key.to_string(),
+        },
+        super::verbs::ApprovalAnswer::Allowed,
+    );
+}
+
 /// The hosts a page and its frames have talked to, for the payment processors.
 fn page_hosts(page: &Page<'_>) -> Vec<String> {
     let heard = super::cdp::heard(&page.label);
@@ -859,6 +877,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 } else {
                     own.title.clone()
                 };
+                // Full permissions: shown at once, the question answered as it is raised.
+                if grant.asks_nothing() {
+                    shown(app, grant, own, format!("Show {title}"), &key);
+                    return Ok(acted(page));
+                }
                 ask(
                     app,
                     grant,
@@ -877,6 +900,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 };
                 let key = approvals::key("browser_takeover", Some(&tab), Some(&takeover.reason));
+                // Full permissions asks the reader nothing (#372): an agent's own tab is
+                // put in front of the reader at once, as Show puts it, and the agent goes
+                // on, waiting for the page to show the step done (`browser_wait`).
+                if grant.asks_nothing() {
+                    if let Place::Own(own) = place {
+                        shown(app, grant, own, takeover.reason.clone(), &key);
+                    }
+                    return Ok(acted(page));
+                }
                 // A question and nothing more: the agent keeps the tab, and goes on
                 // when the page shows the step done.
                 ask(

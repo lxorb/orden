@@ -152,9 +152,10 @@ pub enum Mode {
     Unsupervised,
     /// Every write asks, batched.
     Confirm,
-    /// Nothing asks but paying: the AI sidebar's Full permissions (docs/ai-sidebar.md 4.4),
-    /// whose safety is that every change can be undone. Only ever a call's, laid over the
-    /// built-in grant by `ai_agent.rs`; never kept (`Grants::replace`).
+    /// Nothing asks, whatever the act: the AI sidebar's Full permissions (docs/ai-sidebar.md
+    /// 4.4, #372). Paying included, and a tab shown or a step handed to the reader goes
+    /// ahead without a question. Only ever a call's, laid over the built-in grant by
+    /// `ai_agent.rs`; never kept (`Grants::replace`).
     Autonomous,
 }
 
@@ -274,11 +275,17 @@ impl Grant {
         self.scopes.contains(&scope)
     }
 
-    /// Whether a category asks for this agent: on unless the reader turned it off. An
-    /// autonomous agent asks only before paying, the one thing no undo takes back.
+    /// Whether a category asks for this agent: on unless the reader turned it off, and never
+    /// for an autonomous one (#372: Full permissions asks for nothing, paying included).
     pub fn asks(&self, category: Category) -> bool {
         let on = self.asks.get(&category).copied().unwrap_or(true);
-        on && (self.mode != Mode::Autonomous || category == Category::Paying)
+        on && self.mode != Mode::Autonomous
+    }
+
+    /// Whether this agent goes ahead without asking the reader anything at all, a tab shown
+    /// or a step handed over included: Full permissions.
+    pub fn asks_nothing(&self) -> bool {
+        self.mode == Mode::Autonomous
     }
 
     /// Whether the reader said "always" for this category on this site.

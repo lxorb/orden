@@ -120,6 +120,24 @@ export class FakeCrate implements Source {
   }
 
   /** An agent's call needs asking. */
+  /** A question an agent with Full permissions would have raised, answered as it is raised
+   *  (the crate's `approvals::granted`): nobody is asked. */
+  granted(agent: string, category: Category, summary: string, tab?: string): Approval {
+    const approval: Approval = {
+      id: `q${String(this.next++)}`,
+      agent,
+      name: this.overview.agents.find((one) => one.id === agent)?.name ?? agent,
+      category,
+      summary,
+      verb: category === 'showing' ? 'browser_show' : 'browser_takeover',
+      asked: Date.now(),
+      answer: 'allowed',
+      ...(tab === undefined ? {} : { tab }),
+    }
+    this.emit({ kind: 'answered', approval: { ...approval } })
+    return approval
+  }
+
   ask(agent: string, category: Category, summary: string, site?: string, tab?: string): Approval {
     const grant = this.overview.agents.find((one) => one.id === agent)
     const approval: Approval = {
