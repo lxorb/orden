@@ -18,6 +18,9 @@ What it checks and photographs:
     an arrow dragged from one card to another becoming a connector
     a picture and a note as two entries in the grid rather than one
     the bar over what is picked, and its colours, kept on the plane against an edge
+    the menu holding only what would do something, with Arrange behind one row
+    a phone's bar: Undo and Redo first, and a fade at each end with more past it
+    printing: the sheet the PDF is made from, handed to the print engine
 
 Run it from the repository root:
 
@@ -53,6 +56,16 @@ def fail(what: str) -> None:
 
 
 PREPARE = """
+// What is handed to the print engine, kept where the drive can read it: printing goes
+// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
+(() => {
+  const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
+  Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
+    configurable: true,
+    get() { return own.get.call(this) },
+    set(value) { window.__printed = value; own.set.call(this, value) },
+  });
+})();
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android',
   family: 'unix',
@@ -450,15 +463,80 @@ def check_more_menu(page: Page) -> None:
     more.click()
     page.wait_for_timeout(400)
 
-    for wanted in ("Align left", "Spread across", "Group", "Bring to front"):
-        if page.get_by_text(wanted, exact=True).count() < 1:
-            fail(f"the selection bar's menu does not offer {wanted}")
-
-    say("the selection bar's menu offers lining up, spreading out and the z order")
+    rows = menu_rows(page)
+    # About what is picked: nothing to put down, and nothing greyed (#350).
+    for unwanted in ("Card", "Note", "Picture", "Link", "Frame"):
+        if unwanted in rows:
+            fail(f"the selection bar's menu offers {unwanted}, which puts something new down")
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail("the selection bar's menu has greyed rows rather than leaving them out")
+    if "Group" not in rows or "Arrange" not in rows:
+        fail(f"the selection bar's menu has no Group or no Arrange ({rows})")
     shot(page, "canvas-more-menu")
 
+    # Arrange, pressed, is the rows behind it in the menu's place.
+    page.locator("[role=menu] [role=menuitem]", has_text="Arrange").first.click()
+    page.wait_for_timeout(400)
+    rows = menu_rows(page)
+    for wanted in ("Align left", "Spread across", "Bring to front"):
+        if wanted not in rows:
+            fail(f"Arrange does not offer {wanted} ({rows})")
+    say("the selection bar's menu offers Group and Arrange, and Arrange the rest")
+    shot(page, "canvas-more-arrange")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
+
+    # On bare plane: what can be put down, and the plane's own rows - not a column of
+    # greyed ones.
+    page.keyboard.press("Escape")
+    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.locator(".canvas").first.click(position={"x": 60, "y": 60}, button="right")
+    page.wait_for_timeout(400)
+    rows = menu_rows(page)
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail("the plane's menu has greyed rows rather than leaving them out")
+    for wanted in ("Card", "Frame", "Fit the canvas", "Export as PDF"):
+        if wanted not in rows:
+            fail(f"the plane's menu on nothing has no {wanted} ({rows})")
+    for unwanted in ("Duplicate", "Delete", "Arrange"):
+        if unwanted in rows:
+            fail(f"the plane's menu on nothing offers {unwanted}")
+    fits = page.evaluate(
+        "() => { const m = document.querySelector('[role=menu]').getBoundingClientRect();"
+        " return m.bottom <= innerHeight && m.top >= 0 }"
+    )
+    if not fits:
+        fail("the plane's menu on nothing does not fit the window")
+    say(f"the plane's menu on nothing is {len(rows)} rows, all of them live")
+    shot(page, "canvas-menu-bare")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+
+
+def check_print(page: Page) -> None:
+    """Printing a plane: the sheet its PDF is made from, handed to the print engine
+    (#350). Last, because the dialog it opens is left to time out."""
+    say("--- printing ---")
+
+    three_cards(page)
+    page.evaluate("() => { window.__printed = null }")
+    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.keyboard.press("Control+p")
+    try:
+        page.wait_for_function("() => !!window.__printed", timeout=30000)
+    except Exception:  # noqa: BLE001 - said below
+        fail("Ctrl+P on a canvas handed nothing to the print engine")
+        return
+    sheet = page.evaluate("() => window.__printed")
+    if "<svg" not in sheet or "one" not in sheet or "@page" not in sheet:
+        fail("printing a canvas handed over something that is not its sheet")
+    else:
+        say("printing a canvas hands the print engine the sheet its PDF is made from")
+
+
+def menu_rows(page: Page) -> list[str]:
+    rows = page.locator("[role=menu] [role=menuitem]")
+    return [rows.nth(one).inner_text().strip() for one in range(rows.count())]
 
 
 # The bar over what is picked and its colours, measured against the plane: how far
@@ -1074,6 +1152,76 @@ def drive(browser, theme: str) -> None:
         check_pen_button(page, cdp)
         if theme == "light":
             check_bar_docks(page)
+            check_print(page)
+    finally:
+        context.close()
+
+
+AS_PHONE = """
+() => {
+  const app = window.nibApp;
+  app.viewport.device = 'phone';
+  app.viewport.portrait = true;
+  const root = document.documentElement;
+  root.dataset.device = 'phone';
+  root.toggleAttribute('data-touch', true);
+  root.toggleAttribute('data-drawer', true);
+  root.toggleAttribute('data-narrow', true);
+}
+"""
+
+# Which buttons of the bar are on screen, in order, and which ends of it fade.
+BAR_SEEN = """
+() => {
+  const row = document.querySelector('.cluster .scroller')
+  const box = row.getBoundingClientRect()
+  const seen = [...row.querySelectorAll('button')]
+    .filter((one) => { const at = one.getBoundingClientRect(); return at.left >= box.left - 1 && at.right <= box.right + 1 })
+    .map((one) => one.getAttribute('aria-label'))
+  return { seen, start: row.classList.contains('fade-start'), end: row.classList.contains('fade-end') }
+}
+"""
+
+
+def drive_phone(browser, theme: str) -> None:
+    """A phone's bar: wider than the screen, so it scrolls - with Undo and Redo first,
+    where a thumb finds them, and a fade at whichever end has more past it (#350)."""
+    say(f"=== phone, {theme} ===")
+    context = browser.new_context(
+        viewport={"width": 412, "height": 900},
+        color_scheme=theme,
+        is_mobile=True,
+        has_touch=True,
+        device_scale_factor=2,
+    )
+    context.add_init_script(PREPARE)
+    page = context.new_page()
+    page.on("pageerror", lambda error: fail(f"[phone] page error: {error}"))
+
+    try:
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        wait_for(page, "!!window.nibApp", "[phone] the app to start")
+        wait_for(page, "window.nibApp.workspace.spaces.length > 0", "[phone] a space to exist")
+        page.evaluate(AS_PHONE)
+        opened(page, "phone")
+        page.wait_for_timeout(400)
+
+        first = page.evaluate(BAR_SEEN)
+        say(f"[phone/{theme}] on screen: {first['seen']}")
+        if "Undo" not in first["seen"][:3] or "Redo" not in first["seen"][:3]:
+            fail(f"[phone/{theme}] Undo and Redo are not first on a phone's bar ({first['seen']})")
+        if first["start"] or not first["end"]:
+            fail(f"[phone/{theme}] the bar at its start fades the wrong ends ({first})")
+        shot(page, f"canvas-phone-bar-{theme}")
+
+        page.evaluate("() => { const row = document.querySelector('.cluster .scroller'); row.scrollLeft = row.scrollWidth }")
+        page.wait_for_timeout(300)
+        last = page.evaluate(BAR_SEEN)
+        if not last["start"] or last["end"]:
+            fail(f"[phone/{theme}] the bar at its end fades the wrong ends ({last})")
+        else:
+            say(f"[phone/{theme}] Undo and Redo first, and the bar fades where there is more")
+        shot(page, f"canvas-phone-bar-end-{theme}")
     finally:
         context.close()
 
@@ -1083,6 +1231,8 @@ def main() -> int:
         for theme in ("light", "dark"):
             drive(browser, theme)
         drive_tablet(browser)
+        for theme in ("light", "dark"):
+            drive_phone(browser, theme)
 
     return DRIVE.verdict("everything the drive checked was right")
 
