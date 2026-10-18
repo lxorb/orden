@@ -1949,6 +1949,7 @@ export const zhHans: Dictionary = {
   'Without your logins': '不使用你的登录',
   'Calls a minute': '每分钟调用次数',
   'Pages a minute': '每分钟页面数',
+  'Browser memory limit': '浏览器内存上限',
   '{count} calls': '{count} 次调用',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

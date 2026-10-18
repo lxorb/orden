@@ -2023,6 +2023,7 @@ export const sw: Dictionary = {
   'Without your logins': 'Bila kuingia kwako',
   'Calls a minute': 'Simu kwa dakika',
   'Pages a minute': 'Kurasa kwa dakika',
+  'Browser memory limit': 'Kikomo cha kumbukumbu ya kivinjari',
   '{count} calls': {
     one: 'simu {count}',
     other: 'simu {count}',

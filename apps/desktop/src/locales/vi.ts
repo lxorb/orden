@@ -1978,6 +1978,7 @@ export const vi: Dictionary = {
   'Without your logins': 'Không dùng đăng nhập của bạn',
   'Calls a minute': 'Lượt gọi mỗi phút',
   'Pages a minute': 'Trang mỗi phút',
+  'Browser memory limit': 'Giới hạn bộ nhớ trình duyệt',
   '{count} calls': '{count} lượt gọi',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

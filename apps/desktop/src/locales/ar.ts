@@ -2095,6 +2095,7 @@ export const ar: Dictionary = {
   'Without your logins': 'من دون تسجيلات دخولك',
   'Calls a minute': 'الاستدعاءات في الدقيقة',
   'Pages a minute': 'الصفحات في الدقيقة',
+  'Browser memory limit': 'حد ذاكرة المتصفح',
   '{count} calls': {
     zero: '{count} استدعاء',
     one: '{count} استدعاء',

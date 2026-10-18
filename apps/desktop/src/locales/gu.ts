@@ -1985,6 +1985,7 @@ export const gu: Dictionary = {
   'Without your logins': 'તમારા લૉગ-ઇન વિના',
   'Calls a minute': 'પ્રતિ મિનિટ કૉલ',
   'Pages a minute': 'પ્રતિ મિનિટ પેજ',
+  'Browser memory limit': 'બ્રાઉઝર મેમરી મર્યાદા',
   '{count} calls': {
     one: '{count} કૉલ',
     other: '{count} કૉલ',

@@ -1990,6 +1990,7 @@ export const hi: Dictionary = {
   'Without your logins': 'आपके लॉग-इन के बिना',
   'Calls a minute': 'प्रति मिनट कॉल',
   'Pages a minute': 'प्रति मिनट पेज',
+  'Browser memory limit': 'ब्राउज़र मेमोरी सीमा',
   '{count} calls': {
     one: '{count} कॉल',
     other: '{count} कॉल',

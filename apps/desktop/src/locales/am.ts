@@ -1969,6 +1969,7 @@ export const am: Dictionary = {
   'Without your logins': 'ያለ እርስዎ መግቢያዎች',
   'Calls a minute': 'በደቂቃ ጥሪዎች',
   'Pages a minute': 'በደቂቃ ገጾች',
+  'Browser memory limit': 'የአሳሽ ማህደረ ትውስታ ገደብ',
   '{count} calls': {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',

@@ -1996,6 +1996,7 @@ export const ps: Dictionary = {
   'Without your logins': 'ستاسو له ننوتلو پرته',
   'Calls a minute': 'په دقیقه کې غوښتنې',
   'Pages a minute': 'په دقیقه کې پاڼې',
+  'Browser memory limit': 'د براوزر د حافظې حد',
   '{count} calls': {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',

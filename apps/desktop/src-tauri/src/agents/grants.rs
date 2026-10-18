@@ -168,6 +168,11 @@ pub struct Limits {
     pub calls: u32,
     /// Navigations a minute.
     pub navigations: u32,
+    /// The browser's memory, in MB, past which this agent opens no more tabs; 0, the
+    /// default, is no ceiling at all (#333). A grant written before there was one has
+    /// none.
+    #[serde(default)]
+    pub memory: u32,
 }
 
 impl Default for Limits {
@@ -176,6 +181,7 @@ impl Default for Limits {
             tabs: 4,
             calls: 600,
             navigations: 60,
+            memory: 0,
         }
     }
 }
@@ -848,7 +854,8 @@ mod tests {
             Limits {
                 tabs: 4,
                 calls: 600,
-                navigations: 60
+                navigations: 60,
+                memory: 0
             }
         );
 

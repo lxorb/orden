@@ -1983,6 +1983,7 @@ export const my: Dictionary = {
   'Without your logins': 'သင့်ဝင်ရောက်မှုများ မပါဘဲ',
   'Calls a minute': 'တစ်မိနစ်လျှင် ခေါ်ဆိုမှု',
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
+  'Browser memory limit': 'ဘရောက်ဇာ မှတ်ဉာဏ် ကန့်သတ်ချက်',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

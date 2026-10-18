@@ -1971,6 +1971,7 @@ export const ko: Dictionary = {
   'Without your logins': '내 로그인 없이',
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
+  'Browser memory limit': '브라우저 메모리 한도',
   '{count} calls': '호출 {count}회',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

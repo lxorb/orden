@@ -2003,6 +2003,7 @@ export const tr: Dictionary = {
   'Without your logins': 'Oturumların olmadan',
   'Calls a minute': 'Dakikada çağrı',
   'Pages a minute': 'Dakikada sayfa',
+  'Browser memory limit': 'Tarayıcı bellek sınırı',
   '{count} calls': {
     one: '{count} çağrı',
     other: '{count} çağrı',

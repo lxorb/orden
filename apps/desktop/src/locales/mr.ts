@@ -1996,6 +1996,7 @@ export const mr: Dictionary = {
   'Without your logins': 'तुमच्या लॉग-इनशिवाय',
   'Calls a minute': 'प्रति मिनिट कॉल',
   'Pages a minute': 'प्रति मिनिट पाने',
+  'Browser memory limit': 'ब्राउझर मेमरी मर्यादा',
   '{count} calls': {
     one: '{count} कॉल',
     other: '{count} कॉल',

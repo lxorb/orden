@@ -1998,6 +1998,7 @@ export const pa: Dictionary = {
   'Without your logins': 'ਤੁਹਾਡੇ ਲੌਗ-ਇਨ ਤੋਂ ਬਿਨਾਂ',
   'Calls a minute': 'ਪ੍ਰਤੀ ਮਿੰਟ ਕਾਲਾਂ',
   'Pages a minute': 'ਪ੍ਰਤੀ ਮਿੰਟ ਪੰਨੇ',
+  'Browser memory limit': 'ਬ੍ਰਾਊਜ਼ਰ ਮੈਮਰੀ ਸੀਮਾ',
   '{count} calls': {
     one: '{count} ਕਾਲ',
     other: '{count} ਕਾਲਾਂ',

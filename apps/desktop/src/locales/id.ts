@@ -1993,6 +1993,7 @@ export const id: Dictionary = {
   'Without your logins': 'Tanpa login-mu',
   'Calls a minute': 'Panggilan per menit',
   'Pages a minute': 'Halaman per menit',
+  'Browser memory limit': 'Batas memori browser',
   '{count} calls': '{count} panggilan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

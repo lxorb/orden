@@ -1993,6 +1993,7 @@ export const bn: Dictionary = {
   'Without your logins': 'আপনার লগইন ছাড়া',
   'Calls a minute': 'প্রতি মিনিটে কল',
   'Pages a minute': 'প্রতি মিনিটে পেজ',
+  'Browser memory limit': 'ব্রাউজারের মেমরি সীমা',
   '{count} calls': {
     one: '{count}টি কল',
     other: '{count}টি কল',

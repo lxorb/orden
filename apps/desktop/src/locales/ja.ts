@@ -1989,6 +1989,7 @@ export const ja: Dictionary = {
   'Without your logins': 'あなたのログインなし',
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
+  'Browser memory limit': 'ブラウザのメモリ上限',
   '{count} calls': '{count} 件の呼び出し',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

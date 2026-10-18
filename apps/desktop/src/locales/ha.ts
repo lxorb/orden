@@ -2023,6 +2023,7 @@ export const ha: Dictionary = {
   'Without your logins': 'Ba tare da shigarka ba',
   'Calls a minute': 'Kira a minti ɗaya',
   'Pages a minute': 'Shafuka a minti ɗaya',
+  'Browser memory limit': 'Iyakar ƙwaƙwalwar burauza',
   '{count} calls': {
     one: 'Kira {count}',
     other: 'Kira {count}',

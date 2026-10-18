@@ -2013,6 +2013,7 @@ export const kn: Dictionary = {
   'Without your logins': 'ನಿಮ್ಮ ಲಾಗಿನ್‌ಗಳಿಲ್ಲದೆ',
   'Calls a minute': 'ನಿಮಿಷಕ್ಕೆ ಕರೆಗಳು',
   'Pages a minute': 'ನಿಮಿಷಕ್ಕೆ ಪುಟಗಳು',
+  'Browser memory limit': 'ಬ್ರೌಸರ್ ಮೆಮೊರಿ ಮಿತಿ',
   '{count} calls': {
     one: '{count} ಕರೆ',
     other: '{count} ಕರೆಗಳು',

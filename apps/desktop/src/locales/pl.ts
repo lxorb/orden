@@ -2073,6 +2073,7 @@ export const pl: Dictionary = {
   'Without your logins': 'Bez twoich logowań',
   'Calls a minute': 'Wywołania na minutę',
   'Pages a minute': 'Strony na minutę',
+  'Browser memory limit': 'Limit pamięci przeglądarki',
   '{count} calls': {
     one: '{count} wywołanie',
     few: '{count} wywołania',

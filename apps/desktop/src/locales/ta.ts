@@ -2024,6 +2024,7 @@ export const ta: Dictionary = {
   'Without your logins': 'உங்கள் உள்நுழைவுகள் இல்லாமல்',
   'Calls a minute': 'நிமிடத்திற்கு அழைப்புகள்',
   'Pages a minute': 'நிமிடத்திற்குப் பக்கங்கள்',
+  'Browser memory limit': 'உலாவி நினைவக வரம்பு',
   '{count} calls': {
     one: '{count} அழைப்பு',
     other: '{count} அழைப்புகள்',

@@ -2055,6 +2055,7 @@ export const fr: Dictionary = {
   'Without your logins': 'Sans vos connexions',
   'Calls a minute': 'Appels par minute',
   'Pages a minute': 'Pages par minute',
+  'Browser memory limit': 'Limite de mémoire du navigateur',
   '{count} calls': {
     one: '{count} appel',
     many: '{count} d’appels',

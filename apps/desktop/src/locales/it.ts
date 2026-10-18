@@ -2053,6 +2053,7 @@ export const it: Dictionary = {
   'Without your logins': 'Senza i tuoi accessi',
   'Calls a minute': 'Chiamate al minuto',
   'Pages a minute': 'Pagine al minuto',
+  'Browser memory limit': 'Limite di memoria del browser',
   '{count} calls': {
     one: '{count} chiamata',
     many: '{count} di chiamate',

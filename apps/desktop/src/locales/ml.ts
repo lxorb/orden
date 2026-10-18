@@ -2017,6 +2017,7 @@ export const ml: Dictionary = {
   'Without your logins': 'നിങ്ങളുടെ ലോഗിനുകളില്ലാതെ',
   'Calls a minute': 'മിനിറ്റിൽ കോളുകൾ',
   'Pages a minute': 'മിനിറ്റിൽ പേജുകൾ',
+  'Browser memory limit': 'ബ്രൗസർ മെമ്മറി പരിധി',
   '{count} calls': {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',

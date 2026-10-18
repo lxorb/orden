@@ -639,9 +639,12 @@ risk at its worst (9.6). So:
   (`pages.svelte.ts`), for the same reason: one page is about 180 MB on this machine.
 - **A tab nobody has called for ten minutes is parked**; an agent that disconnects has its
   tabs closed after the same ten minutes, so a reconnect finds them.
-- **A memory ceiling**: when the engine processes under the app are past 3 GB of working
-  set, `browser_open` is refused with the reason rather than making the reader's machine
-  slow.
+- **No memory ceiling unless the reader sets one.** A grant's Browser memory limit
+  (Settings, Agents, Limits; `limits.memory`, in MB) refuses that agent's `browser_open`
+  with the reason when the engine processes under the app are past it in working set. It
+  starts Off: the 3 GB that stood here for every agent refused tabs on machines with
+  memory to spare, and what a machine can hold is its owner's to say (#333). Windows
+  only, where the engine's processes can be counted.
 - Measured in the spike: two agent pages added two engine processes and 83 to 100 MB of
   working set on a small page; closing them gave it back (section 3).
 
@@ -959,7 +962,7 @@ Each agent holds:
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
 | asks | the categories in 9.3, each on or off | all on |
-| limits | tabs, calls a minute, pages a minute | 4 tabs, 600 calls, 60 navigations |
+| limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
 (a chat is other people's words) and `confirm` mode. A grant kept from before chats were

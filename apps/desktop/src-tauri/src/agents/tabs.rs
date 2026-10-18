@@ -167,7 +167,8 @@ fn store_of(id: &str) -> Store {
 }
 
 /// Opens an agent tab out of sight: its record kept, room made, the page built and sent
-/// to `url`. Answers the tab, or why not.
+/// to `url`. `most` is how many tabs the agent keeps and `ceiling` the browser's memory
+/// in MB past which it opens none, 0 for none (see `memory`). Answers the tab, or why not.
 pub fn open(
     app: &AppHandle,
     agent: &str,
@@ -175,10 +176,10 @@ pub fn open(
     store: Store,
     store_name: Option<String>,
     size: (u32, u32),
-    most: usize,
+    (most, ceiling): (usize, u32),
 ) -> Result<Tab, Answer> {
     let address = web_address(url)?;
-    if let Some(why) = super::memory::too_much() {
+    if let Some(why) = super::memory::too_much(ceiling) {
         return Err(Answer::error(Code::Limit, why));
     }
     make_room(app, agent, most, None);

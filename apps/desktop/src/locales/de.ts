@@ -2034,6 +2034,7 @@ export const de: Dictionary = {
   'Without your logins': 'Ohne deine Anmeldungen',
   'Calls a minute': 'Aufrufe pro Minute',
   'Pages a minute': 'Seiten pro Minute',
+  'Browser memory limit': 'Arbeitsspeicher-Grenze des Browsers',
   '{count} calls': {
     one: '{count} Aufruf',
     other: '{count} Aufrufe',

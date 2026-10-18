@@ -2066,6 +2066,7 @@ export const uk: Dictionary = {
   'Without your logins': 'Без ваших входів',
   'Calls a minute': 'Викликів на хвилину',
   'Pages a minute': 'Сторінок на хвилину',
+  'Browser memory limit': 'Межа пам’яті браузера',
   '{count} calls': {
     one: '{count} виклик',
     few: '{count} виклики',

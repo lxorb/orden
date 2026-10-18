@@ -46,7 +46,14 @@
   import type { AgentsPane } from './pane.svelte'
   import { registrable, typedSite } from './sites'
   import Words from './Words.svelte'
-  import { CATEGORY_WORDS, GROUP_WORDS, LIMIT_WORDS, RULE_WORDS, SCOPE_WORDS } from './words'
+  import {
+    CATEGORY_WORDS,
+    GROUP_WORDS,
+    LIMIT_WORDS,
+    limitValue,
+    RULE_WORDS,
+    SCOPE_WORDS,
+  } from './words'
 
   const { pane, grant, onback }: { pane: AgentsPane; grant: Grant; onback: () => void } = $props()
 
@@ -314,7 +321,7 @@
   {#each LIMIT_NAMES as limit (limit)}
     <div class="nib-setting sliding">
       <span class="name">{LIMIT_WORDS[limit]()}</span>
-      <span class="value">{limitOf(limit)}</span>
+      <span class="value">{limitValue(limit, limitOf(limit))}</span>
       <input
         class="slider nib-slider"
         type="range"

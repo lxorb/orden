@@ -2030,6 +2030,7 @@ export const ptBR: Dictionary = {
   'Without your logins': 'Sem os seus logins',
   'Calls a minute': 'Chamadas por minuto',
   'Pages a minute': 'Páginas por minuto',
+  'Browser memory limit': 'Limite de memória do navegador',
   '{count} calls': {
     one: '{count} chamada',
     many: '{count} de chamadas',

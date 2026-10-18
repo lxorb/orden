@@ -2005,6 +2005,7 @@ export const gsw: Dictionary = {
   'Without your logins': 'Ohni dini Aamäldige',
   'Calls a minute': 'Ufrüef pro Minute',
   'Pages a minute': 'Siite pro Minute',
+  'Browser memory limit': 'Arbeitsspeicher-Gränze vom Browser',
   '{count} calls': {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',

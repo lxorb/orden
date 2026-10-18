@@ -41,7 +41,7 @@ function grantFor(id: string, name: string): Grant {
     asks: {},
     always: {},
     programs: [],
-    limits: { tabs: 4, calls: 600, navigations: 60 },
+    limits: { tabs: 4, calls: 600, navigations: 60, memory: 0 },
     created: 0,
   }
 }

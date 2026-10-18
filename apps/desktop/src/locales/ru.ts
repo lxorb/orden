@@ -2073,6 +2073,7 @@ export const ru: Dictionary = {
   'Without your logins': 'Без ваших входов',
   'Calls a minute': 'Вызовов в минуту',
   'Pages a minute': 'Страниц в минуту',
+  'Browser memory limit': 'Предел памяти браузера',
   '{count} calls': {
     one: '{count} вызов',
     few: '{count} вызова',

@@ -2004,6 +2004,7 @@ export const te: Dictionary = {
   'Without your logins': 'మీ లాగిన్‌లు లేకుండా',
   'Calls a minute': 'నిమిషానికి కాల్‌లు',
   'Pages a minute': 'నిమిషానికి పేజీలు',
+  'Browser memory limit': 'బ్రౌజర్ మెమరీ పరిమితి',
   '{count} calls': {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',

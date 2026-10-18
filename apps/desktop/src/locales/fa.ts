@@ -1996,6 +1996,7 @@ export const fa: Dictionary = {
   'Without your logins': 'بدون ورودهای شما',
   'Calls a minute': 'فراخوان در دقیقه',
   'Pages a minute': 'صفحه در دقیقه',
+  'Browser memory limit': 'سقف حافظهٔ مرورگر',
   '{count} calls': {
     one: '{count} فراخوان',
     other: '{count} فراخوان',

@@ -1991,6 +1991,7 @@ export const ur: Dictionary = {
   'Without your logins': 'آپ کے لاگ اِن کے بغیر',
   'Calls a minute': 'فی منٹ کالز',
   'Pages a minute': 'فی منٹ صفحات',
+  'Browser memory limit': 'براؤزر میموری کی حد',
   '{count} calls': {
     one: '{count} کال',
     other: '{count} کالز',

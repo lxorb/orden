@@ -2034,6 +2034,7 @@ export const fil: Dictionary = {
   'Without your logins': 'Nang wala ang iyong mga login',
   'Calls a minute': 'Mga tawag bawat minuto',
   'Pages a minute': 'Mga page bawat minuto',
+  'Browser memory limit': 'Limitasyon sa memory ng browser',
   '{count} calls': {
     one: '{count} tawag',
     other: '{count} na tawag',

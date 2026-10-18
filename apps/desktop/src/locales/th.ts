@@ -1961,6 +1961,7 @@ export const th: Dictionary = {
   'Without your logins': 'ไม่ใช้การลงชื่อเข้าใช้ของคุณ',
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
+  'Browser memory limit': 'ขีดจำกัดหน่วยความจำของเบราว์เซอร์',
   '{count} calls': '{count} การเรียก',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

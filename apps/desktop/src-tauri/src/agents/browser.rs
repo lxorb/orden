@@ -153,11 +153,23 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Caller::Agent(grant) => usize::try_from(grant.limits.tabs).unwrap_or(4),
         Caller::Reader => 4,
     };
+    let ceiling = match caller {
+        Caller::Agent(grant) => grant.limits.memory,
+        Caller::Reader => 0,
+    };
     let size = (
         open.width.unwrap_or(tabs::WIDTH),
         open.height.unwrap_or(tabs::HEIGHT),
     );
-    match tabs::open(app, caller.id(), &open.url, store, store_name, size, most) {
+    match tabs::open(
+        app,
+        caller.id(),
+        &open.url,
+        store,
+        store_name,
+        size,
+        (most, ceiling),
+    ) {
         Ok(tab) => Answer::ok(Opened { tab: tab.id, store }),
         Err(refused) => refused,
     }
