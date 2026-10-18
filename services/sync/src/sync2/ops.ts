@@ -215,14 +215,25 @@ export async function deleteById(
 
 /** A document's words changed while it was deleted: it comes back, with its folders
  *  (an edit beats a delete). What a room's settle asks before it writes the words of a
- *  note somebody deleted meanwhile. */
+ *  note somebody deleted meanwhile.
+ *
+ *  A room's words that are the deleting device's own leave it deleted (`own`): they
+ *  never stand against its own delete (section 5.9), and a room settles a moment after
+ *  the typing, so a note somebody typed in and then moved to another space - a delete
+ *  here, the words going with it - came back here once the room caught up, and the
+ *  move was a copy (#413). New bytes put on a file are a new file, and bring it back
+ *  whoever deleted it. */
 export async function revive(
   env: Env,
   spaceId: string,
   device: string | undefined,
   id: string,
+  own: 'stays deleted' | 'comes back' = 'comes back',
 ): Promise<void> {
   await changeTree(env, spaceId, device, (tree) => {
-    if (tree.entry(id)?.deleted) tree.touch(id, device)
+    const entry = tree.entry(id)
+    if (!entry?.deleted) return
+    if (own === 'stays deleted' && device !== undefined && entry.by === device) return
+    tree.touch(id, device)
   })
 }

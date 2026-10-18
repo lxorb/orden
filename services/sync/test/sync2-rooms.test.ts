@@ -182,7 +182,9 @@ describe('a room holding a note on sync v2', () => {
   test('brings a deleted note back when words land on it', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
-    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    // Deleted on another device, which is another session.
+    const phone = await signIn(env, 'rooms@example.com')
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token: phone })
     expect(row(id).deleted).toBe(1)
 
     const device = new Device(id, 'one\n', 'laptop')
@@ -191,6 +193,22 @@ describe('a room holding a note on sync v2', () => {
 
     expect(row(id).deleted).toBe(0)
     expect(await body(id)).toBe('one\nkept\n')
+  })
+
+  test('leaves a note deleted when the words are the deleting device’s own (#413)', async () => {
+    // What a move to another space is here: typed in, then deleted by the same device
+    // - the words went with it - and the room settling them after the delete.
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    const device = new Device(id, 'one\n', 'laptop')
+    const typed = device.type(4, 'kept\n')
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+
+    await device.push(typed)
+    await rooms.settle()
+
+    expect(row(id).deleted).toBe(1)
+    expect(await body(id)).toBe('one\n')
   })
 })
 
