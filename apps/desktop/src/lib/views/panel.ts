@@ -36,18 +36,25 @@ export interface PanelCounts {
   labels: Label[]
 }
 
-/** The built-in bases, made once per set of inboxes, so the engine compiles each once
- *  and keeps what it knows about every row between two counts. */
+/** The built-in bases, made once per set of inboxes and each way Today can be set, so
+ *  the engine compiles each once and keeps what it knows about every row between two
+ *  counts. */
 const made = new Map<string, Base>()
 
 function builtin(
   name: 'inbox' | 'today' | 'upcoming',
   inboxes: { space: string; path: string }[],
+  undated = false,
 ): Base {
-  const key = name === 'inbox' ? `inbox\n${JSON.stringify(inboxes)}` : name
+  const key =
+    name === 'inbox'
+      ? `inbox\n${JSON.stringify(inboxes)}`
+      : name === 'today'
+        ? `today\n${String(undated)}`
+        : name
   let base = made.get(key)
   if (!base) {
-    base = builtinView(name, { inboxes })
+    base = builtinView(name, { inboxes, ...(undated ? { undated } : {}) })
     if (name === 'inbox')
       for (const old of made.keys()) if (old.startsWith('inbox\n')) made.delete(old)
     made.set(key, base)
@@ -58,14 +65,16 @@ function builtin(
 const isOpen = (row: Row) =>
   row.kind === 'task' && !!row.task && !row.task.done && !row.task.cancelled
 
-/** The panel's lists and counts over these rows, on this day. */
+/** The panel's lists and counts over these rows, on this day; with `undated`, Today's
+ *  count holds the tasks with no start date, as its view does (`modes.undatedInToday`). */
 export function panelCounts(
   rows: readonly Row[],
   today: string,
   inboxes: { space: string; path: string }[],
+  undated = false,
 ): PanelCounts {
   const context = contextFor({ rows, today, now: `${today}T00:00:00` })
-  const todayAnswer = answer(builtin('today', inboxes), 0, rows, context)
+  const todayAnswer = answer(builtin('today', inboxes, undated), 0, rows, context)
 
   const projects = new Map<string, Project>()
   const labels = new Map<string, number>()

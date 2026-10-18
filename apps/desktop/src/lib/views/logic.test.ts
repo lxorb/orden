@@ -579,6 +579,8 @@ describe('the panel', () => {
     ]
     const counts = panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }])
     expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 3 })
+    // With the tasks that have no start date in Today, as Settings can have it (#408).
+    expect(panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }], true).today).toBe(3)
     expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
       'Errands 2',
       'Inbox 1',
