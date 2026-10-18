@@ -20,7 +20,9 @@
  *  it one; a share carrying one always makes its own note.
  *
  *  A markdown file is its own note, under its own name and with its own bytes:
- *  that is a note arriving, not a note being written about.
+ *  that is a note arriving, not a note being written about. And a PDF shared on its
+ *  own is its page note, the way a PDF imported is (#400): somebody's paper to write
+ *  on, not a note with a link to it. See pages/from-pdf.ts.
  *
  *  The reading is separated from the writing on purpose. Everything above the
  *  line is a pure answer to "what would this share become", which is the part
@@ -105,6 +107,12 @@ export function isPicture(item: SharedItem): boolean {
   return item.mime.startsWith('image/') || isPicturePath(item.name)
 }
 
+/** Whether this is a PDF, by what the sender said or by what it is called. */
+export function isPaper(item: SharedItem): boolean {
+  if (item.text !== null) return false
+  return item.mime === 'application/pdf' || /\.pdf$/i.test(item.name)
+}
+
 /** Whether this is a note in its own right rather than something to write about. */
 export function isNote(item: SharedItem): boolean {
   if (item.text !== null) return false
@@ -186,6 +194,19 @@ export function sharedPlan(
 ): ImportPlan {
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0] ?? null
+
+  // A PDF on its own, and nothing said about it: its page note, at the top of the
+  // space, which is where the Import door would put it.
+  const [only] = arrived.items
+  const paper = bytes.get(0)
+  if (arrived.items.length === 1 && only && isPaper(only) && paper?.length && !words) {
+    const name = safeName(only.name.replace(/\.pdf$/i, '')) || 'Shared'
+    return {
+      format: 'pdf-pages',
+      files: [{ kind: 'file', path: `${name}.pdf`, bytes: paper, pages: true }],
+      lost: [],
+    }
+  }
 
   const about: Planned[] = []
   const embeds: string[] = []
