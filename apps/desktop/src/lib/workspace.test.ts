@@ -99,6 +99,27 @@ const sheet = {
   answer: null as string | null,
 }
 
+/** The page note an older build wrote beside `paper.pdf`, its one page naming the
+ *  paper: what opening the paper takes for its own, moving the paper in under it.
+ *  Fresh page notes are made out of pdf.js's reading of the paper, which node has not
+ *  got; see pages/from-pdf.test.ts and naming.store.test.ts for those. */
+const BESIDE_PAPER = JSON.stringify({
+  nodes: [
+    {
+      id: 'p1',
+      type: 'file',
+      file: 'paper.pdf',
+      subpath: '#page=1',
+      x: -397,
+      y: 0,
+      width: 794,
+      height: 1123,
+    },
+  ],
+  edges: [],
+  nib: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
+})
+
 vi.mock('./prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string }) => {
@@ -295,8 +316,8 @@ describe('previewing every kind of file', () => {
   const OTHER_SITE = '/space/other.url'
   const DECK = '/space/deck.pages'
   const PAPER = '/space/paper.pdf'
-  /** A paper opens its companion page note, which is the tab a click on the paper's
-   *  row lands in; see `openPdf` in workspace.svelte.ts. */
+  /** A paper opens as the page note it becomes, which is the tab a click on the
+   *  paper's row lands in; see `openPdf` in workspace.svelte.ts. */
   const PAPER_PAGES = '/space/paper.pages'
   const PLANE = '/space/plan.canvas'
 
@@ -315,10 +336,8 @@ describe('previewing every kind of file', () => {
     notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
     notes[OTHER_SITE] = '[InternetShortcut]\r\nURL=https://example.org/\r\n'
     notes[DECK] = '{}'
-    // The paper's page note is already on disk, which is a paper somebody has
-    // opened before: the first open is the one that writes it, out of the sizes
-    // pdf.js reads off the paper, and there is no pdf.js under node.
-    notes[PAPER_PAGES] = '{}'
+    // The paper's page note from an older build, which the first open takes in.
+    notes[PAPER_PAGES] = BESIDE_PAPER
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
@@ -3183,7 +3202,7 @@ describe('a canvas that comes back after a restart', () => {
    *  `pdf`. There is no such surface any more, so the restore brings the paper's
    *  page note forward in its place; see `restore` in workspace.svelte.ts. */
   test('a paper from an older sitting comes back as its page note', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
 
     try {
       await workspace.applyLayout(drafted('pdf', '/space/paper.pdf'))
@@ -3527,10 +3546,10 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  /** A paper has no tab of its own any more: it opens the page note beside it, and
-   *  that note is named the way every page note is. */
+  /** A paper has no tab of its own any more: it opens as its page note, and that
+   *  note is named the way every page note is. */
   test('is the page note a paper opens', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
 
     try {
       await workspace.openPdf('/space/paper.pdf')
@@ -4468,7 +4487,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('a paper followed the same way opens behind too, as its page note', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
     await workspace.open('/space/a.md')
     const reading = workspace.active
 

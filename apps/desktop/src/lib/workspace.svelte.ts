@@ -277,8 +277,7 @@ function worthReopening(tab: Tab): boolean {
 const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
 
 class Workspace {
-  /** PDF tabs from older sessions are converted to page notes on restore. Keep
-   *  concurrent opens of the same paper from creating the sidecar twice. */
+  /** PDFs on their way to being page notes; see `pageNoteForPdf`. */
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
@@ -1682,67 +1681,47 @@ class Workspace {
     this.persist()
   }
 
-  /** A PDF opens as its page note: the paper supplies the pages, and the page
-   *  note is the only surface used to read or write on them. `page` counts from
-   *  one, and null means wherever the page note was left. */
+  /** A PDF opens as its page note, made the first time; see pages/from-pdf.ts. A
+   *  page note, or the paper one holds, opens that note. `page` counts from one, and
+   *  null means wherever the page note was left. */
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
     // The glasses' plugin has no page surface. Links and search hits use this too,
     // rather than going through `openerFor`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
-    const pageNote = await this.pageNoteForPdf(path)
+    const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
     if (!pageNote) return
     await this.openPages(pageNote, page, how)
   }
 
-  /** The companion page note for a PDF, created on first open. Every page keeps
-   *  the original paper as its background; no raster copy or second viewer is
-   *  involved. */
-  private pageNoteForPdf(asked: string): Promise<string | null> {
+  /** The page note a PDF is, or null where it could not be read. One at a time per
+   *  paper. */
+  pageNoteForPdf(asked: string): Promise<string | null> {
     const path = this.spelled(asked)
-    const pagePath = path.replace(/\.pdf$/i, '.pages')
-    const existing = this.pdfPageNotes.get(pagePath)
+    const existing = this.pdfPageNotes.get(path)
     if (existing) return existing
 
-    const making = (async () => {
-      // A sidecar already on disk is the page note the reader last worked on.
-      if (this.files.some((one) => samePath(one.path, pagePath))) return pagePath
-      const there = await invoke<string>('read_note', { path: pagePath }).catch(() => null)
-      if (there !== null) return pagePath
-
-      try {
-        const [{ openDocument }, { PDF_TO_CSS }, { pagesFromPdf }, { writeCanvas }] =
-          await Promise.all([
-            import('./pdf/document'),
-            import('./pdf/pages'),
-            import('@nib/markdown/pages'),
-            import('@nib/markdown/canvas'),
-          ])
-        const paper = await openDocument(path)
-        const sizes: { width: number; height: number }[] = []
-        try {
-          for (let number = 1; number <= paper.doc.numPages; number += 1) {
-            const page = await paper.doc.getPage(number)
-            const view = page.getViewport({ scale: PDF_TO_CSS })
-            sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })
-            page.cleanup()
-          }
-        } finally {
-          await paper.close().catch(() => undefined)
-        }
-
-        await writeFile(pagePath, writeCanvas(pagesFromPdf(nameOf(path), sizes)))
-        void this.loadTree()
-        return pagePath
-      } catch (error) {
+    const making = this.turning(path)
+      .then(({ from, how }) => from.asPageNote(path, how))
+      .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
-      }
-    })()
-    this.pdfPageNotes.set(pagePath, making)
-    void making.finally(() => this.pdfPageNotes.delete(pagePath))
+      })
+    this.pdfPageNotes.set(path, making)
+    void making.finally(() => this.pdfPageNotes.delete(path))
     return making
+  }
+
+  /** pages/from-pdf.ts, and this space for it to turn a PDF in: moved through
+   *  `renameFile`, so what is kept by path follows the paper. */
+  private async turning(path: string) {
+    const [from, { turningIn }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./pages/turning'),
+    ])
+    const how = turningIn(this.rootHolding(path), (one, to) => this.renameFile(one, to, false))
+    return { from, how }
   }
 
   /** A canvas in the space, in a tab of its own. One tab per canvas, the way the
@@ -2193,6 +2172,7 @@ class Workspace {
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
+    await this.holdPaperBeside(path)
     const tab = this.showTab(
       await this.opened.opening(path, () => this.openDeck(path, page, how)),
       how,
@@ -2200,6 +2180,19 @@ class Workspace {
     // A deck already open turns to the page the link named. One opening at it is
     // already there, which is what the page it was given says.
     if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
+  }
+
+  /** An older build's page note beside its PDF takes the PDF in; asked only where the
+   *  list has that PDF and the note is not open. */
+  private async holdPaperBeside(path: string) {
+    const pdf = path.replace(/\.pages$/i, '.pdf')
+    if (this.opened.at(path) || !this.files.some((one) => samePath(one.path, pdf))) return
+
+    await this.turning(path)
+      .then(({ from, how }) => from.adoptBeside(path, how))
+      .catch((error: unknown) => {
+        log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
+      })
   }
 
   /** The document one open of a page note comes to. Only `openPages` calls it, and
@@ -4030,11 +4023,12 @@ class Workspace {
       if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
     }
 
-    // Unreadable means no snapshot and never synced: only the trash can keep it.
+    // Unreadable means no snapshot and never synced: only the trash can keep it, and
+    // only the trash keeps a page note's paper with it.
     const unread = words && content === null
     // Signed in, the account keeps a copy for 14 days; signed out, this
     // device does, in its own trash folder (see trash.svelte.ts).
-    const toAccount = account.signedIn && !unread
+    const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(this, path) : null
 
