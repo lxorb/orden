@@ -703,8 +703,18 @@ function holds(tail: string): boolean {
  *  #371, a note's task chips say a start date only while it is to come, and a date typed
  *  or picked there is written as one (link-index.svelte.ts, quick-add/task-pick.ts, 907).
  *  #372's Full permissions, #333's browser memory, #360's quick question inset and #376's
- *  spaces in app data add nothing to it. Measured 3,216,129. */
-const BUDGET = 3_217_100
+ *  spaces in app data add nothing to it. Measured 3,216,129.
+ *
+ *  Raised 2026-10-18, to 3,222,400, from an unstable at 3,216,426 (674 under), for #399:
+ *  Ctrl+Z takes back what was done in the sidebar wherever the keyboard went. Who the
+ *  key is for is decided on the way down, before the note the app handed the keyboard
+ *  to (`sidebarKey` and `used` in workspace/undo.svelte.ts, read by App.svelte and the
+ *  sidebar's `data-sidebar`); a gesture of several is one step (`batch` and `many`),
+ *  a new file and a folder deleted are steps too (`bin` in workspace.svelte.ts), and
+ *  undos and redos take turns. What a step means going back and forth is still fetched
+ *  with the first undo (undoing.ts, redoing.ts). Its comments are cut to a line each.
+ *  Measured 3,221,381. */
+const BUDGET = 3_222_400
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
