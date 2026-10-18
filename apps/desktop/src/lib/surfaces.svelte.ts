@@ -388,6 +388,10 @@ export function showQuickAdd(prefill: import('./quick-add/entry').Prefill = {}):
 export const fillBar = held(() => import('./tab-fill/FillBar.svelte'))
 export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
 
+/** Who a guest alone in one shared file is, and the way to an account, in the corner
+ *  that file leaves: only a guest with no app round them ever has it. See alone.svelte.ts. */
+export const guestCorner = held(() => import('./GuestCorner.svelte'))
+
 /** A note as a deck, over the whole window. The one overlay that is not latched:
  *  it takes the tab it is presenting as a prop, so there is nothing for it to be
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */

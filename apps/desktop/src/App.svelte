@@ -45,6 +45,7 @@
     fillBar,
     formatBar as formatBarDoor,
     fullscreenWayOut,
+    guestCorner,
     historySheet,
     iconPicker,
     joinSheet,
@@ -1109,6 +1110,12 @@
       {#if fullscreen.on && workspace.active?.kind !== 'web'}
         {#await fullscreenWayOut() then WayOut}
           <WayOut />
+        {/await}
+      {:else if alone.on && account.guest}
+        <!-- A guest alone in one shared file: their name, and the way to an account,
+             which the panel's foot held; see GuestCorner.svelte. -->
+        {#await guestCorner() then Corner}
+          <Corner />
         {/await}
       {/if}
     </div>

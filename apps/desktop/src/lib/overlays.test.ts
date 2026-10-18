@@ -160,6 +160,7 @@ describe('what hides a web page', () => {
     'lib/CanvasBar.svelte': 'dropdown',
     'lib/ContextMenu.svelte': 'menu',
     'lib/GraphControls.svelte': 'dropdown',
+    'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/History.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
     'lib/Palette.svelte': 'dialog',
