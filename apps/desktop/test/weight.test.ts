@@ -686,8 +686,15 @@ function holds(tail: string): boolean {
  *
  *  Lowered 2026-10-17, to 3,212,500, from an unstable at 3,217,083, for #393: web logins no
  *  longer travel between computers, so the hand-back a closing window waited for and the
- *  web key's lines under a web tab's bar are gone from the first paint. Measured 3,211,503. */
-const BUDGET = 3_212_500
+ *  web key's lines under a web tab's bar are gone from the first paint. Measured 3,211,503.
+ *
+ *  Raised 2026-10-18, to 3,215,500, from an unstable at 3,212,280 (220 under), for #382:
+ *  every popup closes when it is pressed past or the window loses the focus, by one rule
+ *  on the overlay stack (`pressed` and `away` in overlays.ts) that the shell calls from
+ *  the window; the menus, the space switcher and the app menu that are drawn with the
+ *  shell say what they hold, and the copies of a window listener each kept are gone.
+ *  Measured 3,214,496. */
+const BUDGET = 3_215_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
