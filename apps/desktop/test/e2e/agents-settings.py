@@ -188,6 +188,10 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
     photograph("session")
     page.locator(".agents .session").first.click()
+    # Until the calls have slid away: the rows below rise as they go, and in WebKit a
+    # press made while they rose went down on one row and up on another, which is no
+    # click at all (#384).
+    page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
 
     if language == "en":
