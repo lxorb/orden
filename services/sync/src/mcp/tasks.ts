@@ -63,7 +63,7 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      "Add a to-do line to the space's Inbox.md, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (📅 2026-10-06 ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+      "Add a to-do line to the space's Inbox.md, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     inputSchema: {
       type: 'object',
       properties: {
