@@ -5,14 +5,18 @@
  *  (docs/even.md). today.test.ts holds it to the engine's answer for the same rows, so
  *  the two cannot drift. What the dates mean is task-dates' (#371). */
 
-import { dayOf, deadlineOf, hasStarted, isLate } from '@nib/markdown/task-dates'
+import { dayOf, deadlineOf, hasStarted, isLate, startOf } from '@nib/markdown/task-dates'
 import type { Row } from '../types'
 
-/** Whether a row is on Today. */
-function onToday(row: Row, today: string): boolean {
+/** Whether a row is on Today; with `undated`, a task with no day of its own to wait for
+ *  is (`BuiltinParams.undated`). */
+function onToday(row: Row, today: string, undated: boolean): boolean {
   const task = row.task
   if (row.kind !== 'task' || !task || task.done || task.cancelled) return false
   if (!hasStarted(task, today, task.dueReads)) return false
+  if (undated && startOf(task, task.dueReads) === undefined && task.scheduled === undefined) {
+    return true
+  }
   const day = dayOf(task, task.dueReads)
   const deadline = deadlineOf(task, task.dueReads)
   return (day !== undefined && day <= today) || (deadline !== undefined && deadline <= today)
@@ -22,9 +26,9 @@ const overdue = (row: Row, today: string) =>
   row.task !== undefined && isLate(row.task, today, row.task.dueReads)
 
 /** Today's rows, in Today's order. */
-export function todayTasks(rows: readonly Row[], today: string): Row[] {
+export function todayTasks(rows: readonly Row[], today: string, undated = false): Row[] {
   return rows
-    .filter((row) => onToday(row, today))
+    .filter((row) => onToday(row, today, undated))
     .map((row, at) => ({ row, at, late: overdue(row, today) }))
     .sort(
       (a, b) =>

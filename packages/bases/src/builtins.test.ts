@@ -45,6 +45,27 @@ describe('the built-in views', () => {
     ])
   })
 
+  test('Today with undated tasks: one with no day of its own is in it, as begun (#408)', () => {
+    expect(keyed(answer(builtinView('today', { undated: true }), 0, rows, context))).toEqual([
+      [true, ['Renew passport', 'Vault due']],
+      // No start date and no day scheduled: in, whatever its deadline says, which still
+      // only makes it overdue once past. One whose start is still to come stays out.
+      [
+        false,
+        [
+          'Gym',
+          'Call the bank',
+          'Old date',
+          'Draft talk',
+          'Fix the bug',
+          'Ship it',
+          'Elsewhere',
+          'Vault later',
+        ],
+      ],
+    ])
+  })
+
   test('Upcoming: what is overdue, then by day from today, a start still to come on its day', () => {
     expect(keyed(answer(builtinView('upcoming'), 0, rows, context))).toEqual([
       ['overdue', ['Renew passport', 'Vault due']],

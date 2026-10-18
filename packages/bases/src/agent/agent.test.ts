@@ -326,11 +326,20 @@ describe('Today without the engine', () => {
           '- [ ] Early [time:: 07:00] 📅 2026-10-04',
           '- [-] Cancelled 📅 2026-10-04',
           '- [ ] Later 📅 2026-10-09',
+          '- [ ] Planned later ⏳ 2026-10-09',
+          '- [ ] No start, due later [deadline:: 2026-10-09]',
         ].join('\n'),
       ),
     ]
     const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
+
+    // And with the tasks that have no day of their own in it (#408).
+    const undated = listTasks(many, { view: 'today', undated: true }, context).tasks
+    expect(todayTasks(many, context.today, true).map((row) => atOf(row))).toEqual(
+      undated.map((one) => one.at),
+    )
+    expect(undated.length).toBeGreaterThan(engine.length)
   })
 })

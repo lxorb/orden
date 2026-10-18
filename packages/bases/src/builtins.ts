@@ -7,7 +7,8 @@
  *
  *  A task whose start date has not come is in none of them but Upcoming, which is where
  *  the days ahead are, and a project's own list, which is its note; and only a deadline
- *  makes a task overdue (#371, `@nib/markdown/task-dates`). */
+ *  makes a task overdue (#371, `@nib/markdown/task-dates`). A task with no start date
+ *  is in Today only when the reader says so, as one whose start date has come (#408). */
 
 import type { Base, Filter, View } from './types'
 
@@ -21,7 +22,16 @@ export interface BuiltinParams {
   note?: { space: string; path: string }
   /** The tag, without `#`: a label. */
   tag?: string
+  /** Today: a task with no day of its own, neither a start date nor a scheduled one, is
+   *  in it, as one whose start date has come. The reader's setting; off, as Todoist's
+   *  Today leaves a task with no date out. */
+  undated?: boolean
 }
+
+/** What Today holds: a start date come, or a day planned or due by today; and with
+ *  `undated`, a task with no day of its own to wait for. */
+const TODAY = 'task.date <= today() || task.deadline <= today()'
+const UNDATED = '!task.start && !task.scheduled'
 
 const quote = (text: string) => JSON.stringify(text)
 
@@ -65,7 +75,9 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
           name: 'Today',
           // Everything that can be worked on now: a start date come, or a day planned or
           // due by today. A start date that has come stays in Today until done.
-          filters: { and: ['task.started', 'task.date <= today() || task.deadline <= today()'] },
+          filters: {
+            and: ['task.started', params.undated ? `${UNDATED} || ${TODAY}` : TODAY],
+          },
           sort: [
             { property: 'task.priority', direction: 'ASC' },
             { property: 'task.time', direction: 'ASC' },
