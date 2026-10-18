@@ -65,7 +65,8 @@ merge, a second set of tombstones, and a second thing to get wrong. Instead:
 
 - **Obsidian.** Rename `Lecture 4.pages` to `Lecture 4.canvas` and Obsidian opens
   it: the page frames are labelled groups, a PDF-backed page shows that page of
-  the PDF, and the cards are cards. The ink is invisible there, which is already
+  the PDF - `Lecture 4.pages.pdf`, the paper the note holds, which Obsidian lists
+  as the PDF it is - and the cards are cards. The ink is invisible there, which is already
   true of a canvas and is the accepted trade. Rename it back and nothing is lost.
 - **The merge.** `mergeCanvasFiles` in `canvas-merge.ts` merges a page note,
   unchanged, because it is the same objects with the same ids and the same times.
@@ -301,16 +302,51 @@ keep in step.
 
 ## A PDF in
 
-**Import ▸ drop a PDF.** The Import door's detector recognises a picked file that
-is nothing but PDFs and offers "A PDF, as pages to write on" - one row on the
-existing sheet, not a second door.
+**A PDF is a page note.** Emil, #400: "when importing a pdf it should just instantly
+create a page note which contains the pdf." Not a PDF with a page note beside it that
+links to it - which is what this used to make, two rows in the file list for one
+paper.
 
-Two files out of one:
+Every road in ends in the same place. The Import door's detector recognises a picked
+file that is nothing but PDFs and offers "A PDF, as pages to write on" - one row on
+the existing sheet, not a second door. A PDF dropped onto the file list on its own,
+and one another program opened with nib, are the same the moment they land. And a
+PDF that was already in the space becomes one the first time it is opened, in the
+folder it was in and under its name. What comes out is one thing:
 
-- **the paper**, byte for byte as it arrived, so Obsidian and every other reader
-  open it;
-- **`Lecture 4.pages` beside it**, whose pages are that paper's pages, each one a
-  `file` node naming the PDF and the page.
+- **`Lecture 4.pages`**, whose pages are the paper's pages, each one a `file` node
+  naming the paper and the page;
+- holding **the paper**, byte for byte as it arrived, as `Lecture 4.pages.pdf` beside
+  it - the note's own name with `.pdf` after it, the way a PDF's highlights are its
+  name with `.highlights.json` after it. The bytes are moved there, never copied, so
+  there is one copy of a paper, and the rename every file operation is moves them, so
+  a link to the PDF, a tab, a bookmark and its highlights follow it.
+
+**The list shows the note and not its paper**, the way it shows a PDF and not its
+highlights: `held_paper` in `src-tauri/src/paths.rs`, and the browser's tree in
+`web/commands.ts`. A rename, a move, a copy, a delete and Recently deleted take the
+paper with the note (`move_held`, `copy_held`, `drop_held`), so the pair cannot come
+apart from inside the app. A paper whose note has gone anyway - deleted by another
+program - is a PDF again and is listed, and opening it makes it a page note under the
+name it has; nothing is kept where nobody can see it. Deleting a page note always goes
+to this device's Recently deleted, signed in or not, because that is the one place that
+keeps the paper with it.
+
+**Sync carries the paper as the file it is.** A desktop's sync scans the folder, which
+has the paper in it; a phone or a browser, which reads the tree instead, asks for the
+papers the list leaves out (`papers` in the tree's options).
+
+**A PDF in a dropped folder stays a PDF** until it is opened: it is that folder's, the
+attachment a note in it points at, and turning it into a page note on the way in would
+be rewriting somebody's vault. Opening it is the same as opening any other PDF.
+
+**The page note an older build made beside its PDF** is taken for what it is: a page
+note of the PDF's name whose every page names that PDF, and nothing else. Opening either
+of the two moves the PDF in under the note as its paper, and writes nothing in the note
+- the ink, the cards and the pages stay byte for byte as they were. A page note of that
+name that has a blank sheet in it, or a page of another paper, is somebody's own; it is
+left alone, and the PDF becomes `Lecture 4 2.pages` beside it. See
+`apps/desktop/src/lib/pages/from-pdf.ts`.
 
 Nothing is baked in. No PNGs are written; the picture behind a page is rendered
 from the paper itself, by pdf.js at 2x with a 16 Mi-pixel ceiling, when that page
@@ -324,12 +360,16 @@ A landscape plate in a portrait book gets a landscape page, and a page is called
 it is: a page out of a Letter paper says `letter`, so changing its ruling does not
 snap it to A4's size.
 
-**The `file` a page names is relative, and to two things.** Obsidian writes one
-relative to the vault; this import writes the paper's bare name beside the note it
-made, which is the same path only when the note sits at the top of the space. So both
-are tried - the note's own folder first, then the space's root - and the one that opens
-is the one the page draws. `placesOf` in `apps/desktop/src/lib/space-paths.ts` is the
-whole of it. A page whose paper is nowhere says so on the sheet: a blank sheet and a
+**Where a page's paper is.** The note's own paper first: a page names its paper by
+the name it had when the note was made, and the note can be renamed since - the paper
+is renamed with it and the pages are not rewritten - so the paper the note holds is the
+one answer that is never stale. Then the `file` the page names, which is relative, and
+to two things: Obsidian writes one relative to the vault, a page note made here writes
+the paper's bare name beside the note, and the two are the same path only when the note
+sits at the top of the space. So both are tried - the note's own folder first, then the
+space's root. That is a page note written by hand, and one an older build made beside
+its PDF. `paperPlaces` in `apps/desktop/src/lib/pages/held.ts` is the whole of it, and
+the sheet, the navigator and the export all ask it. A page whose paper is nowhere says so on the sheet: a blank sheet and a
 sheet whose PDF could not be read look identical, which is how a whole note of blank
 pages went unnoticed.
 
@@ -355,10 +395,9 @@ back to A4's height; one that was A4 keeps the height it had, because it is abou
 from there.
 
 **Highlights carry over.** A PDF's highlights live in `paper.pdf.highlights.json`
-(see the sidecar in `pdf/highlights.ts`), and that file is untouched by any of
-this: the paper keeps its sidecar, so the same PDF opened in the PDF viewer still
-shows every mark, and the page note is a second thing written beside it rather
-than a replacement for it.
+(see the sidecar in `pdf/highlights.ts`), and they follow the paper into the note:
+`Lecture 4.pdf.highlights.json` is `Lecture 4.pages.pdf.highlights.json` once the
+paper is held, by the same rename that moved the paper.
 
 ## Out
 
@@ -384,8 +423,8 @@ with the `Multiply` blend mode, which is what a marker over printed text is.
 **The ink goes into the page content, not into an `/Ink` annotation.** pdf-lib has
 no annotation writer, and writing both would be every stroke twice; of the two,
 content is the one every reader and every printer draws. What that costs is that
-the strokes cannot be rubbed out again in another app - which is what the `.pages`
-file beside the paper is for, and why the paper is never written over. If a real
+the strokes cannot be rubbed out again in another app - which is what the page note
+holding the paper is for, and why the paper is never written over. If a real
 `/Ink` annotation is wanted instead, the dictionary can be hand-built through
 pdf-lib's low-level API; that is a decision, not an oversight.
 
@@ -448,6 +487,8 @@ a phone reader sees; the navigator is in the drawer where the outline is.
 | One notch of a zoom | `apps/desktop/src/lib/camera.ts` |
 | Where a view was left, and whether its zoom was chosen | `apps/desktop/src/lib/canvas/place.ts` |
 | The paper behind a page | `apps/desktop/src/lib/pages/paper.ts` |
+| The paper a page note holds, and where a page's paper is | `apps/desktop/src/lib/pages/held.ts` |
+| A PDF becoming its page note | `apps/desktop/src/lib/pages/from-pdf.ts` |
 | Out | `apps/desktop/src/lib/pages/out.ts` |
 | What is in front | `apps/desktop/src/lib/pages/showing.svelte.ts` |
 | A PDF in | `apps/desktop/src/lib/import/pdf-pages.ts` |
