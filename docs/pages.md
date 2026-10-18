@@ -183,7 +183,8 @@ horizontal pan, because then there is something to the side to see.
 | | |
 | --- | --- |
 | two fingers | a pinch on the paper, about the middle of the two of them, with the pan the middle moves as well. Two fingers mean the paper in every tool: whatever the first was doing, the second takes it over - except ink that has been going for longer than a quarter of a second, which is a hand settling on the glass rather than a pinch |
-| Ctrl and the wheel | in and out about the pointer, which stays over what it was over. A trackpad pinch arrives as exactly this on every platform |
+| Ctrl and the wheel | in and out about the pointer, which stays over what it was over, a notch a turn |
+| a trackpad's two fingers | a pinch about the point between them, which follows the fingers: twice the span is twice the size (#410). Chromium and WebView2 send it as Ctrl and the wheel in small fractional steps, each a hundred times the log of the step's own scale, which read as notches zoomed an eighth for a doubling; WebKit on a Mac sends it as `gesturestart`, `gesturechange` and `gestureend`. `ctrlWheelZoom` and `heldGestures` in `apps/desktop/src/lib/camera.ts`, which the plane asks too |
 | a double tap | the two fits in turn: the width of the paper, and then the whole of the page |
 | Ctrl+Alt+= and Ctrl+Alt+- | a notch in and out, about the middle of the view |
 | Ctrl+Alt+0 | back to the width, and the paper stays fitted from then on |

@@ -32,7 +32,7 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
-  import { graphPoint, wheelZoom, zoomed } from './camera'
+  import { ctrlWheelZoom, graphPoint, heldGestures, pinching, zoomed } from './camera'
   import { canvasMenu, place, pull, run } from './canvas/actions'
   import {
     coloured,
@@ -690,7 +690,22 @@
     if (!element) return
 
     element.addEventListener('wheel', onWheel, { passive: false })
-    return () => element.removeEventListener('wheel', onWheel)
+    // And a Mac's trackpad pinch, which WebKit tells as gestures rather than the wheel.
+    const unpinch = heldGestures(element, (at, by) => {
+      const rect = element.getBoundingClientRect()
+      store.camera = zoomed(
+        camera,
+        width,
+        height,
+        at.clientX - rect.left,
+        at.clientY - rect.top,
+        by,
+      )
+    })
+    return () => {
+      element.removeEventListener('wheel', onWheel)
+      unpinch()
+    }
   })
 
   function measure(element: HTMLElement) {
@@ -1343,13 +1358,14 @@
     // Ctrl and the wheel is zoom, which is also what a trackpad pinch arrives as.
     // The wheel on its own moves the plane, which is what a wheel does everywhere.
     if (event.ctrlKey || event.metaKey) {
+      if (pinching()) return
       store.camera = zoomed(
         camera,
         width,
         height,
         event.clientX - rect.left,
         event.clientY - rect.top,
-        wheelZoom(event.deltaY),
+        ctrlWheelZoom(event),
       )
       return
     }

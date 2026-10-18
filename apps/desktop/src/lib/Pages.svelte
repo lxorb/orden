@@ -51,7 +51,7 @@
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
-  import { type Camera, graphPoint, NOTCH, wheelZoom } from './camera'
+  import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching } from './camera'
   import { toolPressed } from './canvas/actions'
   import { coloured, copied, movedBy, pickedBox, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
@@ -1010,6 +1010,16 @@
     pull = { ...pull, raw: 0, holding: false }
   }
 
+  // A Mac's trackpad pinch, which WebKit tells as gestures rather than the wheel (#410).
+  $effect(() => {
+    const element = host
+    if (!element) return
+    return heldGestures(element, (at, by) => {
+      store.halt()
+      store.zoomAt(screenAt(at), by)
+    })
+  })
+
   function onwheel(event: WheelEvent) {
     event.preventDefault()
     store.halt()
@@ -1017,7 +1027,7 @@
     // Ctrl or the pinch a trackpad reports as one: the zoom. Everything else is a
     // scroll down the column, which is how a page note is read.
     if (event.ctrlKey || event.metaKey) {
-      store.zoomAt(screenAt(event), wheelZoom(event.deltaY))
+      if (!pinching()) store.zoomAt(screenAt(event), ctrlWheelZoom(event))
       return
     }
 

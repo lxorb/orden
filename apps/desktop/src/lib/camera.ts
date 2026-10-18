@@ -51,6 +51,70 @@ export function wheelZoom(deltaY: number): number {
   return Math.exp((-deltaY / 100) * Math.log(NOTCH))
 }
 
+/** What one Ctrl-wheel event does to the scale: a wheel's notch, or a trackpad's pinch,
+ *  which follows the fingers (#410). Chromium and WebView2 send a pinch as Ctrl and the
+ *  wheel in small fractional steps, each a hundred times the log of how far the fingers
+ *  moved apart, so read as notches a pinch to twice the span zoomed an eighth. A wheel's
+ *  notch is a whole hundred, or a whole share of one at a display's own scale. */
+export function ctrlWheelZoom(event: { deltaY: number; deltaMode: number }): number {
+  const pinch =
+    event.deltaMode === 0 && Math.abs(event.deltaY) < PINCHED && !Number.isInteger(event.deltaY)
+  return pinch ? Math.exp(-event.deltaY / 100) : wheelZoom(event.deltaY)
+}
+
+/** Below this, a fractional Ctrl-wheel step is a pinch rather than a wheel's notch. */
+const PINCHED = 50
+
+/** WebKit's trackpad pinch on a Mac: the scale since the pinch began, where it is. */
+interface Gesture extends UIEvent {
+  scale: number
+  clientX: number
+  clientY: number
+}
+
+/** Whether a WebKit pinch is going on, whose Ctrl-wheel would be counted twice. */
+let gesturing = false
+
+export function pinching(): boolean {
+  return gesturing
+}
+
+/** A trackpad pinch as WebKit on a Mac tells it, which is not as a wheel but as
+ *  `gesturestart`, `gesturechange` and `gestureend` (#410): each change zooms by what the
+ *  fingers moved since the last, about the point between them, and the page's own zoom is
+ *  stopped. Answers how to stop listening. */
+export function heldGestures(
+  element: HTMLElement,
+  zoom: (at: { clientX: number; clientY: number }, by: number) => void,
+): () => void {
+  let last = 1
+  const start = (event: Event) => {
+    event.preventDefault()
+    gesturing = true
+    last = 1
+  }
+  const change = (event: Event) => {
+    event.preventDefault()
+    const gesture = event as Gesture
+    if (!gesture.scale || !last) return
+    zoom(gesture, gesture.scale / last)
+    last = gesture.scale
+  }
+  const end = (event: Event) => {
+    event.preventDefault()
+    gesturing = false
+  }
+  element.addEventListener('gesturestart', start)
+  element.addEventListener('gesturechange', change)
+  element.addEventListener('gestureend', end)
+  return () => {
+    gesturing = false
+    element.removeEventListener('gesturestart', start)
+    element.removeEventListener('gesturechange', change)
+    element.removeEventListener('gestureend', end)
+  }
+}
+
 /** The point of the plane a screen point is over. */
 export function graphPoint(
   camera: Camera,
