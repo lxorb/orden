@@ -393,3 +393,68 @@ describe('a shut side', () => {
     expect(html).not.toContain('data-panel="tree"')
   })
 })
+
+/** A phone and a tablet have no AI panel (#403): not its tab on the right, not a way to
+ *  it from the palette or a key, and not a panel left open on it by a sitting before. */
+describe('the AI panel on a phone and a tablet', () => {
+  function rightTabs(device: typeof viewport.device): string[] {
+    viewport.device = device
+    workspace.panel = null
+    workspace.rightPanel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.rightPanel = null
+    viewport.device = 'desktop'
+    return [...html.matchAll(/role="tab"[^>]*aria-label="([^"]+)"/g)].map(([, one]) => one ?? '')
+  }
+
+  test('has no tab on the right, where a desktop keeps one', () => {
+    open('# Head\n')
+
+    expect(rightTabs('desktop')).toContain('Ask')
+    expect(rightTabs('phone')).not.toContain('Ask')
+    expect(rightTabs('tablet')).not.toContain('Ask')
+  })
+
+  test('and asking for it shows nothing, while a desktop opens it', () => {
+    open('# Head\n')
+    workspace.rightPanel = null
+
+    viewport.device = 'phone'
+    workspace.showPanel('ask')
+    expect(workspace.rightPanel).toBeNull()
+    workspace.togglePanel('ask')
+    expect(workspace.rightPanel).toBeNull()
+    expect(workspace.offers('ask')).toBe(false)
+    expect(workspace.offers('outline')).toBe(true)
+
+    viewport.device = 'desktop'
+    workspace.showPanel('ask')
+    expect(workspace.rightPanel).toBe('ask')
+    workspace.rightPanel = null
+  })
+
+  test('and one left open by a desktop sitting is not drawn, nor what the side opens on', () => {
+    open('# Head\n')
+    workspace.rightPanel = 'ask'
+    workspace.lastRight = 'ask'
+
+    viewport.device = 'phone'
+    expect(workspace.openOn('right')).toBeNull()
+    expect(workspace.nextRight).not.toBe('ask')
+
+    viewport.device = 'desktop'
+    expect(workspace.openOn('right')).toBe('ask')
+    workspace.rightPanel = null
+  })
+
+  test('and the palette has no row for it', async () => {
+    const { appCommands } = await import('./commands')
+    open('# Head\n')
+
+    viewport.device = 'desktop'
+    expect(appCommands().some((one) => one.id === 'ask-panel')).toBe(true)
+    viewport.device = 'phone'
+    expect(appCommands().some((one) => one.id === 'ask-panel')).toBe(false)
+    viewport.device = 'desktop'
+  })
+})

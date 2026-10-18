@@ -530,7 +530,9 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
-        { label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') },
+        ...(viewport.touch
+          ? []
+          : [{ label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
         DIVIDER,
         // Folding is a view operation, so these rows stand whether the note can
         // be written in or not.

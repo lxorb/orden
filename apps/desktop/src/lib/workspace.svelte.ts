@@ -4364,12 +4364,19 @@ class Workspace {
   /** The panel open on one side, which is what that side's tab strip marks and
    *  what its body draws: none on the right under the scratchpad; see panels.ts. */
   openOn(side: PanelSide): Panel | null {
-    return panels.openOn(this.sides, side)
+    const open = panels.openOn(this.sides, side)
+    return open && this.offers(open) ? open : null
   }
 
   /** Which tabs one side holds, in the order the strip shows them. */
   panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
-    return panels.panelsOn(this.right, side, every)
+    return panels.panelsOn(this.right, side, every).filter((one) => this.offers(one))
+  }
+
+  /** Whether this device has a panel at all: a phone and a tablet have no AI panel,
+   *  its tab or any way to it (#403). */
+  offers(panel: Panel): boolean {
+    return panel !== 'ask' || !viewport.touch
   }
 
   /** The panel the right side shows when something asks it to open: whatever is
@@ -4377,7 +4384,9 @@ class Workspace {
    *  key and the thumb that pulls the drawer out. Nothing once every panel has left. */
   get nextRight(): Panel | null {
     const last = this.lastRight
-    return this.rightPanel ?? (last && this.right.includes(last) ? last : this.right[0]) ?? null
+    const right = this.right.filter((one) => this.offers(one))
+    const open = this.rightPanel && this.offers(this.rightPanel) ? this.rightPanel : null
+    return open ?? (last && right.includes(last) ? last : right[0]) ?? null
   }
 
   /** Shows a panel. Asking for the one already showing leaves it showing, which is
@@ -4394,6 +4403,7 @@ class Workspace {
    *  So the fact is held here rather than by everybody who asks for it, and the
    *  gesture that switches says switch; see `togglePanel`. */
   showPanel(next: Panel) {
+    if (!this.offers(next)) return
     this.unfill()
     if (this.openOn(this.sideOf(next)) === next) return
 
@@ -4407,6 +4417,7 @@ class Workspace {
    *  showing. The rule itself is `showing` in workspace/panels.ts, which answers
    *  what the two sides are after the press. */
   togglePanel(next: Panel) {
+    if (!this.offers(next)) return
     if (this.unfill() && this.openOn(this.sideOf(next)) === next) return
     this.sides = panels.showing(this.sides, next)
   }

@@ -30,6 +30,7 @@
   import { settings } from './settings.svelte'
   import { trap } from './trap'
   import { grow } from './grow'
+  import { workspace } from './workspace.svelte'
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
@@ -231,18 +232,21 @@
                 {/if}
               </svg>
             </button>
-            <button
-              class="nib-glyph act"
-              title={t('Continue in the panel')}
-              aria-label={t('Continue in the panel')}
-              onclick={() => void quick.continueInPanel()}
-            >
-              <svg viewBox="0 0 13 13"
-                ><path
-                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
-                /></svg
+            <!-- No panel to go on in on a phone or a tablet (#403). -->
+            {#if workspace.offers('ask')}
+              <button
+                class="nib-glyph act"
+                title={t('Continue in the panel')}
+                aria-label={t('Continue in the panel')}
+                onclick={() => void quick.continueInPanel()}
               >
-            </button>
+                <svg viewBox="0 0 13 13"
+                  ><path
+                    d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                  /></svg
+                >
+              </button>
+            {/if}
           </div>
         {/if}
       </div>

@@ -16,7 +16,9 @@ What it proves, in order:
   with the citation written as a wikilink; the pen starts the conversation again;
 - the Properties panel draws a note's front matter as rows, and a changed value, a
   ticked box, a chip taken off, a key renamed, a key added and a key removed are each
-  one edit of exactly those characters, and Ctrl+Z in the note takes the last back.
+  one edit of exactly those characters, and Ctrl+Z in the note takes the last back;
+- on a phone the right side is a drawer with no Ask in it, and asking for the panel opens
+  nothing (#403).
 
 A fake OpenAI-compatible server answers, streaming a word at a time. No key, no
 network, no bill.
@@ -410,8 +412,8 @@ PHONE_AGENT = (
 
 
 def on_a_phone(browser: Browser) -> None:
-    """The right side as a drawer: its button in the bar, Ask in it, and a citation
-    that puts the drawer away to show its passage."""
+    """The right side as a drawer, its button in the bar, and no Ask in it: a phone has
+    no AI panel, and asking for one opens nothing (#403)."""
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
         user_agent=PHONE_AGENT,
@@ -429,23 +431,20 @@ def on_a_phone(browser: Browser) -> None:
     page.wait_for_timeout(500)
 
     page.locator("button.toggle.right").first.click(force=True)
-    page.wait_for_timeout(600)
-    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
-    wait_for(page, "document.querySelector('.ask textarea')", "[phone] the field")
-    Model.words = ["It ", "faces ", "the ", "wind ", "[2]", "."]
-    page.locator(".ask textarea").fill("Which way does a kestrel face?")
-    page.locator(".ask .go").click()
-    wait_for(page, "document.querySelector('.ask .answer a[href=\"#cite-2\"]')", "[phone] a cited answer")
-    page.wait_for_timeout(400)
-    shot(page, "08-phone-answered")
+    wait_for(page, "document.querySelector('aside[data-region=\"right\"] [role=\"tab\"]')", "[phone] the right drawer's tabs")
+    tabs = page.evaluate(
+        "() => [...document.querySelectorAll('aside[data-region=\"right\"] [role=\"tab\"]')]"
+        ".map((one) => one.getAttribute('aria-label'))"
+    )
+    say(f"[phone] the right drawer holds {tabs}")
+    if "Ask" in tabs:
+        wrong(f"[phone] the right drawer offers the AI panel: {tabs}")
 
-    page.locator('.ask .answer a[href="#cite-2"]').click()
-    page.wait_for_timeout(900)
-    after = page.evaluate(SIDES)
-    active = page.evaluate("() => window.nibApp.workspace.active?.path ?? ''")
-    shot(page, "09-phone-passage")
-    if after["open"] is not None or not active.endswith("Hovering.md"):
-        wrong(f"[phone] the citation did not put the drawer away on its note: {after}, {active}")
+    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
+    page.wait_for_timeout(500)
+    shot(page, "08-phone-right")
+    if page.evaluate("() => !!document.querySelector('.ask textarea')"):
+        wrong("[phone] asking for the AI panel drew it")
     context.close()
 
 

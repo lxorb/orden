@@ -429,6 +429,10 @@ reads as Approve.
 - **Wider when it needs to be.** The right side's width is dragged as today; **Open in new
   tab** on the thread's menu puts the same conversation in a pane (JetBrains, Claude Code's
   editor tab), for a long session beside two notes, and shuts the side it came from.
+- **A desktop's, not a phone's or a tablet's** (#403). Under a thumb the right side has no
+  Ask tab, the palette and the app menu no row for it, Ctrl+Shift+A, Alt+K and **Continue in
+  the panel** nothing to open, and a panel a desktop sitting left open is not drawn:
+  `offers` in `apps/desktop/src/lib/workspace.svelte.ts`, which every way to a panel asks.
 - Fetched the first time it opens, like the Ask panel is (`apps/desktop/src/lib/surfaces.svelte.ts`):
   none of it is in the first paint, held by `apps/desktop/test/weight.test.ts`.
 

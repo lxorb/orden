@@ -1656,12 +1656,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.properties'),
       run: () => revealPanel('properties'),
     },
-    {
-      id: 'ask-panel',
-      label: t('Ask'),
-      hint: shortcuts.hint('app.ask'),
-      run: () => revealPanel('ask'),
-    },
+    // A phone and a tablet have no AI panel (#403).
+    ...(viewport.touch
+      ? []
+      : [
+          {
+            id: 'ask-panel',
+            label: t('Ask'),
+            hint: shortcuts.hint('app.ask'),
+            run: () => revealPanel('ask'),
+          },
+        ]),
     {
       id: 'quick-question',
       label: t('Quick question'),

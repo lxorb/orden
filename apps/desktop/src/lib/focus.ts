@@ -149,6 +149,7 @@ export function stepRegionFocus(direction: number): boolean {
  *  something and a second key nobody remembers for leaving it. The panel has to
  *  be drawn before it can be stood in, so the second half waits a frame. */
 export function revealPanel(panel: Panel): void {
+  if (!workspace.offers(panel)) return
   const side = workspace.sideOf(panel)
   const region: Region = side === 'right' ? 'right' : 'list'
   if (workspace.openOn(side) === panel && regionHere() === region) {
