@@ -1824,6 +1824,13 @@ export const ptPT: Dictionary = {
   'Bring all to front': 'Trazer tudo para a frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
+  'Devices with your AI vault': 'Dispositivos com o seu cofre de IA',
+  'This device': 'Este dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'O dispositivo deixa de conseguir ler as suas contas de IA, e os outros recebem uma chave nova.',
+  'Also remove this device from your AI vault?':
+    'Remover também este dispositivo do seu cofre de IA?',
+  'Remove and sign out': 'Remover e terminar sessão',
   'Undo making {name}': 'Anular criar {name}',
   'Undo the deletion': 'Anular a eliminação',
   'Undo the move': 'Anular a deslocação',

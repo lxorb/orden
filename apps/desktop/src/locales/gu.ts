@@ -1771,6 +1771,12 @@ export const gu: Dictionary = {
   'Bring all to front': 'બધું આગળ લાવો',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'નકલ પાછી લો',
+  'Devices with your AI vault': 'તમારા AI વૉલ્ટ વાળાં ઉપકરણો',
+  'This device': 'આ ઉપકરણ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ઉપકરણ હવે તમારાં AI એકાઉન્ટ વાંચી શકશે નહીં, અને બાકીનાંને નવી કી મળશે.',
+  'Also remove this device from your AI vault?': 'આ ઉપકરણને તમારા AI વૉલ્ટમાંથી પણ દૂર કરવું?',
+  'Remove and sign out': 'દૂર કરો અને સાઇન આઉટ કરો',
   'Undo making {name}': '{name} બનાવવું પાછું લો',
   'Undo the deletion': 'કાઢવું પાછું લો',
   'Undo the move': 'ખસેડવું પાછું લો',

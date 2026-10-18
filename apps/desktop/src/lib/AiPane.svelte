@@ -181,6 +181,19 @@
     ai.remove(provider.id)
   }
 
+  /** An allowed device let go of, after one question: the vault's key changes under it,
+   *  so it can read nothing written after (#389); see `remove` in ai/vault/vault.svelte.ts. */
+  async function removeDevice(id: string, name: string) {
+    const { prompt } = await import('./prompt.svelte')
+    const sure = await prompt.confirm({
+      title: t('Remove {name}?', { name }),
+      detail: t('The device can no longer read your AI accounts, and the others get a new key.'),
+      confirmLabel: t('Remove'),
+      danger: true,
+    })
+    if (sure) await vault.remove(id).catch(() => false)
+  }
+
   /** What an account is called: the name the reader gave it, else whose sign-in it is as
    *  its program says, else its road. */
   function labelOf(provider: Account): string {
@@ -264,6 +277,26 @@
       </div>
     </div>
   </div>
+{/if}
+
+<!-- The devices that hold the vault's key, each of which can be let go of; see
+     `removeDevice`. Only where this device is one of them: it is the one that changes the
+     key for the others. -->
+{#if vault.standing === 'open' && vault.allowed.length}
+  <h3>{t('Devices with your AI vault')}</h3>
+  {#each vault.allowed as one (one.id)}
+    <div class="card" data-device={one.id} transition:slide={{ duration: dur(160) }}>
+      <div class="nib-setting setting">
+        <span class="name">{one.name}</span>
+        <div class="row">
+          {#if one.mine}<span class="hint">{t('This device')}</span>{/if}
+          <button class="nib-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}
+            >{t('Remove')}</button
+          >
+        </div>
+      </div>
+    </div>
+  {/each}
 {/if}
 
 {#if ai.accounts.length}

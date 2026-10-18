@@ -1872,6 +1872,13 @@ export const ar: Dictionary = {
   'Bring all to front': 'إحضار الكل إلى المقدمة',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'التراجع عن النسخ',
+  'Devices with your AI vault': 'الأجهزة التي تحمل خزنة الذكاء الاصطناعي',
+  'This device': 'هذا الجهاز',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'لن يتمكن الجهاز بعد الآن من قراءة حسابات الذكاء الاصطناعي، وتحصل الأجهزة الأخرى على مفتاح جديد.',
+  'Also remove this device from your AI vault?':
+    'هل تزيل هذا الجهاز من خزنة الذكاء الاصطناعي أيضًا؟',
+  'Remove and sign out': 'إزالة وتسجيل الخروج',
   'Undo making {name}': 'التراجع عن إنشاء {name}',
   'Undo the deletion': 'التراجع عن الحذف',
   'Undo the move': 'التراجع عن النقل',

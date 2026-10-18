@@ -1776,6 +1776,12 @@ export const hi: Dictionary = {
   'Bring all to front': 'सभी को सामने लाएँ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'कॉपी पूर्ववत करें',
+  'Devices with your AI vault': 'आपके AI वॉल्ट वाले डिवाइस',
+  'This device': 'यह डिवाइस',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'डिवाइस अब आपके AI खाते नहीं पढ़ सकेगा, और बाकी को नई कुंजी मिलेगी।',
+  'Also remove this device from your AI vault?': 'इस डिवाइस को अपने AI वॉल्ट से भी हटाएं?',
+  'Remove and sign out': 'हटाएं और साइन आउट करें',
   'Undo making {name}': '{name} बनाना पूर्ववत करें',
   'Undo the deletion': 'हटाना पूर्ववत करें',
   'Undo the move': 'ले जाना पूर्ववत करें',

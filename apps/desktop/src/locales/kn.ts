@@ -1794,6 +1794,13 @@ export const kn: Dictionary = {
   'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ನಕಲನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Devices with your AI vault': 'ನಿಮ್ಮ AI ವಾಲ್ಟ್ ಇರುವ ಸಾಧನಗಳು',
+  'This device': 'ಈ ಸಾಧನ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ಆ ಸಾಧನ ಇನ್ನು ನಿಮ್ಮ AI ಖಾತೆಗಳನ್ನು ಓದಲಾಗದು, ಉಳಿದವಕ್ಕೆ ಹೊಸ ಕೀ ಸಿಗುತ್ತದೆ.',
+  'Also remove this device from your AI vault?':
+    'ಈ ಸಾಧನವನ್ನು ನಿಮ್ಮ AI ವಾಲ್ಟ್‌ನಿಂದಲೂ ತೆಗೆದುಹಾಕುವುದೇ?',
+  'Remove and sign out': 'ತೆಗೆದುಹಾಕಿ ಸೈನ್ ಔಟ್ ಮಾಡಿ',
   'Undo making {name}': '{name} ರಚಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
   'Undo the deletion': 'ಅಳಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
   'Undo the move': 'ಸರಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',

@@ -1846,6 +1846,12 @@ export const uk: Dictionary = {
   'Bring all to front': 'Усе на передній план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Скасувати копіювання',
+  'Devices with your AI vault': 'Пристрої з вашим сховищем ШІ',
+  'This device': 'Цей пристрій',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Пристрій більше не зможе читати ваші облікові записи ШІ, а решта отримають новий ключ.',
+  'Also remove this device from your AI vault?': 'Прибрати цей пристрій і зі сховища ШІ?',
+  'Remove and sign out': 'Прибрати й вийти',
   'Undo making {name}': 'Скасувати створення {name}',
   'Undo the deletion': 'Скасувати видалення',
   'Undo the move': 'Скасувати переміщення',

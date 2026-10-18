@@ -1780,6 +1780,12 @@ export const id: Dictionary = {
   'Bring all to front': 'Bawa semua ke depan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Batalkan penyalinan',
+  'Devices with your AI vault': 'Perangkat dengan brankas AI Anda',
+  'This device': 'Perangkat ini',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Perangkat itu tidak bisa lagi membaca akun AI Anda, dan yang lain mendapat kunci baru.',
+  'Also remove this device from your AI vault?': 'Hapus juga perangkat ini dari brankas AI Anda?',
+  'Remove and sign out': 'Hapus dan keluar',
   'Undo making {name}': 'Batalkan pembuatan {name}',
   'Undo the deletion': 'Batalkan penghapusan',
   'Undo the move': 'Batalkan pemindahan',

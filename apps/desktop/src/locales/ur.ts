@@ -1777,6 +1777,12 @@ export const ur: Dictionary = {
   'Bring all to front': 'سب کو سامنے لائیں',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'نقل واپس لیں',
+  'Devices with your AI vault': 'آپ کے AI والٹ والی ڈیوائسز',
+  'This device': 'یہ ڈیوائس',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'وہ ڈیوائس اب آپ کے AI اکاؤنٹس نہیں پڑھ سکے گی، اور باقی کو نئی کلید ملے گی۔',
+  'Also remove this device from your AI vault?': 'اس ڈیوائس کو اپنے AI والٹ سے بھی ہٹائیں؟',
+  'Remove and sign out': 'ہٹائیں اور سائن آؤٹ کریں',
   'Undo making {name}': '{name} بنانا واپس لیں',
   'Undo the deletion': 'حذف واپس لیں',
   'Undo the move': 'منتقلی واپس لیں',

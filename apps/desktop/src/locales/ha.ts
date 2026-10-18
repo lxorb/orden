@@ -1809,6 +1809,12 @@ export const ha: Dictionary = {
   'Bring all to front': 'Kawo duka gaba',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Mayar da kwafin',
+  'Devices with your AI vault': "Na'urorin da ke da ma'ajin AI ɗinka",
+  'This device': "Wannan na'urar",
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    "Na'urar ba za ta iya karanta asusun AI ɗinka ba kuma, sauran kuma za su sami sabon maɓalli.",
+  'Also remove this device from your AI vault?': "A cire wannan na'urar daga ma'ajin AI ɗinka ma?",
+  'Remove and sign out': 'Cire ka fita',
   'Undo making {name}': 'Mayar da ƙirƙirar {name}',
   'Undo the deletion': 'Mayar da sharewar',
   'Undo the move': 'Mayar da matsarwar',

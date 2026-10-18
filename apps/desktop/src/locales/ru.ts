@@ -1852,6 +1852,12 @@ export const ru: Dictionary = {
   'Bring all to front': 'Все окна на передний план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Отменить копирование',
+  'Devices with your AI vault': 'Устройства с вашим хранилищем ИИ',
+  'This device': 'Это устройство',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Устройство больше не сможет читать ваши аккаунты ИИ, а остальные получат новый ключ.',
+  'Also remove this device from your AI vault?': 'Убрать это устройство и из хранилища ИИ?',
+  'Remove and sign out': 'Убрать и выйти',
   'Undo making {name}': 'Отменить создание {name}',
   'Undo the deletion': 'Отменить удаление',
   'Undo the move': 'Отменить перемещение',

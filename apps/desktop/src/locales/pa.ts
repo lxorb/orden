@@ -1784,6 +1784,12 @@ export const pa: Dictionary = {
   'Bring all to front': 'ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ਨਕਲ ਵਾਪਸ ਲਵੋ',
+  'Devices with your AI vault': 'ਤੁਹਾਡੇ AI ਵਾਲਟ ਵਾਲੇ ਡਿਵਾਈਸ',
+  'This device': 'ਇਹ ਡਿਵਾਈਸ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ਉਹ ਡਿਵਾਈਸ ਹੁਣ ਤੁਹਾਡੇ AI ਖਾਤੇ ਨਹੀਂ ਪੜ੍ਹ ਸਕੇਗਾ, ਅਤੇ ਬਾਕੀਆਂ ਨੂੰ ਨਵੀਂ ਕੁੰਜੀ ਮਿਲੇਗੀ।',
+  'Also remove this device from your AI vault?': 'ਇਸ ਡਿਵਾਈਸ ਨੂੰ ਆਪਣੇ AI ਵਾਲਟ ਤੋਂ ਵੀ ਹਟਾਉਣਾ ਹੈ?',
+  'Remove and sign out': 'ਹਟਾਓ ਅਤੇ ਸਾਈਨ ਆਉਟ ਕਰੋ',
   'Undo making {name}': '{name} ਬਣਾਉਣਾ ਵਾਪਸ ਲਵੋ',
   'Undo the deletion': 'ਮਿਟਾਉਣਾ ਵਾਪਸ ਲਵੋ',
   'Undo the move': 'ਭੇਜਣਾ ਵਾਪਸ ਲਵੋ',

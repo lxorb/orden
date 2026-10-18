@@ -1808,6 +1808,13 @@ export const ta: Dictionary = {
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'நகலெடுத்ததைச் செயல்தவிர்',
+  'Devices with your AI vault': 'உங்கள் AI பெட்டகம் உள்ள சாதனங்கள்',
+  'This device': 'இந்தச் சாதனம்',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'அந்தச் சாதனம் இனி உங்கள் AI கணக்குகளைப் படிக்க முடியாது, மற்றவை புதிய சாவியைப் பெறும்.',
+  'Also remove this device from your AI vault?':
+    'இந்தச் சாதனத்தை உங்கள் AI பெட்டகத்திலிருந்தும் நீக்கவா?',
+  'Remove and sign out': 'நீக்கி வெளியேறு',
   'Undo making {name}': '{name} உருவாக்கலைச் செயல்தவிர்',
   'Undo the deletion': 'நீக்கலைச் செயல்தவிர்',
   'Undo the move': 'நகர்த்தலைச் செயல்தவிர்',

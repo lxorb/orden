@@ -1787,6 +1787,12 @@ export const te: Dictionary = {
   'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'కాపీని చర్యరద్దు చేయి',
+  'Devices with your AI vault': 'మీ AI వాల్ట్ ఉన్న పరికరాలు',
+  'This device': 'ఈ పరికరం',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ఆ పరికరం ఇకపై మీ AI ఖాతాలను చదవలేదు, మిగతా వాటికి కొత్త కీ వస్తుంది.',
+  'Also remove this device from your AI vault?': 'ఈ పరికరాన్ని మీ AI వాల్ట్ నుండి కూడా తీసివేయాలా?',
+  'Remove and sign out': 'తీసివేసి సైన్ అవుట్ చేయి',
   'Undo making {name}': '{name} సృష్టిని చర్యరద్దు చేయి',
   'Undo the deletion': 'తొలగింపును చర్యరద్దు చేయి',
   'Undo the move': 'తరలింపును చర్యరద్దు చేయి',

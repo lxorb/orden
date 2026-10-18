@@ -1832,6 +1832,13 @@ export const it: Dictionary = {
   'Bring all to front': 'Porta tutto in primo piano',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Annulla la copia',
+  'Devices with your AI vault': 'Dispositivi con la tua cassaforte IA',
+  'This device': 'Questo dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Il dispositivo non può più leggere i tuoi account IA, e gli altri ricevono una nuova chiave.',
+  'Also remove this device from your AI vault?':
+    'Rimuovere anche questo dispositivo dalla tua cassaforte IA?',
+  'Remove and sign out': 'Rimuovi e disconnetti',
   'Undo making {name}': 'Annulla la creazione di {name}',
   'Undo the deletion': 'Annulla l’eliminazione',
   'Undo the move': 'Annulla lo spostamento',

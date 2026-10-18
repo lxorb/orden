@@ -1767,6 +1767,12 @@ export const vi: Dictionary = {
   'Bring all to front': 'Đưa tất cả ra trước',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Hoàn tác việc sao chép',
+  'Devices with your AI vault': 'Thiết bị có kho AI của bạn',
+  'This device': 'Thiết bị này',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Thiết bị đó sẽ không đọc được tài khoản AI của bạn nữa, và các thiết bị khác nhận khoá mới.',
+  'Also remove this device from your AI vault?': 'Gỡ cả thiết bị này khỏi kho AI của bạn?',
+  'Remove and sign out': 'Gỡ và đăng xuất',
   'Undo making {name}': 'Hoàn tác tạo {name}',
   'Undo the deletion': 'Hoàn tác xoá',
   'Undo the move': 'Hoàn tác chuyển',

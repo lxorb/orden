@@ -1781,6 +1781,13 @@ export const ms: Dictionary = {
   'Bring all to front': 'Bawa semua ke hadapan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Buat asal salinan',
+  'Devices with your AI vault': 'Peranti dengan peti besi AI anda',
+  'This device': 'Peranti ini',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Peranti itu tidak dapat membaca akaun AI anda lagi, dan yang lain mendapat kunci baharu.',
+  'Also remove this device from your AI vault?':
+    'Alih keluar juga peranti ini daripada peti besi AI anda?',
+  'Remove and sign out': 'Alih keluar dan log keluar',
   'Undo making {name}': 'Buat asal penciptaan {name}',
   'Undo the deletion': 'Buat asal penghapusan',
   'Undo the move': 'Buat asal pengalihan',

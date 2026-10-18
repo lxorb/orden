@@ -1791,6 +1791,12 @@ export const gsw: Dictionary = {
   'Bring all to front': 'Alli nach vorne bringä',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Devices with your AI vault': 'Grät mit dim KI-Tresor',
+  'This device': 'Das Grät',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Das Grät cha dini KI-Konte nüme läse, und di andere überchömed en neue Schlüssel.',
+  'Also remove this device from your AI vault?': 'Das Grät au us dim KI-Tresor entferne?',
+  'Remove and sign out': 'Entferne und abmelde',
   'Undo making {name}': '{name} wider ewägnäh',
   'Undo the deletion': 'Lösche zrugnäh',
   'Undo the move': 'Verschiebe zrugnäh',

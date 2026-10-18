@@ -1777,6 +1777,12 @@ export const ja: Dictionary = {
   'Bring all to front': 'すべてを手前に移動',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'コピーを元に戻す',
+  'Devices with your AI vault': 'AI 保管庫を持つデバイス',
+  'This device': 'このデバイス',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'そのデバイスは AI アカウントを読めなくなり、ほかのデバイスには新しい鍵が渡ります。',
+  'Also remove this device from your AI vault?': 'このデバイスを AI 保管庫からも外しますか？',
+  'Remove and sign out': '外してサインアウト',
   'Undo making {name}': '{name} の作成を元に戻す',
   'Undo the deletion': '削除を元に戻す',
   'Undo the move': '移動を元に戻す',

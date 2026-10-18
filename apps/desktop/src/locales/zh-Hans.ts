@@ -1741,6 +1741,12 @@ export const zhHans: Dictionary = {
   'Bring all to front': '前置全部窗口',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '撤销复制',
+  'Devices with your AI vault': '拥有你 AI 保险库的设备',
+  'This device': '此设备',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '该设备将无法再读取你的 AI 账户，其他设备会得到新密钥。',
+  'Also remove this device from your AI vault?': '也将此设备从你的 AI 保险库中移除？',
+  'Remove and sign out': '移除并退出登录',
   'Undo making {name}': '撤销新建{name}',
   'Undo the deletion': '撤销删除',
   'Undo the move': '撤销移动',

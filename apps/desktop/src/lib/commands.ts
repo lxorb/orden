@@ -1358,7 +1358,11 @@ export function appCommands(view?: EditorView): Command[] {
           label: `${t('Sign out')} ${account.user.email}`.trim(),
           // Who this machine is signed in as is not a link's business.
           byHand: true,
-          run: () => void account.signOut(),
+          // Asking first whether this device leaves the AI vault too (#389).
+          run: () =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut()),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },
 

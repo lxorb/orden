@@ -1740,6 +1740,12 @@ export const zhHantHK: Dictionary = {
   'Bring all to front': '全部移至最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Devices with your AI vault': '擁有你 AI 保險庫的裝置',
+  'This device': '此裝置',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '該裝置將無法再讀取你的 AI 帳戶，其他裝置會得到新鎖匙。',
+  'Also remove this device from your AI vault?': '也將此裝置從你的 AI 保險庫中移除？',
+  'Remove and sign out': '移除並登出',
   'Undo making {name}': '復原建立{name}',
   'Undo the deletion': '復原刪除',
   'Undo the move': '復原移動',

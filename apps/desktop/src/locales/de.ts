@@ -1820,6 +1820,13 @@ export const de: Dictionary = {
   'Bring all to front': 'Alle nach vorne bringen',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Devices with your AI vault': 'Geräte mit deinem KI-Tresor',
+  'This device': 'Dieses Gerät',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Das Gerät kann deine KI-Konten nicht mehr lesen, und die anderen bekommen einen neuen Schlüssel.',
+  'Also remove this device from your AI vault?':
+    'Dieses Gerät auch aus deinem KI-Tresor entfernen?',
+  'Remove and sign out': 'Entfernen und abmelden',
   'Undo making {name}': '{name} wieder entfernen',
   'Undo the deletion': 'Löschen zurücknehmen',
   'Undo the move': 'Verschieben zurücknehmen',

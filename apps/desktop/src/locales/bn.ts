@@ -1776,6 +1776,12 @@ export const bn: Dictionary = {
   'Bring all to front': 'সব সামনে আনুন',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'কপি আনডু করুন',
+  'Devices with your AI vault': 'আপনার AI ভল্ট থাকা ডিভাইস',
+  'This device': 'এই ডিভাইস',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ডিভাইসটি আর আপনার AI অ্যাকাউন্ট পড়তে পারবে না, আর বাকিরা নতুন কী পাবে।',
+  'Also remove this device from your AI vault?': 'এই ডিভাইসটিকে আপনার AI ভল্ট থেকেও সরাবেন?',
+  'Remove and sign out': 'সরান ও সাইন আউট',
   'Undo making {name}': '{name} তৈরি আনডু',
   'Undo the deletion': 'মোছা আনডু',
   'Undo the move': 'সরানো আনডু',

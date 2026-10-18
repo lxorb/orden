@@ -1808,6 +1808,12 @@ export const sw: Dictionary = {
   'Bring all to front': 'Leta zote mbele',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Tendua unakili',
+  'Devices with your AI vault': 'Vifaa vyenye kasha lako la AI',
+  'This device': 'Kifaa hiki',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Kifaa hicho hakitaweza tena kusoma akaunti zako za AI, na vingine vitapata ufunguo mpya.',
+  'Also remove this device from your AI vault?': 'Ondoa pia kifaa hiki kwenye kasha lako la AI?',
+  'Remove and sign out': 'Ondoa na utoke',
   'Undo making {name}': 'Tendua kuunda {name}',
   'Undo the deletion': 'Tendua ufutaji',
   'Undo the move': 'Tendua uhamishaji',

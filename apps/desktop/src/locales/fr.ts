@@ -1838,6 +1838,12 @@ export const fr: Dictionary = {
   'Bring all to front': 'Tout ramener au premier plan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Annuler la copie',
+  'Devices with your AI vault': 'Appareils avec votre coffre IA',
+  'This device': 'Cet appareil',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'L’appareil ne peut plus lire vos comptes IA, et les autres reçoivent une nouvelle clé.',
+  'Also remove this device from your AI vault?': 'Retirer aussi cet appareil de votre coffre IA ?',
+  'Remove and sign out': 'Retirer et se déconnecter',
   'Undo making {name}': 'Annuler la création de {name}',
   'Undo the deletion': 'Annuler la suppression',
   'Undo the move': 'Annuler le déplacement',

@@ -1825,6 +1825,13 @@ export const es: Dictionary = {
   'Bring all to front': 'Traer todo al frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Deshacer la copia',
+  'Devices with your AI vault': 'Dispositivos con tu bóveda de IA',
+  'This device': 'Este dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'El dispositivo ya no podrá leer tus cuentas de IA, y los demás reciben una clave nueva.',
+  'Also remove this device from your AI vault?':
+    '¿Quitar también este dispositivo de tu bóveda de IA?',
+  'Remove and sign out': 'Quitar y cerrar sesión',
   'Undo making {name}': 'Deshacer crear {name}',
   'Undo the deletion': 'Deshacer la eliminación',
   'Undo the move': 'Deshacer el movimiento',

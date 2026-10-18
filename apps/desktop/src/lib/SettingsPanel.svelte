@@ -985,7 +985,12 @@
       <Security />
 
       <div class="card">
-        <button class="nib-action is-danger" onclick={() => account.signOut()}
+        <button
+          class="nib-action is-danger"
+          onclick={() =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut())}
           >{t('Sign out')}</button
         >
         <!-- Fetched by the press, like the sheets: nobody opening the settings needs

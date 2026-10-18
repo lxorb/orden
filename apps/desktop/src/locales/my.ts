@@ -1772,6 +1772,12 @@ export const my: Dictionary = {
   'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ကူးယူမှုကို ပြန်ဖျက်',
+  'Devices with your AI vault': 'သင်၏ AI သေတ္တာရှိသော စက်များ',
+  'This device': 'ဤစက်',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ထိုစက်သည် သင်၏ AI အကောင့်များကို မဖတ်နိုင်တော့ဘဲ အခြားစက်များ သော့အသစ် ရမည်။',
+  'Also remove this device from your AI vault?': 'ဤစက်ကို သင်၏ AI သေတ္တာမှလည်း ဖယ်မလား။',
+  'Remove and sign out': 'ဖယ်ပြီး အကောင့်ထွက်',
   'Undo making {name}': '{name} ဖန်တီးမှုပြန်ဖျက်',
   'Undo the deletion': 'ဖျက်မှုကို ပြန်ပါ',
   'Undo the move': 'ရွှေ့မှုကို ပြန်ပါ',

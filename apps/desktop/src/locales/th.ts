@@ -1750,6 +1750,12 @@ export const th: Dictionary = {
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'เลิกทำการคัดลอก',
+  'Devices with your AI vault': 'อุปกรณ์ที่มีห้องนิรภัย AI ของคุณ',
+  'This device': 'อุปกรณ์นี้',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'อุปกรณ์นั้นจะอ่านบัญชี AI ของคุณไม่ได้อีก และอุปกรณ์อื่นจะได้กุญแจใหม่',
+  'Also remove this device from your AI vault?': 'นำอุปกรณ์นี้ออกจากห้องนิรภัย AI ด้วยไหม',
+  'Remove and sign out': 'นำออกและออกจากระบบ',
   'Undo making {name}': 'เลิกสร้าง {name}',
   'Undo the deletion': 'เลิกลบ',
   'Undo the move': 'เลิกย้าย',

@@ -1803,6 +1803,13 @@ export const ml: Dictionary = {
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'പകർപ്പ് പഴയപടിയാക്കുക',
+  'Devices with your AI vault': 'നിങ്ങളുടെ AI വോൾട്ടുള്ള ഉപകരണങ്ങൾ',
+  'This device': 'ഈ ഉപകരണം',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ആ ഉപകരണത്തിന് ഇനി നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ വായിക്കാനാവില്ല, മറ്റുള്ളവയ്ക്ക് പുതിയ കീ ലഭിക്കും.',
+  'Also remove this device from your AI vault?':
+    'ഈ ഉപകരണത്തെ നിങ്ങളുടെ AI വോൾട്ടിൽ നിന്നും നീക്കണോ?',
+  'Remove and sign out': 'നീക്കി സൈൻ ഔട്ട് ചെയ്യുക',
   'Undo making {name}': '{name} ഉണ്ടാക്കിയത് പഴയപടിയാക്കുക',
   'Undo the deletion': 'ഇല്ലാതാക്കിയത് പഴയപടിയാക്കുക',
   'Undo the move': 'നീക്കിയത് പഴയപടിയാക്കുക',

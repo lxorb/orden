@@ -1757,6 +1757,12 @@ export const am: Dictionary = {
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ቅጂውን መልስ',
+  'Devices with your AI vault': 'የAI ካዝናዎ ያላቸው መሣሪያዎች',
+  'This device': 'ይህ መሣሪያ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'መሣሪያው የAI መለያዎችዎን ከእንግዲህ ማንበብ አይችልም፣ ሌሎቹም አዲስ ቁልፍ ያገኛሉ።',
+  'Also remove this device from your AI vault?': 'ይህን መሣሪያ ከAI ካዝናዎም ያስወግዱ?',
+  'Remove and sign out': 'አስወግድና ውጣ',
   'Undo making {name}': '{name} መፍጠርን መልስ',
   'Undo the deletion': 'ማጥፋቱን መልስ',
   'Undo the move': 'ማንቀሳቀሱን መልስ',

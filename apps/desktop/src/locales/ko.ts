@@ -1760,6 +1760,12 @@ export const ko: Dictionary = {
   'Bring all to front': '모두 앞으로 가져오기',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '복사 실행 취소',
+  'Devices with your AI vault': 'AI 보관함이 있는 기기',
+  'This device': '이 기기',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '이 기기는 더 이상 AI 계정을 읽을 수 없고, 다른 기기는 새 키를 받습니다.',
+  'Also remove this device from your AI vault?': '이 기기를 AI 보관함에서도 제거할까요?',
+  'Remove and sign out': '제거하고 로그아웃',
   'Undo making {name}': '{name} 만들기 취소',
   'Undo the deletion': '삭제 취소',
   'Undo the move': '이동 취소',

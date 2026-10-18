@@ -579,7 +579,12 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: account.user ? t('Sign out') : t('Sign in'),
           asks: !account.user,
-          run: () => (account.user ? void account.signOut() : (account.open = true)),
+          run: () =>
+            account.user
+              ? __EVEN_PLUGIN__
+                ? void account.signOut()
+                : void import('./ai/vault/leaving').then((one) => one.signOut())
+              : (account.open = true),
         },
         DIVIDER,
         // Through the store, so what it finds is offered rather than downloaded

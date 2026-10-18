@@ -1781,6 +1781,13 @@ export const fa: Dictionary = {
   'Bring all to front': 'آوردن همه به جلو',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'واگرد رونوشت',
+  'Devices with your AI vault': 'دستگاه‌های دارای گاوصندوق هوش مصنوعی شما',
+  'This device': 'این دستگاه',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'این دستگاه دیگر نمی‌تواند حساب‌های هوش مصنوعی شما را بخواند و بقیه کلید تازه می‌گیرند.',
+  'Also remove this device from your AI vault?':
+    'این دستگاه از گاوصندوق هوش مصنوعی هم برداشته شود؟',
+  'Remove and sign out': 'برداشتن و خروج',
   'Undo making {name}': 'واگرد ساختن {name}',
   'Undo the deletion': 'واگرد حذف',
   'Undo the move': 'واگرد جابه‌جایی',

@@ -1816,6 +1816,12 @@ export const fil: Dictionary = {
   'Bring all to front': 'Dalhin lahat sa harap',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Ibalik ang pagkopya',
+  'Devices with your AI vault': 'Mga device na may iyong AI vault',
+  'This device': 'Ang device na ito',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Hindi na mababasa ng device ang iyong mga AI account, at bagong susi ang makukuha ng iba.',
+  'Also remove this device from your AI vault?': 'Alisin din ang device na ito sa iyong AI vault?',
+  'Remove and sign out': 'Alisin at mag-sign out',
   'Undo making {name}': 'Ibalik ang paggawa ng {name}',
   'Undo the deletion': 'Ibalik ang pagtanggal',
   'Undo the move': 'Ibalik ang paglipat',

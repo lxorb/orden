@@ -1773,6 +1773,12 @@ export const jv: Dictionary = {
   'Bring all to front': 'Gawa kabeh menyang ngarep',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Balekake salinan',
+  'Devices with your AI vault': 'Piranti sing duwe brankas AI sampeyan',
+  'This device': 'Piranti iki',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Piranti kasebut ora bisa maca akun AI sampeyan maneh, lan liyane entuk kunci anyar.',
+  'Also remove this device from your AI vault?': 'Busak uga piranti iki saka brankas AI sampeyan?',
+  'Remove and sign out': 'Busak lan metu',
   'Undo making {name}': 'Balekake gawe {name}',
   'Undo the deletion': 'Balekake pambusakan',
   'Undo the move': 'Balekake pamindhahan',

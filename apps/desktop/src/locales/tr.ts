@@ -1787,6 +1787,13 @@ export const tr: Dictionary = {
   'Bring all to front': 'Tümünü öne getir',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopyalamayı geri al',
+  'Devices with your AI vault': 'Yapay zekâ kasanız olan cihazlar',
+  'This device': 'Bu cihaz',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Cihaz artık yapay zekâ hesaplarınızı okuyamaz, diğerleri yeni bir anahtar alır.',
+  'Also remove this device from your AI vault?':
+    'Bu cihaz yapay zekâ kasanızdan da kaldırılsın mı?',
+  'Remove and sign out': 'Kaldır ve oturumu kapat',
   'Undo making {name}': '{name} oluşturmasını geri al',
   'Undo the deletion': 'Silmeyi geri al',
   'Undo the move': 'Taşımayı geri al',

@@ -1852,6 +1852,12 @@ export const pl: Dictionary = {
   'Bring all to front': 'Przenieś wszystko na wierzch',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Cofnij kopiowanie',
+  'Devices with your AI vault': 'Urządzenia z Twoim sejfem AI',
+  'This device': 'To urządzenie',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'To urządzenie nie odczyta już Twoich kont AI, a pozostałe dostaną nowy klucz.',
+  'Also remove this device from your AI vault?': 'Usunąć to urządzenie także z sejfu AI?',
+  'Remove and sign out': 'Usuń i wyloguj się',
   'Undo making {name}': 'Cofnij utworzenie {name}',
   'Undo the deletion': 'Cofnij usunięcie',
   'Undo the move': 'Cofnij przeniesienie',

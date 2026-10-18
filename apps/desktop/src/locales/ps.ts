@@ -1782,6 +1782,12 @@ export const ps: Dictionary = {
   'Bring all to front': 'ټول مخې ته راوړه',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'لمېسه بېرته کول',
+  'Devices with your AI vault': 'ستاسو د AI خزانې لرونکې وسیلې',
+  'This device': 'دا وسیله',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'وسیله به نور ستاسو د AI حسابونه ونه لوستلای شي، او نورې به نوې کیلي ترلاسه کړي.',
+  'Also remove this device from your AI vault?': 'دا وسیله له خپلې AI خزانې هم لرې کړئ؟',
+  'Remove and sign out': 'لرې کړئ او ووځئ',
   'Undo making {name}': 'د {name} جوړول بېرته کول',
   'Undo the deletion': 'ړنګون بېرته کول',
   'Undo the move': 'خوځښت بېرته کول',
