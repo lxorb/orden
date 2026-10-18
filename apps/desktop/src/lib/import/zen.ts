@@ -21,53 +21,12 @@
  *
  *  Pure: the crate hands over the bytes, mozlz4.ts unpacks them, and this reads
  *  what came out. Anything it does not recognise is stepped over rather than
- *  refused, because the file is another program's and it changes with its releases. */
+ *  refused, because the file is another program's and it changes with its releases.
+ *  What it reads into is every browser's one shape; see sidebar.ts. */
 
-export interface ZenSpace {
-  id: string
-  name: string
-  /** An emoji, a `chrome://` address of one of Zen's drawings, or null. */
-  icon: string | null
-  /** The theme's main colour, where it has one. */
-  colour: [number, number, number] | null
-  /** The container new tabs in the space open in, or nought for none. */
-  container: number
-}
+import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 
-export interface ZenFolder {
-  id: string
-  name: string
-  icon: string | null
-  parent: string | null
-  space: string | null
-  /** A split view, which is a group of tabs side by side rather than a folder. */
-  split: boolean
-}
-
-export interface ZenTab {
-  title: string
-  /** Where the tab is now. */
-  url: string
-  /** Where a pinned tab goes back to, when that is somewhere else. */
-  home: string | null
-  /** The site's mark as the session kept it: an address or a `data:` picture. */
-  icon: string | null
-  pinned: boolean
-  essential: boolean
-  space: string | null
-  folder: string | null
-  /** The container the tab is open in, or nought for none. */
-  container: number
-}
-
-export interface ZenSession {
-  /** In the order Zen's space switcher shows them. */
-  spaces: ZenSpace[]
-  /** In the order they sit in the sidebar. */
-  folders: ZenFolder[]
-  /** In the order they sit in the sidebar, each once. */
-  tabs: ZenTab[]
-}
+export type ZenSession = Sidebar
 
 type Said = Record<string, unknown>
 
@@ -99,14 +58,14 @@ export function readZenSession(said: unknown): ZenSession | null {
           (Number.isFinite(b.position) ? b.position : b.at) || a.at - b.at,
     )
     .map(({ one }) => spaceOf(one))
-    .filter((one): one is ZenSpace => one !== null)
+    .filter((one): one is SidebarSpace => one !== null)
   if (!spaces.length) return null
 
   return {
     spaces,
     folders: list(sidebar.folders)
       .map(folderOf)
-      .filter((one): one is ZenFolder => one !== null),
+      .filter((one): one is SidebarFolder => one !== null),
     tabs: tabsOf(list(sidebar.tabs)),
   }
 }
@@ -127,7 +86,7 @@ function fromWindows(windows: Said[]): Said | null {
   }
 }
 
-function spaceOf(one: Said): ZenSpace | null {
+function spaceOf(one: Said): SidebarSpace | null {
   const id = text(one.uuid)
   if (!id) return null
 
@@ -155,7 +114,7 @@ function colourOf(theme: unknown): [number, number, number] | null {
   return rgb.every((one) => Number.isFinite(one)) ? (rgb as [number, number, number]) : null
 }
 
-function folderOf(one: Said): ZenFolder | null {
+function folderOf(one: Said): SidebarFolder | null {
   const id = text(one.id)
   if (!id) return null
 
@@ -173,8 +132,8 @@ function folderOf(one: Said): ZenFolder | null {
  *  holds it, under one `zenSyncId`, and the copy that has a page wins over a blank
  *  one, which is how Zen chooses too. The stand-in an empty folder keeps and a page
  *  peeked at over another are not tabs anybody opened. */
-function tabsOf(tabs: Said[]): ZenTab[] {
-  const kept = new Map<string, ZenTab | null>()
+function tabsOf(tabs: Said[]): SidebarTab[] {
+  const kept = new Map<string, SidebarTab | null>()
 
   tabs.forEach((one, at) => {
     if (one.zenIsEmpty === true || one.zenIsGlance === true) return
@@ -183,12 +142,12 @@ function tabsOf(tabs: Said[]): ZenTab[] {
     if (!kept.get(key)) kept.set(key, tabOf(one))
   })
 
-  return [...kept.values()].filter((one): one is ZenTab => one !== null)
+  return [...kept.values()].filter((one): one is SidebarTab => one !== null)
 }
 
 /** One tab, or null for one with no page: Firefox's `entries` are the tab's
  *  history and `index` counts from one to the page it is on. */
-function tabOf(one: Said): ZenTab | null {
+function tabOf(one: Said): SidebarTab | null {
   const entries = list(one.entries)
   const index = Math.min(Math.max(Number(one.index) || entries.length, 1), entries.length)
   const entry = entries[index - 1]

@@ -240,6 +240,10 @@ mod web_tint;
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
+// What every browser's import reads profiles and their files with; see
+// browser_profiles.rs.
+#[cfg(desktop)]
+mod browser_profiles;
 // The profiles Zen lists and the file of each that holds its tabs, for the import's
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
