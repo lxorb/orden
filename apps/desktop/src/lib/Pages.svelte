@@ -52,7 +52,7 @@
   import PagesZoom from './PagesZoom.svelte'
   import { type Camera, graphPoint, NOTCH, wheelZoom } from './camera'
   import { toolPressed } from './canvas/actions'
-  import { movedBy, removed, withText } from './canvas/edits'
+  import { movedBy, pickedBox, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
@@ -376,6 +376,31 @@
   /** What is picked, dragged by however far the drag has carried it. */
   const dragging = $derived(gesture?.kind === 'drag' ? gesture.offset : { x: 0, y: 0 })
 
+  /** The ink as it is drawn: carried along with the drag while one is under way, so
+   *  writing caught by the lasso moves under the hand rather than jumping when it
+   *  lets go. */
+  const shownInk = $derived(
+    dragging.x || dragging.y
+      ? movedBy(canvas, store.picked, dragging.x, dragging.y).ink
+      : canvas.ink,
+  )
+
+  /** The box round the ink that is picked, a little larger than the strokes: a line of
+   *  writing is a few units tall, and a press on it should not have to be exact. */
+  const caught = $derived.by(() => {
+    const wanted = new Set(store.picked)
+    const strokes = canvas.ink.filter((one) => wanted.has(one.id)).map((one) => one.id)
+    const box = pickedBox(canvas, strokes)
+    if (!box) return null
+    const slack = 12 * unit
+    return {
+      x: box.x - slack,
+      y: box.y - slack,
+      width: box.width + 2 * slack,
+      height: box.height + 2 * slack,
+    }
+  })
+
   /** A pen sample, in plane units, with everything the digitiser said about it. The
    *  same normalisation the canvas does, so an S Pen, a Pencil and a USI pen all
    *  arrive as the same six numbers. */
@@ -521,6 +546,20 @@
     if (tool === 'erase') {
       gesture = { kind: 'erase', id: event.pointerId, run: freshId() }
       rub(point, gesture.run)
+      return
+    }
+
+    // A press inside what the lasso caught moves it, with the lasso still in hand or
+    // the arrow: the ink it caught could otherwise only ever be deleted, and only from
+    // a keyboard (#350). The plane's own rule; see `lasso` in canvas/pointer.ts.
+    if ((tool === 'lasso' || tool === 'select') && caught && inside(point, caught)) {
+      gesture = {
+        kind: 'drag',
+        id: event.pointerId,
+        from: point,
+        offset: { x: 0, y: 0 },
+        moved: false,
+      }
       return
     }
 
@@ -1064,7 +1103,7 @@
        the stroke under the pen above. The very same component a canvas draws with,
        so a stroke means the same thing on paper as on a plane. -->
   <CanvasInk
-    ink={canvas.ink}
+    ink={shownInk}
     {live}
     camera={view}
     {width}
