@@ -51,7 +51,8 @@ workspace.fileOps.follow(keeping(projectFolders))
 // renamed. Handed over untracked, so the store's own reads are never this effect's.
 $effect.root(() => {
   $effect(() => {
-    const spaces = workspace.spaces.map(({ root, name }) => ({ root, name }))
+    // An archived space's rows are no list's; see workspace/archived-spaces.svelte.ts.
+    const spaces = workspace.shownSpaces.map(({ root, name }) => ({ root, name }))
     untrack(() => store.spacesAre(spaces))
   })
 })
@@ -85,6 +86,6 @@ export const rows = {
 
   /** Every space's inbox, relative to it: what the Inbox view filters on. */
   inboxes(): { space: string; path: string }[] {
-    return workspace.spaces.map((one) => ({ space: one.name, path: inboxOf(one.root) }))
+    return workspace.shownSpaces.map((one) => ({ space: one.name, path: inboxOf(one.root) }))
   },
 }

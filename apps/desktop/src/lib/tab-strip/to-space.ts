@@ -13,7 +13,10 @@ const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.in
 
 /** The spaces these tabs can be moved to. */
 export function spacesOf(tabs: readonly Tab[]): Space[] {
-  return spacesFor(tabs.map(movingOf), workspace, canWriteAt)
+  // Never into a space put away; see workspace/archived-spaces.svelte.ts.
+  return spacesFor(tabs.map(movingOf), workspace, canWriteAt).filter(
+    (one) => !workspace.archivedSpaces.has(one.root),
+  )
 }
 
 /** The tabs moved to a space; see moving-space.ts. */

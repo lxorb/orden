@@ -58,6 +58,7 @@ import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
 import { Archive } from './workspace/archive.svelte'
+import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -281,6 +282,16 @@ class Workspace {
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
+  /** The spaces put away whole; see workspace/archived-spaces.svelte.ts. */
+  readonly archivedSpaces = new ArchivedSpaces()
+
+  /** Every space that is not put away, in the reader's order: what every list of spaces
+   *  offers, and what reads across them. `spaces` is all of them, which sync, a path's
+   *  space and a link still need. */
+  get shownSpaces(): Space[] {
+    return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+  }
+
   /** The space's listing. Raw, because it is only ever replaced whole - every edit
    *  of it builds a new tree; see tree-edits.ts - and a deep proxy over a listing of
    *  thousands of entries charged every walk of it a signal per field read: the

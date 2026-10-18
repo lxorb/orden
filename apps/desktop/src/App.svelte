@@ -232,6 +232,8 @@
         pull.receive(remote)
         void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
+        // Which spaces are put away, the same on every device; see lib/space-archive.ts.
+        void import('./lib/space-archive').then((one) => one.receive(remote))
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
         if (!__EVEN_PLUGIN__)

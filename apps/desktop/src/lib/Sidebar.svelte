@@ -479,7 +479,9 @@
    *  down inside one is not the previous value: the direction came out wrong
    *  whenever the panel happened to read it an extra time. Before the paint, so
    *  the transition that is about to start is the one this decided. */
-  const place = $derived(workspace.spaces.findIndex((one) => one.id === workspace.activeSpaceId))
+  const place = $derived(
+    workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId),
+  )
   let direction = $state(1)
   let lastPlace = -1
 

@@ -44,7 +44,11 @@
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
 
-  const places = placesFor(workspace.tree, workspace.spaces, workspace.activeSpace?.root ?? null)
+  const places = placesFor(
+    workspace.tree,
+    workspace.shownSpaces,
+    workspace.activeSpace?.root ?? null,
+  )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
 

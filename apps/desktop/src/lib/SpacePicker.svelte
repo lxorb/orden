@@ -49,7 +49,7 @@
 
   <div
     class="nib-screen is-centred is-steady picker"
-    style:--rows={workspace.spaces.length}
+    style:--rows={workspace.shownSpaces.length}
     data-spaces-open
     role="menu"
     aria-label={t('Spaces')}
