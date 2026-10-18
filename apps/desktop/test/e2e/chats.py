@@ -29,7 +29,7 @@ import sys
 
 from playwright.sync_api import Page
 
-from harness import Drive
+from harness import WEBKIT, Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -247,7 +247,9 @@ def big(page: Page) -> None:
     say(f"scrolling: {measured}")
     if measured["rows"] > 120:
         wrong(f"{measured['rows']} rows in the page; the window should hold about sixty")
-    if measured["median"] > 20:
+    # A frame's length is the painter's, and Playwright's WebKit outside a Mac paints in
+    # software, which says nothing of what a Mac draws (#384): said there, held here.
+    if measured["median"] > 20 and not WEBKIT:
         wrong(f"a median frame of {measured['median']:.1f} ms while scrolling")
 
 
