@@ -285,11 +285,74 @@ describe('the old names', () => {
     expect(scoop.installer.script.join('\n')).toContain("Join-Path (Split-Path $persist_dir) 'nib'")
   })
 
-  test('the publish workflow moves nib to deprecated and pushes both packages', () => {
-    const publish = repo('.github', 'workflows', 'publish.yml')
-    expect(publish).toContain('git mv bucket/nib.json bucket/deprecated/nib.json')
-    expect(publish).toContain("@{ id = 'orden'; version = $env:VERSION }, @{ id = 'nib'")
-    expect(publish).toMatch(/409 \\\(Conflict\\\)/)
+  test('and removes the junction as a link alone, on install and on uninstall', () => {
+    const scoop = JSON.parse(read('scoop', 'orden.json')) as {
+      installer: { script: string[] }
+      uninstaller: { script: string[] }
+    }
+    const uninstall = scoop.uninstaller.script.join('\n')
+    expect(uninstall).toContain("$appdata.LinkType -eq 'Junction') { $appdata.Delete() }")
+    // `-Recurse` only for a folder that is not a junction, never on one.
+    expect(uninstall).not.toMatch(/Remove-Item "\$env:APPDATA[^"]*" [^\n]*-Recurse/)
+    const install = scoop.installer.script.join('\n')
+    expect(install).toContain("if ($item.LinkType -eq 'Junction') {\n        # The link alone")
+    expect(install).toContain('$item.Delete()')
+  })
+
+  test("Scoop's nib is orden's without the five lines that take over from nib", () => {
+    const scoop = JSON.parse(read('scoop', 'orden.json')) as { installer: { script: string[] } }
+    const lines = scoop.installer.script
+    const at = lines.findIndex((one) => one.startsWith('# Up to 0.15.0'))
+    expect(at).toBeGreaterThan(-1)
+    // The five lines publish.yml cuts: the comment, where nib kept it, and the move.
+    expect(lines.slice(at, at + 5)).toEqual([
+      expect.stringMatching(/^# Up to 0\.15\.0/),
+      "$was = Join-Path (Split-Path $persist_dir) 'nib'",
+      expect.stringMatching(/^if \(\(Test-Path \$was\)/),
+      expect.stringMatching(/^ {4}Get-ChildItem -LiteralPath \$was/),
+      '}',
+    ])
+    const nib = [...lines.slice(0, at), ...lines.slice(at + 5)].join('\n')
+    expect(nib).not.toContain('$was')
+    expect(nib).toContain('New-Item -Path $appdata -ItemType Junction')
+  })
+})
+
+/** Whether Scoop and Chocolatey move from `nib` to `orden` is the repository variable
+ *  PACKAGE_RENAME, off until the rename has been tried on Windows; see
+ *  packaging/windows.md, "Held back, and why". */
+describe('the rename, held back', () => {
+  const publish = repo('.github', 'workflows', 'publish.yml')
+  const job = (name: string) =>
+    new RegExp(`\n {2}${name}:\n([\\s\\S]*?)(?=\n {2}[a-z-]+:\n|$)`).exec(publish)?.[1] ?? ''
+
+  test('is on only when the variable says true', () => {
+    expect(job('gate')).toContain('PACKAGE_RENAME: ${{ vars.PACKAGE_RENAME }}')
+    expect(job('gate')).toContain('if [[ "$PACKAGE_RENAME" == true ]]; then')
+    for (const name of ['scoop', 'chocolatey']) {
+      expect(job(name)).toContain('RENAME: ${{ needs.gate.outputs.rename }}')
+    }
+  })
+
+  test('Scoop bumps nib where it is, and deprecates it only with the rename', () => {
+    const scoop = job('scoop')
+    expect(scoop).toContain('mv nib.json bucket/nib.json')
+    expect(scoop).toContain('> bucket/deprecated/nib.json')
+    expect(scoop).toContain('First scoop update nib, then scoop uninstall nib')
+    expect(scoop).not.toContain('git mv bucket/nib.json')
+  })
+
+  test('Chocolatey pushes nib alone, as Orden, without the rename', () => {
+    const chocolatey = job('chocolatey')
+    expect(chocolatey).toContain('echo "PACKAGES=nib:$VERSION" >> "$GITHUB_ENV"')
+    expect(chocolatey).toContain(
+      'echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"',
+    )
+    expect(chocolatey).toMatch(/409 \\\(Conflict\\\)/)
+    // The paragraph the plain `nib` leaves out is there to be left out.
+    expect(read('chocolatey', 'orden.nuspec')).toMatch(
+      /\nThis package was called `nib` until 0\.15\.0\. `nib` is now an empty package that depends on\n[^\n]+\n\n/,
+    )
   })
 })
 
