@@ -129,7 +129,7 @@
     if (mark) marked = true
   })
 
-  let field = $state<{ take(): void }>()
+  let field = $state<{ take(): void; waiting(): boolean }>()
 
   /** Whether there is a page to clip at all.
    *
@@ -180,7 +180,8 @@
    *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
    *  an address is the only thing to do with an empty tab. */
   onMount(() => {
-    if (started && focused) take()
+    // And one coming back with an address half typed into it, as Chrome's does (#381).
+    if (focused && (started || field?.waiting())) take()
 
     const key = (event: KeyboardEvent) => {
       if (!focused || overlays.depth > 0 || present.on) return
@@ -330,6 +331,7 @@
     {resting}
     {book}
     address={page.url ?? ''}
+    held={page}
     onenter={onaddress}
     {ontyping}
   />

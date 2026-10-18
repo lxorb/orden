@@ -1,3 +1,24 @@
+<script module lang="ts">
+  /** Whether a button of the pointer is down anywhere in the window. A tab coming back
+   *  builds its bar on the press of its tab, which then takes the keyboard for itself as
+   *  the press goes on; the field asks for the keyboard once the press is over (#381). */
+  let pressing = false
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', () => (pressing = true), true)
+    for (const ends of ['pointerup', 'pointercancel'])
+      window.addEventListener(ends, () => (pressing = false), true)
+  }
+
+  /** `run` now, or once the press going on is over and its click with it. */
+  function afterPress(run: () => void) {
+    if (!pressing) {
+      run()
+      return
+    }
+    window.addEventListener('pointerup', () => setTimeout(run, 0), { once: true, capture: true })
+  }
+</script>
+
 <script lang="ts">
   /** The field an address is typed into, finishing it the way a browser does.
    *
@@ -23,12 +44,12 @@
    *  The only field an address is typed into, so every way a tab is given one - the
    *  bar over a page, a new web note asking where it points - finishes it the same. */
 
-  import { untrack } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
   import Suggest from '../Suggest.svelte'
-  import { dotCom } from './typed'
+  import { dotCom, type HalfTyped } from './typed'
   import { shownAddress } from './omnibox'
   import { visited } from './visited'
   import type { Visit } from './visits'
@@ -39,6 +60,7 @@
     book,
     onenter,
     ontyping,
+    held = { halfTyped: null },
   }: {
     /** What the field reads while nobody is typing in it. */
     resting: string
@@ -51,6 +73,11 @@
      *  is what was typed before the field finished it. */
     onenter: (said: string, aside: boolean, typed: string) => void
     ontyping: (on: boolean) => void
+    /** Where what was half typed waits while the field is not on screen: the tab's own
+     *  page, so going to another tab and back finds it (#381). Kept in memory with the
+     *  tab and not in the session, as Chrome keeps an address being typed per tab and
+     *  not across a restart. */
+    held?: { halfTyped: HalfTyped | null }
   } = $props()
 
   const id = $props.id()
@@ -89,8 +116,12 @@
 
   /** Takes the keyboard, with the whole address selected. */
   export function take() {
-    field?.focus()
-    field?.select()
+    afterPress(() => {
+      if (!here()) return
+      field?.focus()
+      if (!restored) field?.select()
+      restored = false
+    })
   }
 
   /** Whether this field is still the one on screen.
@@ -106,22 +137,52 @@
     return field?.isConnected === true
   }
 
-  /** What was half typed when the keyboard left the window with it in this field, where
-   *  the caret was, and over which address: it comes back with the keyboard, as in
-   *  Chrome's address field, while the page is still there. */
-  let kept: { value: string; typed: string; from: number; to: number; over: string } | null = null
+  /** What was half typed when the keyboard left this field, where the caret was, and over
+   *  which address: it comes back with the keyboard, as in Chrome's address field, while
+   *  the tab is on that address - after the keyboard went to another program and back,
+   *  and after the tab went and came back (#381), when this field is a new one in the
+   *  tab's bar and finds it in `held`. The reader leaving the field for something else in
+   *  the window and coming back to it gets the address again, which `left` says; a tab
+   *  is left that way too, by a press on another tab, so a field new to the tab still
+   *  takes what this one left. */
+  function remember(left = false) {
+    const box = field
+    if (!box || !holding) return
+    held.halfTyped =
+      box.value !== address
+        ? {
+            value: box.value,
+            typed,
+            from: box.selectionStart ?? box.value.length,
+            to: box.selectionEnd ?? box.value.length,
+            over: address,
+            left,
+            by: id,
+          }
+        : null
+  }
+
+  /** Whether the last focus put half-typed words back, which `take` then leaves as they
+   *  were rather than selecting. */
+  let restored = false
+  /** Whether the field has the keyboard as far as its own focus and blur said: plain, so
+   *  the teardown reads what the last of them left rather than a graph already gone. */
+  let holding = false
 
   function onFocus() {
     if (!here() || !field) return
 
     visited.wake(book)
+    holding = true
     editing = true
     ontyping(true)
     rows = []
     active = -1
     shut = false
-    const back = kept?.over === address ? kept : null
-    kept = null
+    const half = held.halfTyped
+    const back = half?.over === address && !(half.left && half.by === id) ? half : null
+    held.halfTyped = null
+    restored = back !== null
     if (back) {
       field.value = back.value
       typed = back.typed
@@ -138,21 +199,26 @@
 
     // The window's keyboard going somewhere else - another program, or the page - rather
     // than this field's: the element is still the one the page would type into.
-    const away = document.activeElement === field && field.value !== address
-    kept = away
-      ? {
-          value: field.value,
-          typed,
-          from: field.selectionStart ?? 0,
-          to: field.selectionEnd ?? 0,
-          over: address,
-        }
-      : null
-
+    remember(document.activeElement !== field)
+    holding = false
     editing = false
     ontyping(false)
     rows = []
     field.value = resting
+  }
+
+  // The tab going while its field has the keyboard - Ctrl+Tab typed into it - takes the
+  // field away before any blur this component could hear: what it held is kept here. Only
+  // then: a field the reader had already left holds its resting face, not their words.
+  onMount(() => () => {
+    if (holding) remember()
+  })
+
+  /** Whether half-typed words wait for this field, so the bar gives it the keyboard as
+   *  the tab comes back. */
+  export function waiting(): boolean {
+    const half = held.halfTyped
+    return half?.over === address && !(half.left && half.by === id)
   }
 
   /** Writes the rest of the best address after what was typed, selected. */
@@ -175,6 +241,7 @@
     active = -1
     shut = false
     rows = visited.suggest(book, typed)
+    remember()
 
     // Only a letter typed at the end: a deletion is somebody taking the offer away,
     // and offering it again would undo the key they pressed; a paste and a letter in
@@ -218,6 +285,8 @@
     // back to plain http; see upgrade.ts.
     onenter(said, aside, typed)
     field?.blur()
+    // Gone where it was going: nothing is left half typed.
+    held.halfTyped = null
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -270,7 +339,9 @@
       return
     }
 
+    // The second Escape gives the address back, and what was typed with it.
     box.blur()
+    held.halfTyped = null
   }
 </script>
 
@@ -294,6 +365,8 @@
     onblur={onBlur}
     oninput={onInput}
     onkeydown={onKeydown}
+    onkeyup={() => remember()}
+    onpointerup={() => remember()}
     oncompositionstart={() => (composing = true)}
     oncompositionend={() => (composing = false)}
   />

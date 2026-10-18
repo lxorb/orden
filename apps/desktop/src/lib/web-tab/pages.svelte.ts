@@ -36,6 +36,7 @@ import type { Cut } from './covers'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
 import type { Upgrade } from './upgrade'
+import type { HalfTyped } from './typed'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -294,6 +295,10 @@ export class Page {
   url = $state<string | null>(null)
   /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
+  /** An address half typed into the tab's field, waiting while another tab is in front
+   *  (#381): the tab's own, gone with it. Plain, since only the field reads it, as it is
+   *  built. See AddressField.svelte. */
+  halfTyped: HalfTyped | null = null
   /** The site's own mark as the page shows it now, as an address the window draws
    *  without fetching anything: the picture the engine chose for the page, from inside
    *  the page's own profile. It follows the page, so a site that redraws its mark with
