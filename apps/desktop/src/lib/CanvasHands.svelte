@@ -25,7 +25,8 @@
 
   import type { Camera } from './camera'
   import { approach, arrived } from './canvas/ease'
-  import { heldAtEdge } from './canvas/edge'
+  import { ALONE_INSET, heldAtEdge, INSET } from './canvas/edge'
+  import { alone } from './alone.svelte'
   import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './canvas/ink'
   import type { Palette } from './canvas/paint'
   import type { Hand } from './canvas/shared'
@@ -138,7 +139,12 @@
   const drawn = $derived(
     hands.map((one) => {
       const at = eased[one.id] ?? one.at
-      return { one, at, held: heldAtEdge(at, camera, width, height) }
+      // Clear of a guest's corner, where they are alone in the file; see alone.svelte.ts.
+      return {
+        one,
+        at,
+        held: heldAtEdge(at, camera, width, height, alone.on ? ALONE_INSET : INSET),
+      }
     }),
   )
 

@@ -17,6 +17,19 @@ import type { Point } from './geometry'
  *  where the canvas's bar is: a hand held under it would be a hand nobody can see. */
 export const INSET = { top: 18, right: 18, bottom: 76, left: 18 } as const
 
+/** The same for a guest alone in the one file a link gave them, whose corner - their
+ *  face, and the way to their name - is at the top: a hand held under it would be one
+ *  nobody can see either. See GuestCorner.svelte. */
+export const ALONE_INSET = { ...INSET, top: 72 } as const
+
+/** How far in from each edge, in screen pixels. */
+interface Inset {
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+  readonly left: number
+}
+
 /** How far past the edge a hand may be and still be drawn where it is: its dot is
  *  four pixels across, so one that close is still on the screen. */
 const STILL_SHOWN = 4
@@ -32,7 +45,13 @@ export interface Held {
 }
 
 /** Null for a hand on the screen, which is drawn where it is. */
-export function heldAtEdge(at: Point, camera: Camera, width: number, height: number): Held | null {
+export function heldAtEdge(
+  at: Point,
+  camera: Camera,
+  width: number,
+  height: number,
+  inset: Inset = INSET,
+): Held | null {
   if (width <= 0 || height <= 0) return null
 
   const x = width / 2 + (at.x - camera.x) * camera.scale
@@ -44,10 +63,10 @@ export function heldAtEdge(at: Point, camera: Camera, width: number, height: num
 
   // The nearest point of the inset frame. A frame too small to have an inside - a
   // surface narrower than its own margins - is its middle.
-  const left = Math.min(INSET.left, width / 2)
-  const right = Math.max(width - INSET.right, width / 2)
-  const top = Math.min(INSET.top, height / 2)
-  const bottom = Math.max(height - INSET.bottom, height / 2)
+  const left = Math.min(inset.left, width / 2)
+  const right = Math.max(width - inset.right, width / 2)
+  const top = Math.min(inset.top, height / 2)
+  const bottom = Math.max(height - inset.bottom, height / 2)
   const heldX = Math.min(right, Math.max(left, x))
   const heldY = Math.min(bottom, Math.max(top, y))
 

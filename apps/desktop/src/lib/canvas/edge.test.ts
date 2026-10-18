@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { heldAtEdge, INSET } from './edge'
+import { ALONE_INSET, heldAtEdge, INSET } from './edge'
 
 /** A hand off the screen is held at the screen's edge and points the way to it,
  *  whatever the camera is doing (#386). */
@@ -84,5 +84,12 @@ describe('a hand off the screen', () => {
     const at = { x: 15 + held!.at.x, y: 30 + held!.at.y }
 
     expect(at).toEqual({ x: 15, y: 30 })
+  })
+
+  test('where a guest is alone in the file, is held clear of their corner at the top', () => {
+    const held = heldAtEdge({ x: 380, y: -5000 }, still, WIDTH, HEIGHT, ALONE_INSET)
+
+    expect(onScreen(held!.at).y).toBe(ALONE_INSET.top)
+    expect(ALONE_INSET.top).toBeGreaterThan(INSET.top)
   })
 })
