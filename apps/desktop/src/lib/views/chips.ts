@@ -1,6 +1,7 @@
 /** A task's fields as the quiet chips after its words, the way the editor draws them
- *  (docs/tasks.md 5.7): the date as a weekday within the week and a short date past
- *  it, red when overdue; the time; ↻ for a repeat; ⏱ and the duration; ⚑ and the
+ *  (docs/tasks.md 5.7): the start date while it is still to come, as a weekday within
+ *  the week and a short date past it - once it has come it says nothing (#371); the
+ *  time; ↻ for a repeat; ⏱ and the duration; ⚑ and the
  *  deadline; 🔔 when a reminder is set; the assignee. The priority is the box's colour,
  *  not a chip.
  *
@@ -12,6 +13,7 @@ import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { plain } from './inline'
 import { dayWords } from '@nib/editor/task-days'
+import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 
 export interface Chip {
   kind: 'date' | 'time' | 'repeat' | 'duration' | 'deadline' | 'remind' | 'assignee'
@@ -32,23 +34,19 @@ function minutesText(minutes: number): string {
  *  the date off, for a view whose groups already are the days (Upcoming, a calendar). */
 export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
   const out: Chip[] = []
-  const day = task.due ?? task.scheduled
+  // The day it starts, while that is still to come; a start date is never late.
+  const day = startOf(task, task.dueReads) ?? task.scheduled
   const open = !task.done && !task.cancelled
-  if (dated && day) {
-    out.push({
-      kind: 'date',
-      text: dayWords(day, today),
-      ...(open && day < today ? { late: true } : {}),
-    })
-  }
+  if (dated && day && day > today) out.push({ kind: 'date', text: dayWords(day, today) })
   if (task.time) out.push({ kind: 'time', text: task.time })
   if (task.recurrence) out.push({ kind: 'repeat', text: '↻' })
   if (task.duration !== undefined) out.push({ kind: 'duration', text: minutesText(task.duration) })
-  if (task.deadline) {
+  const deadline = deadlineOf(task, task.dueReads)
+  if (deadline) {
     out.push({
       kind: 'deadline',
-      text: `⚑ ${dayWords(task.deadline, today)}`,
-      ...(open && task.deadline < today ? { late: true } : {}),
+      text: `⚑ ${dayWords(deadline, today)}`,
+      ...(open && deadline < today ? { late: true } : {}),
     })
   }
   if (task.remind.length) out.push({ kind: 'remind', text: '🔔' })

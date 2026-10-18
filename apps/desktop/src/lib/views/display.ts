@@ -182,7 +182,8 @@ export function onlyFilter(only: Only): string | null {
   const parts: string[] = []
   if (only.priority !== undefined) parts.push(`task.priority == ${only.priority}`)
   if (only.label !== undefined) parts.push(`task.hasTag(${JSON.stringify(only.label)})`)
-  if (only.date === 'overdue') parts.push('task.date < today()')
+  // Only a deadline makes a task late (#371).
+  if (only.date === 'overdue') parts.push('task.deadline < today()')
   else if (only.date === 'today') parts.push('task.date == today()')
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
   else if (only.date === 'none') parts.push('!task.date')
