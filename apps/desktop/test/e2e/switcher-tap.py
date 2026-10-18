@@ -71,8 +71,12 @@ def press(page: Page, x: float, y: float, touch: bool) -> None:
 def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     page = DRIVE.page(browser, **options)
     DRIVE.open(page)
-    # Somewhere to switch to, so the list has rows.
-    page.evaluate("async () => { await window.nibApp.workspace.createSpace?.('Second') }")
+    # Somewhere to switch to, so the list has two rows: the space made, and the one the
+    # app opened in, which is the one in front again.
+    page.evaluate(
+        "async () => { const ws = window.nibApp.workspace; const first = ws.activeSpaceId;"
+        " await ws.addSpace('Second'); if (ws.activeSpaceId !== first) await ws.showSpace(first) }"
+    )
     DRIVE.seed(page, *[f"# Row {n}\n\nA note.\n" for n in range(1, 13)])
     page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
     wait_for(page, f"document.querySelector('{BUTTON}')", f"[{label}] the switcher")
@@ -84,6 +88,9 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     press(page, x, y, touch)
     if not is_open(page):
         wrong(f"[{label}] the first press did not open the list")
+    rows = page.evaluate("() => document.querySelectorAll('[data-spaces-open] [data-space-drop]').length")
+    if rows < 2:
+        wrong(f"[{label}] the list has {rows} spaces in it, not two")
     shot(page, f"{label}-open")
 
     press(page, x, y, touch)
