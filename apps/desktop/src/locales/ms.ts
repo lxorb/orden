@@ -242,6 +242,11 @@ export const ms: Dictionary = {
   Unpin: 'Buang pin',
   Close: 'Tutup',
   'Close pinned tab?': 'Tutup tab yang dipin?',
+  'Save changes to {name}?': 'Simpan perubahan pada {name}?',
+  'Save changes to these tabs?': 'Simpan perubahan pada tab ini?',
+  'Unsaved words go to Recently deleted.':
+    'Perkataan yang belum disimpan pergi ke Dipadam baru-baru ini.',
+  'Don’t save': 'Jangan simpan',
   'Close others': 'Tutup yang lain',
   'Close tabs to the right': 'Tutup tab di sebelah kanan',
   'Close tabs to the left': 'Tutup tab di sebelah kiri',

@@ -243,6 +243,11 @@ export const ml: Dictionary = {
   Unpin: 'പിൻ നീക്കുക',
   Close: 'അടയ്ക്കുക',
   'Close pinned tab?': 'പിൻ ചെയ്ത ടാബ് അടയ്ക്കണോ?',
+  'Save changes to {name}?': '{name}-ലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Save changes to these tabs?': 'ഈ ടാബുകളിലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Unsaved words go to Recently deleted.':
+    'സേവ് ചെയ്യാത്ത വാക്കുകൾ അടുത്തിടെ ഇല്ലാതാക്കിയവയിലേക്ക് പോകും.',
+  'Don’t save': 'സേവ് ചെയ്യേണ്ട',
   'Close others': 'മറ്റുള്ളവ അടയ്ക്കുക',
   'Close tabs to the right': 'വലതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',
   'Close tabs to the left': 'ഇടതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',

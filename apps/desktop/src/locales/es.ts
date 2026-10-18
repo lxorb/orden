@@ -243,6 +243,11 @@ export const es: Dictionary = {
   Unpin: 'Desanclar',
   Close: 'Cerrar',
   'Close pinned tab?': '¿Cerrar la pestaña anclada?',
+  'Save changes to {name}?': '¿Guardar los cambios de {name}?',
+  'Save changes to these tabs?': '¿Guardar los cambios de estas pestañas?',
+  'Unsaved words go to Recently deleted.':
+    'Las palabras sin guardar van a Eliminado recientemente.',
+  'Don’t save': 'No guardar',
   'Close others': 'Cerrar las demás',
   'Close tabs to the right': 'Cerrar pestañas a la derecha',
   'Close tabs to the left': 'Cerrar pestañas a la izquierda',

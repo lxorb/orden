@@ -243,6 +243,11 @@ export const fr: Dictionary = {
   Unpin: 'Détacher',
   Close: 'Fermer',
   'Close pinned tab?': 'Fermer l’onglet épinglé ?',
+  'Save changes to {name}?': 'Enregistrer les modifications de {name} ?',
+  'Save changes to these tabs?': 'Enregistrer les modifications de ces onglets ?',
+  'Unsaved words go to Recently deleted.':
+    'Les mots non enregistrés vont dans Récemment supprimés.',
+  'Don’t save': 'Ne pas enregistrer',
   'Close others': 'Fermer les autres',
   'Close tabs to the right': 'Fermer les onglets à droite',
   'Close tabs to the left': 'Fermer les onglets à gauche',

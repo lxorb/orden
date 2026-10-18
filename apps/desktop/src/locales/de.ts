@@ -243,6 +243,11 @@ export const de: Dictionary = {
   Unpin: 'Lösen',
   Close: 'Schließen',
   'Close pinned tab?': 'Angehefteten Tab schließen?',
+  'Save changes to {name}?': 'Änderungen an {name} speichern?',
+  'Save changes to these tabs?': 'Änderungen in diesen Tabs speichern?',
+  'Unsaved words go to Recently deleted.':
+    'Nicht gespeicherte Wörter landen in „Zuletzt gelöscht“.',
+  'Don’t save': 'Nicht speichern',
   'Close others': 'Andere schließen',
   'Close tabs to the right': 'Tabs rechts schließen',
   'Close tabs to the left': 'Tabs links schließen',

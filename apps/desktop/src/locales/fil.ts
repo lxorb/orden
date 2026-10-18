@@ -242,6 +242,11 @@ export const fil: Dictionary = {
   Unpin: 'I-unpin',
   Close: 'Isara',
   'Close pinned tab?': 'Isara ang naka-pin na tab?',
+  'Save changes to {name}?': 'I-save ang mga pagbabago sa {name}?',
+  'Save changes to these tabs?': 'I-save ang mga pagbabago sa mga tab na ito?',
+  'Unsaved words go to Recently deleted.':
+    'Mapupunta sa Kamakailang binura ang mga salitang hindi na-save.',
+  'Don’t save': 'Huwag i-save',
   'Close others': 'Isara ang iba',
   'Close tabs to the right': 'Isara ang mga tab sa kanan',
   'Close tabs to the left': 'Isara ang mga tab sa kaliwa',

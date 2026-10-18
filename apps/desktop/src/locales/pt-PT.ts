@@ -243,6 +243,11 @@ export const ptPT: Dictionary = {
   Unpin: 'Desafixar',
   Close: 'Fechar',
   'Close pinned tab?': 'Fechar o separador afixado?',
+  'Save changes to {name}?': 'Guardar as alterações em {name}?',
+  'Save changes to these tabs?': 'Guardar as alterações nestes separadores?',
+  'Unsaved words go to Recently deleted.':
+    'As palavras não guardadas vão para Eliminados recentemente.',
+  'Don’t save': 'Não guardar',
   'Close others': 'Fechar os outros',
   'Close tabs to the right': 'Fechar separadores à direita',
   'Close tabs to the left': 'Fechar separadores à esquerda',

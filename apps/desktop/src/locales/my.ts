@@ -242,6 +242,11 @@ export const my: Dictionary = {
   Unpin: 'ပင်ဖြုတ်',
   Close: 'ပိတ်',
   'Close pinned tab?': 'ပင်ထိုးထားသောတဘ်ကို ပိတ်မလား?',
+  'Save changes to {name}?': '{name} ရှိ ပြောင်းလဲမှုများကို သိမ်းမလား?',
+  'Save changes to these tabs?': 'ဤတဘ်များရှိ ပြောင်းလဲမှုများကို သိမ်းမလား?',
+  'Unsaved words go to Recently deleted.':
+    'မသိမ်းရသေးသော စာလုံးများ မကြာသေးမီက ဖျက်ထားသည်များ သို့ ရောက်သွားမည်။',
+  'Don’t save': 'မသိမ်းပါ',
   'Close others': 'အခြားတဘ်ပိတ်',
   'Close tabs to the right': 'ညာဘက်ရှိ တဘ်များ ပိတ်',
   'Close tabs to the left': 'ဘယ်ဘက်ရှိ တဘ်များ ပိတ်',

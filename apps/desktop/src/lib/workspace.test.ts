@@ -108,6 +108,19 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
+/** Save's layer, which a tab with unsaved words closed with Save opens: the tab it was
+ *  asked for, and what it calls once that tab has its file. */
+const placing = vi.hoisted(() => ({
+  asked: [] as { tab: string | null; saved: (() => void) | undefined }[],
+}))
+
+vi.mock('./save-place/door', () => ({
+  askPlace: (tab?: string | null, saved?: () => void) => {
+    placing.asked.push({ tab: tab ?? null, saved })
+  },
+  saveFront: () => undefined,
+}))
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -2634,6 +2647,113 @@ describe('a new tab', () => {
 
     const drafts = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)
     expect(drafts[0]?.doc.length).toBeGreaterThan(0)
+  })
+})
+
+/** Emil, 2026-10-15 (#359): *"when closing something that's unsaved (e.g. a note) then
+ *  you should get a warning modal"*. A tab with no file and words in it asks, once for
+ *  every such tab a gesture closes; nothing else does. See workspace/closing-unsaved.ts. */
+describe('closing a tab with unsaved words', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.closed.stack = []
+    trash.length = 0
+    sheet.asked = []
+    sheet.answer = null
+    placing.asked = []
+  })
+
+  function draft(words: string) {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace(words)
+    return tab
+  }
+
+  const open = (id: string) => workspace.tabs.some((one) => one.id === id)
+
+  test('asks before it goes, and Cancel keeps it with its words', async () => {
+    const tab = draft('# Plan\n\nwords')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([`Save changes to ${tab.shown}?`])
+    expect(open(tab.id)).toBe(true)
+    expect(tab.note.blank).toBe(false)
+    expect(trash).toEqual([])
+  })
+
+  test('Don’t save closes it, its words in Recently deleted and on the closed stack', async () => {
+    const tab = draft('# Plan\n\nwords')
+    sheet.answer = 'discard'
+
+    await workspace.closeAsking(tab.id)
+    await vi.waitFor(() => expect(workspace.closed.stack.at(-1)?.trashed).toBe('t1'))
+
+    expect(open(tab.id)).toBe(false)
+    expect(trash).toEqual([{ id: 't1', path: '/space/Plan.md', content: '# Plan\n\nwords' }])
+  })
+
+  test('Save asks where, keeps the tab until it is saved, and then closes it', async () => {
+    const tab = draft('# Plan\n\nwords')
+    sheet.answer = 'save'
+
+    await workspace.closeAsking(tab.id)
+    await vi.waitFor(() => expect(placing.asked).toHaveLength(1))
+
+    expect(placing.asked[0]?.tab).toBe(tab.id)
+    expect(open(tab.id)).toBe(true)
+
+    await workspace.save(tab, '/space', 'Plan.md')
+    placing.asked[0]?.saved?.()
+    await vi.waitFor(() => expect(open(tab.id)).toBe(false))
+    expect(sheet.asked).toHaveLength(1)
+    expect(trash).toEqual([])
+  })
+
+  test('Ctrl+W on a pinned one asks about its words, and not also whether to close it', async () => {
+    const tab = draft('# Plan')
+    workspace.togglePin(tab.id)
+    sheet.answer = 'discard'
+
+    await workspace.closeActive()
+
+    expect(sheet.asked).toEqual([`Save changes to ${tab.shown}?`])
+    expect(open(tab.id)).toBe(false)
+  })
+
+  test('several close with one question, and Save gives each its file first', async () => {
+    const one = draft('# One')
+    const two = draft('# Two')
+    sheet.answer = 'save'
+
+    await workspace.closeMany([one.id, two.id])
+
+    expect(sheet.asked).toEqual(['Save changes to these tabs?'])
+    expect(open(one.id) || open(two.id)).toBe(false)
+    expect(trash).toEqual([])
+    expect(sent.filter((call) => call.command === 'write_note').map((call) => call.path)).toEqual(
+      expect.arrayContaining(['/space/One.md', '/space/Two.md']),
+    )
+  })
+
+  test('asks nothing of an empty new tab, a note with a file, or a website', async () => {
+    workspace.openBlank()
+    const empty = workspace.active
+    await workspace.open('/space/a.md')
+    const note = workspace.tabs.find((one) => one.path === '/space/a.md')
+    workspace.openWebsite()
+    const site = workspace.active
+    if (!empty || !note || !site) throw new Error('nothing opened')
+    note.note.live.replace('# a, typed')
+
+    await workspace.closeMany([empty.id, note.id, site.id])
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
   })
 })
 

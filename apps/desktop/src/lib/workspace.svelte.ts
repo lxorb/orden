@@ -273,6 +273,9 @@ function worthReopening(tab: Tab): boolean {
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
 }
 
+/** A tab with no file and words in it, which closing asks about. */
+const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
+
 class Workspace {
   /** PDF tabs from older sessions are converted to page notes on restore. Keep
    *  concurrent opens of the same paper from creating the sidecar twice. */
@@ -2951,12 +2954,11 @@ class Workspace {
   }
 
   /** Closes a tab somebody asked to close: the cross on the tab, Ctrl+W, the menu row
-   *  and the palette. Nothing is asked about words - every note writes itself, and
-   *  what one was waiting to write goes down as its tab closes; see `closed` in
-   *  workspace/saving.svelte.ts. The one question left is a terminal's, about
-   *  something still running in it; see terminal/closing.ts. `close` below stays the
-   *  plain operation, which is what everything that closes a tab because the note has
-   *  gone away needs.
+   *  and the palette. A note with a file writes itself, and what it was waiting to
+   *  write goes down as its tab closes; see `closed` in workspace/saving.svelte.ts. A
+   *  tab with no file and words asks first, and so does a terminal running something;
+   *  see `mayClose`. `close` below stays the plain operation, which is what everything
+   *  that closes a tab because the note has gone away needs.
    *
    *  A pinned tab has no cross, but its menu row and the middle button close it
    *  outright, as a browser's do. */
@@ -2969,7 +2971,9 @@ class Workspace {
    *  closing, and a pinned tab is asked about first; see workspace/closing-pinned.ts. */
   async closeActive() {
     const tab = this.active
-    if (tab && (!tab.pinned || (await closesPinned()))) await this.closeAsking(tab.id)
+    // A pinned one with unsaved words is asked about those instead.
+    if (tab && (!tab.pinned || unsaved(tab) || (await closesPinned())))
+      await this.closeAsking(tab.id)
   }
 
   /** The tabs of a pane around one; which tabs is workspace/closing-around.ts. */
@@ -2994,11 +2998,16 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  /** Whether a set of tabs may all go. Nothing is asked about a note, which writes
-   *  itself; a terminal running something asks, once for all of them. The window going
-   *  asks its own; see terminal/closing.ts and lib/quitting. */
+  /** Whether a set of tabs may all go. A note with a file writes itself; unsaved words
+   *  ask (workspace/closing-unsaved.ts) and a terminal running something asks, each once
+   *  for all of them. The window going asks its own; see lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
-    if (__EVEN_PLUGIN__ || !closing.some((tab) => tab.kind === 'terminal')) return true
+    if (__EVEN_PLUGIN__) return true
+    if (closing.some(unsaved)) {
+      const { mayLose } = await import('./workspace/closing-unsaved')
+      if (!(await mayLose(this, closing))) return false
+    }
+    if (!closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
     return mayEnd(closing)
   }

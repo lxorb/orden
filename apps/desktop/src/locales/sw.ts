@@ -243,6 +243,11 @@ export const sw: Dictionary = {
   Unpin: 'Ondoa bandiko',
   Close: 'Funga',
   'Close pinned tab?': 'Funga kichupo kilichobandikwa?',
+  'Save changes to {name}?': 'Hifadhi mabadiliko katika {name}?',
+  'Save changes to these tabs?': 'Hifadhi mabadiliko katika vichupo hivi?',
+  'Unsaved words go to Recently deleted.':
+    'Maneno yasiyohifadhiwa huenda kwenye Vilivyofutwa hivi karibuni.',
+  'Don’t save': 'Usihifadhi',
   'Close others': 'Funga nyingine',
   'Close tabs to the right': 'Funga vichupo vya kulia',
   'Close tabs to the left': 'Funga vichupo vya kushoto',

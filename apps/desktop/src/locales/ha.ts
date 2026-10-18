@@ -243,6 +243,11 @@ export const ha: Dictionary = {
   Unpin: 'Cire manne',
   Close: 'Rufe',
   'Close pinned tab?': 'A rufe shafin da aka manne?',
+  'Save changes to {name}?': 'A adana canje-canje a {name}?',
+  'Save changes to these tabs?': 'A adana canje-canje a waɗannan shafuka?',
+  'Unsaved words go to Recently deleted.':
+    'Kalmomin da ba a adana ba za su tafi Waɗanda aka goge kwanan nan.',
+  'Don’t save': 'Kada a adana',
   'Close others': 'Rufe sauran',
   'Close tabs to the right': 'Rufe shafukan dama',
   'Close tabs to the left': 'Rufe shafukan hagu',
