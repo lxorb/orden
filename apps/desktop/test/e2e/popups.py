@@ -52,14 +52,15 @@ def check(
     name: str,
     opening: Callable[[], None],
     popup: str,
-    past: Callable[[], None],
+    area: str | Callable[[], None],
     still: str | None = None,
     toggles: bool | Callable[[], None] = True,
 ) -> None:
-    """Opens it and closes it each way. `still`, where given, is what a press past the
-    popup must leave standing: the layer the popup was dropped from."""
+    """Opens it and closes it each way. A press past it lands in `area`, wherever the
+    popup and the bar it hangs from are not. `still`, where given, is what a press past
+    the popup must leave standing: the layer the popup was dropped from."""
     closers: list[tuple[str, Callable[[], None]]] = [
-        ("a press past it", past),
+        ("a press past it", area if callable(area) else lambda: press_past(page, area, popup)),
         ("Escape", lambda: page.keyboard.press("Escape")),
         ("the window losing the focus", lambda: blurred(page)),
     ]
@@ -78,13 +79,48 @@ def check(
 
         close()
         if not gone(page, popup, f"{name} to close on {how}"):
-            wrong(f"{name}: {how} left it open")
+            # What was on the stack, and what the press landed on, for whoever reads why.
+            said = page.evaluate(
+                "() => ({ depth: window.nibApp.overlays.depth, pressed: window.__pressed ?? [],"
+                " layers: [...document.querySelectorAll('.nib-layer, .nib-bubble, .nib-scrim')]"
+                ".map((one) => one.className) })"
+            )
+            wrong(f"{name}: {how} left it open: {said}")
             page.keyboard.press("Escape")
             page.wait_for_timeout(200)
             continue
         if still and how == "a press past it" and not shown(page, still):
             wrong(f"{name}: a press past it closed what it was dropped from as well")
         say(f"{name}: closed by {how}")
+
+
+# Where in an area a press past a popup may land, tried in turn: the first that is clear
+# of the popup and of the bars a popup hangs from. Fixed points were not enough: a panel
+# measures itself as it opens, and once in a while it was still standing where the press
+# meant to be past it.
+SPOTS = ((0.5, 0.5), (0.2, 0.3), (0.8, 0.3), (0.2, 0.75), (0.8, 0.75), (0.5, 0.1), (0.5, 0.9))
+FLOATING = (".cluster", ".over", ".nib-bubble", "[role=listbox]", ".canvas [data-id]")
+
+
+def press_past(page: Page, area: str, popup: str) -> None:
+    clear = page.evaluate(
+        """([area, avoid, spots]) => {
+          const box = document.querySelector(area)?.getBoundingClientRect()
+          if (!box) return null
+          const rects = avoid.flatMap((one) => [...document.querySelectorAll(one)])
+            .map((one) => one.getBoundingClientRect())
+          for (const [dx, dy] of spots) {
+            const x = box.left + box.width * dx, y = box.top + box.height * dy
+            const under = (r) => x > r.left - 16 && x < r.right + 16 && y > r.top - 16 && y < r.bottom + 16
+            if (!rects.some(under)) return [x, y]
+          }
+          return null
+        }""",
+        [area, [popup, *FLOATING], SPOTS],
+    )
+    if not clear:
+        raise SystemExit(f"nowhere in {area} is clear of {popup}")
+    page.mouse.click(clear[0], clear[1])
 
 
 def empty_spot(page: Page, selector: str, dx: float = 0.5, dy: float = 0.5) -> Callable[[], None]:
@@ -94,19 +130,27 @@ def empty_spot(page: Page, selector: str, dx: float = 0.5, dy: float = 0.5) -> C
         box = page.locator(selector).first.bounding_box()
         if not box:
             raise SystemExit(f"{selector} is not on screen")
-        page.mouse.click(box["x"] + box["width"] * dx, box["y"] + box["height"] * dy)
+        x, y = box["x"] + box["width"] * dx, box["y"] + box["height"] * dy
+        page.mouse.click(x, y)
 
     return press
 
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
+    # The last few presses, as the window heard them, for a popup that stays open.
+    page.add_init_script(
+        """for (const type of ['pointerdown', 'pointerup', 'click']) addEventListener(type, (event) => {
+          const one = event.target
+          ;(window.__pressed ??= []).push(`${type} ${one?.tagName}.${one?.className ?? ''}`)
+          window.__pressed.splice(0, window.__pressed.length - 9)
+        }, true)"""
+    )
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n", "# Other\n\nSomething else.\n")
     DRIVE.open_note(page, "Plan")
     page.wait_for_timeout(300)
 
-    in_the_note = empty_spot(page, ".cm-content", 0.6, 0.8)
 
     # ── The context menu ───────────────────────────────────────────
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
@@ -117,7 +161,7 @@ def drive(browser: Browser) -> None:
         "the context menu",
         lambda: row.click(button="right"),
         ".menu[role=menu]",
-        in_the_note,
+        ".cm-content",
         toggles=False,
     )
 
@@ -128,7 +172,7 @@ def drive(browser: Browser) -> None:
         "the space switcher",
         lambda: switcher.click(),
         "[data-spaces-open]",
-        in_the_note,
+        ".cm-content",
         # Where the header is: the list's own catch is over it while the list is open.
         toggles=lambda: empty_spot(page, '[data-space-drop="switcher"]')(),
     )
@@ -141,7 +185,7 @@ def drive(browser: Browser) -> None:
             "the app menu",
             lambda: menu_button.click(),
             ".nib-layer.nib-host.menu",
-            in_the_note,
+            ".cm-content",
             # Where its button is: the menu's clear scrim is over it while it is open.
             toggles=lambda: empty_spot(page, '[data-opens="app-menu"]')(),
         )
@@ -169,12 +213,11 @@ def drive(browser: Browser) -> None:
         " await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
     DRIVE.wait_for(page, "!!document.querySelector('.cluster button.swatch')", "the canvas bar")
-    on_the_plane = empty_spot(page, ".canvas", 0.3, 0.3)
     swatch = page.locator(".cluster button.swatch").first
-    check(page, "the canvas colours", lambda: swatch.click(), ".cluster .panel", on_the_plane)
+    check(page, "the canvas colours", lambda: swatch.click(), ".cluster .panel", ".canvas")
     put = page.locator('.cluster button[aria-label="Add"]').first
     if put.count():
-        check(page, "the canvas's things to add", lambda: put.click(), ".cluster .panel", on_the_plane)
+        check(page, "the canvas's things to add", lambda: put.click(), ".cluster .panel", ".canvas")
 
     # ── The colours of what is picked on the plane ─────────────────
     # A card, written and stepped out of, which leaves it picked and its own bar over it.
@@ -200,7 +243,7 @@ def drive(browser: Browser) -> None:
             "the colours of what is picked",
             pick_and_open,
             ".over .panel",
-            empty_spot(page, ".canvas", 0.05, 0.3),
+            ".canvas",
             toggles=False,
         )
     else:
@@ -210,7 +253,7 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.openGraph()")
     DRIVE.wait_for(page, "!!document.querySelector('.graph .corner > button')", "the graph")
     controls = page.locator(".graph .corner > button").last
-    check(page, "the graph controls", lambda: controls.click(), ".graph .corner .card", empty_spot(page, ".graph", 0.6, 0.4))
+    check(page, "the graph controls", lambda: controls.click(), ".graph .corner .card", ".graph")
 
     # ── A web tab's bubbles ─────────────────────────────────────────
     # Over a page, whose presses never reach the app: on a desktop the bubble is closed
@@ -223,7 +266,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(800)
     site = page.locator('[data-opens="site"]').first
     if site.count() and site.is_enabled():
-        check(page, "a site's information", lambda: site.click(), ".site.nib-bubble", empty_spot(page, ".web", 0.5, 0.7))
+        check(page, "a site's information", lambda: site.click(), ".site.nib-bubble", ".web")
     else:
         say("a site's information: this build has no page to say anything about")
     # One download, said the way the crate says one, which is what puts the button up.
@@ -234,7 +277,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(300)
     saving = page.locator('[data-opens="downloads"]').first
     if saving.count():
-        check(page, "the downloads", lambda: saving.click(), ".downloads.nib-bubble", empty_spot(page, ".web", 0.5, 0.7))
+        check(page, "the downloads", lambda: saving.click(), ".downloads.nib-bubble", ".web")
     else:
         say("the downloads: nothing has been downloaded in this build")
 
