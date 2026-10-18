@@ -230,6 +230,9 @@ const KNOWN: Record<string, Check> = {
   // The automatic reminder, in minutes before a task's time, -1 for none. Read by the
   // push as well as the app, so only the choices the app offers; see push/reminders.ts.
   remindBefore: oneOf('remindBefore', REMIND_BEFORE),
+  // Whether Today holds a task with no start date, as one whose start date has come
+  // (#408). Read by the MCP's Today as well as the app's; see mcp/tasks.ts.
+  undatedInToday: switched('undatedInToday'),
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in

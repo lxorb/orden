@@ -173,6 +173,19 @@ describe('Silent mode on an account', () => {
   })
 })
 
+describe('the tasks with no start date in Today, on an account', () => {
+  test('is on or off', async () => {
+    expect((await patch({ undatedInToday: true })).json.settings.undatedInToday).toBe(true)
+    expect((await patch({ undatedInToday: false })).json.settings.undatedInToday).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    const refused = await patch({ undatedInToday: 'yes' })
+    expect(refused.status).toBe(400)
+    expect(refused.json.error).toBe('undatedInToday must be true or false')
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)
