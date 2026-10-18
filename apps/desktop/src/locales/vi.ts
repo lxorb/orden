@@ -1573,8 +1573,6 @@ export const vi: Dictionary = {
   // Web tabs
   Reload: 'Tải lại',
   'Hard reload': 'Tải lại toàn bộ',
-  'Clip this page': 'Lưu trang này',
-  'Clip the link': 'Lưu liên kết',
   'Open in the browser': 'Mở trong trình duyệt',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
@@ -1709,7 +1707,6 @@ export const vi: Dictionary = {
   'New tab': 'Thẻ mới',
   'Full screen': 'Toàn màn hình',
   'Print…': 'In…',
-  'Save page': 'Lưu trang',
   'Share…': 'Chia sẻ…',
 
   // What a site is asking for, in the bubble under the address field.

@@ -1588,8 +1588,6 @@ export const ur: Dictionary = {
   // Web tabs
   Reload: 'دوبارہ لوڈ کریں',
   'Hard reload': 'مکمل طور پر دوبارہ لوڈ کریں',
-  'Clip this page': 'یہ صفحہ محفوظ کریں',
-  'Clip the link': 'لنک محفوظ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
@@ -1720,7 +1718,6 @@ export const ur: Dictionary = {
   'New tab': 'نیا ٹیب',
   'Full screen': 'پوری اسکرین',
   'Print…': 'پرنٹ کریں…',
-  'Save page': 'صفحہ محفوظ کریں',
   'Share…': 'شیئر کریں…',
 
   // What a site is asking for, in the bubble under the address field.

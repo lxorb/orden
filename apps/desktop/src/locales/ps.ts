@@ -1591,8 +1591,6 @@ export const ps: Dictionary = {
   // Web tabs
   Reload: 'بېرته راوړل',
   'Hard reload': 'بشپړ بېرته راوړل',
-  'Clip this page': 'دا مخ خوندول',
-  'Clip the link': 'تړنه خوندول',
   'Open in the browser': 'په کوټګر کې پرانيستل',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
@@ -1724,7 +1722,6 @@ export const ps: Dictionary = {
   'New tab': 'نوی ټب',
   'Full screen': 'بشپړ پرده',
   'Print…': 'چاپ…',
-  'Save page': 'مخ خوندول',
   'Share…': 'شريکول…',
 
   // What a site is asking for, in the bubble under the address field.

@@ -1593,8 +1593,6 @@ export const pa: Dictionary = {
   // Web tabs
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
   'Hard reload': 'ਪੂਰੀ ਤਰ੍ਹਾਂ ਮੁੜ ਲੋਡ ਕਰੋ',
-  'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
-  'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
@@ -1726,7 +1724,6 @@ export const pa: Dictionary = {
   'New tab': 'ਨਵੀਂ ਟੈਬ',
   'Full screen': 'ਪੂਰੀ ਸਕ੍ਰੀਨ',
   'Print…': 'ਛਾਪੋ…',
-  'Save page': 'ਪੰਨਾ ਰੱਖਿਅਤ ਕਰੋ',
   'Share…': 'ਸਾਂਝਾ ਕਰੋ…',
 
   // What a site is asking for, in the bubble under the address field.

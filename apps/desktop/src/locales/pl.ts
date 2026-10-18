@@ -1658,8 +1658,6 @@ export const pl: Dictionary = {
   // Web tabs
   Reload: 'Odśwież',
   'Hard reload': 'Twarde przeładowanie',
-  'Clip this page': 'Zapisz tę stronę',
-  'Clip the link': 'Zapisz odnośnik',
   'Open in the browser': 'Otwórz w przeglądarce',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
@@ -1794,7 +1792,6 @@ export const pl: Dictionary = {
   'New tab': 'Nowa karta',
   'Full screen': 'Pełny ekran',
   'Print…': 'Drukuj…',
-  'Save page': 'Zapisz stronę',
   'Share…': 'Udostępnij…',
 
   // What a site is asking for, in the bubble under the address field.

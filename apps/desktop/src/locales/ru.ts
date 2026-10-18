@@ -1661,8 +1661,6 @@ export const ru: Dictionary = {
   // Web tabs
   Reload: 'Обновить',
   'Hard reload': 'Жёсткая перезагрузка',
-  'Clip this page': 'Сохранить эту страницу',
-  'Clip the link': 'Сохранить ссылку',
   'Open in the browser': 'Открыть в браузере',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
@@ -1794,7 +1792,6 @@ export const ru: Dictionary = {
   'New tab': 'Новая вкладка',
   'Full screen': 'Полноэкранный режим',
   'Print…': 'Печать…',
-  'Save page': 'Сохранить страницу',
   'Share…': 'Поделиться…',
 
   // What a site is asking for, in the bubble under the address field.

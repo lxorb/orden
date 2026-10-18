@@ -1571,8 +1571,6 @@ export const ko: Dictionary = {
   // Web tabs
   Reload: '다시 불러오기',
   'Hard reload': '강력 새로고침',
-  'Clip this page': '이 페이지 저장',
-  'Clip the link': '링크 저장',
   'Open in the browser': '브라우저에서 열기',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
@@ -1703,7 +1701,6 @@ export const ko: Dictionary = {
   'New tab': '새 탭',
   'Full screen': '전체화면',
   'Print…': '인쇄…',
-  'Save page': '페이지 저장',
   'Share…': '공유…',
 
   // What a site is asking for, in the bubble under the address field.

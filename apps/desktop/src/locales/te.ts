@@ -1595,8 +1595,6 @@ export const te: Dictionary = {
   // Web tabs
   Reload: 'మళ్ళీ లోడ్ చేయి',
   'Hard reload': 'పూర్తిగా మళ్ళీ లోడ్ చేయి',
-  'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
-  'Clip the link': 'లింక్ ఒడిసిపట్టు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
@@ -1729,7 +1727,6 @@ export const te: Dictionary = {
   'New tab': 'కొత్త ట్యాబ్',
   'Full screen': 'ఫుల్-స్క్రీన్',
   'Print…': 'ప్రింట్ చేయి…',
-  'Save page': 'పేజీని సేవ్ చేయి',
   'Share…': 'షేర్ చేయి…',
 
   // What a site is asking for, in the bubble under the address field.

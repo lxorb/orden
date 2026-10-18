@@ -1611,8 +1611,6 @@ export const ha: Dictionary = {
   // Web tabs
   Reload: 'Sake ɗauko',
   'Hard reload': 'Sake ɗauko gaba ɗaya',
-  'Clip this page': 'Ajiye wannan shafi',
-  'Clip the link': 'Ajiye haɗin',
   'Open in the browser': 'Buɗe a birawuza',
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
@@ -1751,7 +1749,6 @@ export const ha: Dictionary = {
   'New tab': 'Sabon tab',
   'Full screen': 'Cikakken allo',
   'Print…': 'Buga…',
-  'Save page': 'Ajiye shafi',
   'Share…': 'Raba…',
 
   // What a site is asking for, in the bubble under the address field.

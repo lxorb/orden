@@ -1616,8 +1616,6 @@ export const ptBR: Dictionary = {
   // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
-  'Clip this page': 'Salvar esta página',
-  'Clip the link': 'Salvar o link',
   'Open in the browser': 'Abrir no navegador',
   'Show it here': 'Mostrar aqui',
   Website: 'Site',
@@ -1752,7 +1750,6 @@ export const ptBR: Dictionary = {
   'New tab': 'Nova guia',
   'Full screen': 'Tela cheia',
   'Print…': 'Imprimir…',
-  'Save page': 'Salvar página',
   'Share…': 'Compartilhar…',
 
   // What a site is asking for, in the bubble under the address field.

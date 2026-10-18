@@ -1608,8 +1608,6 @@ export const sw: Dictionary = {
   // Web tabs
   Reload: 'Pakia tena',
   'Hard reload': 'Pakia upya kabisa',
-  'Clip this page': 'Hifadhi ukurasa huu',
-  'Clip the link': 'Hifadhi kiungo',
   'Open in the browser': 'Fungua kwenye kivinjari',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
@@ -1750,7 +1748,6 @@ export const sw: Dictionary = {
   'New tab': 'Kichupo kipya',
   'Full screen': 'Skrini nzima',
   'Print…': 'Chapisha…',
-  'Save page': 'Hifadhi ukurasa',
   'Share…': 'Shiriki…',
 
   // What a site is asking for, in the bubble under the address field.

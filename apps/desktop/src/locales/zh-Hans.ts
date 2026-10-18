@@ -1554,8 +1554,6 @@ export const zhHans: Dictionary = {
   // Web tabs
   Reload: '重新加载',
   'Hard reload': '硬性重新加载',
-  'Clip this page': '保存此页',
-  'Clip the link': '保存链接',
   'Open in the browser': '在浏览器中打开',
   'Show it here': '在此显示',
   Website: '网站',
@@ -1684,7 +1682,6 @@ export const zhHans: Dictionary = {
   'New tab': '新建标签页',
   'Full screen': '全屏',
   'Print…': '打印…',
-  'Save page': '保存页面',
   'Share…': '共享…',
 
   // What a site is asking for, in the bubble under the address field.

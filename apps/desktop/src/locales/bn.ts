@@ -1587,8 +1587,6 @@ export const bn: Dictionary = {
   // Web tabs
   Reload: 'আবার লোড করুন',
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
-  'Clip this page': 'এই পাতা রাখুন',
-  'Clip the link': 'লিঙ্ক রাখুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
@@ -1719,7 +1717,6 @@ export const bn: Dictionary = {
   'New tab': 'নতুন ট্যাব',
   'Full screen': 'পূর্ণ স্ক্রীণ',
   'Print…': 'প্রিন্ট…',
-  'Save page': 'পৃষ্ঠা সেভ করুন',
   'Share…': 'শেয়ার…',
 
   // What a site is asking for, in the bubble under the address field.

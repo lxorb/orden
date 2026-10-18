@@ -1578,8 +1578,6 @@ export const my: Dictionary = {
   // Web tabs
   Reload: 'ပြန်ဖွင့်ပါ',
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
-  'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
-  'Clip the link': 'လင့်သိမ်းပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
@@ -1714,7 +1712,6 @@ export const my: Dictionary = {
   'New tab': 'တဘ် အသစ်',
   'Full screen': 'မျက်နှာပြင် အပြည့်',
   'Print…': 'ပုံနှိပ်ပါ…',
-  'Save page': 'စာမျက်နှာ သိမ်းရန်',
   'Share…': 'မျှဝေပါ…',
 
   // What a site is asking for, in the bubble under the address field.

@@ -1656,8 +1656,6 @@ export const uk: Dictionary = {
   // Web tabs
   Reload: 'Оновити',
   'Hard reload': 'Жорстке перезавантаження',
-  'Clip this page': 'Зберегти цю сторінку',
-  'Clip the link': 'Зберегти посилання',
   'Open in the browser': 'Відкрити в браузері',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
@@ -1789,7 +1787,6 @@ export const uk: Dictionary = {
   'New tab': 'Нова вкладка',
   'Full screen': 'На весь екран',
   'Print…': 'Друк…',
-  'Save page': 'Зберегти сторінку',
   'Share…': 'Поділитися…',
 
   // What a site is asking for, in the bubble under the address field.

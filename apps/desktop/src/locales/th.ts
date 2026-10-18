@@ -1562,8 +1562,6 @@ export const th: Dictionary = {
   // Web tabs
   Reload: 'โหลดใหม่',
   'Hard reload': 'โหลดใหม่ทั้งหมด',
-  'Clip this page': 'เก็บหน้านี้',
-  'Clip the link': 'เก็บลิงก์',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
@@ -1693,7 +1691,6 @@ export const th: Dictionary = {
   'New tab': 'แท็บใหม่',
   'Full screen': 'เต็มหน้าจอ',
   'Print…': 'พิมพ์…',
-  'Save page': 'บันทึกหน้า',
   'Share…': 'แชร์…',
 
   // What a site is asking for, in the bubble under the address field.

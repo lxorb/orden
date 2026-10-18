@@ -1612,8 +1612,6 @@ export const ta: Dictionary = {
   // Web tabs
   Reload: 'மீண்டும் ஏற்று',
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
-  'Clip this page': 'இந்தப் பக்கத்தை எடு',
-  'Clip the link': 'இணைப்பை எடு',
   'Open in the browser': 'உலாவியில் திற',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
@@ -1749,7 +1747,6 @@ export const ta: Dictionary = {
   'New tab': 'புதிய தாவல்',
   'Full screen': 'முழுத்திரை',
   'Print…': 'அச்சிடு…',
-  'Save page': 'பக்கத்தைச் சேமி',
   'Share…': 'பகிர்…',
 
   // What a site is asking for, in the bubble under the address field.

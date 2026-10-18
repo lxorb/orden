@@ -1569,8 +1569,6 @@ export const am: Dictionary = {
   // Web tabs
   Reload: 'እንደገና ጫን',
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
-  'Clip this page': 'ይህን ገጽ አስቀምጥ',
-  'Clip the link': 'አገናኙን አስቀምጥ',
   'Open in the browser': 'በአሳሽ ክፈት',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
@@ -1700,7 +1698,6 @@ export const am: Dictionary = {
   'New tab': 'አዲስ ትር',
   'Full screen': 'ሙሉ ማያ ገፅ',
   'Print…': 'አትም…',
-  'Save page': 'ገፅ አስቀምጥ',
   'Share…': 'አጋራ…',
 
   // What a site is asking for, in the bubble under the address field.

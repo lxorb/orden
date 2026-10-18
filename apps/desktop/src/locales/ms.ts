@@ -1583,8 +1583,6 @@ export const ms: Dictionary = {
   // Web tabs
   Reload: 'Muat semula',
   'Hard reload': 'Muat semula sepenuhnya',
-  'Clip this page': 'Simpan halaman ini',
-  'Clip the link': 'Simpan pautan',
   'Open in the browser': 'Buka dalam pelayar',
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
@@ -1723,7 +1721,6 @@ export const ms: Dictionary = {
   'New tab': 'Tab baharu',
   'Full screen': 'Skrin penuh',
   'Print…': 'Cetak…',
-  'Save page': 'Simpan halaman',
   'Share…': 'Kongsi…',
 
   // What a site is asking for, in the bubble under the address field.

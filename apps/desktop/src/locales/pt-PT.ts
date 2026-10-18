@@ -1629,8 +1629,6 @@ export const ptPT: Dictionary = {
   // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
-  'Clip this page': 'Guardar esta página',
-  'Clip the link': 'Guardar a ligação',
   'Open in the browser': 'Abrir no navegador',
   'Show it here': 'Mostrar aqui',
   Website: 'Sítio web',
@@ -1766,7 +1764,6 @@ export const ptPT: Dictionary = {
   'New tab': 'Novo separador',
   'Full screen': 'Ecrã inteiro',
   'Print…': 'Imprimir…',
-  'Save page': 'Guardar página',
   'Share…': 'Partilhar…',
 
   // What a site is asking for, in the bubble under the address field.

@@ -1554,8 +1554,6 @@ export const zhHant: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存此頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '在瀏覽器中開啟',
   'Show it here': '在此顯示',
   Website: '網站',
@@ -1684,7 +1682,6 @@ export const zhHant: Dictionary = {
   'New tab': '新增分頁',
   'Full screen': '全螢幕',
   'Print…': '列印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.

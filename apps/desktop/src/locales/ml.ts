@@ -1606,8 +1606,6 @@ export const ml: Dictionary = {
   // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
-  'Clip this page': 'ഈ താൾ എടുക്കുക',
-  'Clip the link': 'കണ്ണി എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
@@ -1743,7 +1741,6 @@ export const ml: Dictionary = {
   'New tab': 'പുതിയ ടാബ്',
   'Full screen': 'പൂർണ്ണ സ്ക്രീൻ',
   'Print…': 'പ്രിന്റ് ചെയ്യുക…',
-  'Save page': 'പേജ് സംരക്ഷിക്കുക',
   'Share…': 'പങ്കിടുക…',
 
   // What a site is asking for, in the bubble under the address field.

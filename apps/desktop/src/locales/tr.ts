@@ -1593,8 +1593,6 @@ export const tr: Dictionary = {
   // Web tabs
   Reload: 'Yeniden yükle',
   'Hard reload': 'Sert yeniden yükleme',
-  'Clip this page': 'Bu sayfayı sakla',
-  'Clip the link': 'Bağlantıyı sakla',
   'Open in the browser': 'Tarayıcıda aç',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
@@ -1730,7 +1728,6 @@ export const tr: Dictionary = {
   'New tab': 'Yeni sekme',
   'Full screen': 'Tam ekran',
   'Print…': 'Yazdır…',
-  'Save page': 'Sayfayı kaydet',
   'Share…': 'Paylaş…',
 
   // What a site is asking for, in the bubble under the address field.

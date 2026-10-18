@@ -1682,8 +1682,6 @@ export const ar: Dictionary = {
   // Web tabs
   Reload: 'إعادة التحميل',
   'Hard reload': 'إعادة تحميل كاملة',
-  'Clip this page': 'حفظ هذه الصفحة',
-  'Clip the link': 'حفظ الرابط',
   'Open in the browser': 'فتح في المتصفح',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
@@ -1814,7 +1812,6 @@ export const ar: Dictionary = {
   'New tab': 'علامة تبويب جديدة',
   'Full screen': 'ملء الشاشة',
   'Print…': 'طباعة…',
-  'Save page': 'حفظ الصفحة',
   'Share…': 'مشاركة…',
 
   // What a site is asking for, in the bubble under the address field.

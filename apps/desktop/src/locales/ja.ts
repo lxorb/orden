@@ -1579,8 +1579,6 @@ export const ja: Dictionary = {
   // Web tabs
   Reload: '再読み込み',
   'Hard reload': 'ハード再読み込み',
-  'Clip this page': 'このページを保存',
-  'Clip the link': 'リンクを保存',
   'Open in the browser': 'ブラウザーで開く',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
@@ -1719,7 +1717,6 @@ export const ja: Dictionary = {
   'New tab': '新しいタブ',
   'Full screen': '全画面表示',
   'Print…': '印刷…',
-  'Save page': 'ページを保存',
   'Share…': '共有…',
 
   // What a site is asking for, in the bubble under the address field.

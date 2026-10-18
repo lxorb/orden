@@ -1582,8 +1582,6 @@ export const gu: Dictionary = {
   // Web tabs
   Reload: 'ફરી લાવો',
   'Hard reload': 'પૂરેપૂરું ફરી લાવો',
-  'Clip this page': 'આ પાનું સાચવો',
-  'Clip the link': 'કડી સાચવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
@@ -1714,7 +1712,6 @@ export const gu: Dictionary = {
   'New tab': 'નવું ટૅબ',
   'Full screen': 'પૂર્ણ સ્ક્રીન',
   'Print…': 'છાપો…',
-  'Save page': 'પેજ સાચવો',
   'Share…': 'વહેંચો…',
 
   // What a site is asking for, in the bubble under the address field.

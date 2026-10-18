@@ -1635,8 +1635,6 @@ export const it: Dictionary = {
   // Web tabs
   Reload: 'Ricarica',
   'Hard reload': 'Ricaricamento forzato',
-  'Clip this page': 'Salva questa pagina',
-  'Clip the link': 'Salva il link',
   'Open in the browser': 'Apri nel browser',
   'Show it here': 'Mostralo qui',
   Website: 'Sito web',
@@ -1775,7 +1773,6 @@ export const it: Dictionary = {
   'New tab': 'Nuova scheda',
   'Full screen': 'Schermo intero',
   'Print…': 'Stampa…',
-  'Save page': 'Salva pagina',
   'Share…': 'Condividi…',
 
   // What a site is asking for, in the bubble under the address field.

@@ -1,6 +1,7 @@
 <script lang="ts">
-  /** The bar over a page: back, forward, reload, the address, a clip, the extensions,
-   *  what has been downloaded, and the dots.
+  /** The bar over a page: back, forward, reload, the address, the extensions, what has
+   *  been downloaded, and the dots. Saving the page as a note is a row behind the dots
+   *  (menu.ts): Emil, #405, asked for the scissors off the bar.
    *
    *  A browser's row, in nib's shapes. The same `.nib-glyph` squares the find bar and
    *  the sidebar's foot are made of, the same `.nib-field` every box you type in is,
@@ -28,7 +29,6 @@
   import Globe from 'lucide/dist/esm/icons/globe.mjs'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
-  import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { t } from '../i18n.svelte'
   import { longPress } from '../longpress'
@@ -45,14 +45,10 @@
   import { isWebAddress, plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
-  import { clipSource } from './note'
   import { type Page, siteMark } from './pages.svelte'
 
   const {
     page,
-    /** Whether a clip can read the page's words. In a browser it cannot - the
-     *  frame's document is the site's - so the glyph says it will keep the link. */
-    reads,
     /** Whether the pane this bar is in has the focus, so the address key lands in
      *  one bar rather than in all of them. */
     focused,
@@ -61,7 +57,6 @@
     onstep,
     onhistory,
     onaddress,
-    onclip,
     onmenu,
     onsite,
     ondownloads,
@@ -78,7 +73,6 @@
     ground?: { colour: string } | undefined
     /** The scheme whose words read on that colour, where it is not the window's. */
     theme?: 'dark' | 'light' | undefined
-    reads: boolean
     focused: boolean
     book: string
     /** An arrow or reload pressed, and how: with the middle button or a modifier an
@@ -88,7 +82,6 @@
     /** A right click or a held finger on an arrow: the pages that way, as a list. */
     onhistory: (forward: boolean, event: MouseEvent) => void
     onaddress: (said: string, aside: boolean, typed: string) => void
-    onclip: () => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void
     ondownloads: () => void
@@ -130,15 +123,6 @@
   })
 
   let field = $state<{ take(): void; waiting(): boolean }>()
-
-  /** Whether there is a page to clip at all.
-   *
-   *  A tab opened by "Open a website" has an address field and no page behind it yet,
-   *  and an address field nobody has typed into is the empty string rather than null -
-   *  so the glyph was pressable and wrote a note whose `source:` was empty. The glyph
-   *  says so by not being pressable, which is what this bar does everywhere else:
-   *  before the press rather than as an apology after it. See `clipSource`. */
-  const clippable = $derived(clipSource(page.url, null) !== null)
 
   /** The site, plainly, and the page's own name after it. The name is the page's
    *  while it has said one and the address's host until then, so the bar never reads
@@ -335,20 +319,6 @@
     onenter={onaddress}
     {ontyping}
   />
-
-  <button
-    class="nib-glyph"
-    title={reads ? t('Clip this page') : t('Clip the link')}
-    aria-label={reads ? t('Clip this page') : t('Clip the link')}
-    disabled={!clippable}
-    onclick={onclip}
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Scissors as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
-  </button>
 
   {#if extending}
     <ExtensionButtons {...extending} />

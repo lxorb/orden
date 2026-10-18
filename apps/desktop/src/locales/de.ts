@@ -1613,8 +1613,6 @@ export const de: Dictionary = {
   // Web tabs
   Reload: 'Neu laden',
   'Hard reload': 'Vollständig neu laden',
-  'Clip this page': 'Diese Seite speichern',
-  'Clip the link': 'Den Link speichern',
   'Open in the browser': 'Im Browser öffnen',
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
@@ -1763,7 +1761,6 @@ export const de: Dictionary = {
   'New tab': 'Neuer Tab',
   'Full screen': 'Vollbildmodus',
   'Print…': 'Drucken…',
-  'Save page': 'Seite speichern',
   'Share…': 'Teilen…',
 
   // What a site is asking for, in the bubble under the address field.

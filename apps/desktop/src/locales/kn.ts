@@ -1601,8 +1601,6 @@ export const kn: Dictionary = {
   // Web tabs
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Hard reload': 'ಪೂರ್ಣವಾಗಿ ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
-  'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
-  'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
@@ -1736,7 +1734,6 @@ export const kn: Dictionary = {
   'New tab': 'ಹೊಸ ಟ್ಯಾಬ್',
   'Full screen': 'ಪೂರ್ಣ ಪರದೆ',
   'Print…': 'ಮುದ್ರಿಸಿ…',
-  'Save page': 'ಪುಟವನ್ನು ಸೇವ್ ಮಾಡಿ',
   'Share…': 'ಹಂಚಿ…',
 
   // What a site is asking for, in the bubble under the address field.

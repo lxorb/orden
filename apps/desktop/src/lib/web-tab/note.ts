@@ -77,8 +77,8 @@ export function keptBody(text: string): string | null {
  *  Judged rather than merely present, and by the same rule the tab itself is held to:
  *  what is not the web is not somewhere a clip can have come from, because it is not
  *  somewhere the tab could have been. The page's own address wins over the tab's, which
- *  is what the reader is looking at. See clip.ts, which refuses on this, and
- *  WebBar.svelte, where the glyph is not offered while there is nothing to clip. */
+ *  is what the reader is looking at. See clip.ts, which refuses on this, and the menu's
+ *  Save as a note row (menu.ts), greyed out where there is no site to save. */
 export function clipSource(
   read: string | null | undefined,
   fallback: string | null,

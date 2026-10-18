@@ -1615,8 +1615,6 @@ export const fil: Dictionary = {
   // Web tabs
   Reload: 'I-reload',
   'Hard reload': 'Buong i-reload',
-  'Clip this page': 'I-clip ang pahinang ito',
-  'Clip the link': 'I-clip ang link',
   'Open in the browser': 'Buksan sa browser',
   'Show it here': 'Ipakita dito',
   Website: 'Website',
@@ -1757,7 +1755,6 @@ export const fil: Dictionary = {
   'New tab': 'Bagong tab',
   'Full screen': 'Buong screen',
   'Print…': 'I-print…',
-  'Save page': 'I-save ang page',
   'Share…': 'Ibahagi…',
 
   // What a site is asking for, in the bubble under the address field.

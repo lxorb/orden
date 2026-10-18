@@ -1552,8 +1552,6 @@ export const yue: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存呢頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '喺瀏覽器開啟',
   'Show it here': '喺呢度顯示',
   Website: '網站',
@@ -1682,7 +1680,6 @@ export const yue: Dictionary = {
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.

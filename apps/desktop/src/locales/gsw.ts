@@ -1596,8 +1596,6 @@ export const gsw: Dictionary = {
   // Web tabs
   Reload: 'Neu lade',
   'Hard reload': 'Vollständig neu lade',
-  'Clip this page': 'Die Siite spichere',
-  'Clip the link': 'De Link spichere',
   'Open in the browser': 'Im Browser ufmache',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
@@ -1733,7 +1731,6 @@ export const gsw: Dictionary = {
   'New tab': 'Nöie Tab',
   'Full screen': 'Vollbild',
   'Print…': 'Drucke…',
-  'Save page': 'Siite spichere',
   'Share…': 'Teile…',
 
   // What a site is asking for, in the bubble under the address field.

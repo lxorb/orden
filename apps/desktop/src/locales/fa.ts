@@ -1591,8 +1591,6 @@ export const fa: Dictionary = {
   // Web tabs
   Reload: 'بارگذاری دوباره',
   'Hard reload': 'بارگذاری دوباره کامل',
-  'Clip this page': 'ذخیره این صفحه',
-  'Clip the link': 'ذخیره پیوند',
   'Open in the browser': 'گشودن در مرورگر',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
@@ -1724,7 +1722,6 @@ export const fa: Dictionary = {
   'New tab': 'زبانه جدید',
   'Full screen': 'تمام صفحه',
   'Print…': 'چاپ…',
-  'Save page': 'ذخیره صفحه',
   'Share…': 'هم‌رسانی…',
 
   // What a site is asking for, in the bubble under the address field.

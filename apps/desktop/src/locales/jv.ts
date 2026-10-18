@@ -1577,8 +1577,6 @@ export const jv: Dictionary = {
   // Web tabs
   Reload: 'Emot maneh',
   'Hard reload': 'Emot maneh kabeh',
-  'Clip this page': 'Simpen kaca iki',
-  'Clip the link': 'Simpen pranalane',
   'Open in the browser': 'Bukak ing panjelajah',
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
@@ -1715,7 +1713,6 @@ export const jv: Dictionary = {
   'New tab': 'Tab anyar',
   'Full screen': 'Layar wutuh',
   'Print…': 'Cetak…',
-  'Save page': 'Simpen kaca',
   'Share…': 'Bagi…',
 
   // What a site is asking for, in the bubble under the address field.
