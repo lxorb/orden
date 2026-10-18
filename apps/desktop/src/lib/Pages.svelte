@@ -47,24 +47,26 @@
   import CanvasHands from './CanvasHands.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
+  import CanvasPicked from './CanvasPicked.svelte'
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
   import { type Camera, graphPoint, NOTCH, wheelZoom } from './camera'
   import { toolPressed } from './canvas/actions'
-  import { movedBy, pickedBox, removed, withText } from './canvas/edits'
+  import { coloured, copied, movedBy, pickedBox, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
   import { erased, leadPoint, penFelt, strokesInLasso, tidied } from './canvas/ink'
-  import { readPalette } from './canvas/palette'
+  import { DEFAULT_INK, readPalette } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
   import { inks, type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
   import { type Point } from './canvas/geometry'
   import { pageAt } from '@nib/markdown/pages'
-  import { DIVIDER, type MenuEntry } from './menu.svelte'
+  import { longPress } from './longpress'
+  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
   import { forgetPaper } from './pages/paper'
   import {
@@ -596,6 +598,127 @@
     }
   }
 
+  /** How much room the bar over what is picked wants above it before it hangs
+   *  under the pick instead, in pixels. The canvas's own number. */
+  const ROOM = 72
+
+  /** Where the bar over the ink the lasso caught goes: over the middle of it, on
+   *  screen, or under it against the top of the pane - the canvas's bar, so paper and
+   *  plane colour, copy and delete what is picked the same way, with a finger as
+   *  well as a key (#350). Nothing while a gesture is under way. */
+  const overPicked = $derived.by(() => {
+    const box = caught
+    if (!box || gesture || store.editing !== null) return null
+
+    const left = width / 2 + (box.x + box.width / 2 - view.x) * view.scale
+    const above = height / 2 + (box.y - view.y) * view.scale
+    const under = height / 2 + (box.y + box.height - view.y) * view.scale
+    const below = above < ROOM
+
+    return { at: { x: left, y: below ? under : above }, below }
+  })
+
+  /** The colour the picked ink is written in, or nothing where it is the page's own. */
+  const pickedColour = $derived.by(() => {
+    const first = canvas.ink.find((one) => store.isPicked(one.id))
+    return !first || first.color === DEFAULT_INK ? null : first.color
+  })
+
+  /** The picked ink in a colour; nothing at all is the page's own ink, since there
+   *  is no paper showing through a line. */
+  function colourPicked(colour: string | null) {
+    store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
+  }
+
+  function duplicatePicked() {
+    if (!writable || !store.picked.length) return
+    const made = copied(canvas, store.picked)
+    store.edit(made.canvas)
+    store.pickAll(made.ids)
+  }
+
+  /** What is picked, gone - never a page, which is taken away from the navigator. */
+  function deletePicked() {
+    if (!writable) return
+    const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
+    if (!going.length) return
+    store.edit(removed(canvas, going))
+    store.clearPicked()
+  }
+
+  /** One row of the app's own, pressed: an export or printing, which the File menu and
+   *  the palette already have and which load most of what the app can load. */
+  function command(id: string, label: string): MenuEntry {
+    return {
+      label,
+      run: () =>
+        void import('./commands').then(({ appCommands, exportCommands }) => {
+          const row = [...exportCommands(), ...appCommands()].find((one) => one.id === id)
+          if (row && !row.disabled) row.run()
+        }),
+    }
+  }
+
+  /** What a right click or a finger held still on the paper offers: what can be done
+   *  to the ink that is picked, a page after the one under it, the two fits, and the
+   *  note out as a PDF or on paper. Only what would do something here (#350). */
+  function pagesMenu(point: Point): MenuEntry[] {
+    const page = pageAt(pages, point)
+    const ink = writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+    const groups: MenuEntry[][] = [
+      ink
+        ? [
+            { label: t('Duplicate'), run: duplicatePicked },
+            { label: t('Delete'), danger: true, run: deletePicked },
+          ]
+        : [],
+      page && writable
+        ? [
+            {
+              label: t('Add a page after this'),
+              run: () => {
+                const at = store.addPage(page.id)
+                if (at) store.glideTo(at)
+              },
+            },
+          ]
+        : [],
+      [
+        { label: t('Fit width'), run: () => store.fitAgain() },
+        { label: t('Fit page'), run: () => store.fitPage() },
+      ],
+      [command('export-pdf', t('Export as PDF')), command('print', t('Print'))],
+    ]
+    return groups
+      .filter((one) => one.length)
+      .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
+  }
+
+  function showMenu(event: MouseEvent) {
+    menu.show(event, pagesMenu(planeAt(event)), {
+      title: t('Pages'),
+      near: viewport.touch,
+    })
+  }
+
+  /** A right click. The mouse's: a pen's barrel button is the eraser on paper, and a
+   *  finger held still is `longPress` below, so a menu never opens twice for one hold. */
+  function oncontextmenu(event: MouseEvent) {
+    event.preventDefault()
+    const kind = (event as PointerEvent).pointerType
+    if (kind === 'touch' || kind === 'pen') return
+    showMenu(event)
+  }
+
+  /** A finger held still on the paper - unless it is writing, which is a stroke that
+   *  has not moved yet rather than a press. */
+  function held(event: MouseEvent) {
+    const busy = gesture?.kind
+    if (busy === 'draw' || busy === 'erase' || busy === 'lasso') return
+    gesture = null
+    showMenu(event)
+  }
+
   function onpointermove(event: PointerEvent) {
     pointing = planeAt(event)
 
@@ -1044,6 +1167,8 @@
   {onwheel}
   {onkeydown}
   {ondblclick}
+  {oncontextmenu}
+  use:longPress={held}
 >
   <!-- The column, moved by one transform: the pages are elements at their own
        coordinates and a scroll is composited, whether there are two pages or four
@@ -1113,6 +1238,21 @@
   />
 
   <PagesZoom zoom={camera.scale} />
+
+  {#if overPicked}
+    <CanvasPicked
+      at={overPicked.at}
+      below={overPicked.below}
+      colour={pickedColour}
+      recent={pens.recent}
+      grouping={null}
+      oncolour={colourPicked}
+      onduplicate={duplicatePicked}
+      ondelete={deletePicked}
+      ongroup={() => undefined}
+      onmore={(event: MouseEvent) => showMenu(event)}
+    />
+  {/if}
 
   <CanvasBar
     canundo={store.canUndo}
