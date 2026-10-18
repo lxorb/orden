@@ -75,12 +75,14 @@ def drive(browser: Browser) -> None:
         return
 
     row.click()
-    DRIVE.waited(
-        page,
-        f"({SOURCED})().then((found) => found.length > {len(before)})",
-        "the page to land in the space as a note",
-    )
-    after = page.evaluate(SOURCED)
+    # Asked of the space until the note is there: the clip writes it a round trip or
+    # two after the press, and a busy machine takes longer.
+    after = before
+    for _ in range(60):
+        after = page.evaluate(SOURCED)
+        if len(after) > len(before):
+            break
+        page.wait_for_timeout(250)
     fresh = [one for one in after if one not in before]
     say(f"saved: {fresh}")
     if not any(URL in matter for _path, matter in fresh):
