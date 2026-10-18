@@ -161,11 +161,9 @@ describe('the mobile icons', () => {
 })
 
 describe('the other places the mark appears', () => {
-  test('the web app and the clipper carry it at the size their names say', () => {
+  test('the web app carries it at the size its names say', () => {
     for (const size of [256, 512])
       expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
-    for (const size of [16, 32, 48, 128])
-      expect(picture(ROOT, 'apps/clipper/public/icons', `${size}.png`).size).toBe(size)
   })
 
   /** The Even Hub portal refuses a colour asset, so these cannot carry one at all. */

@@ -25,7 +25,7 @@ every push to `main`; see "CI" below.
 | Package | What it owns |
 | --- | --- |
 | `packages/editor` | The CodeMirror 6 live-preview editor: parsing, decorations, widgets, commands. No app concerns. |
-| `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and the clipper share. Pure functions between markdown and HTML. |
+| `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and a web tab's clip share. Pure functions between markdown and HTML. |
 | `packages/bases` | Rows, views and the Bases expression language: a note or a task line as a row, Obsidian's `.base` file read and written, filters, formulas, groups and summaries, recurrence, and Todoist's filter language. Pure, no DOM; see `docs/tasks.md`. The task line itself is `packages/markdown`'s (`task-line.ts`, `task-edits.ts`). |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
@@ -917,8 +917,7 @@ app through `t()`; every key is translated in every catalogue.
 `apps/desktop/src/lib/i18n.svelte.ts` is the whole mechanism, and
 `apps/desktop/src/locales/` holds one catalogue per language. **The English
 string is its own key**, so nothing can come out blank: a language that has not
-translated a row shows the English. The clipper says the same thing in the same
-languages with its own rows; see *The clipper's half* below.
+translated a row shows the English.
 
 ### Adding a string
 
@@ -1004,35 +1003,6 @@ Two things to keep in mind while writing a string:
    that reads right to left it also measures which side the list ended up on,
    which way each mark points, and that the note did not follow the interface, so
    add the id to `RIGHT_TO_LEFT` there as well as in `direction.ts`.
-
-### The clipper's half
-
-The extension says the same thing in the same languages, with its own sixty rows:
-`apps/clipper/src/lib/translate.ts` is the mechanism and `apps/clipper/src/locales/`
-holds the catalogues. The language list, the tags a browser is answered under and
-the shape of a count row are the app's, row for row, and a change to one of the
-three belongs in both files - a deliberate copy rather than a shared package,
-because an extension bundle and an app bundle have nothing else in common and the
-two catalogues hold different rows. The pages wrap it in a rune the way the app
-does; the service worker, which Chrome stops between clips, asks `words()` for a
-catalogue and translates without one.
-
-A language is added the same way, and the rows the app already has for it are
-**lifted from `apps/desktop/src/locales/<id>.ts`** rather than translated again:
-half the extension's rows are words the app already says, and one word per term is
-the whole point. `apps/clipper/src/lib/i18n.test.ts` is the gate, and
-`python apps/clipper/test/e2e/locales.py` photographs the popup at the width Chrome
-gives it and the options page at its own, in the same five hard languages.
-
-The handful of words **Chrome** draws rather than the extension - the tile on
-`chrome://extensions`, the store listing, the shortcut list - live in
-`apps/clipper/public/_locales/<tag>/messages.json`, because Chrome's own mechanism
-is the only one those surfaces have and it picks the folder by the browser's
-interface language, not by what somebody chose in the options page. Only languages
-Chrome has an interface in can be folders there, which is thirty-one of the
-thirty-nine; the rest read the whole extension in their own language with Chrome's
-tile beside it in English. The gate holds the two halves to the same languages and
-checks that every `__MSG_*` the manifest asks for is answered.
 
 Keep one word per term. nib's own vocabulary, and what to follow:
 

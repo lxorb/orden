@@ -1,9 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": {
-    "message": "I-clip ang isang pahina, pinili o link sa mga tala mo sa Orden."
-  },
-  "clipPage": { "message": "I-clip ang pahina" },
-  "clipSelection": { "message": "I-clip ang pinili" },
-  "clipLink": { "message": "I-clip ang link" }
-}

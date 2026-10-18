@@ -130,7 +130,6 @@ sudo apt install orden
 - Free **sync** across every device
 - Built-in **MCP** so your favorite LLM reads and writes your notes
 - **Themes** from a store, or your own CSS
-- Chrome **clipper**, with an **interpreter** that fills a clip's properties using Claude, OpenAI or a model on your own machine
 - A plugin for **Even Realities G2** glasses
 - **Translated** into German, French, Swiss German and Japanese
 

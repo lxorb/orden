@@ -39,17 +39,6 @@
     "apps/cli": {
       "ignoreBinaries": ["screencapture"]
     },
-    "apps/clipper": {
-      "entry": [
-        "src/**/*.svelte",
-        "src/popup/main.ts",
-        "src/options/main.ts",
-        "src/background/index.ts",
-        "src/content/index.ts",
-        "vite.content.config.ts"
-      ],
-      "ignoreDependencies": ["@nib/themes"]
-    },
     "services/sync": {
       "entry": ["src/machines/entry.ts"],
       "ignoreDependencies": ["cloudflare"]

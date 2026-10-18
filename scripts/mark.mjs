@@ -3,7 +3,7 @@
    bottom right, the same two colours the theme opens on).
 
    Everything here is a function of a point on a 1024 grid, so any size is drawn
-   straight from the shapes rather than scaled from a bitmap: the 16 px clipper
+   straight from the shapes rather than scaled from a bitmap: a 16 px
    icon is as sharp as the 1024 master. Dependency-free so the repo stays clean. */
 
 import { deflateSync } from 'node:zlib'
