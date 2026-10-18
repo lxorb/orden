@@ -186,6 +186,17 @@ kept between launches; a guest who comes back holding one file and no space is p
 back in it. An account, or a guest a link let into a whole space, keeps the app:
 they have more than one thing to move between. See `alone.svelte.ts`.
 
+What went with the chrome was the guest's own corner of it: the foot of the panel,
+where they read who they are, changed the name the others see and signed in. So one
+thing of theirs stays, in the top corner at the end - the corner the way out of full
+screen takes, clear of the canvas's bar at the foot and of the carets a note holds at
+its edges, which sit at the start. It is their initial on the colour their caret wears
+for everybody else, and pressed it opens the name, which is written as it is left and
+goes to the others' carets and hands at once, and Sign in, the app's own sign-in.
+Whatever the link let this device into goes with it into the account, so somebody who
+signs in is still in the file, now with the app round it. A press past it or Escape
+shuts it, the way a menu is shut. See `GuestCorner.svelte`.
+
 ## Marks
 
 One mark, `SharedMark.svelte`, in the three places it can be said:
