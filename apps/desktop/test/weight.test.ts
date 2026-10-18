@@ -720,8 +720,14 @@ function holds(tail: string): boolean {
  *  a strip drawn nowhere in the file list's own stylesheet (Tree.svelte, which the
  *  first paint draws), and a press there only turns the row, double or middle
  *  (`onTwist` in tree-keys.ts). The tag tree's is off the first paint. Measured
- *  3,222,679. */
-const BUDGET = 3_223_700
+ *  3,222,679.
+ *
+ *  Raised 2026-10-18, to 3,225,100, for #404 and #403 landing together: a phone's
+ *  scratchpad puts the panes out of reach and points the format bar at its own editor
+ *  (App.svelte, scratchpad/is.svelte.ts), and a touch screen offers no Ask panel
+ *  (`offers` in workspace.svelte.ts, asked by the panel paths and focus.ts). Measured
+ *  3,224,067. */
+const BUDGET = 3_225_100
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
