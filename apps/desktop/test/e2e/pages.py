@@ -20,6 +20,9 @@ What it checks and photographs:
     adding, reordering and deleting a page, and what reordering does to the ink on it
     a long page growing past A4 when writing reaches the bottom of it
     ink caught by the lasso dragged where the hand takes it, and no Add on the bar
+    the canvas's bar over lassoed ink, and the paper's own menu on a right click and
+      on a finger held still
+    printing: one picture per page of the PDF, handed to the print engine
     the page counter in the status bar, and the thumbnails in the outline panel's slot
     a PDF imported as a page note: every page drawn, on the sheet and in the panel,
       counted in pixels rather than taken on trust, and a page whose paper has gone
@@ -81,6 +84,16 @@ def complain(label: str, message) -> None:
 
 
 PREPARE = """
+// What is handed to the print engine, kept where the drive can read it: printing goes
+// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
+(() => {
+  const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
+  Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
+    configurable: true,
+    get() { return own.get.call(this) },
+    set(value) { window.__printed = value; own.set.call(this, value) },
+  });
+})();
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android',
   family: 'unix',
@@ -475,9 +488,79 @@ def check_lasso(page: Page, cdp, label: str) -> None:
         say(f"[{label}] the lassoed ink moved by {tuple(round(v) for v in moved)}")
     shot(page, f"{label}-lasso-moved")
 
+    # The canvas's bar over what is picked, on paper: colour, copy and delete with a
+    # finger as well as a key (#350).
+    bar = page.evaluate("() => [...document.querySelectorAll('.over button')].map((b) => b.getAttribute('aria-label'))")
+    for wanted in ("Colour", "Duplicate", "Delete", "More"):
+        if wanted not in bar:
+            fail(f"[{label}] the bar over lassoed ink has no {wanted} ({bar})")
+    shot(page, f"{label}-lasso-bar")
+    picked = "() => window.nibApp.pages.current.store.picked.slice()"
+    if "Colour" in bar:
+        page.locator(".over button[aria-label='Colour']").first.click()
+        page.wait_for_timeout(300)
+        page.locator(".over button[aria-label='Colour 1']").first.click()
+        page.wait_for_timeout(300)
+        colour = page.evaluate(
+            "(id) => window.nibApp.pages.current.store.canvas.ink.find((s) => s.id === id)?.color", drawn
+        )
+        if colour != "1":
+            fail(f"[{label}] Colour 1 on the bar left the lassoed ink {colour}")
+    count = ink_count(page)
+    if "Duplicate" in bar:
+        page.locator(".over button[aria-label='Duplicate']").first.click()
+        page.wait_for_timeout(300)
+        if ink_count(page) != count + 1:
+            fail(f"[{label}] Duplicate on the bar made {ink_count(page) - count} strokes, not one")
+    if "Delete" in bar:
+        page.locator(".over button[aria-label='Delete']").first.click()
+        page.wait_for_timeout(300)
+        if ink_count(page) != count or page.evaluate(picked):
+            fail(f"[{label}] Delete on the bar did not take the copy away")
+    say(f"[{label}] the bar over lassoed ink colours, copies and deletes it")
+    # The stroke itself, gone too, so the checks after this start from the paper they
+    # had before it.
+    page.evaluate("(id) => window.nibApp.pages.current.store.pick(id)", drawn)
+    page.locator(".pages").first.focus()
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
+
+    # A right click on the paper: what this note can do, and nothing greyed.
+    page.mouse.click(x0 + 300, y0 + 260, button="right")
+    page.wait_for_timeout(400)
+    rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
+    for wanted in ("Add a page after this", "Fit width", "Fit page", "Export as PDF", "Print"):
+        if wanted not in rows:
+            fail(f"[{label}] a right click on the paper has no {wanted} ({rows})")
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail(f"[{label}] a right click on the paper has greyed rows")
+    shot(page, f"{label}-paper-menu")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
     tool(page, "v")
+
+
+def check_print(page: Page, label: str) -> None:
+    """Printing a page note: the print engine is handed one picture per page of the
+    PDF the export writes (#350). Read off the frame the print goes through, which is
+    the page the system's dialog prints."""
+    say("--- printing ---")
+
+    count = len(pages_of(page))
+    page.evaluate("() => { window.__printed = null }")
+    box = surface(page)
+    page.mouse.click(box["x"] + 30, box["y"] + 30)
+    page.keyboard.press("Control+p")
+    try:
+        page.wait_for_function("() => !!window.__printed", timeout=30000)
+    except Exception:  # noqa: BLE001 - said below
+        fail(f"[{label}] Ctrl+P on a page note handed nothing to the print engine")
+        return
+    sheets = page.evaluate("() => (window.__printed.match(/<img /g) || []).length")
+    if sheets != count:
+        fail(f"[{label}] printing handed over {sheets} sheets for {count} pages")
+    else:
+        say(f"[{label}] printing hands the print engine all {count} pages")
 
 
 def check_gutter(page: Page, cdp, label: str) -> None:
@@ -1345,6 +1428,9 @@ def drive(browser, theme: str) -> None:
         # Last, because it imports a paper and opens the note the import made: every
         # check above is about the note this drive started with.
         check_paper(page, theme)
+        # And printing that note, paper and ink together.
+        if theme == "light":
+            check_print(page, theme)
     finally:
         context.close()
 
@@ -1392,6 +1478,22 @@ def drive_phone(browser) -> None:
             fail("[phone] a finger did not write on a phone")
 
         shot(page, "phone-a-stroke")
+
+        # A finger held still on the paper is the paper's menu, as a right click is.
+        tool(page, "v")
+        hold = (box["x"] + box["width"] / 2, box["y"] + 420)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": hold[0], "y": hold[1], "id": 1}]})
+        page.wait_for_timeout(900)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        page.wait_for_timeout(500)
+        rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
+        if "Fit width" not in rows or "Print" not in rows:
+            fail(f"[phone] a finger held on the paper opened no menu ({rows})")
+        else:
+            say(f"[phone] a finger held on the paper opens its menu: {rows}")
+        shot(page, "phone-paper-menu")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
 
         # And the pages are still a column: the same layout, not a second one.
         pages = pages_of(page)
