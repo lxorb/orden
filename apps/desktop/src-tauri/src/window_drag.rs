@@ -71,6 +71,7 @@ pub fn window_move_resize(
 
 /// Where a press was on the screen, in its own pixels.
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub struct Pressed {
     x: i32,
     y: i32,
