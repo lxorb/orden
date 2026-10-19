@@ -161,8 +161,10 @@ png = "0.18"
 # The engine's developer tools, for a web tab's page in the build that ships: F12,
 # Ctrl+Shift+I and the page menu's Inspect, as in a browser. A desktop's only, so a
 # phone's webview is never debuggable from outside, and nib's own window turns them
-# off again outside a development build; see `ready` in src/lib.rs.
-tauri = { version = "2", features = ["devtools"] }
+# off again outside a development build; see `ready` in src/lib.rs. `protocol-asset` is
+# here because the Tauri CLI writes it into every `tauri` entry on each build (it follows
+# `assetProtocol` in tauri.conf.json); listed already, a build leaves this file alone.
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
@@ -247,8 +249,9 @@ tokio = { version = "1", default-features = false, features = ["time", "sync"] }
 # Open, the stop and Quit (docs/agent-native.md, open question 6). Not on Linux, where
 # the tray library is loaded from the system and is not on every desktop: there the
 # window closes the ordinary way. Already in the lock file, as what tauri builds with.
+# `protocol-asset` as on the desktops' entry above: what the Tauri CLI writes on a build.
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }

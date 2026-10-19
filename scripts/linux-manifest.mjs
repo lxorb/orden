@@ -67,7 +67,7 @@ function moved(line, pins, table) {
     // the interface embedded as a release does, and beside it the engine, Tauri's
     // runtime interface at the release the engine was built against, and the crate
     // the library reaches Chromium's own objects through.
-    if (features.includes('protocol-asset')) {
+    if (table === '[dependencies]') {
       return [
         `tauri = { version = "=${pin('tauri')}", features = [${listed([...features, 'custom-protocol'])}] }`,
         `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["unstable"] }`,
@@ -76,8 +76,9 @@ function moved(line, pins, table) {
       ]
     }
     // A platform's own: the developer tools, which Tauri 3 takes from the runtime, and
-    // anything else as Tauri 2 took it.
-    const kept = features.filter((one) => one !== 'devtools')
+    // anything else as Tauri 2 took it. `protocol-asset` is the Tauri CLI's on every
+    // entry (see ../Cargo.toml) and the app's own `tauri` above has it already.
+    const kept = features.filter((one) => one !== 'devtools' && one !== 'protocol-asset')
     return [
       ...(features.includes('devtools')
         ? [
