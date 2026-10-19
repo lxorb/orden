@@ -178,7 +178,8 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
     // A folder deleted signed in: the folders it held, and its notes' words.
     await invoke('create_folder', { path: action.path })
     for (const path of action.folders ?? []) await invoke('create_folder', { path })
-    for (const note of action.notes) await writeFile(note.path, note.content)
+    // Beside a note made at the same name since, as a note's own delete does.
+    for (const note of action.notes) await writeBeside(note.path, note.content)
     return action.path
   }
 
@@ -222,10 +223,7 @@ async function writeBeside(path: string, content: string): Promise<string> {
 /** What a folder about to be deleted signed in holds: the folders under it and the
  *  words of every note that will read, so an undo can write them again. Null when
  *  there is more than is worth holding, which leaves the deletion to Recently deleted. */
-export async function heldIn(
-  ws: { entryAt(path: string): Entry | null },
-  path: string,
-): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
+export async function heldIn(entry: Entry | null): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
   const notes: { path: string; content: string }[] = []
   const folders: string[] = []
   let size = 0
@@ -242,7 +240,6 @@ export async function heldIn(
       notes.push({ path: one.path, content })
     }
   }
-  const entry = ws.entryAt(path)
   if (entry) await walk(entry)
   return size > HELD ? null : { notes, folders }
 }

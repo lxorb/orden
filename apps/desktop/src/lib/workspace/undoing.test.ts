@@ -583,6 +583,8 @@ describe('a folder deleted', () => {
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'create_folder /s/A',
       'create_folder /s/A/B',
+      // Asked first whether the name is still free; see `writeBeside`.
+      'file_stamp /s/A/B/b.md',
       'write_note /s/A/B/b.md',
     ])
     expect(told.at(-1)).toBe('back /s/A')

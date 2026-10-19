@@ -98,3 +98,39 @@ describe('a delete undone after a note took its name', () => {
     expect(workspace.undone.stack).toEqual([])
   })
 })
+
+describe('a folder deleted signed in, undone after a note took a name in it', () => {
+  beforeEach(async () => {
+    files().set('/space/Journal/2026-10-19.md', '# Today\nthe old words\n')
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    await workspace.loadTree()
+    Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(account, 'signedIn')
+  })
+
+  test('with nothing made since, puts its notes back where they were', async () => {
+    await workspace.remove('/space/Journal', true)
+    expect(files().has('/space/Journal/2026-10-19.md')).toBe(false)
+
+    // The row was out of the tree before what it held was read, so the undo had
+    // nothing to write and gave back an empty folder.
+    await workspace.undoFileAction()
+
+    expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nthe old words\n')
+  })
+
+  test('puts the old note back beside the new one, which keeps its words', async () => {
+    await workspace.remove('/space/Journal', true)
+    // Today's note made again in the folder made again, and typed into.
+    files().set('/space/Journal/2026-10-19.md', '# Today\nwritten since\n')
+
+    await workspace.undoFileAction()
+
+    expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nwritten since\n')
+    expect(files().get('/space/Journal/2026-10-19 2.md')).toBe('# Today\nthe old words\n')
+  })
+})
