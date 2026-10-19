@@ -54,6 +54,17 @@ export function notePath(row: Row): string | null {
   return space ? insideSpace(space.root, row.path) : null
 }
 
+/** The view's notes in the order it shows them, once each: what a peek steps through. */
+function walkOf(live: LiveView): string[] {
+  const seen = new Set<string>()
+  for (const group of live.answer?.groups ?? [])
+    for (const row of group.rows) {
+      const path = row.task ? null : notePath(row)
+      if (path !== null) seen.add(path)
+    }
+  return [...seen]
+}
+
 export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, compact: boolean): Kit {
   const kit: Kit = {
     live,
@@ -64,7 +75,11 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       const path = notePath(row)
       if (path === null) return
       const line = row.anchor?.line ?? 0
-      void (how === 'aside' ? workspace.openAside(path) : workspace.open(path)).then(() => {
+      const opening =
+        how === 'aside'
+          ? import('./peek').then((one) => one.peek(path, walkOf(live)))
+          : workspace.open(path)
+      void opening.then(() => {
         workspace.goto = { path, line }
       })
     },

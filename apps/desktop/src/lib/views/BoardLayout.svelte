@@ -20,7 +20,15 @@
    *
    *  A project's board is Todoist's: a column per section, each with the section's menu
    *  (section-actions.ts), the tasks in no section first, and Add section at the end. */
-  import { groupName, type Group, orderId, type Row, rowId, type Value } from '@nib/bases'
+  import {
+    type Answer,
+    groupName,
+    type Group,
+    orderId,
+    type Row,
+    rowId,
+    type Value,
+  } from '@nib/bases'
   import { tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { menu, type MenuEntry } from '../menu.svelte'
@@ -86,10 +94,14 @@
   const {
     kit,
     days,
+    adding = 0,
   }: {
     kit: Kit
     /** Every day from one through another a column, empty ones too: Upcoming's board. */
     days?: { from: string; through: string } | undefined
+    /** How many times the head's New asked for a page: the first column's New page
+     *  opens, the phone's column on a phone. */
+    adding?: number
   } = $props()
 
   const live = $derived(kit.live)
@@ -102,6 +114,8 @@
   const notes = $derived(kinds === 'notes')
   /** A board in a note's fence has no room for adding: the base's own tab has. */
   const adds = $derived(!kit.compact)
+  /** Pages are added in every board, a block's too; a new group only where there is room. */
+  const pages = true
   const sorted = $derived((view?.sort.length ?? 0) > 0)
   /** Whether a card can be carried to another column at all. */
   const carries = $derived(droppableBy(property, kinds))
@@ -131,8 +145,7 @@
   const shownGroups = $derived(
     groups.filter(
       (group) =>
-        !hidden.includes(groupName(group.key)) &&
-        !(view?.nib.hideEmpty && group.rows.length === 0),
+        !hidden.includes(groupName(group.key)) && !(view?.nib.hideEmpty && group.rows.length === 0),
     ),
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
@@ -140,8 +153,11 @@
   const names = $derived(shownGroups.map((group) => groupName(group.key)))
 
   // Written cards come back from the rows; the pending ones they were drawn as go.
+  let seen: Answer | null = null
   $effect(() => {
-    void live.answer
+    const answer = live.answer
+    if (answer === seen) return
+    seen = answer
     untrack(() => {
       if (pending.some((one) => one.written)) pending = pending.filter((one) => !one.written)
     })
@@ -384,7 +400,7 @@
     if (!drop) return
 
     const write = async () => {
-      let wrote = false
+      let wrote = false as boolean
       await asOneUndo([
         async () => {
           wrote = await dropRow(row, drop)
@@ -481,7 +497,7 @@
 
   /** The card the keyboard is on, by column and card. */
   let focus = $state<{ column: string; card: string } | null>(null)
-  const columns: Record<string, BoardColumn | undefined> = {}
+  const columns: Record<string, { reveal: (index: number) => void } | undefined> = {}
   /** How many times Q asked a column's New page to open, by column. */
   let asked = $state<Record<string, number>>({})
 
@@ -498,7 +514,9 @@
     const row = group.rows[index]
     if (!row) {
       await tick()
-      board?.querySelector<HTMLElement>(`[data-column="${CSS.escape(name)}"] [data-new-page]`)?.focus()
+      board
+        ?.querySelector<HTMLElement>(`[data-column="${CSS.escape(name)}"] [data-new-page]`)
+        ?.focus()
       return
     }
     focus = { column: name, card: cardKey(row) }
@@ -577,6 +595,14 @@
     shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0],
   )
 
+  $effect(() => {
+    if (adding === 0) return
+    const first = untrack(() => (phone ? phoneColumn : shownGroups[0]))
+    if (!first) return
+    const name = groupName(first.key)
+    untrack(() => (asked = { ...asked, [name]: (asked[name] ?? 0) + 1 }))
+  })
+
   /** A new group: an option of the property the board groups by. */
   let naming = $state(false)
   function addGroup(words: string) {
@@ -591,9 +617,7 @@
     )
   }
   /** Whether the board's columns are a property's options, which a new one can join. */
-  const groupable = $derived(
-    !project && !days && adds && property !== undefined && property.startsWith('note.'),
-  )
+  const groupable = $derived(!project && !days && adds && property?.startsWith('note.') === true)
 </script>
 
 {#snippet card(row: Row, group: Group, index: number)}
@@ -608,7 +632,7 @@
     pending={pending.some((one) => one.card === cardKey(row) && !one.written)}
     focused={isFocus(column, row, index)}
     carry={carries || !sorted}
-    onmenu={(event, one) => cardMenu(event, one, column)}
+    onmenu={(event: MouseEvent, one: Row) => cardMenu(event, one, column)}
     onfocus={() => (focus = { column, card: cardKey(row) })}
   />
 {/snippet}
@@ -657,8 +681,8 @@
         sums={sumsOf(group)}
         muted={unlisted(group)}
         carries={!project || section !== null}
-        canAdd={adds}
-        onmenu={(event) => columnMenu(event, group)}
+        canAdd={pages}
+        onmenu={(event: MouseEvent) => columnMenu(event, group)}
         oncount={countMenu}
         onadd={() =>
           notes
@@ -692,16 +716,10 @@
       {#snippet one(row: Row, index: number)}{@render card(row, group, index)}{/snippet}
       <BoardColumn bind:this={columns[name]} {rows} {height} card={one} />
     </div>
-    {#if adds}
+    {#if pages}
       <div class="add">
         {#if notes}
-          <BoardNew
-            {kit}
-            {group}
-            {property}
-            list={lists}
-            asked={asked[name] ?? 0}
-          />
+          <BoardNew {kit} {group} {property} list={lists} asked={asked[name] ?? 0} />
         {:else}
           <AddRow {kit} {group} />
         {/if}
@@ -711,13 +729,7 @@
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="board"
-  class:laned={lanes.length > 0}
-  class:phone
-  bind:this={board}
-  onkeydown={keydown}
->
+<div class="board" class:laned={lanes.length > 0} class:phone bind:this={board} onkeydown={keydown}>
   {#if phone && !lanes.length}
     <div class="strip" role="tablist" aria-label={t('Groups')}>
       {#each shownGroups as group (groupName(group.key))}
@@ -810,10 +822,9 @@
             pickedFrom = pickedFrom ?? { column: columnOf(row) ?? '', lane: null }
             carryTo(row, group, undefined, group.rows.length, null)
           }}
-          onclick={() =>
-            kit.change((one, at) => setHidden(one, at, groupName(group.key), false))}
+          onclick={() => kit.change((one, at) => setHidden(one, at, groupName(group.key), false))}
         >
-          <span class="pill" class:toned={tone !== null} style:--pill={tone}
+          <span class="tag" class:toned={tone !== null} style:--pill={tone}
             >{columnName(group)}</span
           >
           <span class="count">{group.rows.length}</span>
@@ -1096,7 +1107,7 @@
     box-shadow: inset 0 0 0 1px var(--accent);
   }
 
-  .pill {
+  .tag {
     min-width: 0;
     overflow: hidden;
     padding: 1px var(--space-2);
@@ -1107,7 +1118,7 @@
     white-space: nowrap;
   }
 
-  .pill.toned {
+  .tag.toned {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }

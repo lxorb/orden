@@ -86,8 +86,10 @@
       kit.choose(row, event.ctrlKey || event.metaKey)
     } else if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
       event.preventDefault()
-      const box = event.currentTarget instanceof HTMLElement && event.currentTarget.getBoundingClientRect()
-      if (box) onmenu(new MouseEvent('contextmenu', { clientX: box.left + 12, clientY: box.bottom }), row)
+      const box =
+        event.currentTarget instanceof HTMLElement && event.currentTarget.getBoundingClientRect()
+      if (box)
+        onmenu(new MouseEvent('contextmenu', { clientX: box.left + 12, clientY: box.bottom }), row)
     }
   }
 </script>
@@ -96,7 +98,9 @@
   <div class="line">
     {#if one?.kind === 'pills'}
       {#each one.pills as pill, at (at)}
-        <span class="pill" class:toned={pill.tone !== null} style:--pill={pill.tone}>{pill.text}</span>
+        <span class="tag" class:toned={pill.tone !== null} style:--pill={pill.tone}
+          >{pill.text}</span
+        >
       {/each}
       {#if one.more}<span class="more-count">+{one.more}</span>{/if}
     {:else if one}
@@ -130,7 +134,7 @@
     onclick={(event) => kit.choose(row, linkModifier(event))}
     onkeydown={keydown}
     oncontextmenu={(event) => onmenu(event, row)}
-    onfocus={onfocus}
+    {onfocus}
   >
     <div class="title">
       {#if row.task}<TaskBox task={row.task} label={title} ontick={() => kit.tick(row)} />{/if}
@@ -197,10 +201,6 @@
     border-radius: inherit;
     outline: none;
     cursor: default;
-  }
-
-  .face:focus-visible {
-    box-shadow: var(--focus-ring);
   }
 
   @media (hover: hover) {
@@ -273,7 +273,7 @@
     color: var(--danger);
   }
 
-  .pill {
+  .tag {
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
@@ -285,7 +285,7 @@
   }
 
   /* An option's tone: a wash of it, and words in it deep enough to read on the wash. */
-  .pill.toned {
+  .tag.toned {
     background: color-mix(in srgb, var(--pill) 16%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }

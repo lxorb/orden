@@ -98,7 +98,14 @@
     }
   }
 
+  /** How many times New asked a board of notes for a page: its first column's. */
+  let boardAdding = $state(0)
+
   function add() {
+    if (layout === 'kanban' && (live.view?.nib.rows ?? 'notes') === 'notes') {
+      boardAdding++
+      return
+    }
     adding = true
     asked++
   }
@@ -130,7 +137,7 @@
         {:else if layout === 'cards'}
           <CardsLayout {kit} />
         {:else if layout === 'kanban'}
-          <BoardLayout {kit} />
+          <BoardLayout {kit} adding={boardAdding} />
         {:else if layout === 'calendar'}
           {#if phone}<AgendaLayout {kit} />{:else}<CalendarLayout {kit} />{/if}
         {:else if layout === 'timeline'}

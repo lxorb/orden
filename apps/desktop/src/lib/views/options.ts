@@ -99,7 +99,7 @@ export function reprefixed(
 
 /** The change that takes one value out of a row: a list's member, or the value itself,
  *  which takes the key away; null where the row does not hold it. */
-export function clearedIn(row: Row, property: string, value: string): RowChange | null {
+function clearedIn(row: Row, property: string, value: string): RowChange | null {
   const key = bare(property)
   const now = row.note[key]
   if (Array.isArray(now)) {

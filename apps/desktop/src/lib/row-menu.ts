@@ -384,8 +384,15 @@ const MAKERS: Partial<Record<KindName, () => unknown>> = {
 }
 
 export function newFileRows(): MenuEntry[] {
-  return hiddenKinds.shown.flatMap((kind) => {
-    const make = MAKERS[kind]
-    return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
-  })
+  return [
+    ...hiddenKinds.shown.flatMap((kind) => {
+      const make = MAKERS[kind]
+      return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
+    }),
+    // A folder of notes with a board over them, Notion's database; see new-database.ts.
+    {
+      label: t('New database'),
+      run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+    },
+  ]
 }

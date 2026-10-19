@@ -59,11 +59,7 @@
        file another program holds, only the news that it does. -->
 {:else if failed.retry}
   <!-- A card carried to a column whose note would not be written: it went back. -->
-  <div
-    class="toast"
-    role="status"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-  >
+  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>{t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
   </div>

@@ -67,9 +67,7 @@
   }
 
   function shows(property: string, on: boolean) {
-    const order = on
-      ? [...live.columns, property]
-      : live.columns.filter((one) => one !== property)
+    const order = on ? [...live.columns, property] : live.columns.filter((one) => one !== property)
     kit.change((one, at) => setColumns(one, at, order))
   }
 
@@ -188,7 +186,12 @@
           aria-hidden="true"
           onpointerdown={(event) => on && carry(event, one)}>⠿</span
         >
-        <div class="nib-setting pressable" role="switch" tabindex="0" {...toggle(on, () => shows(one, !on))}>
+        <div
+          class="nib-setting pressable"
+          role="switch"
+          tabindex="0"
+          {...toggle(on, () => shows(one, !on))}
+        >
           <span class="name"
             >{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span
           >

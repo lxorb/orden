@@ -482,6 +482,8 @@ describe('the switch', () => {
       'lib/views/AutomationsBuilder.svelte',
       // Whether a view of tasks keeps its done ones, in its Display menu.
       'lib/views/DisplayBuilder.svelte',
+      // A board's Colour columns and Hide empty groups, and what a view shows, in its settings.
+      'lib/views/ViewSettings.svelte',
       // What Delete browsing data takes, a switch a kind.
       'lib/web-tab/WebClear.svelte',
     ])

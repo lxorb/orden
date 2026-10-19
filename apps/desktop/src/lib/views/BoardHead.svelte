@@ -36,7 +36,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="head" class:carries oncontextmenu={onmenu}>
-  <span class="pill" class:toned={tone !== null} class:muted style:--pill={tone}>
+  <span class="tag" class:toned={tone !== null} class:muted style:--pill={tone}>
     <span class="name">{name}</span>
   </span>
   <button
@@ -44,7 +44,8 @@
     class="count"
     aria-label={t('Calculate')}
     title={t('Calculate')}
-    onclick={oncount}>{count}{#each sums as sum, at (at)}<span class="sum"> · {sum}</span>{/each}</button
+    onclick={oncount}
+    >{count}{#each sums as sum, at (at)}<span class="sum"> · {sum}</span>{/each}</button
   >
   <span class="spring"></span>
   <button
@@ -90,7 +91,7 @@
     cursor: grab;
   }
 
-  .pill {
+  .tag {
     display: inline-flex;
     align-items: center;
     min-width: 0;
@@ -103,12 +104,12 @@
   }
 
   /* An option's tone, as a card's pill wears it, deep enough to read in light and dark. */
-  .pill.toned {
+  .tag.toned {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }
 
-  .pill.muted {
+  .tag.muted {
     background: none;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     color: var(--muted-strong);

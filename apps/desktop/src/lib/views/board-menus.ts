@@ -6,7 +6,14 @@
  *  deleted takes the value out of this base's notes, and those cards go to the group
  *  of no value. */
 
-import { type Base, type Group, groupName, type Row, type SelectOption, type Value } from '@nib/bases'
+import {
+  type Base,
+  type Group,
+  groupName,
+  type Row,
+  type SelectOption,
+  type Value,
+} from '@nib/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
@@ -19,17 +26,19 @@ import { notePath, type Kit } from './kit'
 import { clearedInBase, optionsAt, renamedInBase } from './options'
 
 /** The six tones as a menu names them, in the canvas's order. */
-const TONES: readonly { tone: string; label: string }[] = [
-  { tone: '1', label: 'Red' },
-  { tone: '2', label: 'Orange' },
-  { tone: '3', label: 'Yellow' },
-  { tone: '4', label: 'Green' },
-  { tone: '5', label: 'Cyan' },
-  { tone: '6', label: 'Purple' },
+const TONES: readonly { tone: string; label: () => string }[] = [
+  { tone: '1', label: () => t('Red') },
+  { tone: '2', label: () => t('Orange') },
+  { tone: '3', label: () => t('Yellow') },
+  { tone: '4', label: () => t('Green') },
+  { tone: '5', label: () => t('Teal') },
+  { tone: '6', label: () => t('Violet') },
 ]
 
 function writeOptions(kit: Kit, property: string, next: SelectOption[]) {
-  kit.change((base) => setProperty(base, bare(property), { options: next.length ? next : undefined }))
+  kit.change((base) =>
+    setProperty(base, bare(property), { options: next.length ? next : undefined }),
+  )
 }
 
 /** A choice renamed: in the options, in this base's notes, and in its keys. */
@@ -58,7 +67,7 @@ export function renameOption(kit: Kit, property: string, from: string, to: strin
 }
 
 /** A choice's tone, or none. */
-export function toneOption(kit: Kit, property: string, value: string, tone: string | null) {
+function toneOption(kit: Kit, property: string, value: string, tone: string | null) {
   const base = kit.live.base
   if (!base) return
   writeOptions(
@@ -75,7 +84,7 @@ export function toneOption(kit: Kit, property: string, value: string, tone: stri
 }
 
 /** A value the notes hold and no option does, made one, in the next tone. */
-export function addAsOption(kit: Kit, property: string, value: string) {
+function addAsOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
   const options = optionsAt(base, property)
@@ -84,7 +93,7 @@ export function addAsOption(kit: Kit, property: string, value: string) {
 }
 
 /** A value the notes hold written as another, in this base's notes. */
-export function mergeInto(kit: Kit, property: string, from: string, to: string) {
+function mergeInto(kit: Kit, property: string, from: string, to: string) {
   const base = kit.live.base
   if (!base || from === to) return
   const notes = renamedInBase(base, kit.live.rows, kit.live.context, property, from, to)
@@ -95,7 +104,7 @@ export function mergeInto(kit: Kit, property: string, from: string, to: string) 
 }
 
 /** A choice taken away, and its value out of this base's notes. */
-export function deleteOption(kit: Kit, property: string, value: string) {
+function deleteOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
   const next = optionsAt(base, property).filter((one) => one.value !== value)
@@ -149,7 +158,7 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
                 run: () => toneOption(kit, property, name, null),
               },
               ...TONES.map((one) => ({
-                label: t(one.label),
+                label: one.label(),
                 checked: option.tone === one.tone,
                 run: () => toneOption(kit, property, name, one.tone),
               })),
@@ -180,7 +189,11 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
     },
     DIVIDER,
     { label: t('Move left'), disabled: at <= 0, run: () => ask.move(-1) },
-    { label: t('Move right'), disabled: at === -1 || at >= names.length - 1, run: () => ask.move(1) },
+    {
+      label: t('Move right'),
+      disabled: at === -1 || at >= names.length - 1,
+      run: () => ask.move(1),
+    },
     ...(option
       ? [
           DIVIDER,
@@ -257,7 +270,11 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
 }
 
 /** Whether the base names a choice for this value of the property. */
-export function optionFor(base: Base | null, property: string, value: Value): SelectOption | undefined {
+export function optionFor(
+  base: Base | null,
+  property: string,
+  value: Value,
+): SelectOption | undefined {
   if (!base || typeof value !== 'string') return undefined
   return optionsAt(base, property).find((one) => one.value === value)
 }

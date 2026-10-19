@@ -147,8 +147,7 @@
   }
   let renaming = $state(false)
 
-  const toggle = (which: NonNullable<typeof open>) =>
-    (open = open === which ? null : which)
+  const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
 
   /** A view nib ships, the way it came. */
   function reset() {
@@ -345,9 +344,11 @@
         {
           label: t('Duplicate view'),
           run: () =>
-            void kit.changed((b) => addView(b, at)).then((kept) => {
-              if (kept) live.at = at + 1
-            }),
+            void kit
+              .changed((b) => addView(b, at))
+              .then((kept) => {
+                if (kept) live.at = at + 1
+              }),
         },
         ...(file !== null && one?.name
           ? [
@@ -374,7 +375,7 @@
             ]
           : []),
       ],
-      { title: one?.name || title },
+      { title: one?.name.trim() ? one.name : title },
     )
   }
 
@@ -602,7 +603,7 @@
         <Popover open={open === 'settings'} label={t('Settings')} onclose={() => (open = null)}>
           <ViewSettings
             {kit}
-            more={(event) => {
+            more={(event?: MouseEvent) => {
               const rows = moreRows(event)
               return rows.map((row) =>
                 row ? { ...row, run: () => ((open = null), row.run()) } : row,
@@ -622,89 +623,89 @@
     {/if}
   </div>
 {:else}
-<div class="head" class:compact={kit.compact}>
-  {#if renaming}
-    <input
-      class="nib-field rename"
-      value={project ? named : (view?.name ?? '')}
-      aria-label={t('Rename')}
-      use:focusSoon
-      onkeydown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur()
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          event.stopPropagation()
+  <div class="head" class:compact={kit.compact}>
+    {#if renaming}
+      <input
+        class="nib-field rename"
+        value={project ? named : (view?.name ?? '')}
+        aria-label={t('Rename')}
+        use:focusSoon
+        onkeydown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.blur()
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            renaming = false
+          }
+        }}
+        onblur={(event) => {
+          const name = event.currentTarget.value
           renaming = false
-        }
-      }}
-      onblur={(event) => {
-        const name = event.currentTarget.value
-        renaming = false
-        if (project) {
-          if (name.trim() && name.trim() !== project.name)
-            void renameProject(projectAt(project.path), name)
-        } else kit.change((one, at) => renameView(one, at, name))
-      }}
-    />
-  {:else}
-    <div class="tool named">
-      <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
-        <span class="words">{named}</span>
-        <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
-      </button>
-      {@render layer(true)}
-    </div>
-  {/if}
+          if (project) {
+            if (name.trim() && name.trim() !== project.name)
+              void renameProject(projectAt(project.path), name)
+          } else kit.change((one, at) => renameView(one, at, name))
+        }}
+      />
+    {:else}
+      <div class="tool named">
+        <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
+          <span class="words">{named}</span>
+          <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+        </button>
+        {@render layer(true)}
+      </div>
+    {/if}
 
-  {@render lock()}
+    {@render lock()}
 
-  {#if !tasky}
-    <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
-      {#each offered as one (one)}
+    {#if !tasky}
+      <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
+        {#each offered as one (one)}
+          <button
+            type="button"
+            role="tab"
+            class:on={layout === one}
+            aria-selected={layout === one}
+            title={layoutName(one)}
+            aria-label={layoutName(one)}
+            onclick={() => pick(one)}
+          >
+            <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
+          </button>
+        {/each}
+      </div>
+    {/if}
+
+    <span class="spring"></span>
+
+    {#if !tasky}{@render tools(['filter', 'sort', 'group'])}{/if}
+
+    {@render searchField()}
+
+    {#if tasky}
+      <div class="tool">
         <button
           type="button"
-          role="tab"
-          class:on={layout === one}
-          aria-selected={layout === one}
-          title={layoutName(one)}
-          aria-label={layoutName(one)}
-          onclick={() => pick(one)}
+          class="nib-glyph"
+          class:set={narrowed}
+          class:open={open === 'display'}
+          data-opens-popover
+          title={t('Display')}
+          aria-label={t('Display')}
+          aria-expanded={open === 'display'}
+          onclick={() => toggle('display')}
         >
-          <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
+          <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
         </button>
-      {/each}
-    </div>
-  {/if}
+        <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+          <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+        </Popover>
+      </div>
+    {/if}
 
-  <span class="spring"></span>
-
-  {#if !tasky}{@render tools(['filter', 'sort', 'group'])}{/if}
-
-  {@render searchField()}
-
-  {#if tasky}
-    <div class="tool">
-      <button
-        type="button"
-        class="nib-glyph"
-        class:set={narrowed}
-        class:open={open === 'display'}
-        data-opens-popover
-        title={t('Display')}
-        aria-label={t('Display')}
-        aria-expanded={open === 'display'}
-        onclick={() => toggle('display')}
-      >
-        <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
-      </button>
-      <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
-        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
-      </Popover>
-    </div>
-  {/if}
-
-  {@render plusButton()}
-</div>
+    {@render plusButton()}
+  </div>
 {/if}
 
 <style>
@@ -876,9 +877,6 @@
 
   .chips .nib-chip {
     max-width: 20rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .lock.shake {

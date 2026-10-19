@@ -152,11 +152,6 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .new:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
-  }
-
   @media (hover: hover) {
     .new:hover {
       background: var(--surface-hover);

@@ -17,7 +17,7 @@ function movedId(id: string, from: string, to: string): string {
 
 /** The base with every manual order naming `from` naming `to`, or null where none did. */
 export function movedOrder(base: Base, from: string, to: string): Base | null {
-  let changed = false
+  let changed = false as boolean
   const views = base.views.map((view) => {
     const order = view.nib.order
     if (!order) return view
@@ -54,7 +54,7 @@ export async function orderMoved(
   if (!was || !now || was === now) return
   for (const path of basesIn(tree)) {
     const before = await invoke<string>('read_note', { path }).catch(() => null)
-    if (before === null || !before.includes(was)) continue
+    if (!before?.includes(was)) continue
     let base: Base
     try {
       base = readBase(before)

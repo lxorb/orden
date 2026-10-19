@@ -388,7 +388,7 @@ describe('a board', () => {
 
   test('orders a task by its words, and by its line as an order written before did', () => {
     const tasks = [taskRow('n.md', '- [ ] one', 0), taskRow('n.md', '- [ ] two', 1)]
-    const hashed = orderId(tasks[1] as Row)
+    const hashed = orderId(tasks[1]!)
     expect(hashed).toMatch(/^n\.md#\^/)
     const one = readBase(
       `views:\n  - type: kanban\n    name: B\n    nib:\n      rows: tasks\n      order:\n        "": ["${hashed}"]\n`,

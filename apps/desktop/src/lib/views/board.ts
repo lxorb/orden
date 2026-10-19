@@ -92,21 +92,19 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
   return option?.group === 'done'
 }
 
-/** Whether a row is done where it stands: its task ticked, or a value of a property
- *  of the base that is a done option. */
-export function isDoneRow(base: Base | null, property: string | undefined, row: Row): boolean {
-  if (row.task) return row.task.done || row.task.cancelled
-  if (!base || !property || !isNoteProperty(property)) return false
-  const value = row.note[bare(property)]
-  return typeof value === 'string' && isDoneGroup(base, property, value)
-}
-
 /** Whether a drop into a group of this grouping can be written: a note's property, a
  *  task's field, the days and halves of the views nib ships. A formula, a rollup or a
  *  file's facts cannot. */
-export function droppableBy(property: string | undefined, rows: 'notes' | 'tasks' | 'both'): boolean {
+export function droppableBy(
+  property: string | undefined,
+  rows: 'notes' | 'tasks' | 'both',
+): boolean {
   if (property === undefined) return false
-  if (/^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section)$/.test(property))
+  if (
+    /^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section)$/.test(
+      property,
+    )
+  )
     return true
   if (property === 'formula.overdue' || property === 'formula.day') return true
   if (property === 'file.path' || property === 'file.basename') return rows !== 'notes'
@@ -175,9 +173,8 @@ export function orderAfter(ids: readonly string[], id: string, index: number): s
   return order
 }
 
-
 /** The members a card shows of a list, and how many more there are. */
-export function someOf<T>(values: readonly T[], most: number): { shown: T[]; more: number } {
+function someOf<T>(values: readonly T[], most: number): { shown: T[]; more: number } {
   return { shown: values.slice(0, most), more: Math.max(0, values.length - most) }
 }
 
