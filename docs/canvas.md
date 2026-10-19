@@ -314,6 +314,17 @@ on the one bar a phone has to scroll. Ctrl+Alt+= and Ctrl+Alt+- step a notch abo
 the middle of the view, Ctrl+Alt+0 fits the whole plane, Ctrl+1 frames what is
 picked, and the menu has Fit the canvas and Zoom to what is picked.
 
+**Back to 100%** (#369): while the plane is at anything but its actual size, the end of
+the bar reads the zoom - `372%`, quiet as a caption - and pressed, puts it back about the
+middle of the view. At 100% there is nothing, so the bar keeps no zoom button it does not
+need. Actual size is in the shortcut list with no key of its own; Ctrl+0 stays the app's
+text size and Ctrl+Alt+0 the fit.
+
+**A pen zoomed in is as fine as it shows** (#369): past 100% a stroke is written as wide
+as the pen is on the screen, so zooming in to write small writes small, as in Miro and
+FigJam. At 100% and further out it is the pen's own width, as it always was. A page note
+is paper, and keeps the pen's width at every zoom.
+
 One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the keys and the wheel
 agree on it: the bar's buttons once stepped by a fifth and the wheel by two fifths,
 which is two zooms for one hand. `wheelZoom` is the one function both the plane and
