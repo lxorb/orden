@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { answer, cellValue, compileView, groupName, rowId, viewOf } from './answer'
+import { answer, cellValue, compileView, groupName, orderId, rowId, viewOf } from './answer'
 import { DEFAULT_SUMMARIES } from './summaries'
 import { readBase } from './base-file'
 import { contextAt, noteRow, taskRow } from './fixtures/rows'
@@ -345,5 +345,58 @@ describe('the names a view gives', () => {
       )
       expect(answer(one, 'S', rows, context).summaries.n, name).not.toBeUndefined()
     }
+  })
+})
+
+describe('a board', () => {
+  const tagged = [
+    noteRow('a.md', { tags: ['iOS', 'Sync'] as Value }),
+    noteRow('b.md', { tags: ['Sync'] as Value }),
+    noteRow('c.md', { tags: [] as Value }),
+    noteRow('d.md'),
+  ]
+  const board = (extra = '') =>
+    readBase(
+      `nib:\n  properties:\n    tags:\n      options:\n        - value: Sync\n        - value: iOS\nviews:\n  - type: kanban\n    name: B\n    groupBy:\n      property: note.tags\n      direction: ASC\n${extra}`,
+    )
+
+  test('puts a card of a list in the column of each of its members', () => {
+    expect(groups(answer(board(), 'B', tagged, context))).toEqual([
+      ['Sync', ['a', 'b']],
+      ['iOS', ['a']],
+      [null, ['c', 'd']],
+    ])
+    expect(answer(board(), 'B', tagged, context).total).toBe(4)
+  })
+
+  test('a table grouped by a list keeps one group per list', () => {
+    const table = readBase(
+      'views:\n  - type: table\n    name: T\n    groupBy:\n      property: note.tags\n      direction: ASC\n',
+    )
+    const found = answer(table, 'T', tagged, context).groups.flatMap((one) => names(one.rows))
+    expect(found.sort()).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  test("keeps the view's own column order, the group of no value first where it says", () => {
+    const own = board('    nib:\n      groups: [iOS]\n      noneFirst: true\n')
+    expect(groups(answer(own, 'B', tagged, context)).map(([key]) => key)).toEqual([
+      null,
+      'iOS',
+      'Sync',
+    ])
+  })
+
+  test('orders a task by its words, and by its line as an order written before did', () => {
+    const tasks = [taskRow('n.md', '- [ ] one', 0), taskRow('n.md', '- [ ] two', 1)]
+    const hashed = orderId(tasks[1] as Row)
+    expect(hashed).toMatch(/^n\.md#\^/)
+    const one = readBase(
+      `views:\n  - type: kanban\n    name: B\n    nib:\n      rows: tasks\n      order:\n        "": ["${hashed}"]\n`,
+    )
+    expect(names(answer(one, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
+    const old = readBase(
+      'views:\n  - type: kanban\n    name: B\n    nib:\n      rows: tasks\n      order:\n        "": ["n.md#1"]\n',
+    )
+    expect(names(answer(old, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
   })
 })

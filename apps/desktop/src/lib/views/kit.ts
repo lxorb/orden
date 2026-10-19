@@ -44,6 +44,8 @@ export interface Kit {
    *  turns the change away and its lock answers (`live.refused`), unless `unlocking`:
    *  the lock's own switch. */
   change(edit: (base: Base, at: number) => Base, unlocking?: boolean): void
+  /** The change, kept: answers once it is written, false where a lock turned it away. */
+  changed(edit: (base: Base, at: number) => Base): Promise<boolean>
 }
 
 /** Where a row's note is on this disk. */
@@ -107,6 +109,16 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         return
       }
       void live.change(edit(base, live.at))
+    },
+    async changed(edit) {
+      const base = live.base
+      if (!base) return false
+      if (live.locked) {
+        live.refused++
+        return false
+      }
+      await live.change(edit(base, live.at))
+      return true
     },
   }
   return kit

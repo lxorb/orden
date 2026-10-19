@@ -15,7 +15,7 @@
     rows: readonly Row[]
     /** One card's height, gap included. */
     height: number
-    card: Snippet<[Row]>
+    card: Snippet<[Row, number]>
   } = $props()
 
   let list = $state<HTMLElement>()
@@ -30,9 +30,21 @@
   const shown = $derived(
     windowFor({ count: rows.length, height, top: win.top, room: win.room || 800, overscan: 4 }),
   )
+
+  /** Scrolls the card at `index` into sight, for the keyboard landing on it. */
+  export function reveal(index: number) {
+    const box = scroller
+    if (!box) return
+    const top = index * height
+    if (top < box.scrollTop) box.scrollTop = top
+    else if (top + height > box.scrollTop + box.clientHeight)
+      box.scrollTop = top + height - box.clientHeight
+  }
+
+  let scroller = $state<HTMLElement>()
 </script>
 
-<div class="scroll">
+<div class="scroll" bind:this={scroller}>
   <div
     class="cards"
     bind:this={list}
@@ -40,15 +52,15 @@
     style:padding-bottom="{shown.below}px"
     style:--card={`${height}px`}
   >
-    {#each rows.slice(shown.first, shown.last + 1) as row (`${row.space}:${rowId(row)}`)}
-      <div class="slot">{@render card(row)}</div>
+    {#each rows.slice(shown.first, shown.last + 1) as row, at (`${row.space}:${rowId(row)}`)}
+      <div class="slot" data-index={shown.first + at}>{@render card(row, shown.first + at)}</div>
     {/each}
   </div>
 </div>
 
 <style>
   .scroll {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;

@@ -7,6 +7,7 @@
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
+  import { failed } from './views/failed.svelte'
   import { workspace } from './workspace.svelte'
 
   /** The one word for each thing the toast can take back. */
@@ -35,6 +36,7 @@
   $effect(() => () => {
     undoToast.dismiss()
     unread.dismiss()
+    failed.dismiss()
     back.dismiss()
   })
 </script>
@@ -55,6 +57,16 @@
   <!-- A row clicked that opened nothing, because the file is there and would not
        read; see unread.svelte.ts. Nothing to press: there is no way back from a
        file another program holds, only the news that it does. -->
+{:else if failed.retry}
+  <!-- A card carried to a column whose note would not be written: it went back. -->
+  <div
+    class="toast"
+    role="status"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+  >
+    <p>{t('Not moved')}</p>
+    <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
+  </div>
 {:else if unread.shown}
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>{t('That file could not be read')}</p>

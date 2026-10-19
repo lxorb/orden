@@ -378,8 +378,12 @@ def at_phone_width(browser: Browser) -> None:
         wrong(f"Today at phone width holds {words}")
     shot(page, "10-phone-today")
     open_base(page, "Board")
-    if not page.evaluate("document.querySelectorAll('.view-tab .column').length >= 3"):
-        wrong("the board at phone width has no columns")
+    # One column at the whole width, the groups as pills above it to switch between.
+    if not page.evaluate(
+        "document.querySelectorAll('.view-tab .strip .switch').length >= 3"
+        " && document.querySelectorAll('.view-tab .column').length === 1"
+    ):
+        wrong("the board at phone width is not one column under its groups' pills")
     shot(page, "11-phone-board")
     open_base(page, "Due")
     if not page.evaluate("!!document.querySelector('.view-tab .agenda')"):

@@ -258,3 +258,74 @@ export function setDisplayName(base: Base, column: string, words: string): Base 
   else properties[key] = next
   return { ...base, properties }
 }
+
+/** A group renamed in every key a base keeps it under: each view's manual order, its
+ *  hidden groups and its column order, and a filter's literal of it, so a column whose
+ *  option was renamed keeps its cards' order, stays hidden and stays where it was. */
+export function renamedGroup(base: Base, property: string, from: string, to: string): Base {
+  if (from === to) return base
+  const name = property.replace(/^note\./, '')
+  const swap = (list: readonly string[]) => list.map((one) => (one === from ? to : one))
+  const quoted = (words: string) => JSON.stringify(words)
+  const literal = (filter: Filter): Filter => {
+    if (typeof filter === 'string')
+      return filter.includes(name) ? filter.split(quoted(from)).join(quoted(to)) : filter
+    if ('and' in filter) return { and: filter.and.map(literal) }
+    if ('or' in filter) return { or: filter.or.map(literal) }
+    return { not: filter.not.map(literal) }
+  }
+  const views = base.views.map((view): View => {
+    if (view.groupBy?.property !== property && view.nib.subGroupBy?.property !== property)
+      return { ...view, ...(view.filters ? { filters: literal(view.filters) } : {}) }
+    const order = view.nib.order
+    const moved =
+      order && from in order
+        ? Object.fromEntries(
+            Object.entries(order).map(([key, ids]) => [key === from ? to : key, ids]),
+          )
+        : order
+    return {
+      ...view,
+      ...(view.filters ? { filters: literal(view.filters) } : {}),
+      nib: {
+        ...view.nib,
+        ...(moved ? { order: moved } : {}),
+        ...(view.nib.hidden ? { hidden: swap(view.nib.hidden) } : {}),
+        ...(view.nib.groups ? { groups: swap(view.nib.groups) } : {}),
+      },
+    }
+  })
+  return { ...base, views, ...(base.filters ? { filters: literal(base.filters) } : {}) }
+}
+
+/** A board's columns in a new order: `moving` put before or after `target`, among the
+ *  columns as they stand (`names`, by key as text). */
+export function placeColumn(
+  base: Base,
+  at: number,
+  names: readonly string[],
+  moving: string,
+  target: string,
+  after: boolean,
+): Base {
+  if (moving === target) return base
+  const rest = names.filter((one) => one !== moving)
+  const index = rest.indexOf(target)
+  if (index === -1) return base
+  rest.splice(after ? index + 1 : index, 0, moving)
+  return setViewNib(base, at, 'groups', rest)
+}
+
+/** A group's manual order with the ids of rows no longer anywhere left out. */
+export function prunedOrder(base: Base, at: number, group: string, alive: (id: string) => boolean) {
+  return withView(base, at, (view) => {
+    const was = view.nib.order?.[group]
+    if (!was) return view
+    const kept = was.filter(alive)
+    if (kept.length === was.length) return view
+    const order = { ...view.nib.order }
+    if (kept.length) order[group] = kept
+    else Reflect.deleteProperty(order, group)
+    return withNib(view, { order: Object.keys(order).length ? order : undefined })
+  })
+}

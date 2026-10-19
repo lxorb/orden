@@ -143,6 +143,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
   const kinds = view.nib.rows ?? 'notes'
+  const fanOut = view.type === 'kanban' || view.type === 'board'
   const showCompleted = view.nib.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''
@@ -256,25 +257,41 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const options = optionOrder(base, by.property)
       const groups = new Map<string, { key: Value; members: { row: Row; facts: RowFacts }[] }>()
       for (const option of options) groups.set(option, { key: option, members: [] })
-      for (const one of members) {
-        const key = settled(keyOf(one.facts))
+      const into = (key: Value, one: { row: Row; facts: RowFacts }) => {
         const name = groupName(key)
         const found = groups.get(name)
-        if (found) found.members.push(one)
-        else groups.set(name, { key, members: [one] })
+        if (found) {
+          if (found.members.at(-1) !== one) found.members.push(one)
+        } else groups.set(name, { key, members: [one] })
+      }
+      for (const one of members) {
+        const key = settled(keyOf(one.facts))
+        // A board grouped by a list puts a card in the column of each of its members,
+        // Notion's multi-select board; a list of none is the group of no value.
+        if (fanOut && Array.isArray(key)) {
+          const each = key.filter((member) => member !== null && groupName(member) !== '')
+          if (!each.length) into(null, one)
+          for (const member of each) into(member, one)
+        } else into(key, one)
       }
       const keys = [...groups.values()]
+      // The view's own column order first, then the options', then by value; the
+      // group of no value last, or first where the view says so.
+      const placed = view.nib.groups ?? []
+      const rank = (key: Value): number => {
+        const name = groupName(key)
+        const own = placed.indexOf(name)
+        if (own !== -1) return own
+        const option = options.indexOf(name)
+        return placed.length + (option === -1 ? options.length : option)
+      }
+      const noneFirst = view.nib.noneFirst === true
       if (view.nib.groupOrder !== 'rows')
         keys.sort((a, b) => {
-          if (a.key === null || b.key === null) return a.key === b.key ? 0 : a.key === null ? 1 : -1
-          const optionA = options.indexOf(groupName(a.key))
-          const optionB = options.indexOf(groupName(b.key))
-          if (optionA !== -1 || optionB !== -1) {
-            return (
-              (optionA === -1 ? options.length : optionA) -
-              (optionB === -1 ? options.length : optionB)
-            )
-          }
+          if (a.key === null || b.key === null)
+            return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
+          const byRank = rank(a.key) - rank(b.key)
+          if (byRank !== 0) return byRank
           const order = sortCompare(a.key, b.key)
           return by.direction === 'DESC' ? -order : order
         })
@@ -295,7 +312,8 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const manual = view.nib.order?.[name]
       if (!manual?.length) return members
       const place = new Map(manual.map((id, at) => [id, at]))
-      const rank = (one: T) => place.get(rowId(one.row)) ?? manual.length
+      const rank = (one: T) =>
+        place.get(orderId(one.row)) ?? place.get(rowId(one.row)) ?? manual.length
       return [...members].sort((a, b) => rank(a) - rank(b))
     }
 
@@ -316,9 +334,16 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   return { view, answer }
 }
 
-/** How a manual order names a row: its path, and a task's line after a `#`. */
+/** How a view names a row on screen: its path, and a task's line after a `#`. */
 export function rowId(row: Row): string {
   return row.anchor ? `${row.path}#${row.anchor.line}` : row.path
+}
+
+/** How a manual order names a row: its path, and a task's words' hash after `#^`, so
+ *  the order holds while lines above the task come and go. An order written before
+ *  names a task by its line (`rowId`), which is still read. */
+export function orderId(row: Row): string {
+  return row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
 }
 
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()

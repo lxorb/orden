@@ -504,6 +504,16 @@ class Workspace {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
     })
+    // A board's manual order names its cards by path, so it follows them as links do.
+    this.fileOps.follow((op) => {
+      const tree = this.tree
+      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree) return
+      if (!samePath(op.root, this.activeSpace?.root ?? '')) return
+      return import('./views/order-paths').then(
+        ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
+        unfetched,
+      )
+    })
   }
 
   readonly activeSpace = $derived(
