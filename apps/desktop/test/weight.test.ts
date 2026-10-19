@@ -772,8 +772,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,242,700, for #423: which order each space's list is read in
  *  goes with the account, and the list cannot be drawn before it is known
  *  (`SpaceSorting`, beside the arranged order in workspace/arranged.svelte.ts rather than
- *  a module of its own; device.svelte.ts lost its copy). Measured 3,241,664. */
-const BUDGET = 3_242_700
+ *  a module of its own; device.svelte.ts lost its copy). Measured 3,241,664.
+ *
+ *  Raised 2026-10-19, to 3,245,000, for #424: the web app says which of its two builds
+ *  is running and goes to the other (`webChannel` and `switchWebChannel` in updater.ts,
+ *  the Unstable mark in Titlebar.svelte), and a listing from a Worker that has never
+ *  heard of a space's order is let be (#423). Measured 3,244,207. */
+const BUDGET = 3_245_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
