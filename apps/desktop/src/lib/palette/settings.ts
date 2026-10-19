@@ -99,6 +99,8 @@ export function settingValue(field: Field | null): string | null {
     }
     case 'slider':
       return `${field.get()}${field.unit ?? ''}`
+    case 'value':
+      return field.get()
     case 'switch':
     case 'text':
     case 'picture':

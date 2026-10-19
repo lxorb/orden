@@ -159,6 +159,23 @@ describe('choosing the rest', () => {
     expect(asked).toEqual([])
   })
 
+  test('a value is copied where it stands, and the list stays up (#490)', () => {
+    let pressed = 0
+    const field: Field = {
+      kind: 'value',
+      label: 'Version',
+      get: () => '0.16.1-779',
+      press: () => (pressed += 1),
+    }
+    const { asked, hands: with_ } = hands()
+
+    expect(
+      choose({ kind: 'setting', setting: setting('Version', 'General', { field }) }, key(), with_),
+    ).toBe('stay')
+    expect(pressed).toBe(1)
+    expect(asked).toEqual([])
+  })
+
   test('any other setting opens its pane on it, and a pane opens on its top', () => {
     const { asked, hands: with_ } = hands()
     choose({ kind: 'setting', setting: setting('Text size', 'Editor') }, key(), with_)
