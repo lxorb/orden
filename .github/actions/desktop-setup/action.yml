@@ -64,5 +64,12 @@ runs:
         sudo apt-get update
         sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build patchelf xdg-utils squashfs-tools
 
+    # The engine, laid out where the build and the bundler both read it (CEF_PATH);
+    # see scripts/linux-cef.sh.
+    - name: The CEF distribution
+      if: runner.os == 'Linux'
+      shell: bash
+      run: bash scripts/linux-cef.sh cef
+
     - shell: bash
       run: pnpm install --frozen-lockfile
