@@ -126,6 +126,7 @@ export const gsw: Dictionary = {
   'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ufgaab hinzuefüege',
+  'Apple Shortcuts': 'Apple Kurzbefähl',
   Tomorrow: 'Morn',
   'done {date}': 'erledigt {date}',
   'Next week': 'Nächschti Wuche',

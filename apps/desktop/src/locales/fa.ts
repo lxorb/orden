@@ -125,6 +125,7 @@ export const fa: Dictionary = {
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'افزودن کار',
+  'Apple Shortcuts': 'Apple میانبرها',
   Tomorrow: 'فردا',
   'done {date}': 'انجام شد {date}',
   'Next week': 'هفتهٔ بعد',

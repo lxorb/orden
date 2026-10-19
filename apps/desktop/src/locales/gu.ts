@@ -125,6 +125,7 @@ export const gu: Dictionary = {
   'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'કાર્ય ઉમેરો',
+  'Apple Shortcuts': 'Apple શૉર્ટકટ',
   Tomorrow: 'આવતીકાલે',
   'done {date}': 'પૂર્ણ {date}',
   'Next week': 'આવતા અઠવાડિયે',

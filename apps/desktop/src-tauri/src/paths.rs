@@ -263,7 +263,7 @@ pub fn made(dir: &Path) -> Result<(), String> {
 /// spaces are - so a drive that made itself a space made it in the reader's own
 /// `Documents/Nib`, beside their notes. This is the one way to keep out of them, and
 /// every probe and drive sets it; see docs/automation.md.
-const SPACES_DIR: &str = "NIB_SPACES_DIR";
+pub(crate) const SPACES_DIR: &str = "NIB_SPACES_DIR";
 
 /// The folder a variable names, or `None` for one it does not name: the spaces root in
 /// `NIB_SPACES_DIR`, and a probe's downloads folder in `NIB_DOWNLOADS_DIR` (see

@@ -28,7 +28,7 @@
   import { settings } from '../settings.svelte'
   import { arrive, segmented } from '../slide'
   import { keep, storedText } from '../stored'
-  import { invoke, isDesktop } from '../tauri'
+  import { invoke, isDesktop, platform } from '../tauri'
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
@@ -120,6 +120,18 @@
         const { offered, on } = (said ?? {}) as { offered?: unknown; on?: unknown }
         enrolled = offered === true ? on !== false : null
       },
+      () => undefined,
+    )
+  })
+
+  /** Whether Shortcuts lists nib's actions, which only a build signed by a developer
+   *  team gets (src-tauri/src/siri.rs). */
+  let shortcuts = $state(false)
+
+  onMount(() => {
+    if (!isDesktop || platform() !== 'macos') return
+    void invoke<boolean>('shortcuts_offered').then(
+      (said) => (shortcuts = said),
       () => undefined,
     )
   })
@@ -227,6 +239,24 @@
               <span class="name">{t('Agents on this computer connect on their own')}</span>
               <span class="nib-switch" class:on={enrolled} aria-hidden="true"></span>
             </div>
+          </div>
+        {/if}
+
+        {#if shortcuts}
+          <div class="card">
+            <button
+              class="nib-setting agent"
+              onclick={() => void invoke('open_shortcuts').catch(() => undefined)}
+            >
+              <AgentMark name={t('Apple Shortcuts')} />
+              <span class="name">
+                {t('Apple Shortcuts')}
+                <small>{t('Add task')}</small>
+              </span>
+              <svg class="chevron nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
+                ><path d="M5 11l6-6M6 5h5v5" /></svg
+              >
+            </button>
           </div>
         {/if}
 

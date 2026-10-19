@@ -126,6 +126,7 @@ export const ta: Dictionary = {
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'பணியைச் சேர்',
+  'Apple Shortcuts': 'Apple ஷார்ட்கட்கள்',
   Tomorrow: 'நாளை',
   'done {date}': 'முடிந்தது {date}',
   'Next week': 'அடுத்த வாரம்',

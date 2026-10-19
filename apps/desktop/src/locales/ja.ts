@@ -122,6 +122,7 @@ export const ja: Dictionary = {
   'Pointing hand on buttons': 'ボタン上で指差しカーソル',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'タスクを追加',
+  'Apple Shortcuts': 'Apple ショートカット',
   Tomorrow: '明日',
   'done {date}': '{date} 完了',
   'Next week': '来週',

@@ -126,6 +126,7 @@ export const ml: Dictionary = {
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ടാസ്ക് ചേർക്കുക',
+  'Apple Shortcuts': 'Apple ഷോർട്ട്കട്ടുകൾ',
   Tomorrow: 'നാളെ',
   'done {date}': 'പൂർത്തിയായി {date}',
   'Next week': 'അടുത്ത ആഴ്ച',

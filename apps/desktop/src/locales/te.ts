@@ -126,6 +126,7 @@ export const te: Dictionary = {
   'Pointing hand on buttons': 'బటన్‌లపై సూచించే చేయి',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'పని జోడించు',
+  'Apple Shortcuts': 'Apple షార్ట్‌కట్‌లు',
   Tomorrow: 'రేపు',
   'done {date}': 'పూర్తయింది {date}',
   'Next week': 'వచ్చే వారం',

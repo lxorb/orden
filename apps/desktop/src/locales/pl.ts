@@ -128,6 +128,7 @@ export const pl: Dictionary = {
   'Pointing hand on buttons': 'Wskazująca dłoń nad przyciskami',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Dodaj zadanie',
+  'Apple Shortcuts': 'Apple Skróty',
   Tomorrow: 'Jutro',
   'done {date}': 'zrobione {date}',
   'Next week': 'W przyszłym tygodniu',

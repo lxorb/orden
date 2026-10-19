@@ -122,6 +122,7 @@ export const yue: Dictionary = {
   'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '加任務',
+  'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '聽日',
   'done {date}': '{date} 完成',
   'Next week': '下個禮拜',

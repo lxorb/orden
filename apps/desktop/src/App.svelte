@@ -302,6 +302,17 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
+  // Where a task added from Shortcuts lands: the inbox of the space in front. Only a
+  // Mac has the action, and the module is fetched rather than in the first paint.
+  $effect(() => {
+    const root = workspace.activeSpace?.root ?? null
+    if (!isDesktop || platform() !== 'macos') return
+    void import('./lib/rows/inbox').then(
+      (one) => one.rememberInbox(root),
+      () => undefined,
+    )
+  })
+
   // The icons the account holds for a space's folders, how it says the space's
   // graph is drawn, and what it leaves out of its own search, taken on whenever its
   // listing changes. Neither has a file to

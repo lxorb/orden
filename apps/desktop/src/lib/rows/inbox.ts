@@ -12,7 +12,7 @@
 import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
 import { without } from '../records'
 import { forget, isRecord, isString, keep, stored } from '../stored'
-import { invoke } from '../tauri'
+import { invoke, isDesktop, platform } from '../tauri'
 import type { KeptByPath } from '../workspace/file-ops'
 
 export const STORAGE_KEY = 'nib:inbox'
@@ -54,6 +54,19 @@ export function setInbox(root: string, relative: string) {
   const key = keyOf(kept, root)
   const all = key === undefined ? kept : without(kept, key)
   write(pathKey(relative, root) === pathKey(INBOX, root) ? all : { ...all, [root]: relative })
+  if (front !== null && samePath(front, root)) rememberInbox(root)
+}
+
+/** The space in front, whose inbox the crate was last told. */
+let front: string | null = null
+
+/** Tells the crate which note is the inbox of the space in front, which is where a task
+ *  added from Shortcuts goes: the crate cannot read local storage, and the app may not
+ *  even be open when one comes. Only a Mac has the action; see src-tauri/src/siri.rs. */
+export function rememberInbox(root: string | null) {
+  front = root
+  if (root === null || !isDesktop || platform() !== 'macos') return
+  void invoke('remember_inbox', { path: insideSpace(root, inboxOf(root)) }).catch(() => undefined)
 }
 
 /** The space's inbox as a path on this disk, made empty where there is none yet. */

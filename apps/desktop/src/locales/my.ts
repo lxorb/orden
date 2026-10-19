@@ -122,6 +122,7 @@ export const my: Dictionary = {
   'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'လုပ်ငန်း ထည့်ရန်',
+  'Apple Shortcuts': 'Apple ဖြတ်လမ်းများ',
   Tomorrow: 'မနက်ဖြန်',
   'done {date}': 'ပြီးပြီ {date}',
   'Next week': 'နောက်အပတ်',

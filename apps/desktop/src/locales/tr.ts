@@ -126,6 +126,7 @@ export const tr: Dictionary = {
   'Pointing hand on buttons': 'Düğmelerde işaret eden el',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Görev ekle',
+  'Apple Shortcuts': 'Apple Kestirmeler',
   Tomorrow: 'Yarın',
   'done {date}': 'tamamlandı {date}',
   'Next week': 'Gelecek hafta',

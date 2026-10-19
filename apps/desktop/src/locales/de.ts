@@ -126,6 +126,7 @@ export const de: Dictionary = {
   'Pointing hand on buttons': 'Zeigende Hand über Schaltflächen',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Aufgabe hinzufügen',
+  'Apple Shortcuts': 'Apple Kurzbefehle',
   Tomorrow: 'Morgen',
   'done {date}': 'erledigt {date}',
   'Next week': 'Nächste Woche',

@@ -126,6 +126,7 @@ export const sw: Dictionary = {
   'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ongeza kazi',
+  'Apple Shortcuts': 'Apple Njia za mkato',
   Tomorrow: 'Kesho',
   'done {date}': 'imekamilika {date}',
   'Next week': 'Wiki ijayo',

@@ -125,6 +125,7 @@ export const fil: Dictionary = {
   'Pointing hand on buttons': 'Nakaturong kamay sa mga button',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Magdagdag ng gawain',
+  'Apple Shortcuts': 'Apple Mga Shortcut',
   Tomorrow: 'Bukas',
   'done {date}': 'tapos {date}',
   'Next week': 'Sa susunod na linggo',

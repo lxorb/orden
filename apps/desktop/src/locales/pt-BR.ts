@@ -127,6 +127,7 @@ export const ptBR: Dictionary = {
   'Pointing hand on buttons': 'Mão apontando nos botões',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Adicionar tarefa',
+  'Apple Shortcuts': 'Apple Atalhos',
   Tomorrow: 'Amanhã',
   'done {date}': 'feita {date}',
   'Next week': 'Semana que vem',
