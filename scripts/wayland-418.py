@@ -382,6 +382,13 @@ def search():
         print("::warning::Settings did not open")
         return
     time.sleep(1.0)
+    # Clicked into, as a hand does, so the keyboard is the field's whatever had it.
+    field = run(
+        "(() => { const r = document.querySelector('.nib-field.search input').getBoundingClientRect();"
+        " return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()"
+    )
+    if isinstance(field, dict):
+        click(field["x"], field["y"])
     focused = run(SEARCH_SETUP)
     # Idle first, for a second, so the frames typed through are told from the ones at rest.
     time.sleep(1.0)
