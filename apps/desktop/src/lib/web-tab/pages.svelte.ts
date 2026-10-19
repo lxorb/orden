@@ -299,6 +299,9 @@ export class Page {
    *  (#381): the tab's own, gone with it. Plain, since only the field reads it, as it is
    *  built. See AddressField.svelte. */
   halfTyped: HalfTyped | null = null
+  /** See WebBar.svelte (#381). */
+  keyboard: 'address' | 'page' | null = null
+  seen = false
   /** The site's own mark as the page shows it now, as an address the window draws
    *  without fetching anything: the picture the engine chose for the page, from inside
    *  the page's own profile. It follows the page, so a site that redraws its mark with

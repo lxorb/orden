@@ -785,6 +785,7 @@
   <div class="head" class:gone={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
+      tab={tab.id}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}
       {focused}

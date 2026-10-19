@@ -3,8 +3,18 @@
    *  builds its bar on the press of its tab, which then takes the keyboard for itself as
    *  the press goes on; the field asks for the keyboard once the press is over (#381). */
   let pressing = false
+  /** What the last press landed on: a tab, which takes the keyboard from the field only on
+   *  its way to another tab, or anything else, which the reader chose instead (#381). */
+  let pressedOn: Element | null = null
   if (typeof window !== 'undefined') {
-    window.addEventListener('pointerdown', () => (pressing = true), true)
+    window.addEventListener(
+      'pointerdown',
+      (event) => {
+        pressing = true
+        pressedOn = event.target instanceof Element ? event.target : null
+      },
+      true,
+    )
     for (const ends of ['pointerup', 'pointercancel'])
       window.addEventListener(ends, () => (pressing = false), true)
   }
@@ -77,7 +87,7 @@
      *  page, so going to another tab and back finds it (#381). Kept in memory with the
      *  tab and not in the session, as Chrome keeps an address being typed per tab and
      *  not across a restart. */
-    held?: { halfTyped: HalfTyped | null }
+    held?: { halfTyped: HalfTyped | null; keyboard?: 'address' | 'page' | null }
   } = $props()
 
   const id = $props.id()
@@ -174,6 +184,7 @@
 
     visited.wake(book)
     holding = true
+    held.keyboard = 'address'
     editing = true
     ontyping(true)
     rows = []
@@ -200,6 +211,9 @@
     // The window's keyboard going somewhere else - another program, or the page - rather
     // than this field's: the element is still the one the page would type into.
     remember(document.activeElement !== field)
+    // Still the field's as far as its tab goes when the keyboard went to another program
+    // or to a tab pressed on the way to it; not when the reader pressed something else.
+    if (document.hasFocus() && !pressedOn?.closest('[data-tab]')) held.keyboard = null
     holding = false
     editing = false
     ontyping(false)
@@ -213,13 +227,6 @@
   onMount(() => () => {
     if (holding) remember()
   })
-
-  /** Whether half-typed words wait for this field, so the bar gives it the keyboard as
-   *  the tab comes back. */
-  export function waiting(): boolean {
-    const half = held.halfTyped
-    return half?.over === address && !(half.left && half.by === id)
-  }
 
   /** Writes the rest of the best address after what was typed, selected. */
   function finish() {

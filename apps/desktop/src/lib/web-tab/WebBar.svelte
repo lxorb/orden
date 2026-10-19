@@ -45,10 +45,13 @@
   import { isWebAddress, plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
+  import { invoke, isDesktop } from '../tauri'
+  import { IN_A_PAGE } from '../trap'
   import { type Page, siteMark } from './pages.svelte'
 
   const {
     page,
+    tab,
     /** Whether the pane this bar is in has the focus, so the address key lands in
      *  one bar rather than in all of them. */
     focused,
@@ -68,6 +71,8 @@
     theme,
   }: {
     page: Page
+    /** The tab's id, which is what the crate gives the keyboard back to a page by. */
+    tab: string
     /** What the page stands on, under glass: the bar takes it, so the tab, the bar and
      *  the page are one surface; see glass/tint.ts. */
     ground?: { colour: string } | undefined
@@ -122,7 +127,7 @@
     if (mark) marked = true
   })
 
-  let field = $state<{ take(): void; waiting(): boolean }>()
+  let field = $state<{ take(): void }>()
 
   /** The site, plainly, and the page's own name after it. The name is the page's
    *  while it has said one and the address's host until then, so the bar never reads
@@ -164,8 +169,15 @@
    *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
    *  an address is the only thing to do with an empty tab. */
   onMount(() => {
-    // And one coming back with an address half typed into it, as Chrome's does (#381).
-    if (focused && (started || field?.waiting())) take()
+    // The keyboard back where it was in this tab as another came to the front: its field,
+    // half-typed words and caret with it, or its page - and nowhere else (#381). A tab
+    // with nowhere to go yet takes it into its field the first time only.
+    const was = page.keyboard
+    page.keyboard = null
+    if (focused && (was === 'address' || (started && !page.seen))) take()
+    else if (focused && was === 'page' && isDesktop)
+      void invoke('keyboard_back', { tab }).catch(() => undefined)
+    page.seen = true
 
     const key = (event: KeyboardEvent) => {
       if (!focused || overlays.depth > 0 || present.on) return
@@ -196,6 +208,9 @@
     return () => {
       window.removeEventListener('keydown', key, true)
       window.removeEventListener('keydown', escape)
+      // The tab left with its page holding the keyboard: given back to the page as it
+      // comes back. The field says for itself whether it held it; see AddressField.svelte.
+      if (focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
     }
   })
 
