@@ -268,6 +268,10 @@ fi
 
 sleep 2
 views > "$out/views.txt" || true
+# A picture of every screen as the run leaves it, whatever it checked.
+for screen in $(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))'); do
+  grim -o "$screen" "$out/end-$screen.png" 2>/dev/null || true
+done
 swaymsg -t get_tree > "$out/tree.json" || true
 kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true

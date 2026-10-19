@@ -228,6 +228,50 @@ jobs:
           path: wayland-out
           if-no-files-found: ignore
 
+  # #427: the AppImage on Fedora 44, whose Mesa 26.2, libgbm and libglvnd the WebKitGTK
+  # one aborted against at start. Under Wayland (sway) and under a bare X server (Xvfb),
+  # a picture of each.
+  fedora-44:
+    needs: build
+    runs-on: ubuntu-latest
+    container: fedora:44
+    permissions:
+      contents: read
+    steps:
+      - name: sway, Xvfb, Mesa and a session bus, as Fedora 44 has them
+        run: |
+          dnf install -y sway xorg-x11-server-Xwayland xorg-x11-server-Xvfb xdpyinfo xwininfo mesa-dri-drivers mesa-libEGL mesa-libgbm libglvnd-egl dbus-daemon dbus-tools python3 python3-pillow grim ImageMagick git
+          install -m 755 "$(command -v sway)" /usr/local/bin/sway
+          rpm -q mesa-libgbm libglvnd
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: Unpacked
+        run: |
+          cd packages/appimage
+          chmod +x ./*.AppImage
+          ./*.AppImage --appimage-extract > /dev/null
+      # As root in a container, where Chromium will not start sandboxed.
+      - name: Under Wayland
+        env:
+          OUT: fedora-out/wayland
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/wayland-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - name: Under X11
+        if: always()
+        env:
+          OUT: fedora-out/x11
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fedora-44
+          path: fedora-out
+          if-no-files-found: ignore
+
   rpm:
     needs: build
     runs-on: ubuntu-latest
