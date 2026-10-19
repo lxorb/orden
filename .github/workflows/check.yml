@@ -531,7 +531,10 @@ jobs:
           fi
 
   # Whatever is on main is what orden.so and nibeditor.com serve. Gated on the tests above,
-  # so a red build never reaches anyone.
+  # so a red build never reaches anyone. The web carries the edge of `unstable` beside it
+  # for whoever asks for it (services/sync/src/channel.ts), and web-unstable.yml refreshes
+  # that half on every push there; this one builds it too, so neither deploy drops the
+  # other's.
   deploy:
     # The types, the tests and the static checks. Clippy guards the desktop app,
     # which is not what this deploys, and coupling the two would let a lint stop a fix.
@@ -567,6 +570,29 @@ jobs:
       - name: Build the web app
         run: pnpm --filter @nib/desktop build
 
+      # The edge of `unstable`, as it stands, beside it: in a worktree of its own, outside
+      # this one, so that nothing either build looks up on the way - a lockfile, a
+      # config - is the other's. A broken edge is no reason to hold a release back, so a
+      # failure here deploys the release alone, and the Worker serves the release to the
+      # browsers that asked for the edge until the next push to `unstable` mends it.
+      - name: Build the unstable web app
+        id: unstable
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin unstable
+          git worktree add --detach "$RUNNER_TEMP/unstable" FETCH_HEAD
+          cd "$RUNNER_TEMP/unstable"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          pnpm install --frozen-lockfile
+          VITE_ORDEN_CHANNEL=unstable pnpm --filter @nib/desktop build
+
+      # Refused only before the unstable pages are in place, so the release is whole either way.
+      - name: Put the two builds together
+        id: together
+        if: steps.unstable.outcome == 'success'
+        continue-on-error: true
+        run: bash scripts/web-channels.sh apps/desktop/dist "$RUNNER_TEMP/unstable/apps/desktop/dist"
+
       # Schema first. A new Worker may read a column the old schema lacks, and
       # the reverse - an unused new column - breaks nothing.
       #
@@ -580,7 +606,14 @@ jobs:
       - name: Build nibd for the machine image
         run: pnpm --filter @nib/machine build
 
+      # The version says which main it is, in full, because a push to `unstable` deploys
+      # the Worker again with the edge's new pages and has to deploy this same main to do
+      # it: the one whose migrations ran. See web-unstable.yml.
       - name: Deploy the Worker
-        run: pnpm --filter @nib/sync run deploy
+        run: |
+          pnpm --filter @nib/sync run deploy \
+            --tag "main-${GITHUB_SHA::12}" \
+            --message "main $GITHUB_SHA unstable ${UNSTABLE_SHA:0:12}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          UNSTABLE_SHA: ${{ steps.together.outcome == 'success' && steps.unstable.outputs.sha || 'none' }}
