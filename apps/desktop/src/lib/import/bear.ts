@@ -118,8 +118,10 @@ export function bearTags(text: string): string {
 }
 
 /** Bear's underline, a single tilde either side, which nib reads as lowered text:
- *  `~underlined~`. The same shape `apple_text` writes an underline in. */
-const UNDERLINE = /(?<![~\\])~([^~\s\\](?:[^~\n]*[^~\s\\])?)~(?!~)/g
+ *  `~underlined~`. It becomes the `<u>` the Apple Notes import writes one as. Held
+ *  to a pair that opens and closes words, so the tildes in an address,
+ *  `example.com/~me/~notes`, stay part of it. */
+const UNDERLINE = /(?<![~\\\w/])~([^~\s\\](?:[^~\n]*[^~\s\\])?)~(?![~\w/])/g
 
 /** Bear 1's highlight, `::marked::`. Held to a pair that opens and closes a word,
  *  so `std::vector::size` is a name with colons in it rather than a highlight. */

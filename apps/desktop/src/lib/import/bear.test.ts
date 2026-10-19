@@ -42,6 +42,8 @@ describe("Bear's other spellings", () => {
     expect(bearWords('~under~ and ~~struck~~ and `~/path~`')).toBe(
       '<u>under</u> and ~~struck~~ and `~/path~`',
     )
+    // The tildes in an address are the address.
+    expect(bearWords('https://example.com/~me/~notes')).toBe('https://example.com/~me/~notes')
   })
 
   test("Bear 1's highlight is nib's, and a name with colons in it is not one", () => {
