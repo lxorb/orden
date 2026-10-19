@@ -2,12 +2,14 @@
 # Puts a release's .debs into the apt repository, as one suite, signed.
 #
 #   APT_KEY_FINGERPRINT=<the signing key, imported into gpg already> \
-#   APT_BASE_URL=https://lxorb.github.io/apt \
-#     scripts/apt-repo.sh <stable|unstable> <folder of .debs> <checkout of the repository>
+#   APT_BASE_URL=https://apt.orden.so \
+#     scripts/apt-repo.sh <stable|unstable> <folder of .debs> <folder to write into>
 #
-# The repository is plain files on GitHub Pages (lxorb/apt), laid out the way apt reads
-# one, and written here with nothing but apt-ftparchive and gpg: no database beside the
-# files, so the checkout is the whole of the state and a run reads it as it finds it.
+# The repository is plain files in Cloudflare R2 (the bucket orden-apt), served at
+# https://apt.orden.so, laid out the way apt reads one, and written here with nothing but
+# apt-ftparchive and gpg: no database beside the files. A run writes one suite and the
+# files at the root into a folder, and .github/workflows/apt.yml puts that suite into
+# the bucket in place of what was there; the other suite is never touched.
 #
 #   dists/<suite>/InRelease, Release, Release.gpg
 #   dists/<suite>/main/binary-{amd64,arm64}/Packages(.gz)
@@ -24,7 +26,7 @@ suite=${1:?stable or unstable}
 debs=${2:?a folder of .debs}
 repo=${3:?a checkout of the repository}
 key=${APT_KEY_FINGERPRINT:?the fingerprint of the signing key}
-base=${APT_BASE_URL:-https://lxorb.github.io/apt}
+base=${APT_BASE_URL:-https://apt.orden.so}
 base=${base%/}
 
 case "$suite" in
@@ -37,6 +39,7 @@ esac
 
 here=$(cd "$(dirname "$0")/.." && pwd)
 debs=$(cd "$debs" && pwd)
+mkdir -p "$repo"
 cd "$repo"
 
 shopt -s nullglob
@@ -91,5 +94,3 @@ gpg --batch --yes --dearmor --output orden-archive-keyring.gpg orden-archive-key
 for page in index.html README.md; do
   sed "s|@BASE@|$base|g" "$here/packaging/apt/$page" >"$page"
 done
-# Served as the files they are, with nothing of Jekyll's in front of them.
-touch .nojekyll
