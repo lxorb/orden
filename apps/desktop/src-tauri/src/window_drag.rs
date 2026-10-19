@@ -91,6 +91,61 @@ mod x11 {
     use x11rb::wrapper::ConnectionExt as _;
     use x11rb::CURRENT_TIME;
 
+    /// A release of `button` sent to the deepest window under the pointer inside
+    /// `window`, which is Chromium's own, and a moment for Chromium to read it.
+    fn let_chromium_go(
+        x: &x11rb::rust_connection::RustConnection,
+        root: u32,
+        window: u32,
+        pointer: &x11rb::protocol::xproto::QueryPointerReply,
+        button: u8,
+    ) -> Result<(), String> {
+        use x11rb::protocol::xproto::{ButtonReleaseEvent, BUTTON_RELEASE_EVENT};
+
+        let fail = |error: &dyn std::fmt::Display| error.to_string();
+        let mut under = window;
+        for _ in 0..16 {
+            let child = x
+                .query_pointer(under)
+                .map_err(|e| fail(&e))?
+                .reply()
+                .map_err(|e| fail(&e))?
+                .child;
+            if child == x11rb::NONE {
+                break;
+            }
+            under = child;
+        }
+        if under == window {
+            return Ok(());
+        }
+        let at = x
+            .translate_coordinates(root, under, pointer.root_x, pointer.root_y)
+            .map_err(|e| fail(&e))?
+            .reply()
+            .map_err(|e| fail(&e))?;
+        let release = ButtonReleaseEvent {
+            response_type: BUTTON_RELEASE_EVENT,
+            detail: button,
+            sequence: 0,
+            time: CURRENT_TIME,
+            root,
+            event: under,
+            child: x11rb::NONE,
+            root_x: pointer.root_x,
+            root_y: pointer.root_y,
+            event_x: at.dst_x,
+            event_y: at.dst_y,
+            state: pointer.mask,
+            same_screen: true,
+        };
+        x.send_event(false, under, EventMask::BUTTON_RELEASE, release)
+            .map_err(|e| fail(&e))?;
+        x.sync().map_err(|e| fail(&e))?;
+        std::thread::sleep(std::time::Duration::from_millis(40));
+        Ok(())
+    }
+
     /// The message, for the window `window` is: where the pointer is on the screen now,
     /// and the first button held, which is the one the press was made with.
     pub fn move_resize(
@@ -114,7 +169,7 @@ mod x11 {
             .reply()
             .map_err(|error| error.to_string())?;
         let held = u16::from(pointer.mask);
-        let button = [
+        let button: u8 = [
             (KeyButMask::BUTTON1, 1),
             (KeyButMask::BUTTON2, 2),
             (KeyButMask::BUTTON3, 3),
@@ -129,7 +184,14 @@ mod x11 {
             .map_err(|error| error.to_string())?
             .atom;
         // The window manager grabs the pointer for the move, which it cannot while a
-        // client holds it; this connection's own grab, if it had one, goes first.
+        // client holds it - and Chromium holds it from the press on, its own grab for
+        // a drag inside the page, on a connection of its own this one cannot let go of
+        // for it. KWin then took the resize and refused the move (#427). So Chromium is
+        // told the button went up, as an event sent to the window the pointer is over,
+        // and lets go of its grab itself, as it does at a real release; the page hears a
+        // release where the press was, which ends nothing but the press. This
+        // connection's own grab, if it had one, goes too.
+        let _ = let_chromium_go(&x, root, xid, &pointer, button);
         let _ = x.ungrab_pointer(CURRENT_TIME);
         let message = ClientMessageEvent::new(
             32,
@@ -139,7 +201,7 @@ mod x11 {
                 u32::try_from(pointer.root_x).unwrap_or(0),
                 u32::try_from(pointer.root_y).unwrap_or(0),
                 direction,
-                button,
+                u32::from(button),
                 // Said by an application, as against a pager.
                 1,
             ],
