@@ -30,6 +30,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { links } = await import('./link-index.svelte')
+const { startup } = await import('./startup.svelte')
 const { keeping } = await import('./workspace/file-ops')
 const { movedTo, within } = await import('./space-paths')
 type FileOp = import('./workspace/file-ops').FileOp
@@ -250,6 +251,32 @@ describe('a note renamed while its heading is still its name', () => {
     const shown = workspace.documentAt(`${ROOT}/Groceries.md`)?.text ?? ''
     expect(shown.startsWith('# Groceries\n')).toBe(true)
     expect(disk.current?.files.get(`${ROOT}/Groceries.md`)).toBe(shown)
+  })
+})
+
+describe('a link rewritten in a note with typing not yet written', () => {
+  test('keeps both the typing and the new link', async () => {
+    disk.current?.files.set(`${ROOT}/Other.md`, 'see [[Plan]]\n')
+    await workspace.loadTree()
+    // The index waits its turn behind the first frame, which a test has to say has
+    // been drawn; see startup.svelte.ts.
+    void startup.shown()
+    await links.build(ROOT)
+    // This disk answers no scan, so the index hears of the two notes the way it
+    // hears of a note written.
+    links.noteSaved(`${ROOT}/Plan.md`, '# Plan\n')
+    links.noteSaved(`${ROOT}/Other.md`, 'see [[Plan]]\n')
+    await workspace.open(`${ROOT}/Other.md`)
+    const note = workspace.active?.note
+    note?.live.replace('see [[Plan]]\ntyped and waiting\n', true)
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Goal.md')
+    await workspace.writesSettled()
+
+    // The rewrite went to the file and skipped the document, which had words of
+    // its own; the typing then went down with the old link in it, over the new.
+    expect(note?.text).toBe('see [[Goal]]\ntyped and waiting\n')
+    expect(disk.current?.files.get(`${ROOT}/Other.md`)).toBe('see [[Goal]]\ntyped and waiting\n')
   })
 })
 

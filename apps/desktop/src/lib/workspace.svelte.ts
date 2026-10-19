@@ -3991,7 +3991,7 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return 0
 
-    const touched = await links.retarget(from, to, root)
+    const touched = await links.retarget(from, to, root, (path) => this.documentAt(path))
 
     // A note on screen may be one of the notes that was rewritten.
     this.flush()

@@ -32,6 +32,7 @@ import {
   type TaskHelp,
 } from '@nib/editor'
 import { door } from '@nib/markdown/door'
+import { oneEdit } from '@nib/markdown/edits'
 import {
   blockIdOf,
   blockIds,
@@ -68,6 +69,7 @@ import {
 import { elsewhere } from './marks-elsewhere.svelte'
 import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
+import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
 
 /** One place a link was found, as a row in the panel. */
@@ -1260,8 +1262,19 @@ class Links {
    *
    *  Each note keeps one snapshot of what it said before, so the rewrite shows up
    *  in the version history of every note it touched and can be undone note by
-   *  note there as well as through the file undo. */
-  async retarget(from: string, to: string, root: string): Promise<number> {
+   *  note there as well as through the file undo.
+   *
+   *  `open` is the document a note is open as, which is where its words are: a note
+   *  with typing not yet written is rewritten there, and written as it then stands,
+   *  the way a replacement writes an open note; see `writeOpen` in
+   *  workspace/note-text.ts. The file alone used to be rewritten, and the typing
+   *  went down a moment later with the old link still in it. */
+  async retarget(
+    from: string,
+    to: string,
+    root: string,
+    open: (path: string) => NoteDoc | null = () => null,
+  ): Promise<number> {
     const was = this.relative(from)
     const now = this.relative(to)
     if (!was || !now || was === now) return 0
@@ -1281,12 +1294,19 @@ class Links {
       if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
 
       const absolute = insideSpace(root, note.path)
-      const before = await invoke<string>('read_note', { path: absolute }).catch(() => null)
+      const before = await this.wordsOf(absolute, open)
       if (before === null) continue
 
       const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
       const after = rewriteLinks(before, note.path, move, points)
       if (after === null || after === before) continue
+
+      // Taken by the document in the same breath as its words were read, so no
+      // keystroke falls between the two; one landing while the write is in the air
+      // is the document's own, and marks it for its next write.
+      const doc = open(absolute)
+      const edit = oneEdit(before, after)
+      if (doc && edit) doc.edited([edit], after)
 
       await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
       await invoke('write_note', { path: absolute, content: after })
@@ -1300,6 +1320,20 @@ class Links {
 
     if (touched) this.changed()
     return touched
+  }
+
+  /** A note's words as they stand: the document's where it is open, and the file's
+   *  otherwise. */
+  private async wordsOf(
+    path: string,
+    open: (path: string) => NoteDoc | null,
+  ): Promise<string | null> {
+    const doc = open(path)
+    if (doc) {
+      doc.flush()
+      return doc.text
+    }
+    return invoke<string>('read_note', { path }).catch(() => null)
   }
 
   /** Blocks anywhere in the space whose words hold `text`: what the editor's
