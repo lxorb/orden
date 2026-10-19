@@ -1,0 +1,148 @@
+name: web-unstable
+
+# The web serves the edge of `unstable` beside the release, to the browsers that ask for
+# it with a cookie (services/sync/src/channel.ts, #424). This refreshes that half on every
+# push to `unstable`.
+#
+# Only the edge's pages and bundle come from `unstable`. The Worker that serves them is
+# main's, and not main's newest commit but the one live now: the one whose migrations
+# check.yml ran when it deployed it, and which it named in the version's message. So this
+# migrates nothing, builds the release's web app from that same commit, puts the edge's
+# beside it and deploys that Worker again, containers untouched. Until main has deployed
+# a Worker that says which commit it is, there is nothing to deploy beside and this says so.
+#
+# The unstable web app talks to that Worker, exactly as the unstable desktop builds do:
+# whatever needs a server change only works on the web once it is released.
+#
+# A push that changes nothing the web app is made of deploys nothing; the same list as
+# release.yml's.
+on:
+  push:
+    branches: [unstable]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.test.ts'
+      - 'apps/desktop/test/**'
+      - 'packages/editor/test/**'
+      - 'packages/glasses/test/**'
+      - 'services/*/test/**'
+  workflow_dispatch:
+
+# The floor, so a job added below without a block of its own still only reads.
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Reads the repository, and may run a main deploy again; see the last step.
+    permissions:
+      contents: read
+      actions: write
+
+    # The same queue as main's deploy in check.yml, so the two never deploy at once and
+    # neither can finish under the other with an older half. A burst of pushes deploys
+    # its newest: GitHub keeps one waiting job per group and cancels the one before.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+
+    steps:
+      # The pushed commit of `unstable`, which is the edge's web app.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The live version's message, as check.yml writes it: `main <sha> unstable <sha>`.
+      - name: Which main is live
+        id: live
+        working-directory: services/sync
+        run: |
+          version=$(pnpm exec wrangler deployments status --json |
+            jq -r '.versions | sort_by(-.percentage) | .[0].version_id')
+          message=$(pnpm exec wrangler versions view "$version" --json |
+            jq -r '.annotations["workers/message"] // ""')
+          main=$(grep -oE '^main [0-9a-f]{40}' <<<"$message" | cut -d' ' -f2 || true)
+          if [ -z "$main" ]; then
+            echo "::notice::The live Worker ($version) does not say which main it is; main's next deploy will. Nothing deployed."
+            exit 0
+          fi
+          echo "Live: main $main, version $version"
+          echo "main=$main" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # In a worktree of its own, outside this one, so that nothing either build looks up
+      # on the way - a lockfile, a config - is the other's.
+      - name: Check out that main
+        if: steps.live.outputs.main
+        run: |
+          git fetch --no-tags --depth=1 origin "$MAIN"
+          git worktree add --detach "$RUNNER_TEMP/main" FETCH_HEAD
+          cd "$RUNNER_TEMP/main"
+          pnpm install --frozen-lockfile
+        env:
+          MAIN: ${{ steps.live.outputs.main }}
+
+      - name: Build the unstable web app
+        if: steps.live.outputs.main
+        run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @nib/desktop build
+
+      - name: Build the release's web app and put the two together
+        if: steps.live.outputs.main
+        working-directory: ${{ runner.temp }}/main
+        run: |
+          pnpm --filter @nib/desktop build
+          bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
+
+      # The Worker's bundle carries nibd for the machines it hands it to, as main's does.
+      - name: Build nibd for the Worker's bundle
+        if: steps.live.outputs.main
+        working-directory: ${{ runner.temp }}/main
+        run: pnpm --filter @nib/machine build
+
+      # No migration: main's ran when main deployed this Worker. And no containers: the
+      # machines' image is main's, built and rolled out by main's deploy, and nothing
+      # here changes it.
+      - name: Deploy the Worker with the edge's pages
+        if: steps.live.outputs.main
+        working-directory: ${{ runner.temp }}/main
+        run: |
+          pnpm --filter @nib/sync run deploy \
+            --containers-rollout none \
+            --tag "main-${MAIN::12}" \
+            --message "main $MAIN unstable ${GITHUB_SHA::12}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          MAIN: ${{ steps.live.outputs.main }}
+
+      # A job waiting in a concurrency group is cancelled when a newer one joins it, so a
+      # push here can push main's deploy out of the queue while this one runs. When main's
+      # newest commit is not the one live and its deploy was cancelled, it is run again,
+      # and waits behind this one. (A main deploy cancelled by hand is run again too; a
+      # deploy is cancelled by hand by cancelling its run before it starts, or not at all.)
+      - name: Put back a main deploy this queue pushed out
+        if: always()
+        run: |
+          head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ -z "$head" ] || [ "$head" = "$MAIN" ]; then exit 0; fi
+          run=$(gh run list -R "$GITHUB_REPOSITORY" -w check.yml -b main -e push -c "$head" -L 1 \
+            --json databaseId -q '.[0].databaseId // empty')
+          if [ -z "$run" ]; then exit 0; fi
+          job=$(gh run view "$run" -R "$GITHUB_REPOSITORY" --json jobs \
+            -q '.jobs[] | select(.name == "deploy" and .conclusion == "cancelled") | .databaseId')
+          if [ -z "$job" ]; then exit 0; fi
+          echo "::notice::main's deploy of $head (run $run) was cancelled in the queue; running it again."
+          gh run rerun "$run" -R "$GITHUB_REPOSITORY" --job "$job"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN: ${{ steps.live.outputs.main }}
