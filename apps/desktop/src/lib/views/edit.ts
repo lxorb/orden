@@ -6,6 +6,7 @@
  *  before; every edit here makes a new base, sharing whatever it did not touch, and
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
+import { bare } from './columns'
 import type { Base, Filter, NibBase, NibProperty, NibView, Sort, View } from '@nib/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
@@ -261,11 +262,22 @@ export function setDisplayName(base: Base, column: string, words: string): Base 
 
 /** A group renamed in every key a base keeps it under: each view's manual order, its
  *  hidden groups and its column order, and a filter's literal of it, so a column whose
- *  option was renamed keeps its cards' order, stays hidden and stays where it was. */
-export function renamedGroup(base: Base, property: string, from: string, to: string): Base {
+ *  option was renamed keeps its cards' order, stays hidden and stays where it was. With
+ *  `merge`, `to` is a group already, and `from`'s cards join it. */
+export function renamedGroup(
+  base: Base,
+  property: string,
+  from: string,
+  to: string,
+  merge = false,
+): Base {
   if (from === to) return base
   const name = property.replace(/^note\./, '')
-  const swap = (list: readonly string[]) => list.map((one) => (one === from ? to : one))
+  // A rename onto a name that is already a group is a merge: the two lists are one,
+  // the target's first, and a name is never there twice.
+  const swap = (list: readonly string[]) => [
+    ...new Set(list.map((one) => (one === from ? to : one))),
+  ]
   const quoted = (words: string) => JSON.stringify(words)
   const literal = (filter: Filter): Filter => {
     if (typeof filter === 'string')
@@ -274,28 +286,53 @@ export function renamedGroup(base: Base, property: string, from: string, to: str
     if ('or' in filter) return { or: filter.or.map(literal) }
     return { not: filter.not.map(literal) }
   }
+  const same = (one: string | undefined) => one !== undefined && bare(one) === name
   const views = base.views.map((view): View => {
-    if (view.groupBy?.property !== property && view.nib.subGroupBy?.property !== property)
+    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property))
       return { ...view, ...(view.filters ? { filters: literal(view.filters) } : {}) }
     const order = view.nib.order
-    const moved =
-      order && from in order
-        ? Object.fromEntries(
-            Object.entries(order).map(([key, ids]) => [key === from ? to : key, ids]),
-          )
-        : order
+    let moved = order
+    if (order && from in order) {
+      const { [from]: carried = [], ...rest } = order
+      moved = { ...rest, [to]: [...new Set([...(rest[to] ?? []), ...carried])] }
+    }
+    // A merge goes into the target as it is, shown or hidden; a rename keeps hiding
+    // what was hidden.
+    const hidden = view.nib.hidden
+      ? merge
+        ? view.nib.hidden.filter((one) => one !== from)
+        : swap(view.nib.hidden)
+      : undefined
     return {
       ...view,
       ...(view.filters ? { filters: literal(view.filters) } : {}),
       nib: {
         ...view.nib,
         ...(moved ? { order: moved } : {}),
-        ...(view.nib.hidden ? { hidden: swap(view.nib.hidden) } : {}),
+        ...(hidden ? { hidden } : {}),
         ...(view.nib.groups ? { groups: swap(view.nib.groups) } : {}),
       },
     }
   })
   return { ...base, views, ...(base.filters ? { filters: literal(base.filters) } : {}) }
+}
+
+/** A group gone from every key a base keeps it under, its option deleted: so one made
+ *  again under that name starts shown, unordered and at the end. */
+export function forgottenGroup(base: Base, property: string, value: string): Base {
+  const name = bare(property)
+  const same = (one: string | undefined) => one !== undefined && bare(one) === name
+  const views = base.views.map((view): View => {
+    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property)) return view
+    const nib = { ...view.nib }
+    if (nib.order && value in nib.order) {
+      nib.order = Object.fromEntries(Object.entries(nib.order).filter(([key]) => key !== value))
+    }
+    if (nib.hidden) nib.hidden = nib.hidden.filter((one) => one !== value)
+    if (nib.groups) nib.groups = nib.groups.filter((one) => one !== value)
+    return { ...view, nib }
+  })
+  return { ...base, views }
 }
 
 /** A board's columns in a new order: `moving` put before or after `target`, among the

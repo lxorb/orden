@@ -129,6 +129,7 @@ function swapped(now: readonly Value[], key: Value, from: Value | undefined): Va
   if (Array.isArray(key)) return key
   if (from === undefined) return key === null ? null : [key]
   const named = (one: Value) => (one === null ? '' : groupName(one))
+  if (named(from) === named(key)) return [...now]
   const kept = named(from) === '' ? [...now] : now.filter((one) => named(one) !== named(from))
   if (key === null || named(key) === '') return kept.length ? kept : null
   return kept.some((one) => named(one) === named(key)) ? kept : [...kept, key]

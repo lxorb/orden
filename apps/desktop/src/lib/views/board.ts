@@ -119,30 +119,128 @@ export interface Pending {
   from: string
   to: string
   key: Value
-  /** Where among the new column's cards it was let go. */
+  /** The swimlane it was carried out of, by key as text, where the board has them and
+   *  it is known. */
+  fromLane?: string
+  /** The swimlane it went to, by key, where the board has them. */
+  lane?: Value
+  /** Where among the new column's cards it was let go, or among its lane's where it
+   *  went to one. */
   index: number
   /** Written, and waiting for the rows to say so. */
   written?: boolean
 }
 
-/** The groups with each pending card where it was carried to. */
+/** The groups with each pending card where it was carried to, in its lane too. */
 export function withPending(groups: readonly Group[], pending: readonly Pending[]): Group[] {
   if (!pending.length) return [...groups]
   const moving = new Map(pending.map((one) => [one.card, one]))
   return groups.map((group) => {
     const name = groupName(group.key)
-    let rows = group.rows.filter((row) => {
+    const isMoving = (row: Row) => {
       const one = moving.get(cardKey(row))
-      return !one || (one.from !== name && one.to !== name)
+      return one !== undefined && (one.from === name || one.to === name)
+    }
+    if (!group.rows.some(isMoving) && !pending.some((one) => one.to === name)) return group
+    const rows = group.rows.filter((row) => !isMoving(row))
+    let sub = group.sub?.map((lane) => {
+      const laneName = groupName(lane.key)
+      const kept = lane.rows.filter((row) => {
+        const one = moving.get(cardKey(row))
+        if (!one) return true
+        // A card leaving the column leaves every lane of it; one arriving leaves the
+        // lane it came from and the one it goes to, where it is put back.
+        if (one.to !== name) return one.from !== name
+        return (
+          one.lane === undefined ||
+          (one.fromLane !== undefined &&
+            laneName !== one.fromLane &&
+            laneName !== groupName(one.lane))
+        )
+      })
+      return kept.length === lane.rows.length ? lane : { ...lane, rows: kept }
     })
     for (const one of pending) {
       if (one.to !== name) continue
-      rows = [...rows]
-      rows.splice(Math.min(one.index, rows.length), 0, one.row)
+      if (one.lane === undefined || !sub) {
+        rows.splice(Math.min(one.index, rows.length), 0, one.row)
+        continue
+      }
+      const laneName = groupName(one.lane)
+      let at = sub.findIndex((lane) => groupName(lane.key) === laneName)
+      if (at === -1) {
+        sub = [...sub, { key: one.lane, rows: [], summaries: {} }]
+        at = sub.length - 1
+      }
+      const lane = sub[at]
+      if (!lane) continue
+      const laneRows = [...lane.rows]
+      // In the column's own cards it goes before the lane's card it was let go above,
+      // or after the lane's last, or at the end where the lane had none.
+      const before = laneRows[one.index]
+      const after = laneRows.at(-1)
+      const place = before ? rows.indexOf(before) : after ? rows.indexOf(after) + 1 : rows.length
+      rows.splice(place === -1 ? rows.length : place, 0, one.row)
+      laneRows.splice(Math.min(one.index, laneRows.length), 0, one.row)
+      sub = sub.map((each, index) => (index === at ? { ...each, rows: laneRows } : each))
     }
-    return rows === group.rows ? group : { ...group, rows }
+    return sub ? { ...group, rows, sub } : { ...group, rows }
   })
 }
+
+/** The groups with one column drawn in a manual order not written yet, its lanes
+ *  following it, the way the engine orders them (answer.ts). `order` names cards by
+ *  `orderId`; a card it does not name goes after the ones it does. */
+export function withOrder(
+  groups: readonly Group[],
+  column: string,
+  order: readonly string[],
+  idOf: (row: Row) => string,
+): Group[] {
+  const place = new Map(order.map((id, at) => [id, at]))
+  const rank = (row: Row) => place.get(idOf(row)) ?? order.length
+  const sorted = (rows: readonly Row[]) => [...rows].sort((a, b) => rank(a) - rank(b))
+  return groups.map((group) =>
+    groupName(group.key) !== column
+      ? group
+      : {
+          ...group,
+          rows: sorted(group.rows),
+          ...(group.sub
+            ? { sub: group.sub.map((lane) => ({ ...lane, rows: sorted(lane.rows) })) }
+            : {}),
+        },
+  )
+}
+
+/** A column's whole manual order after one of its lanes was put in a new one: the
+ *  lane's cards take the places the lane's cards held among the column's, in the
+ *  lane's new order, and every other card stays where it was. `column` is the
+ *  column's cards as they stand; a card new to the column goes beside the lane's card
+ *  next to it. One order a column, as the engine reads it, keeps every lane's. */
+export function mergedOrder(column: readonly string[], lane: readonly string[]): string[] {
+  const out = [...column]
+  lane.forEach((id, at) => {
+    if (out.includes(id)) return
+    const before = lane
+      .slice(0, at)
+      .reverse()
+      .find((one) => out.includes(one))
+    const after = lane.slice(at + 1).find((one) => out.includes(one))
+    const place =
+      before !== undefined
+        ? out.indexOf(before) + 1
+        : after !== undefined
+          ? out.indexOf(after)
+          : out.length
+    out.splice(place, 0, id)
+  })
+  const inLane = new Set(lane)
+  const next = lane[Symbol.iterator]()
+  return out.map((id) => (inLane.has(id) ? (next.next().value ?? id) : id))
+}
+
+type BoardKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End'
 
 /** Where the keyboard goes from a card (`column`, `index`) on a board whose columns
  *  hold `counts` cards: up and down a column, left and right to the card at the same
@@ -151,7 +249,7 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
 export function nextCard(
   counts: readonly number[],
   at: { column: number; index: number },
-  key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End',
+  key: BoardKey,
 ): { column: number; index: number } | null {
   const count = counts[at.column] ?? 0
   if (key === 'ArrowUp') return at.index > 0 ? { ...at, index: at.index - 1 } : null
@@ -165,12 +263,39 @@ export function nextCard(
   return { column, index: Math.min(at.index, Math.max(0, there - 1)) }
 }
 
+/** The same on a board of swimlanes, `counts[lane][column]` the cards of each: left
+ *  and right stay in the lane, and up past a lane's first card (or down past its last)
+ *  goes on to the nearest lane above (or below) with cards in that column. A board
+ *  with no lanes is one lane. */
+export function nextLaned(
+  counts: readonly (readonly number[])[],
+  at: { lane: number; column: number; index: number },
+  key: BoardKey,
+): { lane: number; column: number; index: number } | null {
+  const step = nextCard(counts[at.lane] ?? [], at, key)
+  if (step) return { ...step, lane: at.lane }
+  if (key !== 'ArrowUp' && key !== 'ArrowDown') return null
+  const by = key === 'ArrowUp' ? -1 : 1
+  for (let lane = at.lane + by; lane >= 0 && lane < counts.length; lane += by) {
+    const count = counts[lane]?.[at.column] ?? 0
+    if (count) return { lane, column: at.column, index: by < 0 ? count - 1 : 0 }
+  }
+  return null
+}
+
 /** The ids a column's manual order is written with after a card is let go at `index`
  *  among `ids`, the column's cards as they stand without it. */
 export function orderAfter(ids: readonly string[], id: string, index: number): string[] {
   const order = ids.filter((one) => one !== id)
   order.splice(Math.min(index, order.length), 0, id)
   return order
+}
+
+/** Where among a column's cards a card let go at `index` goes, `index` counted with
+ *  the card itself still standing at `was` (-1 where it stands elsewhere): the place
+ *  it leaves closes up, so a card carried down lands one higher than it was let go. */
+export function indexWithout(index: number, was: number): number {
+  return was !== -1 && was < index ? index - 1 : index
 }
 
 /** The members a card shows of a list, and how many more there are. */

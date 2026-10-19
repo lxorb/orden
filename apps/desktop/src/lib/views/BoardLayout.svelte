@@ -45,11 +45,14 @@
     checklists,
     DEFAULT_SIZE,
     droppableBy,
+    indexWithout,
     isDoneGroup,
-    nextCard,
+    mergedOrder,
+    nextLaned,
     noteKey,
     orderAfter,
     type Pending,
+    withOrder,
     withPending,
   } from './board'
   import BoardCard from './BoardCard.svelte'
@@ -129,6 +132,9 @@
 
   /** Cards carried and not written yet, drawn where they were let go. */
   let pending = $state<Pending[]>([])
+  /** A column's manual order written and not read back yet, drawn already, so the
+   *  keyboard that reordered it finds its card where it went. */
+  let shuffled = $state<{ column: string; order: string[] } | null>(null)
 
   const answered = $derived(
     project
@@ -141,7 +147,10 @@
           )
         : (live.answer?.groups ?? []),
   )
-  const groups = $derived(withPending(answered, pending))
+  const groups = $derived.by(() => {
+    const placed = withPending(answered, pending)
+    return shuffled ? withOrder(placed, shuffled.column, shuffled.order, orderId) : placed
+  })
   const shownGroups = $derived(
     groups.filter(
       (group) =>
@@ -160,11 +169,29 @@
     seen = answer
     untrack(() => {
       if (pending.some((one) => one.written)) pending = pending.filter((one) => !one.written)
+      shuffled = null
     })
   })
 
   /** The swimlanes: every sub-group key any column has, in the order they first come. */
   const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
+  /** The lanes the keyboard walks: a board without them is one lane of no key. */
+  const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
+  /** Whether the lane property holds lists, so a new card holds a list of its lane's one. */
+  const laneLists = $derived(sub?.startsWith('note.') ? holdsLists(live.rows, sub) : false)
+
+  /** A lane's key, from its key as text. */
+  const laneOf = (lane: string | null): Value | undefined =>
+    lane === null ? undefined : lanes.find((one) => groupName(one) === lane)
+
+  /** One column of one lane, by column and lane as text, apart from every other. */
+  const placeKey = (column: string, lane: string | null) =>
+    lane === null ? column : `${column}\n${lane}`
+
+  /** The box of one column of one lane, for finding a card in it. */
+  const placeSelector = (column: string, lane: string | null) =>
+    `[data-column="${CSS.escape(column)}"]` +
+    (lane === null ? '' : `[data-lane="${CSS.escape(lane)}"]`)
 
   /** What a card shows under its title, and how tall that makes every card. */
   const shown = $derived(cardProperties(live.columns, property, sub))
@@ -328,7 +355,8 @@
   }
 
   /** The column a carried card was picked up from, which a list's card needs: it
-   *  stands in a column per member, and only that member is carried. */
+   *  stands in a column per member, and only that member is carried. Set by a press
+   *  that may not become a carry, so a carry trusts it only where the card is. */
   let pickedFrom: { column: string; lane: string | null } | null = null
 
   /** Where among a column's cards a point falls, counting the ones scrolled out of
@@ -346,9 +374,52 @@
     return group.sub?.find((one) => groupName(one.key) === groupName(laneKey))?.rows ?? []
   }
 
-  /** A card let go over a column (or a lane of it), at a place among its cards. */
+  /** Whether a card stands in a column (and a lane of it) now. */
+  function holds(where: { column: string; lane: string | null }, row: Row): boolean {
+    const group = groups.find((one) => groupName(one.key) === where.column)
+    const key = cardKey(row)
+    return !!group && rowsOf(group, laneOf(where.lane)).some((one) => cardKey(one) === key)
+  }
+
+  /** Where a card stands now: in `column`, or else the first column that has it, and
+   *  its lane in that one. */
+  function whereIs(row: Row, given?: string): { column: string; lane: string | null } {
+    const column = given ?? columnOf(row) ?? ''
+    const group = groups.find((one) => groupName(one.key) === column)
+    const key = cardKey(row)
+    const lane = group?.sub?.find((one) => one.rows.some((each) => cardKey(each) === key))
+    return { column, lane: lane ? groupName(lane.key) : null }
+  }
+
+  /** A card let go over a column (or a lane of it), at a place among its cards: the
+   *  place counts the card's own slot where it stands there still. */
   function land(row: Row, group: Group, laneKey: Value | undefined, at: Point, place: HTMLElement) {
-    carryTo(row, group, laneKey, indexAt(place, at), at)
+    const key = cardKey(row)
+    const was = rowsOf(group, laneKey).findIndex((one) => cardKey(one) === key)
+    carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
+  }
+
+  /** The order `drops` are written in: a field before a tick and a tick before a
+   *  move, since a move takes the line to where the row no longer says it is. Two
+   *  fields are one write. */
+  function inTurn(drops: readonly (Drop | null)[]): Drop[] {
+    const given = drops.filter((one): one is Drop => one !== null)
+    const changes = given.flatMap((one) => ('change' in one ? [one.change] : []))
+    const change: Drop[] = changes.length
+      ? [
+          {
+            change: changes.reduce((one, next) => ({
+              note: { ...one.note, ...next.note },
+              task: { ...one.task, ...next.task },
+            })),
+          },
+        ]
+      : []
+    return [
+      ...change,
+      ...given.filter((one) => 'tick' in one),
+      ...given.filter((one) => 'move' in one),
+    ]
   }
 
   function carryTo(
@@ -361,26 +432,49 @@
     const by = property
     if (by === undefined) return
     const name = groupName(group.key)
-    const from = pickedFrom ?? { column: columnOf(row) ?? '', lane: null }
+    const picked = pickedFrom && holds(pickedFrom, row) ? pickedFrom : null
     pickedFrom = null
-    const lane = laneKey === undefined ? null : groupName(laneKey)
-    const ids = rowsOf(group, laneKey).map(orderId)
+    const from =
+      picked && (picked.lane !== null || sub === undefined) ? picked : whereIs(row, picked?.column)
+    // Carried with no lane said, from the menu or onto a hidden group, a card keeps
+    // the lane it stands in.
+    const toLane = laneKey ?? (sub === undefined ? undefined : laneOf(from.lane))
+    const lane = toLane === undefined ? null : groupName(toLane)
+    const ids = rowsOf(group, toLane).map(orderId)
     const id = orderId(row)
-    const order = orderAfter(ids, id, index)
+    const laneOrder = orderAfter(ids, id, index)
+    // A lane's order is written into its column's, where the other lanes' are kept.
+    const order = toLane === undefined ? laneOrder : mergedOrder(group.rows.map(orderId), laneOrder)
 
     if (from.column === name && (lane === null || from.lane === lane)) {
-      if (order.join('\n') === ids.join('\n')) return
+      if (laneOrder.join('\n') === ids.join('\n')) return
       reorder(name, order, at)
       return
     }
     if (!carries) return
 
+    // Only what changed is written: the column where the card left its column, the lane
+    // where it left its lane, each a member swapped where the property is a list.
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
-    const first = dropInto(by, group.key, row, live.today, fromKey)
+    const first = from.column === name ? null : dropInto(by, group.key, row, live.today, fromKey)
     const second =
-      laneKey !== undefined && sub !== undefined ? dropInto(sub, laneKey, row, live.today) : null
+      toLane !== undefined && sub !== undefined && from.lane !== lane
+        ? dropInto(sub, toLane, row, live.today, laneOf(from.lane))
+        : null
+    const drops = inTurn([first, second])
+    if (!drops.length) return
+
     const card = cardKey(row)
-    const moving: Pending = { card, row, from: from.column, to: name, key: group.key, index }
+    const moving: Pending = {
+      card,
+      row,
+      from: from.column,
+      to: name,
+      key: group.key,
+      ...(from.lane === null ? {} : { fromLane: from.lane }),
+      ...(toLane === undefined ? {} : { lane: toLane }),
+      index,
+    }
     pending = [...pending.filter((one) => one.card !== card), moving]
     announce(t('{card} moved to {group}', { card: titleOf(row), group: columnName(group) }))
     // Where it was let go is kept unless a sort places it, or it went to the end of a
@@ -388,23 +482,11 @@
     const others = ids.filter((one) => one !== id).length
     const stored = (view?.nib.order?.[name]?.length ?? 0) > 0
     const keepOrder = !sorted && (stored || index < others)
-    const drop: Drop | null =
-      first && second && 'change' in first && 'change' in second
-        ? {
-            change: {
-              note: { ...first.change.note, ...second.change.note },
-              task: { ...first.change.task, ...second.change.task },
-            },
-          }
-        : (first ?? second)
-    if (!drop) return
 
     const write = async () => {
       let wrote = false as boolean
       await asOneUndo([
-        async () => {
-          wrote = await dropRow(row, drop)
-        },
+        ...drops.map((drop) => async () => (wrote = await dropRow(row, drop))),
         () => (wrote && keepOrder ? writeOrder(name, order) : Promise.resolve(false)),
       ])
       if (wrote) {
@@ -437,7 +519,7 @@
    *  board asks once whether to take the sort away. */
   function reorder(name: string, order: string[], at: Point | null) {
     if (!sorted) {
-      void writeOrder(name, order)
+      shuffle(name, order, false)
       return
     }
     const where = at ?? { x: 0, y: 0 }
@@ -446,12 +528,22 @@
       [
         {
           label: t('Remove sort'),
-          run: () => void writeOrder(name, order, true),
+          run: () => shuffle(name, order, true),
         },
         { label: t('Cancel'), run: () => undefined },
       ],
       { title: t('Remove sort?') },
     )
+  }
+
+  /** A column's manual order drawn at once and written, drawn as it was again if the
+   *  write is turned away. */
+  function shuffle(name: string, order: string[], unsorted: boolean) {
+    const mine = { column: name, order }
+    shuffled = mine
+    void writeOrder(name, order, unsorted).then((wrote) => {
+      if (!wrote && shuffled === mine) shuffled = null
+    })
   }
 
   /** The column a card stands in now, by key as text. */
@@ -495,36 +587,76 @@
     )
   }
 
-  /** The card the keyboard is on, by column and card. */
-  let focus = $state<{ column: string; card: string } | null>(null)
+  /** The card the keyboard is on, by column, lane and card. */
+  let focus = $state<{ column: string; lane: string | null; card: string } | null>(null)
+  /** Each column's cards, by column and lane (`placeKey`). */
   const columns: Record<string, { reveal: (index: number) => void } | undefined> = {}
-  /** How many times Q asked a column's New page to open, by column. */
+  /** How many times Q asked a column's New page to open, by column and lane. */
   let asked = $state<Record<string, number>>({})
 
-  function isFocus(column: string, row: Row, index: number): boolean {
-    if (focus) return focus.column === column && focus.card === cardKey(row)
-    return index === 0 && column === names[0]
+  function askNew(column: string, lane: string | null) {
+    const key = placeKey(column, lane)
+    asked = { ...asked, [key]: (asked[key] ?? 0) + 1 }
   }
 
-  /** Puts the keyboard on the card at `index` of a column, or its New page. */
-  async function focusAt(column: number, index: number) {
+  /** The card Tab reaches: the one the keyboard was on while it is still there, else
+   *  the board's first. */
+  const rover = $derived.by(() => {
+    if (focus) {
+      const at = focus
+      const group = shownGroups.find((one) => groupName(one.key) === at.column)
+      if (group && rowsOf(group, laneOf(at.lane)).some((one) => cardKey(one) === at.card)) return at
+    }
+    const columnsShown = phone && !lanes.length && phoneColumn ? [phoneColumn] : shownGroups
+    for (const laneKey of walked) {
+      for (const group of columnsShown) {
+        const first = rowsOf(group, laneKey)[0]
+        if (first)
+          return {
+            column: groupName(group.key),
+            lane: laneKey === undefined ? null : groupName(laneKey),
+            card: cardKey(first),
+          }
+      }
+    }
+    return null
+  })
+
+  function isFocus(column: string, lane: string | null, row: Row): boolean {
+    return rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
+  }
+
+  /** Puts the keyboard on the card at `index` of a column's lane, or its New page. */
+  async function focusAt(column: number, lane: number, index: number) {
     const group = shownGroups[column]
     if (!group) return
+    const laneKey = walked[lane]
+    const row = rowsOf(group, laneKey)[index]
     const name = groupName(group.key)
-    const row = group.rows[index]
     if (!row) {
       await tick()
-      board
-        ?.querySelector<HTMLElement>(`[data-column="${CSS.escape(name)}"] [data-new-page]`)
-        ?.focus()
+      const laneName = laneKey === undefined ? null : groupName(laneKey)
+      board?.querySelector<HTMLElement>(`${placeSelector(name, laneName)} [data-new-page]`)?.focus()
       return
     }
-    focus = { column: name, card: cardKey(row) }
-    columns[name]?.reveal(index)
+    await focusCard(name, laneKey, row)
+  }
+
+  /** Puts the keyboard on a card by which card it is, wherever in its column and lane
+   *  it stands once what was just done to it is drawn. */
+  async function focusCard(name: string, laneKey: Value | undefined, row: Row) {
+    await tick()
+    const group = shownGroups.find((one) => groupName(one.key) === name)
+    const card = cardKey(row)
+    const index = group ? rowsOf(group, laneKey).findIndex((one) => cardKey(one) === card) : -1
+    if (index === -1) return
+    const lane = laneKey === undefined ? null : groupName(laneKey)
+    focus = { column: name, lane, card }
+    columns[placeKey(name, lane)]?.reveal(index)
     await tick()
     board
       ?.querySelector<HTMLElement>(
-        `[data-column="${CSS.escape(name)}"] [data-index="${index}"] [data-card]`,
+        `${placeSelector(name, lane)} [data-index="${index}"] [data-card]`,
       )
       ?.focus()
   }
@@ -532,16 +664,21 @@
   let board = $state<HTMLElement>()
 
   function keydown(event: KeyboardEvent) {
+    if (event.defaultPrevented) return
     const face = event.target instanceof HTMLElement ? event.target.closest('[data-card]') : null
     const columnBox = face?.closest<HTMLElement>('[data-column]')
     const slot = face?.closest<HTMLElement>('[data-index]')
     if (!face || !columnBox || !slot) return
     const name = columnBox.dataset.column ?? ''
+    const laneName = columnBox.dataset.lane ?? null
     const column = names.indexOf(name)
+    const lane = laneName === null ? 0 : lanes.findIndex((one) => groupName(one) === laneName)
+    const laneKey = walked[lane]
     const index = Number(slot.dataset.index)
     const group = shownGroups[column]
-    const row = group?.rows[index]
-    if (!group || !row) return
+    const rows = group ? rowsOf(group, laneKey) : []
+    const row = rows[index]
+    if (!group || !row || lane === -1) return
     const arrows = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'] as const
     const arrow = arrows.find((one) => one === event.key)
 
@@ -550,32 +687,38 @@
       if (arrow === 'ArrowLeft' || arrow === 'ArrowRight') {
         const to = shownGroups[column + (arrow === 'ArrowLeft' ? -1 : 1)]
         if (!to || !carries) return
-        pickedFrom = { column: name, lane: null }
-        carryTo(row, to, undefined, Math.min(index, to.rows.length), null)
-        void focusAt(column + (arrow === 'ArrowLeft' ? -1 : 1), Math.min(index, to.rows.length))
+        pickedFrom = { column: name, lane: laneName }
+        carryTo(row, to, laneKey, Math.min(index, rowsOf(to, laneKey).length), null)
+        void focusCard(groupName(to.key), laneKey, row)
       } else if (arrow === 'ArrowUp' || arrow === 'ArrowDown') {
-        const step = arrow === 'ArrowUp' ? -1 : 1
-        const next = index + step
-        if (next < 0 || next >= group.rows.length) return
-        const ids = group.rows.map(orderId)
-        reorder(name, orderAfter(ids, orderId(row), next), null)
-        void focusAt(column, next)
+        const next = index + (arrow === 'ArrowUp' ? -1 : 1)
+        if (next < 0 || next >= rows.length) return
+        const order = orderAfter(rows.map(orderId), orderId(row), next)
+        reorder(
+          name,
+          laneKey === undefined ? order : mergedOrder(group.rows.map(orderId), order),
+          null,
+        )
+        // A sort asks first, and the menu that asks has the keyboard.
+        if (!sorted) void focusCard(name, laneKey, row)
       }
       return
     }
     if (arrow && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       event.preventDefault()
-      const counts = shownGroups.map((one) => one.rows.length)
-      const next = nextCard(counts, { column, index }, arrow)
-      if (next) void focusAt(next.column, next.index)
+      const counts = walked.map((one) => shownGroups.map((each) => rowsOf(each, one).length))
+      const next = nextLaned(counts, { lane, column, index }, arrow)
+      if (next) void focusAt(next.column, next.lane, next.index)
       return
     }
     const key = rowKey(event, (id) => shortcuts.keyFor(id), shortcuts.platform)
     if (!key || key.kind === 'step' || key.kind === 'pick' || key.kind === 'unpick') return
     if (key.kind === 'fold' || key.kind === 'edit' || key.kind === 'indent') return
     if (key.kind === 'add') {
+      // The board's own add, which the view's Q would otherwise make a second of.
       event.preventDefault()
-      if (notes) asked = { ...asked, [name]: (asked[name] ?? 0) + 1 }
+      event.stopPropagation()
+      if (notes) askNew(name, laneName)
       else kit.add(property ? { property, key: group.key } : undefined)
       return
     }
@@ -595,12 +738,16 @@
     shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0],
   )
 
+  // Only a New pressed while the board is up opens a page: a board drawn again, its
+  // layout switched back to, opens nothing for the presses before it.
+  let addingSeen = untrack(() => adding)
   $effect(() => {
-    if (adding === 0) return
+    if (adding <= addingSeen) return
+    addingSeen = adding
     const first = untrack(() => (phone ? phoneColumn : shownGroups[0]))
     if (!first) return
-    const name = groupName(first.key)
-    untrack(() => (asked = { ...asked, [name]: (asked[name] ?? 0) + 1 }))
+    const lane = untrack(() => lanes[0])
+    untrack(() => askNew(groupName(first.key), lane === undefined ? null : groupName(lane)))
   })
 
   /** A new group: an option of the property the board groups by. */
@@ -620,7 +767,7 @@
   const groupable = $derived(!project && !days && adds && property?.startsWith('note.') === true)
 </script>
 
-{#snippet card(row: Row, group: Group, index: number)}
+{#snippet card(row: Row, group: Group, lane: string | null)}
   {@const column = groupName(group.key)}
   <BoardCard
     {kit}
@@ -630,10 +777,10 @@
     checklist={checked.get(noteKey(row))}
     done={isDoneGroup(base, property, group.key)}
     pending={pending.some((one) => one.card === cardKey(row) && !one.written)}
-    focused={isFocus(column, row, index)}
+    focused={isFocus(column, lane, row)}
     carry={carries || !sorted}
     onmenu={(event: MouseEvent, one: Row) => cardMenu(event, one, column)}
-    onfocus={() => (focus = { column, card: cardKey(row) })}
+    onfocus={() => (focus = { column, lane, card: cardKey(row) })}
   />
 {/snippet}
 
@@ -686,7 +833,7 @@
         oncount={countMenu}
         onadd={() =>
           notes
-            ? (asked = { ...asked, [name]: (asked[name] ?? 0) + 1 })
+            ? askNew(name, lanes[0] === undefined ? null : groupName(lanes[0]))
             : kit.add(property ? { property, key: group.key } : undefined)}
       />
     </div>
@@ -695,6 +842,7 @@
 
 {#snippet column(group: Group, laneKey: Value | undefined, rows: readonly Row[])}
   {@const name = groupName(group.key)}
+  {@const lane = laneKey === undefined ? null : groupName(laneKey)}
   {@const section = laneKey === undefined ? sectionOf(group) : null}
   {@const tone = toneOfGroup(group)}
   <div
@@ -704,22 +852,31 @@
     style:--wash={tone}
     data-section={section ?? undefined}
     data-column={name}
+    data-lane={lane ?? undefined}
     data-column-key={laneKey === undefined ? name : undefined}
     role="group"
     aria-label={`${columnName(group)}, ${rows.length}`}
-    onpointerdowncapture={() =>
-      (pickedFrom = { column: name, lane: laneKey === undefined ? null : groupName(laneKey) })}
+    onpointerdowncapture={() => (pickedFrom = { column: name, lane })}
     use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}
   >
     {#if laneKey === undefined}{@render head(group)}{/if}
     <div class="cards" role="list">
-      {#snippet one(row: Row, index: number)}{@render card(row, group, index)}{/snippet}
-      <BoardColumn bind:this={columns[name]} {rows} {height} card={one} />
+      {#snippet one(row: Row)}{@render card(row, group, lane)}{/snippet}
+      <BoardColumn bind:this={columns[placeKey(name, lane)]} {rows} {height} card={one} />
     </div>
     {#if pages}
       <div class="add">
         {#if notes}
-          <BoardNew {kit} {group} {property} list={lists} asked={asked[name] ?? 0} />
+          <BoardNew
+            {kit}
+            {group}
+            {property}
+            list={lists}
+            lane={laneKey === undefined || sub === undefined
+              ? undefined
+              : { property: sub, key: laneKey, list: laneLists }}
+            asked={asked[placeKey(name, lane)] ?? 0}
+          />
         {:else}
           <AddRow {kit} {group} />
         {/if}
@@ -796,7 +953,10 @@
               naming = false
             }
           }}
-          onblur={(event) => addGroup(event.currentTarget.value)}
+          onblur={(event) => {
+            // Escape has let it go already, and what it holds is not a group.
+            if (naming) addGroup(event.currentTarget.value)
+          }}
           use:focusSoon
         />
       </div>
@@ -818,10 +978,7 @@
           type="button"
           class="hidden-row"
           title={t('Show again')}
-          use:droppable={(row) => {
-            pickedFrom = pickedFrom ?? { column: columnOf(row) ?? '', lane: null }
-            carryTo(row, group, undefined, group.rows.length, null)
-          }}
+          use:droppable={(row) => carryTo(row, group, undefined, group.rows.length, null)}
           onclick={() => kit.change((one, at) => setHidden(one, at, groupName(group.key), false))}
         >
           <span class="tag" class:toned={tone !== null} style:--pill={tone}

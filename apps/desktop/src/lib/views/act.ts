@@ -98,8 +98,11 @@ export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Pro
   let made = 0
   for (const step of steps) {
     const top = workspace.undone.stack.at(-1)
-    await step()
+    const said = await step()
     if (workspace.undone.stack.at(-1) !== top) made++
+    // A step that answers false was turned away, a locked base's, and what followed
+    // from it is not written either.
+    if (said === false) break
   }
   if (made < 2) return
   const { gatherLast } = await import('../workspace/undo-join')

@@ -3,7 +3,7 @@
  *  the way to try again; see UndoToast.svelte. */
 
 import { undoToastNotice } from '../surfaces.svelte'
-import { UNDO_LINGER } from '../undo-toast.svelte'
+import { UNDO_LINGER, undoToast } from '../undo-toast.svelte'
 
 class Failed {
   /** What a press of Retry does, while the toast says so. */
@@ -11,8 +11,11 @@ class Failed {
 
   private timer: ReturnType<typeof setTimeout> | undefined
 
+  /** The newest news has the toast: an Undo up for something before this goes (Ctrl+Z
+   *  still takes it back), and one for something after this takes the toast in turn. */
   tell(retry: () => void) {
     if (!__EVEN_PLUGIN__) void undoToastNotice.ask()
+    undoToast.dismiss()
     this.retry = retry
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.dismiss(), UNDO_LINGER)

@@ -81,11 +81,17 @@
 
   function keydown(event: KeyboardEvent) {
     if (event.target !== event.currentTarget) return
+    // Each key is the card's alone, so the board's row keys do not do it a second time;
+    // but Ctrl+Enter on a task, which ticks it there.
     if (event.key === 'Enter' || event.key === ' ') {
+      const modded = event.ctrlKey || event.metaKey
+      if (row.task && modded && event.key === 'Enter') return
       event.preventDefault()
-      kit.choose(row, event.ctrlKey || event.metaKey)
+      event.stopPropagation()
+      kit.choose(row, modded)
     } else if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
       event.preventDefault()
+      event.stopPropagation()
       const box =
         event.currentTarget instanceof HTMLElement && event.currentTarget.getBoundingClientRect()
       if (box)

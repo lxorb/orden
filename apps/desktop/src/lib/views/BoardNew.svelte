@@ -5,7 +5,9 @@
    *  written before a title is: Escape, or leaving it empty, writes nothing. The title
    *  is the note's name on disk, with what a file name cannot hold replaced (add.ts).
    *
-   *  `asked` counts the times a key asked for it rather than a press. */
+   *  `asked` counts the times a key asked for it rather than a press; only a count
+   *  higher than the one it was drawn with opens it, so a card drawn again opens
+   *  nothing on its own. In a swimlane the note is given the lane's value too. */
   import type { Group, Value } from '@nib/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -18,6 +20,7 @@
     group,
     property,
     list = false,
+    lane,
     asked = 0,
     onmade,
   }: {
@@ -27,6 +30,9 @@
     property: string | undefined
     /** Whether that property holds lists, so a new card holds a list of its column's one. */
     list?: boolean
+    /** The swimlane it is in: the property the board sub-groups by, the lane's value
+     *  of it, and whether that property holds lists. */
+    lane?: { property: string; key: Value; list: boolean } | undefined
     asked?: number
     /** A note made, by its path. */
     onmade?: (path: string) => void
@@ -38,8 +44,11 @@
   /** A commit already on its way, so Enter and the blur after it do not make two. */
   let making = false
 
+  let seen = untrack(() => asked)
   $effect(() => {
-    if (asked > 0) untrack(open)
+    if (asked <= seen) return
+    seen = asked
+    untrack(open)
   })
 
   function open() {
@@ -47,11 +56,14 @@
     queueMicrotask(() => field?.focus())
   }
 
-  /** The value a new card of this column holds. */
+  /** The values a new card of this column holds, and of its lane. */
   function valued(): Record<string, Value> {
+    const out: Record<string, Value> = {}
     const key = group.key
-    if (!property?.startsWith('note.') || key === null) return {}
-    return { [property.slice(5)]: list ? [key] : key }
+    if (property?.startsWith('note.') && key !== null) out[property.slice(5)] = list ? [key] : key
+    if (lane?.property.startsWith('note.') && lane.key !== null && lane.key !== '')
+      out[lane.property.slice(5)] = lane.list ? [lane.key] : lane.key
+    return out
   }
 
   async function commit(again: boolean) {

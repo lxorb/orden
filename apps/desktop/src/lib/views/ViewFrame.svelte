@@ -92,7 +92,12 @@
     if (event.key === 'g') {
       going = true
       goingTimer = setTimeout(() => (going = false), 1200)
-    } else if (shortcuts.pressed('tasks.quick-add', event) && layout !== 'list') {
+    } else if (
+      shortcuts.pressed('tasks.quick-add', event) &&
+      layout !== 'list' &&
+      // A layout that added for the key itself (a board's column) has said so.
+      !event.defaultPrevented
+    ) {
       event.preventDefault()
       add()
     }

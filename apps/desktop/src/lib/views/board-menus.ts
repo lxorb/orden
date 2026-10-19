@@ -21,7 +21,7 @@ import { workspace } from '../workspace.svelte'
 import { asOneUndo, deleteRows, duplicateRows, linkToRow, writeEach } from './act'
 import { grouped } from './column-menu'
 import { bare } from './columns'
-import { renamedGroup, setHidden, setProperty } from './edit'
+import { forgottenGroup, renamedGroup, setHidden, setProperty } from './edit'
 import { notePath, type Kit } from './kit'
 import { clearedInBase, optionsAt, renamedInBase } from './options'
 
@@ -98,7 +98,7 @@ function mergeInto(kit: Kit, property: string, from: string, to: string) {
   if (!base || from === to) return
   const notes = renamedInBase(base, kit.live.rows, kit.live.context, property, from, to)
   void asOneUndo([
-    () => kit.changed((one) => renamedGroup(one, property, from, to)),
+    () => kit.changed((one) => renamedGroup(one, property, from, to, true)),
     () => writeEach(notes),
   ])
 }
@@ -112,7 +112,9 @@ function deleteOption(kit: Kit, property: string, value: string) {
   void asOneUndo([
     () =>
       kit.changed((one) =>
-        setProperty(one, bare(property), { options: next.length ? next : undefined }),
+        setProperty(forgottenGroup(one, property, value), bare(property), {
+          options: next.length ? next : undefined,
+        }),
       ),
     () => writeEach(notes),
   ])
