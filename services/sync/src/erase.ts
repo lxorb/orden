@@ -48,6 +48,10 @@ const NOTED: readonly string[] = [
   // see rooms/epoch.ts.
   `insert or ignore into leftovers (what, since)
      select 'crdt/' || id, ?3 from notes where space_id in (${OWNED})`,
+  // And the ids themselves, which nothing may be made under again: a room is named by
+  // the id, and is emptied after the row has gone (0052).
+  `insert or ignore into retired_notes (id, since)
+     select id, ?3 from notes where space_id in (${OWNED})`,
   `insert or ignore into leftovers (what, since)
      select distinct 'versions/' || hash, ?3 from note_versions where note_id in (${OWNED_NOTES})`,
   `insert or ignore into leftovers (what, since)

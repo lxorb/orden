@@ -17,7 +17,8 @@ export async function sweepChats(env: Env, at: number): Promise<number> {
   await env.DB.prepare(
     `update chats set ended_at = ?1
       where ended_at is null
-        and ((file_id is not null and not exists (select 1 from notes n where n.id = chats.file_id))
+        and ((file_id is not null and not exists (select 1 from notes n where n.id = chats.file_id
+                                                     and not (n.deleted = 1 and n.deleted_at is null)))
              or exists (select 1 from spaces s where s.id = chats.space_id
                            and s.deleted = 1 and s.deleted_at is null))`,
   )

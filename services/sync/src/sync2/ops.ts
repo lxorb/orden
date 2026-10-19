@@ -44,6 +44,33 @@ async function blobSizes(
   return new Map(results.map((row) => [row.hash, row.size]))
 }
 
+/** The ids a batch of creates names that are not this space's to make: a note of
+ *  another space, live or deleted; a note of this one purged from Recently deleted,
+ *  whose row stays as a tombstone; and an id whose row went for good with its space or
+ *  its account (0052).
+ *
+ *  A device chooses the ids of what it makes, and a note's id names more than its row
+ *  - its room above all, which holds the whole document and is emptied only after the
+ *  row has gone. So an id is made once, by one space, and never again: a create under
+ *  one that was ever somebody else's is refused, as a create of something that has
+ *  gone is, rather than handed whatever is still kept under it. */
+async function takenIds(env: Env, spaceId: string, ops: readonly Op[]): Promise<Set<string>> {
+  const ids = new Set<string>()
+  for (const op of ops) if (op.t === 'create') ids.add(op.id)
+  if (!ids.size) return ids
+
+  const { results } = await env.DB.prepare(
+    `select id from notes
+      where id in (select value from json_each(?1))
+        and (space_id != ?2 or (deleted = 1 and deleted_at is null))
+     union
+     select id from retired_notes where id in (select value from json_each(?1))`,
+  )
+    .bind(JSON.stringify([...ids]), spaceId)
+    .all<{ id: string }>()
+  return new Set(results.map((row) => row.id))
+}
+
 /** A device's batch of ops, applied by the rules, answering each. */
 export async function applyOps(
   env: Env,
@@ -54,13 +81,14 @@ export async function applyOps(
 ): Promise<Changed<OpResult[]>> {
   const keepers = asker ? [asker, space.user_id] : [space.user_id]
   const sizes = await blobSizes(env, keepers, ops)
+  const taken = await takenIds(env, space.id, ops)
   const context: OpContext = { role: space.role, device }
 
   return await changeTree(
     env,
     space.id,
     device,
-    (tree) => ops.map((op) => applied(tree, op, context, sizes)),
+    (tree) => ops.map((op) => applied(tree, op, context, sizes, taken)),
     ops.map((op) => op.op),
   )
 }
@@ -70,7 +98,14 @@ function applied(
   op: Op,
   context: OpContext,
   sizes: ReadonlyMap<string, number>,
+  taken: ReadonlySet<string>,
 ): OpResult {
+  // Not written down as the op's answer, so that an op this space already answered -
+  // sent again by a device that missed the answer - is still answered as it was.
+  if (op.t === 'create' && taken.has(op.id) && !tree.answers(op.op)) {
+    return { op: op.op, refused: 'gone' }
+  }
+
   if (op.t !== 'create' || op.kind !== 'file' || context.role === 'read') {
     return tree.apply(op, context)
   }
