@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { adoptBeside, asPageNote, type Turning } from './from-pdf'
 
 /** A disk in a map, and every move made on it. */
-function disk(start: Record<string, string>, refuse = false) {
+function disk(start: Record<string, string>, refuse: boolean | 'after' = false) {
   const files = new Map(Object.entries(start))
   const moves: string[] = []
 
@@ -14,10 +14,13 @@ function disk(start: Record<string, string>, refuse = false) {
     read: (path) => Promise.resolve(files.get(path) ?? null),
     write: (path, text) => Promise.resolve(void files.set(path, text)),
     move: (from, to) => {
-      if (refuse) return Promise.reject(new Error('held by another program'))
+      if (refuse === true) return Promise.reject(new Error('held by another program'))
       moves.push(`${from} -> ${to}`)
       files.set(to, files.get(from) ?? '')
       files.delete(from)
+      // Moved, and something the move owes after it failed: a link to it that could
+      // not be rewritten, say.
+      if (refuse === 'after') return Promise.reject(new Error('permission denied'))
       return Promise.resolve()
     },
     discard: (path) => Promise.resolve(void files.delete(path)),
@@ -54,6 +57,16 @@ const BESIDE = JSON.stringify({
   ],
   edges: [],
   nib: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
+})
+
+describe('a PDF whose move happened and then failed (#537)', () => {
+  test('is kept in its note: the note is not discarded, and the paper with it', async () => {
+    const { files, how } = disk({ '/s/Lecture.pdf': '%PDF' }, 'after')
+
+    expect(await asPageNote('/s/Lecture.pdf', how)).toBe('/s/Lecture.pages')
+    expect(files.get('/s/Lecture.pages.pdf')).toBe('%PDF')
+    expect(files.has('/s/Lecture.pages')).toBe(true)
+  })
 })
 
 describe('a PDF, as the page note that holds it', () => {
