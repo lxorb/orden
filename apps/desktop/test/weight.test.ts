@@ -762,8 +762,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,239,700, for #364: a picture pasted onto a canvas by somebody
  *  signed in is named by the account's whole address (`accountAddress` in assets.ts,
  *  which the first paint carries for the editor's paste), where it was read as a path in
- *  the space and drawn as "Nothing here". Measured 3,238,704. */
-const BUDGET = 3_239_700
+ *  the space and drawn as "Nothing here". Measured 3,238,704.
+ *
+ *  Raised 2026-10-19, to 3,240,800, for #381: a web tab keeps where the keyboard was as
+ *  it is left - its address field, by what the last press landed on, or its page - and
+ *  gives it back to that and nothing else as it comes back (`keyboard` and `seen` on a
+ *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774. */
+const BUDGET = 3_240_800
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
