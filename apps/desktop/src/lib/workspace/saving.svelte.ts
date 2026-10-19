@@ -21,6 +21,7 @@ import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
+import { onDisk } from '../on-disk'
 import { owesLast, settleUp } from '../parting'
 import { nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -368,9 +369,9 @@ export class Saving {
           found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
-      const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+      const taken = await onDisk(path)
       if (note.path !== null) return null
-      if (stamp) found.push(name)
+      if (taken) found.push(name)
       else if (this.ws.freeName(folder, name) === name) {
         note.path = path
         return path

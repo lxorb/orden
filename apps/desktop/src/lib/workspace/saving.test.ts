@@ -31,6 +31,8 @@ vi.mock('../tauri', () => ({
       refusing.set(path, left - 1)
       throw new Error(`could not write ${path}: the disk is full`)
     }
+    // Nothing is on this disk until it is written; a browser asks by reading.
+    if (command === 'read_note' || command === 'read_asset') throw new Error('nothing there')
     return ''
   },
   isNative: false,

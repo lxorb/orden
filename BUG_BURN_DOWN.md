@@ -25,9 +25,9 @@ data loss. **High** - data loss or a security hole on a specific path.
 | Severity | Found | Fixed | Open |
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
-| High | 13 | 13 | 0 |
+| High | 14 | 14 | 0 |
 | Medium | 26 | 26 | 0 |
-| Low | 11 | 10 | 1 |
+| Low | 15 | 10 | 5 |
 
 Open rows are being fixed; see the status column.
 
@@ -85,6 +85,11 @@ Open rows are being fixed; see the status column.
 | B49 | Medium | Undoing a signed-in folder delete gave back the notes without the folder's pictures, PDFs and attachments, saying nothing (third re-audit; from #399) | Fixed `c4860ca34` | `heldIn` read the file list, which leaves out what no tab opens, and skipped files it could not read | `read_tree` takes `every`; `heldIn` reads the folder off the disk and holds nothing (Recently deleted is the way back) when anything in it is not words | `written-over.store.test.ts` picture test (failed before); `tree.rs` `every_file_is_listed_when_asked_for` (run by CI: a Linux build here needs CEF) |
 | B50 | Medium | In the browser, B49 still gave a folder back without its pictures and PDFs (re-audit of B49) | Fixed `bb9aee261` | The web `read_tree` ignored `every` | The web tree lists every row when asked | `web/commands.test.ts` (failed before) |
 | B51 | Low | A `.DS_Store` or `desktop.ini` in a folder stopped its delete from being undoable (re-audit of B49) | Fixed `bb9aee261` | `heldIn` asked for dotfiles, and those are not words | Dotfiles and sync's clutter names are left out, as sync leaves them | `written-over.store.test.ts` (failed before) |
+| B52 | High | In the browser, B23, B24 and B46 did nothing: an undo or a draft wrote over a note already at its name (complete final re-audit) | Fixed (this commit) | `claim` and `writeBeside` asked `file_stamp`, which the browser answers null for every path | `onDisk` (on-disk.ts), shared with page turning and imports: a stamp on the desktop, a note or an asset that reads in the browser | `undoing.web.test.ts`, `on-disk.test.ts` (failed before) |
+| B53 | Low | Redo after an undo that stepped aside removes the newer note at the old name, not the one put back | Open, accepted | The step kept for redo keeps the old path | - (the note is in Recently deleted) | - |
+| B54 | Low | Printing a canvas escapes the reader's own cards' HTML | Open, accepted | `printOpen` builds the drawing without the trust answer, so it defaults to untrusted (the safe side) | - | - |
+| B55 | Low | Sync's own moves and an agent's move to another space do not wait for a write in the air | Open, accepted (older than this branch) | `disk.move` and `movedAway` do not go through `holdingUnder` | - (B25's `written()` now keeps the tab right and re-queues the write) | - |
+| B56 | Low | An agent or automation edit can report done when the note changed in the same milliseconds and nothing was written | Open, accepted | `writeClosed` now refuses an overlapping edit; the caller does not hear of it | - (before this branch the same race wrote over the note) | - |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a

@@ -24,6 +24,13 @@ vi.mock('../tauri', () => ({
     if (command === 'file_stamp') {
       return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
     }
+    // The browser has no stamps; a file there is one that reads. See on-disk.ts.
+    if ((command === 'read_note' || command === 'read_asset') && onDisk.has(String(args.path))) {
+      return Promise.resolve('')
+    }
+    if (command === 'read_note' || command === 'read_asset') {
+      return Promise.reject(new Error('nothing there'))
+    }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })

@@ -15,6 +15,7 @@ import { oneEdit } from '@nib/markdown/edits'
 import { freePath } from '@nib/markdown/paths'
 import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
 import { folderOf, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
@@ -211,8 +212,7 @@ async function writeBeside(path: string, content: string): Promise<string> {
   const found: string[] = []
   for (;;) {
     const at = freePath(path, (candidate) => found.includes(candidate))
-    const stamp = await invoke<unknown>('file_stamp', { path: at }).catch(() => null)
-    if (!stamp) {
+    if (!(await onDisk(at))) {
       await invoke('write_note', { path: at, content })
       return at
     }

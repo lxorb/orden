@@ -31,6 +31,7 @@ import { freePath } from '@nib/markdown/paths'
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
+import { onDisk } from '../on-disk'
 import { invoke, joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
@@ -161,12 +162,6 @@ async function restampedOnDisk(
     if (!held.length) return { files, stepped: stamped.stepped }
     for (const file of held) taken.add(nameKey(file.path))
   }
-}
-
-/** Whether a file is at this path: `file_stamp` answers nothing where there is none. */
-async function onDisk(path: string): Promise<boolean> {
-  const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
-  return stamp !== null && stamp !== undefined
 }
 
 /** Every path the space already holds, as the one name it is (see `nameKey`), so a
