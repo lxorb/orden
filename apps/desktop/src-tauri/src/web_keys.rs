@@ -319,7 +319,7 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
 /// as the key it was, where the bar answers it (`web.reload`, `web.fresh` in the
 /// registry). Without it a page reloaded by the key once had the keyboard after it, and
 /// every press after the first went into the page and did nothing (#344).
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
         return None;
@@ -339,10 +339,10 @@ pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     }
 }
 
-/// The virtual key Windows names a key by, from the one GDK names it by, for the keys
-/// `meaning` and `reloading` read: letters, digits, Tab, the page keys, F5, F6 and F11,
-/// and the three modifiers.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+/// The virtual key Windows names a key by, from the one X11 names it by (its keysym), for
+/// the keys `meaning` and `reloading` read: letters, digits, Tab, the page keys, F5, F6
+/// and F11, and the three modifiers.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn vk_of(keyval: u32) -> Option<u32> {
     match keyval {
         0x61..=0x7A => Some(keyval - 0x20),
@@ -361,161 +361,302 @@ pub fn vk_of(keyval: u32) -> Option<u32> {
     }
 }
 
-/// Every other engine: a page keeps every key, and on a Mac the menu bar takes the
-/// browser's own chords before the page is asked; see the top of this file. nib's own
-/// Chromium on Windows hears them for every page at once instead; see `chromium`.
-#[cfg(any(not(windows), feature = "cef"))]
+/// A Mac's engine: a page keeps every key, and the menu bar takes the browser's own
+/// chords before the page is asked; see the top of this file.
+#[cfg(not(any(windows, feature = "cef")))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }
 
-/// The browser's chords on nib's own Chromium, on Windows.
+/// CEF, on Linux: the chords taken from the page by the window system; see `grabbed`.
+/// And, from the same connection to it, which page has the keyboard (keyboard.rs).
+#[cfg(feature = "cef")]
+pub use grabbed::{focus_in, listen, x11_window};
+
+/// The browser's chords in a web tab's page on CEF, on Linux.
 ///
 /// Chromium keeps Ctrl+T, Ctrl+W, Ctrl+Tab and the rest from a page before the page is
 /// asked - they are its reserved accelerators - and the runtime then swallows the command
-/// they stand for, since the Chrome window they belong to is not there. So they never
-/// reached the page, the app, or anything: pressed with the keyboard in a web tab they did
-/// nothing at all. And the runtime offers no event for a key, as `WebView2` does.
+/// they stand for, since the Chrome window they belong to is not there. So pressed with
+/// the keyboard in a web tab they reached nothing at all, and the runtime offers no event
+/// for a key, as `WebView2` does.
 ///
-/// Every window of the engine's browsers is on the app's own thread, so the keys a page
-/// is sent pass through that thread's message queue first, and a hook on the thread sees
-/// each one as it is taken off the queue: the same moment `WebView2`'s event is raised,
-/// before Chromium has read it. A key is the browser's by `meaning`, the one rule both
-/// engines are held to, and only while the keyboard is in one of the web tabs' pages - the
-/// app's own page answers its keys itself. Such a key is taken off the queue, the
+/// Every CEF browser on Linux is an X11 window inside the app's own (under `XWayland` in
+/// a Wayland session), and X11 lets a client take a key combination on a window before
+/// whoever has the keyboard in it: a passive grab. So each web tab's browser window has
+/// every chord `meaning` and `reloading` say is the browser's grabbed on it, from a
+/// connection of this crate's own: pressed while the keyboard is in that page, the chord
+/// comes here and never to the page - the same moment `WebView2`'s event is raised - the
 /// keyboard goes back to the app's page, and the window is told the key, as on `WebView2`.
-#[cfg(all(windows, feature = "cef"))]
-pub mod chromium {
-    use std::sync::{Mutex, OnceLock, PoisonError};
+/// A modifier let go of while the grab lasts is told as well, which is the release that
+/// chooses in Ctrl+Tab. The app's own page is a browser beside the tabs' and not inside
+/// them, so its keys are never taken.
+///
+/// Nothing else is taken, and the page keeps every key that is not a chord, Alt alone
+/// included: a page cannot tell the window that Alt is held here, so the tabs' numbers
+/// show only while the app's own page has the keyboard. F11 is taken even while a video
+/// in the page holds the screen, which `WebView2` gives back; Escape leaves it there.
+#[cfg(feature = "cef")]
+mod grabbed {
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 
     use tauri::{AppHandle, Emitter, Manager};
-    use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-    use windows::Win32::System::Threading::GetCurrentThreadId;
-    use windows::Win32::UI::Input::KeyboardAndMouse::{
-        GetFocus, GetKeyState, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT,
-    };
-    use windows::Win32::UI::WindowsAndMessaging::{
-        CallNextHookEx, IsChild, SetWindowsHookExW, HC_ACTION, WH_KEYBOARD,
-    };
+    use x11rb::connection::Connection as _;
+    use x11rb::protocol::xproto::{ConnectionExt as _, GrabMode, Keycode, Keysym, ModMask};
+    use x11rb::protocol::Event;
+    use x11rb::rust_connection::RustConnection;
 
-    use super::{meaning, told, Held, PRESSED};
+    use super::{meaning, reloading, vk_of, Held, Pressed, PRESSED};
 
-    /// The app, for the hook to tell the window with.
-    static APP: OnceLock<AppHandle> = OnceLock::new();
+    /// The keys a chord is made with, as X11 names them: T, W, N and R, Tab, Page Up and
+    /// Page Down, the digits on the top row, F5, F6 and F11.
+    const KEYS: [Keysym; 20] = [
+        0x74, 0x77, 0x6E, 0x72, 0xFF09, 0xFF55, 0xFF56, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36,
+        0x37, 0x38, 0x39, 0xFFC2, 0xFFC3, 0xFFC8,
+    ];
 
-    /// Each web tab's page: its webview's label, the window its browser draws in, and the
-    /// label of the app window it is in.
-    static PAGES: Mutex<Vec<(String, isize, String)>> = Mutex::new(Vec::new());
+    /// The modifiers a grab must be made under as well as its own, since X11 matches a
+    /// grab only with exactly its modifiers down: Caps Lock and Num Lock, either or both.
+    const LOCKS: [u16; 4] = [0, 0x02, 0x10, 0x12];
 
-    /// Starts hearing keys on this thread, once. On the app's own thread, which every
-    /// browser window of the engine is on.
-    #[allow(
-        unsafe_code,
-        reason = "a thread's keys are heard with a Win32 hook, which only the Win32 API installs"
-    )]
-    pub fn start(app: &AppHandle) {
-        if APP.set(app.clone()).is_err() {
-            return;
-        }
-        // Safe: a hook on this thread alone, with a procedure that lives for the program;
-        // it is never removed, and the thread's own end removes it.
-        unsafe {
-            let _ = SetWindowsHookExW(WH_KEYBOARD, Some(heard), None, GetCurrentThreadId());
+    /// What a chord is held with, from X11's modifier mask: Shift, Control and Mod1 (Alt).
+    fn held_by(state: u16) -> Held {
+        Held {
+            shift: state & 0x01 != 0,
+            ctrl: state & 0x04 != 0,
+            alt: state & 0x08 != 0,
         }
     }
 
-    /// A web tab's page, by its webview's label and the window its browser draws in.
-    pub fn page(label: &str, window: isize, holder: &str) {
-        let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
-        pages.retain(|(one, _, _)| one != label);
-        pages.push((label.to_string(), window, holder.to_string()));
+    /// X11's modifier mask for `held`.
+    fn mask_of(held: Held) -> u16 {
+        u16::from(held.shift) | (u16::from(held.ctrl) << 2) | (u16::from(held.alt) << 3)
     }
 
-    /// And the page gone.
-    pub fn page_closed(label: &str) {
-        PAGES
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .retain(|(one, _, _)| one != label);
-    }
-
-    /// The app window holding the web tab that has the keyboard, if one has it.
-    #[allow(
-        unsafe_code,
-        reason = "which window has the keyboard is Win32's to say"
-    )]
-    fn typing_in() -> Option<String> {
-        // Safe: reads which window of this thread has the keyboard, and whether it is
-        // inside another; neither takes anything.
-        let focus = unsafe { GetFocus() };
-        if focus.is_invalid() {
-            return None;
-        }
-        let pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
-        pages.iter().find_map(|(_, page, holder)| {
-            let page = HWND(*page as *mut core::ffi::c_void);
-            let inside = page == focus || unsafe { IsChild(page, focus).as_bool() };
-            inside.then(|| holder.clone())
-        })
-    }
-
-    #[allow(
-        unsafe_code,
-        reason = "the hook's own procedure, called by Win32 with the key's words"
-    )]
-    unsafe extern "system" fn heard(code: i32, key: WPARAM, flags: LPARAM) -> LRESULT {
-        // Only a key being taken off the queue: a look at the queue that leaves it there is
-        // the same key again.
-        if code == i32::try_from(HC_ACTION).unwrap_or(0) {
-            if let Some(taken) = chord(key, flags) {
-                if taken {
-                    return LRESULT(1);
+    /// Every chord the page may not have, as a key and the modifiers held with it: what
+    /// `meaning` and `reloading` say is the browser's, and nothing else.
+    pub(super) fn chords() -> Vec<(Keysym, u16)> {
+        let mut every = Vec::new();
+        for key in KEYS {
+            let Some(vk) = vk_of(key) else { continue };
+            for state in 0..8u16 {
+                let held = held_by((state & 1) | ((state & 2) << 1) | ((state & 4) << 1));
+                if meaning(vk, held, true, false).is_some() || reloading(vk, held).is_some() {
+                    every.push((key, mask_of(held)));
                 }
             }
         }
-        // Safe: hands the key on to whatever else is hooked, as every hook must.
-        unsafe { CallNextHookEx(None, code, key, flags) }
+        every
     }
 
-    /// What a key means here: `None` for a key that is the page's, and otherwise whether
-    /// it is taken from the page (a chord going down) or only told (a modifier let go).
-    #[allow(unsafe_code, reason = "which modifiers are down is Win32's to say")]
-    fn chord(key: WPARAM, flags: LPARAM) -> Option<bool> {
-        let holder = typing_in()?;
-        let app = APP.get()?;
-        let vk = u32::try_from(key.0).ok()?;
-        // Bit 31 of a key message's flags is set as the key goes up, and bit 30 while it
-        // was already down.
-        let down = flags.0 & (1 << 31) == 0;
-        let repeat = flags.0 & (1 << 30) != 0;
-        // Safe: reads the state this thread's input has for three keys.
-        let pressed_with = |key: VIRTUAL_KEY| unsafe { GetKeyState(i32::from(key.0)) < 0 };
-        let held = Held {
-            ctrl: pressed_with(VK_CONTROL),
-            shift: pressed_with(VK_SHIFT),
-            alt: pressed_with(VK_MENU),
-        };
-        let Some(pressed) = meaning(vk, held, down, repeat) else {
-            // Alt held on its own: the page keeps it, and the window is told.
-            let said = told(vk, held, down, repeat)?;
-            let (app, window) = (app.clone(), holder);
-            std::thread::spawn(move || {
-                let _ = app.emit_to(window.as_str(), PRESSED, said);
-            });
-            return Some(false);
-        };
+    /// One connection to the X server for every grab, and the keyboard's map with it.
+    struct Grabs {
+        x: RustConnection,
+        /// Each grabbed page's browser window, and the label of the app window it is in.
+        pages: Mutex<HashMap<u32, String>>,
+        /// Which keysym each keycode is without modifiers, from the server's own map.
+        map: Mutex<Map>,
+    }
 
-        // Told from a thread of its own, since the hook runs in the middle of the app's
-        // own thread taking a message, where a question to a window waits for itself.
-        let (app, window) = (app.clone(), holder);
-        std::thread::spawn(move || {
-            if down && !pressed.keeps_page() {
-                if let Some(ours) = app.get_webview(&window) {
+    /// The server's keyboard map, as far as a grab needs it.
+    #[derive(Default)]
+    struct Map {
+        first: Keycode,
+        per: usize,
+        syms: Vec<Keysym>,
+    }
+
+    impl Map {
+        fn keysym(&self, code: Keycode) -> Option<Keysym> {
+            let at = usize::from(code.checked_sub(self.first)?) * self.per;
+            self.syms.get(at).copied()
+        }
+
+        fn keycodes(&self, sym: Keysym) -> Vec<Keycode> {
+            (0..self.syms.len() / self.per.max(1))
+                .filter(|code| self.syms.get(code * self.per) == Some(&sym))
+                .filter_map(|code| Keycode::try_from(code).ok()?.checked_add(self.first))
+                .collect()
+        }
+    }
+
+    static GRABS: OnceLock<Option<Arc<Grabs>>> = OnceLock::new();
+
+    impl Grabs {
+        /// The server's keyboard map read again: at the start, and when it changes.
+        fn read_map(&self) {
+            let setup = self.x.setup();
+            let (first, last) = (setup.min_keycode, setup.max_keycode);
+            let count = last.saturating_sub(first).saturating_add(1);
+            let read = self
+                .x
+                .get_keyboard_mapping(first, count)
+                .ok()
+                .and_then(|cookie| cookie.reply().ok());
+            if let Some(read) = read {
+                *self.map.lock().unwrap_or_else(PoisonError::into_inner) = Map {
+                    first,
+                    per: usize::from(read.keysyms_per_keycode),
+                    syms: read.keysyms,
+                };
+            }
+        }
+
+        /// Every chord grabbed on `page`'s browser window. A window that has gone already
+        /// is an error the server sends back as an event, read and dropped below.
+        fn grab(&self, page: u32) {
+            let map = self.map.lock().unwrap_or_else(PoisonError::into_inner);
+            for (sym, mask) in chords() {
+                for code in map.keycodes(sym) {
+                    for lock in LOCKS {
+                        let _ = self.x.grab_key(
+                            false,
+                            page,
+                            ModMask::from(mask | lock),
+                            code,
+                            GrabMode::ASYNC,
+                            GrabMode::ASYNC,
+                        );
+                    }
+                }
+            }
+            drop(map);
+            let _ = self.x.flush();
+        }
+
+        /// What the server says, for as long as it says anything: a chord pressed in a
+        /// page, a modifier let go of while the chord holds the keyboard, and a new map.
+        fn hear(&self, app: &AppHandle) {
+            while let Ok(event) = self.x.wait_for_event() {
+                let (window, code, state, down) = match event {
+                    Event::KeyPress(key) => (key.event, key.detail, u16::from(key.state), true),
+                    Event::KeyRelease(key) => (key.event, key.detail, u16::from(key.state), false),
+                    Event::MappingNotify(_) => {
+                        self.read_map();
+                        let pages: Vec<u32> = self
+                            .pages
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner)
+                            .keys()
+                            .copied()
+                            .collect();
+                        for page in pages {
+                            self.grab(page);
+                        }
+                        continue;
+                    }
+                    _ => continue,
+                };
+                let holder = self
+                    .pages
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .get(&window)
+                    .cloned();
+                let sym = self
+                    .map
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .keysym(code);
+                let (Some(holder), Some(vk)) = (holder, sym.and_then(vk_of)) else {
+                    continue;
+                };
+                let held = held_by(state);
+                let said = if down {
+                    meaning(vk, held, true, false).or_else(|| reloading(vk, held))
+                } else {
+                    meaning(vk, held, false, false)
+                };
+                if let Some(said) = said {
+                    told(app, holder, said);
+                }
+            }
+        }
+    }
+
+    /// The window told the key, and the keyboard handed back to its own page for a chord
+    /// about the browser; on the app's own thread, where a webview is given the keyboard.
+    fn told(app: &AppHandle, window: String, said: Pressed) {
+        let telling = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            if said.down && !said.keeps_page() {
+                if let Some(ours) = telling.get_webview(&window) {
                     crate::placement::keyboard_to(&ours);
                 }
             }
-            let _ = app.emit_to(window.as_str(), PRESSED, pressed);
+            let _ = telling.emit_to(window.as_str(), PRESSED, said);
         });
-        Some(down)
+    }
+
+    /// The connection, made the first time a page asks: `None` where there is no X server
+    /// to reach, and then no page has its chords taken.
+    fn grabs(app: &AppHandle) -> Option<Arc<Grabs>> {
+        GRABS
+            .get_or_init(|| {
+                let (x, _) = x11rb::connect(None)
+                    .map_err(|error| eprintln!("web keys: no X server to take chords on: {error}"))
+                    .ok()?;
+                let grabs = Arc::new(Grabs {
+                    x,
+                    pages: Mutex::new(HashMap::new()),
+                    map: Mutex::new(Map::default()),
+                });
+                grabs.read_map();
+                let (hearing, app) = (grabs.clone(), app.clone());
+                std::thread::Builder::new()
+                    .name("web keys".into())
+                    .spawn(move || hearing.hear(&app))
+                    .ok()?;
+                Some(grabs)
+            })
+            .clone()
+    }
+
+    /// A page's browser window, as the X server knows it; `None` before CEF has made it.
+    pub fn x11_window(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
+        use cef::{ImplBrowser as _, ImplBrowserHost as _};
+
+        webview
+            .downcast_ref::<tauri_runtime_cef::Webview>()
+            .and_then(|view| view.browser().host())
+            .map(|host| host.window_handle())
+            .and_then(|handle| u32::try_from(handle).ok())
+            .filter(|handle| *handle != 0)
+    }
+
+    /// Which of `pages` - browser windows - has the keyboard, or holds the window that has
+    /// it, as the X server says: the window with the input focus, and its parents up to the
+    /// root. `None` where no X server was reached.
+    pub fn focus_in(pages: &[u32]) -> Option<u32> {
+        let grabs = GRABS.get()?.as_ref()?;
+        let mut at = grabs.x.get_input_focus().ok()?.reply().ok()?.focus;
+        for _ in 0..16 {
+            if pages.contains(&at) {
+                return Some(at);
+            }
+            let tree = grabs.x.query_tree(at).ok()?.reply().ok()?;
+            if tree.parent == 0 || tree.parent == tree.root {
+                return None;
+            }
+            at = tree.parent;
+        }
+        None
+    }
+
+    /// Starts taking the browser's chords on one page. Called on the window's thread,
+    /// once, as the page is built; `window` is the label of the window it is in, which is
+    /// also the label of that window's own page.
+    pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
+        let Some(page) = x11_window(webview) else {
+            return;
+        };
+        let Some(grabs) = grabs(&app) else { return };
+        grabs
+            .pages
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(page, window);
+        grabs.grab(page);
     }
 }
 

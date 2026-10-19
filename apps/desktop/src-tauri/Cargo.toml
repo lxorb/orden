@@ -37,8 +37,7 @@ missing_docs = "warn"
 # not handed away from somebody typing in a page (src/presence.rs). And the shape a
 # web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
 # window's top edge strip, shown only while that edge resizes the window
-# (src/top_edge.rs). And on Linux, the compositor's token handed to GTK's Wayland
-# display (src/linux.rs). None of
+# (src/top_edge.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -383,6 +382,12 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 # from linux/Cargo.toml, on CEF; this table is what that manifest is written from.
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
+# The X server, from a connection of the crate's own: the browser's chords taken from a
+# web tab's page before the page has them, and which page has the keyboard. Every CEF
+# browser is an X11 window, and Chromium keeps the chords from the page and swallows
+# them. Pure Rust, and in Linux's lock file already, through the runtime's windowing.
+# See web_keys.rs and keyboard.rs.
+x11rb = { version = "0.13", default-features = false }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open

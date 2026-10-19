@@ -559,122 +559,6 @@ mod native {
 /// The same on nib's own Chromium on Windows, through each browser's host, which is CEF's
 /// own way to give a browser the keyboard. There the app's own page is a browser like any
 /// other and nothing hands it the keyboard as the window comes back, so this does.
-#[cfg(all(windows, feature = "cef"))]
-mod native {
-    use std::sync::{Mutex, PoisonError};
-
-    use cef::{ImplBrowser as _, ImplBrowserHost as _};
-    use tauri::{AppHandle, Webview};
-    use tauri_runtime_cef::WebviewCefExt as _;
-
-    pub use super::watching::in_front;
-
-    /// A browser the keyboard can be handed to: a reader's page, or a window's own.
-    struct Page {
-        label: String,
-        window: String,
-        own: bool,
-        host: cef::BrowserHost,
-    }
-
-    static PAGES: Mutex<Vec<Page>> = Mutex::new(Vec::new());
-
-    fn pages<T>(look: impl FnOnce(&mut Vec<Page>) -> T) -> T {
-        look(&mut PAGES.lock().unwrap_or_else(PoisonError::into_inner))
-    }
-
-    fn keep_host(page: Page) {
-        pages(|all| {
-            all.retain(|one| one.label != page.label);
-            all.push(page);
-        });
-    }
-
-    /// Nothing to hear on the runtime's own webview; see `chromium_page`.
-    pub fn page(_platform: &tauri::webview::PlatformWebview, _label: &str, _window: &str) {}
-
-    /// A reader's page, by its browser's host, as its browser is found.
-    pub fn chromium_page(label: &str, window: &str, host: cef::BrowserHost) {
-        keep_host(Page {
-            label: label.to_string(),
-            window: window.to_string(),
-            own: false,
-            host,
-        });
-    }
-
-    pub fn let_go_of(label: &str) {
-        pages(|all| all.retain(|one| one.label != label));
-    }
-
-    /// Which of this window's pages has the keyboard now.
-    pub fn holding(window: &str) -> Option<String> {
-        pages(|all| {
-            all.iter()
-                .find(|one| {
-                    !one.own
-                        && one.window == window
-                        && super::watching::keyboard_in(one.host.window_handle().0 as isize)
-                })
-                .map(|one| one.label.clone())
-        })
-    }
-
-    fn focus(host: Option<cef::BrowserHost>) -> bool {
-        host.is_some_and(|host| {
-            host.set_focus(1);
-            true
-        })
-    }
-
-    pub fn take_now(label: &str) -> bool {
-        focus(pages(|all| {
-            all.iter()
-                .find(|one| !one.own && one.label == label)
-                .map(|one| one.host.clone())
-        }))
-    }
-
-    pub fn take(_app: &AppHandle, label: &str) -> bool {
-        take_now(label)
-    }
-
-    pub fn take_own(window: &str) {
-        focus(pages(|all| {
-            all.iter()
-                .find(|one| one.own && one.window == window)
-                .map(|one| one.host.clone())
-        }));
-    }
-
-    pub fn owns(window: &str) -> bool {
-        pages(|all| all.iter().any(|one| one.own && one.window == window))
-    }
-
-    pub fn window_gone(window: &str) {
-        pages(|all| all.retain(|one| !(one.own && one.window == window)));
-    }
-
-    /// Follows the window, and keeps its own page's host to hand the keyboard to.
-    pub fn watch(webview: &Webview) {
-        super::watching::watch(webview);
-        let label = webview.window().label().to_string();
-        let own = webview.label().to_string();
-        let _ = webview.with_cef_webview(move |page| {
-            if let Some(host) = page.browser().host() {
-                keep_host(Page {
-                    label: own,
-                    window: label,
-                    own: true,
-                    host,
-                });
-            }
-        });
-    }
-}
-
-/// A Mac, asked which page is the window's first responder or inside it. The keyboard is
-/// handed over through the runtime, which makes the page the first responder.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod native {
     use std::cell::RefCell;
@@ -747,36 +631,45 @@ mod native {
     pub fn watch(_webview: &Webview) {}
 }
 
-/// Linux, asked which page is its window's focus widget.
-#[cfg(all(target_os = "linux", not(feature = "cef")))]
+/// CEF, on Linux, asked which page's browser window the X server says has the keyboard,
+/// or holds the window that has it.
+#[cfg(feature = "cef")]
 mod native {
-    use std::cell::RefCell;
     use std::collections::HashMap;
+    use std::sync::{Mutex, PoisonError};
 
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Manager, Webview, Window};
-    use webkit2gtk::glib::prelude::ObjectExt as _;
 
-    thread_local! {
-        static PAGES: RefCell<HashMap<String, (String, webkit2gtk::WebView)>> =
-            RefCell::new(HashMap::new());
-    }
+    /// Each reader's page: the window it is in, and its browser's X11 window.
+    static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
     pub fn page(platform: &PlatformWebview, label: &str, window: &str) {
-        let view = platform.inner();
-        PAGES.with_borrow_mut(|all| all.insert(label.to_string(), (window.to_string(), view)));
+        let Some(x11) = crate::web_keys::x11_window(platform) else {
+            return;
+        };
+        let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
+        pages.retain(|(one, _, _)| one != label);
+        pages.push((label.to_string(), window.to_string(), x11));
     }
 
     pub fn let_go_of(label: &str) {
-        PAGES.with_borrow_mut(|all| all.remove(label));
+        PAGES
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .retain(|(one, _, _)| one != label);
     }
 
     pub fn holding(window: &str) -> Option<String> {
-        PAGES.with_borrow(|all| {
-            all.iter().find_map(|(label, (holder, view))| {
-                (holder == window && view.property::<bool>("is-focus")).then(|| label.clone())
-            })
-        })
+        let pages: HashMap<u32, String> = PAGES
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .filter(|(_, holder, _)| holder == window)
+            .map(|(label, _, x11)| (*x11, label.clone()))
+            .collect();
+        let found = crate::web_keys::focus_in(&pages.keys().copied().collect::<Vec<_>>())?;
+        pages.get(&found).cloned()
     }
 
     pub fn take(app: &AppHandle, label: &str) -> bool {
@@ -791,13 +684,9 @@ mod native {
     pub fn watch(_webview: &Webview) {}
 }
 
-/// Everywhere else - nib's own Chromium on a Mac, the BSDs - the record without the
-/// platform's answer to which page has the keyboard: a layer closing gives it back to the
-/// app's own page's element.
-#[cfg(not(any(
-    windows,
-    all(any(target_os = "macos", target_os = "linux"), not(feature = "cef"))
-)))]
+/// Everywhere else - the BSDs - the record without the platform's answer to which page has
+/// the keyboard: a layer closing gives it back to the app's own page's element.
+#[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
 mod native {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Manager, Webview, Window};
@@ -822,8 +711,6 @@ mod native {
     pub fn watch(_webview: &Webview) {}
 }
 
-#[cfg(all(windows, feature = "cef"))]
-pub use native::chromium_page;
 pub use native::page;
 
 #[cfg(test)]

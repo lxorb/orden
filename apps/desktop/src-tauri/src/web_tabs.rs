@@ -1011,7 +1011,7 @@ mod session {
         };
 
         let made = crate::engine::add_child(
-            &window,
+            window,
             builder,
             tauri::LogicalPosition::new(0.0, 0.0),
             tauri::LogicalSize::new(1.0, 1.0),
@@ -1503,24 +1503,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             tab.to_string(),
             view.window().label().to_string(),
         );
-        #[cfg(windows)]
-        {
-            use cef::{ImplBrowser as _, ImplBrowserHost as _};
-            use tauri_runtime_cef::WebviewCefExt as _;
-            let (keyed, label) = (holder.clone(), view.label().to_string());
-            let _ = view.with_cef_webview(move |page| {
-                if let Some(host) = page.browser().host() {
-                    crate::web_keys::chromium::page(
-                        &label,
-                        host.window_handle().0 as isize,
-                        &keyed,
-                    );
-                    // Where the keyboard goes back to as the window comes back; see
-                    // keyboard.rs.
-                    crate::keyboard::chromium_page(&label, &keyed, host);
-                }
-            });
-        }
         std::thread::spawn(move || {
             crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
             let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
@@ -2312,12 +2294,10 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
 
 /// What nib's own Chromium keeps about a page it speaks to, let go of as the page closes,
 /// so a tab opened again under the same label is a new page to it; see
-/// `engine/devtools.rs` and `web_keys.rs`.
+/// `engine/devtools.rs`.
 #[cfg(feature = "cef")]
 fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
-    #[cfg(windows)]
-    crate::web_keys::chromium::page_closed(label);
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been

@@ -800,10 +800,6 @@ fn hearing(handle: &tauri::AppHandle) {
     // What the window's own page may be given: the microphone the moment somebody
     // presses Record, and nothing else; see `hearing` in web_tabs.rs.
     web_tabs::hearing(handle);
-    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
-    // page and the app alike; see web_keys.rs.
-    #[cfg(all(windows, feature = "cef"))]
-    web_keys::chromium::start(handle);
     // The fingers on a precision touchpad, which a swipe waits for; see touchpad.rs.
     #[cfg(windows)]
     touchpad::start(handle);
