@@ -22,7 +22,7 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { owesLast, settleUp } from '../parting'
-import { nameOf, within } from '../space-paths'
+import { nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import { entryAt } from '../tree-edits'
@@ -470,7 +470,7 @@ export class Saving {
     note.written(path, nameOf(path), revision)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
-    if (note.path !== path) this.owed(note)
+    if (!samePath(note.path, path)) this.owed(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it

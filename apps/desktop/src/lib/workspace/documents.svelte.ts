@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { samePath } from '../space-paths'
 
 /** The name a note nobody has named carries. It is never on screen: such a note
  *  is called after its own first words instead, so a window of drafts is a window
@@ -346,7 +347,7 @@ export class NoteDoc {
    *  being told the path the write went to. Telling it that pointed the tab back at
    *  the file the move had just left. */
   written(path: string, name: string, revision: number) {
-    const moved = this.path !== path
+    const moved = !samePath(this.path, path)
     if (!moved) this.name = name
     this.dirty = moved || this.revision !== revision
     this.before = null
