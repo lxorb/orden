@@ -1274,6 +1274,7 @@ export const zhHans: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count}篇已归档笔记放在名为Archive的文件夹中',
   'The colours a note had are not kept': '笔记原有的颜色不会保留',
+  '{count} files could not be read, so they were left out': '{count}个文件无法读取，已略过',
   '{count} block references were written out as the words they pointed at':
     '{count}处块引用已写成其指向的文字',
   '{count} saved views are left out, and every row is in the table':

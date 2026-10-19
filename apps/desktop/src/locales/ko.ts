@@ -1287,6 +1287,8 @@ export const ko: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '보관된 {count}개 노트가 Archive 폴더에 있습니다',
   'The colours a note had are not kept': '노트에 있던 색은 보관되지 않습니다',
+  '{count} files could not be read, so they were left out':
+    '읽을 수 없는 파일 {count}개는 빠졌습니다',
   '{count} block references were written out as the words they pointed at':
     '{count}개 블록 참조가 가리키던 글로 풀어 써졌습니다',
   '{count} saved views are left out, and every row is in the table':

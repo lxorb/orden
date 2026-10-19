@@ -1308,6 +1308,10 @@ export const pa: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} ਸਾਂਭੀਆਂ ਨੋਟਾਂ Archive ਨਾਂ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹਨ',
   'The colours a note had are not kept': 'ਨੋਟ ਦੇ ਰੰਗ ਨਹੀਂ ਰੱਖੇ ਜਾਂਦੇ',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ, ਇਸ ਲਈ ਛੱਡ ਦਿੱਤੀਆਂ',
+    other: '{count} ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ, ਇਸ ਲਈ ਛੱਡ ਦਿੱਤੀਆਂ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ਬਲਾਕ ਹਵਾਲੇ ਉਨ੍ਹਾਂ ਸ਼ਬਦਾਂ ਵਜੋਂ ਲਿਖੇ ਗਏ ਜਿਨ੍ਹਾਂ ਵੱਲ ਉਹ ਇਸ਼ਾਰਾ ਕਰਦੇ ਸਨ',
   '{count} saved views are left out, and every row is in the table': {

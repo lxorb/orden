@@ -1302,6 +1302,10 @@ export const fa: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',
   'The colours a note had are not kept': 'رنگ‌هایی که یادداشت داشت نگه داشته نمی‌شوند',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} فایل خوانده نشد و کنار گذاشته شد',
+    other: '{count} فایل خوانده نشد و کنار گذاشته شد',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
   '{count} saved views are left out, and every row is in the table': {

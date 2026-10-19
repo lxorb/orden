@@ -1313,6 +1313,10 @@ export const sw: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'madokezo {count} yaliyowekwa kumbukumbu yapo kwenye folda inayoitwa Archive',
   'The colours a note had are not kept': 'Rangi ambazo dokezo lilikuwa nazo hazihifadhiwi',
+  '{count} files could not be read, so they were left out': {
+    one: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+    other: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+  },
   '{count} block references were written out as the words they pointed at':
     'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
   '{count} saved views are left out, and every row is in the table': {

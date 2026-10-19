@@ -1328,6 +1328,11 @@ export const ptPT: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} notas arquivadas estão numa pasta chamada Archive',
   'The colours a note had are not kept': 'As cores que uma nota tinha não ficam',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} ficheiros não puderam ser lidos e ficaram de fora',
+    one: '{count} ficheiro não pôde ser lido e ficou de fora',
+    other: '{count} ficheiros não puderam ser lidos e ficaram de fora',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} referências de bloco foram escritas como as palavras a que apontavam',
   '{count} saved views are left out, and every row is in the table': {

@@ -1291,6 +1291,8 @@ export const jv: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} cathetan arsip ana ing folder jenenge Archive',
   'The colours a note had are not kept': 'Warna sing didhuweni cathetan ora disimpen',
+  '{count} files could not be read, so they were left out':
+    '{count} berkas ora bisa diwaca, mula ora dilebokake',
   '{count} block references were written out as the words they pointed at':
     '{count} referensi blok ditulis minangka tembung sing dituding',
   '{count} saved views are left out, and every row is in the table':

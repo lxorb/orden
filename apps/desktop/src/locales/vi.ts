@@ -1287,6 +1287,8 @@ export const vi: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',
   'The colours a note had are not kept': 'Màu mà ghi chú từng có không được giữ',
+  '{count} files could not be read, so they were left out':
+    'Không đọc được {count} tệp nên đã bỏ qua',
   '{count} block references were written out as the words they pointed at':
     '{count} tham chiếu khối được viết ra thành chữ mà chúng trỏ tới',
   '{count} saved views are left out, and every row is in the table':

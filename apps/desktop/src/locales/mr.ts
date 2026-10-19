@@ -1300,6 +1300,10 @@ export const mr: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} संग्रहित नोंदी Archive नावाच्या फोल्डरमध्ये आहेत',
   'The colours a note had are not kept': 'नोंदीचे रंग ठेवले जात नाहीत',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} फायली वाचता आल्या नाहीत, म्हणून वगळल्या',
+    other: '{count} फायली वाचता आल्या नाहीत, म्हणून वगळल्या',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ ज्या शब्दांकडे निर्देश करत होते त्या शब्दांत लिहिले',
   '{count} saved views are left out, and every row is in the table': {

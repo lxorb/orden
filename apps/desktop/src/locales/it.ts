@@ -1332,6 +1332,11 @@ export const it: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} note archiviate sono in una cartella chiamata Archive',
   'The colours a note had are not kept': 'I colori di una nota non vengono mantenuti',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} file non si sono potuti leggere e sono stati lasciati fuori',
+    one: '{count} file non si è potuto leggere ed è stato lasciato fuori',
+    other: '{count} file non si sono potuti leggere e sono stati lasciati fuori',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} riferimenti a blocchi sono stati scritti come il testo a cui puntavano',
   '{count} saved views are left out, and every row is in the table': {

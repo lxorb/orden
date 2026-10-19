@@ -1316,6 +1316,10 @@ export const ta: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} காப்பகக் குறிப்புகள் Archive எனும் கோப்புறையில் உள்ளன',
   'The colours a note had are not kept': 'குறிப்புக்கு இருந்த நிறங்கள் வைக்கப்படவில்லை',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+    other: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
   '{count} saved views are left out, and every row is in the table': {

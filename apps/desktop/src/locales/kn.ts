@@ -1311,6 +1311,10 @@ export const kn: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು Archive ಫೋಲ್ಡರ್‌ನಲ್ಲಿವೆ',
   'The colours a note had are not kept': 'ಟಿಪ್ಪಣಿಗೆ ಇದ್ದ ಬಣ್ಣಗಳನ್ನು ಇಡಲಾಗುವುದಿಲ್ಲ',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+    other: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
   '{count} saved views are left out, and every row is in the table': {

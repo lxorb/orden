@@ -1302,6 +1302,10 @@ export const ur: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} محفوظ شدہ نوٹس Archive نامی فولڈر میں ہیں',
   'The colours a note had are not kept': 'نوٹ کے رنگ محفوظ نہیں رہتے',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} فائلیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں',
+    other: '{count} فائلیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} بلاک حوالے ان الفاظ کے طور پر لکھے گئے جن کی طرف وہ اشارہ کرتے تھے',
   '{count} saved views are left out, and every row is in the table': {

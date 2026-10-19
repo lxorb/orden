@@ -1301,6 +1301,10 @@ export const hi: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} संग्रहित नोट Archive नाम के फ़ोल्डर में हैं',
   'The colours a note had are not kept': 'नोट के रंग नहीं रखे जाते',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} फ़ाइल पढ़ी नहीं जा सकी, इसलिए छोड़ दी गई',
+    other: '{count} फ़ाइलें पढ़ी नहीं जा सकीं, इसलिए छोड़ दी गईं',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ उन शब्दों के रूप में लिखे गए जिन पर वे इशारा करते थे',
   '{count} saved views are left out, and every row is in the table': {

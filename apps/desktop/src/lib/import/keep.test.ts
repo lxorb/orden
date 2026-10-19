@@ -115,3 +115,105 @@ describe('a Google Keep export', () => {
     expect(plan.files).toHaveLength(0)
   })
 })
+
+describe('what a real Takeout does', () => {
+  test('a list with no title is named after its first item, not its box', async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/1629964242424.json',
+        keepNote({ title: '', listContent: [{ text: 'Milk', isChecked: false }] }),
+      ),
+    ])
+
+    expect(plan.files[0]?.path).toBe('Milk.md')
+  })
+
+  test('a note that is only a picture is not named after the picture', async () => {
+    const plan = await readKeep([
+      file('Keep/Shot.json', keepNote({ title: '', attachments: [{ filePath: 'a.png' }] })),
+      file('Keep/a.png', 'PNG'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toContain('Untitled.md')
+  })
+
+  test('a picture the JSON calls .jpeg is found as the .jpg Takeout wrote', async () => {
+    const plan = await readKeep([
+      file(
+        'Takeout/Keep/good place.json',
+        keepNote({
+          title: 'good place',
+          attachments: [{ filePath: '1629964333125.746683646.jpeg' }],
+        }),
+      ),
+      file('Takeout/Keep/1629964333125.746683646.jpg', 'JPEG'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toContain('assets/1629964333125.746683646.jpg')
+    expect(noteAt(plan, 'good place.md')).toContain('![](assets/1629964333125.746683646.jpg)')
+    expect(plan.lost).toEqual([])
+  })
+
+  test('an attachment that is not in the export is counted rather than dropped quietly', async () => {
+    const plan = await readKeep([
+      file('Keep/Voice.json', keepNote({ title: 'Voice', attachments: [{ filePath: 'a.3gp' }] })),
+    ])
+
+    expect(plan.lost.find((one) => one.text.includes('missing'))?.values).toEqual({ count: 1 })
+  })
+
+  test('a note cut short is counted, while Takeout’s own JSON is not', async () => {
+    const plan = await readKeep([
+      file('Takeout/Keep/Cut.json', '{"title": "Cut sh'),
+      file('Takeout/Keep/settings.json', '{"version":2}'),
+      file('Takeout/Keep/Here.json', keepNote({ title: 'Here', textContent: 'line 1\r\nline 2' })),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toEqual(['Here.md'])
+    expect(plan.lost.find((one) => one.text.includes('could not be read'))?.values).toEqual({
+      count: 1,
+    })
+    expect(noteAt(plan, 'Here.md')).toContain('line 1\nline 2')
+  })
+
+  test('a picture two notes share is written once', async () => {
+    const plan = await readKeep([
+      file('Keep/A.json', keepNote({ title: 'A', attachments: [{ filePath: 'p.jpg' }] })),
+      file('Keep/B.json', keepNote({ title: 'B', attachments: [{ filePath: 'p.jpg' }] })),
+      file('Keep/p.jpg', 'JPEG'),
+    ])
+
+    expect(plan.files.filter((one) => one.kind === 'file')).toHaveLength(1)
+    expect(noteAt(plan, 'B.md')).toContain('![](assets/p.jpg)')
+  })
+
+  test('a file name a link cannot hold as written is encoded', async () => {
+    const plan = await readKeep([
+      file('Keep/A.json', keepNote({ title: 'A', attachments: [{ filePath: 'Shot (1).png' }] })),
+      file('Keep/Shot (1).png', 'PNG'),
+    ])
+
+    expect(noteAt(plan, 'A.md')).toContain('![](assets/Shot%20%281%29.png)')
+  })
+
+  test('a page shared into a note comes as a link, and one the words hold is not repeated', async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Links.json',
+        keepNote({
+          title: 'Links',
+          textContent: 'See https://example.com/a',
+          annotations: [
+            { source: 'WEBLINK', title: 'A', url: 'https://example.com/a' },
+            { source: 'WEBLINK', title: 'Cloudflare [CDN]', url: 'https://www.cloudflare.com/' },
+            { source: 'WEBLINK', title: 'No address' },
+          ],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Links.md')
+    expect(text).toContain('- [Cloudflare \\[CDN\\]](<https://www.cloudflare.com/>)')
+    expect(text.match(/example\.com\/a/g)).toHaveLength(1)
+  })
+})

@@ -1302,6 +1302,10 @@ export const ps: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} ارشيف شوي يادښتونه په Archive نومي دوتنپوښ کې دي',
   'The colours a note had are not kept': 'هغه رنګونه چې يادښت لرله نه ساتل کېږي',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+    other: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
   '{count} saved views are left out, and every row is in the table': {

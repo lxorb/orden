@@ -1298,6 +1298,10 @@ export const gu: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',
   'The colours a note had are not kept': 'નોંધ પાસે જે રંગ હતા તે રખાતા નથી',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+    other: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
   '{count} saved views are left out, and every row is in the table': {

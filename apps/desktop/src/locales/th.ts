@@ -1281,6 +1281,8 @@ export const th: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',
   'The colours a note had are not kept': 'สีที่โน้ตมีจะไม่ถูกเก็บไว้',
+  '{count} files could not be read, so they were left out':
+    'อ่านไฟล์ {count} ไฟล์ไม่ได้ จึงไม่ได้นำเข้า',
   '{count} block references were written out as the words they pointed at':
     '{count} การอ้างบล็อกถูกเขียนเป็นข้อความที่มันชี้ไป',
   '{count} saved views are left out, and every row is in the table':

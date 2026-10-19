@@ -1306,6 +1306,10 @@ export const tr: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} arşivlenmiş not Archive adlı bir klasörde',
   'The colours a note had are not kept': 'Bir notun renkleri korunmaz',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+    other: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
   '{count} saved views are left out, and every row is in the table': {

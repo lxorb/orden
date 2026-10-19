@@ -1292,6 +1292,8 @@ export const my: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'သိမ်းထားသော မှတ်စု {count} သည် Archive ဖိုလ်ဒါတွင် ရှိသည်',
   'The colours a note had are not kept': 'မှတ်စုတွင်ရှိခဲ့သော အရောင်များ မထားပါ',
+  '{count} files could not be read, so they were left out':
+    'ဖိုင် {count} ခုကို ဖတ်၍မရသဖြင့် ချန်ထားခဲ့သည်',
   '{count} block references were written out as the words they pointed at':
     'ဘလောက်ရည်ညွှန်း {count} ကို ညွှန်ခဲ့သော စကားလုံးများအဖြစ် ရေးလိုက်သည်',
   '{count} saved views are left out, and every row is in the table':

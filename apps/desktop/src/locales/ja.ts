@@ -1294,6 +1294,8 @@ export const ja: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'アーカイブ済みの {count} 件は Archive フォルダーに入ります',
   'The colours a note had are not kept': 'ノートの色は引き継がれません',
+  '{count} files could not be read, so they were left out':
+    '読み込めなかったファイル {count} 件は省きました',
   '{count} block references were written out as the words they pointed at':
     '{count} 件のブロック参照は、参照先の文に置き換えました',
   '{count} saved views are left out, and every row is in the table':

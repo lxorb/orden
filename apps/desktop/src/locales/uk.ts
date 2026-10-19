@@ -1351,6 +1351,12 @@ export const uk: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'Архівних нотаток: {count}, вони в папці Archive',
   'The colours a note had are not kept': 'Кольори нотаток не зберігаються',
+  '{count} files could not be read, so they were left out': {
+    few: 'Не вдалося прочитати {count} файли, їх пропущено',
+    many: 'Не вдалося прочитати {count} файлів, їх пропущено',
+    one: 'Не вдалося прочитати {count} файл, його пропущено',
+    other: 'Не вдалося прочитати {count} файлу, їх пропущено',
+  },
   '{count} block references were written out as the words they pointed at':
     'Посилань на блоки: {count}, вони записані словами, на які вказували',
   '{count} saved views are left out, and every row is in the table': {

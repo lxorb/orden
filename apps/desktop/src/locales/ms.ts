@@ -1296,6 +1296,8 @@ export const ms: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} nota terarkib ada dalam folder bernama Archive',
   'The colours a note had are not kept': 'Warna yang ada pada nota tidak disimpan',
+  '{count} files could not be read, so they were left out':
+    '{count} fail tidak dapat dibaca, jadi ditinggalkan',
   '{count} block references were written out as the words they pointed at':
     '{count} rujukan blok ditulis sebagai perkataan yang dirujuknya',
   '{count} saved views are left out, and every row is in the table':

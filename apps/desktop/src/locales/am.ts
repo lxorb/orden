@@ -1287,6 +1287,10 @@ export const am: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',
   'The colours a note had are not kept': 'ማስታወሻው የነበሩት ቀለሞች አይቀመጡም',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ፋይል ሊነበብ ስላልቻለ ቀርቷል',
+    other: '{count} ፋይሎች ሊነበቡ ስላልቻሉ ቀርተዋል',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
   '{count} saved views are left out, and every row is in the table': {

@@ -1319,6 +1319,10 @@ export const fil: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'Nasa folder na Archive ang {count} naka-archive na tala',
   'The colours a note had are not kept': 'Hindi itinatago ang kulay na nasa tala',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} file ang hindi mabasa, kaya hindi isinama',
+    other: '{count} file ang hindi mabasa, kaya hindi isinama',
+  },
   '{count} block references were written out as the words they pointed at':
     'Isinulat ang {count} block reference bilang mga salitang tinutukoy nito',
   '{count} saved views are left out, and every row is in the table': {

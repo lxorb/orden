@@ -1314,6 +1314,10 @@ export const ha: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'bayanan kula {count} da aka adana suna cikin babban fayil mai suna Archive',
   'The colours a note had are not kept': 'Ba a riƙe launukan da bayanin kula yake da su',
+  '{count} files could not be read, so they were left out': {
+    one: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+    other: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+  },
   '{count} block references were written out as the words they pointed at':
     'an rubuta nassoshin sassa {count} a matsayin kalmomin da suka nuna',
   '{count} saved views are left out, and every row is in the table': {

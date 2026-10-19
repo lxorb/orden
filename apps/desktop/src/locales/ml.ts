@@ -1317,6 +1317,10 @@ export const ml: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     '{count} ആർക്കൈവ് കുറിപ്പുകൾ Archive ഫോൾഡറിലാണ്',
   'The colours a note had are not kept': 'കുറിപ്പിനുണ്ടായിരുന്ന നിറങ്ങൾ സൂക്ഷിക്കില്ല',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+    other: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
   '{count} saved views are left out, and every row is in the table': {

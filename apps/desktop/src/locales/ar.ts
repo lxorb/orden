@@ -1367,6 +1367,14 @@ export const ar: Dictionary = {
   '{count} archived notes are in a folder called Archive':
     'هناك {count} ملاحظة مؤرشفة في مجلد باسم Archive',
   'The colours a note had are not kept': 'ألوان الملاحظة لا تُحفظ',
+  '{count} files could not be read, so they were left out': {
+    few: 'تعذّرت قراءة {count} ملفات، فتُركت',
+    many: 'تعذّرت قراءة {count} ملفًا، فتُركت',
+    one: 'تعذّرت قراءة {count} ملف، فتُرك',
+    other: 'تعذّرت قراءة {count} ملف، فتُركت',
+    two: 'تعذّرت قراءة {count} ملفين، فتُركا',
+    zero: 'تعذّرت قراءة {count} ملفات، فتُركت',
+  },
   '{count} block references were written out as the words they pointed at':
     'كُتب {count} مرجع كتلة كالكلمات التي تشير إليها',
   '{count} saved views are left out, and every row is in the table': {
