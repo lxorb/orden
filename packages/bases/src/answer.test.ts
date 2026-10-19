@@ -130,6 +130,33 @@ describe('a view of notes', () => {
   })
 })
 
+describe('the limit', () => {
+  const limited = readBase(`views:
+  - type: kanban
+    name: Board
+    limit: 1
+    groupBy:
+      property: note.status
+      direction: ASC
+    sort:
+      - property: pages
+        direction: DESC
+    nib:
+      order:
+        Doing: [Books/Beloved.md]
+`)
+
+  test('cuts each group after its manual order, so no column loses all its cards', () => {
+    const result = answer(limited, 'Board', books, context)
+    expect(groups(result)).toEqual([
+      ['Doing', ['Beloved']],
+      ['Done', ['Ulysses']],
+      ['To do', ['Emma']],
+    ])
+    expect(result.total).toBe(3)
+  })
+})
+
 describe('groups', () => {
   const rows = [
     noteRow('a.md', 'kind: b\nsize: 2'),
