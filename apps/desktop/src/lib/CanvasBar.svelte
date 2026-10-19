@@ -517,6 +517,14 @@
     align-items: center;
     gap: var(--space-2);
     animation: rise var(--dur-stage) var(--ease-out);
+    /* The strip is the pane's width and the bar and its panel are not: what is either
+       side of them is the plane, and takes the pointer - a stroke drawn there, and a
+       press there that closes the panel (#382). */
+    pointer-events: none;
+  }
+
+  .cluster > * {
+    pointer-events: auto;
   }
 
   .cluster.top {

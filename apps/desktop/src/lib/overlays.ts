@@ -110,7 +110,7 @@ class Overlays {
     for (let at = this.stack.length - 1; at >= 0; at--) {
       const one = this.stack[at]
       if (!one?.holds) return
-      if (target && one.holds().some((held) => held?.contains(target))) return
+      if (target && one.holds().some((held) => holds(held, target))) return
       this.shutBy.push(one.holds)
       this.shut(one)
     }
@@ -163,6 +163,27 @@ class Overlays {
     top.close()
     return true
   }
+}
+
+/** Whether a press on `target` is in what `held` draws. Not the bare box round a popup and
+ *  its button, where nothing is drawn: the canvas's pens and their panel sit in a strip
+ *  the width of the pane, and a press beside the panel landed in it and left it open
+ *  (#382). */
+function holds(held: Pick<Element, 'contains'> | null | undefined, target: Node): boolean {
+  if (!held?.contains(target)) return false
+  return held !== target || typeof getComputedStyle !== 'function' || !bare(target)
+}
+
+/** An element that draws nothing of its own: no background and no border. */
+function bare(node: Node): boolean {
+  if (typeof Element === 'undefined' || !(node instanceof Element)) return false
+  const style = getComputedStyle(node)
+  const none = (value: string) => value === 'none' || value === ''
+  return (
+    style.backgroundColor === 'rgba(0, 0, 0, 0)' &&
+    none(style.backgroundImage) &&
+    none(style.borderTopStyle)
+  )
 }
 
 /** What a press landed on, where it is a node at all. */
