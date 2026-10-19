@@ -20,6 +20,8 @@ portrait one at 1.77, one at 1, one at 1.75, one at 2):
     and come back whole after;
   - and the window's own page has to still be drawn after all of it: the tab strip has
     its ink (#387's window flashing between light and dark);
+  - the update notice put up at the foot of the pane has to float over the page, which
+    keeps its hole and shows round the card, and come back whole after (#512);
   - and once, the window made smaller: the page follows;
   - and on the last screen, the page clicked into so it holds the keyboard, and
     Ctrl+R pressed three times and F5 once, each a load of the page (#344: the key
@@ -390,6 +392,45 @@ def look(output, moved=True, tag=""):
             fail(f"{output}: the page did not come back whole after {name} ({back})")
         if strip_area and inked and ink(after, strip_area) < inked * 0.3:
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
+
+    # A notice at the foot of the pane - the update notice, which the toasts share a row
+    # with - floats over the page, which is cut round it and keeps its hole: it used to
+    # take a band of the pane under the page of its own, the page ended above it (#512).
+    run("window.nibApp.updates.ready = '9.9.9'")
+    card = None
+    for _ in range(12):
+        time.sleep(0.25)
+        card = box("[data-notices] > .notice")
+        if isinstance(card, dict) and card.get("height", 0) > 0:
+            break
+    if not isinstance(card, dict):
+        fail(f"{output}: the update notice did not come up")
+    else:
+        # It flies in over a fifth of a second; the page is asked again once it lands.
+        time.sleep(1.0)
+        card = box("[data-notices] > .notice")
+        under_card = hole()
+        shot = shoot(output, f"{tag}notice", scale)
+        covered = share(shot, on_screen(card, 4))
+        under = share(shot, want)
+        print(
+            f"{output}: the update notice at {card}: the page is over {covered:.0%} of it,"
+            f" shows in {under:.0%} of its hole, and the hole is {under_card}"
+        )
+        if under_card and abs(under_card["height"] - pane["height"]) > 1:
+            fail(
+                f"{output}: the notice took a band of the pane: the page's hole went from"
+                f" {pane['height']:.0f} to {under_card['height']:.0f} tall"
+            )
+        if covered > 0.05:
+            fail(f"{output}: the page is drawn over the update notice ({covered:.0%})")
+        if under < 0.5:
+            fail(f"{output}: under the update notice the page is gone ({under:.0%} of its hole)")
+    run("window.nibApp.updates.dismiss()")
+    time.sleep(1.0)
+    back = bounding(shoot(output, f"{tag}after-notice", scale))
+    if not near(back, want, scale):
+        fail(f"{output}: the page did not come back whole after the update notice ({back})")
 
 
 def loads():
