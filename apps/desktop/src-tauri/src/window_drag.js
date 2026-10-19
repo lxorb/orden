@@ -8,7 +8,16 @@
   // Tauri's own rule for a drag region (its drag.js), so the same presses move the window.
   const ATTR = 'data-tauri-drag-region'
   const CLICKABLE = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'])
-  const ROLES = new Set(['button', 'link', 'menuitem', 'tab', 'checkbox', 'radio', 'switch', 'option'])
+  const ROLES = new Set([
+    'button',
+    'link',
+    'menuitem',
+    'tab',
+    'checkbox',
+    'radio',
+    'switch',
+    'option',
+  ])
   function clickable(el) {
     return (
       CLICKABLE.has(el.tagName) ||
@@ -70,8 +79,7 @@
   // Whether the window fills the screen, where it has no edges to take.
   let filling = false
   function measure() {
-    filling =
-      window.outerWidth >= screen.availWidth && window.outerHeight >= screen.availHeight
+    filling = window.outerWidth >= screen.availWidth && window.outerHeight >= screen.availHeight
   }
   window.addEventListener('resize', measure)
   measure()

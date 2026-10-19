@@ -29,7 +29,7 @@ pub const SCRIPT: &str = include_str!("window_drag.js");
 /// on it is held: asked by `SCRIPT` the moment the press lands. A resize is refused
 /// where the window is maximised or fills the screen, and nothing happens where there
 /// is no X11 window to move (any platform but Linux, which moves its own).
-#[tauri::command]
+#[tauri::command(async)]
 pub fn window_move_resize(webview: tauri::Webview, edge: Option<String>) -> Result<(), String> {
     let direction = match edge.as_deref() {
         None => MOVE,

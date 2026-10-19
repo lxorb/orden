@@ -3,7 +3,8 @@
   "ignore": [
     "apps/desktop/src-tauri/src/web_state/scripts/*.js",
     "apps/desktop/src-tauri/src/web_tabs/*.js",
-    "apps/desktop/src-tauri/src/web_swipe.js"
+    "apps/desktop/src-tauri/src/web_swipe.js",
+    "apps/desktop/src-tauri/src/window_drag.js"
   ],
   "workspaces": {
     ".": {
