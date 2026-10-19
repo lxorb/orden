@@ -84,7 +84,10 @@ pub fn window_move_resize(
 #[tauri::command(async)]
 #[cfg_attr(
     not(feature = "cef"),
-    allow(clippy::unnecessary_wraps, reason = "a command's answer, the same on every engine")
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "a command's answer, the same on every engine"
+    )
 )]
 pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
     #[cfg(feature = "cef")]
