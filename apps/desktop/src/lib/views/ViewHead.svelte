@@ -307,6 +307,7 @@
         run: () =>
           void kit
             .changed((b) => {
+              const rows = b.views[live.at]?.nib.rows
               const fresh: Base = {
                 ...b,
                 views: [
@@ -317,7 +318,11 @@
                     order: [],
                     sort: [],
                     summaries: {},
-                    nib: { kept: {} },
+                    // A view of the same rows as the one it was made from.
+                    nib: {
+                      kept: {},
+                      ...(rows ? { rows } : {}),
+                    },
                     options: {},
                   },
                 ],
@@ -633,7 +638,7 @@
         </Popover>
       </div>
       <div class="tool">{@render layer(false)}</div>
-      {#if !kit.compact || notes}{@render plusButton()}{/if}
+      {#if !kit.compact || notes || tasky}{@render plusButton()}{/if}
     </div>
     {#if active.filter || active.sort}
       <div class="chips">

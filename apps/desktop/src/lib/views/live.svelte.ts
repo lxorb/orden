@@ -33,8 +33,9 @@ export interface Source {
   scope: string | null
   /** The base, as it is now. */
   load(): Promise<Base>
-  /** Keeps a changed base. */
-  save(next: Base): Promise<void>
+  /** Keeps a changed base; `shown` is where the reader is with it, for a host that
+   *  keeps that. */
+  save(next: Base, shown?: Shown): Promise<void>
   /** Bases' `this`: the note embedding the view. */
   self?: () => Row | undefined
   /** Which view of the base to show first, by name. */
@@ -216,8 +217,10 @@ export class LiveView {
    *  starts on it. */
   async change(next: Base, show?: number): Promise<void> {
     this.base = next
-    if (show !== undefined) this.at = show
-    if (this.at >= next.views.length) this.at = Math.max(0, next.views.length - 1)
-    await this.source.save(next)
+    // Not kept under the words as they were: undone, those words come back to where
+    // the reader was on them. The write keeps the new place under the new words.
+    if (show !== undefined) this.#at = show
+    if (this.#at >= next.views.length) this.#at = Math.max(0, next.views.length - 1)
+    await this.source.save(next, { at: this.#at, typed: this.typed })
   }
 }

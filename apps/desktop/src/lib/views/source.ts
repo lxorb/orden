@@ -141,6 +141,19 @@ function fenceAt(text: string, code: string): { from: number; to: number } | nul
  *  session, so a note opened again shows its fence as it was left. */
 const fenceViews = new Map<string, Shown>()
 
+/** Enough places for every fence a session reads and the versions undo walks back
+ *  through; the oldest goes first. */
+const KEPT_PLACES = 200
+
+function remember(key: string, place: Shown) {
+  fenceViews.delete(key)
+  fenceViews.set(key, place)
+  for (const old of fenceViews.keys()) {
+    if (fenceViews.size <= KEPT_PLACES) break
+    fenceViews.delete(old)
+  }
+}
+
 /** A fence's place in `fenceViews`: its words as the editor and the write both have
  *  them, whatever the last line ends with. */
 const fenceKey = (path: string, words: string) => `${path}\n${words.replace(/\s+$/, '')}`
@@ -157,10 +170,10 @@ export function fenceSource(code: string, path: string | null): Source {
     shown: () => shown,
     keep(now) {
       shown = now
-      if (path !== null) fenceViews.set(fenceKey(path, words), now)
+      if (path !== null) remember(fenceKey(path, words), now)
     },
     load: () => Promise.resolve(readBase(words)),
-    async save(next) {
+    async save(next, now) {
       if (path === null) return
       const text = await noteText(workspace, path)
       if (text === null) return
@@ -168,7 +181,8 @@ export function fenceSource(code: string, path: string | null): Source {
       if (!at) return
       const written = writeBase(next, words)
       // Before the write, which is what draws the fence again.
-      if (shown) fenceViews.set(fenceKey(path, written), shown)
+      shown = now ?? shown
+      if (shown) remember(fenceKey(path, written), shown)
       const after =
         text.slice(0, at.from) +
         (written.endsWith('\n') ? written : `${written}\n`) +

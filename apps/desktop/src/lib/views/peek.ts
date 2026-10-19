@@ -80,10 +80,6 @@ async function showIn(pane: string, path: string, old: Tab) {
     await workspace.openEntry(path, { preview: true })
     return
   }
-  if (open.paneId === pane) {
-    workspace.activeTabId = open.id
-    return
-  }
   const tab = new Tab(open.note, pane)
   const tabs = [...workspace.tabs]
   tabs.splice(tabs.findIndex((one) => one.id === old.id) + 1, 0, tab)
