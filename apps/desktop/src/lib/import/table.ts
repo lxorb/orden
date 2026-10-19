@@ -49,7 +49,8 @@ export async function readTable(
 
   for (const source of sources) {
     if (!TABLE.test(source.path)) continue
-    if (paths.has(source.path.toLowerCase().replace(/\.csv$/, '_all.csv'))) continue
+    const all = source.path.toLowerCase().replace(/\.csv$/, '_all.csv')
+    if (all !== source.path.toLowerCase() && paths.has(all)) continue
 
     const name = (source.path.split('/').pop() ?? source.path).replace(/_all(\.csv)$/i, '$1')
     const stem = safeName(withoutNotionId(name.replace(TABLE, '')))
