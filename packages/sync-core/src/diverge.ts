@@ -303,6 +303,19 @@ function repeats(references: readonly string[], merge: string): boolean {
   return false
 }
 
+/** How much a merge says twice that none of `references` says that often: of every run
+ *  of `RUN` characters it holds more than once, the copies past the most any reference
+ *  holds. A run it holds once is two words set side by side, not a repeat. */
+function excess(references: readonly string[], merge: string): number {
+  const known = references.map(runsOf)
+  let over = 0
+  for (const [run, count] of runsOf(merge)) {
+    if (count < 2) continue
+    over += Math.max(0, count - Math.max(...known.map((one) => one.get(run) ?? 0)))
+  }
+  return over
+}
+
 /** Classifies what merging `local` and `remote` against `base` would do, and says
  *  what the note should read when nobody has to be asked. `merged` is the CRDT's
  *  merge of the two, when the caller has it. */
@@ -366,7 +379,17 @@ export function diverge(
   // is the note. Without it in hand, both sides' edits are kept.
   let settled: Divergence['settled'] = 'newer'
   if (overlaps.length) {
-    const kept = merged === undefined ? write(() => 'both') : [merged]
+    let kept = merged === undefined ? write(() => 'both') : [merged]
+    // Unless the CRDT says it twice as well: two devices that each settled a meeting by
+    // moving the same passage each typed it again, as two insertions of their own, and
+    // the one deletion lands on the copy both started from. Then the text merge, with
+    // both sides' edits made, is the note (#436) - where it says less twice than the CRDT
+    // does: the check reads runs of letters, and a merge that only sets two words side by
+    // side can look like a repeat to it, so the two are weighed rather than either taken.
+    if (merged !== undefined && repeats([local, remote], merged)) {
+      const both = resolved(base, analysis, () => 'both', merged)
+      if (excess([local, remote], both) < excess([local, remote], merged)) kept = [both]
+    }
     if (checked.some((text) => repeats([local, remote, ...kept], text))) {
       checked = kept
       settled = 'both'
