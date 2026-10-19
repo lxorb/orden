@@ -466,6 +466,13 @@ describe('the door', () => {
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(tablet)] }])
   })
 
+  test('a guest signing out tells the machine of the terminal it may be watching', async () => {
+    const { guests, term } = await made()
+    door.asked.length = 0
+    await call(env, '/v1/auth/signout', { method: 'POST', token: guests.write })
+    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(guests.write)] }])
+  })
+
   test('taking a writer out of the space tells the machine in the same request', async () => {
     const { owner, term } = await made()
     door.asked.length = 0

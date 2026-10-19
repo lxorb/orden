@@ -71,7 +71,9 @@ export async function machinesSignedOut(
         and (t.user_id = ?1
              or n.space_id in (select id from spaces where user_id = ?1
                                union select m.space_id from space_members m
-                                       join users u on u.email = m.email where u.id = ?1))
+                                       join users u on u.email = m.email where u.id = ?1
+                               union select g.space_id from guest_members g
+                                      where g.guest_id = ?1 and g.joined_at is not null))
       limit ?2`,
   )
     .bind(who, MOST_MACHINES)

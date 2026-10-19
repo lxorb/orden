@@ -1556,6 +1556,24 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(socket.closed).toBe(true)
   })
 
+  test('is a guest signing out, whose socket closes with the session', async () => {
+    const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'write', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+    const arrived = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { device: 'Windows' },
+    })
+    const socket = await open(arrived.json.guest.id)
+
+    await call(env, '/v1/auth/signout', { method: 'POST', token: arrived.json.token })
+
+    expect(socket.closed).toBe(true)
+  })
+
   test('is a person letting themselves out, on their other devices', async () => {
     const socket = await open(writerId)
 

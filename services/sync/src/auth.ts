@@ -579,6 +579,19 @@ auth.post('/signout', async (context) => {
       await machinesSignedOut(context.env, held.user_id, [await sha256(token)])
       // And wherever this device was pushed to; see push/live.ts.
       await forgetEndedTargets(context.env, held.user_id)
+      return context.json({ ok: true })
+    }
+
+    // Or a guest's, which is kept in a table of its own: signing out ends it the same
+    // way, and closes what it had open (#519).
+    const guest = await context.env.DB.prepare(
+      'delete from guest_sessions where token_hash = ? returning guest_id',
+    )
+      .bind(await sha256(token))
+      .first<{ guest_id: string }>()
+    if (guest) {
+      await roomsSignedOut(context.env, guest.guest_id)
+      await machinesSignedOut(context.env, guest.guest_id, [await sha256(token)])
     }
   }
   return context.json({ ok: true })

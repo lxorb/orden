@@ -563,6 +563,14 @@ describe('a guest session', () => {
     expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
   })
 
+  test('is over once it signs out, and the token opens nothing after (#519)', async () => {
+    expect((await call(env, '/v1/me', { token: guest })).status).toBe(200)
+    expect((await call(env, '/v1/auth/signout', { method: 'POST', token: guest })).status).toBe(200)
+
+    expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
+    expect(env.db.prepare('select count(*) as held from guest_sessions').get()).toEqual({ held: 0 })
+  })
+
   test('ends when the owner takes them out, and is nobody afterwards', async () => {
     const who = (await shareView()).json.members[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, { method: 'DELETE', token: owner })
