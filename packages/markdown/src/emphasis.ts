@@ -118,7 +118,7 @@ const read: Record<string, Map<string, Runs>> = { '*': new Map(), _: new Map() }
 const READ_MOST = 16
 
 /** Whether the run of `mark` at `at` in `masked` could close at all. */
-export function couldClose(masked: string, at: number, mark: string): boolean {
+function couldClose(masked: string, at: number, mark: string): boolean {
   const known = read[mark] ?? new Map<string, Runs>()
   let runs = known.get(masked)
   if (!runs) {
