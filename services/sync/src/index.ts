@@ -8,6 +8,7 @@ import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { blogRootOf, isOwnOrigin } from './hosts'
+import { serveApp, servePage, switchChannel } from './channel'
 import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
@@ -326,15 +327,13 @@ app.get('/health', (context) => context.json({ ok: true }))
  *  the assets router's not-found handling would answer `/even/` with the
  *  editor's own page, so the path is named here and asked for by file name.
  *  Registered ahead of the catch-all for that reason. See docs/even.md. */
-app.get('/even', (context) => servePlugin(context.env, context.req.url))
-app.get('/even/', (context) => servePlugin(context.env, context.req.url))
+app.get('/even', (context) => servePlugin(context.env, context.req.raw))
+app.get('/even/', (context) => servePlugin(context.env, context.req.raw))
 
-function servePlugin(env: Env, from: string): Promise<Response> | Response {
+/** The plugin's page from the build this browser asked for; see channel.ts. */
+function servePlugin(env: Env, request: Request): Promise<Response> | Response {
   if (!env.ASSETS) return new Response('Not found', { status: 404 })
-
-  const url = new URL(from)
-  url.pathname = '/even.html'
-  return env.ASSETS.fetch(new Request(url, { headers: { accept: 'text/html' } }))
+  return servePage(env.ASSETS, request, '/even.html')
 }
 
 /** Anything that is not the API is either a published space, looked up by
@@ -353,10 +352,15 @@ app.all('*', async (context) => {
   const root = blogRootOf(context.env, hostname)
   if (root && hostname !== root) return context.redirect(context.env.APP_ORIGIN, 302)
 
+  // `?channel=` switches this browser between the release and the edge of `unstable`,
+  // and the cookie it leaves picks the build below; see channel.ts.
+  const switched = switchChannel(context.req.raw)
+  if (switched) return switched
+
   // The web build of the editor. It stores notes in the browser until someone
   // signs in, so it is served to anyone who asks.
   const assets = context.env.ASSETS
-  if (assets) return unframed(await assets.fetch(context.req.raw))
+  if (assets) return unframed(await serveApp(assets, context.req.raw))
 
   return context.text('Not found', 404)
 })
