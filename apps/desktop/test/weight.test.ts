@@ -777,8 +777,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,245,000, for #424: the web app says which of its two builds
  *  is running and goes to the other (`webChannel` and `switchWebChannel` in updater.ts,
  *  the Unstable mark in Titlebar.svelte), and a listing from a Worker that has never
- *  heard of a space's order is let be (#423). Measured 3,244,207. */
-const BUDGET = 3_245_000
+ *  heard of a space's order is let be (#423). Measured 3,244,207.
+ *
+ *  Raised 2026-10-19, to 3,250,000, for the bug fixes after #419: the version row in
+ *  Settings (#490), and markdown's lookups by Map and CommonMark's fence rule (#492,
+ *  #493), had taken the room down to 17 bytes, and fixes in @nib/markdown land beside
+ *  the app's in parallel. Measured 3,244,983. */
+const BUDGET = 3_250_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
