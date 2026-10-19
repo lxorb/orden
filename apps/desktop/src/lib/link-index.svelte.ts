@@ -64,6 +64,7 @@ import {
   nameOf,
   noteName,
   relativePath,
+  samePath,
   within,
 } from './space-paths'
 import { elsewhere } from './marks-elsewhere.svelte'
@@ -159,6 +160,16 @@ const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
 /** The query fence's rows, once the first fence has asked for them; see `query` in the
  *  space the editor is handed. */
 let queryBlock: typeof import('./query-block') | null = null
+
+/** How `retarget` runs. */
+export interface Retargeting {
+  /** The note itself went, by a rename or a move; not by a merge. */
+  moved?: boolean
+  /** Only these notes, by absolute path. */
+  only?: readonly string[]
+  /** Filled with every note rewritten. */
+  touched?: string[]
+}
 
 class Links {
   /** Every note of the open space as the last scan read it.
@@ -1286,7 +1297,9 @@ class Links {
     to: string,
     root: string,
     open: (path: string) => NoteDoc | null = () => null,
+    how: Retargeting = {},
   ): Promise<number> {
+    const { moved = false, only, touched: told } = how
     const was = this.relative(from)
     const now = this.relative(to)
     if (!was || !now || was === now) return 0
@@ -1300,6 +1313,7 @@ class Links {
     let touched = 0
 
     for (const note of [...this.notes]) {
+      if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
       // Whether this note is worth reading at all, decided from the index.
       const candidates = note.links.filter((link) => this.couldName(link, byFile))
       if (!candidates.length) continue
@@ -1308,7 +1322,7 @@ class Links {
       // The note that moved is still listed, and still open, under the name it
       // had: its words are found there, but its file is where it went, and it
       // links from there now. Written to the old path, it came back under it.
-      const self = note.path === was
+      const self = moved && note.path === was
       const absolute = insideSpace(root, note.path)
       const target = self ? insideSpace(root, now) : absolute
       const before = await this.wordsOf(absolute, target, open)
@@ -1328,6 +1342,7 @@ class Links {
       await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       await invoke('write_note', { path: target, content: after })
       for (const hear of this.hearing) hear(target, after)
+      told?.push(target)
 
       this.notes = this.notes.map((one) =>
         one.path === note.path ? scanNote(note.path, after) : one,

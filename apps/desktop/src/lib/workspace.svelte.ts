@@ -12,7 +12,7 @@ import {
 } from '@nib/markdown/links'
 import { freePath } from '@nib/markdown/paths'
 import { openerFor, sharedKind } from './openers'
-import { links } from './link-index.svelte'
+import { links, type Retargeting } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
@@ -2580,7 +2580,7 @@ class Workspace {
 
         // A note that moved is a note every link to it has to be pointed at again;
         // see `renameFile`, including why this comes before everything is told.
-        const rewrote = (await this.retarget(from, target)) > 0
+        const rewrote = (await this.retarget(from, target, { moved: true })) > 0
         this.undone.record({
           kind: 'move',
           from,
@@ -3976,7 +3976,7 @@ class Workspace {
     // Every link to the note now points at a name nothing answers to, so they
     // are rewritten, silently, as Obsidian does. Recorded on the action so that
     // undoing the rename undoes the rewrite with it.
-    const rewrote = (await this.retarget(path, target)) > 0
+    const rewrote = (await this.retarget(path, target, { moved: true })) > 0
     if (undoable) {
       this.undone.record({
         kind: 'rename',
@@ -4157,11 +4157,11 @@ class Workspace {
   /** Rewrites every link in the space that points at `from` so it points at `to`.
    *  Answers how many notes were touched, so a caller can record whether there is
    *  anything to put back. */
-  async retarget(from: string, to: string): Promise<number> {
+  async retarget(from: string, to: string, how: Retargeting = {}): Promise<number> {
     const root = this.activeSpace?.root
     if (!root) return 0
 
-    const touched = await links.retarget(from, to, root, (path) => this.documentAt(path))
+    const touched = await links.retarget(from, to, root, (path) => this.documentAt(path), how)
 
     // A note on screen may be one of the notes that was rewritten.
     this.flush()

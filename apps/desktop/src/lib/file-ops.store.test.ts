@@ -315,6 +315,56 @@ describe('a note open on screen that links to itself, renamed', () => {
   })
 })
 
+describe('a note open on screen that links to itself, merged into another', () => {
+  test('leaves the joined words in the note it went into', async () => {
+    disk.current?.files.set(`${ROOT}/A.md`, 'see [[A#Goals]]\n')
+    disk.current?.files.set(`${ROOT}/B.md`, 'kept in B\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/A.md`, 'see [[A#Goals]]\n')
+    links.noteSaved(`${ROOT}/B.md`, 'kept in B\n')
+    await workspace.open(`${ROOT}/A.md`)
+
+    await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
+    await workspace.writesSettled()
+
+    // The rewrite took the merge for a move, and wrote A's own words over B.
+    const b = disk.current?.files.get(`${ROOT}/B.md`) ?? ''
+    expect(b).toContain('kept in B')
+    expect(b).toContain('[[B#Goals]]')
+    expect(disk.current?.files.has(`${ROOT}/A.md`)).toBe(false)
+  })
+
+  test('and undone, gives each note its own words back', async () => {
+    disk.current?.files.set(`${ROOT}/A.md`, 'only A\n')
+    disk.current?.files.set(`${ROOT}/B.md`, 'see [[B#Goals]]\n')
+    disk.current?.files.set(`${ROOT}/C.md`, 'to [[A]]\n')
+    disk.current?.files.set(`${ROOT}/D.md`, 'to [[B]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/A.md`, 'only A\n')
+    links.noteSaved(`${ROOT}/B.md`, 'see [[B#Goals]]\n')
+    links.noteSaved(`${ROOT}/C.md`, 'to [[A]]\n')
+    links.noteSaved(`${ROOT}/D.md`, 'to [[B]]\n')
+
+    await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
+    await workspace.writesSettled()
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    // B is open after the merge; taken for the note that moved, its words went
+    // over the A just put back.
+    expect(disk.current?.files.get(`${ROOT}/A.md`)).toBe('only A\n')
+    expect(disk.current?.files.get(`${ROOT}/B.md`)).toBe('see [[B#Goals]]\n')
+    // The link the merge pointed at B goes back to A; one that always named B
+    // was pointed at A as well.
+    expect(disk.current?.files.get(`${ROOT}/C.md`)).toBe('to [[A]]\n')
+    expect(disk.current?.files.get(`${ROOT}/D.md`)).toBe('to [[B]]\n')
+  })
+})
+
 describe('the stores the app keeps by path', () => {
   /** Each follower, by the call it answers an operation with. */
   function counted() {

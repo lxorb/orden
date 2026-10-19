@@ -119,7 +119,8 @@ describe('a note merged into another', () => {
     await mergeInto(ws, A, B)
 
     expect(ws.undone.stack).toEqual([
-      { kind: 'merge', from: A, fromContent: '# a\n', into: B, intoContent: '# b\n' },
+      // Nothing linked to A here, so no note's links are to put back.
+      { kind: 'merge', from: A, fromContent: '# a\n', into: B, intoContent: '# b\n', relinked: [] },
     ])
   })
 

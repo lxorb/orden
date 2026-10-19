@@ -14,7 +14,8 @@
 import { oneEdit } from '@nib/markdown/edits'
 import { freePath } from '@nib/markdown/paths'
 import { applied, type Edit } from '../search/replace'
-import { folderOf } from '../space-paths'
+import type { Retargeting } from '../link-index.svelte'
+import { folderOf, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
@@ -33,7 +34,7 @@ export interface PutsBack {
   documentAt(path: string): NoteDoc | null
   entryAt(path: string): Entry | null
   reload(path: string, content: string): void
-  retarget(from: string, to: string): Promise<number>
+  retarget(from: string, to: string, how?: Retargeting): Promise<number>
   /** A file operation, said once to everything kept by path; see `fileMoved` in
    *  workspace.svelte.ts. A rename put back is a rename, a delete put back is a file
    *  come back, and an import or a copy taken back is files gone. */
@@ -316,7 +317,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
     // The rename rewrote every link that pointed at the note; putting the name
     // back has to put those back too, which is the same rewrite the other way
     // round - and, again, before anything is told the note moved.
-    if (action.rewrote) await ws.retarget(action.to, action.from)
+    if (action.rewrote) await ws.retarget(action.to, action.from, { moved: true })
     await ws.fileMoved(action.to, action.from, kind)
   })
   // A nesting made the folder; refused where something else is in it now.
@@ -332,8 +333,15 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   await writeFile(action.from, action.fromContent)
   ws.reload(action.into, action.intoContent)
 
-  // Links to the note that went away were pointed at the note it went into.
-  await ws.retarget(action.into, action.from)
+  // Links to the note that went away were pointed at the note it went into: put
+  // back in the notes the merge rewrote, and only there, since a link that always
+  // named the note it went into still means that note. The two notes themselves
+  // were just written back whole. A merge recorded before this was kept has no
+  // list, and is put back across the space as it used to be.
+  const only = action.relinked?.filter(
+    (path) => !samePath(path, action.into) && !samePath(path, action.from),
+  )
+  if (!only || only.length) await ws.retarget(action.into, action.from, only ? { only } : {})
 }
 
 /** Puts a split or an extraction back: the note whole again, and the note that
