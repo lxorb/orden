@@ -35,12 +35,21 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 
 ```
 Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
-Depends: libwebkit2gtk-4.1-0 (>= 2.40.0), gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, libwebkit2gtk-4.1-0, libgtk-3-0
-Recommends: gstreamer1.0-libav, gstreamer1.0-plugins-bad
-usr/bin/nib
+Depends: libgtk-4-1 (>= 4.14), libnss3, libnspr4, ... (`bundle.linux.deb.depends`)
+usr/bin/nib -> ../share/Orden/nib
+usr/share/Orden/nib, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
+usr/share/Orden/libvk_swiftshader.so, vk_swiftshader_icd.json, libvulkan.so.1
+usr/share/Orden/chrome-sandbox (setuid root)
 usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
 ```
+
+The program is beside the engine it runs on, CEF, in `/usr/share/Orden`, where it finds
+`libcef.so` and Chromium finds its resources; `/usr/bin/nib` is a link to it. The `.rpm`
+is laid out the same way. Two empty files go in beside them as well, `libEGL.so` and
+`libGLESv2.so`: CEF 154 links ANGLE into `libcef.so` and no longer ships the two, and
+the bundler still copies them by name (see `scripts/linux-cef.sh`). Chromium only loads
+them where ANGLE is not linked in, so they are never opened.
 
 The binary and the icons are fine, and so is most of the control file: `Description:`
 comes from `bundle.shortDescription` and `longDescription` in `tauri.conf.json`, and the
@@ -66,46 +75,51 @@ copies differ only where they have to: the snap one points `Icon=` at `${SNAP}`.
 
 ## What Orden needs of the system
 
-**WebKitGTK 2.40 or newer.** A web tab's state is read and written in a script
-world of its own through `webkit_web_view_call_async_javascript_function`, which
-is new in 2.40, so the crate builds `webkit2gtk` with its `v2_40` feature
-(`apps/desktop/src-tauri/Cargo.toml`, `src/web_state/isolated.rs`). wry on its
-own asks for 2.38. Every distribution packaged here is past it: Ubuntu 22.04 has
-2.50 and 24.04 2.52 in their updates, Debian 12 2.50 and 13 2.54, Arch 2.54, and the snap's
-gnome-46-2404 platform 2.52.
+**Its engine, CEF, which every package carries.** Orden runs on CEF (Chromium) on Linux,
+through Tauri 3's `tauri-runtime-cef`: the app's own window and every web tab are
+browsers of one Chromium, as on Windows with WebView2. Nothing of WebKitGTK or
+GStreamer is asked for any more. Tauri 3 is Linux's alone: macOS, Windows and the phones
+stay on Tauri 2, and Linux builds from a manifest of its own
+(`apps/desktop/src-tauri/linux/Cargo.toml`, written from the app's by
+`scripts/linux-manifest.mjs`; see `scripts/linux-cef.sh`).
 
-**GStreamer's -base and -good plugins.** WebKitGTK plays and records sound and
-video through GStreamer, and what Orden plays is its own: a voice note in a chat,
-a recording embedded in a note, a picture's or a video's preview in a chat's
-gallery. A recording on Linux is Opus in WebM (`recorder/container.ts`): Opus is
-in -base, WebM (and MP4) in -good, and so is the source and sink for the sound
-server. Debian's and Ubuntu's `libwebkit2gtk-4.1-0` already depend on both; Arch's
-`webkit2gtk-4.1` depends only on GStreamer's libraries and leaves every plugin
-optional, so the AUR package names them.
+**GTK 4.14 or newer.** The runtime's windows are GTK 4, built against 4.14, which is
+Ubuntu 24.04, Debian 13, Fedora 40 and Arch, and the snap's gnome-46-2404 platform. Not
+Ubuntu 22.04 or Debian 12, whose GTK 4 is older: the `.deb` says so in its `Depends:`.
+The release is built on Ubuntu 24.04 for the same reason.
 
-**gst-libav and -bad, recommended.** A recording made on a Mac or an iPhone is AAC
-in MP4 (`.m4a`), and a video from a phone is H.264 or HEVC; GStreamer decodes those
-in gst-libav (`avdec_aac`, `avdec_h264`), with -bad holding most of the remaining
-formats. Without them the file is there and does not play, and nothing else in the
-app is affected, so they are what Debian calls Recommends (Debian 13 recommends
-them for WebKitGTK already; Ubuntu only suggests them) and the AUR `optdepends`.
+**X11, which a Wayland desktop has as Xwayland.** CEF puts each browser in an X11
+window, so the runtime starts GTK on X11 (`GDK_BACKEND=x11`, `--ozone-platform=x11`)
+whatever the session, and under Wayland the window is an Xwayland one; Chromium draws
+on the GPU in both. A global shortcut under Wayland still goes through the desktop
+portal (`hotkeys/portal.rs`), since no Xwayland window hears a key pressed elsewhere.
 
-| | WebKitGTK | required | recommended |
-| --- | --- | --- | --- |
-| `.deb` (`tauri.conf.json` `bundle.linux.deb`) | `libwebkit2gtk-4.1-0 (>= 2.40.0)` | `gstreamer1.0-plugins-base`, `-good` | `gstreamer1.0-libav`, `-plugins-bad` |
-| AUR (`PKGBUILD`) | `webkit2gtk-4.1>=2.40` | `gst-plugins-base`, `gst-plugins-good` | `gst-libav`, `gst-plugins-bad` (`optdepends`) |
-| snap | the platform's, 2.52 | the platform's | none: not in the platform |
-| Nix | nixpkgs' | `gstPluginsFor` in the flake: all five | - |
+**What Chromium links.** `libcef.so` asks for NSS and NSPR, ALSA, CUPS, the
+accessibility bridge (ATK, AT-SPI), D-Bus, GBM and DRM, xkbcommon, Pango and Cairo,
+udev, and the X11 libraries (X11, xcb, Xcomposite, Xdamage, Xext, Xfixes, Xrandr):
 
-The `.rpm` names neither: Tauri writes its requirements as sonames
-(`libwebkit2gtk-4.1.so.0()(64bit)`), which carry no version, and Fedora and
-openSUSE spell every package above differently.
+| | named |
+| --- | --- |
+| `.deb` (`tauri.conf.json` `bundle.linux.deb.depends`) | `libgtk-4-1 (>= 4.14)`, `libnss3`, `libasound2t64 \| libasound2` and the rest by Ubuntu's names |
+| `.rpm` (`bundle.linux.rpm.depends`) | `gtk4 >= 4.14`, `nss`, `alsa-lib` and the rest by Fedora's names |
+| AUR (`PKGBUILD`) | `gtk4>=4.14`, `nss`, `alsa-lib` and the rest by Arch's names |
+| snap | the platform's |
+| Nix | `runtimeInputsFor` in the flake, and `openedFor` for what Chromium opens by name |
 
-The snap has no way to recommend a package, and stages nothing beside the platform
-on purpose (see below). gnome-46-2404 carries -base, -good, PipeWire's and the GL
-plugins, so recordings and WebM play; AAC and H.264 do not. Staging gst-libav would
-not be enough to change that: its libavfilter is not in the platform, and the
-platform's launcher puts no directory of the snap's own on the library path.
+**Media.** Chromium plays VP9, AV1, VP8, Opus, Vorbis, FLAC and MP3 itself, in WebM, Ogg
+and MP4, so a recording made on Linux (Opus in WebM, `recorder/container.ts`) plays
+everywhere. The standard CEF build has no H.264, HEVC or AAC, and no DRM: a `.m4a` from a
+Mac or an iPhone and an H.264 video do not play, in any package. A CEF built with
+Chromium's proprietary codecs would play them; that is a build of its own, on a larger
+runner, if it is wanted.
+
+**The sandbox.** Chromium sandboxes its renderers with the setuid `chrome-sandbox` beside
+`libcef.so`, which the `.deb`, the `.rpm` and the AUR package install setuid root, or in
+user namespaces where it is not setuid. The snap has the namespace one, through
+`browser-support` with `allow-sandbox`; Nix leaves the helper out of the store, where it
+cannot be setuid, and NixOS allows the namespaces. An AppImage cannot carry a setuid
+helper: where user namespaces are restricted as well (Ubuntu 24.04's AppArmor), the
+runtime starts Chromium without a sandbox and says so in the log.
 
 ## apt - `lxorb/apt`
 
@@ -245,12 +259,10 @@ was decided; the history has how they were made and checked.
 
 ## Snap Store
 
-`snap/snapcraft.yaml` unpacks the `.deb` (`source-type: deb`) and stages nothing
-of its own: the `gnome` extension's platform snap carries GTK, WebKitGTK 4.1 and
-libsoup3, and binds the `webkit2gtk-4.1` helper directory in from there. A staged
-second copy of the library would pair a WebKit UI process with web process
-helpers from a different WebKit, which is how a Tauri window ends up blank.
-Strict confinement: the spaces are reached through `home`, an export saved to a
+`snap/snapcraft.yaml` unpacks the `.deb` (`source-type: deb`), which carries the engine,
+and stages nothing of its own: the `gnome` extension's platform snap carries GTK 4 and
+the rest of what Chromium links. Strict confinement, with Chromium's namespace sandbox
+through `browser-support` and `allow-sandbox`, as the Chromium snap has it: the spaces are reached through `home`, an export saved to a
 stick through `removable-media`, and nothing else is needed.
 
 Two channels. A release goes to `stable`, from `publish-linux.yml`; every edge build goes
@@ -327,10 +339,12 @@ quietly carried the source flake onto main and broke
 `nix profile install github:lxorb/orden?dir=packaging/nix` for everyone already on
 it. Nothing in the flake asks which branch it is on.
 
-The release build takes the program out of the release `.deb` and runs it on
-nixpkgs' own WebKitGTK, GTK and GStreamer, with `autoPatchelfHook` and
-`wrapGAppsHook3`, the way nixpkgs packages other Tauri apps and the way the AUR
-package runs it on Arch's. Up to 0.13 it wrapped the AppImage instead, which broke
+The release build takes the program and the engine beside it out of the release `.deb`
+and runs them on nixpkgs' own GTK 4, NSS and the rest, with `autoPatchelfHook` and
+`wrapGAppsHook4`, the way the AUR package runs it on Arch's. The source build compiles
+Linux's manifest against nixpkgs' `cef-binary` moved to the version that manifest pins
+(`cefFor`), and ships that engine beside the program the same way. What follows about
+WebKitGTK is the history of the release build up to 0.16, when Linux moved to CEF. Up to 0.13 it wrapped the AppImage instead, which broke
 on NixOS: the AppImage's own libwayland-client and GLib do not match the system's
 Mesa and libglvnd (WebKit's web process aborts with `Could not create default EGL
 display: EGL_BAD_PARAMETER`), its start script forces `GDK_BACKEND=x11`, and its
