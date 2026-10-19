@@ -328,6 +328,45 @@ describe('diverge', () => {
     expect(result.resolution?.split('mk13z').length).toBe(2)
   })
 
+  test('a passage two devices each put back over a deletion, at one point, is said once (#530)', () => {
+    // Walk seed 611000297: one device kept a day's words over a deletion as the newer
+    // side of a meeting, the other answered Keep mine; each wrote the words again, and
+    // the one device's words there ended with them where the other's began with them.
+    const base = ''
+    const local = 'mk3z on\nmk17z plan milk mk25z the we after'
+    const remote = 'we mk10zmk3z on'
+    const merged = 'we mk10zmk3z onmk3z on\nmk17z plan milk mk25z the we after'
+    expect(merged.split('mk3z').length).toBe(3)
+
+    const result = diverge(base, local, remote, REMOTE_NEWER, merged)
+    expect(result.resolution).toBe('we mk10zmk3z on\nmk17z plan milk mk25z the we after')
+  })
+
+  test('a word both sides moved, each to a place of its own, is said once, where the newer put it (#530)', () => {
+    // Walk seed 622002257: another program and the device each moved mk15z; the device's
+    // words were older, and its new place for it goes.
+    const base = 'review on review mk15z review'
+    const file = 'review mk31z we review milk ship on review mk15z'
+    const ours = 'review on mk15z we review mk30z review mk27z ship review on'
+
+    expect(diverge(base, file, ours, LOCAL_NEWER).resolution).toBe(
+      'review mk31z we we review milk ship on review mk15z mk27z ship review on',
+    )
+    expect(diverge(base, file, ours, REMOTE_NEWER).resolution).toBe(
+      'review mk31z we mk15z we review mk30z review mk27z ship review on',
+    )
+  })
+
+  test('words each side wrote anew in a place of its own are both kept, the same or not', () => {
+    const base = 'First line.\n\nSecond line.\n'
+    const local = 'First line, the plan.\n\nSecond line.\n'
+    const remote = 'First line.\n\nSecond line, the plan.\n'
+
+    expect(diverge(base, local, remote, REMOTE_NEWER).resolution).toBe(
+      'First line, the plan.\n\nSecond line, the plan.\n',
+    )
+  })
+
   test('a line one side wrote that the other wrote too and went on from is not asked about', () => {
     // Found by the conflict drive under v2: a note closed offline and opened again
     // against a file nib wrote before the line, so one side is the line and the other
