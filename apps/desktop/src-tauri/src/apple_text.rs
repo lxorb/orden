@@ -212,7 +212,7 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             }
         }
 
-        let words = inline(&line, parts);
+        let words = inline(&line, parts, fenced);
 
         if fenced {
             out.push_str(&words);
@@ -351,21 +351,63 @@ fn prefix(run: &Run, soft: bool, counted: u32) -> String {
 }
 
 /// One line's words, with what each run says about them written around them.
-fn inline(line: &Line, parts: &mut dyn Parts) -> String {
+///
+/// Runs next to each other that say the same thing are written as one: Notes ends a
+/// run wherever anything changes, a colour or a font as much as bold, so `Graphic` in
+/// bold may be two runs, and marking each on its own would write `**Gr****aphic**`.
+///
+/// Inside a block of code the words are the code, exactly as typed: no marks around
+/// them and no escapes in them, since a fence shows a backslash as a backslash.
+fn inline(line: &Line, parts: &mut dyn Parts, code: bool) -> String {
     let mut out = String::new();
+    let mut pending: Option<(&Run, String)> = None;
 
     for (run, said) in &line.pieces {
         if let Some((id, uti)) = &run.attachment {
+            if let Some((held, words)) = pending.take() {
+                out.push_str(&written(held, &words, code));
+            }
             if let Some(words) = parts.attachment(id, uti) {
                 out.push_str(&words);
             }
             continue;
         }
 
-        out.push_str(&wrapped(run, said));
+        match &mut pending {
+            Some((held, words)) if same_marks(held, run) => words.push_str(said),
+            _ => {
+                if let Some((held, words)) = pending.take() {
+                    out.push_str(&written(held, &words, code));
+                }
+                pending = Some((run, said.clone()));
+            }
+        }
+    }
+
+    if let Some((held, words)) = pending {
+        out.push_str(&written(held, &words, code));
     }
 
     out
+}
+
+/// A stretch of words: marked, or as it is inside code.
+fn written(run: &Run, said: &str, code: bool) -> String {
+    if code {
+        return said.replace(OBJECT, "");
+    }
+
+    wrapped(run, said)
+}
+
+/// Whether two runs write the same marks around their words.
+fn same_marks(one: &Run, other: &Run) -> bool {
+    one.weight == other.weight
+        && one.underlined == other.underlined
+        && (one.struck != 0) == (other.struck != 0)
+        && one.baseline == other.baseline
+        && one.link == other.link
+        && (one.emphasis != 0) == (other.emphasis != 0)
 }
 
 /// One piece of a line, with its marks around it.
@@ -411,7 +453,7 @@ fn wrapped(run: &Run, said: &str) -> String {
 
     if let Some(link) = &run.link {
         if link != &marked {
-            marked = format!("[{marked}]({link})");
+            marked = format!("[{marked}]({})", destination(link));
         }
     }
 
@@ -422,10 +464,37 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// The two characters a note's own words would otherwise become a link with.
+/// The two characters a note's own words would otherwise become a link with, and
+/// the `<` that would otherwise open a tag: a note that says `<script>` or `<b>`
+/// says those words, and read as HTML they would vanish or turn into markup.
 /// Everything else is left as it was: a note that says `5 * 3` says that.
 fn escaped(words: &str) -> String {
-    words.replace('[', "\\[").replace(']', "\\]")
+    let mut out = String::with_capacity(words.len());
+    let mut chars = words.chars().peekable();
+
+    while let Some(one) = chars.next() {
+        let opens_tag = one == '<'
+            && chars
+                .peek()
+                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'));
+        if one == '[' || one == ']' || opens_tag {
+            out.push('\\');
+        }
+        out.push(one);
+    }
+
+    out
+}
+
+/// Where a link goes, as markdown writes it: in angle brackets where it holds a space
+/// or a bracket of its own, which would otherwise end the link early or not make one.
+pub fn destination(link: &str) -> String {
+    if link.contains(|one: char| one.is_whitespace() || matches!(one, '(' | ')' | '<' | '>')) {
+        let inside = link.replace('<', "%3C").replace('>', "%3E");
+        return format!("<{inside}>");
+    }
+
+    link.to_string()
 }
 
 /// Blank lines collapsed and the ends trimmed, which is what every other reader
@@ -896,6 +965,19 @@ fn note_of(bytes: &[u8]) -> Body {
         }
     }
 
+    // The runs should cover the whole text. The words past the last of them, in a
+    // row whose runs stop short or that has none, are words of the note all the
+    // same: written plain rather than dropped without a word.
+    let covered = runs
+        .iter()
+        .fold(0_usize, |sum, run| sum.saturating_add(run.length));
+    if covered < text.len() {
+        runs.push(Run {
+            length: text.len() - covered,
+            ..Run::default()
+        });
+    }
+
     Body { text, runs }
 }
 
@@ -1291,6 +1373,68 @@ mod tests {
 
         assert!(said.len() < 200, "{} characters of indent", said.len());
         assert!(said.trim_start().starts_with("- "), "{said}");
+    }
+
+    /// Code is the code as it was typed: a bracket in it is a bracket, and a bold run
+    /// inside it is not asterisks around it.
+    #[test]
+    fn a_block_of_code_keeps_its_words_as_they_were_typed() {
+        let said = as_markdown(
+            "let a = b[0]\n",
+            &[
+                run(8, &[bytes(2, &style(4, 0, None))]),
+                run(5, &[bytes(2, &style(4, 0, None)), number(5, 1)]),
+            ],
+        );
+
+        assert_eq!(said, "```\nlet a = b[0]\n```");
+    }
+
+    /// Notes ends a run wherever anything changes, a colour as much as bold, so one
+    /// bold word may be two runs. It is written as the one word it is.
+    #[test]
+    fn runs_that_say_the_same_thing_are_marked_once() {
+        let said = as_markdown(
+            "Graphic designer",
+            &[
+                run(2, &[number(5, 1)]),
+                run(5, &[number(5, 1), bytes(10, b"colour")]),
+                run(9, &[number(5, 1)]),
+            ],
+        );
+
+        assert_eq!(said, "**Graphic designer**");
+    }
+
+    /// A row whose runs stop short of its text still holds the rest of the words.
+    #[test]
+    fn words_past_the_last_run_are_kept() {
+        let said = as_markdown(
+            "Title\nand the rest\n",
+            &[run(6, &[bytes(2, &style(0, 0, None))])],
+        );
+        assert_eq!(said, "# Title\nand the rest");
+
+        let bare = as_markdown("No runs at all", &[]);
+        assert_eq!(bare, "No runs at all");
+    }
+
+    /// A note that says `<b>` says those three characters, rather than turning the rest
+    /// of its line bold or its words into markup that vanishes.
+    #[test]
+    fn words_that_look_like_html_are_words() {
+        let said = as_markdown("<script src=x> and 1 < 2", &[run(24, &[])]);
+        assert_eq!(said, "\\<script src=x> and 1 < 2");
+    }
+
+    /// A link with a space or a bracket in where it goes is still one link.
+    #[test]
+    fn a_link_with_a_space_in_it_is_still_a_link() {
+        let said = as_markdown(
+            "Here",
+            &[run(4, &[bytes(9, b"file:///Users/me/My Notes (1).pdf")])],
+        );
+        assert_eq!(said, "[Here](<file:///Users/me/My Notes (1).pdf>)");
     }
 
     // ── Tables and scans ──
