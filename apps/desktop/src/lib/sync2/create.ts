@@ -225,6 +225,19 @@ export function unsynced(core: Core, space: SpaceState, entry: EntryRow): Change
   return changes
 }
 
+/** Every live entry under a folder in the tree, however deep, whether or not it is on
+ *  this disk. */
+function inside(space: SpaceState, folder: string): EntryRow[] {
+  const holds = (id: string | null, depth = 0): boolean => {
+    if (id === null || depth > space.entries.size) return false
+    if (id === folder) return true
+    return holds(space.entries.get(id)?.parent ?? null, depth + 1)
+  }
+  return [...space.entries.values()].filter(
+    (one) => !one.deleted && one.id !== folder && holds(one.parent),
+  )
+}
+
 /** A file or folder deleted here. The person threw these words away, so nothing of them
  *  goes up any more; what the account holds of them lands in its Recently deleted,
  *  unless another device wrote in them since this one last looked, when the account
@@ -236,10 +249,13 @@ export function removed(core: Core, space: SpaceState, path: string): Change[] {
   const gone = atOrUnder(space, path)
 
   // What this device has seen of the words it deletes: a note whose newest words it has
-  // not pulled yet was not seen, so the account must not take them.
+  // not pulled yet was not seen, so the account must not take them. Everything under it
+  // in the tree, not only what is on this disk: a note that came in the list and whose
+  // words were never pulled has no file here yet, and a folder delete took it, words and
+  // all, with nothing kept (#435).
   let seen = space.row.cursor
   const wanted = core.wanted(space.id)
-  for (const one of gone) {
+  for (const one of new Set([...gone, ...inside(space, entry.id)])) {
     if (!wanted.has(one.id)) continue
     seen = Math.min(seen, core.numbers.get(one.id)?.pulled ?? 0)
   }

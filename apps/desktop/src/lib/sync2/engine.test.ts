@@ -42,6 +42,8 @@ interface Device {
   account: ReferenceAccount
   routes: string[]
   online: boolean
+  /** Routes this device's requests go unanswered on, as if each were lost. */
+  unanswered: Set<string>
   engine: Engine
   launch(): Promise<Engine>
 }
@@ -108,13 +110,14 @@ async function device(
     account,
     routes: [],
     online: true,
+    unanswered: new Set(),
     engine: null as unknown as Engine,
     async launch() {
       const world: World = {
         disk,
         account: {
           ask: async (route, body) => {
-            if (!made.online || route === 'prepare') return null
+            if (!made.online || route === 'prepare' || made.unanswered.has(route)) return null
             made.routes.push(route)
             return unframe(await account.handle(id, route, frame(body)))
           },
@@ -443,6 +446,61 @@ describe('an outbox folded while offline', () => {
     expect(names).toEqual(['Ideas.md'])
     expect(here.engine.waiting(SPACE)).toBe(false)
     expect(here.store.rows('outbox')).toEqual([])
+  })
+})
+
+describe('a folder deleted here', () => {
+  test('leaves a note in it whose words this device never pulled, and the folder with it (#435)', async () => {
+    // Another device made a folder and a note in it. This one read the list and has not
+    // pulled the note's words, so the note has no file here yet; deleting the folder took
+    // the note, words and all, with nothing kept. Seed 207340730 of the long walks.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    const here = await device(account, 'd1')
+
+    await there.disk.mkdir(`${ROOT}/Work`)
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.disk.write(`${ROOT}/Work/Notes.md`, 'eggs mk7z')
+    const note = await there.engine.created(`${ROOT}/Work/Notes.md`, false, 'eggs mk7z')
+    await there.engine.pass(SPACE)
+    expect(note).not.toBeNull()
+    expect(await textOn(account, note ?? '')).toBe('eggs mk7z')
+
+    here.unanswered.add('pull')
+    await here.engine.pass(SPACE)
+    expect(here.disk.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
+
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`)
+    here.unanswered.clear()
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries.map((entry) => entry.name)
+    expect(live).toEqual(expect.arrayContaining(['Work', 'Notes.md']))
+    expect(await textOn(account, note ?? '')).toBe('eggs mk7z')
+  })
+
+  test('takes a note in it whose words this device had pulled', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    const here = await device(account, 'd1')
+
+    await there.disk.mkdir(`${ROOT}/Work`)
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.disk.write(`${ROOT}/Work/Notes.md`, 'eggs mk8z')
+    await there.engine.created(`${ROOT}/Work/Notes.md`, false, 'eggs mk8z')
+    await there.engine.pass(SPACE)
+
+    await here.engine.pass(SPACE)
+    expect(here.disk.files.get(`${ROOT}/Work/Notes.md`)).toBe('eggs mk8z')
+
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`)
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries.map((entry) => entry.name)
+    expect(live).not.toContain('Work')
+    expect(live).not.toContain('Notes.md')
   })
 })
 
