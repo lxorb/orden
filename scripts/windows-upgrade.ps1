@@ -251,8 +251,19 @@ if ($Scenario -eq 'msi') {
   $code = $entries[0].PSChildName
   Run 'msiexec.exe' "/x $code /qn" | Out-Null
 } else {
+  # NSIS's uninstaller copies itself to %TEMP% (Un_A.exe and the like), starts that
+  # copy and returns at once, so its exit says nothing about the uninstall. Wait for
+  # the copy, and for what it removes last, rather than for a fixed while: three
+  # seconds was not always enough on a busy runner.
   Run "$want\uninstall.exe" '/S' | Out-Null
-  Start-Sleep -Seconds 3
+  $deadline = (Get-Date).AddSeconds(120)
+  do {
+    Start-Sleep -Seconds 1
+    $copies = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -match '^(Un|Au)_[A-Z]$' })
+    $done = -not $copies -and -not (Test-Path $exe) -and -not (Has "$uninstall\$product")
+  } until ($done -or (Get-Date) -gt $deadline)
+  Write-Host "  uninstalled after $([int]((Get-Date) - $deadline.AddSeconds(-120)).TotalSeconds)s, done: $done"
+  Start-Sleep -Seconds 2
 }
 Show 'uninstalled'
 Check 'the program is gone' (-not (Test-Path $exe))
