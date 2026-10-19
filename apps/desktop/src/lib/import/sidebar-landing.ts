@@ -35,7 +35,9 @@ export async function landSpaces(
 }
 
 async function landSpace(plan: SpacePlan): Promise<Space> {
-  const held = workspace.spaces.find((one) => nameKey(one.name.trim()) === nameKey(plan.name))
+  const held = workspace.spaces.find(
+    (one) => nameKey(asFolder(one.name)) === nameKey(asFolder(plan.name)),
+  )
   const space = held ?? (await workspace.addSpace(plan.name))
   if (!space) throw new Error(t('That import could not be written.'))
   // What follows is the open space's: the file list, its order, its bookmarks.
@@ -73,6 +75,23 @@ async function landSpace(plan: SpacePlan): Promise<Space> {
   if (marks.length) workspace.bookmarks.toggleAll(marks)
 
   return space
+}
+
+/** The longest name a space's folder takes, as the crate cuts it. */
+const LONGEST_SPACE = 64
+
+/** A space's name as the crate names its folder, which is the name the space then has
+ *  (`folder_name` in spaces.rs): what a folder cannot be called a space, runs of space
+ *  one, no dot or space at either end. A browser's space called `Work: Client` is the
+ *  space `Work Client` the import made of it the time before. */
+function asFolder(name: string): string {
+  const cleaned = name
+    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(' ')
+  const ends = /^[.\s]+|[.\s]+$/g
+  return Array.from(cleaned.replace(ends, '')).slice(0, LONGEST_SPACE).join('').replace(ends, '')
 }
 
 /** The files the space does not already hold: a web note at the same place pointing
