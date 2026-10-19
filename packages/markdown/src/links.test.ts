@@ -524,3 +524,19 @@ describe('links after code that only looks like a fence', () => {
     expect(found.map((link) => link.target)).toEqual(['Target'])
   })
 })
+
+/** #494: a `\s*` either side of the optional title shared out the blanks of a link
+ *  nothing closed every way there is - thirteen seconds for a hundred thousand. */
+describe('a markdown link that never closes', () => {
+  test('is turned away in linear time, however many blanks follow it', () => {
+    const started = performance.now()
+    expect(findLinks(`[a](b${' '.repeat(100_000)}x`)).toEqual([])
+    expect(findLinks(`[a](<b>${' '.repeat(100_000)}"t" x`)).toEqual([])
+    expect(performance.now() - started).toBeLessThan(500)
+  })
+
+  test('still reads a title after blanks, and blanks with no title', () => {
+    const found = findLinks('[a](One.md   "title"  ) [b](<Two.md>   )')
+    expect(found.map((link) => link.target)).toEqual(['One.md', 'Two.md'])
+  })
+})

@@ -41,6 +41,31 @@ function math(tex: string, display: boolean): string {
   }
 }
 
+/** What is known of where highlights close in one run of inline text, by the
+ *  run's own token list: how far from the end of the run the closer stands, or -1
+ *  for none at all. */
+const CLOSERS = new WeakMap<Token[], number>()
+
+/** Where the `==` closing a highlight that opens `src` stands, or -1: the first
+ *  at index 3 or later with no blank before it, which is what
+ *  `/^==(?=\S)([\s\S]*?\S)==/` matched - found once per run, not once per `==`.
+ *
+ *  That pattern scanned to the end of the paragraph at every `==` that never
+ *  closed, so a paragraph of them took seconds (#494). Marked asks again at every
+ *  position with what is left of the run, and the same list of tokens, so what is
+ *  left only ever shrinks from the front: a closer found for one ask is the first
+ *  for every later ask that starts before it, and none for one is none for all. */
+function highlightEnd(src: string, tokens: Token[] | undefined): number {
+  const left = tokens ? CLOSERS.get(tokens) : undefined
+  if (left === -1) return -1
+  if (left !== undefined && src.length - left >= 3) return src.length - left
+
+  let at = src.indexOf('==', 3)
+  while (at !== -1 && !/\S/.test(src.charAt(at - 1))) at = src.indexOf('==', at + 1)
+  if (tokens) CLOSERS.set(tokens, at === -1 ? -1 : src.length - at)
+  return at
+}
+
 /** `==marked==`, and `==🔴 marked==` for one of the five colours Obsidian writes.
  *
  *  The colour comes off the front of the words before they are tokenized, so it
@@ -59,16 +84,17 @@ export const highlight: MarkedExtension = {
       name: 'highlight',
       level: 'inline',
       start: (src: string) => src.indexOf('=='),
-      tokenizer(src: string) {
-        const match = /^==(?=\S)([\s\S]*?\S)==/.exec(src)
-        if (!match?.[1]) return undefined
+      tokenizer(src: string, tokens: Token[]) {
+        if (!src.startsWith('==') || !/\S/.test(src.charAt(2))) return undefined
+        const end = highlightEnd(src, tokens)
+        if (end === -1) return undefined
 
-        const { colour, from } = readHighlight(match[1])
-        const words = match[1].slice(from)
+        const { colour, from } = readHighlight(src.slice(2, end))
+        const words = src.slice(2 + from, end)
 
         return {
           type: 'highlight',
-          raw: match[0],
+          raw: src.slice(0, end + 2),
           text: words,
           tone: colour.tone,
           tokens: this.lexer.inlineTokens(words),
