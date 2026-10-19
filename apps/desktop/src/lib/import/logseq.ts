@@ -155,7 +155,11 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
           // went, and these are the ones in its properties: a PDF's highlights
           // page names its PDF there.
           const extra = said.meta.extra?.map(
-            ([name, value]) => [name, followed(value, path, free, went)] as const,
+            ([name, value]) =>
+              [
+                name,
+                typeof value === 'string' ? followed(value, path, free, went) : value,
+              ] as const,
           )
 
           // The names the page answered to in Logseq that its file here does not
