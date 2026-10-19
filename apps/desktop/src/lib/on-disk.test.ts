@@ -36,9 +36,12 @@ describe('a file on the disk', () => {
   test('on the desktop, is a folder the tree reads', async () => {
     state.native = true
     state.answers.set('file_stamp /s/Work', null)
-    state.answers.set('read_tree /s/Work', { children: [] })
+    state.answers.set('read_tree /s/Work', { is_dir: true, children: [] })
+    // Only a folder's own listing says so; an answer of nothing is no folder.
+    state.answers.set('read_tree /s/Odd', undefined)
 
     expect(await onDisk('/s/Work')).toBe(true)
+    expect(await onDisk('/s/Odd')).toBe(false)
     expect(await onDisk('/s/Gone')).toBe(false)
   })
 
