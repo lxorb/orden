@@ -92,6 +92,8 @@ kill "$app" 2>/dev/null || true
 wait "$app" 2>/dev/null || true
 [ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
+find "$HOME" -path '*ch.emilvinu.nib*' -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
+[ -f "$out/nib.log" ] && { echo "::group::nib.log"; cat "$out/nib.log"; echo "::endgroup::"; }
 echo "::group::orden's output"
 cat "$out/orden.log"
 echo "::endgroup::"

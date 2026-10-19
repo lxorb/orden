@@ -38,13 +38,25 @@ pub fn window_move_resize(webview: tauri::Webview, edge: Option<String>) -> Resu
     };
     #[cfg(feature = "cef")]
     {
+        use tauri::Manager as _;
         let window = webview.window();
         if direction != MOVE
             && (window.is_maximized().unwrap_or(false) || window.is_fullscreen().unwrap_or(false))
         {
             return Ok(());
         }
-        x11::move_resize(&window, direction)
+        let done = x11::move_resize(&window, direction);
+        // Said in the log, which is the one place a window manager that took no notice
+        // can be told apart from a press that never asked.
+        crate::logs::say(
+            webview.app_handle(),
+            if done.is_ok() { "info" } else { "error" },
+            &match &done {
+                Ok(said) => format!("window: {said}"),
+                Err(error) => format!("window: no move or resize ({error})"),
+            },
+        );
+        done.map(|_| ())
     }
     #[cfg(not(feature = "cef"))]
     {
@@ -84,7 +96,7 @@ mod x11 {
     pub fn move_resize(
         window: &tauri::Window<crate::Engine>,
         direction: u32,
-    ) -> Result<(), String> {
+    ) -> Result<String, String> {
         let xid = window
             .window_handle()
             .ok()
@@ -141,7 +153,10 @@ mod x11 {
         .map_err(|error| error.to_string())?;
         x.flush().map_err(|error| error.to_string())?;
         x.sync().map_err(|error| error.to_string())?;
-        Ok(())
+        Ok(format!(
+            "_NET_WM_MOVERESIZE {direction} for {xid:#x} at {},{} with button {button} (held {held:#x})",
+            pointer.root_x, pointer.root_y
+        ))
     }
 }
 
