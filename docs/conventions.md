@@ -180,7 +180,12 @@ quietly: a change that touches one says so where it is made.
   which Edit custom CSS and Edit snippets open in a tab; `read_note` and
   `file_stamp` stand behind it. And `chosen`: that, or where the reader picked
   a file in the system's own dialog, for `write_note`, `write_bytes`,
-  `run_pandoc`, `print_pdf` and `import_document`.
+  `run_pandoc`, `print_pdf` and `import_document`. Every one compares the parts
+  of a path the way the platform's file system tells names apart (`Naming`):
+  without case on a Mac and on Windows, folded no wider than NTFS folds it, and
+  after the trailing dot or space Win32 drops; a Windows path holding a `:` (a
+  stream) or an 8.3 alias (`TRASH~1`) is let in nowhere, since its letters do not
+  say what it names (#485, #486).
 
 **nib opens nothing from outside its spaces.** No bundle declares a file type,
 no command line, second launch or Finder hand-off is read as a note (only a web
