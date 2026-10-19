@@ -101,7 +101,7 @@
       },
       "rpm": {
         "depends": [
-          "gtk4 >= 4.14",
+          "gtk4",
           "nss",
           "nspr",
           "alsa-lib",
