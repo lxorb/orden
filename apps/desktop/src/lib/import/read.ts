@@ -109,7 +109,9 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
  *  a note or a web page, bar the `index.html` an HTML export opens on; an export of
  *  nothing but databases has its id on each table instead. */
 function looksLikeNotion(paths: readonly string[]): boolean {
-  const named = (path: string) => hasNotionId(path.split('/').pop() ?? path)
+  // A table of every row is `Tasks <id>_all.csv`, the id before the `_all`.
+  const named = (path: string) =>
+    hasNotionId((path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1'))
   const pages = paths.filter(
     (one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one),
   )

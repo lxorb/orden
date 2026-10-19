@@ -22,6 +22,12 @@ describe('which app an export came out of', () => {
     ).resolves.toBe('notion')
   })
 
+  test('a Notion database exported on its own says so with the id before the _all', async () => {
+    await expect(
+      detect([file('Tasks 1a2b3c4d5e6f78901a2b3c4d5e6f7890_all.csv', 'Name,Status\nOne,Done\n')]),
+    ).resolves.toBe('notion')
+  })
+
   test('a folder of notes with one Notion page kept in it is a folder of notes', async () => {
     const standup = '# Standup\nDate: 2024-03-02\nAttendees: Ann, Bob\n\nShipped the beta.\n'
     const sources = [
