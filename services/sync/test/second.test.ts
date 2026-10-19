@@ -390,7 +390,7 @@ describe('signing in with it on', () => {
    *  `current` is given for the factor already on. */
   async function replace(token: string, current?: string) {
     const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
-    const fresh = secretOf(env)
+    const fresh = await secretHeldFor(env, begun.json.holding ?? '')
     const done = await call<SecondView>(env, '/v1/second/confirm', {
       token,
       body: {
@@ -465,7 +465,7 @@ describe('signing in with it on', () => {
       body: { code: await codeAt(secret, step() + 1) },
     })
     const left = await call<SecondView>(env, '/v1/second', { token, body: {} })
-    const leftSecret = secretOf(env)
+    const leftSecret = await secretHeldFor(env, left.json.holding ?? '')
     const { done: on, fresh } = await replace(token)
     expect(on.status).toBe(200)
 
@@ -922,6 +922,17 @@ function secretOf(env: TestEnv): string {
   const row = env.db
     .prepare("select value from cached where scope = 'second-pending' order by until desc limit 1")
     .get() as { value: string } | undefined
+
+  return (row?.value ?? '').split(':')[1] ?? ''
+}
+
+/** The secret one pending enrolment holds, found by its holding token: where two are
+ *  pending at once, made in the same millisecond, the newest is not a question the
+ *  table can answer. */
+async function secretHeldFor(env: TestEnv, holding: string): Promise<string> {
+  const row = env.db
+    .prepare("select value from cached where scope = 'second-pending' and key = ?")
+    .get(await sha256(holding)) as { value: string } | undefined
 
   return (row?.value ?? '').split(':')[1] ?? ''
 }
