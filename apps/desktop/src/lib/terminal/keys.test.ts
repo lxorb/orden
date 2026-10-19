@@ -20,9 +20,6 @@ describe('on Windows and Linux', () => {
       ['Tab', ctrlShift, 'app.previous-note'],
       ['PageDown', ctrl, 'app.next-note.alt'],
       ['PageUp', ctrlShift, 'app.move-tab-left'],
-      ['p', ctrl, 'app.palette.alt'],
-      ['o', ctrl, 'app.palette.alt'],
-      ['p', ctrl, 'app.commands.alt'],
       ['P', ctrlShift, 'app.commands'],
       ['F6', {}, 'app.region-next'],
       ['F11', {}, 'app.fullscreen'],
@@ -45,22 +42,14 @@ describe('on Windows and Linux', () => {
     }
   })
 
-  /** A half-typed command losing its tab to a word deleted is the worst trade there is:
-   *  VS Code, Windows Terminal and every emulator let the shell have Ctrl+W. */
-  test('and everything a shell reads is the shell’s, Ctrl+W above all', () => {
+  /** A key only a shell has is the shell's, and Ctrl+C is the interrupt whatever an app
+   *  command might be on it. */
+  test('a key nothing of the app is on is the shell’s, and Ctrl+C always is', () => {
     for (const [key, command] of [
-      ['w', 'app.close'],
-      ['p', 'app.print'],
-      ['o', 'app.palette.open'],
-      ['s', 'app.save'],
       ['r', null],
       ['c', null],
       ['d', null],
-      // End of input to a shell, and Deselect tab everywhere else.
-      ['d', 'app.deselect-tab'],
-      // NUL to a shell - Emacs's mark, PowerShell's menu of completions - and the space
-      // switcher everywhere else, which a terminal reaches on Ctrl+Shift+Space.
-      [' ', 'space.switcher'],
+      ['c', 'edit.copy'],
     ] as const) {
       expect(routeKey(press(key, ctrl), 'win', command, false), key).toBe('shell')
     }
@@ -68,31 +57,59 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('F5'), 'win', null, false)).toBe('shell')
   })
 
-  /** Emil, issue #213: a key that is both is asked about. Ctrl+T is a new tab and the
-   *  shell's swapped letters, Ctrl+N the scratchpad and its next line; which one it is
-   *  in a terminal is the reader's to say, once. See two-ways.ts. */
-  test('Ctrl+T and Ctrl+N are both, and asked about', () => {
-    expect(routeKey(press('t', ctrl), 'win', 'app.new-kind', false)).toBe('ask')
-    expect(routeKey(press('n', ctrl), 'linux', 'app.scratchpad', false)).toBe('ask')
-    // A command rebound off Ctrl and a letter is a chord no shell has.
+  /** Emil, issues #213 and #426: every app command on a key the shell reads is both, and
+   *  which one it is in a terminal is the reader's to say, once - the defaults and any key
+   *  rebound onto one alike. Ctrl+W among them, which went to the shell without a
+   *  question before. See two-ways.ts. */
+  test('every app command on a key a shell reads is both, and asked about', () => {
+    for (const [key, command] of [
+      ['t', 'app.new-kind'],
+      ['n', 'app.scratchpad'],
+      ['w', 'app.close'],
+      ['p', 'app.print'],
+      ['o', 'app.palette.open'],
+      ['e', 'app.reading'],
+      // End of input to a shell, and Deselect tab everywhere else.
+      ['d', 'app.deselect-tab'],
+      // NUL to a shell - Emacs's mark, PowerShell's menu of completions - and the space
+      // switcher everywhere else.
+      [' ', 'space.switcher'],
+      // US to a shell, readline's undo, and the source view everywhere else.
+      ['/', 'app.source'],
+      // A key somebody put a command on in Settings.
+      ['k', 'app.palette.alt'],
+      ['[', 'app.back'],
+    ] as const) {
+      expect(routeKey(press(key, ctrl), 'win', command, false), key).toBe('ask')
+      expect(routeKey(press(key, ctrl), 'linux', command, false), key).toBe('ask')
+    }
+    // A command rebound off a key a shell reads is a chord no shell has.
     expect(routeKey(press('T', ctrlShift), 'win', 'app.new-kind', false)).toBe('app')
-    expect(routeKey(press('F9'), 'win', 'app.scratchpad', false)).toBe('app')
   })
 
-  test('only Ctrl and a letter is a character a shell reads', () => {
+  test('a character a shell reads is Ctrl and a letter, Ctrl+Space, or another control key', () => {
     expect(shellReads(press('n', ctrl))).toBe(true)
+    expect(shellReads(press(' ', ctrl))).toBe(true)
+    expect(shellReads(press('[', ctrl))).toBe(true)
+    expect(shellReads(press('/', ctrl))).toBe(true)
+    expect(shellReads(press('2', ctrl))).toBe(true)
     expect(shellReads(press('N', ctrlShift))).toBe(false)
+    expect(shellReads(press(' ', ctrlShift))).toBe(false)
     expect(shellReads(press('n', { ctrlKey: true, altKey: true }))).toBe(false)
     expect(shellReads(press('1', ctrl))).toBe(false)
+    expect(shellReads(press(',', ctrl))).toBe(false)
     expect(shellReads(press('n', cmd))).toBe(false)
   })
 
   /** What the shell would have read, typed once the answer is the shell: DC4 is
-   *  readline's transpose-chars, SO its next-history. */
+   *  readline's transpose-chars, SO its next-history, NUL Emacs's mark. */
   test('the shell is given the character the key would have typed', () => {
     expect(controlOf('t')).toBe('\x14')
     expect(controlOf('n')).toBe('\x0e')
     expect(controlOf('N')).toBe('\x0e')
+    expect(controlOf(' ')).toBe('\x00')
+    expect(controlOf('[')).toBe('\x1b')
+    expect(controlOf('/')).toBe('\x1f')
   })
 
   /** Close window here and Close tab in every terminal there is: neither, then. */

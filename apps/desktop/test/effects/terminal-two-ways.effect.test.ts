@@ -97,13 +97,14 @@ async function opened(key: string): Promise<Opened> {
   return session
 }
 
-/** Ctrl and a letter, pressed with the terminal's keyboard. */
+/** Ctrl and a letter, or Ctrl+Space, pressed with the terminal's keyboard. */
 function press(session: Opened, letter: string) {
+  const space = letter === ' '
   session.term.textarea?.dispatchEvent(
     new KeyboardEvent('keydown', {
       key: letter,
-      code: `Key${letter.toUpperCase()}`,
-      keyCode: letter.toUpperCase().charCodeAt(0),
+      code: space ? 'Space' : `Key${letter.toUpperCase()}`,
+      keyCode: space ? 32 : letter.toUpperCase().charCodeAt(0),
       ctrlKey: true,
       bubbles: true,
       cancelable: true,
@@ -216,4 +217,31 @@ test('put away, the question gives the press to nobody', async () => {
   expect(typed).toEqual([])
   expect(heard).toEqual([])
   expect(shells.ways['app.scratchpad']).toBeUndefined()
+})
+
+/** Every app command on a key the shell reads is both (#426): the space switcher's
+ *  Ctrl+Space, which the shell reads as NUL, and Ctrl+W, which it deletes a word with and
+ *  which went to the shell unasked before. */
+test('Ctrl+Space asks too, and the shell chosen is given NUL', async () => {
+  const session = await opened('w6')
+  press(session, ' ')
+  await vi.waitFor(() => expect(prompt.open).toBe(true))
+  flushSync()
+  expect(prompt.title).toBe('Ctrl+Space in a terminal')
+
+  answer('Terminal')
+  await vi.waitFor(() => expect(typed).toEqual(['\x00']))
+  expect(shells.ways['space.switcher']).toBe('shell')
+})
+
+test('Ctrl+W asks too, and Ctrl+C never does', async () => {
+  const session = await opened('w7')
+  press(session, 'c')
+  flushSync()
+  expect(prompt.open).toBe(false)
+
+  press(session, 'w')
+  await vi.waitFor(() => expect(prompt.open).toBe(true))
+  flushSync()
+  expect(prompt.title).toBe('Ctrl+W in a terminal')
 })
