@@ -26,15 +26,15 @@
  *  nobody has moved a row in keeps nothing at all; see `trimmed` in
  *  tree-arranging.ts.
  *
- *  Which order a space is read in is not here: that is a view rather than a fact
- *  about the notes, so it stays on the machine, in workspace/device.svelte.ts,
- *  beside how far down the list each space was left. */
+ *  Which of the seven orders a space is read in is `SpaceSorting` at the end of this
+ *  file, with the account too (#423). */
 
+import { untrack } from 'svelte'
 import { door } from '@nib/markdown/door'
 import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
-import { renamedIn, withoutName } from '../tree-order'
-import { isRecord, isString, keep } from '../stored'
-import { filledIn, type Folded, readSpaces, without } from '../records'
+import { isRecord, isString, keep, recordOf, stored } from '../stored'
+import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'
+import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:arranged'
 
@@ -458,4 +458,122 @@ function withList(
   names: string[],
 ): Record<string, string[]> {
   return names.length ? { ...held, [folder]: names } : without(held, folder)
+}
+
+/** Which order each space's file list is read in, with the account, so a space read in
+ *  the order somebody arranged by hand is read in it on every device (#423). Here beside
+ *  the arranged order it chooses, rather than a module of its own the first paint would
+ *  load besides. Folded as the graph's settings are; what each machine chose before, by
+ *  folder, is read over once. See docs/tree.md. */
+export const SORT_KEY = 'nib:sorting'
+
+const BEFORE = 'nib:list-order'
+
+interface Sorted extends Folded {
+  mode: SortMode
+  /** Whether the account has heard it, as the arranged order keeps; see `Kept` above. A
+   *  listing that arrives before a choice has landed says the old order, and is not
+   *  taken over the choice. */
+  sent: boolean
+}
+
+function readSorts(): Record<string, Sorted> {
+  const kept = readSpaces(SORT_KEY, (one) => ({
+    mode: isSortMode(one.mode) ? one.mode : FIRST_MODE,
+    sent: one.sent !== false,
+  }))
+  if (Object.keys(kept).length || isRecord(stored(SORT_KEY))) return kept
+
+  const before = recordOf(stored(BEFORE), isSortMode)
+  const taken = Object.fromEntries(
+    Object.entries(before).map(([root, mode]) => [root, { mode, account: null, sent: true }]),
+  )
+  if (Object.keys(taken).length) keep(SORT_KEY, JSON.stringify(taken))
+  return taken
+}
+
+const ORDER: Folding<SortMode> = {
+  fold: (theirs, mine) => (theirs === FIRST_MODE ? mine : theirs),
+  same: (one, other) => one === other,
+}
+
+export class SpaceSorting {
+  private spaces = $state<Record<string, Sorted>>(readSorts())
+
+  constructor(private readonly root: () => string | null) {}
+
+  reread(): void {
+    const grown = filledIn(this.spaces, readSorts())
+    if (grown) this.spaces = grown
+  }
+
+  of(root: string): SortMode {
+    return this.spaces[root]?.mode ?? FIRST_MODE
+  }
+
+  set(mode: SortMode) {
+    const root = this.root()
+    if (root === null || this.of(root) === mode) return
+
+    this.keepAs(root, mode, this.spaces[root]?.account ?? null, false)
+    void this.push(root)
+  }
+
+  /** Takes over what the account holds for one space. Untracked: the listing is what a
+   *  caller's effect follows, and the order written here is not. */
+  adopt(root: string, theirs: unknown, accountId: string) {
+    untrack(() => {
+      const account = isSortMode(theirs) ? theirs : FIRST_MODE
+      const kept = this.spaces[root]
+      // A choice the account has not heard yet stands against a listing from before it,
+      // and is sent again; the listing that says it is the one it was heard by.
+      if (kept?.sent === false && kept.account === accountId) {
+        if (kept.mode === account) this.keepAs(root, account, accountId, true)
+        else void this.push(root)
+        return
+      }
+      const met = meet(kept, accountId, kept?.mode ?? FIRST_MODE, account, ORDER)
+      if (!met) return
+
+      this.keepAs(root, met.value, accountId, !met.tell)
+      if (met.tell) void this.push(root)
+    })
+  }
+
+  spaceMoved(from: string, to: string) {
+    const kept = this.spaces[from]
+    if (!kept || from === to) return
+
+    this.spaces = { ...without(this.spaces, from), [to]: kept }
+    this.write()
+  }
+
+  forget(root: string) {
+    if (!(root in this.spaces)) return
+
+    this.spaces = without(this.spaces, root)
+    this.write()
+  }
+
+  private keepAs(root: string, mode: SortMode, account: string | null, sent: boolean) {
+    this.spaces = { ...this.spaces, [root]: { mode, account, sent } }
+    this.write()
+  }
+
+  private async push(root: string) {
+    const { push } = await import('./pushing')
+    await push(
+      root,
+      (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),
+      (landed) => {
+        const kept = this.spaces[root]
+        // Landed, it waits for the listing that says it; see `adopt`.
+        if (kept && !landed) this.keepAs(root, kept.mode, kept.account, false)
+      },
+    )
+  }
+
+  private write() {
+    keep(SORT_KEY, JSON.stringify(this.spaces))
+  }
 }

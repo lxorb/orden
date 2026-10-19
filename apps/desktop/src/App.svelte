@@ -322,6 +322,7 @@
       workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
       void workspace.arranged.adopt(space.root, remote.arranged, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
+      workspace.sorting.adopt(space.root, remote.sort, who)
       workspace.excluded.adopt(space.root, remote.excluded, who)
       void workspace.archive.adopt(space.root, remote.archived, who)
     }
