@@ -31,7 +31,26 @@ const NOTION_ID = /[ -][0-9a-f]{32}$/i
  *  there is, and the reader brings pdf.js with it - half a megabyte, in front of the
  *  first paint, to answer a question about an extension. */
 export function looksLikePapers(paths: readonly string[]): boolean {
-  return paths.length > 0 && paths.every((one) => /\.pdf$/i.test(one))
+  // The `.DS_Store` a Mac leaves in a folder of papers, and the `._` twin it zips up
+  // beside each one, are not files anybody picked.
+  const picked = paths.filter((one) => !isJunk(one))
+  return picked.length > 0 && picked.every((one) => /\.pdf$/i.test(one))
+}
+
+/** Files no export meant to hand over: a folder's own metadata, the rubbish two
+ *  desktops leave in every folder they touch. `Icon\r` is where Finder keeps a
+ *  folder's own icon, named with a character Windows cannot write. */
+export function isJunk(path: string): boolean {
+  const name = path.split('/').pop() ?? path
+  return (
+    name === '.DS_Store' ||
+    name === 'Thumbs.db' ||
+    name === 'desktop.ini' ||
+    name === 'Icon\r' ||
+    name.startsWith('._') ||
+    path.startsWith('__MACOSX/') ||
+    path.includes('/__MACOSX/')
+  )
 }
 
 export function safeName(title: string): string {

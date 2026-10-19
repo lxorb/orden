@@ -15,6 +15,7 @@
  *  not a PDF at all is said to be one now, before anything is written. */
 
 import { pageSizes } from '../pdf/document'
+import { isJunk, Names, safeParts } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
@@ -22,10 +23,18 @@ import type { Source } from './sources'
 export async function readPdfPages(sources: readonly Source[]): Promise<ImportPlan> {
   const files: Planned[] = []
   const lost: Lost[] = []
+  const names = new Names()
 
   for (const source of sources) {
+    // The `._` twin a Mac zips up beside every paper is not one, nor is a folder's
+    // `.DS_Store`; see looksLikePapers, which already looked past them.
+    if (isJunk(source.path)) continue
+
     const bytes = await source.bytes()
-    const name = source.path.split('/').pop() ?? source.path
+    // Papers land side by side, whatever folders they came out of, under a name a
+    // file may have everywhere: `Q&A: week 1?.pdf` is written on Windows too, and two
+    // papers called `Notes.pdf` are two papers.
+    const name = names.free(safeParts(source.path.split('/').pop() ?? source.path))
 
     const sizes = await pageSizes(bytes).catch(() => [])
     if (sizes.length) {
