@@ -12,7 +12,8 @@
  *  and nothing outside Roam knows the uid. `[these words](((uid)))` showed its
  *  own words, which it keeps.
  *
- *  `{{[[TODO]]}}` and `{{[[DONE]]}}` are checkboxes, so the block becomes a task.
+ *  `{{[[TODO]]}}` and `{{[[DONE]]}}`, or `{{TODO}}` and `{{DONE}}`, are checkboxes,
+ *  so the block becomes a task.
  *
  *  `^^text^^` is a highlight, which is `==text==` everywhere else, and `__text__`
  *  is Roam's italics, which is `*text*`: markdown reads the underscores as bold.
@@ -72,6 +73,9 @@ const EMBED = String.raw`\{\{\s*(?:\[\[)?embed(?:-path)?(?:\]\])?\s*:\s*`
 
 /** An embed of one block, standing alone or in a sentence. */
 const BLOCK_EMBED = new RegExp(`${EMBED}\\(\\(([^()\\s]+)\\)\\)\\s*\\}\\}`, 'g')
+
+/** A block that is nothing but an embed of another. */
+const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
 
 /** An embed of a whole page. */
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
@@ -217,7 +221,7 @@ function linesOf(
 
     // A block that is nothing but an embed shows the embedded block's own
     // children under it, as Roam did.
-    const embedded = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`).exec(said)?.[1]
+    const embedded = ALONE.exec(said)?.[1]
     const shown = embedded && graph.known.has(embedded) && !here.has(embedded) ? embedded : null
     const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []))
     const indent = '  '.repeat(depth)
@@ -277,8 +281,8 @@ export function roamText(
 
   return outsideCode(said, (text) =>
     text
-      .replace(/\{\{\[\[TODO\]\]\}\}\s*/g, '[ ] ')
-      .replace(/\{\{\[\[DONE\]\]\}\}\s*/g, '[x] ')
+      .replace(/\{\{(?:\[\[)?TODO(?:\]\])?\}\}\s*/g, '[ ] ')
+      .replace(/\{\{(?:\[\[)?DONE(?:\]\])?\}\}\s*/g, '[x] ')
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')
       .replace(/(?<![\w_])__(?=\S)([^_\n]+?)__(?![\w_])/g, '*$1*')
       .replace(BLOCK_EMBED, (whole, uid: string) => block(whole, uid))

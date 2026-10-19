@@ -185,3 +185,9 @@ describe('a Roam export, block by block', () => {
     expect(text).toContain('- Before\n\n## Section\n\n- Under')
   })
 })
+
+describe("Roam's checkboxes", () => {
+  test('are read with their brackets or without', () => {
+    expect(roamText('{{TODO}} Ring and {{[[DONE]]}}')).toBe('[ ] Ring and [x] ')
+  })
+})
