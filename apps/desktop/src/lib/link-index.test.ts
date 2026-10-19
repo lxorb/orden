@@ -21,6 +21,8 @@ let reads = 0
 /** Every note a snapshot was taken of, so "one snapshot per touched note" is a
  *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
+/** Notes the "disk" will not write: read-only, or held by another program. */
+const unwritable = new Set<string>()
 /** Scans held open, by the space each is of: the rows it will answer with, and the
  *  hand that lets it answer. Empty unless a test is standing in the gap between a
  *  space being asked for and its rows arriving - which is where the app lives for
@@ -77,6 +79,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       }
       case 'write_note': {
         const relative = path.slice(ROOT.length + 1)
+        if (unwritable.has(relative)) throw new Error(`permission denied: ${path}`)
         notes[relative] = stringOf(args, 'content')
         written.push(relative)
         return undefined
@@ -744,6 +747,28 @@ describe('renaming a note rewrites the links to it', () => {
     expect(notes['Two.md']).toBe('and [the plan](Roadmap.md)')
     expect(notes['Three.md']).toBe('nothing here')
     expect(written.sort()).toEqual(['One.md', 'Two.md'])
+  })
+
+  test('a note that cannot be written keeps its link, and the others are rewritten (#537)', async () => {
+    await space({
+      'Plan.md': '# Plan',
+      'One.md': 'see [[Plan]] now',
+      'Locked.md': 'also [[Plan]]',
+      'Two.md': 'and [the plan](Plan.md)',
+    })
+    unwritable.add('Locked.md')
+
+    try {
+      // Thrown, it undid the move that asked for it; see pages/from-pdf.ts.
+      const touched = await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+
+      expect(touched).toBe(2)
+      expect(notes['Locked.md']).toBe('also [[Plan]]')
+      expect(notes['One.md']).toBe('see [[Roadmap]] now')
+      expect(notes['Two.md']).toBe('and [the plan](Roadmap.md)')
+    } finally {
+      unwritable.clear()
+    }
   })
 
   test('one snapshot per note it touched, and none for the rest', async () => {

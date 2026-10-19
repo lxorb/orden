@@ -69,6 +69,7 @@ import { elsewhere } from './marks-elsewhere.svelte'
 import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { FileOp } from './workspace/file-ops'
+import { log } from './log'
 
 /** One place a link was found, as a row in the panel. */
 export interface Reference {
@@ -1301,7 +1302,18 @@ class Links {
       if (after === null || after === before) continue
 
       await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
-      await invoke('write_note', { path: absolute, content: after })
+      // A note that cannot be written - read-only, held by another program, a full
+      // disk - keeps its old link and is said in the log; the others are rewritten
+      // all the same. Thrown, it undid the move that asked for this: opening a PDF
+      // discarded the page note made for it, and with it the PDF, for good (#537).
+      const wrote = await invoke('write_note', { path: absolute, content: after }).then(
+        () => true,
+        (error: unknown) => {
+          log('warn', `a link in ${absolute} could not be rewritten: ${String(error)}`)
+          return false
+        },
+      )
+      if (!wrote) continue
       for (const hear of this.hearing) hear(absolute, after)
 
       this.notes = this.notes.map((one) =>
