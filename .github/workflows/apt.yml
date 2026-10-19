@@ -162,14 +162,14 @@ jobs:
       - name: Into the bucket
         working-directory: apt
         run: |
-          s3() { aws s3 --endpoint-url "$R2" --only-show-errors "$@"; }
+          s3() { aws --endpoint-url "$R2" s3 "$@"; }
           bucket="s3://$R2_BUCKET"
-          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --cache-control 'public, max-age=31536000, immutable'
-          s3 sync "dists/$SUITE" "$bucket/dists/$SUITE" --delete --cache-control 'public, max-age=60'
+          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --only-show-errors --cache-control 'public, max-age=31536000, immutable'
+          s3 sync "dists/$SUITE" "$bucket/dists/$SUITE" --only-show-errors --delete --cache-control 'public, max-age=60'
           for file in orden-archive-keyring.asc orden-archive-keyring.gpg index.html README.md; do
-            s3 cp "$file" "$bucket/$file" --cache-control 'public, max-age=300'
+            s3 cp "$file" "$bucket/$file" --only-show-errors --cache-control 'public, max-age=300'
           done
-          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --delete --cache-control 'public, max-age=31536000, immutable'
+          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --only-show-errors --delete --cache-control 'public, max-age=31536000, immutable'
           s3 ls --recursive "$bucket/dists/$SUITE/"
           s3 ls --recursive "$bucket/pool/$SUITE/"
           {
