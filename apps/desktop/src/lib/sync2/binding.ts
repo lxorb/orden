@@ -48,20 +48,31 @@ function arrive(note: Held, from: string, to: string) {
   if (change) note.live.arrived([change])
 }
 
-/** Brings a note and its document to one text, as above. */
-async function agree(engine: Engine, id: string, note: Held, doc: Doc): Promise<void> {
+/** Brings a note and its document to one text, as above. Answers null once they are
+ *  one, or, where the two each moved and the rule asks, the words the note said as the
+ *  question went up: the note is held, and the next meeting is against those (#543).
+ *
+ *  `given` is the words both sides last shared, where the caller knows them better than
+ *  the file nib last wrote: after a hold, what the note said when it was asked. */
+async function agree(
+  engine: Engine,
+  id: string,
+  note: Held,
+  doc: Doc,
+  given?: string,
+): Promise<string | null> {
   const mine = note.latest
   const theirs = doc.text()
-  if (mine === theirs) return
+  if (mine === theirs) return null
 
-  const base = (await writtenOf(engine.core, id)) ?? theirs
+  const base = given ?? (await writtenOf(engine.core, id)) ?? theirs
   if (theirs === base) {
     doc.write((live) => turn('words', live, theirs, mine, MINE))
-    return
+    return null
   }
   if (mine === base) {
     arrive(note, mine, theirs)
-    return
+    return null
   }
 
   const merged = mergedOf(base, mine, theirs)
@@ -77,15 +88,23 @@ async function agree(engine: Engine, id: string, note: Held, doc: Doc): Promise<
     // Held like another program's edit: the note keeps what it says here, and the
     // question comes up over it.
     await engine.holdFile(id, base, mine)
-    return
+    return mine
   }
   const resolution = judged.resolution
   doc.write((live) => turn('words', live, theirs, resolution, MINE))
   arrive(note, mine, resolution)
+  return null
 }
 
 /** Joins a note to its document. Answers how to part them again. `holds` is whether the
- *  note's view is still on this file (see rooms/bind.ts). */
+ *  note's view is still on this file (see rooms/bind.ts).
+ *
+ *  Not while the two are held apart: the note and the document then say different
+ *  things, and a keystroke put into the document at the note's place landed inside
+ *  another word of it (`wr!itten`), a deletion took out words nobody chose (#543). The
+ *  note waits, typed into as a file, until the question is answered, and meets the
+ *  document again then - against the words it said as it was asked, so what the answer
+ *  kept and what was typed since both stay. */
 export async function attach(
   engine: Engine,
   id: string,
@@ -99,23 +118,50 @@ export async function attach(
     if (doc) await engine.letGo(id)
     return null
   }
-  await agree(engine, id, note, doc)
 
   let text: Y.Text = doc.live.getText(TEXT)
-  let unbind = bind(note.live, text, holds)
+  let unbind: (() => void) | null = null
+  let waiting: (() => void) | null = null
+  let parted = false
+  /** Whether the note has been parted from it, or moved on to another file. */
+  const gone = () => parted || !holds()
+
+  const join = () => {
+    unbind = bind(note.live, text, holds)
+  }
+  const wait = (asked: string) => {
+    waiting = engine.whenLetGo(id, () => {
+      waiting = null
+      void (async () => {
+        if (gone()) return
+        const still = await agree(engine, id, note, doc, asked)
+        if (gone()) return
+        if (still === null) join()
+        else wait(still)
+      })()
+    })
+  }
+
+  const asked = await agree(engine, id, note, doc)
+  if (asked === null) join()
+  else wait(asked)
+
   // The account's words taken over this device's, or a new epoch: the same note, a new
-  // document under it.
+  // document under it. A note still waiting on its question meets it when that is answered.
   doc.replaced = (fresh) => {
+    text = fresh.getText(TEXT)
+    if (!unbind) return
     unbind()
     const was = note.latest
-    text = fresh.getText(TEXT)
     arrive(note, was, text.toJSON())
-    unbind = bind(note.live, text, holds)
+    join()
     again?.()
   }
 
   return () => {
-    unbind()
+    parted = true
+    unbind?.()
+    waiting?.()
     doc.replaced = null
     void engine.letGo(id)
   }

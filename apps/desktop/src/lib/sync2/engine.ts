@@ -59,7 +59,30 @@ export class Engine implements AskedEngine {
   ) {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
-    core.events.held = () => void this.held.refresh()
+    core.events.held = () => {
+      void this.held.refresh()
+      for (const [id, told] of [...this.unheld]) {
+        if (core.isHeld(id)) continue
+        this.unheld.delete(id)
+        for (const one of told) one()
+      }
+    }
+  }
+
+  /** Who is waiting for a held note to be let go of, by id; see `whenLetGo`. */
+  private readonly unheld = new Map<string, Set<() => void>>()
+
+  /** Tells `then` once the note is no longer held: its question answered, whichever
+   *  way. Answers how to stop waiting. An open note waits so before it is joined to its
+   *  document again; see binding.ts. */
+  whenLetGo(id: string, then: () => void): () => void {
+    const told = this.unheld.get(id) ?? new Set()
+    told.add(then)
+    this.unheld.set(id, told)
+    return () => {
+      told.delete(then)
+      if (!told.size) this.unheld.delete(id)
+    }
   }
 
   static async start(world: World, store: SyncStore, how: Starting = {}): Promise<Engine> {
