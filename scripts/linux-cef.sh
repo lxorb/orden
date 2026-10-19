@@ -76,6 +76,27 @@ case "${1:-use}" in
     sharun=https://raw.githubusercontent.com/FabianLars/Anylinux-AppImages/3e280d1b2270fecfcb2c2c823b490c782ecf1277/useful-tools/lib
     export ANYLINUX_LIB_SOURCE="${ANYLINUX_LIB_SOURCE:-$sharun/anylinux.c}"
     export GTK_CLASS_FIX_SOURCE="${GTK_CLASS_FIX_SOURCE:-$sharun/gtk-class-fix.c}"
+    # And NSS's own modules in the AppImage, which quick-sharun leaves out though Chromium
+    # cannot start without them: NSS opens libsoftokn3.so and libfreeblpriv3.so beside
+    # its libnss3.so, and an AppImage carrying the one and not the others met the host's
+    # - a newer NSS's, on Arch, or none, on a Fedora without nss-softokn - and Chromium
+    # ended at its start (#427). Named as AppImage files, which the bundler hands
+    # quick-sharun with the rest.
+    case "${1:-}" in
+      build | bundle)
+        lib="/usr/lib/$(uname -m)-linux-gnu"
+        files=""
+        for module in libsoftokn3.so libfreeblpriv3.so libfreebl3.so libnssckbi.so libnssdbm3.so; do
+          for at in "$lib/$module" "$lib/nss/$module"; do
+            if [ -f "$at" ]; then
+              files="$files${files:+,}\"/usr/lib/$module\":\"$(readlink -f "$at")\""
+              break
+            fi
+          done
+        done
+        [ -n "$files" ] && set -- "$@" --config "{\"bundle\":{\"linux\":{\"appimage\":{\"files\":{$files}}}}}"
+        ;;
+    esac
     cd "$here/apps/desktop"
     exec npx --yes "@tauri-apps/cli@$pin" "$@"
     ;;
