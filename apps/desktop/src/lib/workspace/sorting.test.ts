@@ -111,3 +111,21 @@ describe('a choice the account has not heard yet', () => {
     expect(sent.every((one) => one.sort === 'manual')).toBe(true)
   })
 })
+
+describe('an account whose listing says nothing of the order', () => {
+  test('is not folded with nor sent to, and the order chosen here stands until it does', async () => {
+    // A Worker from before #423: the listing has no sort at all, and a push would 404.
+    store.set('nib:list-order', JSON.stringify({ [ROOT]: 'manual' }))
+    const sorting = made()
+    for (let pass = 0; pass < 3; pass++) sorting.adopt(ROOT, undefined, 'account')
+    expect(sorting.of(ROOT)).toBe('manual')
+    // A push goes out after an import; give it the time to have gone, had it been sent.
+    await new Promise((settled) => setTimeout(settled, 50))
+    expect(sent).toEqual([])
+
+    // The Worker is new now: an account meeting this space for the first time.
+    sorting.adopt(ROOT, 'name', 'account')
+    expect(sorting.of(ROOT)).toBe('manual')
+    await vi.waitFor(() => expect(sent).toEqual([{ root: ROOT, sort: 'manual' }]))
+  })
+})

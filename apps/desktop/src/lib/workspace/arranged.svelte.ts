@@ -522,6 +522,10 @@ export class SpaceSorting {
   /** Takes over what the account holds for one space. Untracked: the listing is what a
    *  caller's effect follows, and the order written here is not. */
   adopt(root: string, theirs: unknown, accountId: string) {
+    // A Worker from before #423 lists no order at all. That account has not heard of
+    // a space's order, so there is nothing to fold and nowhere to send one: the order
+    // chosen here stands, kept on this device, until the listing carries one.
+    if (theirs === undefined) return
     untrack(() => {
       const account = isSortMode(theirs) ? theirs : FIRST_MODE
       const kept = this.spaces[root]
