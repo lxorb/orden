@@ -132,7 +132,8 @@ export default tseslint.config(
     // state scripts are the same kind of thing: page scripts the crate runs in a site's
     // own page, never modules of the app; see src-tauri/src/web_state.rs. So is the clip's
     // reader, src-tauri/src/web_tabs/reader.js, the swipe's, src-tauri/src/web_swipe.js, and
-    // the window's own frame's on Linux, src-tauri/src/window_drag.js.
+    // the window's own frame's on Linux, src-tauri/src/window_drag.js, and the one that
+    // says what draws the window's page, src-tauri/src/gpu.js.
     // And the frame script, a classic script every sandboxed frame carries inline; see
     // packages/editor/src/frame-script.js.
     files: [
@@ -141,6 +142,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/web_tabs/*.js',
       'apps/desktop/src-tauri/src/web_swipe.js',
       'apps/desktop/src-tauri/src/window_drag.js',
+      'apps/desktop/src-tauri/src/gpu.js',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,
