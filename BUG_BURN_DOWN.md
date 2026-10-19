@@ -26,8 +26,8 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 13 | 13 | 0 |
-| Medium | 25 | 25 | 0 |
-| Low | 10 | 9 | 1 |
+| Medium | 26 | 26 | 0 |
+| Low | 11 | 10 | 1 |
 
 Open rows are being fixed; see the status column.
 
@@ -83,6 +83,8 @@ Open rows are being fixed; see the status column.
 | B46 | High | Undoing a signed-in folder delete wrote over notes made at the same paths since (second re-audit; B24 for folders, from #399) | Fixed `5991dbde0` | `putBack` wrote held notes with `writeFile` | Each held note goes through `writeBeside` | `written-over.store.test.ts` (failed before) |
 | B47 | Medium | Undoing a signed-in folder delete gave back an empty folder | Fixed `5991dbde0`, then `c4860ca34` | `remove` hid the row before `heldIn` read what it held | `heldIn` reads the folder off the disk, not the tree | `written-over.store.test.ts` (failed before) |
 | B49 | Medium | Undoing a signed-in folder delete gave back the notes without the folder's pictures, PDFs and attachments, saying nothing (third re-audit; from #399) | Fixed `c4860ca34` | `heldIn` read the file list, which leaves out what no tab opens, and skipped files it could not read | `read_tree` takes `every`; `heldIn` reads the folder off the disk and holds nothing (Recently deleted is the way back) when anything in it is not words | `written-over.store.test.ts` picture test (failed before); `tree.rs` `every_file_is_listed_when_asked_for` (run by CI: a Linux build here needs CEF) |
+| B50 | Medium | In the browser, B49 still gave a folder back without its pictures and PDFs (re-audit of B49) | Fixed `bb9aee261` | The web `read_tree` ignored `every` | The web tree lists every row when asked | `web/commands.test.ts` (failed before) |
+| B51 | Low | A `.DS_Store` or `desktop.ini` in a folder stopped its delete from being undoable (re-audit of B49) | Fixed `bb9aee261` | `heldIn` asked for dotfiles, and those are not words | Dotfiles and sync's clutter names are left out, as sync leaves them | `written-over.store.test.ts` (failed before) |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
