@@ -43,7 +43,7 @@
     turnOf,
     zoomed,
   } from './camera'
-  import { canvasMenu, place, pull, run } from './canvas/actions'
+  import { actualSize, canvasMenu, place, pull, run } from './canvas/actions'
   import {
     coloured,
     movedBy,
@@ -2132,6 +2132,8 @@
       onundo={() => store.undo()}
       onredo={() => store.redo()}
       onerase={() => run.eraseAll(store)}
+      scale={camera.scale}
+      onactual={() => actualSize(store, { width, height })}
     />
   {/if}
 

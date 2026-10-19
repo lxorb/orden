@@ -59,6 +59,8 @@
     onredo,
     onerase,
     places = true,
+    scale,
+    onactual,
   }: {
     canundo: boolean
     canredo: boolean
@@ -71,7 +73,20 @@
      *  on paper, and a grid of things that a press there would never put down is a
      *  row of buttons that do nothing (#350). */
     places?: boolean
+    /** How near the plane is, and the way back to its actual size: a small reading of
+     *  the zoom at the bar's end while it is anything but 100%, which pressed goes back
+     *  there (#369). Nothing at 100%, so the bar keeps no zoom buttons it does not need
+     *  (#401). A plane's; a page note fits its paper and says its zoom elsewhere. */
+    scale?: number
+    onactual?: () => void
   } = $props()
+
+  /** The zoom as a reading, where it is not the actual size. */
+  const zoomed = $derived(
+    scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005
+      ? `${String(Math.round(scale * 100))}%`
+      : null,
+  )
 
   /** Whether Undo and Redo come first, which is a phone's bar: see `arrows` below. */
   const early = $derived(viewport.device === 'phone')
@@ -500,6 +515,21 @@
           <span class="split"></span>
           {@render arrows()}
         {/if}
+
+        {#if zoomed}
+          <button
+            type="button"
+            class="actual"
+            title={t('Actual size')}
+            aria-label={t('Actual size')}
+            onclick={() => {
+              tick()
+              onactual?.()
+            }}
+          >
+            {zoomed}
+          </button>
+        {/if}
       </div>
     </div>
   {/if}
@@ -790,6 +820,18 @@
     border-radius: 2px;
     background: var(--ink);
     box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 30%, transparent);
+  }
+
+  /* The zoom, read, while it is not the actual size; pressed, it is again (#369). A
+     reading rather than a glyph, quiet as a caption, and only as wide as its words. */
+  .actual {
+    width: auto;
+    min-width: 0;
+    padding-inline: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
   }
 
   /* The colour in hand, drawn as the dot it is. */

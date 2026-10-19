@@ -1502,6 +1502,9 @@ const CANVAS_ENTRIES: Shortcut[] = (
     // (#401).
     ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
     ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
+    // Back to 100% (#369): the bar's reading of the zoom does it, and a reader who wants
+    // a key gives it one. Ctrl+0 is the app's text size, and Ctrl+Alt+0 the fit.
+    ['canvas.zoom.actual', () => t('Actual size'), null],
     // Upright again (#351).
     ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],

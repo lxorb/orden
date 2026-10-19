@@ -590,6 +590,7 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
   ['canvas.zoom.in', (store, view) => zoomedBy(store, view, NOTCH)],
   ['canvas.zoom.out', (store, view) => zoomedBy(store, view, 1 / NOTCH)],
+  ['canvas.zoom.actual', (store, view) => actualSize(store, view)],
   ['canvas.upright', (store, view) => upright(store, view)],
   ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
   ['canvas.find', (_store, view) => view.onfind()],
@@ -611,6 +612,13 @@ function upright(store: CanvasStore, view: { width: number; height: number }): b
 }
 
 /** One notch of the zoom, about the middle of the view. */
+/** The plane at its actual size, 100%, about the middle of the view: what the zoom's
+ *  reading on the bar does when pressed (#369). */
+export function actualSize(store: CanvasStore, view: { width: number; height: number }) {
+  const { width, height } = view
+  store.camera = zoomed(store.camera, width, height, width / 2, height / 2, 1 / store.camera.scale)
+}
+
 function zoomedBy(store: CanvasStore, view: KeyView, by: number) {
   const { width, height } = view
   store.camera = zoomed(store.camera, width, height, width / 2, height / 2, by)
