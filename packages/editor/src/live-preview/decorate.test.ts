@@ -538,6 +538,38 @@ describe('extensions', () => {
     expect(concealed('%% a note %%\n\nbody', 4)).toEqual([])
   })
 
+  /** A view plugin may not replace a line break; CodeMirror throws, and the editor
+   *  is left showing one note while holding another (#524). */
+  test('shows a comment written across lines rather than hiding it', () => {
+    for (const doc of [
+      '%%\nmulti\nline\n%%',
+      '<!--\nmulti\nline\n-->',
+      'a <!-- c\nd --> b',
+      'a %%c\nd%% b',
+    ]) {
+      expect(concealed(doc)).toEqual([])
+      expect(revealedMeta(doc + PARK, doc.length + PARK.length)).not.toEqual([])
+    }
+  })
+
+  test('replaces nothing across a line break, whatever was written', () => {
+    for (const doc of [
+      '<img\n  src="a.png">',
+      '<iframe\nsrc="https://example.com">',
+      '![a\nb](a.png)',
+      'x <span\nclass="a">y</span>',
+    ]) {
+      const full = doc + PARK
+      for (const trusted of [false, true]) {
+        const { decorations } = buildDecorations(state(full, full.length, trusted))
+        decorations.between(0, full.length, (from, to, value) => {
+          if (value.spec.class === undefined && from < to)
+            expect(full.slice(from, to), doc).not.toContain('\n')
+        })
+      }
+    }
+  })
+
   test('leaves a lone pair of percents alone', () => {
     expect(concealed('a 50%% b')).toEqual([])
   })

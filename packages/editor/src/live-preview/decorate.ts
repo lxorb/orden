@@ -99,11 +99,24 @@ class Decorator {
       )
     }
 
+    // A view plugin may not replace a line break: CodeMirror throws, and a note that
+    // opened with one left the old note on screen and the new one in the state, every
+    // keystroke after that landing in the wrong words (#524). A comment, a tag or a
+    // picture written across lines is shown instead - the syntax faded the way a
+    // revealed one is, the picture as what was written.
+    const doc = this.state.doc
+    const oneLine = (range: Range<Decoration>) =>
+      doc.lineAt(range.from).number === doc.lineAt(range.to).number
+    const hidden = this.hidden.filter(oneLine)
+    const faded = this.hidden
+      .filter((range) => range.value === hide && !oneLine(range))
+      .map((range) => meta.range(range.from, range.to))
+
     return {
-      decorations: Decoration.set([...lines, ...this.marks, ...this.hidden], true),
+      decorations: Decoration.set([...lines, ...this.marks, ...faded, ...hidden], true),
       // Only concealed text is atomic, so the caret steps over hidden syntax
       // instead of landing inside it. Visible marks stay freely editable.
-      atomic: Decoration.set(this.hidden, true),
+      atomic: Decoration.set(hidden, true),
     }
   }
 
