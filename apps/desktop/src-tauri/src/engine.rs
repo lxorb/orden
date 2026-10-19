@@ -407,7 +407,8 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 }
 
 /// What every window of the app's own is on CEF, the first and every one after it: its
-/// page in the interface's own profile, and Alloy style (see `ui_window`).
+/// page in the interface's own profile, Alloy style (see `ui_window`), and the window
+/// moved and resized by the page's own presses, which never reach GTK (`window_drag.rs`).
 ///
 /// A profile folder that cannot be made leaves the page in the engine's own, said in the
 /// log, rather than the window not opening at all.
@@ -418,7 +419,8 @@ pub(crate) fn own_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> tauri::WebviewWindowBuilder<'a, crate::Engine, M> {
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
-        .browser_runtime_style(RuntimeStyle::Alloy);
+        .browser_runtime_style(RuntimeStyle::Alloy)
+        .initialization_script(crate::window_drag::SCRIPT);
     match app_profile(app) {
         Ok(profile) => building.data_directory(profile),
         Err(error) => {
