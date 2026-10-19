@@ -143,22 +143,55 @@ export function tomboyMarkdown(
   content: string,
   link: (title: string) => string = (title) => `[[${title}]]`,
 ): string {
-  let out = ''
+  // What is written so far, in pieces: a mark wraps the pieces since it opened
+  // and a list looks at the last few, so a long note is not copied once per item.
+  const out: string[] = []
   let at = 0
   let depth = 0
   // Where the last list at the top closed, so a list straight after it is the
   // same list carried on rather than a new one after a gap.
   let listEnd = -1
   const open: { name: string; from: number }[] = []
+  // Whether the words of a list item are still to come, whose spaces in front
+  // would otherwise push them far enough in to read as code.
+  let item = false
 
   const write = (text: string) => {
-    out += text
+    if (text) out.push(text)
+  }
+
+  /** The end of what is written, which is all a line ending is looked for in. */
+  const tail = () => {
+    let end = ''
+    for (let at = out.length - 1; at >= 0 && end.length < 256; at -= 1) end = `${out[at]}${end}`
+    return end
+  }
+
+  /** The last `count` characters taken off again. */
+  const cut = (count: number) => {
+    let left = count
+    while (left > 0 && out.length) {
+      const last = out.pop() ?? ''
+      if (last.length > left) out.push(last.slice(0, last.length - left))
+      left -= last.length
+    }
+  }
+
+  const words = (text: string) => {
+    if (!item) {
+      write(text)
+      return
+    }
+
+    const said = text.replace(/^[ \t]+/, '')
+    if (said) item = false
+    write(said)
   }
 
   for (const tag of tagsIn(content)) {
     if (tag.from < at) continue
 
-    write(unescapeXml(content.slice(at, tag.from)))
+    words(unescapeXml(content.slice(at, tag.from)))
     at = tag.to
 
     const name = tag.name.toLowerCase()
@@ -173,9 +206,10 @@ export function tomboyMarkdown(
       const which = open.map((one) => one.name).lastIndexOf(name)
       if (which < 0) continue
 
-      const from = open[which]?.from ?? out.length
+      const from = Math.min(open[which]?.from ?? out.length, out.length)
       open.splice(which)
-      out = out.slice(0, from) + marked(out.slice(from), mark)
+      if (listEnd > from) listEnd = -1
+      write(marked(out.splice(from).join(''), mark))
       continue
     }
 
@@ -186,16 +220,19 @@ export function tomboyMarkdown(
           // The blank line is what makes the first item a list rather than the
           // tail of the paragraph above it. Tomboy-ng writes each item as a
           // list of its own, which is still one list.
-          if (listEnd >= 0 && /^[ \t]*(\n[ \t]*){0,2}$/.test(out.slice(listEnd))) {
-            out = out.slice(0, listEnd)
-          } else if (out && !/\n\s*\n\s*$/.test(out)) write(/\n\s*$/.test(out) ? '\n' : '\n\n')
+          const between = listEnd >= 0 && listEnd <= out.length ? out.slice(listEnd).join('') : null
+          if (between !== null && /^[ \t]*(\n[ \t]*){0,2}$/.test(between)) {
+            out.length = listEnd
+          } else if (out.length && !/\n\s*\n\s*$/.test(tail())) {
+            write(/\n\s*$/.test(tail()) ? '\n' : '\n\n')
+          }
         }
       } else {
         depth = Math.max(0, depth - 1)
         if (depth === 0) {
           // And a blank line after it, so the words that follow are not taken
           // for more of the last item.
-          if (!out.endsWith('\n')) write('\n')
+          if (!tail().endsWith('\n')) write('\n')
           listEnd = out.length
           write('\n')
         }
@@ -207,9 +244,10 @@ export function tomboyMarkdown(
       // An item's own line ending is inside it, so a new item only starts a line
       // where the last one did not end one.
       if (!tag.closing) {
-        out = out.replace(/[ \t]+$/, '')
-        if (out && !out.endsWith('\n')) write('\n')
+        cut(/[ \t]*$/.exec(tail())?.[0].length ?? 0)
+        if (out.length && !tail().endsWith('\n')) write('\n')
         write(`${'  '.repeat(Math.max(0, depth - 1))}- `)
+        item = true
       }
       continue
     }
@@ -230,6 +268,7 @@ export function tomboyMarkdown(
   write(unescapeXml(content.slice(at)))
 
   return out
+    .join('')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()

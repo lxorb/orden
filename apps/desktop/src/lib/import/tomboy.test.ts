@@ -124,6 +124,24 @@ describe("Tomboy's own markup", () => {
     ])
   })
 
+  test('the spaces in front of an item are not taken for code', () => {
+    expect(tomboyMarkdown('<list><list-item dir="ltr">    spaced</list-item></list>')).toBe(
+      '- spaced',
+    )
+  })
+
+  test('a long list is read once rather than once per item', () => {
+    const items = Array.from(
+      { length: 20000 },
+      (_, at) => `<list-item dir="ltr"><bold>item ${at}</bold>\n</list-item>`,
+    )
+    const started = performance.now()
+    const said = tomboyMarkdown(`<list>${items.join('')}</list>`)
+
+    expect(said.split('\n')).toHaveLength(20000)
+    expect(performance.now() - started).toBeLessThan(2000)
+  })
+
   test('emphasis keeps its spaces outside, and marks nothing where there are no words', () => {
     expect(tomboyMarkdown('a <bold>fett </bold>b')).toBe('a **fett** b')
     expect(tomboyMarkdown('like <highlight> "John Smith" name </highlight> will')).toBe(
