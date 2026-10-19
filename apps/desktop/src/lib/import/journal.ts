@@ -49,8 +49,9 @@ const DAY = /(\d{4}-\d{2}-\d{2})/
  *  are collected here and written as links instead. */
 const MEDIA = new Set(['img', 'video', 'audio', 'source'])
 
-/** The cards Journal draws rather than writes: a mood, a walk, a map. */
-const DRAWN = /assetType_(stateOfMind|motionActivity|genericMap)/i
+/** The cards Journal draws rather than writes: a mood, a walk, a map, and the
+ *  map of several places a day out draws. */
+const DRAWN = /assetType_(stateOfMind|motionActivity|genericMap|multiPinMap)\b/i
 
 /** What one entry's document said. */
 interface Entry {
@@ -67,13 +68,24 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
   const entries = new Map<string, Entry>()
   let drawn = 0
   let heic = 0
+  let missing = 0
+
+  // What the export holds under `Resources/`, by name, so a picture an entry
+  // shows that did not come with it is counted rather than left a broken link.
+  const held = new Set(
+    sources
+      .filter((one) => RESOURCE.test(one.path))
+      .map((one) => (one.path.split('/').pop() ?? one.path).toLowerCase()),
+  )
 
   // Read before placing: an entry's name is its title, and the title is inside
   // the document rather than on it.
   for (const source of sources) {
     if (isJunk(source.path) || !ENTRY.test(source.path)) continue
-    const entry = entryOf(await source.text(), source.path)
+    const html = await source.text()
+    const entry = entryOf(html, source.path)
     drawn += entry.drawn
+    missing += mediaNames(html).filter((name) => !held.has(name.toLowerCase())).length
     entries.set(source.path, entry)
   }
 
@@ -120,7 +132,36 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
     })
   }
 
+  if (missing) {
+    plan.lost.push({
+      text: key('{count} attachments were missing from the export or could not be read'),
+      one: '{count} attachment was missing from the export or could not be read',
+      values: { count: missing },
+    })
+  }
+
   return plan
+}
+
+/** The files under `Resources/` an entry shows, by name, each once. */
+function mediaNames(html: string): string[] {
+  const names = new Set<string>()
+
+  for (const tag of tagsIn(html)) {
+    if (tag.closing || !MEDIA.has(tag.name.toLowerCase())) continue
+
+    const source = (tag.attributes.src ?? '').trim()
+    if (!/(^|\/)resources\//i.test(source)) continue
+
+    const name = source.split(/[?#]/)[0]?.split('/').pop() ?? ''
+    try {
+      names.add(decodeURIComponent(name))
+    } catch {
+      names.add(name)
+    }
+  }
+
+  return [...names].filter(Boolean)
 }
 
 /** What an entry's note is called: the day it was written, and its title after
