@@ -209,6 +209,9 @@ rooms.get('/:noteId', async (context) => {
       // up and never learns what it names; what it is for is being told that
       // this one is not in the space any more. See `roomsRevoked`.
       'x-nib-who': allowed.who,
+      // And the sign-in it arrived with, by its hash, which the socket lasts no longer
+      // than; see `askSignIns` in room.ts.
+      'x-nib-login': hash,
       // Sync v2: which epoch the note's document is on, whether the socket speaks
       // `nib.v2` (and so hears acknowledgements and new epochs), and which device is
       // on the other end. See `NoteRoom` and docs/sync-v2.md section 7.

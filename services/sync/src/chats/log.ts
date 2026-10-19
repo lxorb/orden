@@ -27,6 +27,7 @@ import { BEAT, BEAT_ANSWER } from '@nib/sync-core/wire'
 import { places } from '../bound'
 import { note } from '../failed'
 import { askHub } from '../hub/reach'
+import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import type { Env } from '../types'
 import {
   admit,
@@ -64,6 +65,9 @@ export type Person = Asker & { id: string; guest: boolean }
 
 /** What the door decided about a socket, kept on it across a sleep. */
 interface Attached extends Person {
+  /** The hash of the sign-in the socket arrived with, which it lasts no longer than;
+   *  see `askSignIns`. Absent on a socket let in before the door said. */
+  login?: string
   hello: boolean
   /** When this socket last had a typing frame relayed. */
   typedAt: number
@@ -101,6 +105,7 @@ function attachedTo(socket: WebSocket): Attached | null {
     guest: one.guest === true,
     role: one.role === 'owner' || one.role === 'write' ? one.role : 'read',
     ...(typeof one.device === 'string' && one.device ? { device: one.device } : {}),
+    ...(typeof one.login === 'string' && one.login ? { login: one.login } : {}),
     hello: one.hello === true,
     typedAt: typeof one.typedAt === 'number' ? one.typedAt : 0,
   }
@@ -128,6 +133,8 @@ function wholeIn(value: string | null): number | null {
 
 export class ChatLog implements DurableObject {
   private ready = false
+  /** When this object last asked whether its sockets' sign-ins live; see `askSignIns`. */
+  private signInsAskedAt = 0
   private reachers: { at: number; list: { id: string; guest: boolean }[] } | null = null
 
   constructor(
@@ -155,6 +162,9 @@ export class ChatLog implements DurableObject {
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
     }
+    // Every ask below may say something to the sockets here, and none whose sign-in
+    // has ended hears it.
+    await this.askSignIns()
     if (ask === 'profile') {
       const who = headers.get('x-nib-profile')
       if (isWho(who)) this.everyone({ t: 'profile', who })
@@ -173,7 +183,7 @@ export class ChatLog implements DurableObject {
     switch (ask) {
       case 'join': {
         const pair = new WebSocketPair()
-        await this.enter(pair[1], person)
+        await this.enter(pair[1], person, headers.get('x-nib-login') ?? undefined)
         return new Response(null, { status: 101, webSocket: pair[0] })
       }
       case 'send': {
@@ -205,13 +215,13 @@ export class ChatLog implements DurableObject {
 
   /** The object's half of a socket, taken in. Apart from `fetch` because a test drives
    *  it without a runtime to make the pair. The device says `hello` next. */
-  async enter(server: WebSocket, person: Person): Promise<void> {
+  async enter(server: WebSocket, person: Person, login?: string): Promise<void> {
     // Written down before the socket is taken, so a revocation can always find it: a
     // socket no row names is a socket nobody can close.
     await this.writeSocketRow(person.id)
 
     this.ctx.acceptWebSocket(server, [person.who])
-    attach(server, { ...person, hello: false, typedAt: 0 })
+    attach(server, { ...person, ...(login ? { login } : {}), hello: false, typedAt: 0 })
     this.sayHere()
   }
 
@@ -219,6 +229,9 @@ export class ChatLog implements DurableObject {
     if (typeof message !== 'string') return
     const me = attachedTo(socket)
     if (!me) return
+    // Whatever this says is heard by every socket here, so none whose sign-in has
+    // ended - this one included - is left to say it or to hear it.
+    if ((await this.askSignIns()).has(socket)) return
     const frame = clientFrameOf(message)
     if (!frame) {
       say(socket, { t: 'refused', id: null, error: INVALID })
@@ -918,6 +931,8 @@ export class ChatLog implements DurableObject {
   /* ── The alarm ────────────────────────────────────────────────────────── */
 
   async alarm(): Promise<void> {
+    // What the alarm places - a post held for its time - is said to the sockets here.
+    await this.askSignIns()
     const now = Date.now()
     const flushAt = Number(readMeta(this.sql, 'flush_at') ?? Number.NaN)
     try {
@@ -970,6 +985,54 @@ export class ChatLog implements DurableObject {
   }
 
   /* ── Access ending ────────────────────────────────────────────────────── */
+
+  /** Every socket whose sign-in has ended - run out, most of all, which nothing else
+   *  announces - closed, at most once a minute (#520). Asked when something is about to
+   *  be said to the sockets here, which is the only time a socket that outlived its
+   *  sign-in could hear or say anything: a chat nobody writes in is never woken for it.
+   *  A socket let in before the door said which sign-in it came with is left as it is. */
+  private async askSignIns(): Promise<Set<WebSocket>> {
+    const closed = new Set<WebSocket>()
+    const now = Date.now()
+    if (now - this.signInsAskedAt < ASK_SIGNINS_EVERY) return closed
+    this.signInsAskedAt = now
+
+    const sockets = this.ctx.getWebSockets()
+    const logins = sockets.flatMap((one) => attachedTo(one)?.login ?? [])
+    if (!logins.length) return closed
+
+    const live = await stillSignedIn(this.env, logins).catch(() => null)
+    // Not asked is not ended: the next minute asks again.
+    if (!live) return closed
+
+    for (const socket of sockets) {
+      const login = attachedTo(socket)?.login
+      if (login === undefined || live.has(login)) continue
+      socket.close(SIGNED_OUT, 'signed out')
+      closed.add(socket)
+    }
+    if (!closed.size) return closed
+
+    // A close this side asked for brings no close handler with it, so the rows go from
+    // here, one for each person none of whose sockets is left, and who is here is said.
+    const gone = new Set([...closed].flatMap((one) => attachedTo(one)?.id ?? []))
+    for (const socket of sockets) {
+      if (!closed.has(socket)) gone.delete(attachedTo(socket)?.id ?? '')
+    }
+    for (const id of gone) await this.forgetSocketRow(id)
+    this.reachers = null
+    for (const socket of sockets) {
+      if (!closed.has(socket) && attachedTo(socket)?.hello) {
+        say(socket, { t: 'here', who: this.here().filter((one) => !this.closedWho(closed, one)) })
+      }
+    }
+    return closed
+  }
+
+  /** Whether everybody's sockets of this `who` are among those just closed. */
+  private closedWho(closed: Set<WebSocket>, who: Who): boolean {
+    return this.ctx.getWebSockets(who).every((one) => closed.has(one))
+  }
 
   /** Somebody's access ended, or narrowed to reading, while they had the chat open. */
   private async revoke(id: string, role: string | null): Promise<Response> {

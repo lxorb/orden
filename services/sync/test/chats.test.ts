@@ -10,6 +10,7 @@ import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@nib/chats/wir
 import { subprotocol } from '@nib/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/chats/reach'
+import { sha256 } from '../src/crypto'
 import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
 import { chatLogs, type ChatSocket, fire, hangUp, open, say } from './chat-fakes'
@@ -1045,6 +1046,8 @@ describe('chats', () => {
         expect(told?.get('x-nib-chat-ask'), who).toBe('join')
         expect(told?.get('x-nib-space'), who).toBe(spaceId)
         expect(told?.get('x-nib-device'), who).toBe('device-one')
+        // And the sign-in it arrived with, which the socket lasts no longer than (#520).
+        expect(told?.get('x-nib-login'), who).toBe(await sha256(people[who]))
       }
       expect((await knock(people.stranger)).status).toBe(404)
       expect((await knock('not-a-session')).status).toBe(401)

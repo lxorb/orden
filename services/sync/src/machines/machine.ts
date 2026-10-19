@@ -81,7 +81,8 @@ import {
   type SessionNow,
   text,
 } from '@nib/online/wire'
-import { reachAgain, SIGNED_IN } from './reach'
+import { reachAgain } from './reach'
+import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'
 
 /** Work nothing waits for - a heartbeat's, a socket's, a link event's - with whatever it
@@ -1553,12 +1554,8 @@ export class Machine implements DurableObject {
     const logins = [
       ...new Set(sockets.flatMap(({ viewer }) => (viewer.login ? [viewer.login] : []))),
     ]
-    if (logins.length) {
-      const { results } = await this.env.DB.prepare(SIGNED_IN)
-        .bind(JSON.stringify(logins), Date.now())
-        .all<{ login: string }>()
-      this.signedOut(logins.filter((one) => !results.some((row) => row.login === one)))
-    }
+    const live = await stillSignedIn(this.env, logins)
+    this.signedOut(logins.filter((one) => !live.has(one)))
 
     const pairs = new Map<string, { who: string; term: string; guest: boolean }>()
     for (const { viewer } of sockets) {
