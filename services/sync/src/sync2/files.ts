@@ -90,7 +90,7 @@ type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Pro
 
 /** The hash of an object in the bucket, read as a stream where the runtime can hash
  *  one (a Worker's `DigestStream`), and whole where it cannot. */
-export async function hashOf(object: R2ObjectBody): Promise<string> {
+async function hashOf(object: R2ObjectBody): Promise<string> {
   // Read off the runtime rather than its types, which describe only one of the two.
   const Streaming = (crypto as unknown as { DigestStream?: DigestStreaming }).DigestStream
   if (Streaming) {
