@@ -296,7 +296,15 @@ export interface Canvas {
 }
 
 export function emptyCanvas(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
+  return {
+    nodes: [],
+    edges: [],
+    ink: [],
+    at: noTimes(),
+    gone: noTimes(),
+    icon: null,
+    iconColor: null,
+  }
 }
 
 /** A colour the spec would accept, or undefined. Anything else is dropped rather
@@ -635,12 +643,25 @@ function writtenPage(page: PageNode): Record<string, unknown> {
   return { id: page.id, paper: page.paper, pattern: page.pattern }
 }
 
+/** An empty map of id to time, with no prototype. The ids are the file's own, so
+ *  a card called `__proto__` has to keep its time and one called `constructor`
+ *  must not be found to have one already. */
+export function noTimes(): Record<string, number> {
+  return Object.create(null) as Record<string, number>
+}
+
+/** The time an id has in a map of them, and never one its prototype answers for:
+ *  a canvas can come from anywhere, built on a plain object. */
+export function timeIn(times: Readonly<Record<string, number>>, id: string): number | undefined {
+  return Object.hasOwn(times, id) ? times[id] : undefined
+}
+
 /** A map of id to a number, with anything that is not one left out. What `at`
  *  and `gone` both are. */
 function readTimes(value: unknown): Record<string, number> {
-  if (!isRecord(value)) return {}
+  if (!isRecord(value)) return noTimes()
 
-  const out: Record<string, number> = {}
+  const out = noTimes()
   for (const [id, when] of Object.entries(value)) {
     if (id && isNumber(when) && when > 0) out[id] = Math.round(when)
   }
