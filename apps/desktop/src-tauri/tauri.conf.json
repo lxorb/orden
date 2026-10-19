@@ -97,7 +97,8 @@
         ],
         "conflicts": ["nib", "nibeditor"],
         "replaces": ["nib", "nibeditor"],
-        "desktopTemplate": "linux/main.desktop"
+        "desktopTemplate": "linux/main.desktop",
+        "postInstallScript": "linux/postinst"
       },
       "rpm": {
         "depends": [
