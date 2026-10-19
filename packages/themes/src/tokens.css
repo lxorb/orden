@@ -2,6 +2,38 @@
    Direction: ink on glass. Cool, optical, instrument-like - not warm paper.
    Typora theme variables are aliased at the bottom so Typora themes drop in. */
 
+/* The faces the platforms ship for the Arabic scripts, as one family that only the
+   Arabic letters reach (#418). Named straight in the stacks below, they were the first
+   face there that a machine without Geist had, and a browser measures a line by the
+   first face it has whatever draws the words: on an Ubuntu with the Noto fonts every
+   word in Latin stood on Noto Naskh Arabic's tall line and was drawn high in its button.
+   A face whose range leaves out the space is passed over for that, so the line is the
+   face that draws the Latin again, and an Arabic letter still finds these first.
+
+   The same faces in the same order as before, the first one a machine has; a bold face
+   of its own for the weights from semibold up, so nothing is thickened by hand. Nothing
+   is downloaded: every source is `local()`. */
+@font-face {
+  font-family: 'Orden Arabic';
+  font-weight: 100 500;
+  src:
+    local('Noto Naskh Arabic'), local('NotoNaskhArabic-Regular'), local('Geeza Pro'),
+    local('GeezaPro'), local('Segoe UI'), local('SegoeUI'), local('Noto Sans Arabic'),
+    local('NotoSansArabic-Regular'), local('Tahoma');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+1EE00-1EEFF;
+}
+
+@font-face {
+  font-family: 'Orden Arabic';
+  font-weight: 600 900;
+  src:
+    local('Noto Naskh Arabic Bold'), local('NotoNaskhArabic-Bold'), local('Geeza Pro Bold'),
+    local('GeezaPro-Bold'), local('Segoe UI Bold'), local('SegoeUI-Bold'),
+    local('Noto Sans Arabic Bold'), local('NotoSansArabic-Bold'), local('Tahoma Bold'),
+    local('Tahoma-Bold');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+1EE00-1EEFF;
+}
+
 :root {
   /* Geist and iA Writer draw no Arabic letter at all, so a name or a note in one
      of the Arabic scripts falls through to whatever the platform happens to reach
@@ -14,7 +46,7 @@
      `--font-arabic` is named once and spliced into all three stacks, so a Persian
      comment inside a code fence shapes as well as a Persian heading. Urdu wants
      something else again, which is the `[lang|='ur']` block below. */
-  --font-arabic: 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', 'Noto Sans Arabic', 'Tahoma';
+  --font-arabic: 'Orden Arabic';
   --font-ui: 'Geist', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
   --font-content:
     'iA Writer Quattro', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
