@@ -179,11 +179,14 @@ def drag(start, by, steps=12):
 
 
 # A press on the tab strip's own empty part, where Tauri's drag region is.
+# A point the region itself is on top at, looked for across its width: the strip's
+# region lies under the tabs, and shows only where there are none.
 region = run(
     "(() => { for (const one of document.querySelectorAll('[data-tauri-drag-region]')) {"
-    " const r = one.getBoundingClientRect(); if (r.width < 40 || r.height < 8) continue;"
-    " const x = r.x + r.width / 2, y = r.y + r.height / 2;"
-    " if (document.elementFromPoint(x, y) === one) return { x, y } } return null })()"
+    " const r = one.getBoundingClientRect(); if (r.width < 20 || r.height < 8) continue;"
+    " const y = r.y + r.height / 2;"
+    " for (let x = r.x + r.width - 12; x > r.x + 8; x -= 6) {"
+    " if (document.elementFromPoint(x, y) === one) return { x, y } } } return null })()"
 )
 if not isinstance(region, dict):
     fail("no drag region to press on")

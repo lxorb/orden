@@ -30,6 +30,9 @@ for _ in $(seq 50); do xdpyinfo > /dev/null 2>&1 && break; sleep 0.1; done
 here=$(cd "$(dirname "$0")" && pwd)
 wm=""
 if [ "${KWIN:-0}" = 1 ]; then
+  # KWin's own services, started by the session bus, on the same display; without it its
+  # shortcut service aborts and KWin goes with it.
+  dbus-update-activation-environment DISPLAY XDG_RUNTIME_DIR 2>/dev/null || true
   # Without compositing, which a server with no GPU has nothing to do it with.
   KWIN_COMPOSE=N QT_QPA_PLATFORM=xcb kwin_x11 --replace > "$out/kwin.log" 2>&1 &
   wm=$!
