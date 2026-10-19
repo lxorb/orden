@@ -139,6 +139,15 @@ export type Field = Common &
         set(value: string): void
         sides: PictureSide[]
       }
+    /** A value the app says rather than one somebody sets - the version this is - and
+     *  a press copies it. Nothing to put back, so it has no `initial` and a pane's
+     *  reset passes over it. */
+    | {
+        kind: 'value'
+        initial?: undefined
+        get(): string
+        press(): void
+      }
     /** A line somebody types. Only where nothing else will do - a spoken command's
      *  own phrase, a page's margin - and never on the glasses, which have nothing to
      *  type with. */
