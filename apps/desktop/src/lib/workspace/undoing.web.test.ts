@@ -16,7 +16,8 @@ vi.mock('../tauri', () => ({
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
     if (command === 'read_asset') return Promise.reject(new Error('no such asset'))
-    if (command === 'write_note') files.set(path, String(args?.content ?? ''))
+    if (command === 'write_note')
+      files.set(path, typeof args?.content === 'string' ? args.content : '')
     return Promise.resolve(undefined)
   },
 }))
