@@ -190,6 +190,20 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
   fi
   python3 "$here/wayland-pointer.py" "$out/pointer.fifo" > "$out/pointer.log" 2>&1 &
   pointer_pid=$!
+  # The pointer and the keyboard on the seat before Orden starts, and not while it does
+  # (#439): Xwayland makes each an input device of its own, and GTK 4 reads the X
+  # server's devices once as it opens the display. A device made between that reading
+  # and GTK listening for new ones is one GTK never learns of, and the first event from
+  # it is GDK handed no device - `gdk_device_get_n_axes: assertion 'GDK_IS_DEVICE
+  # (device)' failed` - and a crash.
+  said="a pointer is on the seat"
+  [ -n "${KEY_MAP:-}" ] && said="and a keyboard"
+  for _ in $(seq 100); do
+    grep -q "$said" "$out/pointer.log" 2>/dev/null && break
+    sleep 0.1
+  done
+  grep -q "$said" "$out/pointer.log" || { echo "::error::the stand-in pointer did not start"; cat "$out/pointer.log"; exit 1; }
+  sleep 0.5
 fi
 
 started=$(date +%s%N)
